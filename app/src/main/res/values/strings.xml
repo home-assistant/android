@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Home Assistant</string>
+    <string name="msg_token_fmt" translatable="false">InstanceID Token: %s</string>
+    <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
+</resources>
