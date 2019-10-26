@@ -6,4 +6,10 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+    <style name="TextAppearance.HomeAssistant.Title" parent="TextAppearance.AppCompat.Title">
+
+
+    </style>
+
+
 </resources>
