@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.android.R
 
 
-class OnboardingActivity : AppCompatActivity(), DiscoveryListener {
+class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -20,10 +20,17 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener {
     }
 
     override fun onSelectManualSetup() {
-        throw NotImplementedError()
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, ManualSetupFragment.newInstance())
+            .commit()
     }
 
     override fun onHomeAssistantDiscover() {
+        throw NotImplementedError()
+    }
+
+    override fun onSelectUrl(url: String) {
         throw NotImplementedError()
     }
 

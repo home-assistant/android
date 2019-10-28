@@ -5,4 +5,6 @@
     <string name="connect_to_home_internet">Make sure your phone is connected \nto your home internet.</string>
     <string name="scan_again">scan again</string>
     <string name="manual_setup">enter address manually</string>
+    <string name="input_url">Home Assistant URL</string>
+    <string name="input_url_hint">URL</string>
 </resources>
