@@ -1,6 +1,5 @@
 package io.homeassistant.android.onboarding
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.android.onboarding.authentication.AuthenticationFragment
@@ -41,7 +40,7 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     }
 
     override fun onAuthenticationSuccess(url: String) {
-        throw NotImplementedError()
+        startActivity(WebviewActivity.newInstance(this, url))
     }
 
 }
