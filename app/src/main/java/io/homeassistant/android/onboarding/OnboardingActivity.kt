@@ -1,20 +1,23 @@
 package io.homeassistant.android.onboarding
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import io.homeassistant.android.R
+import io.homeassistant.android.onboarding.authentication.AuthenticationFragment
+import io.homeassistant.android.onboarding.authentication.AuthenticationListener
+import io.homeassistant.android.webview.WebviewActivity
 
 
-class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener {
+class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener, AuthenticationListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_onboarding)
+        setContentView(io.homeassistant.android.R.layout.activity_onboarding)
 
         if (savedInstanceState == null) {
             supportFragmentManager
                 .beginTransaction()
-                .add(R.id.content, DiscoveryFragment.newInstance())
+                .add(io.homeassistant.android.R.id.content, DiscoveryFragment.newInstance())
                 .commit()
         }
     }
@@ -22,7 +25,7 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     override fun onSelectManualSetup() {
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, ManualSetupFragment.newInstance())
+            .replace(io.homeassistant.android.R.id.content, ManualSetupFragment.newInstance())
             .commit()
     }
 
@@ -31,6 +34,13 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     }
 
     override fun onSelectUrl(url: String) {
+        supportFragmentManager
+            .beginTransaction()
+            .replace(io.homeassistant.android.R.id.content, AuthenticationFragment.newInstance(url))
+            .commit()
+    }
+
+    override fun onAuthenticationSuccess(url: String) {
         throw NotImplementedError()
     }
 
