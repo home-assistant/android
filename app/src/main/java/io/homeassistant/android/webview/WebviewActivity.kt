@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -18,11 +19,9 @@ class WebviewActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "WebviewActivity"
-        private const val EXTRA_URL = "extra_url"
 
-        fun newInstance(context: Context, url: String): Intent {
+        fun newInstance(context: Context): Intent {
             return Intent(context, WebviewActivity::class.java)
-                .putExtra(EXTRA_URL, url)
         }
     }
 
@@ -49,8 +48,8 @@ class WebviewActivity : AppCompatActivity() {
                     webView.post {
                         webView.evaluateJavascript(
                             "${JSONObject(callback).get("callback")}(true, {\n" +
-                                    "  \"access_token\": \"${Session.token?.accessToken}\",\n" +
-                                    "  \"expires_in\": ${Session.token?.expiresIn}\n" +
+                                    "  \"access_token\": \"${Session.getInstance().token?.accessToken}\",\n" +
+                                    "  \"expires_in\": ${Session.getInstance().token?.expiresIn}\n" +
                                     "});"
                             , null
                         )
@@ -60,7 +59,7 @@ class WebviewActivity : AppCompatActivity() {
         }
 
         webView.loadUrl(
-            Uri.parse(intent.extras?.getString(EXTRA_URL) ?: throw IllegalArgumentException("url should not be null"))
+            Uri.parse(Session.getInstance().url ?: throw IllegalArgumentException("url should not be null"))
                 .buildUpon()
                 .appendQueryParameter("external_auth", "1")
                 .toString()

@@ -52,7 +52,7 @@ class AuthenticationPresenterImpl(private val view: AuthenticationView) : Authen
                     override fun onResponse(call: Call<Token>, response: Response<Token>) {
                         val body = response.body()
                         if (response.isSuccessful && body != null) {
-                            Session.token = body
+                            Session.getInstance().registerSession(body, url)
                             view.openWebview(url)
                         } else {
                             Log.e(TAG, "authorization code error ${response.errorBody()?.string()}")

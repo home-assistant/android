@@ -1,5 +1,7 @@
 package io.homeassistant.android.onboarding
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.android.onboarding.authentication.AuthenticationFragment
@@ -8,6 +10,14 @@ import io.homeassistant.android.webview.WebviewActivity
 
 
 class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener, AuthenticationListener {
+
+    companion object {
+        private const val TAG = "OnboardingActivity"
+
+        fun newInstance(context: Context): Intent {
+            return Intent(context, OnboardingActivity::class.java)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +58,7 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     }
 
     override fun onAuthenticationSuccess(url: String) {
-        startActivity(WebviewActivity.newInstance(this, url))
+        startActivity(WebviewActivity.newInstance(this))
         finish()
     }
 
