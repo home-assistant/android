@@ -26,6 +26,8 @@ class WebviewActivity : AppCompatActivity() {
         }
     }
 
+    private lateinit var webView: WebView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
@@ -34,7 +36,7 @@ class WebviewActivity : AppCompatActivity() {
             WebView.setWebContentsDebuggingEnabled(true)
         }
 
-        val webView = findViewById<WebView>(R.id.webview)
+        webView = findViewById(R.id.webview)
         webView.apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
@@ -63,5 +65,13 @@ class WebviewActivity : AppCompatActivity() {
                 .appendQueryParameter("external_auth", "1")
                 .toString()
         )
+    }
+
+    override fun onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            super.onBackPressed()
+        }
     }
 }

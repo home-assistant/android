@@ -21,6 +21,14 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
         }
     }
 
+    override fun onBackPressed() {
+        if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
+        } else {
+            super.onBackPressed()
+        }
+    }
+
     override fun onSelectManualSetup() {
         supportFragmentManager
             .beginTransaction()
@@ -41,6 +49,7 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
 
     override fun onAuthenticationSuccess(url: String) {
         startActivity(WebviewActivity.newInstance(this, url))
+        finish()
     }
 
 }
