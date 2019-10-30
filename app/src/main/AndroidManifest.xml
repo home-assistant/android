@@ -27,6 +27,8 @@
 
         <activity android:name=".webview.WebViewActivity" />
 
+        <activity android:name=".settings.SettingsActivity" />
+
     </application>
 
 </manifest>

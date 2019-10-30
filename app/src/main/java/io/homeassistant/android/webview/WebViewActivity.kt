@@ -4,12 +4,14 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.android.BuildConfig
 import io.homeassistant.android.R
+import io.homeassistant.android.settings.SettingsActivity
 import io.homeassistant.android.api.Session
 import io.homeassistant.android.io.homeassistant.android.api.Token
 import org.json.JSONObject
@@ -68,6 +70,28 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.android.webview.We
                                 "});"
                         , null
                     )
+                }
+            }
+
+            @JavascriptInterface
+            fun externalBus(message: String) {
+                Log.d(TAG, "External bus $message")
+                webView.post {
+                    when {
+                        JSONObject(message).get("type") == "config/get" -> {
+                            val script = "externalBus({" +
+                                    " \"id\": ${JSONObject(message).get("id")}," +
+                                    " \"type\": \"result\"," +
+                                    " \"success\": \"true\"," +
+                                    " \"result\": {\"hasSettingsScreen\": true }" +
+                                    "})"
+                            Log.d(TAG, script)
+                            webView.evaluateJavascript(script) {
+                                Log.d(TAG, "Callback $it")
+                            }
+                        }
+                        JSONObject(message).get("type") == "config_screen/show" -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+                    }
                 }
             }
         }, "externalApp")
