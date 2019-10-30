@@ -8,13 +8,17 @@ import retrofit2.http.POST
 
 interface AuthenticationService {
 
+    companion object {
+        const val CLIENT_ID = "https://home-assistant.io/iOS"
+    }
+
     @FormUrlEncoded
     @POST("auth/token")
     fun getToken(
         @Field("grant_type") grandType: String,
         @Field("code") code: String,
         @Field("client_id") clientId: String
-    ): Call<Token>
+    ): Call<AuthorizationCode>
 
     @FormUrlEncoded
     @POST("auth/token")
@@ -22,7 +26,7 @@ interface AuthenticationService {
         @Field("grant_type") grandType: String,
         @Field("refresh_token") token: String,
         @Field("client_id") clientId: String
-    ): Call<Void>
+    ): Call<RefreshToken>
 
     @FormUrlEncoded
     @POST("auth/token")

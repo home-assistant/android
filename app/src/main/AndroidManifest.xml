@@ -25,7 +25,7 @@
 
         <activity android:name=".onboarding.OnboardingActivity" />
 
-        <activity android:name=".webview.WebviewActivity" />
+        <activity android:name=".webview.WebViewActivity" />
 
     </application>
 

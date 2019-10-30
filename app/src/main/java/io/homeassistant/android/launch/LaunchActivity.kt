@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.android.api.Session
 import io.homeassistant.android.onboarding.OnboardingActivity
-import io.homeassistant.android.webview.WebviewActivity
+import io.homeassistant.android.webview.WebViewActivity
 
 
 class LaunchActivity : AppCompatActivity() {
@@ -15,7 +15,7 @@ class LaunchActivity : AppCompatActivity() {
         if (Session.getInstance().url.isNullOrBlank()) {
             startActivity(OnboardingActivity.newInstance(this))
         } else {
-            startActivity(WebviewActivity.newInstance(this))
+            startActivity(WebViewActivity.newInstance(this))
         }
         finish()
     }

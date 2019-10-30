@@ -6,7 +6,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.android.onboarding.authentication.AuthenticationListener
-import io.homeassistant.android.webview.WebviewActivity
+import io.homeassistant.android.webview.WebViewActivity
 
 
 class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener, AuthenticationListener {
@@ -58,7 +58,7 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     }
 
     override fun onAuthenticationSuccess(url: String) {
-        startActivity(WebviewActivity.newInstance(this))
+        startActivity(WebViewActivity.newInstance(this))
         finish()
     }
 
