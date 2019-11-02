@@ -45,6 +45,39 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.android.webview.We
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             webViewClient = WebViewClient()
+
+            addJavascriptInterface(object : Any() {
+                @JavascriptInterface
+                fun getExternalAuth(callback: String) {
+                    presenter.onGetExternalAuth(JSONObject(callback).get("callback") as String)
+                }
+
+                @JavascriptInterface
+                fun externalBus(message: String) {
+                    Log.d(TAG, "External bus $message")
+                    webView.post {
+                        when {
+                            JSONObject(message).get("type") == "config/get" -> {
+                                val script = "externalBus(" +
+                                        "${JSONObject(
+                                            mapOf(
+                                                "id" to JSONObject(message).get("id"),
+                                                "type" to "result",
+                                                "success" to true,
+                                                "result" to JSONObject(mapOf("hasSettingsScreen" to true))
+                                            )
+                                        )}" +
+                                        ");"
+                                Log.d(TAG, script)
+                                webView.evaluateJavascript(script) {
+                                    Log.d(TAG, "Callback $it")
+                                }
+                            }
+                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+                        }
+                    }
+                }
+            }, "externalApp")
         }
 
         presenter.onViewReady()
@@ -58,43 +91,21 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.android.webview.We
         }
     }
 
-    override fun setupJavascriptInterface(token: Token) {
-        webView.addJavascriptInterface(object : Any() {
-            @JavascriptInterface
-            fun getExternalAuth(callback: String) {
-                webView.post {
-                    webView.evaluateJavascript(
-                        "${JSONObject(callback).get("callback")}(true, {\n" +
-                                "  \"access_token\": \"${token.accessToken}\",\n" +
-                                "  \"expires_in\": ${token.expiresIn()}\n" +
-                                "});"
-                        , null
-                    )
-                }
-            }
-
-            @JavascriptInterface
-            fun externalBus(message: String) {
-                Log.d(TAG, "External bus $message")
-                webView.post {
-                    when {
-                        JSONObject(message).get("type") == "config/get" -> {
-                            val script = "externalBus({" +
-                                    " \"id\": ${JSONObject(message).get("id")}," +
-                                    " \"type\": \"result\"," +
-                                    " \"success\": \"true\"," +
-                                    " \"result\": {\"hasSettingsScreen\": true }" +
-                                    "})"
-                            Log.d(TAG, script)
-                            webView.evaluateJavascript(script) {
-                                Log.d(TAG, "Callback $it")
-                            }
-                        }
-                        JSONObject(message).get("type") == "config_screen/show" -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
-                    }
-                }
-            }
-        }, "externalApp")
+    override fun setToken(callback: String, token: Token) {
+        webView.post {
+            webView.evaluateJavascript(
+                "$callback(" +
+                        "true," +
+                        "${JSONObject(
+                            mapOf(
+                                "access_token" to token.accessToken,
+                                "expires_in" to token.expiresIn()
+                            )
+                        )}" +
+                        ");"
+                , null
+            )
+        }
     }
 
     override fun loadUrl(url: String) {

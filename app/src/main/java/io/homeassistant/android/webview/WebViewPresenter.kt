@@ -5,4 +5,6 @@ interface WebViewPresenter {
 
     fun onViewReady()
 
+    fun onGetExternalAuth(callback: String)
+
 }

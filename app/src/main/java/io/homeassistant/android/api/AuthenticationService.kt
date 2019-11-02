@@ -9,7 +9,7 @@ import retrofit2.http.POST
 interface AuthenticationService {
 
     companion object {
-        const val CLIENT_ID = "https://home-assistant.io/iOS"
+        const val CLIENT_ID = "https://home-assistant.io/android"
     }
 
     @FormUrlEncoded
