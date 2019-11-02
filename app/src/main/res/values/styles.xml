@@ -1,11 +1,31 @@
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <!-- Customize your theme here. -->
+    <style name="Theme.HomeAssistant" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorButtonNormal">@color/colorPrimary</item>
+
+        <item name="buttonStyle">@style/Widget.HomeAssistant.Button.Colored</item>
+    </style>
+
+    <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.AppCompat.Headline">
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="TextAppearance.HomeAssistant.Title" parent="TextAppearance.AppCompat.Title">
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="TextAppearance.HomeAssistant.Medium" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="Widget.HomeAssistant.Button.Colored" parent="Widget.AppCompat.Button">
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="Widget.HomeAssistant.Button.Borderless" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:textColor">@color/colorPrimary</item>
     </style>
 
 </resources>
