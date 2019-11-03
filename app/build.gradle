@@ -26,6 +26,27 @@ android {
         serviceCredentialsFile = "serviceCredentialsFile.json"
         releaseNotesFile = "CHANGES.md"
     }
+
+    signingConfigs {
+        release {
+            storeFile file('../release_keystore.keystore')
+            storePassword "${System.env.KEYSTORE_PASSWORD ?: ""}"
+            keyAlias "$System.env.KEYSTORE_ALIAS" ?: ""
+            keyPassword "${System.env.KEYSTORE_ALIAS_PASSWORD ?: ""}"
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            debuggable false
+            jniDebuggable false
+            zipAlignEnabled true
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            signingConfig signingConfigs.release
+        }
+    }
 }
 
 dependencies {
