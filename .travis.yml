@@ -28,3 +28,4 @@ script:
   - export VERSION_CODE=`git rev-list --count HEAD`
   - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then bash ./gradlew testReleaseUnitTest; fi'
   - 'if [ "$TRAVIS_BRANCH" = "master"  ]; then bash ./gradlew assembleRelease appDistributionUploadRelease; fi'
+  - ./gradlew assembleRelease
