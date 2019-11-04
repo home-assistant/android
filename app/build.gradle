@@ -1,13 +1,16 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.firebase.appdistribution'
+apply plugin: 'com.github.triplet.play'
 
 buildscript {
     repositories {
         google()
+        maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
         classpath 'com.google.firebase:firebase-appdistribution-gradle:1.1.0'
+        classpath 'com.github.triplet.gradle:play-publisher:2.5.0'
     }
 }
 
@@ -15,7 +18,7 @@ android {
     compileSdkVersion 29
 
     defaultConfig {
-        applicationId "io.homeassistant.android"
+        applicationId "io.homeassistant.companion.android"
         minSdkVersion 21
         targetSdkVersion 29
         versionCode "${System.env.VERSION_CODE ?: 1}".toInteger()
@@ -23,9 +26,33 @@ android {
     }
 
     firebaseAppDistribution {
-        serviceCredentialsFile = "serviceCredentialsFile.json"
+        serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
         releaseNotesFile = "CHANGES.md"
     }
+
+    signingConfigs {
+        release {
+            storeFile file('release_keystore.keystore')
+            storePassword "${System.env.KEYSTORE_PASSWORD ?: ""}"
+            keyAlias "$System.env.KEYSTORE_ALIAS" ?: ""
+            keyPassword "${System.env.KEYSTORE_ALIAS_PASSWORD ?: ""}"
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        release {
+            debuggable false
+            jniDebuggable false
+            zipAlignEnabled true
+            signingConfig signingConfigs.release
+        }
+    }
+}
+
+play {
+    serviceAccountCredentials = file("playStorePublishServiceCredentialsFile.json")
 }
 
 dependencies {
