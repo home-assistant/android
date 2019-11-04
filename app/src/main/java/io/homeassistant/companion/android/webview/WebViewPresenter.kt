@@ -1,4 +1,4 @@
-package io.homeassistant.android.webview
+package io.homeassistant.companion.android.webview
 
 
 interface WebViewPresenter {

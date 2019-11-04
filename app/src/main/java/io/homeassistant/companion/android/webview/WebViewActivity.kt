@@ -1,4 +1,4 @@
-package io.homeassistant.android.webview
+package io.homeassistant.companion.android.webview
 
 import android.content.Context
 import android.content.Intent
@@ -9,15 +9,15 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
-import io.homeassistant.android.BuildConfig
-import io.homeassistant.android.R
-import io.homeassistant.android.settings.SettingsActivity
-import io.homeassistant.android.api.Session
-import io.homeassistant.android.io.homeassistant.android.api.Token
+import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.api.Session
+import io.homeassistant.companion.android.api.Token
+import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.R
 import org.json.JSONObject
 
 
-class WebViewActivity : AppCompatActivity(), io.homeassistant.android.webview.WebView {
+class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 
     companion object {
         private const val TAG = "WebviewActivity"

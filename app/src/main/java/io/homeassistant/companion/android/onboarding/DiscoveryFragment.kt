@@ -1,4 +1,4 @@
-package io.homeassistant.android.onboarding
+package io.homeassistant.companion.android.onboarding
 
 import android.os.Bundle
 import android.os.Handler
@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ViewFlipper
 import androidx.fragment.app.Fragment
-import io.homeassistant.android.R
+import io.homeassistant.companion.android.R
 
 
 class DiscoveryFragment : Fragment() {

@@ -1,4 +1,4 @@
-package io.homeassistant.android.io.homeassistant.android.api
+package io.homeassistant.companion.android.api
 
 import java.util.*
 

@@ -1,10 +1,10 @@
-package io.homeassistant.android.io.homeassistant.android.launch
+package io.homeassistant.companion.android.launch
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import io.homeassistant.android.api.Session
-import io.homeassistant.android.onboarding.OnboardingActivity
-import io.homeassistant.android.webview.WebViewActivity
+import io.homeassistant.companion.android.api.Session
+import io.homeassistant.companion.android.onboarding.OnboardingActivity
+import io.homeassistant.companion.android.webview.WebViewActivity
 
 
 class LaunchActivity : AppCompatActivity() {

@@ -1,4 +1,4 @@
-package io.homeassistant.android.onboarding.authentication
+package io.homeassistant.companion.android.onboarding.authentication
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
-import io.homeassistant.android.R
+import io.homeassistant.companion.android.R
 
 
 class AuthenticationFragment : Fragment(), AuthenticationView {

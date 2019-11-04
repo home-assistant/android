@@ -1,4 +1,4 @@
-package io.homeassistant.android.api
+package io.homeassistant.companion.android.api
 
 import retrofit2.Call
 import retrofit2.http.Field

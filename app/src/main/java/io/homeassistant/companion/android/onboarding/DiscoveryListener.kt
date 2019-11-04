@@ -1,4 +1,4 @@
-package io.homeassistant.android.onboarding
+package io.homeassistant.companion.android.onboarding
 
 interface DiscoveryListener {
 

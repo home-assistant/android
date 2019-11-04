@@ -1,6 +1,6 @@
-package io.homeassistant.android.api
+package io.homeassistant.companion.android.api
 
-import io.homeassistant.android.BuildConfig
+import io.homeassistant.companion.android.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

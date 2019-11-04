@@ -1,8 +1,7 @@
-package io.homeassistant.android.api
+package io.homeassistant.companion.android.api
 
 import android.app.Application
 import android.content.Context
-import io.homeassistant.android.io.homeassistant.android.api.Token
 import java.util.*
 
 

@@ -1,4 +1,4 @@
-package io.homeassistant.android.onboarding.authentication
+package io.homeassistant.companion.android.onboarding.authentication
 
 
 interface AuthenticationPresenter {

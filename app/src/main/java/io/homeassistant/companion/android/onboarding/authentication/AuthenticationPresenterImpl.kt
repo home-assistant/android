@@ -1,11 +1,11 @@
-package io.homeassistant.android.onboarding.authentication
+package io.homeassistant.companion.android.onboarding.authentication
 
 import android.net.Uri
 import android.util.Log
-import io.homeassistant.android.api.AuthenticationService
-import io.homeassistant.android.api.HomeAssistantApi
-import io.homeassistant.android.api.Session
-import io.homeassistant.android.api.AuthorizationCode
+import io.homeassistant.companion.android.api.AuthenticationService
+import io.homeassistant.companion.android.api.HomeAssistantApi
+import io.homeassistant.companion.android.api.Session
+import io.homeassistant.companion.android.api.AuthorizationCode
 import retrofit2.Call
 import retrofit2.Response
 
