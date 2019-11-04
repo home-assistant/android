@@ -2,8 +2,8 @@ language: android
 dist: trusty
 
 before_install:
-  - chmod ugo+x travis/before_install.sh
-  - ./travis/before_install.sh
+  - chmod ugo+x .travis/before_install.sh
+  - ./.travis/before_install.sh
 
 android:
   components:
@@ -21,7 +21,5 @@ cache:
     - $HOME/.android/build-cache
 
 script:
-  - echo $TRAVIS_COMMIT_MESSAGE > CHANGES.md
-  - export VERSION_CODE=`git rev-list --count HEAD`
-  - 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then bash ./gradlew testReleaseUnitTest; fi'
-  - 'if [ "$TRAVIS_BRANCH" = "master"  ]; then bash ./gradlew assembleRelease appDistributionUploadRelease; fi'
+  - chmod ugo+x .travis/script.sh
+  - ./.travis/script.sh

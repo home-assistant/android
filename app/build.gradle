@@ -1,13 +1,16 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.firebase.appdistribution'
+apply plugin: 'com.github.triplet.play'
 
 buildscript {
     repositories {
         google()
+        maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
         classpath 'com.google.firebase:firebase-appdistribution-gradle:1.1.0'
+        classpath 'com.github.triplet.gradle:play-publisher:2.5.0'
     }
 }
 
@@ -23,13 +26,13 @@ android {
     }
 
     firebaseAppDistribution {
-        serviceCredentialsFile = "serviceCredentialsFile.json"
+        serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
         releaseNotesFile = "CHANGES.md"
     }
 
     signingConfigs {
         release {
-            storeFile file('../release_keystore.keystore')
+            storeFile file('release_keystore.keystore')
             storePassword "${System.env.KEYSTORE_PASSWORD ?: ""}"
             keyAlias "$System.env.KEYSTORE_ALIAS" ?: ""
             keyPassword "${System.env.KEYSTORE_ALIAS_PASSWORD ?: ""}"
@@ -46,6 +49,10 @@ android {
             signingConfig signingConfigs.release
         }
     }
+}
+
+play {
+    serviceAccountCredentials = file("playStorePublishServiceCredentialsFile.json")
 }
 
 dependencies {
