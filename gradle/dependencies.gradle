@@ -1,0 +1,6 @@
+ext {
+    retrofit2Version = '2.6.2'
+    okhttp3Version = '4.2.2'
+    appCompatVersion= '1.1.0'
+    constraintLayoutversion = '1.1.3'
+}

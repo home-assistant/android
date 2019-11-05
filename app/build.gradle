@@ -57,12 +57,12 @@ play {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "androidx.appcompat:appcompat:1.1.0"
-    implementation "androidx.constraintlayout:constraintlayout:1.1.3"
+    implementation "androidx.appcompat:appcompat:$appCompatVersion"
+    implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutversion"
 
-    implementation "com.squareup.retrofit2:retrofit:2.6.2"
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.2.2'
-    implementation "com.squareup.retrofit2:converter-jackson:2.6.2"
+    implementation "com.squareup.retrofit2:retrofit:$retrofit2Version"
+    implementation "com.squareup.retrofit2:converter-jackson:$retrofit2Version"
+    implementation "com.squareup.okhttp3:logging-interceptor:$okhttp3Version"
 }
 
 apply plugin: 'com.google.gms.google-services'
