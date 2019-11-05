@@ -3,6 +3,8 @@
 echo $TRAVIS_COMMIT_MESSAGE > CHANGES.md
 export VERSION_CODE=`git rev-list --count HEAD`
 
+./gradlew testReleaseUnitTest
+
 if [ "$TRAVIS_PULL_REQUEST" = "false" ]
 then
     if [ "$TRAVIS_BRANCH" = "master" ]
@@ -14,6 +16,4 @@ then
             ./gradlew publishReleaseBundle
         fi
     fi
-else
-    ./gradlew testReleaseUnitTest
 fi
