@@ -1,9 +1,12 @@
 #!/bin/bash
 
+set -ev
+
 echo $TRAVIS_COMMIT_MESSAGE > CHANGES.md
 export VERSION_CODE=`git rev-list --count HEAD`
 
-./gradlew testReleaseUnitTest
+./gradlew test
+./gradlew lint
 
 if [ "$TRAVIS_PULL_REQUEST" = "false" ]
 then
