@@ -6,5 +6,6 @@ ext {
     coroutinesVersion = '1.3.2'
 
     assertJVersion = '3.13.2'
+    mockkVersion = '1.9.3'
     spek2Version = '2.0.8'
 }
