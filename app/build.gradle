@@ -78,11 +78,6 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutversion"
 
-    implementation "com.squareup.retrofit2:retrofit:$retrofit2Version"
-    implementation "com.squareup.retrofit2:converter-jackson:$retrofit2Version"
-    implementation "com.squareup.okhttp3:logging-interceptor:$okhttp3Version"
-
-
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek2Version"
     testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek2Version"
     testImplementation "org.assertj:assertj-core:$assertJVersion"
