@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.data.authentication
 
-import java.time.Instant
+import org.threeten.bp.Instant
 
 
 data class Session(

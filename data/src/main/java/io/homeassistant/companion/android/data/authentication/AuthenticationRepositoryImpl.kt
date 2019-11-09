@@ -6,8 +6,8 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationRe
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.threeten.bp.Instant
 import java.net.URL
-import java.time.Instant
 
 
 class AuthenticationRepositoryImpl(

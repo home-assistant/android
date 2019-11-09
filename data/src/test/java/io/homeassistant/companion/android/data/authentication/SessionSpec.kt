@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.data.authentication
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.time.Instant
+import org.threeten.bp.Instant
 
 
 object SessionSpec : Spek({

@@ -20,6 +20,7 @@ dependencies {
     implementation "com.squareup.retrofit2:converter-jackson:$retrofit2Version"
     implementation "com.squareup.okhttp3:logging-interceptor:$okhttp3Version"
 
+    implementation "org.threeten:threetenbp:$threeTenBpVersion"
 
     testImplementation "com.squareup.okhttp3:mockwebserver:$okhttp3Version"
 
