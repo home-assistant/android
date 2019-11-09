@@ -4,9 +4,10 @@ import android.net.Uri
 import android.util.Log
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import kotlinx.coroutines.*
+import javax.inject.Inject
 
 
-class AuthenticationPresenterImpl(
+class AuthenticationPresenterImpl @Inject constructor(
     private val view: AuthenticationView,
     private val authenticationUseCase: AuthenticationUseCase
 ) : AuthenticationPresenter {

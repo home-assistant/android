@@ -3,9 +3,10 @@ package io.homeassistant.companion.android.webview
 import android.net.Uri
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import kotlinx.coroutines.*
+import javax.inject.Inject
 
 
-class WebViewPresenterImpl(
+class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
     private val authenticationUseCase: AuthenticationUseCase
 ) : WebViewPresenter {

@@ -7,7 +7,11 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import androidx.fragment.app.Fragment
+import io.homeassistant.companion.android.DaggerPresenterComponent
+import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import javax.inject.Inject
 
 
 class ManualSetupFragment : Fragment(), ManualSetupView {
@@ -18,7 +22,18 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         }
     }
 
-    lateinit var presenter: ManualSetupPresenter
+    @Inject lateinit var presenter: ManualSetupPresenter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        DaggerPresenterComponent
+            .builder()
+            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
+            .presenterModule(PresenterModule(this))
+            .build()
+            .inject(this)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_manual_setup, container, false).apply {
@@ -29,6 +44,7 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
     }
 
     override fun urlSaved() {
+        (activity?.application as GraphComponentAccessor).urlUpdated()
         (activity as ManualSetupListener).onSelectUrl()
     }
 

@@ -7,7 +7,11 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
+import io.homeassistant.companion.android.DaggerPresenterComponent
+import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import javax.inject.Inject
 
 
 class AuthenticationFragment : Fragment(), AuthenticationView {
@@ -20,8 +24,19 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         }
     }
 
-    private lateinit var presenter: AuthenticationPresenter
+    @Inject lateinit var presenter: AuthenticationPresenter
     private lateinit var webView: WebView
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        DaggerPresenterComponent
+            .builder()
+            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
+            .presenterModule(PresenterModule(this))
+            .build()
+            .inject(this)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_authentication, container, false).apply {

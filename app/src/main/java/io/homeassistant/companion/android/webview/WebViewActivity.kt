@@ -9,9 +9,13 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.DaggerPresenterComponent
+import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.settings.SettingsActivity
 import org.json.JSONObject
+import javax.inject.Inject
 
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -24,12 +28,19 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
 
+    @Inject lateinit var presenter: WebViewPresenter
     private lateinit var webView: WebView
-    private lateinit var presenter: WebViewPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
+
+        DaggerPresenterComponent
+            .builder()
+            .appComponent((application as GraphComponentAccessor).appComponent)
+            .presenterModule(PresenterModule(this))
+            .build()
+            .inject(this)
 
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)

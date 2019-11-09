@@ -5,8 +5,9 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import kotlinx.coroutines.*
 import java.net.MalformedURLException
 import java.net.URL
+import javax.inject.Inject
 
-class ManualSetupPresenterImpl(
+class ManualSetupPresenterImpl @Inject constructor(
     private val view: ManualSetupView,
     private val authenticationUseCase: AuthenticationUseCase
 ) : ManualSetupPresenter {

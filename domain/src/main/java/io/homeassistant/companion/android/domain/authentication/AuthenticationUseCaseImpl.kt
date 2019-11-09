@@ -1,8 +1,9 @@
 package io.homeassistant.companion.android.domain.authentication
 
 import java.net.URL
+import javax.inject.Inject
 
-class AuthenticationUseCaseImpl(
+class AuthenticationUseCaseImpl @Inject constructor(
     private val authenticationRepository: AuthenticationRepository
 ) : AuthenticationUseCase {
 

@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.firebase.appdistribution'
 apply plugin: 'com.github.triplet.play'
 apply plugin: 'de.mannodermaus.android-junit5'
@@ -17,11 +18,11 @@ buildscript {
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion projectSdkVersion.toInteger()
 
     defaultConfig {
         applicationId "io.homeassistant.companion.android"
-        minSdkVersion 21
+        minSdkVersion projectMinSdkVersion
         targetSdkVersion 29
         versionCode "${System.env.VERSION_CODE ?: 1}".toInteger()
         versionName "1.0.0"
@@ -69,11 +70,15 @@ play {
 }
 
 dependencies {
+    implementation project(':common')
     implementation project(':domain')
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
+
+    implementation "com.google.dagger:dagger:${daggerVersion}"
+    kapt "com.google.dagger:dagger-compiler:${daggerVersion}"
 
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutversion"

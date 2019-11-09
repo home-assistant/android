@@ -8,9 +8,10 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.threeten.bp.Instant
 import java.net.URL
+import javax.inject.Inject
 
 
-class AuthenticationRepositoryImpl(
+class AuthenticationRepositoryImpl @Inject constructor(
     private val authenticationService: AuthenticationService,
     private val localStorage: LocalStorage
 ) : AuthenticationRepository {
