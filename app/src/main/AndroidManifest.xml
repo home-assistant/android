@@ -23,9 +23,13 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".onboarding.OnboardingActivity" />
+        <activity
+            android:name=".onboarding.OnboardingActivity"
+            android:configChanges="orientation|screenSize" />
 
-        <activity android:name=".webview.WebViewActivity" />
+        <activity
+            android:name=".webview.WebViewActivity"
+            android:configChanges="orientation|screenSize" />
 
         <activity android:name=".settings.SettingsActivity" />
 
