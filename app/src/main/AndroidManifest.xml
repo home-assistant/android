@@ -13,7 +13,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HomeAssistant"
         android:usesCleartextTraffic="true"
-        tools:ignore="GoogleAppIndexingWarning">
+        tools:ignore="GoogleAppIndexingWarning"
+        android:roundIcon="@mipmap/ic_launcher_round">
 
         <activity android:name=".launch.LaunchActivity">
             <intent-filter>
