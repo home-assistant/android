@@ -7,4 +7,6 @@ interface WebViewPresenter {
 
     fun onGetExternalAuth(callback: String)
 
+    fun onFinish()
+
 }

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding
+package io.homeassistant.companion.android.onboarding.discovery
 
 import android.os.Bundle
 import android.os.Handler

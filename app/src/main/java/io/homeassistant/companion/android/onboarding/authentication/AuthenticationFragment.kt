@@ -14,26 +14,14 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
 
     companion object {
         private const val TAG = "AuthenticationFragment"
-        private const val EXTRA_URL = "extra_url"
 
-        fun newInstance(url: String): AuthenticationFragment {
-            return AuthenticationFragment().apply {
-                this.arguments = Bundle().apply {
-                    this.putString(EXTRA_URL, url)
-                }
-            }
+        fun newInstance(): AuthenticationFragment {
+            return AuthenticationFragment()
         }
     }
 
     private lateinit var presenter: AuthenticationPresenter
     private lateinit var webView: WebView
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        presenter = AuthenticationPresenterImpl(this)
-        presenter.initialize(arguments?.getString(EXTRA_URL) ?: throw IllegalArgumentException("Url should not be null"))
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_authentication, container, false).apply {
@@ -61,8 +49,12 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         webView.loadUrl(url)
     }
 
-    override fun openWebview(url: String) {
-        (activity as AuthenticationListener).onAuthenticationSuccess(url)
+    override fun openWebview() {
+        (activity as AuthenticationListener).onAuthenticationSuccess()
     }
 
+    override fun onDestroy() {
+        presenter.onFinish()
+        super.onDestroy()
+    }
 }

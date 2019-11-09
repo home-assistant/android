@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.firebase.appdistribution'
 apply plugin: 'com.github.triplet.play'
+apply plugin: 'de.mannodermaus.android-junit5'
 
 buildscript {
     repositories {
@@ -11,6 +12,7 @@ buildscript {
     dependencies {
         classpath 'com.google.firebase:firebase-appdistribution-gradle:1.1.0'
         classpath 'com.github.triplet.gradle:play-publisher:2.5.0'
+        classpath 'de.mannodermaus.gradle.plugins:android-junit5:1.5.2.0'
     }
 }
 
@@ -49,6 +51,17 @@ android {
             signingConfig signingConfigs.release
         }
     }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+        junitPlatform {
+            filters {
+                engines {
+                    include 'spek2'
+                }
+            }
+        }
+    }
 }
 
 play {
@@ -56,13 +69,25 @@ play {
 }
 
 dependencies {
+    implementation project(':domain')
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion"
+
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutversion"
 
     implementation "com.squareup.retrofit2:retrofit:$retrofit2Version"
     implementation "com.squareup.retrofit2:converter-jackson:$retrofit2Version"
     implementation "com.squareup.okhttp3:logging-interceptor:$okhttp3Version"
+
+
+    testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek2Version"
+    testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek2Version"
+    testImplementation "org.assertj:assertj-core:$assertJVersion"
+    testImplementation "io.mockk:mockk:$mockkVersion"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion"
 }
 
 apply plugin: 'com.google.gms.google-services'

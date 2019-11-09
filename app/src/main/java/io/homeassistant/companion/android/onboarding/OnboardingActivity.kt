@@ -7,6 +7,10 @@ import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
+import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
+import io.homeassistant.companion.android.onboarding.discovery.DiscoveryListener
+import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
+import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 
@@ -51,14 +55,14 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
         throw NotImplementedError()
     }
 
-    override fun onSelectUrl(url: String) {
+    override fun onSelectUrl() {
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, AuthenticationFragment.newInstance(url))
+            .replace(R.id.content, AuthenticationFragment.newInstance())
             .commit()
     }
 
-    override fun onAuthenticationSuccess(url: String) {
+    override fun onAuthenticationSuccess() {
         startActivity(WebViewActivity.newInstance(this))
         finish()
     }
