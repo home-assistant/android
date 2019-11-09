@@ -9,11 +9,12 @@ import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
-import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.api.Session
-import io.homeassistant.companion.android.api.Token
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.api.Session
+import io.homeassistant.companion.android.api.Token
+import io.homeassistant.companion.android.settings.SettingsActivity
 import org.json.JSONObject
 
 
@@ -73,11 +74,21 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     Log.d(TAG, "Callback $it")
                                 }
                             }
-                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(
+                                SettingsActivity.newInstance(this@WebViewActivity)
+                            )
                         }
                     }
                 }
             }, "externalApp")
+        }
+
+        val swipeRefreshLayout: SwipeRefreshLayout = findViewById(R.id.swiperefreshlayout)
+        swipeRefreshLayout.apply {
+            setOnRefreshListener {
+                webView.reload()
+                swipeRefreshLayout.isRefreshing = false
+            }
         }
 
         presenter.onViewReady()
@@ -110,7 +121,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun loadUrl(url: String) {
         webView.loadUrl(
-            Uri.parse(Session.getInstance().url ?: throw IllegalArgumentException("url should not be null"))
+            Uri.parse(
+                Session.getInstance().url
+                    ?: throw IllegalArgumentException("url should not be null")
+            )
                 .buildUpon()
                 .appendQueryParameter("external_auth", "1")
                 .toString()
