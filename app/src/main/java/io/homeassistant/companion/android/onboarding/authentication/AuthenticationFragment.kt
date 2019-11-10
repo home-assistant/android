@@ -7,32 +7,35 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
+import io.homeassistant.companion.android.DaggerPresenterComponent
+import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import javax.inject.Inject
 
 
 class AuthenticationFragment : Fragment(), AuthenticationView {
 
     companion object {
         private const val TAG = "AuthenticationFragment"
-        private const val EXTRA_URL = "extra_url"
 
-        fun newInstance(url: String): AuthenticationFragment {
-            return AuthenticationFragment().apply {
-                this.arguments = Bundle().apply {
-                    this.putString(EXTRA_URL, url)
-                }
-            }
+        fun newInstance(): AuthenticationFragment {
+            return AuthenticationFragment()
         }
     }
 
-    private lateinit var presenter: AuthenticationPresenter
+    @Inject lateinit var presenter: AuthenticationPresenter
     private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        presenter = AuthenticationPresenterImpl(this)
-        presenter.initialize(arguments?.getString(EXTRA_URL) ?: throw IllegalArgumentException("Url should not be null"))
+        DaggerPresenterComponent
+            .builder()
+            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
+            .presenterModule(PresenterModule(this))
+            .build()
+            .inject(this)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -61,8 +64,12 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         webView.loadUrl(url)
     }
 
-    override fun openWebview(url: String) {
-        (activity as AuthenticationListener).onAuthenticationSuccess(url)
+    override fun openWebview() {
+        (activity as AuthenticationListener).onAuthenticationSuccess()
     }
 
+    override fun onDestroy() {
+        presenter.onFinish()
+        super.onDestroy()
+    }
 }
