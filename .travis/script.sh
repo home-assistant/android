@@ -10,13 +10,11 @@ export VERSION_CODE=`git rev-list --count HEAD`
 
 if [ "$TRAVIS_PULL_REQUEST" = "false" ]
 then
-    if [ "$TRAVIS_BRANCH" = "master" ]
+    if [ -n "$TRAVIS_TAG" ]
+    then
+        ./gradlew publishReleaseBundle
+    elif [ "$TRAVIS_BRANCH" = "master" ]
     then
         ./gradlew assembleRelease appDistributionUploadRelease
-
-        if [ -n "$TRAVIS_TAG" ]
-        then
-            ./gradlew publishReleaseBundle
-        fi
     fi
 fi
