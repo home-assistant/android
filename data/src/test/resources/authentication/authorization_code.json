@@ -1,0 +1,6 @@
+{
+  "access_token": "ABCDEFGH",
+  "expires_in": 1800,
+  "refresh_token": "IJKLMNOPQRST",
+  "token_type": "Bearer"
+}

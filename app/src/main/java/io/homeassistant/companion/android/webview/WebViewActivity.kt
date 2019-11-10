@@ -2,19 +2,20 @@ package io.homeassistant.companion.android.webview
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
-import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.api.Session
-import io.homeassistant.companion.android.api.Token
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.DaggerPresenterComponent
+import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.settings.SettingsActivity
 import org.json.JSONObject
+import javax.inject.Inject
 
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -27,14 +28,19 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
 
+    @Inject lateinit var presenter: WebViewPresenter
     private lateinit var webView: WebView
-    private lateinit var presenter: WebViewPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
 
-        presenter = WebViewPresenterImpl(this)
+        DaggerPresenterComponent
+            .builder()
+            .appComponent((application as GraphComponentAccessor).appComponent)
+            .presenterModule(PresenterModule(this))
+            .build()
+            .inject(this)
 
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
@@ -91,29 +97,18 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
 
-    override fun setToken(callback: String, token: Token) {
+    override fun loadUrl(url: String) {
+        webView.loadUrl(url)
+    }
+
+    override fun setExternalAuth(callback: String, externalAuth: String) {
         webView.post {
-            webView.evaluateJavascript(
-                "$callback(" +
-                        "true," +
-                        "${JSONObject(
-                            mapOf(
-                                "access_token" to token.accessToken,
-                                "expires_in" to token.expiresIn()
-                            )
-                        )}" +
-                        ");"
-                , null
-            )
+            webView.evaluateJavascript("$callback(true, $externalAuth);", null)
         }
     }
 
-    override fun loadUrl(url: String) {
-        webView.loadUrl(
-            Uri.parse(Session.getInstance().url ?: throw IllegalArgumentException("url should not be null"))
-                .buildUpon()
-                .appendQueryParameter("external_auth", "1")
-                .toString()
-        )
+    override fun onDestroy() {
+        presenter.onFinish()
+        super.onDestroy()
     }
 }

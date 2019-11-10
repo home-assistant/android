@@ -1,55 +1,44 @@
 package io.homeassistant.companion.android.webview
 
-import android.util.Log
-import io.homeassistant.companion.android.api.AuthenticationService
-import io.homeassistant.companion.android.api.HomeAssistantApi
-import io.homeassistant.companion.android.api.RefreshToken
-import io.homeassistant.companion.android.api.Session
-import retrofit2.Response
-import java.io.IOException
+import android.net.Uri
+import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
+import kotlinx.coroutines.*
+import javax.inject.Inject
 
 
-class WebViewPresenterImpl(private val view: WebView) : WebViewPresenter {
+class WebViewPresenterImpl @Inject constructor(
+    private val view: WebView,
+    private val authenticationUseCase: AuthenticationUseCase
+) : WebViewPresenter {
 
     companion object {
         private const val TAG = "WebViewPresenterImpl"
     }
 
-    private lateinit var url: String
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onViewReady() {
-        url = Session.getInstance().url ?: throw IllegalStateException("Unable to display the webview if we do not have url")
-        view.loadUrl(url)
+        mainScope.launch {
+            val url = authenticationUseCase.getUrl() ?: throw IllegalStateException("Unable to display the webview if we do not have url")
+
+            view.loadUrl(
+                Uri.parse(url.toString())
+                    .buildUpon()
+                    .appendQueryParameter("external_auth", "1")
+                    .build()
+                    .toString()
+            )
+        }
     }
 
-
     override fun onGetExternalAuth(callback: String) {
-        val token = Session.getInstance().token ?: throw IllegalStateException("Unable to display the webview if we do not have token")
-        if (token.isExpired()) {
-            val response: Response<RefreshToken>
-            try {
-                response = HomeAssistantApi(url)
-                    .authenticationService
-                    .refreshToken("refresh_token", token.refreshToken, AuthenticationService.CLIENT_ID)
-                    .execute()
-            } catch (e: IOException) {
-                Log.e(TAG, "refresh token error", e)
-                return
-            } catch (e: RuntimeException) {
-                Log.e(TAG, "refresh token error", e)
-                return
-            }
-
-            val body = response.body()
-            if (response.isSuccessful && body != null) {
-                Session.getInstance().registerRefreshToken(body, url)
-                view.setToken(callback, Session.getInstance().token!!)
-            } else {
-                Log.e(TAG, "refresh token error ${response.errorBody()?.string()}")
-            }
-        } else {
-            view.setToken(callback, token)
+        mainScope.launch {
+            view.setExternalAuth(callback, authenticationUseCase.retrieveExternalAuthentication())
         }
+    }
+
+    override fun onFinish() {
+        mainScope.cancel()
     }
 
 }

@@ -5,6 +5,6 @@ interface AuthenticationView {
 
     fun loadUrl(url: String)
 
-    fun openWebview(url: String)
+    fun openWebview()
 
 }
