@@ -7,7 +7,10 @@ import io.homeassistant.companion.android.data.HomeAssistantRetrofit
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.data.authentication.AuthenticationRepositoryImpl
 import io.homeassistant.companion.android.data.authentication.AuthenticationService
+import io.homeassistant.companion.android.data.integration.IntegrationRepositoryImpl
+import io.homeassistant.companion.android.data.integration.IntegrationService
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 
 @Module(includes = [DataModule.Declaration::class])
 class DataModule(
@@ -22,6 +25,9 @@ class DataModule(
     fun provideAuthenticationService(homeAssistantRetrofit: HomeAssistantRetrofit) = homeAssistantRetrofit.retrofit.create(AuthenticationService::class.java)
 
     @Provides
+    fun providesIntegrationService(homeAssistantRetrofit: HomeAssistantRetrofit) = homeAssistantRetrofit.retrofit.create(IntegrationService::class.java)
+
+    @Provides
     fun provideLocalStorage() = localStorage
 
 
@@ -30,6 +36,9 @@ class DataModule(
 
         @Binds
         fun bindAuthenticationRepositoryImpl(repository: AuthenticationRepositoryImpl): AuthenticationRepository
+
+        @Binds
+        fun bindIntegrationService(repository: IntegrationRepositoryImpl): IntegrationRepository
 
     }
 

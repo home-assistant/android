@@ -19,4 +19,6 @@ interface AuthenticationRepository {
 
     suspend fun buildAuthenticationUrl(callbackUrl: String): URL
 
+    suspend fun buildBearerToken(): String
+
 }

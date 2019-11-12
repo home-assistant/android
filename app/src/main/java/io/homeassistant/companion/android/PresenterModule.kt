@@ -9,6 +9,9 @@ import io.homeassistant.companion.android.launch.LaunchView
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationPresenter
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationPresenterImpl
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationView
+import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenter
+import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenterImpl
+import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationView
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenter
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenterImpl
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupView
@@ -22,6 +25,7 @@ class PresenterModule {
     private lateinit var launchView: LaunchView
     private lateinit var authenticationView: AuthenticationView
     private lateinit var manualSetupView: ManualSetupView
+    private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
     private lateinit var webView: WebView
 
     constructor(launchView: LaunchView) {
@@ -34,6 +38,10 @@ class PresenterModule {
 
     constructor(manualSetupView: ManualSetupView) {
         this.manualSetupView = manualSetupView
+    }
+
+    constructor(mobileAppIntegrationView: MobileAppIntegrationView) {
+        this.mobileAppIntegrationView = mobileAppIntegrationView
     }
 
     constructor(webView: WebView) {
@@ -50,6 +58,9 @@ class PresenterModule {
     fun provideManualSetupView() = manualSetupView
 
     @Provides
+    fun provideMobileAppIntegrationView() = mobileAppIntegrationView
+
+    @Provides
     fun provideWebView() = webView
 
     @Module
@@ -63,6 +74,9 @@ class PresenterModule {
 
         @Binds
         fun bindManualSetupPresenter(presenter: ManualSetupPresenterImpl): ManualSetupPresenter
+
+        @Binds
+        fun bindMobileAppPresenter(presenter: MobileAppIntegrationPresenterImpl): MobileAppIntegrationPresenter
 
         @Binds
         fun bindWebViewPresenterImpl(presenter: WebViewPresenterImpl): WebViewPresenter

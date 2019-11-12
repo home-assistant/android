@@ -82,6 +82,23 @@ class AuthenticationRepositoryImpl @Inject constructor(
             .toUrl()
     }
 
+    override suspend fun buildBearerToken(): String {
+        val session = retrieveSession()
+
+        if (session != null) {
+            if (session.isExpired()) {
+                return authenticationService.refreshToken(AuthenticationService.GRANT_TYPE_REFRESH, session.refreshToken, AuthenticationService.CLIENT_ID).let {
+                    val refreshSession = Session(it.accessToken, Instant.now().epochSecond + it.expiresIn, session.refreshToken, it.tokenType)
+                    saveSession(refreshSession)
+                    refreshSession.accessToken
+                }
+            }
+            return "Bearer " + session.accessToken
+        } else {
+            throw AuthorizationException()
+        }
+    }
+
     private fun convertSession(session: Session): String {
         return ObjectMapper().writeValueAsString(
             mapOf(
