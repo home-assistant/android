@@ -4,8 +4,7 @@ import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.catchThrowable
+import org.assertj.core.api.Assertions.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import org.threeten.bp.Instant
@@ -95,6 +94,29 @@ object AuthenticationRepositoryImplSpec : Spek({
 
             it("should return the authentication url") {
                 assertThat(authenticationUrl).isEqualTo(URL("https://demo.home-assistant.io/auth/authorize?response_type=code&client_id=https://home-assistant.io/android&redirect_uri=homeassistant://auth-callback"))
+            }
+        }
+
+        describe("build bearer token"){
+            it("should return a valid bearer token"){
+                coEvery { localStorage.getString("url") } returns "https://demo.home-assistant.io/"
+                coEvery { localStorage.getString("access_token") } returns "ABCDEFGH"
+                coEvery { localStorage.getLong("expires_date") } returns 1547605320
+                coEvery { localStorage.getString("refresh_token") } returns "IJKLMNOPQRST"
+                coEvery { localStorage.getString("token_type") } returns "Bearer"
+
+                val token = runBlocking { repository.buildBearerToken() }
+
+                assertThat(token).isEqualTo("Bearer ABCDEFGH")
+            }
+            it("should throw an exception when no valid session"){
+                coEvery { localStorage.getString("url") } returns null
+                coEvery { localStorage.getString("access_token") } returns null
+                coEvery { localStorage.getLong("expires_date") } returns null
+                coEvery { localStorage.getString("refresh_token") } returns null
+                coEvery { localStorage.getString("token_type") } returns null
+
+                assertThatThrownBy { runBlocking { repository.buildBearerToken() } }
             }
         }
 
