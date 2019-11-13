@@ -71,7 +71,15 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
             .commit()
     }
 
-    override fun integrationRegistrationComplete() {
+    override fun onIntegrationRegistrationComplete() {
+        startWebView()
+    }
+
+    override fun onIntegrationRegistrationSkipped() {
+        startWebView()
+    }
+
+    private fun startWebView(){
         startActivity(WebViewActivity.newInstance(this))
         finish()
     }

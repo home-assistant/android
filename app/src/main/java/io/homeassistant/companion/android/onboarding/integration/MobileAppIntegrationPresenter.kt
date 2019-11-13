@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 interface MobileAppIntegrationPresenter {
-    fun onRetry()
+    fun onRegistrationAttempt()
     fun onSkip()
     fun onFinish()
 }

@@ -4,6 +4,10 @@ interface MobileAppIntegrationView {
 
     fun deviceRegistered()
 
-    fun registrationFailed()
+    fun registrationSkipped()
+
+    fun showLoading()
+
+    fun showError()
 
 }

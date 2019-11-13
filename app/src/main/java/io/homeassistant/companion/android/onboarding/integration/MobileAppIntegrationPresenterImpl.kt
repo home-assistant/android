@@ -13,7 +13,9 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onRetry() {
+    override fun onRegistrationAttempt() {
+
+        view.showLoading()
 
         mainScope.launch {
             val success = integrationUseCase.registerDevice(
@@ -31,13 +33,13 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
             if (success) {
                 view.deviceRegistered()
             } else {
-                view.registrationFailed()
+                view.showError()
             }
         }
     }
 
     override fun onSkip() {
-        view.deviceRegistered()
+        view.registrationSkipped()
     }
 
     override fun onFinish() {

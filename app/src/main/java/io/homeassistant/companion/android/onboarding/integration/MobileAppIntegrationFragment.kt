@@ -5,8 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ProgressBar
-import androidx.appcompat.widget.AppCompatTextView
+import android.widget.ViewFlipper
 import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -18,6 +17,9 @@ import javax.inject.Inject
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
     companion object {
+        private const val LOADING_VIEW = 0
+        private const val ERROR_VIEW = 1
+
         fun newInstance(): MobileAppIntegrationFragment {
             return MobileAppIntegrationFragment()
         }
@@ -25,6 +27,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
     @Inject
     lateinit var presenter: MobileAppIntegrationPresenter
+
+    private lateinit var viewFlipper: ViewFlipper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,30 +47,35 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_mobile_app_integration, container, false).apply {
+            viewFlipper = this.findViewById(R.id.view_flipper)
             findViewById<Button>(R.id.skip).setOnClickListener {
                 presenter.onSkip()
             }
             findViewById<Button>(R.id.retry).setOnClickListener {
-                view!!.findViewById<ProgressBar>(R.id.progress).visibility = ProgressBar.VISIBLE
-                presenter.onRetry()
+                presenter.onRegistrationAttempt()
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        presenter.onRetry()
+        presenter.onRegistrationAttempt()
     }
 
     override fun deviceRegistered() {
-        (activity as MobileAppIntegrationListener).integrationRegistrationComplete()
+        (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
     }
 
-    override fun registrationFailed() {
-        view!!.findViewById<AppCompatTextView>(R.id.mobile_app_status)
-            .setText(R.string.error_with_registration)
+    override fun registrationSkipped() {
+        (activity as MobileAppIntegrationListener).onIntegrationRegistrationSkipped()
+    }
 
-        view!!.findViewById<ProgressBar>(R.id.progress).visibility = ProgressBar.INVISIBLE
+    override fun showError() {
+        viewFlipper.displayedChild = ERROR_VIEW
+    }
+
+    override fun showLoading() {
+        viewFlipper.displayedChild = LOADING_VIEW
     }
 
     override fun onDestroy() {
