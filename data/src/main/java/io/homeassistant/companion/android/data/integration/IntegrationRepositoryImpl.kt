@@ -5,11 +5,12 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationRe
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import javax.inject.Inject
+import javax.inject.Named
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
     private val authenticationRepository: AuthenticationRepository,
-    private val localStorage: LocalStorage
+    @Named("integration") private val localStorage: LocalStorage
 ) : IntegrationRepository {
 
     companion object {

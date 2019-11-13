@@ -9,11 +9,12 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.threeten.bp.Instant
 import java.net.URL
 import javax.inject.Inject
+import javax.inject.Named
 
 
 class AuthenticationRepositoryImpl @Inject constructor(
     private val authenticationService: AuthenticationService,
-    private val localStorage: LocalStorage
+    @Named("session") private val localStorage: LocalStorage
 ) : AuthenticationRepository {
 
     companion object {

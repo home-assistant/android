@@ -11,11 +11,13 @@ import io.homeassistant.companion.android.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.data.integration.IntegrationService
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
+import javax.inject.Named
 
 @Module(includes = [DataModule.Declaration::class])
 class DataModule(
     private val url: String,
-    private val localStorage: LocalStorage
+    private val sessionLocalStorage: LocalStorage,
+    private val integrationLocalStorage: LocalStorage
 ) {
 
     @Provides
@@ -28,7 +30,13 @@ class DataModule(
     fun providesIntegrationService(homeAssistantRetrofit: HomeAssistantRetrofit) = homeAssistantRetrofit.retrofit.create(IntegrationService::class.java)
 
     @Provides
-    fun provideLocalStorage() = localStorage
+    @Named("session")
+    fun provideSessionLocalStorage() = sessionLocalStorage
+
+    @Provides
+    @Named("integration")
+    fun provideIntegrationLocalStorage() = integrationLocalStorage
+
 
 
     @Module
