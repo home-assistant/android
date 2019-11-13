@@ -15,7 +15,7 @@ interface IntegrationUseCase {
         osVersion: String,
         supportsEncryption: Boolean,
         appData: Dictionary<String, Objects>?
-    ): Boolean
+    )
 
     suspend fun isRegistered(): Boolean
 

@@ -17,8 +17,8 @@ class IntegrationUseCaseImpl @Inject constructor(
         osVersion: String,
         supportsEncryption: Boolean,
         appData: Dictionary<String, Objects>?
-    ): Boolean {
-        return integrationRepository.registerDevice(
+    ) {
+        integrationRepository.registerDevice(
             appId,
             appName,
             appVersion,

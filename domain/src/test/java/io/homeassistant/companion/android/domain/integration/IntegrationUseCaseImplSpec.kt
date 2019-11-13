@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.domain.integration
 
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -32,7 +30,7 @@ object IntegrationUseCaseImplSpec : Spek({
                         any(),
                         any()
                     )
-                } returns true
+                } just Runs
 
                 runBlocking {
                     useCase.registerDevice(

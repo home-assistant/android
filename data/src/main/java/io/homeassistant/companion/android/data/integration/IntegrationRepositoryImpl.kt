@@ -30,37 +30,28 @@ class IntegrationRepositoryImpl @Inject constructor(
         osVersion: String,
         supportsEncryption: Boolean,
         appData: Dictionary<String, Objects>?
-    ): Boolean {
-        var success = false
-        try {
-            val response = integrationService.registerDevice(
-                authenticationRepository.buildBearerToken(),
-                RegisterDeviceRequest(
-                    appId,
-                    appName,
-                    appVersion,
-                    deviceName,
-                    manufacturer,
-                    model,
-                    osName,
-                    osVersion,
-                    supportsEncryption,
-                    appData
-                )
+    ) {
+        val response = integrationService.registerDevice(
+            authenticationRepository.buildBearerToken(),
+            RegisterDeviceRequest(
+                appId,
+                appName,
+                appVersion,
+                deviceName,
+                manufacturer,
+                model,
+                osName,
+                osVersion,
+                supportsEncryption,
+                appData
             )
+        )
 
-            localStorage.putString(PREF_CLOUD_URL, response.cloudhookUrl)
-            localStorage.putString(PREF_REMOTE_UI_URL, response.remoteUiUrl)
-            localStorage.putString(PREF_SECRET, response.secret)
-            localStorage.putString(PREF_WEBHOOK_ID, response.webhookId)
+        localStorage.putString(PREF_CLOUD_URL, response.cloudhookUrl)
+        localStorage.putString(PREF_REMOTE_UI_URL, response.remoteUiUrl)
+        localStorage.putString(PREF_SECRET, response.secret)
+        localStorage.putString(PREF_WEBHOOK_ID, response.webhookId)
 
-            success = true
-        } catch (exception: Exception) {
-            // TODO: Change this to our logger?
-            System.err.println("Issue registering device!")
-            exception.printStackTrace()
-        }
-        return success
     }
 
     override suspend fun isRegistered(): Boolean {
