@@ -1,13 +1,13 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.mockk.coVerifyAll
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.lang.Exception
 
 
 object MobileAppIntegrationPresenterImplSpec : Spek({
@@ -36,14 +36,28 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
         }
 
         describe("on click retry") {
-            beforeEachTest {
+
+            it("should try to register and succeed") {
+                coEvery {integrationUseCase.registerDevice(any())} just runs
+
                 presenter.onRegistrationAttempt()
+
+                coVerifyAll {
+                    view.showLoading()
+                    integrationUseCase.registerDevice(any())
+                    view.deviceRegistered()
+                }
             }
 
-            it("should try to register") {
+            it("should succeed and fail"){
+                coEvery {integrationUseCase.registerDevice(any())} throws Exception()
+                presenter.onRegistrationAttempt()
                 coVerifyAll {
+                    view.showLoading()
                     integrationUseCase.registerDevice(any())
+                    view.showError()
                 }
+                coVerify(inverse = true) { view.deviceRegistered() }
             }
         }
     }
