@@ -42,18 +42,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
 
             it("should try to register") {
                 coVerifyAll {
-                    integrationUseCase.registerDevice(
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any()
-                    )
+                    integrationUseCase.registerDevice(any())
                 }
             }
         }

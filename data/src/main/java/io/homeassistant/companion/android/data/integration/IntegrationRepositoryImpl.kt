@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.data.integration
 
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import java.util.*
 import javax.inject.Inject
@@ -19,31 +20,20 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_WEBHOOK_ID = "webhook_id"
     }
 
-    override suspend fun registerDevice(
-        appId: String,
-        appName: String,
-        appVersion: String,
-        deviceName: String,
-        manufacturer: String,
-        model: String,
-        osName: String,
-        osVersion: String,
-        supportsEncryption: Boolean,
-        appData: Dictionary<String, Objects>?
-    ) {
+    override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
         val response = integrationService.registerDevice(
             authenticationRepository.buildBearerToken(),
             RegisterDeviceRequest(
-                appId,
-                appName,
-                appVersion,
-                deviceName,
-                manufacturer,
-                model,
-                osName,
-                osVersion,
-                supportsEncryption,
-                appData
+                deviceRegistration.appId,
+                deviceRegistration.appName,
+                deviceRegistration.appVersion,
+                deviceRegistration.deviceName,
+                deviceRegistration.manufacturer,
+                deviceRegistration.model,
+                deviceRegistration.osName,
+                deviceRegistration.osVersion,
+                deviceRegistration.supportsEncryption,
+                deviceRegistration.appData
             )
         )
 

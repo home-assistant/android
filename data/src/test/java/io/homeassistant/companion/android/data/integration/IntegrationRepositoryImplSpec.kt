@@ -2,7 +2,11 @@ package io.homeassistant.companion.android.data.integration
 
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
-import io.mockk.*
+import io.homeassistant.companion.android.domain.integration.DeviceRegistration
+import io.mockk.coEvery
+import io.mockk.coVerifyAll
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.spekframework.spek2.Spek
@@ -12,6 +16,18 @@ object IntegrationRepositoryImplSpec : Spek({
 
     describe("a repository") {
 
+        val deviceRegistration = DeviceRegistration(
+            "appId",
+            "appName",
+            "appVersion",
+            "deviceName",
+            "manufacturer",
+            "model",
+            "osName",
+            "osVersion",
+            false,
+            null
+        )
         val localStorage by memoized { mockk<LocalStorage>(relaxUnitFun = true) }
         val integrationService by memoized { mockk<IntegrationService>(relaxUnitFun = true) }
         val authenticationRepository by memoized { mockk<AuthenticationRepository>(relaxUnitFun = true) }
@@ -38,18 +54,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 coEvery { authenticationRepository.buildBearerToken() } returns "ABC123"
 
                 runBlocking {
-                    repository.registerDevice(
-                        "appId",
-                        "appName",
-                        "appVersion",
-                        "deviceName",
-                        "manufacturer",
-                        "model",
-                        "osName",
-                        "osVersion",
-                        false,
-                        null
-                    )
+                    repository.registerDevice(deviceRegistration)
                 }
             }
 
