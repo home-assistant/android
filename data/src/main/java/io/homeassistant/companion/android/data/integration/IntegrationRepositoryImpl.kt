@@ -4,7 +4,6 @@ import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
-import java.util.*
 import javax.inject.Inject
 
 class IntegrationRepositoryImpl @Inject constructor(
@@ -21,21 +20,11 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
-        val response = integrationService.registerDevice(
-            authenticationRepository.buildBearerToken(),
-            RegisterDeviceRequest(
-                deviceRegistration.appId,
-                deviceRegistration.appName,
-                deviceRegistration.appVersion,
-                deviceRegistration.deviceName,
-                deviceRegistration.manufacturer,
-                deviceRegistration.model,
-                deviceRegistration.osName,
-                deviceRegistration.osVersion,
-                deviceRegistration.supportsEncryption,
-                deviceRegistration.appData
+        val response =
+            integrationService.registerDevice(
+                authenticationRepository.buildBearerToken(),
+                createRegisterDeviceRequest(deviceRegistration)
             )
-        )
 
         localStorage.putString(PREF_CLOUD_URL, response.cloudhookUrl)
         localStorage.putString(PREF_REMOTE_UI_URL, response.remoteUiUrl)
@@ -46,5 +35,20 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isRegistered(): Boolean {
         return localStorage.getString(PREF_WEBHOOK_ID) != null
+    }
+
+    private fun createRegisterDeviceRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
+        return RegisterDeviceRequest(
+            deviceRegistration.appId,
+            deviceRegistration.appName,
+            deviceRegistration.appVersion,
+            deviceRegistration.deviceName,
+            deviceRegistration.manufacturer,
+            deviceRegistration.model,
+            deviceRegistration.osName,
+            deviceRegistration.osVersion,
+            deviceRegistration.supportsEncryption,
+            deviceRegistration.appData
+        )
     }
 }
