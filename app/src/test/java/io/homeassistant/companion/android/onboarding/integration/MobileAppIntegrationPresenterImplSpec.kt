@@ -31,7 +31,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             }
 
             it("should continue") {
-                coVerifyAll { view.deviceRegistered() }
+                coVerifyAll { view.registrationSkipped() }
             }
         }
 

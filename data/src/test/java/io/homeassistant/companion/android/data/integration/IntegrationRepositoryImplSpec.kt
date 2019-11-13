@@ -4,6 +4,7 @@ import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -63,12 +64,17 @@ object IntegrationRepositoryImplSpec : Spek({
         }
 
         describe("isRegistered") {
-            beforeEachTest {
+            it("should return true when webhook has a value") {
                 coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
-                runBlocking { repository.isRegistered() }
+                var isRegistered = false
+                runBlocking { isRegistered = repository.isRegistered() }
+                Assertions.assertThat(isRegistered).isTrue()
             }
-            it("should pull the webhook id") {
-                coVerify { localStorage.getString("webhook_id") }
+            it("should return false when webhook has no value") {
+                coEvery { localStorage.getString("webhook_id") } returns null
+                var isRegistered = true
+                runBlocking { isRegistered = repository.isRegistered() }
+                Assertions.assertThat(isRegistered).isFalse()
             }
         }
     }
