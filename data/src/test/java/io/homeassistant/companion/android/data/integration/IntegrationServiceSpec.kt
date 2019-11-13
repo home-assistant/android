@@ -9,18 +9,6 @@ import org.spekframework.spek2.style.specification.describe
 
 
 object IntegrationServiceSpec : Spek({
-    val registrationRequest = RegisterDeviceRequest(
-        "appId",
-        "appName",
-        "appVersion",
-        "deviceName",
-        "manufacturer",
-        "model",
-        "osName",
-        "osVersion",
-        false,
-        null
-    )
     describe("an integration service") {
         val mockService by memoized { HomeAssistantMockService(IntegrationService::class.java) }
 
@@ -28,6 +16,18 @@ object IntegrationServiceSpec : Spek({
         lateinit var registrationResponse: RegisterDeviceResponse
 
         beforeEachTest {
+            val registrationRequest = RegisterDeviceRequest(
+                "appId",
+                "appName",
+                "appVersion",
+                "deviceName",
+                "manufacturer",
+                "model",
+                "osName",
+                "osVersion",
+                false,
+                null
+            )
             mockService.enqueueResponse(200, "integration/register.json")
             registrationResponse = runBlocking {
                 mockService.get().registerDevice("123", registrationRequest)

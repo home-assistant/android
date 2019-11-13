@@ -7,18 +7,6 @@ import org.spekframework.spek2.style.specification.describe
 
 object IntegrationUseCaseImplSpec : Spek({
     describe("integration use case") {
-        val deviceRegistration = DeviceRegistration(
-            "appId",
-            "appName",
-            "appVersion",
-            "deviceName",
-            "manufacturer",
-            "model",
-            "osName",
-            "osVersion",
-            false,
-            null
-        )
 
         val integrationRepository by memoized {
             mockk<IntegrationRepository>(
@@ -29,6 +17,7 @@ object IntegrationUseCaseImplSpec : Spek({
         val useCase by memoized { IntegrationUseCaseImpl(integrationRepository) }
 
         describe("registerDevice") {
+            val deviceRegistration = mockk<DeviceRegistration>()
             beforeEachTest {
                 coEvery {
                     integrationRepository.registerDevice(any())

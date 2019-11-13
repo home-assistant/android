@@ -16,18 +16,6 @@ object IntegrationRepositoryImplSpec : Spek({
 
     describe("a repository") {
 
-        val deviceRegistration = DeviceRegistration(
-            "appId",
-            "appName",
-            "appVersion",
-            "deviceName",
-            "manufacturer",
-            "model",
-            "osName",
-            "osVersion",
-            false,
-            null
-        )
         val localStorage by memoized { mockk<LocalStorage>(relaxUnitFun = true) }
         val integrationService by memoized { mockk<IntegrationService>(relaxUnitFun = true) }
         val authenticationRepository by memoized { mockk<AuthenticationRepository>(relaxUnitFun = true) }
@@ -42,8 +30,20 @@ object IntegrationRepositoryImplSpec : Spek({
 
         describe("registerDevice") {
             beforeEachTest {
+                val deviceRegistration = DeviceRegistration(
+                    "appId",
+                    "appName",
+                    "appVersion",
+                    "deviceName",
+                    "manufacturer",
+                    "model",
+                    "osName",
+                    "osVersion",
+                    false,
+                    null
+                )
                 coEvery {
-                    integrationService.registerDevice(any(), any())
+                    integrationService.registerDevice("ABC123", any())
                 } returns mockk {
                     every { cloudhookUrl } returns "https://home-assistant.io/1/"
                     every { remoteUiUrl } returns "https://home-assistant.io/2/"
