@@ -29,26 +29,24 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
-        authenticationService.getToken(AuthenticationService.GRANT_TYPE_CODE, authorizationCode, AuthenticationService.CLIENT_ID).let {
-            saveSession(Session(it.accessToken, Instant.now().epochSecond + it.expiresIn, it.refreshToken!!, it.tokenType))
+        authenticationService.getToken(
+            AuthenticationService.GRANT_TYPE_CODE,
+            authorizationCode,
+            AuthenticationService.CLIENT_ID
+        ).let {
+            saveSession(
+                Session(
+                    it.accessToken,
+                    Instant.now().epochSecond + it.expiresIn,
+                    it.refreshToken!!,
+                    it.tokenType
+                )
+            )
         }
     }
 
     override suspend fun retrieveExternalAuthentication(): String {
-        val session = retrieveSession()
-
-        if (session != null) {
-            if (session.isExpired()) {
-                return authenticationService.refreshToken(AuthenticationService.GRANT_TYPE_REFRESH, session.refreshToken, AuthenticationService.CLIENT_ID).let {
-                    val refreshSession = Session(it.accessToken, Instant.now().epochSecond + it.expiresIn, session.refreshToken, it.tokenType)
-                    saveSession(refreshSession)
-                    convertSession(refreshSession)
-                }
-            }
-            return convertSession(session)
-        } else {
-            throw AuthorizationException()
-        }
+        return convertSession(ensureValidSession())
     }
 
     override suspend fun revokeSession() {
@@ -83,20 +81,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun buildBearerToken(): String {
-        val session = retrieveSession()
-
-        if (session != null) {
-            if (session.isExpired()) {
-                return authenticationService.refreshToken(AuthenticationService.GRANT_TYPE_REFRESH, session.refreshToken, AuthenticationService.CLIENT_ID).let {
-                    val refreshSession = Session(it.accessToken, Instant.now().epochSecond + it.expiresIn, session.refreshToken, it.tokenType)
-                    saveSession(refreshSession)
-                    refreshSession.accessToken
-                }
-            }
-            return "Bearer " + session.accessToken
-        } else {
-            throw AuthorizationException()
-        }
+        return "Bearer " + ensureValidSession().accessToken
     }
 
     private fun convertSession(session: Session): String {
@@ -119,6 +104,29 @@ class AuthenticationRepositoryImpl @Inject constructor(
         } else {
             null
         }
+    }
+
+    private suspend fun ensureValidSession(): Session {
+        val session = retrieveSession() ?: throw AuthorizationException()
+
+        if (session.isExpired()) {
+            return authenticationService.refreshToken(
+                AuthenticationService.GRANT_TYPE_REFRESH,
+                session.refreshToken,
+                AuthenticationService.CLIENT_ID
+            ).let {
+                val refreshSession = Session(
+                    it.accessToken,
+                    Instant.now().epochSecond + it.expiresIn,
+                    session.refreshToken,
+                    it.tokenType
+                )
+                saveSession(refreshSession)
+                refreshSession
+            }
+        }
+
+        return session
     }
 
     private suspend fun saveSession(session: Session?) {
