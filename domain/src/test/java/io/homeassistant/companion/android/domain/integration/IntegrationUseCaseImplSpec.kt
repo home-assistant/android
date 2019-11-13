@@ -7,6 +7,19 @@ import org.spekframework.spek2.style.specification.describe
 
 object IntegrationUseCaseImplSpec : Spek({
     describe("integration use case") {
+        val deviceRegistration = DeviceRegistration(
+            "appId",
+            "appName",
+            "appVersion",
+            "deviceName",
+            "manufacturer",
+            "model",
+            "osName",
+            "osVersion",
+            false,
+            null
+        )
+
         val integrationRepository by memoized {
             mockk<IntegrationRepository>(
                 relaxed = true,
@@ -18,50 +31,17 @@ object IntegrationUseCaseImplSpec : Spek({
         describe("registerDevice") {
             beforeEachTest {
                 coEvery {
-                    integrationRepository.registerDevice(
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any()
-                    )
+                    integrationRepository.registerDevice(any())
                 } just Runs
 
                 runBlocking {
-                    useCase.registerDevice(
-                        "appId",
-                        "appName",
-                        "appVersion",
-                        "deviceName",
-                        "manufacturer",
-                        "model",
-                        "osName",
-                        "osVersion",
-                        false,
-                        null
-                    )
+                    useCase.registerDevice(deviceRegistration)
                 }
             }
 
             it("should call repository") {
                 coVerify {
-                    integrationRepository.registerDevice(
-                        "appId",
-                        "appName",
-                        "appVersion",
-                        "deviceName",
-                        "manufacturer",
-                        "model",
-                        "osName",
-                        "osVersion",
-                        false,
-                        null
-                    )
+                    integrationRepository.registerDevice(deviceRegistration)
                 }
             }
         }
