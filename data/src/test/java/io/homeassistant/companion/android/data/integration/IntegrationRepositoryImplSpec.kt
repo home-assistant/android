@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import kotlin.properties.Delegates
 
 object IntegrationRepositoryImplSpec : Spek({
 
@@ -68,18 +69,33 @@ object IntegrationRepositoryImplSpec : Spek({
             }
         }
 
-        describe("isRegistered") {
-            it("should return true when webhook has a value") {
+        describe("is registered") {
+            beforeEachTest {
                 coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
-                var isRegistered = false
-                runBlocking { isRegistered = repository.isRegistered() }
-                Assertions.assertThat(isRegistered).isTrue()
             }
-            it("should return false when webhook has no value") {
+            describe("isRegistered") {
+                var isRegistered by Delegates.notNull<Boolean>()
+                beforeEachTest {
+                    runBlocking { isRegistered = repository.isRegistered() }
+                }
+                it("should return true when webhook has a value") {
+                    Assertions.assertThat(isRegistered).isTrue()
+                }
+            }
+        }
+        describe("is not registered"){
+            beforeEachTest {
                 coEvery { localStorage.getString("webhook_id") } returns null
-                var isRegistered = true
-                runBlocking { isRegistered = repository.isRegistered() }
-                Assertions.assertThat(isRegistered).isFalse()
+            }
+            describe("isRegistered"){
+                var isRegistered by Delegates.notNull<Boolean>()
+                beforeEachTest {
+                    runBlocking { isRegistered = repository.isRegistered() }
+                }
+                it("should return false when webhook has no value") {
+                    Assertions.assertThat(isRegistered).isFalse()
+                }
+
             }
         }
     }

@@ -7,7 +7,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.lang.Exception
 
 
 object MobileAppIntegrationPresenterImplSpec : Spek({
@@ -25,7 +24,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
         val view by memoized { mockk<MobileAppIntegrationView>(relaxUnitFun = true) }
         val presenter by memoized { MobileAppIntegrationPresenterImpl(view, integrationUseCase) }
 
-        describe("on click skip") {
+        describe("on skip") {
             beforeEachTest {
                 presenter.onSkip()
             }
@@ -35,31 +34,41 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             }
         }
 
-        describe("on click retry") {
-
-            it("should try to register and succeed") {
-                coEvery {integrationUseCase.registerDevice(any())} just runs
-
-                presenter.onRegistrationAttempt()
-
-                coVerifyAll {
-                    view.showLoading()
-                    integrationUseCase.registerDevice(any())
-                    view.deviceRegistered()
+        describe("on registration success") {
+            beforeEachTest {
+                coEvery { integrationUseCase.registerDevice(any()) } just runs
+            }
+            describe("register") {
+                beforeEachTest {
+                    presenter.onRegistrationAttempt()
+                }
+                it("should register successfully") {
+                    coVerifyAll {
+                        view.showLoading()
+                        integrationUseCase.registerDevice(any())
+                        view.deviceRegistered()
+                    }
                 }
             }
+        }
 
-            it("should succeed and fail"){
-                coEvery {integrationUseCase.registerDevice(any())} throws Exception()
-                presenter.onRegistrationAttempt()
-                coVerifyAll {
-                    view.showLoading()
-                    integrationUseCase.registerDevice(any())
-                    view.showError()
+        describe("on registration failed") {
+            beforeEachTest {
+                coEvery { integrationUseCase.registerDevice(any()) } throws Exception()
+            }
+            describe("register"){
+                beforeEachTest {
+                    presenter.onRegistrationAttempt()
                 }
-                coVerify(inverse = true) { view.deviceRegistered() }
+                it("should fail") {
+                    coVerifyAll {
+                        view.showLoading()
+                        integrationUseCase.registerDevice(any())
+                        view.showError()
+                    }
+                    coVerify(inverse = true) { view.deviceRegistered() }
+                }
             }
         }
     }
-
 })

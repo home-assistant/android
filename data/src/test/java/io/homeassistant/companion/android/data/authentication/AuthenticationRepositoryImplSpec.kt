@@ -4,7 +4,8 @@ import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.catchThrowable
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import org.threeten.bp.Instant
@@ -21,7 +22,12 @@ object AuthenticationRepositoryImplSpec : Spek({
     describe("a repository") {
         val localStorage by memoized { mockk<LocalStorage>(relaxUnitFun = true) }
         val authenticationService by memoized { mockk<AuthenticationService>(relaxUnitFun = true) }
-        val repository by memoized { AuthenticationRepositoryImpl(authenticationService, localStorage) }
+        val repository by memoized {
+            AuthenticationRepositoryImpl(
+                authenticationService,
+                localStorage
+            )
+        }
 
         describe("saveUrl") {
             beforeEachTest {
@@ -36,7 +42,11 @@ object AuthenticationRepositoryImplSpec : Spek({
         describe("get token on success") {
             beforeEachTest {
                 coEvery {
-                    authenticationService.getToken("authorization_code", "123456", "https://home-assistant.io/android")
+                    authenticationService.getToken(
+                        "authorization_code",
+                        "123456",
+                        "https://home-assistant.io/android"
+                    )
                 } returns mockk {
                     every { accessToken } returns "ABCDEFGH"
                     every { expiresIn } returns 1800
@@ -89,34 +99,12 @@ object AuthenticationRepositoryImplSpec : Spek({
             lateinit var authenticationUrl: URL
             beforeEachTest {
                 coEvery { localStorage.getString("url") } returns "https://demo.home-assistant.io/"
-                authenticationUrl = runBlocking { repository.buildAuthenticationUrl("homeassistant://auth-callback") }
+                authenticationUrl =
+                    runBlocking { repository.buildAuthenticationUrl("homeassistant://auth-callback") }
             }
 
             it("should return the authentication url") {
                 assertThat(authenticationUrl).isEqualTo(URL("https://demo.home-assistant.io/auth/authorize?response_type=code&client_id=https://home-assistant.io/android&redirect_uri=homeassistant://auth-callback"))
-            }
-        }
-
-        describe("build bearer token"){
-            it("should return a valid bearer token"){
-                coEvery { localStorage.getString("url") } returns "https://demo.home-assistant.io/"
-                coEvery { localStorage.getString("access_token") } returns "ABCDEFGH"
-                coEvery { localStorage.getLong("expires_date") } returns 1547605320
-                coEvery { localStorage.getString("refresh_token") } returns "IJKLMNOPQRST"
-                coEvery { localStorage.getString("token_type") } returns "Bearer"
-
-                val token = runBlocking { repository.buildBearerToken() }
-
-                assertThat(token).isEqualTo("Bearer ABCDEFGH")
-            }
-            it("should throw an exception when no valid session"){
-                coEvery { localStorage.getString("url") } returns null
-                coEvery { localStorage.getString("access_token") } returns null
-                coEvery { localStorage.getLong("expires_date") } returns null
-                coEvery { localStorage.getString("refresh_token") } returns null
-                coEvery { localStorage.getString("token_type") } returns null
-
-                assertThatThrownBy { runBlocking { repository.buildBearerToken() } }
             }
         }
 
@@ -190,6 +178,16 @@ object AuthenticationRepositoryImplSpec : Spek({
                     }
                 }
             }
+
+            describe("build bearer token") {
+                lateinit var token: String
+                beforeEachTest {
+                    token = runBlocking { repository.buildBearerToken() }
+                }
+                it("should return a valid bearer token") {
+                    assertThat(token).isEqualTo("Bearer ABCDEFGH")
+                }
+            }
         }
 
         describe("connected user with expired access token") {
@@ -199,21 +197,24 @@ object AuthenticationRepositoryImplSpec : Spek({
                 coEvery { localStorage.getLong("expires_date") } returns Instant.now().epochSecond - 1800
                 coEvery { localStorage.getString("refresh_token") } returns "IJKLMNOPQRST"
                 coEvery { localStorage.getString("token_type") } returns "Bearer"
+                coEvery {
+                    authenticationService.refreshToken(
+                        "refresh_token",
+                        "IJKLMNOPQRST",
+                        "https://home-assistant.io/android"
+                    )
+                } returns mockk {
+                    every { accessToken } returns "HGFEDCBA"
+                    every { expiresIn } returns 1800
+                    every { refreshToken } returns null
+                    every { tokenType } returns "Bearer"
+                }
             }
 
             describe("retrieve external authentication") {
                 lateinit var externalAuth: String
                 beforeEachTest {
                     externalAuth = runBlocking {
-                        coEvery {
-                            authenticationService.refreshToken("refresh_token", "IJKLMNOPQRST", "https://home-assistant.io/android")
-                        } returns mockk {
-                            every { accessToken } returns "HGFEDCBA"
-                            every { expiresIn } returns 1800
-                            every { refreshToken } returns null
-                            every { tokenType } returns "Bearer"
-                        }
-
                         repository.retrieveExternalAuthentication()
                     }
                 }
@@ -229,6 +230,26 @@ object AuthenticationRepositoryImplSpec : Spek({
 
                 it("should serialize the refresh external authentication") {
                     assertThat(externalAuth).isEqualTo("{\"access_token\":\"HGFEDCBA\",\"expires_in\":1800}")
+                }
+            }
+
+            describe("build bearer token") {
+                lateinit var token: String
+                beforeEachTest {
+                    token = runBlocking { repository.buildBearerToken() }
+                }
+                it("should refresh the token") {
+                    coVerify {
+                        authenticationService.refreshToken(
+                            "refresh_token",
+                            "IJKLMNOPQRST",
+                            "https://home-assistant.io/android"
+                        )
+                    }
+                }
+
+                it("should return a valid bearer token") {
+                    assertThat(token).isEqualTo("Bearer HGFEDCBA")
                 }
             }
         }
@@ -293,6 +314,20 @@ object AuthenticationRepositoryImplSpec : Spek({
                     }
                 }
 
+                it("should throw an exception") {
+                    assertThat(thrown).isInstanceOf(AuthorizationException::class.java)
+                }
+            }
+
+            describe("build bearer token") {
+                lateinit var thrown: Throwable
+                beforeEachTest {
+                    thrown = catchThrowable {
+                        runBlocking {
+                            repository.buildBearerToken()
+                        }
+                    }
+                }
                 it("should throw an exception") {
                     assertThat(thrown).isInstanceOf(AuthorizationException::class.java)
                 }
