@@ -1,5 +1,8 @@
 package io.homeassistant.companion.android.onboarding.integration
 
+import android.os.Build
+import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
@@ -35,8 +38,20 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
         }
 
         describe("on registration success") {
+            val deviceRegistration = DeviceRegistration(
+                BuildConfig.APPLICATION_ID,
+                "Home Assistant",
+                "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                "TBD",
+                Build.MANUFACTURER ?: "UNKNOWN",
+                Build.MODEL ?: "UNKNOWN",
+                "Android",
+                Build.VERSION.SDK_INT.toString(),
+                false,
+                null
+            )
             beforeEachTest {
-                coEvery { integrationUseCase.registerDevice(any()) } just runs
+                coEvery { integrationUseCase.registerDevice(deviceRegistration) } just runs
             }
             describe("register") {
                 beforeEachTest {
@@ -45,7 +60,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
                 it("should register successfully") {
                     coVerifyAll {
                         view.showLoading()
-                        integrationUseCase.registerDevice(any())
+                        integrationUseCase.registerDevice(deviceRegistration)
                         view.deviceRegistered()
                     }
                 }

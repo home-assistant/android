@@ -43,8 +43,20 @@ object IntegrationRepositoryImplSpec : Spek({
                     false,
                     null
                 )
+                val registerDeviceRequest = RegisterDeviceRequest(
+                    deviceRegistration.appId,
+                    deviceRegistration.appName,
+                    deviceRegistration.appVersion,
+                    deviceRegistration.deviceName,
+                    deviceRegistration.manufacturer,
+                    deviceRegistration.model,
+                    deviceRegistration.osName,
+                    deviceRegistration.osVersion,
+                    deviceRegistration.supportsEncryption,
+                    deviceRegistration.appData
+                )
                 coEvery {
-                    integrationService.registerDevice("ABC123", any())
+                    integrationService.registerDevice("ABC123", registerDeviceRequest)
                 } returns mockk {
                     every { cloudhookUrl } returns "https://home-assistant.io/1/"
                     every { remoteUiUrl } returns "https://home-assistant.io/2/"
@@ -83,11 +95,11 @@ object IntegrationRepositoryImplSpec : Spek({
                 }
             }
         }
-        describe("is not registered"){
+        describe("is not registered") {
             beforeEachTest {
                 coEvery { localStorage.getString("webhook_id") } returns null
             }
-            describe("isRegistered"){
+            describe("isRegistered") {
                 var isRegistered by Delegates.notNull<Boolean>()
                 beforeEachTest {
                     runBlocking { isRegistered = repository.isRegistered() }
