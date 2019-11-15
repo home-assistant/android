@@ -9,12 +9,14 @@ import io.homeassistant.companion.android.onboarding.authentication.Authenticati
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryListener
+import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
+import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationListener
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 
-class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener, AuthenticationListener {
+class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener, AuthenticationListener, MobileAppIntegrationListener {
 
     companion object {
         private const val TAG = "OnboardingActivity"
@@ -63,6 +65,21 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     }
 
     override fun onAuthenticationSuccess() {
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, MobileAppIntegrationFragment.newInstance())
+            .commit()
+    }
+
+    override fun onIntegrationRegistrationComplete() {
+        startWebView()
+    }
+
+    override fun onIntegrationRegistrationSkipped() {
+        startWebView()
+    }
+
+    private fun startWebView(){
         startActivity(WebViewActivity.newInstance(this))
         finish()
     }

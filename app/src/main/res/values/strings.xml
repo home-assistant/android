@@ -7,4 +7,11 @@
     <string name="manual_setup">enter address manually</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="input_url_hint">URL</string>
+    <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
+    <string name="checking_with_home_assistant">Checking with Home Assistant</string>
+    <string name="skip">Skip</string>
+    <string name="retry">Retry</string>
+    <string name="attempting_registration">Attempting to register application…</string>
+    <string name="unable_to_register">Unable to Register Application</string>
+    <string name="error_with_registration">Please check to ensure you have the mobile_app \nintegration enabled on your home assistant instance.</string>
 </resources>
