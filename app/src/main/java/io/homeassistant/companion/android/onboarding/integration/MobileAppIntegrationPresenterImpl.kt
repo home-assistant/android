@@ -28,7 +28,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
                 BuildConfig.APPLICATION_ID,
                 "Home Assistant",
                 "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                "TBD",
+                Build.MODEL ?: "UNKNOWN",
                 Build.MANUFACTURER ?: "UNKNOWN",
                 Build.MODEL ?: "UNKNOWN",
                 "Android",
