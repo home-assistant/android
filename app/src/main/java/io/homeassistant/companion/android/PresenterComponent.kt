@@ -4,6 +4,7 @@ import dagger.Component
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
+import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.webview.WebViewActivity
 
@@ -15,6 +16,8 @@ interface PresenterComponent {
     fun inject(fragment: AuthenticationFragment)
 
     fun inject(fragment: ManualSetupFragment)
+
+    fun inject(fragment: MobileAppIntegrationFragment)
 
     fun inject(activity: WebViewActivity)
 
