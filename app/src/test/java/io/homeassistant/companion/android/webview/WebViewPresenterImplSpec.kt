@@ -4,7 +4,6 @@ import android.net.Uri
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.spekframework.spek2.Spek
@@ -43,7 +42,7 @@ object WebViewPresenterImplSpec : Spek({
             }
         }
 
-        describe("on get external auth") {
+        describe("on get external auth on success") {
             beforeEachTest {
                 coEvery { authenticationUseCase.retrieveExternalAuthentication() } returns "{\"access_token\":\"ABCDEFGH\",\"expires_in\":1800}"
                 presenter.onGetExternalAuth("externalAuthSetToken")
@@ -51,6 +50,19 @@ object WebViewPresenterImplSpec : Spek({
 
             it("should set external auth") {
                 verify { view.setExternalAuth("externalAuthSetToken", "{\"access_token\":\"ABCDEFGH\",\"expires_in\":1800}") }
+            }
+        }
+
+        describe("on get external auth on error") {
+            beforeEachTest {
+                coEvery { authenticationUseCase.retrieveExternalAuthentication() } throws Exception()
+                presenter.onGetExternalAuth("externalAuthSetToken")
+            }
+
+            it("should not crash") {
+                coVerify {
+                    view wasNot Called
+                }
             }
         }
     }
