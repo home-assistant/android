@@ -49,7 +49,7 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         (activity as ManualSetupListener).onSelectUrl()
     }
 
-    override fun onErrorUrlParse(text: String?){
+    override fun displayUrlError(text: String?){
         view?.findViewById<TextInputLayout>(R.id.url_text_layout)?.error = text
     }
 
