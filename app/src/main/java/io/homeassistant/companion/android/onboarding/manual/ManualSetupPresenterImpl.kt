@@ -24,6 +24,10 @@ class ManualSetupPresenterImpl @Inject constructor(
             url = URL(urlString)
         } catch (e: MalformedURLException) {
             Log.e(TAG, "Unable to parse url", e)
+            if(e.message != null){
+                view.onErrorUrlParse(e.message)
+            }
+
             return
         }
 
