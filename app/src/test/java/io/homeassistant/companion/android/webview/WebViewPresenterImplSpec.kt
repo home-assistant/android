@@ -49,7 +49,7 @@ object WebViewPresenterImplSpec : Spek({
             }
 
             it("should set external auth") {
-                verify { view.setExternalAuth("externalAuthSetToken", "{\"access_token\":\"ABCDEFGH\",\"expires_in\":1800}") }
+                verify { view.setExternalAuth("externalAuthSetToken(true, {\"access_token\":\"ABCDEFGH\",\"expires_in\":1800})") }
             }
         }
 
@@ -63,6 +63,28 @@ object WebViewPresenterImplSpec : Spek({
                 coVerify {
                     view wasNot Called
                 }
+            }
+        }
+
+        describe("on revoke external auth on success") {
+            beforeEachTest {
+                coEvery { authenticationUseCase.revokeSession() } just runs
+                presenter.onRevokeExternalAuth("externalAuthRevokeToken")
+            }
+
+            it("should set external auth") {
+                verify { view.setExternalAuth("externalAuthRevokeToken(true)") }
+            }
+        }
+
+        describe("on revoke external auth on error") {
+            beforeEachTest {
+                coEvery { authenticationUseCase.revokeSession() } throws Exception()
+                presenter.onRevokeExternalAuth("externalAuthRevokeToken")
+            }
+
+            it("should set external auth") {
+                verify { view.setExternalAuth("externalAuthRevokeToken(false)") }
             }
         }
     }

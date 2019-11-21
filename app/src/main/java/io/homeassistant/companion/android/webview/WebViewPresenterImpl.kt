@@ -35,9 +35,21 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onGetExternalAuth(callback: String) {
         mainScope.launch {
             try {
-                view.setExternalAuth(callback, authenticationUseCase.retrieveExternalAuthentication())
+                view.setExternalAuth("$callback(true, ${authenticationUseCase.retrieveExternalAuthentication()})")
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
+            }
+        }
+    }
+
+    override fun onRevokeExternalAuth(callback: String) {
+        mainScope.launch {
+            try {
+                authenticationUseCase.revokeSession()
+                view.setExternalAuth("$callback(true)")
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to revoke session", e)
+                view.setExternalAuth("$callback(false)")
             }
         }
     }

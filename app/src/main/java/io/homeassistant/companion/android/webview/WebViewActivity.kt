@@ -59,6 +59,11 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 }
 
                 @JavascriptInterface
+                fun revokeExternalAuth(callback: String) {
+                    presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
+                }
+
+                @JavascriptInterface
                 fun externalBus(message: String) {
                     Log.d(TAG, "External bus $message")
                     webView.post {
@@ -101,9 +106,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         webView.loadUrl(url)
     }
 
-    override fun setExternalAuth(callback: String, externalAuth: String) {
+    override fun setExternalAuth(script: String) {
         webView.post {
-            webView.evaluateJavascript("$callback(true, $externalAuth);", null)
+            webView.evaluateJavascript(script, null)
         }
     }
 
