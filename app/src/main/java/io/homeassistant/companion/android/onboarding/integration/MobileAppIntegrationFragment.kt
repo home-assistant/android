@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 import javax.inject.Inject
 
-
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
     companion object {
@@ -78,6 +77,4 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         presenter.onFinish()
         super.onDestroy()
     }
-
 }
-

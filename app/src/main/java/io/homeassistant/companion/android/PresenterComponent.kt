@@ -20,5 +20,4 @@ interface PresenterComponent {
     fun inject(fragment: MobileAppIntegrationFragment)
 
     fun inject(activity: WebViewActivity)
-
 }

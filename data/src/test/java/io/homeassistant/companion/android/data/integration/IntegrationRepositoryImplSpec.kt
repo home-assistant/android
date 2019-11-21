@@ -107,9 +107,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 it("should return false when webhook has no value") {
                     Assertions.assertThat(isRegistered).isFalse()
                 }
-
             }
         }
     }
-
 })

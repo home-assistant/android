@@ -5,5 +5,4 @@ interface IntegrationUseCase {
     suspend fun registerDevice(deviceRegistration: DeviceRegistration)
 
     suspend fun isRegistered(): Boolean
-
 }

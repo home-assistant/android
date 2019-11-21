@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.domain.authentication
 
 import java.net.URL
 
-
 interface AuthenticationUseCase {
 
     suspend fun saveUrl(url: URL)
@@ -18,5 +17,4 @@ interface AuthenticationUseCase {
     suspend fun getUrl(): URL?
 
     suspend fun buildAuthenticationUrl(callbackUrl: String): URL
-
 }

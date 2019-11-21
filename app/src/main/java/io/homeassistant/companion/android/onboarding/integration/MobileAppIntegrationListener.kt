@@ -5,5 +5,4 @@ interface MobileAppIntegrationListener {
     fun onIntegrationRegistrationComplete()
 
     fun onIntegrationRegistrationSkipped()
-
 }

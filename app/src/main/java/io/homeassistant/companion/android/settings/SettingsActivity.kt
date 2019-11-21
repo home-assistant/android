@@ -8,7 +8,6 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import kotlinx.android.synthetic.main.activity_settings.*
 
-
 class SettingsActivity : AppCompatActivity() {
 
     companion object {
@@ -17,12 +16,10 @@ class SettingsActivity : AppCompatActivity() {
         }
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
         val version = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
         versionTextView.text = version
     }
-
 }

@@ -37,8 +37,6 @@ class DataModule(
     @Named("integration")
     fun provideIntegrationLocalStorage() = integrationLocalStorage
 
-
-
     @Module
     interface Declaration {
 
@@ -47,7 +45,5 @@ class DataModule(
 
         @Binds
         fun bindIntegrationService(repository: IntegrationRepositoryImpl): IntegrationRepository
-
     }
-
 }

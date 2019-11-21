@@ -5,7 +5,6 @@ import android.content.Context
 import io.homeassistant.companion.android.common.LocalStorageImpl
 import kotlinx.coroutines.runBlocking
 
-
 class Graph(
     private val application: Application
 ) {
@@ -51,5 +50,4 @@ class Graph(
             .domainComponent(domainComponent)
             .build()
     }
-
 }

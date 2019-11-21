@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import kotlinx.android.synthetic.main.fragment_manual_setup.*
 import javax.inject.Inject
 
-
 class ManualSetupFragment(private val listener: ManualSetupListener) : Fragment(), ManualSetupView {
 
     companion object {
@@ -57,5 +56,4 @@ class ManualSetupFragment(private val listener: ManualSetupListener) : Fragment(
         presenter.onFinish()
         super.onDestroy()
     }
-
 }

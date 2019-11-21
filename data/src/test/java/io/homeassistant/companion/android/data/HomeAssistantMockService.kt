@@ -4,7 +4,6 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import java.io.IOException
 
-
 class HomeAssistantMockService<T>(private val c: Class<T>) {
 
     private val mockServer: MockWebServer = MockWebServer()
@@ -38,5 +37,4 @@ class HomeAssistantMockService<T>(private val c: Class<T>) {
             throw RuntimeException()
         }
     }
-
 }

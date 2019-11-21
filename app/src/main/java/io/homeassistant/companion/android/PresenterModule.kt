@@ -80,7 +80,5 @@ class PresenterModule {
 
         @Binds
         fun bindWebViewPresenterImpl(presenter: WebViewPresenterImpl): WebViewPresenter
-
-
     }
 }

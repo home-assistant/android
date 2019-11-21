@@ -11,7 +11,6 @@ import java.net.URL
 import javax.inject.Inject
 import javax.inject.Named
 
-
 class AuthenticationRepositoryImpl @Inject constructor(
     private val authenticationService: AuthenticationService,
     @Named("session") private val localStorage: LocalStorage
@@ -136,5 +135,4 @@ class AuthenticationRepositoryImpl @Inject constructor(
         localStorage.putString(PREF_REFRESH_TOKEN, session?.refreshToken)
         localStorage.putString(PREF_TOKEN_TYPE, session?.tokenType)
     }
-
 }

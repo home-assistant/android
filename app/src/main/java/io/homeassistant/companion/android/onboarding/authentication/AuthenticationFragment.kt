@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import kotlinx.android.synthetic.main.fragment_authentication.*
 import javax.inject.Inject
 
-
 class AuthenticationFragment : Fragment(), AuthenticationView {
 
     companion object {

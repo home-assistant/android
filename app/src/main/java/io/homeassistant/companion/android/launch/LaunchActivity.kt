@@ -9,7 +9,6 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 
-
 class LaunchActivity : AppCompatActivity(), LaunchView {
 
     @Inject lateinit var presenter: LaunchPresenter
