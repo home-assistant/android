@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/view_flipper"
+    android:id="@+id/flipperView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
@@ -13,14 +13,14 @@
         android:text="@string/input_url" />
 
     <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/home_assistant_url"
+        android:id="@+id/urlEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:hint="@string/input_url_hint" />
 
     <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/ok"
+        android:id="@+id/okButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"

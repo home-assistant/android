@@ -4,13 +4,12 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ViewFlipper
 import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 import javax.inject.Inject
 
 
@@ -28,8 +27,6 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     @Inject
     lateinit var presenter: MobileAppIntegrationPresenter
 
-    private lateinit var viewFlipper: ViewFlipper
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -46,15 +43,14 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_mobile_app_integration, container, false).apply {
-            viewFlipper = this.findViewById(R.id.view_flipper)
-            findViewById<Button>(R.id.skip).setOnClickListener {
-                presenter.onSkip()
-            }
-            findViewById<Button>(R.id.retry).setOnClickListener {
-                presenter.onRegistrationAttempt()
-            }
-        }
+        return inflater.inflate(R.layout.fragment_mobile_app_integration, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        skipButton.setOnClickListener { presenter.onSkip() }
+        retryButton.setOnClickListener { presenter.onRegistrationAttempt() }
     }
 
     override fun onResume() {
@@ -71,11 +67,11 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun showError() {
-        viewFlipper.displayedChild = ERROR_VIEW
+        flipperView.displayedChild = ERROR_VIEW
     }
 
     override fun showLoading() {
-        viewFlipper.displayedChild = LOADING_VIEW
+        flipperView.displayedChild = LOADING_VIEW
     }
 
     override fun onDestroy() {

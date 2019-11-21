@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import kotlinx.android.synthetic.main.fragment_authentication.*
 import javax.inject.Inject
 
 
@@ -24,8 +25,8 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         }
     }
 
-    @Inject lateinit var presenter: AuthenticationPresenter
-    private lateinit var webView: WebView
+    @Inject
+    lateinit var presenter: AuthenticationPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,30 +39,32 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
             .inject(this)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_authentication, container, false).apply {
-            webView = findViewById(R.id.webview)
-
-            webView.apply {
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
-                        return presenter.onRedirectUrl(url)
-                    }
-                }
-            }
-        }
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_authentication, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        webview.apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
+                    return presenter.onRedirectUrl(url)
+                }
+            }
+        }
+
         presenter.onViewReady()
     }
 
     override fun loadUrl(url: String) {
-        webView.loadUrl(url)
+        webview.loadUrl(url)
     }
 
     override fun openWebview() {

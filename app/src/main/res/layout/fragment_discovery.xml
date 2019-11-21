@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ViewFlipper xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/view_flipper"
+    android:id="@+id/flipperView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/activity_margin">
@@ -32,7 +32,7 @@
         android:layout_height="match_parent">
 
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/title"
+            android:id="@+id/titleTextView"
             style="@style/TextAppearance.HomeAssistant.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -45,7 +45,7 @@
             app:layout_constraintVertical_bias="0.35" />
 
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/subtitle"
+            android:id="@+id/subtitleTextView"
             style="@style/TextAppearance.HomeAssistant.Medium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -57,7 +57,7 @@
             app:layout_constraintTop_toBottomOf="@+id/title" />
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/retry"
+            android:id="@+id/retryButton"
             style="@style/Widget.HomeAssistant.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -65,10 +65,10 @@
             android:text="@string/scan_again"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/subtitle" />
+            app:layout_constraintTop_toBottomOf="@+id/subtitleTextView" />
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/manual_setup"
+            android:id="@+id/manualSetupButton"
             style="@style/Widget.HomeAssistant.Button.Borderless"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

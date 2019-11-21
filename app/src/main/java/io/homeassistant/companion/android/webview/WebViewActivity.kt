@@ -14,9 +14,9 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.settings.SettingsActivity
+import kotlinx.android.synthetic.main.activity_webview.*
 import org.json.JSONObject
 import javax.inject.Inject
-
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -28,8 +28,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
 
-    @Inject lateinit var presenter: WebViewPresenter
-    private lateinit var webView: WebView
+    @Inject
+    lateinit var presenter: WebViewPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,8 +46,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             WebView.setWebContentsDebuggingEnabled(true)
         }
 
-        webView = findViewById(R.id.webview)
-        webView.apply {
+        webview.apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             webViewClient = WebViewClient()
@@ -61,7 +60,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 @JavascriptInterface
                 fun externalBus(message: String) {
                     Log.d(TAG, "External bus $message")
-                    webView.post {
+                    webview.post {
                         when {
                             JSONObject(message).get("type") == "config/get" -> {
                                 val script = "externalBus(" +
@@ -75,11 +74,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                         )}" +
                                         ");"
                                 Log.d(TAG, script)
-                                webView.evaluateJavascript(script) {
+                                webview.evaluateJavascript(script) {
                                     Log.d(TAG, "Callback $it")
                                 }
                             }
-                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(
+                                SettingsActivity.newInstance(this@WebViewActivity)
+                            )
                         }
                     }
                 }
@@ -90,20 +91,20 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack()
+        if (webview.canGoBack()) {
+            webview.goBack()
         } else {
             super.onBackPressed()
         }
     }
 
     override fun loadUrl(url: String) {
-        webView.loadUrl(url)
+        webview.loadUrl(url)
     }
 
     override fun setExternalAuth(callback: String, externalAuth: String) {
-        webView.post {
-            webView.evaluateJavascript("$callback(true, $externalAuth);", null)
+        webview.post {
+            webview.evaluateJavascript("$callback(true, $externalAuth);", null)
         }
     }
 
