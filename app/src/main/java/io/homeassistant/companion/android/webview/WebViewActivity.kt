@@ -64,15 +64,15 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         when {
                             JSONObject(message).get("type") == "config/get" -> {
                                 val script = "externalBus(" +
-                                        "${JSONObject(
-                                            mapOf(
-                                                "id" to JSONObject(message).get("id"),
-                                                "type" to "result",
-                                                "success" to true,
-                                                "result" to JSONObject(mapOf("hasSettingsScreen" to true))
-                                            )
-                                        )}" +
-                                        ");"
+                                    "${JSONObject(
+                                        mapOf(
+                                            "id" to JSONObject(message).get("id"),
+                                            "type" to "result",
+                                            "success" to true,
+                                            "result" to JSONObject(mapOf("hasSettingsScreen" to true))
+                                        )
+                                    )}" +
+                                    ");"
                                 Log.d(TAG, script)
                                 webview.evaluateJavascript(script) {
                                     Log.d(TAG, "Callback $it")

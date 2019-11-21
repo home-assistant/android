@@ -24,10 +24,12 @@ class DataModule(
     fun provideEndPoint() = url
 
     @Provides
-    fun provideAuthenticationService(homeAssistantRetrofit: HomeAssistantRetrofit) = homeAssistantRetrofit.retrofit.create(AuthenticationService::class.java)
+    fun provideAuthenticationService(homeAssistantRetrofit: HomeAssistantRetrofit) =
+        homeAssistantRetrofit.retrofit.create(AuthenticationService::class.java)
 
     @Provides
-    fun providesIntegrationService(homeAssistantRetrofit: HomeAssistantRetrofit) = homeAssistantRetrofit.retrofit.create(IntegrationService::class.java)
+    fun providesIntegrationService(homeAssistantRetrofit: HomeAssistantRetrofit) =
+        homeAssistantRetrofit.retrofit.create(IntegrationService::class.java)
 
     @Provides
     @Named("session")

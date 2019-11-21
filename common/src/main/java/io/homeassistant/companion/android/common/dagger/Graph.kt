@@ -34,11 +34,23 @@ class Graph(
     private fun buildComponent() {
         dataComponent = DaggerDataComponent
             .builder()
-            .dataModule(DataModule(
-                url,
-                LocalStorageImpl(application.getSharedPreferences("session", Context.MODE_PRIVATE)),
-                LocalStorageImpl(application.getSharedPreferences("integration", Context.MODE_PRIVATE))
-            ))
+            .dataModule(
+                DataModule(
+                    url,
+                    LocalStorageImpl(
+                        application.getSharedPreferences(
+                            "session",
+                            Context.MODE_PRIVATE
+                        )
+                    ),
+                    LocalStorageImpl(
+                        application.getSharedPreferences(
+                            "integration",
+                            Context.MODE_PRIVATE
+                        )
+                    )
+                )
+            )
             .build()
 
         domainComponent = DaggerDomainComponent

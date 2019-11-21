@@ -18,7 +18,11 @@ object AuthenticationServiceSpec : Spek({
             beforeEachTest {
                 mockService.enqueueResponse(200, "authentication/authorization_code.json")
                 token = runBlocking {
-                    mockService.get().getToken(AuthenticationService.GRANT_TYPE_CODE, "12345", AuthenticationService.CLIENT_ID)
+                    mockService.get().getToken(
+                        AuthenticationService.GRANT_TYPE_CODE,
+                        "12345",
+                        AuthenticationService.CLIENT_ID
+                    )
                 }
                 request = mockService.takeRequest()
             }
@@ -46,7 +50,11 @@ object AuthenticationServiceSpec : Spek({
             beforeEachTest {
                 mockService.enqueueResponse(200, "authentication/refresh_token.json")
                 token = runBlocking {
-                    mockService.get().refreshToken(AuthenticationService.GRANT_TYPE_REFRESH, "IJKLMNOPQRST", AuthenticationService.CLIENT_ID)
+                    mockService.get().refreshToken(
+                        AuthenticationService.GRANT_TYPE_REFRESH,
+                        "IJKLMNOPQRST",
+                        AuthenticationService.CLIENT_ID
+                    )
                 }
                 request = mockService.takeRequest()
             }
@@ -73,7 +81,8 @@ object AuthenticationServiceSpec : Spek({
             beforeEachTest {
                 mockService.enqueueResponse(200)
                 runBlocking {
-                    mockService.get().revokeToken("IJKLMNOPQRST", AuthenticationService.REVOKE_ACTION)
+                    mockService.get()
+                        .revokeToken("IJKLMNOPQRST", AuthenticationService.REVOKE_ACTION)
                 }
                 request = mockService.takeRequest()
             }

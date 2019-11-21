@@ -7,7 +7,8 @@ import java.io.IOException
 class HomeAssistantMockService<T>(private val c: Class<T>) {
 
     private val mockServer: MockWebServer = MockWebServer()
-    private val homeAssistantRetrofit = HomeAssistantRetrofit(mockServer.url("/").toString()).retrofit
+    private val homeAssistantRetrofit =
+        HomeAssistantRetrofit(mockServer.url("/").toString()).retrofit
 
     fun get(): T {
         return homeAssistantRetrofit.create(c)

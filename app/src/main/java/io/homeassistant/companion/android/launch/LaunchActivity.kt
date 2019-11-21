@@ -11,7 +11,8 @@ import javax.inject.Inject
 
 class LaunchActivity : AppCompatActivity(), LaunchView {
 
-    @Inject lateinit var presenter: LaunchPresenter
+    @Inject
+    lateinit var presenter: LaunchPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
