@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.data
 
+import java.io.IOException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import java.io.IOException
 
 class HomeAssistantMockService<T>(private val c: Class<T>) {
 

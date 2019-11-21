@@ -3,12 +3,12 @@ package io.homeassistant.companion.android.onboarding.authentication
 import android.net.Uri
 import android.util.Log
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class AuthenticationPresenterImpl @Inject constructor(
     private val view: AuthenticationView,

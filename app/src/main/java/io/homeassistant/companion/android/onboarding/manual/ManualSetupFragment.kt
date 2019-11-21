@@ -9,8 +9,8 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import kotlinx.android.synthetic.main.fragment_manual_setup.*
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.fragment_manual_setup.*
 
 class ManualSetupFragment(private val listener: ManualSetupListener) : Fragment(), ManualSetupView {
 

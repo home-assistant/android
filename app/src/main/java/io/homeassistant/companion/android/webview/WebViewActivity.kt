@@ -14,9 +14,9 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.settings.SettingsActivity
+import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
 import org.json.JSONObject
-import javax.inject.Inject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 

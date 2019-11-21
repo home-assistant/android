@@ -11,8 +11,8 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import kotlinx.android.synthetic.main.fragment_authentication.*
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.fragment_authentication.*
 
 class AuthenticationFragment : Fragment(), AuthenticationView {
 

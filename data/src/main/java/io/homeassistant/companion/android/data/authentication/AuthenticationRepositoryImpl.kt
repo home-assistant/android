@@ -4,12 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.authentication.SessionState
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import org.threeten.bp.Instant
 import java.net.URL
 import javax.inject.Inject
 import javax.inject.Named
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.threeten.bp.Instant
 
 class AuthenticationRepositoryImpl @Inject constructor(
     private val authenticationService: AuthenticationService,
