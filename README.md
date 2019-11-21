@@ -14,3 +14,8 @@
 - Connect your phone or create a new virtual device following on screen instruction
 
 - :tada:
+
+
+## Continuous Integration
+
+We are using [Travis](https://travis-ci.com/home-assistant/home-assistant-android) to perform continuous integration both by unit testing and deploying to [Firebase App Distribution](https://appdistribution.firebase.dev/i/KSHQEptq) or [Play Store](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android) when we add a git tag.
