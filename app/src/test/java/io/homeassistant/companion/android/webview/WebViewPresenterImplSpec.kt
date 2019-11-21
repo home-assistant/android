@@ -60,9 +60,7 @@ object WebViewPresenterImplSpec : Spek({
             }
 
             it("should not crash") {
-                coVerify {
-                    view wasNot Called
-                }
+                verify { view.setExternalAuth("externalAuthSetToken(false)") }
             }
         }
 

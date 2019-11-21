@@ -38,6 +38,7 @@ class WebViewPresenterImpl @Inject constructor(
                 view.setExternalAuth("$callback(true, ${authenticationUseCase.retrieveExternalAuthentication()})")
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
+                view.setExternalAuth("$callback(false)")
             }
         }
     }
