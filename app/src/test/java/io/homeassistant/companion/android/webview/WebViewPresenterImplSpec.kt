@@ -72,6 +72,7 @@ object WebViewPresenterImplSpec : Spek({
 
             it("should set external auth") {
                 verify { view.setExternalAuth("externalAuthRevokeToken(true)") }
+                verify { view.openOnBoarding() }
             }
         }
 
