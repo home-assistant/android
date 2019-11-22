@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import org.json.JSONObject
 import javax.inject.Inject
@@ -59,6 +60,11 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 }
 
                 @JavascriptInterface
+                fun revokeExternalAuth(callback: String) {
+                    presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
+                }
+
+                @JavascriptInterface
                 fun externalBus(message: String) {
                     Log.d(TAG, "External bus $message")
                     webView.post {
@@ -89,6 +95,11 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         presenter.onViewReady()
     }
 
+    override fun openOnBoarding() {
+        finish()
+        startActivity(Intent(this, OnboardingActivity::class.java))
+    }
+
     override fun onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack()
@@ -101,9 +112,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         webView.loadUrl(url)
     }
 
-    override fun setExternalAuth(callback: String, externalAuth: String) {
+    override fun setExternalAuth(script: String) {
         webView.post {
-            webView.evaluateJavascript("$callback(true, $externalAuth);", null)
+            webView.evaluateJavascript(script, null)
         }
     }
 
