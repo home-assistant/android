@@ -56,7 +56,7 @@ object ManualSetupPresenterImplSpec : Spek({
                 verify(exactly = 0) { view.urlSaved() }
             }
             it("should notify the displayUrlError") {
-                verify { view.displayUrlError(any()) }
+                verify { view.displayUrlError(URLError.NO_PROTOCOL) }
             }
         }
     }
