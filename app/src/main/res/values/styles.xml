@@ -6,6 +6,8 @@
         <item name="colorButtonNormal">@color/colorPrimary</item>
 
         <item name="buttonStyle">@style/Widget.HomeAssistant.Button.Colored</item>
+
+        <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
     </style>
 
     <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.AppCompat.Headline">
@@ -27,5 +29,7 @@
     <style name="Widget.HomeAssistant.Button.Borderless" parent="Widget.AppCompat.Button.Borderless">
         <item name="android:textColor">@color/colorPrimary</item>
     </style>
+
+    <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.AppCompat.Light.Dialog.Alert" />
 
 </resources>
