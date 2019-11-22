@@ -5,6 +5,8 @@ interface WebView {
 
     fun loadUrl(url: String)
 
-    fun setExternalAuth(callback: String, externalAuth: String)
+    fun setExternalAuth(script: String)
+
+    fun openOnBoarding()
 
 }

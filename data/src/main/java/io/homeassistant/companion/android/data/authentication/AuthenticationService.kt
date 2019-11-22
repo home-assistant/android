@@ -33,7 +33,7 @@ interface AuthenticationService {
     @FormUrlEncoded
     @POST("auth/token")
     suspend fun revokeToken(
-        @Field("refresh_token") refreshToken: String,
+        @Field("token") refreshToken: String,
         @Field("action") action: String
     )
 

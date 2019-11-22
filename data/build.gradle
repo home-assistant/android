@@ -21,6 +21,7 @@ dependencies {
     implementation "com.squareup.retrofit2:retrofit:$retrofit2Version"
     implementation "com.squareup.retrofit2:converter-jackson:$retrofit2Version"
     implementation "com.squareup.okhttp3:okhttp:$okhttp3Version"
+    implementation "com.squareup.okhttp3:logging-interceptor:$okhttp3Version"
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion"
 
     implementation "org.threeten:threetenbp:$threeTenBpVersion"

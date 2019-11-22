@@ -7,6 +7,8 @@ interface WebViewPresenter {
 
     fun onGetExternalAuth(callback: String)
 
+    fun onRevokeExternalAuth(callback: String)
+
     fun onFinish()
 
 }
