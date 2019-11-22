@@ -14,4 +14,6 @@
     <string name="attempting_registration">Attempting to register application…</string>
     <string name="unable_to_register">Unable to Register Application</string>
     <string name="error_with_registration">Please check to ensure you have the mobile_app \nintegration enabled on your home assistant instance.</string>
+    <string name="url_error_protocol_missing">The URL needs a protocol</string>
+    <string name="url_error_undefined">Undefined Error in URL Parsing</string>
 </resources>

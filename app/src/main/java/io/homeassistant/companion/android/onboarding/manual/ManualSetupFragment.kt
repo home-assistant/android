@@ -53,6 +53,13 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         view?.findViewById<TextInputLayout>(R.id.url_text_layout)?.error = text
     }
 
+    override fun displayUrlError(error: URLError) {
+        view?.findViewById<TextInputLayout>(R.id.url_text_layout)?.error = when(error){
+            URLError.NO_PROTOCOL -> context?.getString(R.string.url_error_protocol_missing)
+            else -> context?.getString(R.string.url_error_undefined)
+        }
+    }
+
     override fun onDestroy() {
         presenter.onFinish()
         super.onDestroy()
