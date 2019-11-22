@@ -25,14 +25,7 @@ class ManualSetupPresenterImpl @Inject constructor(
             url = URL(urlString)
         } catch (e: MalformedURLException) {
             Log.e(TAG, "Unable to parse url", e)
-            if(e.message != null){
-                val message: String = e.message as String
-                if(message.contains("protocol")){
-                    view.displayUrlError(URLError.NO_PROTOCOL)
-                } else {
-                    view.displayUrlError(e.localizedMessage)
-                }
-            }
+            view.displayUrlError()
             return
         }
 

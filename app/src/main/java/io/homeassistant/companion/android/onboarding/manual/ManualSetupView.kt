@@ -9,8 +9,6 @@ interface ManualSetupView {
 
     fun urlSaved()
 
-    fun displayUrlError(text: String?)
-
-    fun displayUrlError(error: URLError)
+    fun displayUrlError()
 
 }
