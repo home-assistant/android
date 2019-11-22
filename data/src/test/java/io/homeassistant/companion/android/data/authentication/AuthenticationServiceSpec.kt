@@ -83,7 +83,7 @@ object AuthenticationServiceSpec : Spek({
                 assertThat(request.method).isEqualTo("POST")
                 assertThat(request.path).isEqualTo("/auth/token")
                 assertThat(request.body.readUtf8())
-                    .contains("refresh_token=IJKLMNOPQRST")
+                    .contains("token=IJKLMNOPQRST")
                     .contains("action=revoke")
             }
         }
