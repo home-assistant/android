@@ -5,6 +5,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/settings_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="title,icon,app_version_text_view,manage_instances_button,logout_button" />
+
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/title"
         style="@style/TextAppearance.HomeAssistant.Headline"
@@ -27,13 +33,36 @@
         app:srcCompat="@drawable/app_icon" />
 
     <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/version_text_view"
+        android:id="@+id/app_version_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/icon"
-        tools:text="1.0.0 (1)" />
+        tools:text="App: 1.0.0 (1)" />
+
+    <FrameLayout
+        android:id="@+id/manage_instances_fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/manage_instances_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Manage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/app_version_text_view" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/logout_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/logout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/manage_instances_button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

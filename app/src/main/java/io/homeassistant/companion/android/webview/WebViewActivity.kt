@@ -29,7 +29,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
 
-    @Inject lateinit var presenter: WebViewPresenter
+    @Inject
+    lateinit var presenter: WebViewPresenter
     private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,7 +86,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     Log.d(TAG, "Callback $it")
                                 }
                             }
-                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(
+                                SettingsActivity.newInstance(this@WebViewActivity)
+                            )
                         }
                     }
                 }

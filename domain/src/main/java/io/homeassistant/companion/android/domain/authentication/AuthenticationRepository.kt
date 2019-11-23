@@ -21,4 +21,10 @@ interface AuthenticationRepository {
 
     suspend fun buildBearerToken(): String
 
+    suspend fun getAllInstanceUrls(): List<String>
+
+    suspend fun setCurrentInstance(url: String)
+
+    suspend fun deleteInstance(url: String)
+
 }

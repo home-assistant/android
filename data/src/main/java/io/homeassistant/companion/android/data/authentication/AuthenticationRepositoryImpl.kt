@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.data.authentication
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.authentication.SessionState
@@ -18,15 +20,13 @@ class AuthenticationRepositoryImpl @Inject constructor(
 ) : AuthenticationRepository {
 
     companion object {
+        private const val PREF_INSTANCES = "instances"
         private const val PREF_URL = "url"
-        private const val PREF_ACCESS_TOKEN = "access_token"
-        private const val PREF_EXPIRED_DATE = "expires_date"
-        private const val PREF_REFRESH_TOKEN = "refresh_token"
-        private const val PREF_TOKEN_TYPE = "token_type"
     }
 
     override suspend fun saveUrl(url: URL) {
-        localStorage.putString(PREF_URL, url.toString())
+        addInstance(url)
+        setCurrentInstance(url.toString())
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
@@ -51,9 +51,14 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun revokeSession() {
-        val session = retrieveSession() ?: throw AuthorizationException()
-        authenticationService.revokeToken(session.refreshToken, AuthenticationService.REVOKE_ACTION)
-        saveSession(null)
+        val session = retrieveSession()
+        session?.let {
+            authenticationService.revokeToken(
+                it.refreshToken,
+                AuthenticationService.REVOKE_ACTION
+            )
+        }
+        deleteInstance(getUrl().toString())
     }
 
     override suspend fun getSessionState(): SessionState {
@@ -69,7 +74,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {
-        val url = localStorage.getString(PREF_URL) ?: throw AuthorizationException()
+        val url = getUrl().toString()
 
         return url.toHttpUrl()
             .newBuilder()
@@ -85,6 +90,14 @@ class AuthenticationRepositoryImpl @Inject constructor(
         return "Bearer " + ensureValidSession().accessToken
     }
 
+    override suspend fun getAllInstanceUrls(): List<String> {
+        return getSessions().keys.toMutableList()
+    }
+
+    override suspend fun setCurrentInstance(url: String) {
+        localStorage.putString(PREF_URL, url)
+    }
+
     private fun convertSession(session: Session): String {
         return ObjectMapper().writeValueAsString(
             mapOf(
@@ -95,16 +108,46 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     private suspend fun retrieveSession(): Session? {
-        val accessToken = localStorage.getString(PREF_ACCESS_TOKEN)
-        val expiredDate = localStorage.getLong(PREF_EXPIRED_DATE)
-        val refreshToken = localStorage.getString(PREF_REFRESH_TOKEN)
-        val tokenType = localStorage.getString(PREF_TOKEN_TYPE)
-
-        return if (accessToken != null && expiredDate != null && refreshToken != null && tokenType != null) {
-            Session(accessToken, expiredDate, refreshToken, tokenType)
-        } else {
-            null
+        System.out.println(getUrl().toString())
+        System.out.println(getUrl()?.host)
+        for (urlString in getSessions().keys) {
+            System.out.println(urlString)
+            if (urlString.toHttpUrlOrNull()?.host == getUrl()?.host) {
+                return getSessions()[urlString]
+            }
         }
+        return null
+    }
+
+    private suspend fun getSessions(): MutableMap<String, Session?> {
+        val instances = localStorage.getString(PREF_INSTANCES)
+        val objectMapper = ObjectMapper()
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+        return instances?.let {
+            objectMapper.readValue<MutableMap<String, Session?>>(it)
+        } ?: HashMap()
+    }
+
+    private suspend fun addInstance(url: URL, session: Session? = null) {
+        var instanceMap: MutableMap<String, Session?> = getSessions()
+        val objectMapper = ObjectMapper()
+        var alreadyAdded = false
+        for (stringUrl in instanceMap.keys) {
+            if (stringUrl.toHttpUrlOrNull()?.host == url.host) {
+                instanceMap[stringUrl] = session
+                alreadyAdded = true
+            }
+        }
+        if (!alreadyAdded) {
+            instanceMap[url.toString()] = session
+        }
+        localStorage.putString(PREF_INSTANCES, objectMapper.writeValueAsString(instanceMap))
+    }
+
+    private suspend fun saveSessions(sessions: MutableMap<String, Session?>) {
+        val objectMapper = ObjectMapper()
+        localStorage.putString(PREF_INSTANCES, objectMapper.writeValueAsString(sessions))
     }
 
     private suspend fun ensureValidSession(): Session {
@@ -131,10 +174,15 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     private suspend fun saveSession(session: Session?) {
-        localStorage.putString(PREF_ACCESS_TOKEN, session?.accessToken)
-        localStorage.putLong(PREF_EXPIRED_DATE, session?.expiresTimestamp)
-        localStorage.putString(PREF_REFRESH_TOKEN, session?.refreshToken)
-        localStorage.putString(PREF_TOKEN_TYPE, session?.tokenType)
+        session?.let {
+            addInstance(getUrl()!!, session)
+        }
+    }
+
+    override suspend fun deleteInstance(url: String) {
+        val sessions = getSessions()
+        sessions.remove(url)
+        saveSessions(sessions)
     }
 
 }

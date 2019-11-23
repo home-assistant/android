@@ -35,4 +35,15 @@ class AuthenticationUseCaseImpl @Inject constructor(
         return authenticationRepository.buildAuthenticationUrl(callbackUrl)
     }
 
+    override suspend fun getAllInstanceUrls(): List<String> {
+        return authenticationRepository.getAllInstanceUrls()
+    }
+
+    override suspend fun setCurrentInstance(url: String) {
+        return authenticationRepository.setCurrentInstance(url)
+    }
+
+    override suspend fun deleteInstance(url: String) {
+        return authenticationRepository.deleteInstance(url)
+    }
 }

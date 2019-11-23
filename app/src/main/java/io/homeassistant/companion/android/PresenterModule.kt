@@ -15,6 +15,12 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenter
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenterImpl
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupView
+import io.homeassistant.companion.android.settings.SettingsPresenter
+import io.homeassistant.companion.android.settings.SettingsPresenterImpl
+import io.homeassistant.companion.android.settings.SettingsView
+import io.homeassistant.companion.android.settings.manageinstances.ManageInstancePresenterImpl
+import io.homeassistant.companion.android.settings.manageinstances.ManageInstancePresenter
+import io.homeassistant.companion.android.settings.manageinstances.ManageInstanceView
 import io.homeassistant.companion.android.webview.WebView
 import io.homeassistant.companion.android.webview.WebViewPresenter
 import io.homeassistant.companion.android.webview.WebViewPresenterImpl
@@ -27,6 +33,8 @@ class PresenterModule {
     private lateinit var manualSetupView: ManualSetupView
     private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
     private lateinit var webView: WebView
+    private lateinit var settingsView: SettingsView
+    private lateinit var manageInstanceView: ManageInstanceView
 
     constructor(launchView: LaunchView) {
         this.launchView = launchView
@@ -48,6 +56,14 @@ class PresenterModule {
         this.webView = webView
     }
 
+    constructor(settingsView: SettingsView) {
+        this.settingsView = settingsView
+    }
+
+    constructor(manageInstanceView: ManageInstanceView) {
+        this.manageInstanceView = manageInstanceView
+    }
+
     @Provides
     fun provideLaunchView() = launchView
 
@@ -62,6 +78,12 @@ class PresenterModule {
 
     @Provides
     fun provideWebView() = webView
+
+    @Provides
+    fun providesSettingsView() = settingsView
+
+    @Provides
+    fun providesManageInstanceView() = manageInstanceView
 
     @Module
     interface Declaration {
@@ -80,6 +102,12 @@ class PresenterModule {
 
         @Binds
         fun bindWebViewPresenterImpl(presenter: WebViewPresenterImpl): WebViewPresenter
+
+        @Binds
+        fun bindSettingsPresenterImpl(presenter: SettingsPresenterImpl): SettingsPresenter
+
+        @Binds
+        fun bindManageInstancePresenterImpl(presenter: ManageInstancePresenterImpl): ManageInstancePresenter
 
 
     }

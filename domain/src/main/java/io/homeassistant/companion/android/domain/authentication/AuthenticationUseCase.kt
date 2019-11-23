@@ -19,4 +19,10 @@ interface AuthenticationUseCase {
 
     suspend fun buildAuthenticationUrl(callbackUrl: String): URL
 
+    suspend fun getAllInstanceUrls(): List<String>
+
+    suspend fun setCurrentInstance(url: String)
+
+    suspend fun deleteInstance(url: String)
+
 }
