@@ -52,8 +52,11 @@ object ManualSetupPresenterImplSpec : Spek({
                 coVerifyAll { authenticationUseCase wasNot Called }
             }
 
-            it("should notify the listener") {
-                verify { view wasNot Called }
+            it("shouldn't notify the listener to save the url") {
+                verify(exactly = 0) { view.urlSaved() }
+            }
+            it("should notify the displayUrlError") {
+                verify { view.displayUrlError() }
             }
         }
     }

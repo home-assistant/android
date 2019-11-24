@@ -14,4 +14,5 @@
     <string name="attempting_registration">Attempting to register application…</string>
     <string name="unable_to_register">Unable to Register Application</string>
     <string name="error_with_registration">Please check to ensure you have the mobile_app \nintegration enabled on your home assistant instance.</string>
+    <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
 </resources>

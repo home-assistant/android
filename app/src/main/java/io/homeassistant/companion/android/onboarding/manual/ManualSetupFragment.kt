@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import androidx.fragment.app.Fragment
+import com.google.android.material.textfield.TextInputLayout
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
@@ -46,6 +47,10 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
     override fun urlSaved() {
         (activity?.application as GraphComponentAccessor).urlUpdated()
         (activity as ManualSetupListener).onSelectUrl()
+    }
+
+    override fun displayUrlError(){
+        view?.findViewById<TextInputLayout>(R.id.url_text_layout)?.error = context?.getString(R.string.url_parse_error)
     }
 
     override fun onDestroy() {

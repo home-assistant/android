@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.manual
 
 import android.util.Log
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import kotlinx.coroutines.*
 import java.net.MalformedURLException
@@ -24,6 +25,7 @@ class ManualSetupPresenterImpl @Inject constructor(
             url = URL(urlString)
         } catch (e: MalformedURLException) {
             Log.e(TAG, "Unable to parse url", e)
+            view.displayUrlError()
             return
         }
 
