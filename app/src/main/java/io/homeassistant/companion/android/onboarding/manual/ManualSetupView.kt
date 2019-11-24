@@ -4,4 +4,6 @@ interface ManualSetupView {
 
     fun urlSaved()
 
+    fun displayUrlError()
+
 }
