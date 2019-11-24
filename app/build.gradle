@@ -32,6 +32,7 @@ android {
     firebaseAppDistribution {
         serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
         releaseNotesFile = "CHANGES.md"
+        groups="continuous-deployment"
     }
 
     signingConfigs {
