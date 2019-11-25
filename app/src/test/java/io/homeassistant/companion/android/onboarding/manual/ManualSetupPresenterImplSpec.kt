@@ -6,7 +6,6 @@ import io.mockk.coVerifyAll
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.spekframework.spek2.Spek
@@ -31,11 +30,11 @@ object ManualSetupPresenterImplSpec : Spek({
 
         describe("on click ok with valid url") {
             beforeEachTest {
-                presenter.onClickOk("https://demo.home-assistant.io/")
+                presenter.onClickOk("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false")
             }
 
             it("should save the url") {
-                coVerifyAll { authenticationUseCase.saveUrl(URL("https://demo.home-assistant.io/")) }
+                coVerifyAll { authenticationUseCase.saveUrl(URL("https://demo.home-assistant.io:8123")) }
             }
 
             it("should notify the listener") {
@@ -52,10 +51,10 @@ object ManualSetupPresenterImplSpec : Spek({
                 coVerifyAll { authenticationUseCase wasNot Called }
             }
 
-            it("shouldn't notify the listener to save the url") {
+            it("shouldn't notify the listener") {
                 verify(exactly = 0) { view.urlSaved() }
             }
-            it("should notify the displayUrlError") {
+            it("should display url error") {
                 verify { view.displayUrlError() }
             }
         }
