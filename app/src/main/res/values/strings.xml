@@ -6,7 +6,7 @@
     <string name="scan_again">scan again</string>
     <string name="manual_setup">enter address manually</string>
     <string name="input_url">Home Assistant URL</string>
-    <string name="input_url_hint">URL</string>
+    <string name="input_url_hint">https://example.duckdns.org:8123</string>
     <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>
     <string name="skip">Skip</string>
