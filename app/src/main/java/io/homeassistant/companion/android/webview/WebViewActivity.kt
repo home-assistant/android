@@ -4,9 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.webkit.JavascriptInterface
+import android.webkit.*
 import android.webkit.WebView
-import android.webkit.WebViewClient
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
@@ -52,6 +52,21 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             webViewClient = WebViewClient()
+
+            webChromeClient = object : WebChromeClient() {
+                override fun onJsConfirm(view: WebView, url: String, message: String, result: JsResult): Boolean {
+                    AlertDialog
+                        .Builder(this@WebViewActivity)
+                        .setTitle(R.string.app_name)
+                        .setMessage(message)
+                        .setPositiveButton(android.R.string.ok) { _, _ -> result.confirm() }
+                        .setNegativeButton(android.R.string.cancel) { _, _ -> result.cancel() }
+                        .setOnDismissListener { result.cancel() }
+                        .create()
+                        .show()
+                    return true
+                }
+            }
 
             addJavascriptInterface(object : Any() {
                 @JavascriptInterface
