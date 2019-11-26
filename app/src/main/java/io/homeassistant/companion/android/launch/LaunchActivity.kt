@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.launch
 
 import android.content.Intent
 import android.os.Bundle
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -10,11 +11,11 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
+import co.lokalise.android.sdk.core.LokaliseContextWrapper
 
 class LaunchActivity : AppCompatActivity(), LaunchView {
 
-    @Inject
-    lateinit var presenter: LaunchPresenter
+    @Inject lateinit var presenter: LaunchPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,5 +48,9 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     override fun onDestroy() {
         presenter.onFinish()
         super.onDestroy()
+    }
+
+    override fun attachBaseContext(newBase: Context?) {
+        super.attachBaseContext(LokaliseContextWrapper.wrap(newBase))
     }
 }
