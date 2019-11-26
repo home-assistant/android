@@ -23,5 +23,4 @@ class HomeAssistantApplication : Application(), GraphComponentAccessor {
     override fun urlUpdated() {
         graph.urlUpdated()
     }
-
 }

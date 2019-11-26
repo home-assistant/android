@@ -4,13 +4,17 @@ import android.os.Build
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerifyAll
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.runs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-
 
 object MobileAppIntegrationPresenterImplSpec : Spek({
 
@@ -71,7 +75,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             beforeEachTest {
                 coEvery { integrationUseCase.registerDevice(any()) } throws Exception()
             }
-            describe("register"){
+            describe("register") {
                 beforeEachTest {
                     presenter.onRegistrationAttempt()
                 }

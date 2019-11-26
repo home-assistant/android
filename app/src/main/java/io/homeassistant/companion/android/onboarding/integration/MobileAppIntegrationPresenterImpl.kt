@@ -5,8 +5,12 @@ import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import kotlinx.coroutines.*
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
     private val view: MobileAppIntegrationView,

@@ -7,11 +7,11 @@ import io.mockk.coEvery
 import io.mockk.coVerifyAll
 import io.mockk.every
 import io.mockk.mockk
+import kotlin.properties.Delegates
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import kotlin.properties.Delegates
 
 object IntegrationRepositoryImplSpec : Spek({
 
@@ -107,9 +107,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 it("should return false when webhook has no value") {
                     Assertions.assertThat(isRegistered).isFalse()
                 }
-
             }
         }
     }
-
 })

@@ -11,9 +11,8 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCaseI
 interface DomainModule {
 
     @Binds
-    fun bindAuthenticationUseCase(useCaseImpl: AuthenticationUseCaseImpl) : AuthenticationUseCase
+    fun bindAuthenticationUseCase(useCaseImpl: AuthenticationUseCaseImpl): AuthenticationUseCase
 
     @Binds
-    fun bindIntegrationUseCase(useCaseImpl: IntegrationUseCaseImpl) : IntegrationUseCase
-
+    fun bindIntegrationUseCase(useCaseImpl: IntegrationUseCaseImpl): IntegrationUseCase
 }

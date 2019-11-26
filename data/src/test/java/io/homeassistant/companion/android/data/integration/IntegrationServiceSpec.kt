@@ -7,7 +7,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-
 object IntegrationServiceSpec : Spek({
     describe("an integration service") {
         val mockService by memoized { HomeAssistantMockService(IntegrationService::class.java) }
@@ -44,5 +43,4 @@ object IntegrationServiceSpec : Spek({
             assertThat(registrationResponse.webhookId).isEqualTo("ABC")
         }
     }
-
 })

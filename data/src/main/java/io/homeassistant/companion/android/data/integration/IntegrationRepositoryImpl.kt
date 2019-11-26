@@ -31,7 +31,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         localStorage.putString(PREF_REMOTE_UI_URL, response.remoteUiUrl)
         localStorage.putString(PREF_SECRET, response.secret)
         localStorage.putString(PREF_WEBHOOK_ID, response.webhookId)
-
     }
 
     override suspend fun isRegistered(): Boolean {

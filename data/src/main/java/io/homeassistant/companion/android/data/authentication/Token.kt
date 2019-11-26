@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.data.authentication
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-
 data class Token(
     @JsonProperty("access_token")
     val accessToken: String,
