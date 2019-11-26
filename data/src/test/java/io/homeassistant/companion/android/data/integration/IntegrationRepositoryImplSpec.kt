@@ -3,15 +3,15 @@ package io.homeassistant.companion.android.data.integration
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
-import io.mockk.coEvery
-import io.mockk.coVerifyAll
-import io.mockk.every
-import io.mockk.mockk
-import kotlin.properties.Delegates
+import io.homeassistant.companion.android.domain.integration.UpdateLocation
+import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import retrofit2.Response
+import java.net.URL
+import kotlin.properties.Delegates
 
 object IntegrationRepositoryImplSpec : Spek({
 
@@ -95,6 +95,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 }
             }
         }
+
         describe("is not registered") {
             beforeEachTest {
                 coEvery { localStorage.getString("webhook_id") } returns null
@@ -106,6 +107,60 @@ object IntegrationRepositoryImplSpec : Spek({
                 }
                 it("should return false when webhook has no value") {
                     Assertions.assertThat(isRegistered).isFalse()
+                }
+
+            }
+        }
+
+        describe("location updated") {
+            beforeEachTest {
+                coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
+                coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
+            }
+            describe("updateLocation") {
+                val location = UpdateLocation(
+                    "locationName",
+                    arrayOf(45.0, -45.0),
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                )
+                val updateLocationRequest = UpdateLocationRequest(
+                    location.locationName,
+                    location.gps,
+                    location.gpsAccuracy,
+                    location.battery,
+                    location.speed,
+                    location.altitude,
+                    location.course,
+                    location.verticalAccuracy
+                )
+                val integrationRequest = IntegrationRequest(
+                    "update_location",
+                    updateLocationRequest
+                )
+                beforeEachTest {
+                    coEvery { localStorage.getString("cloud_url") } returns null
+                    coEvery { localStorage.getString("remote_ui_url") } returns null
+                    coEvery {
+                        integrationService.updateLocation(
+                            any(),//"http://example.com/api/webhook/FGHIJ",
+                            any()//integrationRequest
+                        )
+                    } returns Response.success(null)
+                    runBlocking { repository.updateLocation(location) }
+                }
+
+                it("should call the service.") {
+                    coVerify {
+                        integrationService.updateLocation(
+                            "http://example.com/api/webhook/FGHIJ",
+                            integrationRequest
+                        )
+                    }
                 }
             }
         }
