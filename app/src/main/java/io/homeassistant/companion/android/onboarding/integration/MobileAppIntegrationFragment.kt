@@ -1,15 +1,20 @@
 package io.homeassistant.companion.android.onboarding.integration
 
+import android.Manifest.permission.*
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ViewFlipper
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import javax.inject.Inject
 
@@ -18,6 +23,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     companion object {
         private const val LOADING_VIEW = 0
         private const val ERROR_VIEW = 1
+
+        private const val LOCATION_REQUEST_CODE = 1000
 
         fun newInstance(): MobileAppIntegrationFragment {
             return MobileAppIntegrationFragment()
@@ -28,6 +35,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     lateinit var presenter: MobileAppIntegrationPresenter
 
     private lateinit var viewFlipper: ViewFlipper
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +70,16 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun deviceRegistered() {
-        (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
+        if (!haveLocationPermission()) {
+            ActivityCompat.requestPermissions(
+                activity!!,
+                arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION),
+                LOCATION_REQUEST_CODE
+            )
+        } else {
+            // If we have permission already we can just continue with
+            (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
+        }
     }
 
     override fun registrationSkipped() {
@@ -81,4 +98,43 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         presenter.onFinish()
         super.onDestroy()
     }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == LOCATION_REQUEST_CODE
+            && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            && grantResults[1] == PackageManager.PERMISSION_GRANTED
+            && grantResults[2] == PackageManager.PERMISSION_GRANTED
+        ) {
+            val intent = Intent(context, LocationBroadcastReceiver::class.java)
+            intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
+
+            activity!!.sendBroadcast(intent)
+        }
+
+        (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
+    }
+
+    private fun haveLocationPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(
+            context!!,
+            ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(
+            context!!,
+            ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+                // TODO: Only call for correct versions
+                && ActivityCompat.checkSelfPermission(
+            context!!,
+            ACCESS_BACKGROUND_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+
 }
