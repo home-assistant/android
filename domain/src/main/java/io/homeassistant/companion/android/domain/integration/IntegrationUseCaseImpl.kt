@@ -12,4 +12,8 @@ class IntegrationUseCaseImpl @Inject constructor(
     override suspend fun isRegistered(): Boolean {
         return integrationRepository.isRegistered()
     }
+
+    override suspend fun updateLocation(updateLocation: UpdateLocation) {
+        return integrationRepository.updateLocation(updateLocation)
+    }
 }

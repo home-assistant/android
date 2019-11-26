@@ -1,16 +1,28 @@
 package io.homeassistant.companion.android.background
 
-import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.os.BatteryManager
+import android.os.Build
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import io.homeassistant.companion.android.DaggerReceiverComponent
+import io.homeassistant.companion.android.common.dagger.Graph
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.domain.integration.UpdateLocation
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class LocationBroadcastReceiver : BroadcastReceiver() {
 
@@ -23,12 +35,21 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         private const val TAG = "LocBroadcastReceiver"
     }
 
+    @Inject
+    lateinit var integrationUseCase: IntegrationUseCase
+
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onReceive(context: Context, intent: Intent) {
+        DaggerReceiverComponent.builder()
+            .appComponent(Graph(context).appComponent)
+            .build()
+            .inject(this)
+
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED -> requestUpdates(context)
             ACTION_REQUEST_LOCATION_UPDATES -> requestUpdates(context)
-            ACTION_PROCESS_LOCATION -> handleUpdate(intent)
+            ACTION_PROCESS_LOCATION -> handleUpdate(context, intent)
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
     }
@@ -38,7 +59,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
         if (ActivityCompat.checkSelfPermission(
                 context,
-                ACCESS_FINE_LOCATION
+                ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
@@ -54,7 +75,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
     }
 
-    private fun handleUpdate(intent: Intent) {
+    private fun handleUpdate(context: Context, intent: Intent) {
         Log.d(TAG, "Received location update.")
         val locationResult = LocationResult.extractResult(intent)
 
@@ -66,8 +87,24 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
                         "\nAccuracy: ${lastLocation.accuracy}" +
                         "\nBearing: ${lastLocation.bearing}"
             )
+            val updateLocation = UpdateLocation(
+                "",
+                arrayOf(lastLocation.latitude, lastLocation.longitude),
+                lastLocation.accuracy.toInt(),
+                getBatteryLevel(context),
+                lastLocation.speed.toInt(),
+                lastLocation.altitude.toInt(),
+                lastLocation.bearing.toInt(),
+                if (Build.VERSION.SDK_INT >= 26) lastLocation.verticalAccuracyMeters.toInt() else null
+            )
 
-            // Call service with location
+            mainScope.launch {
+                try {
+                    integrationUseCase.updateLocation(updateLocation)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Could not update location.", e)
+                }
+            }
         }
     }
 
@@ -88,6 +125,20 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         locationRequest.priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
 
         return locationRequest
+    }
+
+    private fun getBatteryLevel(context: Context): Int? {
+        val batteryIntent =
+            context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val level = batteryIntent!!.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = batteryIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+
+        if (level == -1 || scale == -1) {
+            Log.e(TAG, "Issue getting battery level!")
+            return null
+        }
+
+        return (level.toFloat() / scale.toFloat() * 100.0f).toInt()
     }
 
 }
