@@ -54,10 +54,6 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         view.registrationSkipped()
     }
 
-    fun onLocationEnabled() {
-
-    }
-
     override fun onFinish() {
         mainScope.cancel()
     }

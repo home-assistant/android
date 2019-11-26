@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 import android.Manifest.permission.*
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -73,7 +75,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         if (!haveLocationPermission()) {
             ActivityCompat.requestPermissions(
                 activity!!,
-                arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION),
+                getLocationPermissions(),
                 LOCATION_REQUEST_CODE
             )
         } else {
@@ -129,12 +131,16 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             context!!,
             ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
-                // TODO: Only call for correct versions
-                && ActivityCompat.checkSelfPermission(
-            context!!,
-            ACCESS_BACKGROUND_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
     }
 
+    @SuppressLint("InlinedApi")
+    private fun getLocationPermissions(): Array<String> {
+        var retVal = arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION)
+
+        if(Build.VERSION.SDK_INT >= 21)
+            retVal = retVal.plus(ACCESS_BACKGROUND_LOCATION)
+
+        return retVal
+    }
 
 }

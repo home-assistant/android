@@ -26,18 +26,18 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED -> requestUpdates(context, intent)
-            ACTION_REQUEST_LOCATION_UPDATES -> requestUpdates(context, intent)
-            ACTION_PROCESS_LOCATION -> handleUpdate(context, intent)
+            Intent.ACTION_BOOT_COMPLETED -> requestUpdates(context)
+            ACTION_REQUEST_LOCATION_UPDATES -> requestUpdates(context)
+            ACTION_PROCESS_LOCATION -> handleUpdate(intent)
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
     }
 
-    private fun requestUpdates(context: Context, intent: Intent) {
+    private fun requestUpdates(context: Context) {
         Log.d(TAG, "Registering for location updates.")
 
         if (ActivityCompat.checkSelfPermission(
-                context!!,
+                context,
                 ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -54,11 +54,12 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
     }
 
-    private fun handleUpdate(context: Context, intent: Intent) {
+    private fun handleUpdate(intent: Intent) {
         Log.d(TAG, "Received location update.")
         val locationResult = LocationResult.extractResult(intent)
-        val lastLocation = locationResult.lastLocation
-        if (lastLocation != null) {
+
+        if (locationResult != null && locationResult.lastLocation != null) {
+            val lastLocation = locationResult.lastLocation
             Log.d(
                 TAG, "Last Location: " +
                         "\nCoords:(${lastLocation.latitude}, ${lastLocation.longitude})" +
