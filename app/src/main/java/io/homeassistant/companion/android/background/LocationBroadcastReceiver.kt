@@ -14,8 +14,7 @@ import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import io.homeassistant.companion.android.HomeAssistantApplication
-import io.homeassistant.companion.android.common.dagger.Graph
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import javax.inject.Inject
@@ -52,18 +51,13 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun ensureInjected(context: Context) {
-        if (context.applicationContext is HomeAssistantApplication) {
-            // If we have the application context then use it
+        if (context.applicationContext is GraphComponentAccessor) {
             DaggerReceiverComponent.builder()
-                .appComponent((context.applicationContext as HomeAssistantApplication).appComponent)
+                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
                 .build()
                 .inject(this)
         } else {
-            // But since it's not guaranteed by the API we can do this just in case.
-            DaggerReceiverComponent.builder()
-                .appComponent(Graph(context).appComponent)
-                .build()
-                .inject(this)
+            throw Exception("Application Context passed is not of our application!")
         }
     }
 
