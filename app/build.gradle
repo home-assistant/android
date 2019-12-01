@@ -5,6 +5,7 @@ apply plugin: 'com.google.firebase.appdistribution'
 apply plugin: 'com.github.triplet.play'
 apply plugin: 'de.mannodermaus.android-junit5'
 apply plugin: 'io.fabric'
+apply plugin: 'com.google.gms.google-services'
 
 buildscript {
     repositories {
@@ -100,6 +101,3 @@ dependencies {
     testImplementation "io.mockk:mockk:$mockkVersion"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion"
 }
-
-apply plugin: 'com.google.gms.google-services'
-apply plugin: 'kotlin-android-extensions'

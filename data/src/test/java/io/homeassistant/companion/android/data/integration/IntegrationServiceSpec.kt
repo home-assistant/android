@@ -67,7 +67,7 @@ object IntegrationServiceSpec : Spek({
                 )
                 mockService.enqueueResponse(200, "integration/empty.json")
                 response = runBlocking {
-                    mockService.get().updateLocation(mockService.getMockServer().url("/path/to/hook").toString(), integrationRequest)
+                    mockService.get().updateLocation(mockService.getMockServer().url("/path/to/hook"), integrationRequest)
                 }
                 request = mockService.takeRequest()
             }
