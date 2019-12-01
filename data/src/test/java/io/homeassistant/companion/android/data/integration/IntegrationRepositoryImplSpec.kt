@@ -120,7 +120,100 @@ object IntegrationRepositoryImplSpec : Spek({
                 coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
                 coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
             }
-            describe("updateLocation") {
+
+            describe("updateLocation cloud url") {
+                val location = UpdateLocation(
+                    "locationName",
+                    arrayOf(45.0, -45.0),
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                )
+                val integrationRequest = IntegrationRequest(
+                    "update_location",
+                    UpdateLocationRequest(
+                        location.locationName,
+                        location.gps,
+                        location.gpsAccuracy,
+                        location.battery,
+                        location.speed,
+                        location.altitude,
+                        location.course,
+                        location.verticalAccuracy
+                    )
+                )
+                beforeEachTest {
+                    coEvery { localStorage.getString("cloud_url") } returns "http://best.com/hook/id"
+                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+                    coEvery {
+                        integrationService.updateLocation(
+                            any(), // "http://example.com/api/webhook/FGHIJ",
+                            any() // integrationRequest
+                        )
+                    } returns Response.success(null)
+                    runBlocking { repository.updateLocation(location) }
+                }
+
+                it("should call the service.") {
+                    coVerify {
+                        integrationService.updateLocation(
+                            "http://best.com/hook/id",
+                            integrationRequest
+                        )
+                    }
+                }
+            }
+
+            describe("updateLocation remote ui url") {
+                val location = UpdateLocation(
+                    "locationName",
+                    arrayOf(45.0, -45.0),
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                )
+                val integrationRequest = IntegrationRequest(
+                    "update_location",
+                    UpdateLocationRequest(
+                        location.locationName,
+                        location.gps,
+                        location.gpsAccuracy,
+                        location.battery,
+                        location.speed,
+                        location.altitude,
+                        location.course,
+                        location.verticalAccuracy
+                    )
+                )
+                beforeEachTest {
+                    coEvery { localStorage.getString("cloud_url") } returns null
+                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+                    coEvery {
+                        integrationService.updateLocation(
+                            any(), // "http://example.com/api/webhook/FGHIJ",
+                            any() // integrationRequest
+                        )
+                    } returns Response.success(null)
+                    runBlocking { repository.updateLocation(location) }
+                }
+
+                it("should call the service.") {
+                    coVerify {
+                        integrationService.updateLocation(
+                            "http://better.com/api/webhook/FGHIJ",
+                            integrationRequest
+                        )
+                    }
+                }
+            }
+
+            describe("updateLocation auth url") {
                 val location = UpdateLocation(
                     "locationName",
                     arrayOf(45.0, -45.0),
@@ -160,6 +253,52 @@ object IntegrationRepositoryImplSpec : Spek({
                     coVerify {
                         integrationService.updateLocation(
                             "http://example.com/api/webhook/FGHIJ",
+                            integrationRequest
+                        )
+                    }
+                }
+            }
+
+            describe("updateLocation with trailing slash") {
+                val location = UpdateLocation(
+                    "locationName",
+                    arrayOf(45.0, -45.0),
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                )
+                val integrationRequest = IntegrationRequest(
+                    "update_location",
+                    UpdateLocationRequest(
+                        location.locationName,
+                        location.gps,
+                        location.gpsAccuracy,
+                        location.battery,
+                        location.speed,
+                        location.altitude,
+                        location.course,
+                        location.verticalAccuracy
+                    )
+                )
+                beforeEachTest {
+                    coEvery { localStorage.getString("cloud_url") } returns null
+                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com/"
+                    coEvery {
+                        integrationService.updateLocation(
+                            any(), // "http://example.com/api/webhook/FGHIJ",
+                            any() // integrationRequest
+                        )
+                    } returns Response.success(null)
+                    runBlocking { repository.updateLocation(location) }
+                }
+
+                it("should call the service.") {
+                    coVerify {
+                        integrationService.updateLocation(
+                            "http://better.com/api/webhook/FGHIJ",
                             integrationRequest
                         )
                     }
