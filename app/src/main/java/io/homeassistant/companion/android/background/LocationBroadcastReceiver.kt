@@ -18,11 +18,11 @@ import io.homeassistant.companion.android.DaggerReceiverComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class LocationBroadcastReceiver : BroadcastReceiver() {
 
@@ -72,7 +72,6 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
             createLocationRequest(),
             getLocationUpdateIntent(context)
         )
-
     }
 
     private fun handleUpdate(context: Context, intent: Intent) {
@@ -108,7 +107,6 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
-
     private fun getLocationUpdateIntent(context: Context): PendingIntent {
         val intent = Intent(context, LocationBroadcastReceiver::class.java)
         intent.action = ACTION_PROCESS_LOCATION
@@ -140,5 +138,4 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
         return (level.toFloat() / scale.toFloat() * 100.0f).toInt()
     }
-
 }

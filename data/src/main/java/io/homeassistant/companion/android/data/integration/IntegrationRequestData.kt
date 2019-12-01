@@ -10,4 +10,4 @@ data class UpdateLocationRequest(
     val altitude: Int,
     val course: Int,
     val verticalAccuracy: Int?
-): IntegrationRequestData()
+) : IntegrationRequestData()

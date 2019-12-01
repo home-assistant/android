@@ -8,5 +8,4 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 interface ReceiverComponent {
 
     fun inject(receiver: LocationBroadcastReceiver)
-
 }

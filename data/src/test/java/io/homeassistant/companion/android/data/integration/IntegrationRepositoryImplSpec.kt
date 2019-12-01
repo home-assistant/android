@@ -4,14 +4,18 @@ import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerifyAll
+import io.mockk.every
+import io.mockk.mockk
+import java.net.URL
+import kotlin.properties.Delegates
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import retrofit2.Response
-import java.net.URL
-import kotlin.properties.Delegates
 
 object IntegrationRepositoryImplSpec : Spek({
 
@@ -108,7 +112,6 @@ object IntegrationRepositoryImplSpec : Spek({
                 it("should return false when webhook has no value") {
                     Assertions.assertThat(isRegistered).isFalse()
                 }
-
             }
         }
 
@@ -147,8 +150,8 @@ object IntegrationRepositoryImplSpec : Spek({
                     coEvery { localStorage.getString("remote_ui_url") } returns null
                     coEvery {
                         integrationService.updateLocation(
-                            any(),//"http://example.com/api/webhook/FGHIJ",
-                            any()//integrationRequest
+                            any(), // "http://example.com/api/webhook/FGHIJ",
+                            any() // integrationRequest
                         )
                     } returns Response.success(null)
                     runBlocking { repository.updateLocation(location) }

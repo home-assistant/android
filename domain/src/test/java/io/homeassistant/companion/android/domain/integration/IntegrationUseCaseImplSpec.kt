@@ -59,6 +59,5 @@ object IntegrationUseCaseImplSpec : Spek({
                 coVerify { integrationRepository.updateLocation(location) }
             }
         }
-
     }
 })

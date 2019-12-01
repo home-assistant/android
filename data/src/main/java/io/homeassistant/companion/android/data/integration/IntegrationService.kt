@@ -15,7 +15,6 @@ interface IntegrationService {
         @Body request: RegisterDeviceRequest
     ): RegisterDeviceResponse
 
-
     @POST
     suspend fun updateLocation(
         @Url url: String,

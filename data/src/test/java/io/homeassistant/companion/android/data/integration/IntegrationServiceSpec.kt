@@ -53,7 +53,7 @@ object IntegrationServiceSpec : Spek({
             beforeEachTest {
                 val updateLocationRequest = UpdateLocationRequest(
                     "locationName",
-                    arrayOf(45.0,-45.0),
+                    arrayOf(45.0, -45.0),
                     0,
                     1,
                     2,

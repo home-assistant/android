@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.onboarding.integration
 
-import android.Manifest.permission.*
+import android.Manifest.permission.ACCESS_BACKGROUND_LOCATION
+import android.Manifest.permission.ACCESS_COARSE_LOCATION
+import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -37,7 +39,6 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     lateinit var presenter: MobileAppIntegrationPresenter
 
     private lateinit var viewFlipper: ViewFlipper
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,10 +109,10 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (requestCode == LOCATION_REQUEST_CODE
-            && grantResults[0] == PackageManager.PERMISSION_GRANTED
-            && grantResults[1] == PackageManager.PERMISSION_GRANTED
-            && grantResults[2] == PackageManager.PERMISSION_GRANTED
+        if (requestCode == LOCATION_REQUEST_CODE &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+            grantResults[1] == PackageManager.PERMISSION_GRANTED &&
+            grantResults[2] == PackageManager.PERMISSION_GRANTED
         ) {
             val intent = Intent(context, LocationBroadcastReceiver::class.java)
             intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
@@ -126,8 +127,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         return ActivityCompat.checkSelfPermission(
             context!!,
             ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(
+        ) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(
             context!!,
             ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
@@ -137,10 +138,9 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     private fun getLocationPermissions(): Array<String> {
         var retVal = arrayOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION)
 
-        if(Build.VERSION.SDK_INT >= 21)
+        if (Build.VERSION.SDK_INT >= 21)
             retVal = retVal.plus(ACCESS_BACKGROUND_LOCATION)
 
         return retVal
     }
-
 }
