@@ -61,15 +61,19 @@ class IntegrationRepositoryImpl @Inject constructor(
         val retVal = ArrayList<String>()
         val webhook = localStorage.getString(PREF_WEBHOOK_ID)
 
-        var url = localStorage.getString(PREF_CLOUD_URL)
-        if (url != null)
-            retVal.add(url)
+        localStorage.getString(PREF_CLOUD_URL)?.let {
+            retVal.add(it)
+        }
 
-        url = localStorage.getString(PREF_REMOTE_UI_URL)
-        if (url != null)
-            retVal.add("$url/api/webhook/$webhook")
+        localStorage.getString(PREF_REMOTE_UI_URL)?.let {
+            val base = if (it.last() == '/') it else "$it/"
+            retVal.add("${base}api/webhook/$webhook")
+        }
 
-        retVal.add(authenticationRepository.getUrl().toString() + "/api/webhook/" + webhook)
+        authenticationRepository.getUrl().toString().let {
+            val base = if (it.last() == '/') it else "$it/"
+            retVal.add("${base}api/webhook/$webhook")
+        }
 
         return retVal.toTypedArray()
     }
