@@ -12,6 +12,7 @@ import io.mockk.mockk
 import java.net.URL
 import kotlin.properties.Delegates
 import kotlinx.coroutines.runBlocking
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.assertj.core.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -160,7 +161,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 it("should call the service.") {
                     coVerify {
                         integrationService.updateLocation(
-                            "http://best.com/hook/id",
+                            "http://best.com/hook/id".toHttpUrl(),
                             integrationRequest
                         )
                     }
@@ -206,7 +207,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 it("should call the service.") {
                     coVerify {
                         integrationService.updateLocation(
-                            "http://better.com/api/webhook/FGHIJ",
+                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             integrationRequest
                         )
                     }
@@ -252,7 +253,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 it("should call the service.") {
                     coVerify {
                         integrationService.updateLocation(
-                            "http://example.com/api/webhook/FGHIJ",
+                            "http://example.com/api/webhook/FGHIJ".toHttpUrl(),
                             integrationRequest
                         )
                     }
@@ -298,7 +299,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 it("should call the service.") {
                     coVerify {
                         integrationService.updateLocation(
-                            "http://better.com/api/webhook/FGHIJ",
+                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             integrationRequest
                         )
                     }

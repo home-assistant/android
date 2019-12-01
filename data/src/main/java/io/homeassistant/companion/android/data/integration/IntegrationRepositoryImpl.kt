@@ -7,6 +7,8 @@ import io.homeassistant.companion.android.domain.integration.IntegrationReposito
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import javax.inject.Inject
 import javax.inject.Named
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -57,22 +59,26 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     // https://developers.home-assistant.io/docs/en/app_integration_sending_data.html#short-note-on-instance-urls
-    private suspend fun getUrls(): Array<String> {
-        val retVal = ArrayList<String>()
+    private suspend fun getUrls(): Array<HttpUrl> {
+        val retVal = ArrayList<HttpUrl>()
         val webhook = localStorage.getString(PREF_WEBHOOK_ID)
 
         localStorage.getString(PREF_CLOUD_URL)?.let {
-            retVal.add(it)
+            retVal.add(it.toHttpUrl())
         }
 
         localStorage.getString(PREF_REMOTE_UI_URL)?.let {
+            // The purpose of this check is to ensure that we don't have a double `/` at the root.
+            // If that happens we fail to call any webhook endpoints.
             val base = if (it.last() == '/') it else "$it/"
-            retVal.add("${base}api/webhook/$webhook")
+            retVal.add("${base}api/webhook/$webhook".toHttpUrl())
         }
 
         authenticationRepository.getUrl().toString().let {
+            // The purpose of this check is to ensure that we don't have a double `/` at the root.
+            // If that happens we fail to call any webhook endpoints.
             val base = if (it.last() == '/') it else "$it/"
-            retVal.add("${base}api/webhook/$webhook")
+            retVal.add("${base}api/webhook/$webhook".toHttpUrl())
         }
 
         return retVal.toTypedArray()

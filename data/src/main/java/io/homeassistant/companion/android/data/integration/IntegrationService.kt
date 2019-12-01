@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.data.integration
 
+import okhttp3.HttpUrl
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -17,7 +18,7 @@ interface IntegrationService {
 
     @POST
     suspend fun updateLocation(
-        @Url url: String,
+        @Url url: HttpUrl,
         @Body request: IntegrationRequest
     ): Response<ResponseBody>
 }
