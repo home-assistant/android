@@ -4,8 +4,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.webkit.*
+import android.webkit.JavascriptInterface
+import android.webkit.JsResult
+import android.webkit.WebChromeClient
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.BuildConfig
@@ -15,9 +18,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
-import org.json.JSONObject
 import javax.inject.Inject
-
+import org.json.JSONObject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -29,7 +31,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
 
-    @Inject lateinit var presenter: WebViewPresenter
+    @Inject
+    lateinit var presenter: WebViewPresenter
     private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,7 +57,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             webViewClient = WebViewClient()
 
             webChromeClient = object : WebChromeClient() {
-                override fun onJsConfirm(view: WebView, url: String, message: String, result: JsResult): Boolean {
+                override fun onJsConfirm(
+                    view: WebView,
+                    url: String,
+                    message: String,
+                    result: JsResult
+                ): Boolean {
                     AlertDialog
                         .Builder(this@WebViewActivity)
                         .setTitle(R.string.app_name)
@@ -86,21 +94,23 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         when {
                             JSONObject(message).get("type") == "config/get" -> {
                                 val script = "externalBus(" +
-                                        "${JSONObject(
-                                            mapOf(
-                                                "id" to JSONObject(message).get("id"),
-                                                "type" to "result",
-                                                "success" to true,
-                                                "result" to JSONObject(mapOf("hasSettingsScreen" to true))
-                                            )
-                                        )}" +
-                                        ");"
+                                    "${JSONObject(
+                                        mapOf(
+                                            "id" to JSONObject(message).get("id"),
+                                            "type" to "result",
+                                            "success" to true,
+                                            "result" to JSONObject(mapOf("hasSettingsScreen" to true))
+                                        )
+                                    )}" +
+                                    ");"
                                 Log.d(TAG, script)
                                 webView.evaluateJavascript(script) {
                                     Log.d(TAG, "Callback $it")
                                 }
                             }
-                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(SettingsActivity.newInstance(this@WebViewActivity))
+                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(
+                                SettingsActivity.newInstance(this@WebViewActivity)
+                            )
                         }
                     }
                 }

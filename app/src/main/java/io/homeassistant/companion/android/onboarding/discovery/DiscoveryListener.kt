@@ -5,5 +5,4 @@ interface DiscoveryListener {
     fun onSelectManualSetup()
 
     fun onHomeAssistantDiscover()
-
 }

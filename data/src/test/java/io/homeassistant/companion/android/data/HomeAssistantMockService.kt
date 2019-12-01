@@ -1,14 +1,14 @@
 package io.homeassistant.companion.android.data
 
+import java.io.IOException
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
-import java.io.IOException
-
 
 class HomeAssistantMockService<T>(private val c: Class<T>) {
 
     private val mockServer: MockWebServer = MockWebServer()
-    private val homeAssistantRetrofit = HomeAssistantRetrofit(mockServer.url("/").toString()).retrofit
+    private val homeAssistantRetrofit =
+        HomeAssistantRetrofit(mockServer.url("/").toString()).retrofit
 
     fun get(): T {
         return homeAssistantRetrofit.create(c)
@@ -38,5 +38,4 @@ class HomeAssistantMockService<T>(private val c: Class<T>) {
             throw RuntimeException()
         }
     }
-
 }

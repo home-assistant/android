@@ -28,5 +28,4 @@ class LocalStorageImpl(private val sharedPreferences: SharedPreferences) : Local
             null
         }
     }
-
 }

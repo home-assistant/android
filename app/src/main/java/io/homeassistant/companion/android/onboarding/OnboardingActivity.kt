@@ -15,8 +15,8 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
 
-
-class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener, AuthenticationListener, MobileAppIntegrationListener {
+class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener,
+    AuthenticationListener, MobileAppIntegrationListener {
 
     companion object {
         private const val TAG = "OnboardingActivity"
@@ -79,9 +79,8 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
         startWebView()
     }
 
-    private fun startWebView(){
+    private fun startWebView() {
         startActivity(WebViewActivity.newInstance(this))
         finish()
     }
-
 }

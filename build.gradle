@@ -6,24 +6,31 @@ buildscript {
         google()
         jcenter()
         maven { url 'https://maven.fabric.io/public' }
-
+        maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.5.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.3.2'
         classpath 'io.fabric.tools:gradle:1.31.2'
+        classpath "org.jlleitschuh.gradle:ktlint-gradle:9.1.1"
     }
 }
+
+apply plugin: "org.jlleitschuh.gradle.ktlint"
 
 allprojects {
     repositories {
         google()
         jcenter()
-
     }
+    apply plugin: "org.jlleitschuh.gradle.ktlint"
 }
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+ktlint {
+    android = true
 }

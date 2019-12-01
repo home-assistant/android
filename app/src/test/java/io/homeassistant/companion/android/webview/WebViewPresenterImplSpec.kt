@@ -2,14 +2,19 @@ package io.homeassistant.companion.android.webview
 
 import android.net.Uri
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.runs
+import io.mockk.verify
+import java.net.URL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.net.URL
-
 
 object WebViewPresenterImplSpec : Spek({
 
@@ -31,7 +36,9 @@ object WebViewPresenterImplSpec : Spek({
                 coEvery { authenticationUseCase.getUrl() } returns URL("https://demo.home-assistant.io/")
                 mockkStatic(Uri::class)
                 every { Uri.parse("https://demo.home-assistant.io/") } returns mockk {
-                    every { buildUpon().appendQueryParameter("external_auth", "1").build().toString() } returns "https://demo.home-assistant.io?external_auth=1"
+                    every {
+                        buildUpon().appendQueryParameter("external_auth", "1").build().toString()
+                    } returns "https://demo.home-assistant.io?external_auth=1"
                 }
 
                 presenter.onViewReady()

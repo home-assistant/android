@@ -11,5 +11,4 @@ interface IntegrationService {
         @Header("Authorization") auth: String,
         @Body request: RegisterDeviceRequest
     ): RegisterDeviceResponse
-
 }

@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import javax.inject.Inject
 
-
 class ManualSetupFragment : Fragment(), ManualSetupView {
 
     companion object {
@@ -23,7 +22,8 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         }
     }
 
-    @Inject lateinit var presenter: ManualSetupPresenter
+    @Inject
+    lateinit var presenter: ManualSetupPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +36,11 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
             .inject(this)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_manual_setup, container, false).apply {
             findViewById<Button>(R.id.ok).setOnClickListener {
                 presenter.onClickOk(findViewById<EditText>(R.id.home_assistant_url).text.toString())
@@ -49,13 +53,13 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         (activity as ManualSetupListener).onSelectUrl()
     }
 
-    override fun displayUrlError(){
-        view?.findViewById<TextInputLayout>(R.id.url_text_layout)?.error = context?.getString(R.string.url_parse_error)
+    override fun displayUrlError() {
+        view?.findViewById<TextInputLayout>(R.id.url_text_layout)?.error =
+            context?.getString(R.string.url_parse_error)
     }
 
     override fun onDestroy() {
         presenter.onFinish()
         super.onDestroy()
     }
-
 }

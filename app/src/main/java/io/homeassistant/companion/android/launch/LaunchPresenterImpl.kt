@@ -2,8 +2,12 @@ package io.homeassistant.companion.android.launch
 
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
-import kotlinx.coroutines.*
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class LaunchPresenterImpl @Inject constructor(
     private val view: LaunchView,
@@ -25,5 +29,4 @@ class LaunchPresenterImpl @Inject constructor(
     override fun onFinish() {
         mainScope.cancel()
     }
-
 }

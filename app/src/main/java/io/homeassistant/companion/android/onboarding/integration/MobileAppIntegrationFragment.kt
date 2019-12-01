@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import javax.inject.Inject
 
-
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
     companion object {
@@ -82,6 +81,4 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         presenter.onFinish()
         super.onDestroy()
     }
-
 }
-

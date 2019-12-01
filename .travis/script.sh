@@ -7,6 +7,7 @@ export VERSION_CODE=`git rev-list --count HEAD`
 
 ./gradlew test
 ./gradlew lint
+./gradlew ktlintCheck
 
 if [ "$TRAVIS_PULL_REQUEST" = "false" ]
 then

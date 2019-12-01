@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import javax.inject.Inject
 
-
 class AuthenticationFragment : Fragment(), AuthenticationView {
 
     companion object {
@@ -24,7 +23,8 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         }
     }
 
-    @Inject lateinit var presenter: AuthenticationPresenter
+    @Inject
+    lateinit var presenter: AuthenticationPresenter
     private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,7 +38,11 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
             .inject(this)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_authentication, container, false).apply {
             webView = findViewById(R.id.webview)
 

@@ -5,7 +5,6 @@ import android.content.Context
 import io.homeassistant.companion.android.common.LocalStorageImpl
 import kotlinx.coroutines.runBlocking
 
-
 class Graph(
     private val application: Application
 ) {
@@ -35,11 +34,23 @@ class Graph(
     private fun buildComponent() {
         dataComponent = DaggerDataComponent
             .builder()
-            .dataModule(DataModule(
-                url,
-                LocalStorageImpl(application.getSharedPreferences("session", Context.MODE_PRIVATE)),
-                LocalStorageImpl(application.getSharedPreferences("integration", Context.MODE_PRIVATE))
-            ))
+            .dataModule(
+                DataModule(
+                    url,
+                    LocalStorageImpl(
+                        application.getSharedPreferences(
+                            "session",
+                            Context.MODE_PRIVATE
+                        )
+                    ),
+                    LocalStorageImpl(
+                        application.getSharedPreferences(
+                            "integration",
+                            Context.MODE_PRIVATE
+                        )
+                    )
+                )
+            )
             .build()
 
         domainComponent = DaggerDomainComponent
@@ -51,5 +62,4 @@ class Graph(
             .domainComponent(domainComponent)
             .build()
     }
-
 }
