@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
@@ -40,16 +41,29 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onReceive(context: Context, intent: Intent) {
-        DaggerReceiverComponent.builder()
-            .appComponent(Graph(context).appComponent)
-            .build()
-            .inject(this)
+        ensureInjected(context)
 
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED -> requestUpdates(context)
             ACTION_REQUEST_LOCATION_UPDATES -> requestUpdates(context)
             ACTION_PROCESS_LOCATION -> handleUpdate(context, intent)
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
+        }
+    }
+
+    private fun ensureInjected(context: Context) {
+        if (context.applicationContext is HomeAssistantApplication) {
+            // If we have the application context then use it
+            DaggerReceiverComponent.builder()
+                .appComponent((context.applicationContext as HomeAssistantApplication).appComponent)
+                .build()
+                .inject(this)
+        } else {
+            // But since it's not guaranteed by the API we can do this just in case.
+            DaggerReceiverComponent.builder()
+                .appComponent(Graph(context).appComponent)
+                .build()
+                .inject(this)
         }
     }
 
