@@ -131,19 +131,18 @@ object IntegrationRepositoryImplSpec : Spek({
                     4,
                     5
                 )
-                val updateLocationRequest = UpdateLocationRequest(
-                    location.locationName,
-                    location.gps,
-                    location.gpsAccuracy,
-                    location.battery,
-                    location.speed,
-                    location.altitude,
-                    location.course,
-                    location.verticalAccuracy
-                )
                 val integrationRequest = IntegrationRequest(
                     "update_location",
-                    updateLocationRequest
+                    UpdateLocationRequest(
+                        location.locationName,
+                        location.gps,
+                        location.gpsAccuracy,
+                        location.battery,
+                        location.speed,
+                        location.altitude,
+                        location.course,
+                        location.verticalAccuracy
+                    )
                 )
                 beforeEachTest {
                     coEvery { localStorage.getString("cloud_url") } returns null
