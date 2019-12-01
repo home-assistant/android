@@ -75,25 +75,23 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
     private fun handleUpdate(context: Context, intent: Intent) {
         Log.d(TAG, "Received location update.")
-        val locationResult = LocationResult.extractResult(intent)
+        LocationResult.extractResult(intent)?.lastLocation?.let {
 
-        if (locationResult != null && locationResult.lastLocation != null) {
-            val lastLocation = locationResult.lastLocation
             Log.d(
                 TAG, "Last Location: " +
-                        "\nCoords:(${lastLocation.latitude}, ${lastLocation.longitude})" +
-                        "\nAccuracy: ${lastLocation.accuracy}" +
-                        "\nBearing: ${lastLocation.bearing}"
+                    "\nCoords:(${it.latitude}, ${it.longitude})" +
+                    "\nAccuracy: ${it.accuracy}" +
+                    "\nBearing: ${it.bearing}"
             )
             val updateLocation = UpdateLocation(
                 "",
-                arrayOf(lastLocation.latitude, lastLocation.longitude),
-                lastLocation.accuracy.toInt(),
+                arrayOf(it.latitude, it.longitude),
+                it.accuracy.toInt(),
                 getBatteryLevel(context),
-                lastLocation.speed.toInt(),
-                lastLocation.altitude.toInt(),
-                lastLocation.bearing.toInt(),
-                if (Build.VERSION.SDK_INT >= 26) lastLocation.verticalAccuracyMeters.toInt() else null
+                it.speed.toInt(),
+                it.altitude.toInt(),
+                it.bearing.toInt(),
+                if (Build.VERSION.SDK_INT >= 26) it.verticalAccuracyMeters.toInt() else null
             )
 
             mainScope.launch {
