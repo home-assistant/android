@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding.authentication
 
-
 interface AuthenticationPresenter {
 
     fun onViewReady()
@@ -8,5 +7,4 @@ interface AuthenticationPresenter {
     fun onRedirectUrl(redirectUrl: String): Boolean
 
     fun onFinish()
-
 }

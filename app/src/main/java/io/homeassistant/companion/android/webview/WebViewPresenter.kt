@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.webview
 
-
 interface WebViewPresenter {
 
     fun onViewReady()
@@ -10,5 +9,4 @@ interface WebViewPresenter {
     fun onRevokeExternalAuth(callback: String)
 
     fun onFinish()
-
 }

@@ -2,16 +2,20 @@ package io.homeassistant.companion.android.onboarding.authentication
 
 import android.net.Uri
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.mockk.*
+import io.mockk.Called
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.verify
+import java.net.URL
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.net.URL
-
 
 object AuthenticationPresenterImplSpec : Spek({
 

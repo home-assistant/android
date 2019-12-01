@@ -10,7 +10,6 @@ import android.widget.ViewFlipper
 import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.R
 
-
 class DiscoveryFragment : Fragment() {
 
     companion object {
@@ -24,10 +23,15 @@ class DiscoveryFragment : Fragment() {
 
     private lateinit var viewFlipper: ViewFlipper
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_discovery, container, false).apply {
             viewFlipper = this.findViewById(R.id.view_flipper)
-            this.findViewById<Button>(R.id.manual_setup).setOnClickListener { (activity as DiscoveryListener).onSelectManualSetup() }
+            this.findViewById<Button>(R.id.manual_setup)
+                .setOnClickListener { (activity as DiscoveryListener).onSelectManualSetup() }
             this.findViewById<Button>(R.id.retry).setOnClickListener { scan() }
         }
     }

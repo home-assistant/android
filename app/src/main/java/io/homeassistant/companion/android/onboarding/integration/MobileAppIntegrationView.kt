@@ -9,5 +9,4 @@ interface MobileAppIntegrationView {
     fun showLoading()
 
     fun showError()
-
 }

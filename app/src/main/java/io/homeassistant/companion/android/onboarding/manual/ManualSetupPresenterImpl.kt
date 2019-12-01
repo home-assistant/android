@@ -2,10 +2,14 @@ package io.homeassistant.companion.android.onboarding.manual
 
 import android.util.Log
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import kotlinx.coroutines.*
 import java.net.MalformedURLException
 import java.net.URL
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class ManualSetupPresenterImpl @Inject constructor(
     private val view: ManualSetupView,
@@ -37,5 +41,4 @@ class ManualSetupPresenterImpl @Inject constructor(
     override fun onFinish() {
         mainScope.cancel()
     }
-
 }

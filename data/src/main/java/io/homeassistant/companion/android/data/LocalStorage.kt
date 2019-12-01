@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.data
 
-
 interface LocalStorage {
 
     suspend fun putString(key: String, value: String?)
@@ -10,5 +9,4 @@ interface LocalStorage {
     suspend fun putLong(key: String, value: Long?)
 
     suspend fun getLong(key: String): Long?
-
 }

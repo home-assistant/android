@@ -3,12 +3,11 @@ package io.homeassistant.companion.android.domain.authentication
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import java.net.URL
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.net.URL
-
 
 object AuthenticationUseCaseImplSpec : Spek({
 
