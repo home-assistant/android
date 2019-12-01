@@ -110,9 +110,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (requestCode == LOCATION_REQUEST_CODE &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED &&
-            grantResults[1] == PackageManager.PERMISSION_GRANTED &&
-            grantResults[2] == PackageManager.PERMISSION_GRANTED
+            grantResults.all { it == PackageManager.PERMISSION_GRANTED }
         ) {
             val intent = Intent(context, LocationBroadcastReceiver::class.java)
             intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
