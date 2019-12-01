@@ -17,6 +17,8 @@ buildscript {
     }
 }
 
+apply plugin: "org.jlleitschuh.gradle.ktlint"
+
 allprojects {
     repositories {
         google()
@@ -32,5 +34,3 @@ task clean(type: Delete) {
 ktlint {
     android = true
 }
-
-apply plugin: "org.jlleitschuh.gradle.ktlint"
