@@ -1,11 +1,12 @@
 package io.homeassistant.companion.android.common.dagger
 
+import android.app.Application
 import android.content.Context
 import io.homeassistant.companion.android.common.LocalStorageImpl
 import kotlinx.coroutines.runBlocking
 
 class Graph(
-    private val context: Context
+    private val application: Application
 ) {
 
     lateinit var appComponent: AppComponent
@@ -37,13 +38,13 @@ class Graph(
                 DataModule(
                     url,
                     LocalStorageImpl(
-                        context.getSharedPreferences(
+                        application.getSharedPreferences(
                             "session",
                             Context.MODE_PRIVATE
                         )
                     ),
                     LocalStorageImpl(
-                        context.getSharedPreferences(
+                        application.getSharedPreferences(
                             "integration",
                             Context.MODE_PRIVATE
                         )
