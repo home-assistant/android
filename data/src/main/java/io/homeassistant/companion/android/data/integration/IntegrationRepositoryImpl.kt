@@ -68,17 +68,15 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
 
         localStorage.getString(PREF_REMOTE_UI_URL)?.let {
-            // The purpose of this check is to ensure that we don't have a double `/` at the root.
-            // If that happens we fail to call any webhook endpoints.
-            val base = if (it.last() == '/') it else "$it/"
-            retVal.add("${base}api/webhook/$webhook".toHttpUrl())
+            retVal.add(it.toHttpUrl().newBuilder()
+                .addPathSegments("api/webhook/$webhook")
+                .build())
         }
 
         authenticationRepository.getUrl().toString().let {
-            // The purpose of this check is to ensure that we don't have a double `/` at the root.
-            // If that happens we fail to call any webhook endpoints.
-            val base = if (it.last() == '/') it else "$it/"
-            retVal.add("${base}api/webhook/$webhook".toHttpUrl())
+            retVal.add(it.toHttpUrl().newBuilder()
+                .addPathSegments("api/webhook/$webhook")
+                .build())
         }
 
         return retVal.toTypedArray()
