@@ -92,6 +92,8 @@ dependencies {
 
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
 
+    implementation 'com.google.android.gms:play-services-location:17.0.0'
+
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek2Version"
     testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek2Version"
     testImplementation "org.assertj:assertj-core:$assertJVersion"
@@ -99,4 +101,6 @@ dependencies {
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion"
 }
 
+// This plugin must stay at the bottom
+// https://developers.google.com/android/guides/google-services-plugin
 apply plugin: 'com.google.gms.google-services'

@@ -48,5 +48,16 @@ object IntegrationUseCaseImplSpec : Spek({
                 coVerify { integrationRepository.isRegistered() }
             }
         }
+
+        describe("updateLocation") {
+            val location = mockk<UpdateLocation>()
+            beforeEachTest {
+                runBlocking { useCase.updateLocation(location) }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.updateLocation(location) }
+            }
+        }
     }
 })

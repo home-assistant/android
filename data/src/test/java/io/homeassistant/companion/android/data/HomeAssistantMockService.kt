@@ -14,6 +14,8 @@ class HomeAssistantMockService<T>(private val c: Class<T>) {
         return homeAssistantRetrofit.create(c)
     }
 
+    fun getMockServer() = mockServer
+
     fun enqueueResponse(code: Int, file: String? = null) {
         val mockResponse = MockResponse()
         if (file != null) {
