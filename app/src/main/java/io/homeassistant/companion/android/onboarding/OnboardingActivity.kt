@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import co.lokalise.android.sdk.core.LokaliseContextWrapper
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
@@ -82,5 +83,9 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     private fun startWebView() {
         startActivity(WebViewActivity.newInstance(this))
         finish()
+    }
+
+    override fun attachBaseContext(newBase: Context?) {
+        super.attachBaseContext(LokaliseContextWrapper.wrap(newBase))
     }
 }
