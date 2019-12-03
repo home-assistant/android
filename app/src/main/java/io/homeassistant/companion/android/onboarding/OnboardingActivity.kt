@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import co.lokalise.android.sdk.core.LokaliseContextWrapper
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
@@ -14,7 +15,6 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
-import co.lokalise.android.sdk.core.LokaliseContextWrapper
 
 class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener,
     AuthenticationListener, MobileAppIntegrationListener {

@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android
 
 import android.app.Application
+import co.lokalise.android.sdk.LokaliseSDK
 import com.jakewharton.threetenabp.AndroidThreeTen
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import co.lokalise.android.sdk.LokaliseSDK
 
 class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
