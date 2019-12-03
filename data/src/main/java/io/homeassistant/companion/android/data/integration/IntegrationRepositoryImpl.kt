@@ -50,12 +50,11 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try!
             }
             // if we had a successful call we can return
-            if(wasSuccess)
+            if (wasSuccess)
                 return
         }
 
         throw IntegrationException()
-
     }
 
     // https://developers.home-assistant.io/docs/en/app_integration_sending_data.html#short-note-on-instance-urls
