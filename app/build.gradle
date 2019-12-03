@@ -26,7 +26,7 @@ android {
         minSdkVersion projectMinSdkVersion
         targetSdkVersion 29
         versionCode "${System.env.VERSION_CODE ?: 1}".toInteger()
-        versionName "1.0.0"
+        versionName "${System.env.VERSION_NAME ?: "1.0.0"}"
     }
 
     firebaseAppDistribution {
