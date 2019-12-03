@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
+import co.lokalise.android.sdk.core.LokaliseContextWrapper
 
 class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener,
     AuthenticationListener, MobileAppIntegrationListener {
@@ -82,5 +83,9 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     private fun startWebView() {
         startActivity(WebViewActivity.newInstance(this))
         finish()
+    }
+
+    override fun attachBaseContext(newBase: Context?) {
+        super.attachBaseContext(LokaliseContextWrapper.wrap(newBase))
     }
 }
