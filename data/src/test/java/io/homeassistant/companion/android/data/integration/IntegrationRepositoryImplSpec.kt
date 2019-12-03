@@ -13,7 +13,6 @@ import java.net.URL
 import kotlin.properties.Delegates
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.catchThrowable
 import org.spekframework.spek2.Spek
