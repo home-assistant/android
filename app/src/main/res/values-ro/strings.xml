@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="app_name">Home Assistant</string>
+  <string name="scanning_network">Se caută o instanță a Home Assistant-ul in rețeaua locală </string>
+  <string name="home_assistant_not_discover">Nu am găsit instanța Home Assistant-ului</string>
+  <string name="connect_to_home_internet">Asigurați-vă că telefonul dvs. este conectat 
+ la rețeaua locală.</string>
+  <string name="scan_again">scaneaza inca o data</string>
+  <string name="manual_setup">ntroduceți manual adresa</string>
+  <string name="input_url">Adresa Home Assistant-</string>
+  <string name="input_url_hint">https://example.duckdns.org:8123</string>
+  <string name="status_of_mobile_app_integration">Statusul integrării a l aplicatiei mobile.</string>
+  <string name="checking_with_home_assistant">Verific cu Home Assistant-ul</string>
+  <string name="skip">Nu acum </string>
+  <string name="retry">Reîncercați</string>
+  <string name="attempting_registration">Se încearcă înregistrarea aplicației...</string>
+  <string name="unable_to_register">Nu s-au putut înregistra </string>
+  <string name="error_with_registration">Te rog verifică dacă este activată integrarea pentru mobile_app în configurația Home Assistant-ului.</string>
+  <string name="url_parse_error">Nu am putut analiza adresa Home Assistant-ului. Ar trebui sa arate așa: https:///example.com</string>
+</resources>

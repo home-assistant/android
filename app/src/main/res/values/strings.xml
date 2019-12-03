@@ -1,18 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <resources>
-    <string name="app_name">Home Assistant</string>
-    <string name="scanning_network">Scanning the network \nfor Home Assistant</string>
-    <string name="home_assistant_not_discover">Unable to find your \nHome Assistant instance</string>
-    <string name="connect_to_home_internet">Make sure your phone is connected \nto your home internet.</string>
-    <string name="scan_again">scan again</string>
-    <string name="manual_setup">enter address manually</string>
-    <string name="input_url">Home Assistant URL</string>
-    <string name="input_url_hint">https://example.duckdns.org:8123</string>
-    <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
-    <string name="checking_with_home_assistant">Checking with Home Assistant</string>
-    <string name="skip">Skip</string>
-    <string name="retry">Retry</string>
-    <string name="attempting_registration">Attempting to register application…</string>
-    <string name="unable_to_register">Unable to Register Application</string>
-    <string name="error_with_registration">Please check to ensure you have the mobile_app \nintegration enabled on your home assistant instance.</string>
-    <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
+  <string name="app_name">Home Assistant</string>
+  <string name="scanning_network">Scanning the network 
+for Home Assistant</string>
+  <string name="home_assistant_not_discover">Unable to find your 
+Home Assistant instance</string>
+  <string name="connect_to_home_internet">Make sure your phone is connected 
+to your home internet.</string>
+  <string name="scan_again">scan again</string>
+  <string name="manual_setup">enter address manually</string>
+  <string name="input_url">Home Assistant URL</string>
+  <string name="input_url_hint">https://example.duckdns.org:8123</string>
+  <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
+  <string name="checking_with_home_assistant">Checking with Home Assistant</string>
+  <string name="skip">Skip</string>
+  <string name="retry">Retry</string>
+  <string name="attempting_registration">Attempting to register application…</string>
+  <string name="unable_to_register">Unable to Register Application</string>
+  <string name="error_with_registration">Please check to ensure you have the mobile_app 
+integration enabled on your home assistant instance.</string>
+  <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
 </resources>
