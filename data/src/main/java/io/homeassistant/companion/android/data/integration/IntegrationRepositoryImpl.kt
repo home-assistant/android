@@ -42,20 +42,20 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
-        var wasSuccess = false
         for (it in getUrls()) {
+            var wasSuccess = false
             try {
-                wasSuccess =
-                    integrationService.updateLocation(it, updateLocationRequest).isSuccessful
-                break // If we get here update success!
+                wasSuccess = integrationService.updateLocation(it, updateLocationRequest).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
+            // if we had a successful call we can return
+            if(wasSuccess)
+                return
         }
 
-        if (!wasSuccess) {
-            throw IntegrationException()
-        }
+        throw IntegrationException()
+
     }
 
     // https://developers.home-assistant.io/docs/en/app_integration_sending_data.html#short-note-on-instance-urls

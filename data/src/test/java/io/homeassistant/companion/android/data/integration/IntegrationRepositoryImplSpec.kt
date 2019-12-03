@@ -294,7 +294,9 @@ object IntegrationRepositoryImplSpec : Spek({
                             "http://best.com/hook/id".toHttpUrl(),
                             any() // integrationRequest
                         )
-                    } throws Exception()
+                    } returns mockk {
+                        every { isSuccessful } returns false
+                    }
                     coEvery {
                         integrationService.updateLocation(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
@@ -341,19 +343,25 @@ object IntegrationRepositoryImplSpec : Spek({
                             "http://best.com/hook/id".toHttpUrl(),
                             any() // integrationRequest
                         )
-                    } throws Exception()
+                    } returns mockk {
+                        every { isSuccessful } returns false
+                    }
                     coEvery {
                         integrationService.updateLocation(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             any() // integrationRequest
                         )
-                    } throws Exception()
+                    } returns mockk {
+                        every { isSuccessful } returns false
+                    }
                     coEvery {
                         integrationService.updateLocation(
                             "http://example.com/api/webhook/FGHIJ".toHttpUrl(),
                             any() // integrationRequest
                         )
-                    } throws Exception()
+                    } returns mockk {
+                        every { isSuccessful } returns false
+                    }
 
                     thrown = catchThrowable { runBlocking { repository.updateLocation(location) } }
                 }
