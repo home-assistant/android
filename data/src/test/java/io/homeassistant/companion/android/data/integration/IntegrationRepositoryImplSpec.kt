@@ -14,6 +14,8 @@ import kotlin.properties.Delegates
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.catchThrowable
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import retrofit2.Response
@@ -96,7 +98,7 @@ object IntegrationRepositoryImplSpec : Spek({
                     runBlocking { isRegistered = repository.isRegistered() }
                 }
                 it("should return true when webhook has a value") {
-                    Assertions.assertThat(isRegistered).isTrue()
+                    assertThat(isRegistered).isTrue()
                 }
             }
         }
@@ -111,7 +113,7 @@ object IntegrationRepositoryImplSpec : Spek({
                     runBlocking { isRegistered = repository.isRegistered() }
                 }
                 it("should return false when webhook has no value") {
-                    Assertions.assertThat(isRegistered).isFalse()
+                    assertThat(isRegistered).isFalse()
                 }
             }
         }
@@ -257,6 +259,108 @@ object IntegrationRepositoryImplSpec : Spek({
                             integrationRequest
                         )
                     }
+                }
+            }
+
+            describe("updateLocation fail then succeeds") {
+                val location = UpdateLocation(
+                    "locationName",
+                    arrayOf(45.0, -45.0),
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                )
+                val integrationRequest = IntegrationRequest(
+                    "update_location",
+                    UpdateLocationRequest(
+                        location.locationName,
+                        location.gps,
+                        location.gpsAccuracy,
+                        location.battery,
+                        location.speed,
+                        location.altitude,
+                        location.course,
+                        location.verticalAccuracy
+                    )
+                )
+
+                beforeEachTest {
+                    coEvery { localStorage.getString("cloud_url") } returns "http://best.com/hook/id"
+                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+                    coEvery {
+                        integrationService.updateLocation(
+                            "http://best.com/hook/id".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } throws Exception()
+                    coEvery {
+                        integrationService.updateLocation(
+                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } returns Response.success(null)
+
+                    runBlocking { repository.updateLocation(location) }
+                }
+
+                it("should call service 2 times") {
+                    coVerifyAll {
+                        integrationService.updateLocation(
+                            "http://best.com/hook/id".toHttpUrl(),
+                            integrationRequest
+                        )
+                        integrationService.updateLocation(
+                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
+                            integrationRequest
+                        )
+                    }
+                }
+            }
+
+            describe("updateLocation failure") {
+                val location = UpdateLocation(
+                    "locationName",
+                    arrayOf(45.0, -45.0),
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5
+                )
+
+                lateinit var thrown: Throwable
+
+                beforeEachTest {
+                    coEvery { localStorage.getString("cloud_url") } returns "http://best.com/hook/id"
+                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+                    coEvery {
+                        integrationService.updateLocation(
+                            "http://best.com/hook/id".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } throws Exception()
+                    coEvery {
+                        integrationService.updateLocation(
+                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } throws Exception()
+                    coEvery {
+                        integrationService.updateLocation(
+                            "http://example.com/api/webhook/FGHIJ".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } throws Exception()
+
+                    thrown = catchThrowable { runBlocking { repository.updateLocation(location) } }
+                }
+
+                it("should throw an exception") {
+                    assertThat(thrown).isInstanceOf(IntegrationException::class.java)
                 }
             }
 

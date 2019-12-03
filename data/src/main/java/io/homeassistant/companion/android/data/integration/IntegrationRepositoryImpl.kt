@@ -43,11 +43,11 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
         var wasSuccess = false
-        getUrls().forEach {
+        for (it in getUrls()) {
             try {
                 wasSuccess =
                     integrationService.updateLocation(it, updateLocationRequest).isSuccessful
-                return@forEach // If we get here update success!
+                break // If we get here update success!
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
@@ -68,15 +68,19 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
 
         localStorage.getString(PREF_REMOTE_UI_URL)?.let {
-            retVal.add(it.toHttpUrl().newBuilder()
-                .addPathSegments("api/webhook/$webhook")
-                .build())
+            retVal.add(
+                it.toHttpUrl().newBuilder()
+                    .addPathSegments("api/webhook/$webhook")
+                    .build()
+            )
         }
 
         authenticationRepository.getUrl().toString().let {
-            retVal.add(it.toHttpUrl().newBuilder()
-                .addPathSegments("api/webhook/$webhook")
-                .build())
+            retVal.add(
+                it.toHttpUrl().newBuilder()
+                    .addPathSegments("api/webhook/$webhook")
+                    .build()
+            )
         }
 
         return retVal.toTypedArray()
