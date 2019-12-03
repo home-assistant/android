@@ -11,7 +11,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import co.lokalise.android.sdk.core.LokaliseContextWrapper
+import com.lokalise.sdk.LokaliseContextWrapper
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -149,7 +149,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onDestroy()
     }
 
-    override fun attachBaseContext(newBase: Context?) {
+    override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LokaliseContextWrapper.wrap(newBase))
     }
 }
