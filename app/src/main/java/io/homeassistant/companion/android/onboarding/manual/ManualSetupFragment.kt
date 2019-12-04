@@ -4,8 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.Button
 import android.widget.EditText
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.fragment.app.Fragment
 import com.google.android.material.textfield.TextInputLayout
 import io.homeassistant.companion.android.DaggerPresenterComponent
@@ -42,10 +44,21 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_manual_setup, container, false).apply {
+            findViewById<AppCompatEditText>(R.id.home_assistant_url).setOnEditorActionListener { view, actionId, event ->
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    submitForm()
+                    return@setOnEditorActionListener true
+                }
+                return@setOnEditorActionListener false
+            }
             findViewById<Button>(R.id.ok).setOnClickListener {
-                presenter.onClickOk(findViewById<EditText>(R.id.home_assistant_url).text.toString())
+                submitForm()
             }
         }
+    }
+
+    private fun View.submitForm() {
+        presenter.onClickOk(findViewById<EditText>(R.id.home_assistant_url).text.toString())
     }
 
     override fun urlSaved() {

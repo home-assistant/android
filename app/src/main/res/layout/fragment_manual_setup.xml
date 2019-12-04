@@ -22,6 +22,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:inputType="text"
+            android:maxLines="1"
+            android:lines="1"
+            android:imeOptions="actionDone"
             android:hint="@string/input_url_hint" />
 
     </com.google.android.material.textfield.TextInputLayout>
