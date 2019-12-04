@@ -41,6 +41,14 @@
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity android:name=".webview.WebViewActivity" />
         <activity android:name=".settings.SettingsActivity" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_launcher_foreground" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/colorPrimary" />
+
     </application>
 
 </manifest>

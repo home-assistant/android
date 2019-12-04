@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.onboarding.integration
 
 import android.os.Build
 import android.util.Log
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
@@ -11,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.util.*
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
     private val view: MobileAppIntegrationView,
@@ -28,6 +31,25 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         view.showLoading()
 
         mainScope.launch {
+
+            var appData = hashMapOf(
+                "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification"
+            )
+
+            FirebaseInstanceId.getInstance().instanceId
+                .addOnCompleteListener(OnCompleteListener { task ->
+                    if (!task.isSuccessful) {
+                        Log.w(TAG, "getInstanceId failed", task.exception)
+                        return@OnCompleteListener
+                    }
+
+                    val token = task.result?.token.toString()
+
+                    Log.w(TAG, "InstanceID Token:($token)")
+
+                    appData.put("push_token", token)
+                })
+
             val deviceRegistration = DeviceRegistration(
                 BuildConfig.APPLICATION_ID,
                 "Home Assistant",
@@ -38,8 +60,9 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
                 "Android",
                 Build.VERSION.SDK_INT.toString(),
                 false,
-                null
+                appData
             )
+
             try {
                 integrationUseCase.registerDevice(deviceRegistration)
                 view.deviceRegistered()

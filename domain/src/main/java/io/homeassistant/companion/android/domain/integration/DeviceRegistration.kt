@@ -13,5 +13,5 @@ data class DeviceRegistration(
     val osName: String,
     val osVersion: String,
     val supportsEncryption: Boolean,
-    val appData: Dictionary<String, Objects>?
+    val appData: HashMap<String, String>?
 )

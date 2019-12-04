@@ -15,5 +15,5 @@ data class RegisterDeviceRequest(
     var osVersion: String,
     var supportsEncryption: Boolean,
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    var appData: Dictionary<String, Objects>?
+    var appData: HashMap<String, String>?
 )
