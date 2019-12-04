@@ -64,18 +64,14 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             findViewById<Button>(R.id.retry).setOnClickListener {
                 presenter.onRegistrationAttempt()
             }
-        }
-    }
 
-    override fun onResume() {
-        super.onResume()
-        presenter.onRegistrationAttempt()
+            presenter.onRegistrationAttempt()
+        }
     }
 
     override fun deviceRegistered() {
         if (!haveLocationPermission()) {
-            ActivityCompat.requestPermissions(
-                activity!!,
+            requestPermissions(
                 getLocationPermissions(),
                 LOCATION_REQUEST_CODE
             )
@@ -126,10 +122,10 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             context!!,
             ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(
-            context!!,
-            ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
+            ActivityCompat.checkSelfPermission(
+                context!!,
+                ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
     }
 
     @SuppressLint("InlinedApi")
