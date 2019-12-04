@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.data.integration
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
+import io.homeassistant.companion.android.domain.integration.EntityResponse
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import javax.inject.Inject
@@ -21,6 +23,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_REMOTE_UI_URL = "remote_ui_url"
         private const val PREF_SECRET = "secret"
         private const val PREF_WEBHOOK_ID = "webhook_id"
+        private const val PREF_ZONES = "zones"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -52,6 +55,25 @@ class IntegrationRepositoryImpl @Inject constructor(
             // if we had a successful call we can return
             if (wasSuccess)
                 return
+        }
+
+        throw IntegrationException()
+    }
+
+    override suspend fun getZones(): Array<EntityResponse> {
+        val getZonesRequest = IntegrationRequest("get_zones", null)
+        var zones: Array<EntityResponse>? = null
+        for (it in getUrls()) {
+            try {
+                zones = integrationService.getZones(it, getZonesRequest)
+            }catch (e:Exception){
+                // Ignore failure until we are out of URLS to try!
+            }
+
+            if(zones != null){
+                localStorage.putString(PREF_ZONES, jacksonObjectMapper().writeValueAsString(zones))
+                return zones
+            }
         }
 
         throw IntegrationException()

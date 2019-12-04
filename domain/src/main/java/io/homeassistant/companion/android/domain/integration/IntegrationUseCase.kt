@@ -7,4 +7,6 @@ interface IntegrationUseCase {
     suspend fun isRegistered(): Boolean
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
+
+    suspend fun getZones(): Array<EntityResponse>
 }
