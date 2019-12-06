@@ -92,8 +92,6 @@ dependencies {
 
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
 
-    implementation('com.lokalise.android:sdk:2.0.0-beta-2') { transitive = true }
-
     implementation 'com.google.android.gms:play-services-location:17.0.0'
 
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek2Version"
