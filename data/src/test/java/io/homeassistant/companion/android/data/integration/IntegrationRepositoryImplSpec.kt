@@ -425,6 +425,8 @@ object IntegrationRepositoryImplSpec : Spek({
         describe("get zones") {
             beforeEachTest {
                 coEvery { localStorage.getString("cloud_url") } returns "https://best.com"
+                coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com/"
+                coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
                 coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
             }
             describe("getZones") {

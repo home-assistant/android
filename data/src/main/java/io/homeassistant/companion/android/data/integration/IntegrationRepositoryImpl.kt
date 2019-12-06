@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.data.integration
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
@@ -24,7 +23,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_REMOTE_UI_URL = "remote_ui_url"
         private const val PREF_SECRET = "secret"
         private const val PREF_WEBHOOK_ID = "webhook_id"
-        private const val PREF_ZONES = "zones"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -73,7 +71,6 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
 
             if (zones != null) {
-                localStorage.putString(PREF_ZONES, jacksonObjectMapper().writeValueAsString(zones))
                 return createZonesResponse(zones)
             }
         }
