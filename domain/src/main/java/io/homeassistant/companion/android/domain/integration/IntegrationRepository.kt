@@ -8,5 +8,5 @@ interface IntegrationRepository {
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
 
-    suspend fun getZones(): Array<EntityResponse>
+    suspend fun getZones(): Array<Entity<ZoneAttributes>>
 }

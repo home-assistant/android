@@ -59,5 +59,15 @@ object IntegrationUseCaseImplSpec : Spek({
                 coVerify { integrationRepository.updateLocation(location) }
             }
         }
+
+        describe("getZones") {
+            beforeEachTest {
+                runBlocking { useCase.getZones() }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.getZones() }
+            }
+        }
     }
 })

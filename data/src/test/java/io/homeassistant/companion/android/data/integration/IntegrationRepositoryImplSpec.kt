@@ -3,13 +3,17 @@ package io.homeassistant.companion.android.data.integration
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
+import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
+import io.homeassistant.companion.android.domain.integration.ZoneAttributes
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
 import io.mockk.every
 import io.mockk.mockk
 import java.net.URL
+import java.util.Calendar
+import java.util.HashMap
 import kotlin.properties.Delegates
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -414,6 +418,40 @@ object IntegrationRepositoryImplSpec : Spek({
                             integrationRequest
                         )
                     }
+                }
+            }
+        }
+
+        describe("get zones") {
+            beforeEachTest {
+                coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
+            }
+            describe("getZones") {
+                val entities = EntityResponse(
+                    "entityId",
+                    "state",
+                    ZoneAttributes(
+                        false,
+                        0.0,
+                        1.1,
+                        2.2F,
+                        "fName",
+                        "icon"
+                    ),
+                    Calendar.getInstance(),
+                    Calendar.getInstance(),
+                    HashMap()
+                )
+                var zones: Array<Entity<ZoneAttributes>>? = null
+                beforeEachTest {
+                    coEvery { integrationService.getZones(any(), any()) } returns arrayOf(entities)
+                    runBlocking { zones = repository.getZones() }
+                }
+                it("should return true when webhook has a value") {
+                    assertThat(zones).isNotNull
+                    assertThat(zones!!.size).isEqualTo(1)
+                    assertThat(zones!![0]).isNotNull
+                    assertThat(zones!![0].entityId).isEqualTo(entities.entityId)
                 }
             }
         }

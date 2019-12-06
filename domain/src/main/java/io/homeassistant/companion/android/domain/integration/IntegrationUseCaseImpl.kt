@@ -17,7 +17,7 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.updateLocation(updateLocation)
     }
 
-    override suspend fun getZones(): Array<EntityResponse> {
+    override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
         return integrationRepository.getZones()
     }
 }

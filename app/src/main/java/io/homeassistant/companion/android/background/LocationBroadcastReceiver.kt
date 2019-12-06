@@ -68,7 +68,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun setupLocationTracking(context: Context){
+    private fun setupLocationTracking(context: Context) {
         requestLocationUpdates(context)
         requestZoneUpdates(context)
     }
@@ -86,14 +86,17 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         }
 
         val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+        val intent = getLocationUpdateIntent(context, false)
+
+        fusedLocationProviderClient.removeLocationUpdates(intent)
 
         fusedLocationProviderClient.requestLocationUpdates(
             createLocationRequest(),
-            getLocationUpdateIntent(context, false)
+            intent
         )
     }
 
-    private fun requestZoneUpdates(context: Context){
+    private fun requestZoneUpdates(context: Context) {
         Log.d(TAG, "Registering for zone based location updates")
 
         if (ActivityCompat.checkSelfPermission(
@@ -107,9 +110,11 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
         val geofencingClient = LocationServices.getGeofencingClient(context)
         mainScope.launch {
+            val intent = getLocationUpdateIntent(context, true)
+            geofencingClient.removeGeofences(intent)
             geofencingClient.addGeofences(
                 createGeofencingRequest(),
-                getLocationUpdateIntent(context, true)
+                intent
             )
         }
     }
@@ -121,7 +126,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun handleGeoUpdate(context: Context, intent: Intent){
+    private fun handleGeoUpdate(context: Context, intent: Intent) {
         Log.d(TAG, "Received geofence update.")
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
@@ -132,7 +137,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         sendLocationUpdate(geofencingEvent.triggeringLocation, context)
     }
 
-    private fun sendLocationUpdate(location: Location, context: Context){
+    private fun sendLocationUpdate(location: Location, context: Context) {
         Log.d(
             TAG, "Last Location: " +
                 "\nCoords:(${location.latitude}, ${location.longitude})" +
@@ -161,7 +166,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
     private fun getLocationUpdateIntent(context: Context, isGeofence: Boolean): PendingIntent {
         val intent = Intent(context, LocationBroadcastReceiver::class.java)
-        intent.action = if(isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
+        intent.action = if (isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
@@ -177,15 +182,15 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         return locationRequest
     }
 
-    private suspend fun createGeofencingRequest(): GeofencingRequest{
+    private suspend fun createGeofencingRequest(): GeofencingRequest {
         val geofencingRequestBuilder = GeofencingRequest.Builder()
         integrationUseCase.getZones().forEach {
             geofencingRequestBuilder.addGeofence(Geofence.Builder()
                 .setRequestId(it.entityId)
                 .setCircularRegion(
-                    it.attributes["latitude"]?.toDouble()!!,
-                    it.attributes["longitude"]?.toDouble()!!,
-                    it.attributes["radius"]?.toFloat()!!)
+                    it.attributes.latitude,
+                    it.attributes.longitude,
+                    it.attributes.radius)
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build())

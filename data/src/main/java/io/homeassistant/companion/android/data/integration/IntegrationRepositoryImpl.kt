@@ -4,9 +4,10 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
-import io.homeassistant.companion.android.domain.integration.EntityResponse
+import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
+import io.homeassistant.companion.android.domain.integration.ZoneAttributes
 import javax.inject.Inject
 import javax.inject.Named
 import okhttp3.HttpUrl
@@ -48,7 +49,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         for (it in getUrls()) {
             var wasSuccess = false
             try {
-                wasSuccess = integrationService.updateLocation(it, updateLocationRequest).isSuccessful
+                wasSuccess =
+                    integrationService.updateLocation(it, updateLocationRequest).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
@@ -60,19 +62,19 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
-    override suspend fun getZones(): Array<EntityResponse> {
+    override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
         val getZonesRequest = IntegrationRequest("get_zones", null)
-        var zones: Array<EntityResponse>? = null
+        var zones: Array<EntityResponse<ZoneAttributes>>? = null
         for (it in getUrls()) {
             try {
                 zones = integrationService.getZones(it, getZonesRequest)
-            }catch (e:Exception){
+            } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
 
-            if(zones != null){
+            if (zones != null) {
                 localStorage.putString(PREF_ZONES, jacksonObjectMapper().writeValueAsString(zones))
-                return zones
+                return createZonesResponse(zones)
             }
         }
 
@@ -136,5 +138,23 @@ class IntegrationRepositoryImpl @Inject constructor(
                 updateLocation.verticalAccuracy
             )
         )
+    }
+
+    private fun createZonesResponse(zones: Array<EntityResponse<ZoneAttributes>>): Array<Entity<ZoneAttributes>> {
+        val retVal = ArrayList<Entity<ZoneAttributes>>()
+        zones.forEach {
+            retVal.add(
+                Entity<ZoneAttributes>(
+                    it.entityId,
+                    it.state,
+                    it.attributes,
+                    it.lastChanged,
+                    it.lastUpdated,
+                    it.context
+                )
+            )
+        }
+
+        return retVal.toTypedArray()
     }
 }
