@@ -152,7 +152,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
             location.speed.toInt(),
             location.altitude.toInt(),
             location.bearing.toInt(),
-            if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else null
+            if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0
         )
 
         mainScope.launch {
