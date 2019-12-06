@@ -47,5 +47,4 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         presenter.onFinish()
         super.onDestroy()
     }
-
 }

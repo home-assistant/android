@@ -147,5 +147,4 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         presenter.onFinish()
         super.onDestroy()
     }
-
 }

@@ -83,5 +83,4 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
         startActivity(WebViewActivity.newInstance(this))
         finish()
     }
-
 }
