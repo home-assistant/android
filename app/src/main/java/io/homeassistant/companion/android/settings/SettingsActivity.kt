@@ -19,7 +19,10 @@ class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
-        findViewById<TextView>(R.id.version_text_view).text =
-            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, SettingsFragment.newInstance())
+            .commit()
     }
 }

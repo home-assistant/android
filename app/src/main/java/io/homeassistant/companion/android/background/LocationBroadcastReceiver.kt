@@ -69,13 +69,6 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun setupLocationTracking(context: Context) {
-        requestLocationUpdates(context)
-        requestZoneUpdates(context)
-    }
-
-    private fun requestLocationUpdates(context: Context) {
-        Log.d(TAG, "Registering for location updates.")
-
         if (ActivityCompat.checkSelfPermission(
                 context,
                 ACCESS_COARSE_LOCATION
@@ -84,6 +77,17 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
         }
+
+        mainScope.launch {
+            if (integrationUseCase.isBackgroundTrackingEnabled())
+                requestLocationUpdates(context)
+            if (integrationUseCase.isZoneTrackingEnabled())
+                requestZoneUpdates(context)
+        }
+    }
+
+    private fun requestLocationUpdates(context: Context) {
+        Log.d(TAG, "Registering for location updates.")
 
         val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
         val intent = getLocationUpdateIntent(context, false)
@@ -96,27 +100,17 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         )
     }
 
-    private fun requestZoneUpdates(context: Context) {
+    private suspend fun requestZoneUpdates(context: Context) {
         Log.d(TAG, "Registering for zone based location updates")
 
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            Log.w(TAG, "Not starting location reporting because of permissions.")
-            return
-        }
-
         val geofencingClient = LocationServices.getGeofencingClient(context)
-        mainScope.launch {
             val intent = getLocationUpdateIntent(context, true)
             geofencingClient.removeGeofences(intent)
             geofencingClient.addGeofences(
                 createGeofencingRequest(),
                 intent
             )
-        }
+
     }
 
     private fun handleLocationUpdate(context: Context, intent: Intent) {

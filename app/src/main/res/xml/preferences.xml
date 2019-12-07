@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="Location">
+        <SwitchPreference
+            android:key="location_zone"
+            android:title="Zone Based Tracking"
+            android:summary="This will take the zones you have in Home Assistant and place geofences around them"/>
+        <SwitchPreference
+            android:key="location_background"
+            android:title="Background Location Tracking"
+            android:summary="This will attempt to update your location no matter what in the background on given intervals."/>
+
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="App Version Info">
+        <Preference
+            android:key="version"
+            android:title="Application Version"
+            android:summary="1.0.0 (1)"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

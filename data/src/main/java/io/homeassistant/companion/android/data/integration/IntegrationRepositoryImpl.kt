@@ -23,6 +23,9 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_REMOTE_UI_URL = "remote_ui_url"
         private const val PREF_SECRET = "secret"
         private const val PREF_WEBHOOK_ID = "webhook_id"
+
+        private const val PREF_ZONE_ENABLED = "zone_enabled"
+        private const val PREF_BACKGROUND_ENABLED = "background_enabled"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -76,6 +79,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
 
         throw IntegrationException()
+    }
+
+    override suspend fun setZoneTrackingEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_ZONE_ENABLED, enabled)
+    }
+
+    override suspend fun isZoneTrackingEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_ZONE_ENABLED)
+    }
+
+    override suspend fun setBackgroundTrackingEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_BACKGROUND_ENABLED, enabled)
+    }
+
+    override suspend fun isBackgroundTrackingEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
     }
 
     // https://developers.home-assistant.io/docs/en/app_integration_sending_data.html#short-note-on-instance-urls

@@ -83,8 +83,9 @@ dependencies {
     kapt "com.google.dagger:dagger-compiler:${daggerVersion}"
 
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
-    implementation 'com.google.android.material:material:1.0.0'
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutversion"
+    implementation "androidx.preference:preference-ktx:1.1.0"
+    implementation 'com.google.android.material:material:1.0.0'
 
     implementation("com.jakewharton.threetenabp:threetenabp:$threeTenAbpVersion") {
         exclude group: 'org.threeten'
