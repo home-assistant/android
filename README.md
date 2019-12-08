@@ -33,3 +33,14 @@ To run a check with an auto-format:
 ```bash
 ./gradlew ktlintFormat
 ```
+
+## Troubleshooting
+
+The steps can vary depending on the specific device.
+
+**Duplicate devices:**
+- This issue is fixed with the upcoming release of Home Assistant version 0.103.
+
+**Location is not updating:**
+1. Make sure you have granted the Home Assistant app access to your location. (Settings - Apps - Permissions - Location)
+2. Make sure battery optimization for the the Home Assistant app is **off**
