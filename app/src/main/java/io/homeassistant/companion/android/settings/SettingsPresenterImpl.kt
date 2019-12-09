@@ -2,13 +2,13 @@ package io.homeassistant.companion.android.settings
 
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
 
 class SettingsPresenterImpl @Inject constructor(
     private val settingsView: SettingsView,
@@ -19,7 +19,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getBoolean(key: String?, defValue: Boolean): Boolean {
         return runBlocking {
-            return@runBlocking when (key){
+            return@runBlocking when (key) {
                 "location_zone" -> integrationUseCase.isZoneTrackingEnabled()
                 "location_background" -> integrationUseCase.isBackgroundTrackingEnabled()
                 else -> throw Exception()
@@ -29,7 +29,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun putBoolean(key: String?, value: Boolean) {
         mainScope.launch {
-            when(key){
+            when (key) {
                 "location_zone" -> integrationUseCase.setZoneTrackingEnabled(value)
                 "location_background" -> integrationUseCase.setBackgroundTrackingEnabled(value)
                 else -> throw Exception()

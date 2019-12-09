@@ -110,7 +110,6 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
                 createGeofencingRequest(),
                 intent
             )
-
     }
 
     private fun handleLocationUpdate(context: Context, intent: Intent) {

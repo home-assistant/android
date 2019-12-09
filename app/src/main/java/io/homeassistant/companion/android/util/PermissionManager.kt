@@ -52,7 +52,7 @@ class PermissionManager {
             fragment.requestPermissions(getLocationPermissionArray(), LOCATION_REQUEST_CODE)
         }
 
-        fun restartLocationTracking(context: Context, activity: Activity){
+        fun restartLocationTracking(context: Context, activity: Activity) {
             val intent = Intent(context, LocationBroadcastReceiver::class.java)
             intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
 

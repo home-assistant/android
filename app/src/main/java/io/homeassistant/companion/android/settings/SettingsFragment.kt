@@ -32,11 +32,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("version").let {
             it!!.summary = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
         }
-
     }
 
     override fun onLocationSettingChanged() {
-        if(!PermissionManager.haveLocationPermissions(context!!)){
+        if (!PermissionManager.haveLocationPermissions(context!!)) {
             PermissionManager.requestLocationPermissions(this)
         }
         PermissionManager.restartLocationTracking(context!!, activity!!)

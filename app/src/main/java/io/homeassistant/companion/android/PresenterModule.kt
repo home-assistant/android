@@ -48,7 +48,7 @@ class PresenterModule {
         this.mobileAppIntegrationView = mobileAppIntegrationView
     }
 
-    constructor(settingsView: SettingsView){
+    constructor(settingsView: SettingsView) {
         this.settingsView = settingsView
     }
 
