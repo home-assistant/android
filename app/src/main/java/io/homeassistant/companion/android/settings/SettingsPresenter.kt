@@ -1,7 +1,8 @@
 package io.homeassistant.companion.android.settings
 
+import androidx.preference.PreferenceDataStore
+
 interface SettingsPresenter {
-    fun onLocationZoneChange(value: Boolean)
-    fun onLocationBackgroundChange(value: Boolean)
+    fun getPreferenceDataStore(): PreferenceDataStore
     fun onFinish()
 }

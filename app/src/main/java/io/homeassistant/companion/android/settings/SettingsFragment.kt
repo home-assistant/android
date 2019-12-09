@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -9,8 +8,8 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
@@ -18,47 +17,48 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     @Inject
     lateinit var presenter: SettingsPresenter
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerPresenterComponent
             .builder()
             .appComponent((activity?.application as GraphComponentAccessor).appComponent)
             .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
-    }
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
+
         setPreferencesFromResource(R.xml.preferences, rootKey)
-        findPreference<SwitchPreference>("location_zone")!!.setOnPreferenceChangeListener {
-                _, newValue ->
-            presenter.onLocationZoneChange(newValue as Boolean)
-
-            true
-        }
-
-        findPreference<SwitchPreference>("location_background")!!.setOnPreferenceChangeListener {
-                _, newValue ->
-            presenter.onLocationBackgroundChange(newValue as Boolean)
-
-            true
-        }
 
         findPreference<Preference>("version").let {
             it!!.summary = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
         }
+
     }
 
     override fun onLocationSettingChanged() {
-        val intent = Intent(context, LocationBroadcastReceiver::class.java)
-        intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
+        if(!PermissionManager.haveLocationPermissions(context!!)){
+            PermissionManager.requestLocationPermissions(this)
+        }
+        PermissionManager.restartLocationTracking(context!!, activity!!)
+    }
 
-        activity!!.sendBroadcast(intent)
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (PermissionManager.validateLocationPermissions(requestCode, permissions, grantResults)) {
+            PermissionManager.restartLocationTracking(context!!, activity!!)
+        } else {
+            // If we don't have permissions, don't let them in!
+            findPreference<SwitchPreference>("location_zone")!!.isChecked = false
+            findPreference<SwitchPreference>("location_background")!!.isChecked = false
+        }
     }
 
     companion object {
-        @JvmStatic
         fun newInstance() = SettingsFragment()
     }
 }
