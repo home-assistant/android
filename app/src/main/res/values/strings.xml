@@ -20,4 +20,9 @@ to your home internet.</string>
     <string name="error_with_registration">Please check to ensure you have the mobile_app
 integration enabled on your home assistant instance.</string>
     <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
+    <string name="pref_location_zone_title">Zone Based Tracking</string>
+    <string name="pref_location_zone_summary">This will take the zones you have in Home Assistant and place geofences around them, updating when you enter or leave.</string>
+    <string name="pref_location_background_title">Background Location Tracking</string>
+    <string name="pref_location_background_summary">This will attempt to update your location no matter what in the background on given intervals.</string>
+    <string name="application_version">Application Version</string>
 </resources>
