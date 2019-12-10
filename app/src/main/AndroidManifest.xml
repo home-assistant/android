@@ -42,7 +42,9 @@
         </activity>
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity android:name=".webview.WebViewActivity" />
-        <activity android:name=".settings.SettingsActivity" />
+        <activity
+            android:name=".settings.SettingsActivity"
+            android:parentActivityName=".webview.WebViewActivity"/>
     </application>
 
 </manifest>
