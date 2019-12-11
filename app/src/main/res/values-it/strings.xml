@@ -20,9 +20,9 @@ a Internet di casa tua.</string>
   <string name="error_with_registration">Varifica di avere l\'integrazione mobile_app abilitata 
 sul tuo home assistant.</string>
   <string name="url_parse_error">Impossibile analizzare l\'URL di Home Assistant. Dovrebbe somigliare a https://esempio.com</string>
-  <string name="pref_location_zone_title"></string>
-  <string name="pref_location_zone_summary"></string>
-  <string name="pref_location_background_title"></string>
-  <string name="pref_location_background_summary"></string>
-  <string name="application_version"></string>
+  <string name="pref_location_zone_title">Zone Based Tracking</string>
+  <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
+  <string name="pref_location_background_title">Background Location Tracking</string>
+  <string name="pref_location_background_summary">Update your location behind the scenes, periodically.</string>
+  <string name="application_version">Application Version</string>
 </resources>
