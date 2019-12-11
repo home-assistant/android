@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.data.integration
 
+import io.homeassistant.companion.android.domain.integration.ZoneAttributes
 import okhttp3.HttpUrl
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -21,4 +22,10 @@ interface IntegrationService {
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
     ): Response<ResponseBody>
+
+    @POST
+    suspend fun getZones(
+        @Url url: HttpUrl,
+        @Body request: IntegrationRequest
+    ): Array<EntityResponse<ZoneAttributes>>
 }

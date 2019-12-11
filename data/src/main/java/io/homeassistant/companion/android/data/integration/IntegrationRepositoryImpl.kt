@@ -3,8 +3,10 @@ package io.homeassistant.companion.android.data.integration
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
+import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
+import io.homeassistant.companion.android.domain.integration.ZoneAttributes
 import javax.inject.Inject
 import javax.inject.Named
 import okhttp3.HttpUrl
@@ -21,6 +23,9 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_REMOTE_UI_URL = "remote_ui_url"
         private const val PREF_SECRET = "secret"
         private const val PREF_WEBHOOK_ID = "webhook_id"
+
+        private const val PREF_ZONE_ENABLED = "zone_enabled"
+        private const val PREF_BACKGROUND_ENABLED = "background_enabled"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -45,7 +50,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         for (it in getUrls()) {
             var wasSuccess = false
             try {
-                wasSuccess = integrationService.updateLocation(it, updateLocationRequest).isSuccessful
+                wasSuccess =
+                    integrationService.updateLocation(it, updateLocationRequest).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
@@ -55,6 +61,40 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
 
         throw IntegrationException()
+    }
+
+    override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
+        val getZonesRequest = IntegrationRequest("get_zones", null)
+        var zones: Array<EntityResponse<ZoneAttributes>>? = null
+        for (it in getUrls()) {
+            try {
+                zones = integrationService.getZones(it, getZonesRequest)
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+
+            if (zones != null) {
+                return createZonesResponse(zones)
+            }
+        }
+
+        throw IntegrationException()
+    }
+
+    override suspend fun setZoneTrackingEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_ZONE_ENABLED, enabled)
+    }
+
+    override suspend fun isZoneTrackingEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_ZONE_ENABLED)
+    }
+
+    override suspend fun setBackgroundTrackingEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_BACKGROUND_ENABLED, enabled)
+    }
+
+    override suspend fun isBackgroundTrackingEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
     }
 
     // https://developers.home-assistant.io/docs/en/app_integration_sending_data.html#short-note-on-instance-urls
@@ -114,5 +154,23 @@ class IntegrationRepositoryImpl @Inject constructor(
                 updateLocation.verticalAccuracy
             )
         )
+    }
+
+    private fun createZonesResponse(zones: Array<EntityResponse<ZoneAttributes>>): Array<Entity<ZoneAttributes>> {
+        val retVal = ArrayList<Entity<ZoneAttributes>>()
+        zones.forEach {
+            retVal.add(
+                Entity<ZoneAttributes>(
+                    it.entityId,
+                    it.state,
+                    it.attributes,
+                    it.lastChanged,
+                    it.lastUpdated,
+                    it.context
+                )
+            )
+        }
+
+        return retVal.toTypedArray()
     }
 }
