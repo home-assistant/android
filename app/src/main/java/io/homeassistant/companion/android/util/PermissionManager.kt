@@ -16,28 +16,35 @@ class PermissionManager {
     companion object {
         private const val LOCATION_REQUEST_CODE = 1
 
-        fun haveLocationPermissions(context: Context): Boolean {
-            return ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
+        /**
+         * Check if the a given permission is granted
+         */
+        fun hasPermission(context: Context, permission: String): Boolean {
+            return ActivityCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
         }
 
-        @SuppressLint("InlinedApi")
+        /**
+         * Check if the required location permissions are granted
+         */
+        fun haveLocationPermissions(context: Context): Boolean {
+            for (permission in getLocationPermissionArray()) {
+                if (!hasPermission(context, permission)) {
+                    return false
+                }
+            }
+            return true
+        }
+
+        /**
+         * Returns an Array with required location permissions.
+         * ACCESS_FINE_LOCATION and, if API level >= 29, ACCESS_BACKGROUND_LOCATION.
+         */
         fun getLocationPermissionArray(): Array<String> {
-            var retVal = arrayOf(
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            )
-
-            if (Build.VERSION.SDK_INT >= 21)
-                retVal = retVal.plus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-
-            return retVal
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            } else {
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
         }
 
         fun validateLocationPermissions(
