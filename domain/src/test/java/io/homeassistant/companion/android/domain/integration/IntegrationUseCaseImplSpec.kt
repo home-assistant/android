@@ -59,5 +59,55 @@ object IntegrationUseCaseImplSpec : Spek({
                 coVerify { integrationRepository.updateLocation(location) }
             }
         }
+
+        describe("getZones") {
+            beforeEachTest {
+                runBlocking { useCase.getZones() }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.getZones() }
+            }
+        }
+
+        describe("setZoneTrackingEnabled") {
+            beforeEachTest {
+                runBlocking { useCase.setZoneTrackingEnabled(true) }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.setZoneTrackingEnabled(true) }
+            }
+        }
+
+        describe("isZoneTrackingEnabled") {
+            beforeEachTest {
+                runBlocking { useCase.isZoneTrackingEnabled() }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.isZoneTrackingEnabled() }
+            }
+        }
+
+        describe("setBackgroundTrackingEnabled") {
+            beforeEachTest {
+                runBlocking { useCase.setBackgroundTrackingEnabled(true) }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.setBackgroundTrackingEnabled(true) }
+            }
+        }
+
+        describe("isBackgroundTrackingEnabled") {
+            beforeEachTest {
+                runBlocking { useCase.isBackgroundTrackingEnabled() }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.isBackgroundTrackingEnabled() }
+            }
+        }
     }
 })

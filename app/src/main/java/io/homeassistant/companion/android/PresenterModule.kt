@@ -15,6 +15,9 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenter
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenterImpl
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupView
+import io.homeassistant.companion.android.settings.SettingsPresenter
+import io.homeassistant.companion.android.settings.SettingsPresenterImpl
+import io.homeassistant.companion.android.settings.SettingsView
 import io.homeassistant.companion.android.webview.WebView
 import io.homeassistant.companion.android.webview.WebViewPresenter
 import io.homeassistant.companion.android.webview.WebViewPresenterImpl
@@ -26,6 +29,7 @@ class PresenterModule {
     private lateinit var authenticationView: AuthenticationView
     private lateinit var manualSetupView: ManualSetupView
     private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
+    private lateinit var settingsView: SettingsView
     private lateinit var webView: WebView
 
     constructor(launchView: LaunchView) {
@@ -42,6 +46,10 @@ class PresenterModule {
 
     constructor(mobileAppIntegrationView: MobileAppIntegrationView) {
         this.mobileAppIntegrationView = mobileAppIntegrationView
+    }
+
+    constructor(settingsView: SettingsView) {
+        this.settingsView = settingsView
     }
 
     constructor(webView: WebView) {
@@ -61,6 +69,9 @@ class PresenterModule {
     fun provideMobileAppIntegrationView() = mobileAppIntegrationView
 
     @Provides
+    fun provideSettingsView() = settingsView
+
+    @Provides
     fun provideWebView() = webView
 
     @Module
@@ -77,6 +88,9 @@ class PresenterModule {
 
         @Binds
         fun bindMobileAppPresenter(presenter: MobileAppIntegrationPresenterImpl): MobileAppIntegrationPresenter
+
+        @Binds
+        fun bindSettingsPresenter(presenter: SettingsPresenterImpl): SettingsPresenter
 
         @Binds
         fun bindWebViewPresenterImpl(presenter: WebViewPresenterImpl): WebViewPresenter

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="Location">
+        <SwitchPreference
+            android:key="location_zone"
+            android:icon="@drawable/map_marker_radius"
+            android:title="@string/pref_location_zone_title"
+            android:summary="@string/pref_location_zone_summary"/>
+        <SwitchPreference
+            android:key="location_background"
+            android:icon="@drawable/map_marker"
+            android:title="@string/pref_location_background_title"
+            android:summary="@string/pref_location_background_summary"/>
+
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="App Version Info">
+        <Preference
+            android:key="version"
+            android:icon="@drawable/app_icon"
+            android:title="@string/application_version"
+            android:summary="1.0.0 (1)"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>
