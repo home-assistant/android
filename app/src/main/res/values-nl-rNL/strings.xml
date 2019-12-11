@@ -16,9 +16,9 @@
   <string name="unable_to_register">Niet mogelijk om de applicatie te registeren.</string>
   <string name="error_with_registration">Controleer of de mobile_app integratie is ingeschakeld in je Home Assistant instantie.</string>
   <string name="url_parse_error">Je Home Assistant URL lijkt niet te kloppen. Het zou ongeveer hetzelfde moeten zijn als https://example.com</string>
-  <string name="pref_location_zone_title"></string>
-  <string name="pref_location_zone_summary"></string>
-  <string name="pref_location_background_title"></string>
-  <string name="pref_location_background_summary"></string>
-  <string name="application_version"></string>
+  <string name="pref_location_zone_title">Zone Based Tracking</string>
+  <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
+  <string name="pref_location_background_title">Background Location Tracking</string>
+  <string name="pref_location_background_summary">Update your location behind the scenes, periodically.</string>
+  <string name="application_version">Application Version</string>
 </resources>

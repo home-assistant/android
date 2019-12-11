@@ -16,9 +16,9 @@
   <string name="unable_to_register">Nie można zarejestrować aplikacji</string>
   <string name="error_with_registration">Sprawdź, czy integracja mobile_app jest włączona w Twoim instancji Home Assistant\'a.</string>
   <string name="url_parse_error">Nie można rozpoznać adresu URL Home Assistant\'a. Powinien on wyglądać następująco https://example.com</string>
-  <string name="pref_location_zone_title"></string>
-  <string name="pref_location_zone_summary"></string>
-  <string name="pref_location_background_title"></string>
-  <string name="pref_location_background_summary"></string>
-  <string name="application_version"></string>
+  <string name="pref_location_zone_title">Śledzenie lokalizacji oparte na strefach</string>
+  <string name="pref_location_zone_summary">Importuj istniejące strefy Home Assistant\'a  do śledzenia lokalizacji opartego na strefach.</string>
+  <string name="pref_location_background_title">Śledzenie lokalizacji w tle</string>
+  <string name="pref_location_background_summary">Okresowo aktualizuj lokalizację w tle.</string>
+  <string name="application_version">Wersja aplikacji</string>
 </resources>
