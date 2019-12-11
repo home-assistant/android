@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="app_name">Home Assistant</string>
+  <string name="scanning_network">Netwerk scannen naar Home Assistant</string>
+  <string name="home_assistant_not_discover">Home Assistant instantie niet gevonden</string>
+  <string name="connect_to_home_internet">Je telefoon dient verbonden te zijn met je thuis netwerk.</string>
+  <string name="scan_again">opnieuw scannen</string>
+  <string name="manual_setup">Adres handmatig invullen</string>
+  <string name="input_url">Home Assistant adres</string>
+  <string name="input_url_hint">https://example.duckdns.org:8123</string>
+  <string name="status_of_mobile_app_integration">Status van mobiele app integratie:</string>
+  <string name="checking_with_home_assistant">Controleren met Home Assistant</string>
+  <string name="skip">Overslaan</string>
+  <string name="retry">Opnieuw proberen</string>
+  <string name="attempting_registration">Proberen om de applicatie te registreren...</string>
+  <string name="unable_to_register">Niet mogelijk om de applicatie te registeren.</string>
+  <string name="error_with_registration">Controleer of de mobile_app integratie is ingeschakeld in je Home Assistant instantie.</string>
+  <string name="url_parse_error">Je Home Assistant URL lijkt niet te kloppen. Het zou ongeveer hetzelfde moeten zijn als https://example.com</string>
+  <string name="pref_location_zone_title"></string>
+  <string name="pref_location_zone_summary"></string>
+  <string name="pref_location_background_title"></string>
+  <string name="pref_location_background_summary"></string>
+  <string name="application_version"></string>
+</resources>

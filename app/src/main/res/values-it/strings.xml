@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="app_name">Home Assistant</string>
+  <string name="scanning_network">Ricerca Home Assistant in corso.
+Scansione della rete</string>
+  <string name="home_assistant_not_discover">Impossibile trovate 
+il tuo Home Assistant</string>
+  <string name="connect_to_home_internet">Assicurati che il telefono sia collegato 
+a Internet di casa tua.</string>
+  <string name="scan_again">Cerca di nuovo</string>
+  <string name="manual_setup">inserisci l\'indirizzo manualmente</string>
+  <string name="input_url">URL Home Assistant</string>
+  <string name="input_url_hint">https://esempio.duckdns.org:8123</string>
+  <string name="status_of_mobile_app_integration">Stato integrazione della mobile app:</string>
+  <string name="checking_with_home_assistant">Verifica Home Assistant in corso</string>
+  <string name="skip">Salta</string>
+  <string name="retry">Riprova</string>
+  <string name="attempting_registration">Tentativo di registrazione dell\'applicazione...</string>
+  <string name="unable_to_register">Impossibile registrare l\'applicazione</string>
+  <string name="error_with_registration">Varifica di avere l\'integrazione mobile_app abilitata 
+sul tuo home assistant.</string>
+  <string name="url_parse_error">Impossibile analizzare l\'URL di Home Assistant. Dovrebbe somigliare a https://esempio.com</string>
+  <string name="pref_location_zone_title"></string>
+  <string name="pref_location_zone_summary"></string>
+  <string name="pref_location_background_title"></string>
+  <string name="pref_location_background_summary"></string>
+  <string name="application_version"></string>
+</resources>
