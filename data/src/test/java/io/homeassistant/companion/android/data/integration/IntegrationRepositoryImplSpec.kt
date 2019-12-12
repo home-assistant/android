@@ -91,6 +91,55 @@ object IntegrationRepositoryImplSpec : Spek({
             }
         }
 
+        describe("registerDevice") {
+            val deviceRegistration = DeviceRegistration(
+                "appId",
+                "appName",
+                "appVersion",
+                "deviceName",
+                "manufacturer",
+                "model",
+                "osName",
+                "osVersion",
+                false,
+                null
+            )
+            val registerDeviceRequest = RegisterDeviceRequest(
+                deviceRegistration.appId,
+                deviceRegistration.appName,
+                deviceRegistration.appVersion,
+                deviceRegistration.deviceName,
+                deviceRegistration.manufacturer,
+                deviceRegistration.model,
+                deviceRegistration.osName,
+                deviceRegistration.osVersion,
+                deviceRegistration.supportsEncryption,
+                deviceRegistration.appData
+            )
+            beforeEachTest {
+                coEvery {
+                    integrationService.updateRegistration(any(), IntegrationRequest("update_registration", registerDeviceRequest))
+                } returns Response.success(null)
+
+                coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
+                coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
+                coEvery { localStorage.getString("cloud_url") } returns "http://best.com/hook/id"
+                coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+
+                runBlocking {
+                    repository.updateRegistration(deviceRegistration)
+                }
+            }
+
+            it("should call the service") {
+                coVerify {
+                    integrationService.updateRegistration(
+                        "http://best.com/hook/id".toHttpUrl(),
+                        IntegrationRequest("update_registration", registerDeviceRequest))
+                }
+            }
+        }
+
         describe("is registered") {
             beforeEachTest {
                 coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"

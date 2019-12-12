@@ -34,7 +34,25 @@ class IntegrationRepositoryImpl @Inject constructor(
                 authenticationRepository.buildBearerToken(),
                 createRegisterDeviceRequest(deviceRegistration)
             )
+        persistDeviceRegistrationResponse(response)
+    }
 
+    override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
+        val request = IntegrationRequest("update_registration", createRegisterDeviceRequest(deviceRegistration))
+        for (it in getUrls()) {
+            try {
+                if (integrationService.updateRegistration(it, request).isSuccessful) {
+                    return
+                }
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+        }
+
+        throw IntegrationException()
+    }
+
+    private suspend fun persistDeviceRegistrationResponse(response: RegisterDeviceResponse) {
         localStorage.putString(PREF_CLOUD_URL, response.cloudhookUrl)
         localStorage.putString(PREF_REMOTE_UI_URL, response.remoteUiUrl)
         localStorage.putString(PREF_SECRET, response.secret)

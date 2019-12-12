@@ -1,9 +1,16 @@
 package io.homeassistant.companion.android.launch
 
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.firebase.iid.FirebaseInstanceId
+import com.google.firebase.iid.InstanceIdResult
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.resetMain
@@ -15,6 +22,27 @@ object LaunchPresenterImplSpec : Spek({
 
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
+
+        val onSuccessListener = slot<OnSuccessListener<InstanceIdResult>>()
+        val mockResults = mockk<InstanceIdResult> {
+            every { token } returns "ABC123"
+        }
+
+        mockkStatic(FirebaseInstanceId::class)
+        every { FirebaseInstanceId.getInstance() } returns mockk {
+            every { instanceId } returns mockk {
+                every { addOnSuccessListener(capture(onSuccessListener)) } answers {
+                    onSuccessListener.captured.onSuccess(mockResults)
+
+                    mockk {
+                        every { result } returns mockResults
+                    }
+                }
+                every { addOnFailureListener(any()) } returns mockk {
+                    every { exception } returns Exception()
+                }
+            }
+        }
     }
 
     afterEachTest {
@@ -23,8 +51,9 @@ object LaunchPresenterImplSpec : Spek({
 
     describe("launch presenter") {
         val authenticationUseCase by memoized { mockk<AuthenticationUseCase>() }
+        val integrationUseCase by memoized { mockk<IntegrationUseCase>() }
         val view by memoized { mockk<LaunchView>(relaxUnitFun = true) }
-        val presenter by memoized { LaunchPresenterImpl(view, authenticationUseCase) }
+        val presenter by memoized { LaunchPresenterImpl(view, authenticationUseCase, integrationUseCase) }
 
         describe("anonymous state") {
             beforeEachTest {
