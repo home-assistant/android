@@ -60,7 +60,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun deviceRegistered() {
-        if (!PermissionManager.haveLocationPermissions(context!!)) {
+        if (!PermissionManager.hasLocationPermissions(context!!)) {
             PermissionManager.requestLocationPermissions(this)
         } else {
             // If we have permission already we can just continue with

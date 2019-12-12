@@ -1,17 +1,14 @@
 package io.homeassistant.companion.android.background
 
-import android.Manifest.permission.ACCESS_COARSE_LOCATION
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.location.Location
 import android.os.BatteryManager
 import android.os.Build
 import android.util.Log
-import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.GeofencingRequest
@@ -21,6 +18,7 @@ import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
+import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,11 +67,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun setupLocationTracking(context: Context) {
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
+        if (!PermissionManager.hasLocationPermissions(context)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
         }

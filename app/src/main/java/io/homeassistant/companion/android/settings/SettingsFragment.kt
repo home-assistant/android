@@ -35,7 +35,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     }
 
     override fun onLocationSettingChanged() {
-        if (!PermissionManager.haveLocationPermissions(context!!)) {
+        if (!PermissionManager.hasLocationPermissions(context!!)) {
             PermissionManager.requestLocationPermissions(this)
         }
         PermissionManager.restartLocationTracking(context!!, activity!!)
