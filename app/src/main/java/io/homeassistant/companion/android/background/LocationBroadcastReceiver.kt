@@ -79,10 +79,14 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         }
 
         mainScope.launch {
-            if (integrationUseCase.isBackgroundTrackingEnabled())
-                requestLocationUpdates(context)
-            if (integrationUseCase.isZoneTrackingEnabled())
-                requestZoneUpdates(context)
+            try {
+                if (integrationUseCase.isBackgroundTrackingEnabled())
+                    requestLocationUpdates(context)
+                if (integrationUseCase.isZoneTrackingEnabled())
+                    requestZoneUpdates(context)
+            } catch (e: Exception) {
+                Log.e(TAG, "Issue setting up location tracking", e)
+            }
         }
     }
 
@@ -103,13 +107,18 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     private suspend fun requestZoneUpdates(context: Context) {
         Log.d(TAG, "Registering for zone based location updates")
 
-        val geofencingClient = LocationServices.getGeofencingClient(context)
+        try {
+            val geofencingClient = LocationServices.getGeofencingClient(context)
             val intent = getLocationUpdateIntent(context, true)
+            val geofencingRequest = createGeofencingRequest()
             geofencingClient.removeGeofences(intent)
             geofencingClient.addGeofences(
-                createGeofencingRequest(),
+                geofencingRequest,
                 intent
             )
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue requesting zone updates.", e)
+        }
     }
 
     private fun handleLocationUpdate(context: Context, intent: Intent) {
@@ -133,9 +142,9 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     private fun sendLocationUpdate(location: Location, context: Context) {
         Log.d(
             TAG, "Last Location: " +
-                "\nCoords:(${location.latitude}, ${location.longitude})" +
-                "\nAccuracy: ${location.accuracy}" +
-                "\nBearing: ${location.bearing}"
+                    "\nCoords:(${location.latitude}, ${location.longitude})" +
+                    "\nAccuracy: ${location.accuracy}" +
+                    "\nBearing: ${location.bearing}"
         )
         val updateLocation = UpdateLocation(
             "",
@@ -178,15 +187,18 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     private suspend fun createGeofencingRequest(): GeofencingRequest {
         val geofencingRequestBuilder = GeofencingRequest.Builder()
         integrationUseCase.getZones().forEach {
-            geofencingRequestBuilder.addGeofence(Geofence.Builder()
-                .setRequestId(it.entityId)
-                .setCircularRegion(
-                    it.attributes.latitude,
-                    it.attributes.longitude,
-                    it.attributes.radius)
-                .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
-                .build())
+            geofencingRequestBuilder.addGeofence(
+                Geofence.Builder()
+                    .setRequestId(it.entityId)
+                    .setCircularRegion(
+                        it.attributes.latitude,
+                        it.attributes.longitude,
+                        it.attributes.radius
+                    )
+                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
+                    .build()
+            )
         }
         return geofencingRequestBuilder.build()
     }
