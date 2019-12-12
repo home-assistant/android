@@ -16,9 +16,9 @@
 - :tada:
 
 
-## Continuous Integration
+## Testing Dev Releases
 
-We are using [Travis](https://travis-ci.com/home-assistant/home-assistant-android) to perform continuous integration both by unit testing and deploying to [Firebase App Distribution](https://appdistribution.firebase.dev/i/8zf5W4zz) or [Play Store](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android) when we add a git tag.
+We are using [Travis](https://travis-ci.com/home-assistant/home-assistant-android) to perform continuous integration both by unit testing, deploying dev releases to [Firebase App Distribution](https://appdistribution.firebase.dev/i/8zf5W4zz) and final releases to the [Play Store](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android) when we add a git tag.
 
 ## Quality
 
