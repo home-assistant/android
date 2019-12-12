@@ -24,19 +24,24 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object MobileAppIntegrationPresenterImplSpec : Spek({
-    var onSuccessListener = slot<OnSuccessListener<InstanceIdResult>>()
-    val mockResults = mockk<InstanceIdResult> {
-        every { token } returns "ABC123"
-    }
 
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
 
+        var onSuccessListener = slot<OnSuccessListener<InstanceIdResult>>()
+        val mockResults = mockk<InstanceIdResult> {
+            every { token } returns "ABC123"
+        }
+
         mockkStatic(FirebaseInstanceId::class)
         every { FirebaseInstanceId.getInstance() } returns mockk {
             every { instanceId } returns mockk {
-                every { addOnSuccessListener(capture(onSuccessListener)) } returns mockk {
-                    every { result } returns mockk()
+                every { addOnSuccessListener(capture(onSuccessListener)) } answers {
+                    onSuccessListener.captured.onSuccess(mockResults)
+
+                    mockk {
+                        every { result } returns mockResults
+                    }
                 }
                 every { addOnFailureListener(any()) } returns mockk {
                     every { exception } returns Exception()
@@ -83,7 +88,6 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             describe("register") {
                 beforeEachTest {
                     presenter.onRegistrationAttempt()
-                    onSuccessListener.captured.onSuccess(mockResults)
                 }
                 it("should register successfully") {
                     coVerifyAll {
@@ -102,7 +106,6 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             describe("register") {
                 beforeEachTest {
                     presenter.onRegistrationAttempt()
-                    onSuccessListener.captured.onSuccess(mockResults)
                 }
                 it("should fail") {
                     coVerifyAll {
