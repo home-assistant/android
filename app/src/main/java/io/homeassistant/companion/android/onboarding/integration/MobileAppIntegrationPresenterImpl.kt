@@ -31,29 +31,30 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
     override fun onRegistrationAttempt() {
 
         view.showLoading()
+        FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
+            mainScope.launch {
+                val token = it.result?.token
 
-        mainScope.launch {
-            val token = FirebaseInstanceId.getInstance().instanceId.result?.token
+                val deviceRegistration = DeviceRegistration(
+                    BuildConfig.APPLICATION_ID,
+                    "Home Assistant",
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    Build.MODEL ?: "UNKNOWN",
+                    Build.MANUFACTURER ?: "UNKNOWN",
+                    Build.MODEL ?: "UNKNOWN",
+                    "Android",
+                    Build.VERSION.SDK_INT.toString(),
+                    false,
+                    token?.let { MessagingService.generateAppData(it) }
+                )
 
-            val deviceRegistration = DeviceRegistration(
-                BuildConfig.APPLICATION_ID,
-                "Home Assistant",
-                "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                Build.MODEL ?: "UNKNOWN",
-                Build.MANUFACTURER ?: "UNKNOWN",
-                Build.MODEL ?: "UNKNOWN",
-                "Android",
-                Build.VERSION.SDK_INT.toString(),
-                false,
-                token?.let { MessagingService.generateAppData(it) }
-            )
-
-            try {
-                integrationUseCase.registerDevice(deviceRegistration)
-                view.deviceRegistered()
-            } catch (e: Exception) {
-                Log.e(TAG, "Error with registering application", e)
-                view.showError()
+                try {
+                    integrationUseCase.registerDevice(deviceRegistration)
+                    view.deviceRegistered()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error with registering application", e)
+                    view.showError()
+                }
             }
         }
     }

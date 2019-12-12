@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.launch
 
 import android.os.Build
+import android.util.Log
 import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
@@ -8,6 +9,7 @@ import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.notifications.MessagingService
+import java.lang.Exception
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +22,10 @@ class LaunchPresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationUseCase,
     private val integrationUseCase: IntegrationUseCase
 ) : LaunchPresenter {
+
+    companion object {
+        const val TAG = "LaunchPresenter"
+    }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -42,20 +48,24 @@ class LaunchPresenterImpl @Inject constructor(
     private fun resyncNotificationIds() {
         FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener {
             mainScope.launch {
-                integrationUseCase.updateRegistration(
-                    DeviceRegistration(
-                        null,
-                        null,
-                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                        Build.MODEL ?: "UNKNOWN",
-                        Build.MANUFACTURER ?: "UNKNOWN",
-                        Build.MODEL ?: "UNKNOWN",
-                        null,
-                        Build.VERSION.SDK_INT.toString(),
-                        null,
-                        MessagingService.generateAppData(it.token)
+                try {
+                    integrationUseCase.updateRegistration(
+                        DeviceRegistration(
+                            null,
+                            null,
+                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                            Build.MODEL ?: "UNKNOWN",
+                            Build.MANUFACTURER ?: "UNKNOWN",
+                            Build.MODEL ?: "UNKNOWN",
+                            null,
+                            Build.VERSION.SDK_INT.toString(),
+                            null,
+                            MessagingService.generateAppData(it.token)
+                        )
                     )
-                )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Issue updating Registration", e)
+                }
             }
         }
     }
