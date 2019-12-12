@@ -11,9 +11,9 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.lang.Exception
@@ -108,11 +108,12 @@ class MessagingService : FirebaseMessagingService() {
             Log.d(TAG, "Refreshed token: $token")
             try {
                 integrationUseCase.updateRegistration(
-                    DeviceRegistration(
-                        appData = generateAppData(
-                            token
-                        )
-                    )
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    Build.MODEL ?: "UNKNOWN",
+                    Build.MANUFACTURER ?: "UNKNOWN",
+                    Build.MODEL ?: "UNKNOWN",
+                    Build.VERSION.SDK_INT.toString(),
+                    generateAppData(token)
                 )
             } catch (e: Exception) {
                 // TODO: Store for update later

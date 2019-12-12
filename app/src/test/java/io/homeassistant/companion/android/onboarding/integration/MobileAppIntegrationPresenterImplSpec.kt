@@ -1,14 +1,17 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 import android.os.Build
+import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
+import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.runs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.resetMain
@@ -20,6 +23,13 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
 
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
+
+        mockkStatic(FirebaseInstanceId::class)
+        every { FirebaseInstanceId.getInstance() } returns mockk {
+            every { instanceId } returns mockk {
+                every { addOnCompleteListener(any()) } returns mockk()
+            }
+        }
     }
 
     afterEachTest {

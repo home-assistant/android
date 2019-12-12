@@ -3,7 +3,14 @@ package io.homeassistant.companion.android.domain.integration
 interface IntegrationUseCase {
 
     suspend fun registerDevice(deviceRegistration: DeviceRegistration)
-    suspend fun updateRegistration(deviceRegistration: DeviceRegistration)
+    suspend fun updateRegistration(
+        appVersion: String,
+        deviceName: String,
+        manufacturer: String,
+        model: String,
+        osVersion: String,
+        appData: HashMap<String, String>
+    )
 
     suspend fun isRegistered(): Boolean
 

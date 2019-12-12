@@ -6,7 +6,6 @@ import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
-import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.notifications.MessagingService
 import java.lang.Exception
@@ -50,18 +49,12 @@ class LaunchPresenterImpl @Inject constructor(
             mainScope.launch {
                 try {
                     integrationUseCase.updateRegistration(
-                        DeviceRegistration(
-                            null,
-                            null,
-                            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                            Build.MODEL ?: "UNKNOWN",
-                            Build.MANUFACTURER ?: "UNKNOWN",
-                            Build.MODEL ?: "UNKNOWN",
-                            null,
-                            Build.VERSION.SDK_INT.toString(),
-                            null,
-                            MessagingService.generateAppData(it.token)
-                        )
+                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                        Build.MODEL ?: "UNKNOWN",
+                        Build.MANUFACTURER ?: "UNKNOWN",
+                        Build.MODEL ?: "UNKNOWN",
+                        Build.VERSION.SDK_INT.toString(),
+                        MessagingService.generateAppData(it.token)
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Issue updating Registration", e)
