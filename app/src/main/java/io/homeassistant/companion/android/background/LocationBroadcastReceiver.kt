@@ -67,7 +67,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun setupLocationTracking(context: Context) {
-        if (!PermissionManager.haveLocationPermissions(context)) {
+        if (!PermissionManager.hasLocationPermissions(context)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
         }

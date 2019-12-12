@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.util
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -14,7 +13,7 @@ import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 class PermissionManager {
 
     companion object {
-        private const val LOCATION_REQUEST_CODE = 1
+        const val LOCATION_REQUEST_CODE = 1
 
         /**
          * Check if the a given permission is granted
@@ -24,9 +23,16 @@ class PermissionManager {
         }
 
         /**
+         * Returns TRUE if all permissions in the grantResults were granted
+         */
+        fun arePermissionsGranted(grantResults: IntArray): Boolean {
+            return grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+        }
+
+        /**
          * Check if the required location permissions are granted
          */
-        fun haveLocationPermissions(context: Context): Boolean {
+        fun hasLocationPermissions(context: Context): Boolean {
             for (permission in getLocationPermissionArray()) {
                 if (!hasPermission(context, permission)) {
                     return false
@@ -52,7 +58,7 @@ class PermissionManager {
             permissions: Array<out String>,
             grantResults: IntArray
         ): Boolean {
-            return requestCode == LOCATION_REQUEST_CODE && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            return requestCode == LOCATION_REQUEST_CODE && arePermissionsGranted(grantResults)
         }
 
         fun requestLocationPermissions(fragment: Fragment) {
