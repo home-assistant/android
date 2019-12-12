@@ -31,9 +31,10 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
     override fun onRegistrationAttempt() {
 
         view.showLoading()
-        FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener {
+        val instanceId = FirebaseInstanceId.getInstance().instanceId
+        instanceId.addOnSuccessListener {
             mainScope.launch {
-                val token = it.result?.token
+                val token = it.token
 
                 val deviceRegistration = DeviceRegistration(
                     BuildConfig.APPLICATION_ID,
@@ -45,7 +46,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
                     "Android",
                     Build.VERSION.SDK_INT.toString(),
                     false,
-                    token?.let { MessagingService.generateAppData(it) }
+                    token.let { MessagingService.generateAppData(it) }
                 )
 
                 try {
@@ -56,6 +57,10 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
                     view.showError()
                 }
             }
+        }
+        instanceId.addOnFailureListener {
+            Log.e(TAG, "Couldn't get FirebaseInstanceId", it)
+            view.showError()
         }
     }
 

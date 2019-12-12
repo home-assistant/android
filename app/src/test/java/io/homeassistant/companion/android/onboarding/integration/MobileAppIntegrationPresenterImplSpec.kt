@@ -1,10 +1,13 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 import android.os.Build
+import com.google.android.gms.tasks.OnSuccessListener
 import com.google.firebase.iid.FirebaseInstanceId
+import com.google.firebase.iid.InstanceIdResult
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.notifications.MessagingService
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
@@ -13,6 +16,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.runs
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -20,6 +24,10 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object MobileAppIntegrationPresenterImplSpec : Spek({
+    var onSuccessListener = slot<OnSuccessListener<InstanceIdResult>>()
+    val mockResults = mockk<InstanceIdResult> {
+        every { token } returns "ABC123"
+    }
 
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
@@ -27,7 +35,12 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
         mockkStatic(FirebaseInstanceId::class)
         every { FirebaseInstanceId.getInstance() } returns mockk {
             every { instanceId } returns mockk {
-                every { addOnCompleteListener(any()) } returns mockk()
+                every { addOnSuccessListener(capture(onSuccessListener)) } returns mockk {
+                    every { result } returns mockk()
+                }
+                every { addOnFailureListener(any()) } returns mockk {
+                    every { exception } returns Exception()
+                }
             }
         }
     }
@@ -62,7 +75,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
                 "Android",
                 Build.VERSION.SDK_INT.toString(),
                 false,
-                null
+                MessagingService.generateAppData("ABC123")
             )
             beforeEachTest {
                 coEvery { integrationUseCase.registerDevice(deviceRegistration) } just runs
@@ -70,6 +83,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             describe("register") {
                 beforeEachTest {
                     presenter.onRegistrationAttempt()
+                    onSuccessListener.captured.onSuccess(mockResults)
                 }
                 it("should register successfully") {
                     coVerifyAll {
@@ -88,6 +102,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             describe("register") {
                 beforeEachTest {
                     presenter.onRegistrationAttempt()
+                    onSuccessListener.captured.onSuccess(mockResults)
                 }
                 it("should fail") {
                     coVerifyAll {
