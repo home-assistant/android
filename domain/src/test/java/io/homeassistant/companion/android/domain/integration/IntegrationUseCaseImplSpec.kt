@@ -40,20 +40,29 @@ object IntegrationUseCaseImplSpec : Spek({
         }
 
         describe("updateRegistration") {
-            val deviceRegistration = mockk<DeviceRegistration>()
             beforeEachTest {
                 coEvery {
                     integrationRepository.updateRegistration(any())
                 } just Runs
 
                 runBlocking {
-                    useCase.updateRegistration(deviceRegistration)
+                    useCase.updateRegistration("1", "2", "3", "4", "5", hashMapOf())
                 }
             }
 
             it("should call repository") {
                 coVerify {
-                    integrationRepository.updateRegistration(deviceRegistration)
+                    integrationRepository.updateRegistration(DeviceRegistration(
+                        null,
+                        null,
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        null,
+                        "5",
+                        null,
+                        hashMapOf()))
                 }
             }
         }
