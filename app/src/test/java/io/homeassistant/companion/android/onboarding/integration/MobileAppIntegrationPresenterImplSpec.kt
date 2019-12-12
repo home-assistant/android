@@ -28,7 +28,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
 
-        var onSuccessListener = slot<OnSuccessListener<InstanceIdResult>>()
+        val onSuccessListener = slot<OnSuccessListener<InstanceIdResult>>()
         val mockResults = mockk<InstanceIdResult> {
             every { token } returns "ABC123"
         }
