@@ -39,6 +39,25 @@ object IntegrationUseCaseImplSpec : Spek({
             }
         }
 
+        describe("updateRegistration") {
+            val deviceRegistration = mockk<DeviceRegistration>()
+            beforeEachTest {
+                coEvery {
+                    integrationRepository.updateRegistration(any())
+                } just Runs
+
+                runBlocking {
+                    useCase.updateRegistration(deviceRegistration)
+                }
+            }
+
+            it("should call repository") {
+                coVerify {
+                    integrationRepository.updateRegistration(deviceRegistration)
+                }
+            }
+        }
+
         describe("isRegistered") {
             beforeEachTest {
                 runBlocking { useCase.isRegistered() }
