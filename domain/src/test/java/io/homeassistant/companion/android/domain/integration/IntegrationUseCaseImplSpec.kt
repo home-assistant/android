@@ -39,6 +39,34 @@ object IntegrationUseCaseImplSpec : Spek({
             }
         }
 
+        describe("updateRegistration") {
+            beforeEachTest {
+                coEvery {
+                    integrationRepository.updateRegistration(any())
+                } just Runs
+
+                runBlocking {
+                    useCase.updateRegistration("1", "2", "3", "4", "5", hashMapOf())
+                }
+            }
+
+            it("should call repository") {
+                coVerify {
+                    integrationRepository.updateRegistration(DeviceRegistration(
+                        null,
+                        null,
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        null,
+                        "5",
+                        null,
+                        hashMapOf()))
+                }
+            }
+        }
+
         describe("isRegistered") {
             beforeEachTest {
                 runBlocking { useCase.isRegistered() }
