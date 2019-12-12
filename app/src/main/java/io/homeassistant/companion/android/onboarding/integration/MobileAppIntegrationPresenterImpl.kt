@@ -16,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.util.*
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
     private val view: MobileAppIntegrationView,

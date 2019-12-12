@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.data.integration
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import java.util.Dictionary
-import java.util.Objects
 
 data class RegisterDeviceRequest(
     var appId: String,

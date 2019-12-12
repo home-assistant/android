@@ -1,8 +1,5 @@
 package io.homeassistant.companion.android.domain.integration
 
-import java.util.Dictionary
-import java.util.Objects
-
 data class DeviceRegistration(
     val appId: String,
     val appName: String,
