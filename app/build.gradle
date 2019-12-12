@@ -83,16 +83,15 @@ dependencies {
     kapt "com.google.dagger:dagger-compiler:${daggerVersion}"
 
     implementation "androidx.appcompat:appcompat:$appCompatVersion"
-    implementation 'com.google.android.material:material:1.0.0'
     implementation "androidx.constraintlayout:constraintlayout:$constraintLayoutversion"
+    implementation "androidx.preference:preference-ktx:1.1.0"
+    implementation 'com.google.android.material:material:1.0.0'
 
     implementation("com.jakewharton.threetenabp:threetenabp:$threeTenAbpVersion") {
         exclude group: 'org.threeten'
     }
 
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
-
-    implementation('com.lokalise.android:sdk:2.0.0-beta-2') { transitive = true }
 
     implementation 'com.google.android.gms:play-services-location:17.0.0'
     implementation "com.google.firebase:firebase-core:17.2.1"

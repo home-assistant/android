@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.onboarding.integration
 
+import android.app.Activity
+import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.google.android.gms.tasks.OnCompleteListener
@@ -7,6 +9,7 @@ import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +73,14 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
                 Log.e(TAG, "Error with registering application", e)
                 view.showError()
             }
+        }
+    }
+
+    override fun onGrantedLocationPermission(context: Context, activity: Activity) {
+        mainScope.launch {
+            integrationUseCase.setZoneTrackingEnabled(true)
+            integrationUseCase.setBackgroundTrackingEnabled(true)
+            PermissionManager.restartLocationTracking(context, activity)
         }
     }
 
