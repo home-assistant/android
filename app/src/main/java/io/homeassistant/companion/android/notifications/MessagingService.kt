@@ -9,6 +9,7 @@ import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import io.homeassistant.companion.android.BuildConfig
@@ -77,7 +78,8 @@ class MessagingService : FirebaseMessagingService() {
         val channelId = "default"
         val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_stat_ic_notification)
+            .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
             .setContentTitle(messageTitle)
             .setContentText(messageBody)
             .setAutoCancel(true)
