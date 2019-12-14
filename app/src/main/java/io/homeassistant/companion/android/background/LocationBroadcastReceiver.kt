@@ -87,6 +87,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun removeAllLocationUpdateRequests(context: Context) {
+        Log.d(TAG, "Removing all location requests.")
         val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
         val backgroundIntent = getLocationUpdateIntent(context, false)
 
