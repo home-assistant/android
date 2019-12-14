@@ -74,6 +74,8 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
         mainScope.launch {
             try {
+                removeAllLocationUpdateRequests(context)
+
                 if (integrationUseCase.isBackgroundTrackingEnabled())
                     requestLocationUpdates(context)
                 if (integrationUseCase.isZoneTrackingEnabled())
@@ -84,13 +86,22 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
+    private fun removeAllLocationUpdateRequests(context: Context) {
+        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+        val backgroundIntent = getLocationUpdateIntent(context, false)
+
+        fusedLocationProviderClient.removeLocationUpdates(backgroundIntent)
+
+        val geofencingClient = LocationServices.getGeofencingClient(context)
+        val zoneIntent = getLocationUpdateIntent(context, true)
+        geofencingClient.removeGeofences(zoneIntent)
+    }
+
     private fun requestLocationUpdates(context: Context) {
         Log.d(TAG, "Registering for location updates.")
 
         val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
         val intent = getLocationUpdateIntent(context, false)
-
-        fusedLocationProviderClient.removeLocationUpdates(intent)
 
         fusedLocationProviderClient.requestLocationUpdates(
             createLocationRequest(),
@@ -105,7 +116,6 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
             val geofencingClient = LocationServices.getGeofencingClient(context)
             val intent = getLocationUpdateIntent(context, true)
             val geofencingRequest = createGeofencingRequest()
-            geofencingClient.removeGeofences(intent)
             geofencingClient.addGeofences(
                 geofencingRequest,
                 intent
