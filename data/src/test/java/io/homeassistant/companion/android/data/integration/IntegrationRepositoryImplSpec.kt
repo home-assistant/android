@@ -51,6 +51,7 @@ object IntegrationRepositoryImplSpec : Spek({
                     "osName",
                     "osVersion",
                     false,
+                    null,
                     null
                 )
                 val registerDeviceRequest = RegisterDeviceRequest(
@@ -63,8 +64,20 @@ object IntegrationRepositoryImplSpec : Spek({
                     deviceRegistration.osName,
                     deviceRegistration.osVersion,
                     deviceRegistration.supportsEncryption,
-                    deviceRegistration.appData
+                    hashMapOf(
+                        "push_url" to (deviceRegistration.pushUrl ?: "push_url"),
+                        "push_token" to (deviceRegistration.pushToken ?: "push_token")
+                    )
                 )
+
+                coEvery { localStorage.getString("app_version") } returns "app_version"
+                coEvery { localStorage.getString("device_name") } returns "device_name"
+                coEvery { localStorage.getString("manufacturer") } returns "manufacturer"
+                coEvery { localStorage.getString("model") } returns "model"
+                coEvery { localStorage.getString("os_version") } returns "os_version"
+                coEvery { localStorage.getString("push_url") } returns "push_url"
+                coEvery { localStorage.getString("push_token") } returns "push_token"
+
                 coEvery {
                     integrationService.registerDevice("ABC123", registerDeviceRequest)
                 } returns mockk {
@@ -82,7 +95,7 @@ object IntegrationRepositoryImplSpec : Spek({
             }
 
             it("should save response data") {
-                coVerifyAll {
+                coVerify {
                     localStorage.putString("cloud_url", "https://home-assistant.io/1/")
                     localStorage.putString("remote_ui_url", "https://home-assistant.io/2/")
                     localStorage.putString("secret", "ABCDE")
@@ -101,8 +114,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 "model",
                 "osName",
                 "osVersion",
-                false,
-                null
+                false
             )
             val registerDeviceRequest = RegisterDeviceRequest(
                 deviceRegistration.appId,
@@ -114,7 +126,10 @@ object IntegrationRepositoryImplSpec : Spek({
                 deviceRegistration.osName,
                 deviceRegistration.osVersion,
                 deviceRegistration.supportsEncryption,
-                deviceRegistration.appData
+                hashMapOf(
+                    "push_url" to (deviceRegistration.pushUrl ?: "push_url"),
+                    "push_token" to (deviceRegistration.pushToken ?: "push_token")
+                )
             )
             beforeEachTest {
                 coEvery {
@@ -125,6 +140,14 @@ object IntegrationRepositoryImplSpec : Spek({
                 coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
                 coEvery { localStorage.getString("cloud_url") } returns "http://best.com/hook/id"
                 coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+
+                coEvery { localStorage.getString("app_version") } returns "app_version"
+                coEvery { localStorage.getString("device_name") } returns "device_name"
+                coEvery { localStorage.getString("manufacturer") } returns "manufacturer"
+                coEvery { localStorage.getString("model") } returns "model"
+                coEvery { localStorage.getString("os_version") } returns "os_version"
+                coEvery { localStorage.getString("push_url") } returns "push_url"
+                coEvery { localStorage.getString("push_token") } returns "push_token"
 
                 runBlocking {
                     repository.updateRegistration(deviceRegistration)

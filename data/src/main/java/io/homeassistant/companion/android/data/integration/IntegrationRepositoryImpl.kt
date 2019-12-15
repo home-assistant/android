@@ -198,8 +198,9 @@ class IntegrationRepositoryImpl @Inject constructor(
             deviceRegistration.osVersion ?: oldDeviceRegistration.osVersion,
             deviceRegistration.supportsEncryption,
             hashMapOf(
-                "push_url" to (deviceRegistration.pushUrl ?: oldDeviceRegistration.pushUrl!!),
-                "push_token" to (deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken!!)
+                "push_url" to (deviceRegistration.pushUrl ?: oldDeviceRegistration.pushUrl ?: ""),
+                "push_token" to (deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
+                ?: "")
             )
         )
     }

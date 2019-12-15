@@ -7,7 +7,6 @@ import com.google.firebase.iid.InstanceIdResult
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.notifications.MessagingService
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
@@ -80,7 +79,8 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
                 "Android",
                 Build.VERSION.SDK_INT.toString(),
                 false,
-                MessagingService.generateAppData("ABC123")
+                "url",
+                "token"
             )
             beforeEachTest {
                 coEvery { integrationUseCase.registerDevice(deviceRegistration) } just runs
@@ -90,7 +90,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
                     presenter.onRegistrationAttempt()
                 }
                 it("should register successfully") {
-                    coVerifyAll {
+                    coVerify {
                         view.showLoading()
                         integrationUseCase.registerDevice(deviceRegistration)
                         view.deviceRegistered()
