@@ -12,7 +12,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase

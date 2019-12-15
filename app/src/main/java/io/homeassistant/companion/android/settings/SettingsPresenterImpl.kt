@@ -40,7 +40,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun getString(key: String?, defValue: String?): String? {
         return runBlocking {
-            when(key) {
+            when (key) {
                 "registration_name" -> integrationUseCase.getRegistration().deviceName
                 else -> throw Exception()
             }
@@ -49,7 +49,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun putString(key: String?, value: String?) {
         mainScope.launch {
-            when(key) {
+            when (key) {
                 "registration_name" -> integrationUseCase.updateRegistration(deviceName = value!!)
                 else -> throw Exception()
             }

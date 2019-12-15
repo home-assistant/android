@@ -30,7 +30,7 @@ class IntegrationUseCaseImpl @Inject constructor(
                 null,
                 osVersion,
                 null,
-                pushUrl?: "https://mobile-apps.home-assistant.io/api/sendPushNotification",
+                pushUrl ?: "https://mobile-apps.home-assistant.io/api/sendPushNotification",
                 pushToken
             )
         )
