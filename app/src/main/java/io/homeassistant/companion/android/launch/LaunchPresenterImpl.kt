@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.notifications.MessagingService
 import java.lang.Exception
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -31,7 +30,7 @@ class LaunchPresenterImpl @Inject constructor(
     override fun onViewReady() {
         mainScope.launch {
             if (authenticationUseCase.getSessionState() == SessionState.CONNECTED) {
-                resyncNotificationIds()
+                resyncRegistration()
                 view.displayWebview()
             } else {
                 view.displayOnBoarding()
@@ -44,17 +43,17 @@ class LaunchPresenterImpl @Inject constructor(
     }
 
     // TODO: This should probably go in settings?
-    private fun resyncNotificationIds() {
+    private fun resyncRegistration() {
         FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener {
             mainScope.launch {
                 try {
                     integrationUseCase.updateRegistration(
                         "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                        Build.MODEL ?: "UNKNOWN",
+                        null,
                         Build.MANUFACTURER ?: "UNKNOWN",
                         Build.MODEL ?: "UNKNOWN",
                         Build.VERSION.SDK_INT.toString(),
-                        MessagingService.generateAppData(it.token)
+                        pushToken = it.token
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Issue updating Registration", e)

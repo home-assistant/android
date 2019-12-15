@@ -4,13 +4,15 @@ interface IntegrationUseCase {
 
     suspend fun registerDevice(deviceRegistration: DeviceRegistration)
     suspend fun updateRegistration(
-        appVersion: String,
-        deviceName: String,
-        manufacturer: String,
-        model: String,
-        osVersion: String,
-        appData: HashMap<String, String>
+        appVersion: String? = null,
+        deviceName: String? = null,
+        manufacturer: String? = null,
+        model: String? = null,
+        osVersion: String? = null,
+        pushUrl: String? = null,
+        pushToken: String? = null
     )
+    suspend fun getRegistration(): DeviceRegistration
 
     suspend fun isRegistered(): Boolean
 

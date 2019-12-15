@@ -10,5 +10,6 @@ data class DeviceRegistration(
     val osName: String? = null,
     val osVersion: String? = null,
     val supportsEncryption: Boolean? = null,
-    val appData: HashMap<String, String>? = null
+    val pushUrl: String? = null,
+    var pushToken: String? = null
 )

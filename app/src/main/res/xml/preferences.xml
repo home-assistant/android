@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
+        android:title="Device Registration">
+        <EditTextPreference
+            android:key="registration_name"
+            android:title="Device Name"
+            android:summary="The name of the device listed in Home Assistant"/>
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/location">
         <SwitchPreference
             android:key="location_zone"
@@ -12,7 +19,6 @@
             android:icon="@drawable/map_marker"
             android:title="@string/pref_location_background_title"
             android:summary="@string/pref_location_background_summary"/>
-
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">

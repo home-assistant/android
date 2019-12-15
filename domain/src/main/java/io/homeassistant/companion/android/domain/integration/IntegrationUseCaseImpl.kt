@@ -10,12 +10,13 @@ class IntegrationUseCaseImpl @Inject constructor(
     }
 
     override suspend fun updateRegistration(
-        appVersion: String,
-        deviceName: String,
-        manufacturer: String,
-        model: String,
-        osVersion: String,
-        appData: HashMap<String, String>
+        appVersion: String?,
+        deviceName: String?,
+        manufacturer: String?,
+        model: String?,
+        osVersion: String?,
+        pushUrl: String?,
+        pushToken: String?
     ) {
 
         integrationRepository.updateRegistration(
@@ -29,9 +30,14 @@ class IntegrationUseCaseImpl @Inject constructor(
                 null,
                 osVersion,
                 null,
-                appData
+                pushUrl?: "https://mobile-apps.home-assistant.io/api/sendPushNotification",
+                pushToken
             )
         )
+    }
+
+    override suspend fun getRegistration(): DeviceRegistration {
+        return integrationRepository.getRegistration()
     }
 
     override suspend fun isRegistered(): Boolean {

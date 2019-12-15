@@ -8,7 +8,6 @@ import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.notifications.MessagingService
 import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -46,7 +45,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
                     "Android",
                     Build.VERSION.SDK_INT.toString(),
                     false,
-                    token.let { MessagingService.generateAppData(it) }
+                    pushToken = token
                 )
 
                 try {
