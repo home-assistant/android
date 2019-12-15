@@ -8,8 +8,6 @@
 
         <item name="colorControlNormal">@android:color/white</item>
 
-        <item name="buttonStyle">@style/Widget.HomeAssistant.Button.Colored</item>
-
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
     </style>
 
