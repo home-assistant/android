@@ -28,7 +28,7 @@ allprojects {
     apply plugin: "org.jlleitschuh.gradle.ktlint"
 }
 
-task clean(type: Delete) {
+task clean(type: Delete, group: 'build') {
     delete rootProject.buildDir
 }
 

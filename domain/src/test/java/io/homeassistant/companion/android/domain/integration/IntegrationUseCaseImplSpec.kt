@@ -46,7 +46,7 @@ object IntegrationUseCaseImplSpec : Spek({
                 } just Runs
 
                 runBlocking {
-                    useCase.updateRegistration("1", "2", "3", "4", "5", hashMapOf())
+                    useCase.updateRegistration("1", "2", "3", "4", "5", "6", "7")
                 }
             }
 
@@ -62,7 +62,9 @@ object IntegrationUseCaseImplSpec : Spek({
                         null,
                         "5",
                         null,
-                        hashMapOf()))
+                        "6",
+                        "7"
+                        ))
                 }
             }
         }

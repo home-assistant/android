@@ -79,8 +79,8 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
                 "Android",
                 Build.VERSION.SDK_INT.toString(),
                 false,
-                "url",
-                "token"
+                null,
+                "ABC123"
             )
             beforeEachTest {
                 coEvery { integrationUseCase.registerDevice(deviceRegistration) } just runs
