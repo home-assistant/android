@@ -6,8 +6,6 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="colorButtonNormal">@color/colorPrimary</item>
 
-        <item name="colorControlNormal">@android:color/white</item>
-
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
     </style>
 
@@ -29,6 +27,11 @@
 
     <style name="Widget.HomeAssistant.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
         <item name="android:textColor">@color/colorPrimary</item>
+    </style>
+
+    <style name="Toolbar">
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="colorControlNormal">@android:color/white</item>
     </style>
 
     <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert" />
