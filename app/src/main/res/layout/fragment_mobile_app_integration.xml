@@ -68,7 +68,7 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/skip"
-            style="@style/Widget.HomeAssistant.Button.Borderless"
+            style="@style/Widget.HomeAssistant.Button.Outlined"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/skip"

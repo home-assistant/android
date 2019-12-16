@@ -1,6 +1,6 @@
 <resources>
 
-    <style name="Theme.HomeAssistant" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="Theme.HomeAssistant" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
@@ -11,26 +11,26 @@
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
     </style>
 
-    <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.AppCompat.Headline">
+    <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.MaterialComponents.Headline1">
         <item name="android:textSize">20sp</item>
     </style>
 
-    <style name="TextAppearance.HomeAssistant.Title" parent="TextAppearance.AppCompat.Title">
+    <style name="TextAppearance.HomeAssistant.Title" parent="TextAppearance.MaterialComponents.Headline2">
         <item name="android:textSize">18sp</item>
     </style>
 
-    <style name="TextAppearance.HomeAssistant.Medium" parent="TextAppearance.AppCompat.Medium">
+    <style name="TextAppearance.HomeAssistant.Medium" parent="TextAppearance.MaterialComponents.Headline3">
         <item name="android:textSize">16sp</item>
     </style>
 
-    <style name="Widget.HomeAssistant.Button.Colored" parent="Widget.AppCompat.Button">
+    <style name="Widget.HomeAssistant.Button.Colored" parent="Widget.MaterialComponents.Button">
         <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <style name="Widget.HomeAssistant.Button.Borderless" parent="Widget.AppCompat.Button.Borderless">
+    <style name="Widget.HomeAssistant.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
         <item name="android:textColor">@color/colorPrimary</item>
     </style>
 
-    <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.AppCompat.Light.Dialog.Alert" />
+    <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert" />
 
 </resources>
