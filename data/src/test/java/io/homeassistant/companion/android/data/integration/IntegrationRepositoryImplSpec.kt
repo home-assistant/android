@@ -51,8 +51,8 @@ object IntegrationRepositoryImplSpec : Spek({
                     "osName",
                     "osVersion",
                     false,
-                    null,
-                    null
+                    "pushUrl",
+                    "pushToken"
                 )
                 val registerDeviceRequest = RegisterDeviceRequest(
                     deviceRegistration.appId,
@@ -102,9 +102,21 @@ object IntegrationRepositoryImplSpec : Spek({
                     localStorage.putString("webhook_id", "FGHIJ")
                 }
             }
+
+            it("should save registration data") {
+                coVerify {
+                    localStorage.putString("app_version", "appVersion")
+                    localStorage.putString("device_name", "deviceName")
+                    localStorage.putString("manufacturer", "manufacturer")
+                    localStorage.putString("model", "model")
+                    localStorage.putString("os_version", "osVersion")
+                    localStorage.putString("push_url", "pushUrl")
+                    localStorage.putString("push_token", "pushToken")
+                }
+            }
         }
 
-        describe("registerDevice") {
+        describe("updateRegistration") {
             val deviceRegistration = DeviceRegistration(
                 "appId",
                 "appName",
@@ -114,7 +126,9 @@ object IntegrationRepositoryImplSpec : Spek({
                 "model",
                 "osName",
                 "osVersion",
-                false
+                false,
+                "pushUrl",
+                "pushToken"
             )
             val registerDeviceRequest = RegisterDeviceRequest(
                 deviceRegistration.appId,
@@ -159,6 +173,18 @@ object IntegrationRepositoryImplSpec : Spek({
                     integrationService.updateRegistration(
                         "http://best.com/hook/id".toHttpUrl(),
                         IntegrationRequest("update_registration", registerDeviceRequest))
+                }
+            }
+
+            it("should persist the registration") {
+                coVerify {
+                    localStorage.putString("app_version", "appVersion")
+                    localStorage.putString("device_name", "deviceName")
+                    localStorage.putString("manufacturer", "manufacturer")
+                    localStorage.putString("model", "model")
+                    localStorage.putString("os_version", "osVersion")
+                    localStorage.putString("push_url", "pushUrl")
+                    localStorage.putString("push_token", "pushToken")
                 }
             }
         }
