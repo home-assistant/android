@@ -2,11 +2,13 @@ package io.homeassistant.companion.android.data.authentication
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.data.LocalStorage
+import io.homeassistant.companion.android.domain.MalformedHttpUrlException
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import java.net.URL
 import javax.inject.Inject
 import javax.inject.Named
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.threeten.bp.Instant
@@ -24,8 +26,21 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_TOKEN_TYPE = "token_type"
     }
 
-    override suspend fun saveUrl(url: URL) {
-        localStorage.putString(PREF_URL, url.toString())
+    override suspend fun saveUrl(url: String) {
+        val trimUrl = try {
+            val httpUrl = url.toHttpUrl()
+            HttpUrl.Builder()
+                .scheme(httpUrl.scheme)
+                .host(httpUrl.host)
+                .port(httpUrl.port)
+                .toString()
+        } catch (e: IllegalArgumentException) {
+            throw MalformedHttpUrlException(
+                e.message
+            )
+        }
+
+        localStorage.putString(PREF_URL, trimUrl)
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
