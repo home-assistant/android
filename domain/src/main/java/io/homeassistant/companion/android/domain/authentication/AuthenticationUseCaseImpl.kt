@@ -7,7 +7,7 @@ class AuthenticationUseCaseImpl @Inject constructor(
     private val authenticationRepository: AuthenticationRepository
 ) : AuthenticationUseCase {
 
-    override suspend fun saveUrl(url: URL) {
+    override suspend fun saveUrl(url: String) {
         authenticationRepository.saveUrl(url)
     }
 

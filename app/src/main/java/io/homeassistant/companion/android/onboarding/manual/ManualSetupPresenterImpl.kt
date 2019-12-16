@@ -1,9 +1,8 @@
 package io.homeassistant.companion.android.onboarding.manual
 
 import android.util.Log
+import io.homeassistant.companion.android.domain.MalformedHttpUrlException
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import java.net.MalformedURLException
-import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,18 +21,15 @@ class ManualSetupPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onClickOk(urlString: String) {
-        val url: URL
-        try {
-            url = URL(urlString)
-        } catch (e: MalformedURLException) {
-            Log.e(TAG, "Unable to parse url", e)
-            view.displayUrlError()
-            return
-        }
-
+    override fun onClickOk(url: String) {
         mainScope.launch {
-            authenticationUseCase.saveUrl(URL(url.protocol, url.host, url.port, ""))
+            try {
+                authenticationUseCase.saveUrl(url)
+            } catch (e: MalformedHttpUrlException) {
+                Log.e(TAG, "Unable to parse url", e)
+                view.displayUrlError()
+                return@launch
+            }
             view.urlSaved()
         }
     }

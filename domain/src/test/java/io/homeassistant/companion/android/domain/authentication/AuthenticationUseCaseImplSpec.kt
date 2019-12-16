@@ -17,11 +17,11 @@ object AuthenticationUseCaseImplSpec : Spek({
 
         describe("save url") {
             beforeEachTest {
-                runBlocking { useCase.saveUrl(URL("https://demo.home-assistant.io/")) }
+                runBlocking { useCase.saveUrl("https://demo.home-assistant.io/") }
             }
 
             it("should call the repository") {
-                coVerify { authenticationRepository.saveUrl(URL("https://demo.home-assistant.io/")) }
+                coVerify { authenticationRepository.saveUrl("https://demo.home-assistant.io/") }
             }
         }
 
