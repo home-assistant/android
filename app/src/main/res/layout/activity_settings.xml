@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        android:theme="@style/Toolbar"
+        android:theme="@style/ThemeOverlay.HomeAssistant.ActionBar"
         android:elevation="4dp" />
     <FrameLayout
         android:id="@+id/content"
