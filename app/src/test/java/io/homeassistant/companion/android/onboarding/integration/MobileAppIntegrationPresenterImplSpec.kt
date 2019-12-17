@@ -70,16 +70,8 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
 
         describe("on registration success") {
             val deviceRegistration = DeviceRegistration(
-                BuildConfig.APPLICATION_ID,
-                "Home Assistant",
                 "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                 Build.MODEL ?: "UNKNOWN",
-                Build.MANUFACTURER ?: "UNKNOWN",
-                Build.MODEL ?: "UNKNOWN",
-                "Android",
-                Build.VERSION.SDK_INT.toString(),
-                false,
-                null,
                 "ABC123"
             )
             beforeEachTest {

@@ -35,47 +35,38 @@ object IntegrationRepositoryImplSpec : Spek({
             IntegrationRepositoryImpl(
                 integrationService,
                 authenticationRepository,
-                localStorage
+                localStorage,
+                "manufacturer",
+                "model",
+                "osVersion"
             )
         }
 
         describe("registerDevice") {
             beforeEachTest {
                 val deviceRegistration = DeviceRegistration(
-                    "appId",
-                    "appName",
                     "appVersion",
                     "deviceName",
-                    "manufacturer",
-                    "model",
-                    "osName",
-                    "osVersion",
-                    false,
-                    "pushUrl",
                     "pushToken"
                 )
                 val registerDeviceRequest = RegisterDeviceRequest(
-                    deviceRegistration.appId,
-                    deviceRegistration.appName,
+                    "io.homeassistant.companion.android",
+                    "Home Assistant",
                     deviceRegistration.appVersion,
                     deviceRegistration.deviceName,
-                    deviceRegistration.manufacturer,
-                    deviceRegistration.model,
-                    deviceRegistration.osName,
-                    deviceRegistration.osVersion,
-                    deviceRegistration.supportsEncryption,
+                    "manufacturer",
+                    "model",
+                    "Android",
+                    "osVersion",
+                    false,
                     hashMapOf(
-                        "push_url" to (deviceRegistration.pushUrl ?: "push_url"),
+                        "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
                         "push_token" to (deviceRegistration.pushToken ?: "push_token")
                     )
                 )
 
                 coEvery { localStorage.getString("app_version") } returns "app_version"
                 coEvery { localStorage.getString("device_name") } returns "device_name"
-                coEvery { localStorage.getString("manufacturer") } returns "manufacturer"
-                coEvery { localStorage.getString("model") } returns "model"
-                coEvery { localStorage.getString("os_version") } returns "os_version"
-                coEvery { localStorage.getString("push_url") } returns "push_url"
                 coEvery { localStorage.getString("push_token") } returns "push_token"
 
                 coEvery {
@@ -107,10 +98,6 @@ object IntegrationRepositoryImplSpec : Spek({
                 coVerify {
                     localStorage.putString("app_version", "appVersion")
                     localStorage.putString("device_name", "deviceName")
-                    localStorage.putString("manufacturer", "manufacturer")
-                    localStorage.putString("model", "model")
-                    localStorage.putString("os_version", "osVersion")
-                    localStorage.putString("push_url", "pushUrl")
                     localStorage.putString("push_token", "pushToken")
                 }
             }
@@ -118,30 +105,22 @@ object IntegrationRepositoryImplSpec : Spek({
 
         describe("updateRegistration") {
             val deviceRegistration = DeviceRegistration(
-                "appId",
-                "appName",
                 "appVersion",
                 "deviceName",
-                "manufacturer",
-                "model",
-                "osName",
-                "osVersion",
-                false,
-                "pushUrl",
                 "pushToken"
             )
             val registerDeviceRequest = RegisterDeviceRequest(
-                deviceRegistration.appId,
-                deviceRegistration.appName,
+                "io.homeassistant.companion.android",
+                "Home Assistant",
                 deviceRegistration.appVersion,
                 deviceRegistration.deviceName,
-                deviceRegistration.manufacturer,
-                deviceRegistration.model,
-                deviceRegistration.osName,
-                deviceRegistration.osVersion,
-                deviceRegistration.supportsEncryption,
+                "manufacturer",
+                "model",
+                "Android",
+                "osVersion",
+                false,
                 hashMapOf(
-                    "push_url" to (deviceRegistration.pushUrl ?: "push_url"),
+                    "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
                     "push_token" to (deviceRegistration.pushToken ?: "push_token")
                 )
             )
@@ -157,10 +136,6 @@ object IntegrationRepositoryImplSpec : Spek({
 
                 coEvery { localStorage.getString("app_version") } returns "app_version"
                 coEvery { localStorage.getString("device_name") } returns "device_name"
-                coEvery { localStorage.getString("manufacturer") } returns "manufacturer"
-                coEvery { localStorage.getString("model") } returns "model"
-                coEvery { localStorage.getString("os_version") } returns "os_version"
-                coEvery { localStorage.getString("push_url") } returns "push_url"
                 coEvery { localStorage.getString("push_token") } returns "push_token"
 
                 runBlocking {
@@ -180,10 +155,6 @@ object IntegrationRepositoryImplSpec : Spek({
                 coVerify {
                     localStorage.putString("app_version", "appVersion")
                     localStorage.putString("device_name", "deviceName")
-                    localStorage.putString("manufacturer", "manufacturer")
-                    localStorage.putString("model", "model")
-                    localStorage.putString("os_version", "osVersion")
-                    localStorage.putString("push_url", "pushUrl")
                     localStorage.putString("push_token", "pushToken")
                 }
             }

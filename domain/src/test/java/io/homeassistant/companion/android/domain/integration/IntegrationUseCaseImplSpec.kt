@@ -53,16 +53,8 @@ object IntegrationUseCaseImplSpec : Spek({
             it("should call repository") {
                 coVerify {
                     integrationRepository.updateRegistration(DeviceRegistration(
-                        null,
-                        null,
                         "1",
                         "2",
-                        "3",
-                        "4",
-                        null,
-                        "5",
-                        null,
-                        "6",
                         "7"
                         ))
                 }

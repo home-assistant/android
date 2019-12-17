@@ -36,16 +36,9 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
                 val token = it.token
 
                 val deviceRegistration = DeviceRegistration(
-                    BuildConfig.APPLICATION_ID,
-                    "Home Assistant",
                     "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     Build.MODEL ?: "UNKNOWN",
-                    Build.MANUFACTURER ?: "UNKNOWN",
-                    Build.MODEL ?: "UNKNOWN",
-                    "Android",
-                    Build.VERSION.SDK_INT.toString(),
-                    false,
-                    pushToken = token
+                    token
                 )
 
                 try {

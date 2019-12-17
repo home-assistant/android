@@ -21,16 +21,8 @@ class IntegrationUseCaseImpl @Inject constructor(
 
         integrationRepository.updateRegistration(
             DeviceRegistration(
-                null,
-                null,
                 appVersion,
                 deviceName,
-                manufacturer,
-                model,
-                null,
-                osVersion,
-                null,
-                pushUrl ?: "https://mobile-apps.home-assistant.io/api/sendPushNotification",
                 pushToken
             )
         )
