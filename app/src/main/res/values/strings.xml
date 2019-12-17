@@ -27,4 +27,6 @@ integration enabled on your home assistant instance.</string>
   <string name="application_version">Application Version</string>
   <string name="location">Location</string>
   <string name="app_version_info">App Version Info</string>
+  <string name="device_registration">Device Registration</string>
+  <string name="device_name">Device Name</string>
 </resources>
