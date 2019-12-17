@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.settings
 
 import android.os.Bundle
+import android.text.InputType
+import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
@@ -28,6 +30,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
         setPreferencesFromResource(R.xml.preferences, rootKey)
+
+        findPreference<EditTextPreference>("location_accuracy")?.setOnBindEditTextListener {
+            it.inputType = InputType.TYPE_CLASS_NUMBER
+        }
 
         findPreference<Preference>("version").let {
             it!!.summary = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"

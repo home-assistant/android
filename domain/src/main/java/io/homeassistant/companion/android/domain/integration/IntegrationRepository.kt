@@ -16,4 +16,7 @@ interface IntegrationRepository {
 
     suspend fun setBackgroundTrackingEnabled(enabled: Boolean)
     suspend fun isBackgroundTrackingEnabled(): Boolean
+
+    suspend fun getMinimumAccuracy(): Int
+    suspend fun setMinimumAccuracy(value: Int)
 }

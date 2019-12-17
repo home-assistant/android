@@ -163,6 +163,10 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         )
 
         mainScope.launch {
+            if (updateLocation.gpsAccuracy > integrationUseCase.getMinimumAccuracy()) {
+                Log.w(TAG, "GPS accuracy doesn't meet accuracy cutoff")
+                return@launch
+            }
             try {
                 integrationUseCase.updateLocation(updateLocation)
             } catch (e: Exception) {

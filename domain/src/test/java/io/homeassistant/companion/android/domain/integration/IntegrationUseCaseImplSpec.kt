@@ -137,5 +137,25 @@ object IntegrationUseCaseImplSpec : Spek({
                 coVerify { integrationRepository.isBackgroundTrackingEnabled() }
             }
         }
+
+        describe("setMinimumAccuracy") {
+            beforeEachTest {
+                runBlocking { useCase.setMinimumAccuracy(50) }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.setMinimumAccuracy(50) }
+            }
+        }
+
+        describe("getMinimumAccuracy") {
+            beforeEachTest {
+                runBlocking { useCase.getMinimumAccuracy() }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.getMinimumAccuracy() }
+            }
+        }
     }
 })

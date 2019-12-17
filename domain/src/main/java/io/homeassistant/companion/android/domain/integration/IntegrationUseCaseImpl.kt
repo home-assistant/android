@@ -61,4 +61,12 @@ class IntegrationUseCaseImpl @Inject constructor(
     override suspend fun isBackgroundTrackingEnabled(): Boolean {
         return integrationRepository.isBackgroundTrackingEnabled()
     }
+
+    override suspend fun getMinimumAccuracy(): Int {
+        return integrationRepository.getMinimumAccuracy()
+    }
+
+    override suspend fun setMinimumAccuracy(value: Int) {
+        return integrationRepository.setMinimumAccuracy(value)
+    }
 }

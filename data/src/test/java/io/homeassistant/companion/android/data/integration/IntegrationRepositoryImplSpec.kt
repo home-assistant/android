@@ -552,6 +552,39 @@ object IntegrationRepositoryImplSpec : Spek({
                     }
                 }
             }
+
+            describe("getMinimumAccuracy default value") {
+                var accuracy = 0
+                beforeEachTest {
+                    coEvery { localStorage.getInt("accuracy") } returns 0
+                    runBlocking { accuracy = repository.getMinimumAccuracy() }
+                }
+                it("should return what is stored") {
+                    assertThat(accuracy).isEqualTo(50)
+                }
+            }
+
+            describe("getMinimumAccuracy") {
+                var accuracy = 0
+                beforeEachTest {
+                    coEvery { localStorage.getInt("accuracy") } returns 55
+                    runBlocking { accuracy = repository.getMinimumAccuracy() }
+                }
+                it("should return what is stored") {
+                    assertThat(accuracy).isEqualTo(55)
+                }
+            }
+
+            describe("setMinimumAccuracy") {
+                beforeEachTest {
+                    runBlocking { repository.setMinimumAccuracy(100) }
+                }
+                it("should store what is passed") {
+                    coVerify {
+                        localStorage.putInt("accuracy", 100)
+                    }
+                }
+            }
         }
     }
 })

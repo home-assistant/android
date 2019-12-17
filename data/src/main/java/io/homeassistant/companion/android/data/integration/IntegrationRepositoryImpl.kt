@@ -26,6 +26,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_ZONE_ENABLED = "zone_enabled"
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
+        private const val PREF_ACCURACY = "accuracy"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -113,6 +114,18 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isBackgroundTrackingEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
+    }
+
+    override suspend fun getMinimumAccuracy(): Int {
+        var retVal = localStorage.getInt(PREF_ACCURACY)
+        if (retVal == 0) {
+            retVal = 50
+        }
+        return retVal
+    }
+
+    override suspend fun setMinimumAccuracy(value: Int) {
+        localStorage.putInt(PREF_ACCURACY, value)
     }
 
     // https://developers.home-assistant.io/docs/en/app_integration_sending_data.html#short-note-on-instance-urls

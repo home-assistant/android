@@ -12,7 +12,13 @@
             android:icon="@drawable/map_marker"
             android:title="@string/pref_location_background_title"
             android:summary="@string/pref_location_background_summary"/>
-
+        <EditTextPreference
+            android:key="location_accuracy"
+            android:icon="@drawable/bullseye_arrow"
+            android:title="@string/pref_accuracy_requirement_title"
+            android:summary="@string/pref_accuracy_requirement_summary"
+            android:inputType="number|textNoSuggestions"
+            android:digits="0123456789"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="App Version Info">

@@ -38,6 +38,24 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
+    override fun getString(key: String?, defValue: String?): String? {
+        return runBlocking {
+            return@runBlocking when (key) {
+                "location_accuracy" -> integrationUseCase.getMinimumAccuracy().toString()
+                else -> throw Exception()
+            }
+        }
+    }
+
+    override fun putString(key: String?, value: String?) {
+        mainScope.launch {
+            when (key) {
+                "location_accuracy" -> integrationUseCase.setMinimumAccuracy(Integer.parseInt(value.toString()))
+                else -> throw Exception()
+            }
+        }
+    }
+
     override fun getPreferenceDataStore(): PreferenceDataStore {
         return this
     }

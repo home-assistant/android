@@ -13,4 +13,8 @@ interface LocalStorage {
     suspend fun putBoolean(key: String, value: Boolean)
 
     suspend fun getBoolean(key: String): Boolean
+
+    suspend fun putInt(key: String, value: Int)
+
+    suspend fun getInt(key: String): Int
 }
