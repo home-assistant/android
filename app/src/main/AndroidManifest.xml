@@ -26,9 +26,9 @@
             android:exported="true"
             android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
             </intent-filter>
         </receiver>
 
@@ -40,10 +40,13 @@
             </intent-filter>
         </activity>
         <activity android:name=".onboarding.OnboardingActivity" />
-        <activity android:name=".webview.WebViewActivity" />
+        <activity
+            android:name=".webview.WebViewActivity"
+            android:configChanges="orientation|screenSize" />
         <activity
             android:name=".settings.SettingsActivity"
-            android:parentActivityName=".webview.WebViewActivity"/>
+            android:parentActivityName=".webview.WebViewActivity" />
+
         <service
             android:name=".notifications.MessagingService"
             android:exported="false">
