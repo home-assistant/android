@@ -26,5 +26,5 @@ integration enabled on your home assistant instance.</string>
   <string name="pref_location_background_summary">Update your location behind the scenes, periodically.</string>
   <string name="application_version">Application Version</string>
   <string name="pref_accuracy_requirement_title" tools:ignore="MissingTranslation">Accuracy Requirement</string>
-  <string name="pref_accuracy_requirement_summary" tools:ignore="MissingTranslation">Disregard location updates that are below this accuracy threshold.</string>
+  <string name="pref_accuracy_requirement_summary" tools:ignore="MissingTranslation">Disregard location updates that are below this accuracy threshold in meters.</string>
 </resources>
