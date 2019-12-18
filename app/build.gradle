@@ -65,10 +65,6 @@ android {
             }
         }
     }
-
-    lintOptions {
-        disable 'MissingTranslation'
-    }
 }
 
 play {
