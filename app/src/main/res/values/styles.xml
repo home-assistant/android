@@ -22,7 +22,7 @@
     </style>
 
     <style name="Widget.HomeAssistant.Button.Colored" parent="Widget.MaterialComponents.Button">
-        <item name="android:textColor">@color/onPrimary</item>
+        <item name="android:textColor">@color/colorOnPrimary</item>
     </style>
 
     <style name="Widget.HomeAssistant.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
@@ -31,8 +31,8 @@
 
     <style name="ThemeOverlay.HomeAssistant.ActionBar" parent="@style/ThemeOverlay.MaterialComponents.ActionBar">
         <item name="android:background">@color/colorPrimary</item>
-        <item name="android:textColorPrimary">@color/onPrimary</item>
-        <item name="colorControlNormal">@color/onPrimary</item>
+        <item name="android:textColorPrimary">@color/colorOnPrimary</item>
+        <item name="colorControlNormal">@color/colorOnPrimary</item>
     </style>
 
     <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert" />
