@@ -12,7 +12,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
@@ -27,13 +26,6 @@ import kotlinx.coroutines.launch
 class MessagingService : FirebaseMessagingService() {
     companion object {
         const val TAG = "MessagingService"
-
-        fun generateAppData(pushToken: String): HashMap<String, String> {
-            return hashMapOf(
-                "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
-                "push_token" to pushToken
-            )
-        }
     }
 
     @Inject
@@ -110,12 +102,7 @@ class MessagingService : FirebaseMessagingService() {
             Log.d(TAG, "Refreshed token: $token")
             try {
                 integrationUseCase.updateRegistration(
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                    Build.MODEL ?: "UNKNOWN",
-                    Build.MANUFACTURER ?: "UNKNOWN",
-                    Build.MODEL ?: "UNKNOWN",
-                    Build.VERSION.SDK_INT.toString(),
-                    generateAppData(token)
+                    pushToken = token
                 )
             } catch (e: Exception) {
                 // TODO: Store for update later

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.dagger
 
+import android.os.Build
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -38,6 +39,18 @@ class DataModule(
     @Provides
     @Named("integration")
     fun provideIntegrationLocalStorage() = integrationLocalStorage
+
+    @Provides
+    @Named("manufacturer")
+    fun provideDeviceManufacturer() = Build.MANUFACTURER
+
+    @Provides
+    @Named("model")
+    fun provideDeviceModel() = Build.MODEL
+
+    @Provides
+    @Named("osVersion")
+    fun provideDeviceOsVersion() = Build.VERSION.SDK_INT.toString()
 
     @Module
     interface Declaration {

@@ -10,28 +10,26 @@ class IntegrationUseCaseImpl @Inject constructor(
     }
 
     override suspend fun updateRegistration(
-        appVersion: String,
-        deviceName: String,
-        manufacturer: String,
-        model: String,
-        osVersion: String,
-        appData: HashMap<String, String>
+        appVersion: String?,
+        deviceName: String?,
+        manufacturer: String?,
+        model: String?,
+        osVersion: String?,
+        pushUrl: String?,
+        pushToken: String?
     ) {
 
         integrationRepository.updateRegistration(
             DeviceRegistration(
-                null,
-                null,
                 appVersion,
                 deviceName,
-                manufacturer,
-                model,
-                null,
-                osVersion,
-                null,
-                appData
+                pushToken
             )
         )
+    }
+
+    override suspend fun getRegistration(): DeviceRegistration {
+        return integrationRepository.getRegistration()
     }
 
     override suspend fun isRegistered(): Boolean {

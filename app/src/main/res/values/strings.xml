@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
     <string name="app_name">Home Assistant</string>
-    <string name="scanning_network">Scanning the network 
+    <string name="scanning_network">Scanning the network
 for Home Assistant</string>
-    <string name="home_assistant_not_discover">Unable to find your 
+    <string name="home_assistant_not_discover">Unable to find your
 Home Assistant instance</string>
-    <string name="connect_to_home_internet">Make sure your phone is connected 
+    <string name="connect_to_home_internet">Make sure your phone is connected
 to your home internet.</string>
     <string name="scan_again">scan again</string>
     <string name="manual_setup">enter address manually</string>
@@ -17,7 +17,7 @@ to your home internet.</string>
     <string name="retry">Retry</string>
     <string name="attempting_registration">Registering application…</string>
     <string name="unable_to_register">Unable to Register Application</string>
-    <string name="error_with_registration">Please check to ensure you have the mobile_app 
+    <string name="error_with_registration">Please check to ensure you have the mobile_app
 integration enabled on your home assistant instance.</string>
     <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
     <string name="pref_location_zone_title">Zone Based Tracking</string>
@@ -25,4 +25,8 @@ integration enabled on your home assistant instance.</string>
     <string name="pref_location_background_title">Background Location Tracking</string>
     <string name="pref_location_background_summary">Update your location behind the scenes, periodically.</string>
     <string name="application_version">Application Version</string>
+    <string name="location">Location</string>
+    <string name="app_version_info">App Version Info</string>
+    <string name="device_registration">Device Registration</string>
+    <string name="device_name">Device Name</string>
 </resources>

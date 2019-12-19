@@ -4,6 +4,7 @@ interface IntegrationRepository {
 
     suspend fun registerDevice(deviceRegistration: DeviceRegistration)
     suspend fun updateRegistration(deviceRegistration: DeviceRegistration)
+    suspend fun getRegistration(): DeviceRegistration
 
     suspend fun isRegistered(): Boolean
 
