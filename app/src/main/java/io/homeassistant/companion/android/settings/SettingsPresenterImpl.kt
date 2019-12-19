@@ -38,6 +38,24 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
+    override fun getString(key: String?, defValue: String?): String? {
+        return runBlocking {
+            when (key) {
+                "registration_name" -> integrationUseCase.getRegistration().deviceName
+                else -> throw Exception()
+            }
+        }
+    }
+
+    override fun putString(key: String?, value: String?) {
+        mainScope.launch {
+            when (key) {
+                "registration_name" -> integrationUseCase.updateRegistration(deviceName = value!!)
+                else -> throw Exception()
+            }
+        }
+    }
+
     override fun getPreferenceDataStore(): PreferenceDataStore {
         return this
     }

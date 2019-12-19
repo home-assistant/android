@@ -46,23 +46,17 @@ object IntegrationUseCaseImplSpec : Spek({
                 } just Runs
 
                 runBlocking {
-                    useCase.updateRegistration("1", "2", "3", "4", "5", hashMapOf())
+                    useCase.updateRegistration("1", "2", "3", "4", "5", "6", "7")
                 }
             }
 
             it("should call repository") {
                 coVerify {
                     integrationRepository.updateRegistration(DeviceRegistration(
-                        null,
-                        null,
                         "1",
                         "2",
-                        "3",
-                        "4",
-                        null,
-                        "5",
-                        null,
-                        hashMapOf()))
+                        "7"
+                        ))
                 }
             }
         }

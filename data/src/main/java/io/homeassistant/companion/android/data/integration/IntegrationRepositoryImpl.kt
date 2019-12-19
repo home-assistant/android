@@ -15,10 +15,22 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
     private val authenticationRepository: AuthenticationRepository,
-    @Named("integration") private val localStorage: LocalStorage
+    @Named("integration") private val localStorage: LocalStorage,
+    @Named("manufacturer") private val manufacturer: String,
+    @Named("model")private val model: String,
+    @Named("osVersion")private val osVersion: String
 ) : IntegrationRepository {
 
     companion object {
+        private const val APP_ID = "io.homeassistant.companion.android"
+        private const val APP_NAME = "Home Assistant"
+        private const val OS_NAME = "Android"
+        private const val PUSH_URL = "https://mobile-apps.home-assistant.io/api/sendPushNotification"
+
+        private const val PREF_APP_VERSION = "app_version"
+        private const val PREF_DEVICE_NAME = "device_name"
+        private const val PREF_PUSH_TOKEN = "push_token"
+
         private const val PREF_CLOUD_URL = "cloud_url"
         private const val PREF_REMOTE_UI_URL = "remote_ui_url"
         private const val PREF_SECRET = "secret"
@@ -34,14 +46,19 @@ class IntegrationRepositoryImpl @Inject constructor(
                 authenticationRepository.buildBearerToken(),
                 createRegisterDeviceRequest(deviceRegistration)
             )
+        persistDeviceRegistration(deviceRegistration)
         persistDeviceRegistrationResponse(response)
     }
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
-        val request = IntegrationRequest("update_registration", createRegisterDeviceRequest(deviceRegistration))
+        val request = IntegrationRequest(
+            "update_registration",
+            createRegisterDeviceRequest(deviceRegistration)
+        )
         for (it in getUrls()) {
             try {
                 if (integrationService.updateRegistration(it, request).isSuccessful) {
+                    persistDeviceRegistration(deviceRegistration)
                     return
                 }
             } catch (e: Exception) {
@@ -50,6 +67,23 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
 
         throw IntegrationException()
+    }
+
+    override suspend fun getRegistration(): DeviceRegistration {
+        return DeviceRegistration(
+            localStorage.getString(PREF_APP_VERSION),
+            localStorage.getString(PREF_DEVICE_NAME),
+            localStorage.getString(PREF_PUSH_TOKEN)
+        )
+    }
+
+    private suspend fun persistDeviceRegistration(deviceRegistration: DeviceRegistration) {
+        if (deviceRegistration.appVersion != null)
+            localStorage.putString(PREF_APP_VERSION, deviceRegistration.appVersion)
+        if (deviceRegistration.deviceName != null)
+            localStorage.putString(PREF_DEVICE_NAME, deviceRegistration.deviceName)
+        if (deviceRegistration.pushToken != null)
+            localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
     }
 
     private suspend fun persistDeviceRegistrationResponse(response: RegisterDeviceResponse) {
@@ -143,18 +177,23 @@ class IntegrationRepositoryImpl @Inject constructor(
         return retVal.toTypedArray()
     }
 
-    private fun createRegisterDeviceRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
+    private suspend fun createRegisterDeviceRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
+        val oldDeviceRegistration = getRegistration()
         return RegisterDeviceRequest(
-            deviceRegistration.appId,
-            deviceRegistration.appName,
-            deviceRegistration.appVersion,
-            deviceRegistration.deviceName,
-            deviceRegistration.manufacturer,
-            deviceRegistration.model,
-            deviceRegistration.osName,
-            deviceRegistration.osVersion,
-            deviceRegistration.supportsEncryption,
-            deviceRegistration.appData
+            APP_ID,
+            APP_NAME,
+            deviceRegistration.appVersion ?: oldDeviceRegistration.appVersion,
+            deviceRegistration.deviceName ?: oldDeviceRegistration.deviceName,
+            manufacturer,
+            model,
+            OS_NAME,
+            osVersion,
+            false,
+            hashMapOf(
+                "push_url" to PUSH_URL,
+                "push_token" to (deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
+                ?: "")
+            )
         )
     }
 
@@ -178,7 +217,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         val retVal = ArrayList<Entity<ZoneAttributes>>()
         zones.forEach {
             retVal.add(
-                Entity<ZoneAttributes>(
+                Entity(
                     it.entityId,
                     it.state,
                     it.attributes,

@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<androidx.preference.PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory
-        android:title="Location">
+        android:title="@string/device_registration">
+        <EditTextPreference
+            android:key="registration_name"
+            android:title="@string/device_name"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/location">
         <SwitchPreference
             android:key="location_zone"
             android:icon="@drawable/map_marker_radius"
@@ -12,10 +19,9 @@
             android:icon="@drawable/map_marker"
             android:title="@string/pref_location_background_title"
             android:summary="@string/pref_location_background_summary"/>
-
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="App Version Info">
+        android:title="@string/app_version_info">
         <Preference
             android:key="version"
             android:icon="@drawable/app_icon"
@@ -23,4 +29,4 @@
             android:summary="1.0.0 (1)"/>
     </PreferenceCategory>
 
-</PreferenceScreen>
+</androidx.preference.PreferenceScreen>
