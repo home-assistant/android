@@ -2,7 +2,7 @@
 
 set -ev
 
-echo $TRAVIS_COMMIT_MESSAGE > CHANGES.md
+echo `git log --format=%B -n 1 $TRAVIS_COMMIT` > CHANGES.md
 export VERSION_CODE=`git rev-list --count HEAD`
 export VERSION_NAME=`git describe --tags $(git rev-list --tags --max-count=1)`
 
