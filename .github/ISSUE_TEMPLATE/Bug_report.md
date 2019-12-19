@@ -4,8 +4,8 @@ about: Create a report to help us improve
 ---
 
 <!-- READ THIS FIRST:
-- Make sure you run the latest versino of the Android app
-- Make sure you run the latest versino of Home Assistant
+- Make sure you run the latest version of the Android app
+- Make sure you run the latest version of Home Assistant
 -->
 
 **Home Assistant Android version:**
