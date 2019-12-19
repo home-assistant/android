@@ -4,7 +4,7 @@ import java.net.URL
 
 interface AuthenticationRepository {
 
-    suspend fun saveUrl(url: URL)
+    suspend fun saveUrl(url: String)
 
     suspend fun registerAuthorizationCode(authorizationCode: String)
 

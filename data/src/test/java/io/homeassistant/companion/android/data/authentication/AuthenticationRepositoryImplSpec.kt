@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.data.authentication
 
 import io.homeassistant.companion.android.data.LocalStorage
+import io.homeassistant.companion.android.domain.MalformedHttpUrlException
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.mockk.Called
 import io.mockk.coEvery
@@ -35,13 +36,53 @@ object AuthenticationRepositoryImplSpec : Spek({
             )
         }
 
-        describe("saveUrl") {
-            beforeEachTest {
-                runBlocking { repository.saveUrl(URL("https://demo.home-assistant.io/")) }
-            }
+        mapOf(
+            "https://demo.home-assistant.io:8123/lovelace/0/default_view?home_assistant=1&true=false" to "https://demo.home-assistant.io:8123/",
+            "https://demo.home-assistant.io/lovelace/0/default_view?home_assistant=1&true=false" to "https://demo.home-assistant.io/",
+            "https://demo.home-assistant.io" to "https://demo.home-assistant.io/",
+            "https://192.168.1.1:8123/lovelace/0" to "https://192.168.1.1:8123/",
+            "https://192.168.1.1:8123" to "https://192.168.1.1:8123/",
+            "https://192.168.1.1" to "https://192.168.1.1/"
+        ).forEach {
+            describe("save valid url \"${it.key}\"") {
+                beforeEachTest {
+                    runBlocking { repository.saveUrl(it.key) }
+                }
 
-            it("should save url") {
-                coVerifyAll { localStorage.putString("url", "https://demo.home-assistant.io/") }
+                it("should save url") {
+                    coVerifyAll { localStorage.putString("url", it.value) }
+                }
+            }
+        }
+
+        listOf(
+            "",
+            "home assistant",
+            "http://192.168..132:8123",
+            "http://....:8123",
+            "http://......",
+            "ftp://192.168.1.1"
+        ).forEach {
+            describe("save invalid url \"$it\"") {
+                lateinit var throwable: Throwable
+                beforeEachTest {
+                    runBlocking {
+                        try {
+                            repository.saveUrl(it)
+                        } catch (e: Exception) {
+                            throwable = e
+                        }
+                    }
+                }
+
+                it("shouldn't save url") {
+                    coVerify(exactly = 0) {
+                        localStorage.putString("url", "https://demo.home-assistant.io:8123")
+                    }
+                }
+                it("should throw an exception") {
+                    assertThat(throwable).isInstanceOf(MalformedHttpUrlException::class.java)
+                }
             }
         }
 
