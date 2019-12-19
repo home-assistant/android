@@ -1,6 +1,9 @@
 language: android
 dist: trusty
 
+git:
+  depth: false
+
 before_install:
   - chmod ugo+x .travis/before_install.sh
   - ./.travis/before_install.sh
