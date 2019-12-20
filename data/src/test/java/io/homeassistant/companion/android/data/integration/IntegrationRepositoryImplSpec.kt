@@ -110,15 +110,15 @@ object IntegrationRepositoryImplSpec : Spek({
                 "pushToken"
             )
             val registerDeviceRequest = RegisterDeviceRequest(
-                "io.homeassistant.companion.android",
-                "Home Assistant",
+                null,
+                null,
                 deviceRegistration.appVersion,
                 deviceRegistration.deviceName,
                 "manufacturer",
                 "model",
-                "Android",
+                null,
                 "osVersion",
-                false,
+                null,
                 hashMapOf(
                     "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
                     "push_token" to (deviceRegistration.pushToken ?: "push_token")
