@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/view_flipper"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="@dimen/activity_margin">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/url_text_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:helperText="@string/input_url_hint">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/home_assistant_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/input_url"
+            android:imeOptions="actionDone"
+            android:inputType="textUri"
+            android:lines="1"
+            android:maxLines="1" />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/ok"
+        style="@style/Widget.HomeAssistant.Button.Colored"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@android:string/ok" />
+
+</LinearLayout>
