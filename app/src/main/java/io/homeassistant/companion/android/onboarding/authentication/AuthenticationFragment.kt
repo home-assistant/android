@@ -65,8 +65,8 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
                         super.onReceivedError(view, request, error)
 
                         val builder = AlertDialog.Builder(context)
-                        builder.setTitle(R.string.error_connection_failed)
-                        builder.setPositiveButton(R.string.ok ){ _, _ ->
+                        builder.setTitle(R.string.error_onboarding_connection_failed)
+                        builder.setPositiveButton(R.string.ok) { _, _ ->
                             fragmentManager?.popBackStack()
                         }
                         builder.show()
