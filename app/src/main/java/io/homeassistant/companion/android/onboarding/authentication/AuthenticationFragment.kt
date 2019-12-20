@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.onboarding.authentication
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.fragment.app.Fragment
@@ -52,6 +55,21 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                         return presenter.onRedirectUrl(url)
+                    }
+
+                    override fun onReceivedError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        error: WebResourceError?
+                    ) {
+                        super.onReceivedError(view, request, error)
+
+                        val builder = AlertDialog.Builder(context)
+                        builder.setTitle(R.string.error_connection_failed)
+                        builder.setPositiveButton(R.string.ok ){ _, _ ->
+                            fragmentManager?.popBackStack()
+                        }
+                        builder.show()
                     }
                 }
             }
