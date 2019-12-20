@@ -41,10 +41,15 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
+        val request = createUpdateRegistrationRequest(deviceRegistration)
+        request.appId = APP_ID
+        request.appName = APP_NAME
+        request.osName = OS_NAME
+        request.supportsEncryption = false
         val response =
             integrationService.registerDevice(
                 authenticationRepository.buildBearerToken(),
-                createRegisterDeviceRequest(deviceRegistration)
+                request
             )
         persistDeviceRegistration(deviceRegistration)
         persistDeviceRegistrationResponse(response)
@@ -53,7 +58,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
         val request = IntegrationRequest(
             "update_registration",
-            createRegisterDeviceRequest(deviceRegistration)
+            createUpdateRegistrationRequest(deviceRegistration)
         )
         for (it in getUrls()) {
             try {
@@ -177,18 +182,18 @@ class IntegrationRepositoryImpl @Inject constructor(
         return retVal.toTypedArray()
     }
 
-    private suspend fun createRegisterDeviceRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
+    private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
         return RegisterDeviceRequest(
-            APP_ID,
-            APP_NAME,
+            null,
+            null,
             deviceRegistration.appVersion ?: oldDeviceRegistration.appVersion,
             deviceRegistration.deviceName ?: oldDeviceRegistration.deviceName,
             manufacturer,
             model,
-            OS_NAME,
+            null,
             osVersion,
-            false,
+            null,
             hashMapOf(
                 "push_url" to PUSH_URL,
                 "push_token" to (deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
