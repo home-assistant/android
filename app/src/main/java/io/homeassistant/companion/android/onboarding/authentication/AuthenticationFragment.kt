@@ -90,10 +90,10 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         super.onDestroy()
     }
 
-    fun popBack(){
+    fun popBack() {
         fragmentManager?.popBackStack()
     }
-    fun showError(title : String){
+    fun showError(title: String) {
         AlertDialog.Builder(context)
             .setTitle(title)
             .setPositiveButton(R.string.ok) { _, _ -> }
