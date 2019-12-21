@@ -238,10 +238,10 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
                             Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                             runBlocking { sendLocationUpdate(locationResult.lastLocation, context) }
                             LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(this)
-                        } else if (numberCalls >= maxRetries){
+                        } else if (numberCalls >= maxRetries) {
                             Log.d(TAG, "No location was accurate enough, sending our last location anyway")
                             runBlocking { sendLocationUpdate(locationResult!!.lastLocation, context) }
-                        }else {
+                        } else {
                             Log.w(TAG, "Location not accurate enough on retry $numberCalls of $maxRetries")
                         }
                     }
