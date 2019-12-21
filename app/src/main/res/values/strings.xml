@@ -15,10 +15,12 @@ to your home internet.</string>
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>
     <string name="skip">Skip</string>
     <string name="retry">Retry</string>
+    <string name="ok">Ok</string>
     <string name="attempting_registration">Registering application…</string>
     <string name="unable_to_register">Unable to Register Application</string>
     <string name="error_with_registration">Please check to ensure you have the mobile_app
 integration enabled on your home assistant instance.</string>
+    <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
     <string name="pref_location_zone_title">Zone Based Tracking</string>
     <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
