@@ -222,17 +222,27 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun requestSingleAccurateLocation(context: Context) {
+        val maxRetries = 5
         val request = createLocationRequest()
         request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        request.numUpdates = 2 // Request 2 updates to make sure GPS gets a good lock
+        request.numUpdates = maxRetries
         LocationServices.getFusedLocationProviderClient(context)
             .requestLocationUpdates(
                 request,
                 object : LocationCallback() {
+                    var numberCalls = 0
                     override fun onLocationResult(locationResult: LocationResult?) {
-                        if (locationResult != null) {
-                            Log.d(TAG, "Got single accurate location update: ${locationResult.lastLocation}")
+                        numberCalls++
+                        Log.d(TAG, "Got single accurate location update: ${locationResult?.lastLocation}")
+                        if (locationResult != null && locationResult.lastLocation.accuracy <= 1) {
+                            Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                             runBlocking { sendLocationUpdate(locationResult.lastLocation, context) }
+                            LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(this)
+                        } else if (numberCalls >= maxRetries){
+                            Log.d(TAG, "No location was accurate enough, sending our last location anyway")
+                            runBlocking { sendLocationUpdate(locationResult!!.lastLocation, context) }
+                        }else {
+                            Log.w(TAG, "Location not accurate enough on retry $numberCalls of $maxRetries")
                         }
                     }
                 },
