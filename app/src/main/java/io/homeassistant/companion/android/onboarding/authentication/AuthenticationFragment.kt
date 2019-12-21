@@ -63,13 +63,8 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
                         error: WebResourceError?
                     ) {
                         super.onReceivedError(view, request, error)
-
-                        val builder = AlertDialog.Builder(context)
-                        builder.setTitle(R.string.error_onboarding_connection_failed)
-                        builder.setPositiveButton(R.string.ok) { _, _ ->
-                            fragmentManager?.popBackStack()
-                        }
-                        builder.show()
+                        popBack()
+                        showError(getString(R.string.error_onboarding_connection_failed))
                     }
                 }
             }
@@ -93,5 +88,15 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     override fun onDestroy() {
         presenter.onFinish()
         super.onDestroy()
+    }
+
+    fun popBack(){
+        fragmentManager?.popBackStack()
+    }
+    fun showError(title : String){
+        AlertDialog.Builder(context)
+            .setTitle(title)
+            .setPositiveButton(R.string.ok) { _, _ -> }
+            .show()
     }
 }
