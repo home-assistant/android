@@ -64,10 +64,6 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         }
     }
 
-    override fun onSkip() {
-        view.registrationSkipped()
-    }
-
     override fun onFinish() {
         mainScope.cancel()
     }

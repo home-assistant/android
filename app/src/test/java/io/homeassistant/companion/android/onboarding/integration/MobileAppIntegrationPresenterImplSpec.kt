@@ -58,16 +58,6 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
         val view by memoized { mockk<MobileAppIntegrationView>(relaxUnitFun = true) }
         val presenter by memoized { MobileAppIntegrationPresenterImpl(view, integrationUseCase) }
 
-        describe("on skip") {
-            beforeEachTest {
-                presenter.onSkip()
-            }
-
-            it("should continue") {
-                coVerifyAll { view.registrationSkipped() }
-            }
-        }
-
         describe("on registration success") {
             val deviceRegistration = DeviceRegistration(
                 "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",

@@ -29,11 +29,12 @@ class LaunchPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            if (authenticationUseCase.getSessionState() == SessionState.CONNECTED) {
+            val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
+            if (sessionValid && integrationUseCase.isRegistered()) {
                 resyncRegistration()
                 view.displayWebview()
             } else {
-                view.displayOnBoarding()
+                view.displayOnBoarding(sessionValid)
             }
         }
     }
