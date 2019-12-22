@@ -6,6 +6,5 @@ import android.content.Context
 interface MobileAppIntegrationPresenter {
     fun onRegistrationAttempt()
     fun onGrantedLocationPermission(context: Context, activity: Activity)
-    fun onSkip()
     fun onFinish()
 }

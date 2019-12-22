@@ -42,8 +42,11 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         finish()
     }
 
-    override fun displayOnBoarding() {
-        startActivity(OnboardingActivity.newInstance(this))
+    override fun displayOnBoarding(sessionConnected: Boolean) {
+        val intent = OnboardingActivity.newInstance(this)
+        intent.putExtra(OnboardingActivity.SESSION_CONNECTED, sessionConnected)
+
+        startActivity(intent)
         finish()
     }
 

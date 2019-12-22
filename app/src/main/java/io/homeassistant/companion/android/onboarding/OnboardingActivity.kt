@@ -22,6 +22,7 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     AuthenticationListener, MobileAppIntegrationListener {
 
     companion object {
+        const val SESSION_CONNECTED = "is_registered"
         private const val TAG = "OnboardingActivity"
 
         fun newInstance(context: Context): Intent {
@@ -33,7 +34,14 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
 
-        if (savedInstanceState == null) {
+        val sessionConnected = intent.extras?.getBoolean(SESSION_CONNECTED) ?: false
+
+        if (sessionConnected) {
+            supportFragmentManager
+                .beginTransaction()
+                .add(R.id.content, MobileAppIntegrationFragment.newInstance())
+                .commit()
+        } else {
             supportFragmentManager
                 .beginTransaction()
                 .add(R.id.content, DiscoveryFragment.newInstance())
@@ -76,10 +84,6 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     }
 
     override fun onIntegrationRegistrationComplete() {
-        startWebView()
-    }
-
-    override fun onIntegrationRegistrationSkipped() {
         startWebView()
     }
 
