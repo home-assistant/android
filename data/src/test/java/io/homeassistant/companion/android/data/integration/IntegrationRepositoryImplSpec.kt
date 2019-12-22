@@ -173,6 +173,18 @@ object IntegrationRepositoryImplSpec : Spek({
                     assertThat(isRegistered).isTrue()
                 }
             }
+
+            describe("getUiUrl") {
+                var url: URL? = null
+                beforeEachTest {
+                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
+                    coEvery { localStorage.getString("remote_ui_url") } returns "https://best.com"
+                    runBlocking { url = repository.getUiUrl(true) }
+                }
+                it("should return the remote ui url") {
+                    assertThat(url).isEqualTo("https://best.com".toHttpUrl().toUrl())
+                }
+            }
         }
 
         describe("is not registered") {
@@ -186,6 +198,18 @@ object IntegrationRepositoryImplSpec : Spek({
                 }
                 it("should return false when webhook has no value") {
                     assertThat(isRegistered).isFalse()
+                }
+            }
+
+            describe("getUiUrl") {
+                var url: URL? = null
+                beforeEachTest {
+                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
+                    coEvery { localStorage.getString("remote_ui_url") } returns null
+                    runBlocking { url = repository.getUiUrl(true) }
+                }
+                it("should return the authentication url") {
+                    assertThat(url).asString().isEqualTo("http://example.com")
                 }
             }
         }
