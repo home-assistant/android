@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.domain.integration
 
+import java.net.URL
 import javax.inject.Inject
 
 class IntegrationUseCaseImpl @Inject constructor(
@@ -34,6 +35,10 @@ class IntegrationUseCaseImpl @Inject constructor(
 
     override suspend fun isRegistered(): Boolean {
         return integrationRepository.isRegistered()
+    }
+
+    override suspend fun getUiUrl(isInternal: Boolean): URL? {
+        return integrationRepository.getUiUrl(isInternal)
     }
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {

@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.domain.integration
 
+import java.net.URL
+
 interface IntegrationUseCase {
 
     suspend fun registerDevice(deviceRegistration: DeviceRegistration)
@@ -15,6 +17,8 @@ interface IntegrationUseCase {
     suspend fun getRegistration(): DeviceRegistration
 
     suspend fun isRegistered(): Boolean
+
+    suspend fun getUiUrl(isInternal: Boolean): URL?
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
 
