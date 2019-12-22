@@ -12,6 +12,7 @@ import android.util.Log
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.GeofencingRequest
+import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
@@ -24,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class LocationBroadcastReceiver : BroadcastReceiver() {
 
@@ -36,6 +38,8 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
 
         private const val TAG = "LocBroadcastReceiver"
+
+        private const val MINIMUM_ACCURACY = 200
     }
 
     @Inject
@@ -129,7 +133,11 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     private fun handleLocationUpdate(context: Context, intent: Intent) {
         Log.d(TAG, "Received location update.")
         LocationResult.extractResult(intent)?.lastLocation?.let {
-            sendLocationUpdate(it, context)
+            if (it.accuracy > MINIMUM_ACCURACY) {
+                Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $it")
+            } else {
+                sendLocationUpdate(it, context)
+            }
         }
     }
 
@@ -141,7 +149,12 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
             return
         }
 
-        sendLocationUpdate(geofencingEvent.triggeringLocation, context)
+        if (geofencingEvent.triggeringLocation.accuracy > MINIMUM_ACCURACY) {
+            Log.w(TAG, "Geofence location accuracy didn't meet requirements, requesting new location.")
+            requestSingleAccurateLocation(context)
+        } else {
+            sendLocationUpdate(geofencingEvent.triggeringLocation, context)
+        }
     }
 
     private fun sendLocationUpdate(location: Location, context: Context) {
@@ -206,6 +219,35 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
             )
         }
         return geofencingRequestBuilder.build()
+    }
+
+    private fun requestSingleAccurateLocation(context: Context) {
+        val maxRetries = 5
+        val request = createLocationRequest()
+        request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        request.numUpdates = maxRetries
+        LocationServices.getFusedLocationProviderClient(context)
+            .requestLocationUpdates(
+                request,
+                object : LocationCallback() {
+                    var numberCalls = 0
+                    override fun onLocationResult(locationResult: LocationResult?) {
+                        numberCalls++
+                        Log.d(TAG, "Got single accurate location update: ${locationResult?.lastLocation}")
+                        if (locationResult != null && locationResult.lastLocation.accuracy <= 1) {
+                            Log.d(TAG, "Location accurate enough, all done with high accuracy.")
+                            runBlocking { sendLocationUpdate(locationResult.lastLocation, context) }
+                            LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(this)
+                        } else if (numberCalls >= maxRetries) {
+                            Log.d(TAG, "No location was accurate enough, sending our last location anyway")
+                            runBlocking { sendLocationUpdate(locationResult!!.lastLocation, context) }
+                        } else {
+                            Log.w(TAG, "Location not accurate enough on retry $numberCalls of $maxRetries")
+                        }
+                    }
+                },
+                null
+            )
     }
 
     private fun getBatteryLevel(context: Context): Int? {
