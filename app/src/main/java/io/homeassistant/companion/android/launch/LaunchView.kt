@@ -4,5 +4,5 @@ interface LaunchView {
 
     fun displayWebview()
 
-    fun displayOnBoarding()
+    fun displayOnBoarding(sessionConnected: Boolean)
 }

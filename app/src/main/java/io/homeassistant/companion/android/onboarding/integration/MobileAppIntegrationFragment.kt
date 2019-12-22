@@ -48,9 +48,6 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     ): View? {
         return inflater.inflate(R.layout.fragment_mobile_app_integration, container, false).apply {
             viewFlipper = this.findViewById(R.id.view_flipper)
-            findViewById<Button>(R.id.skip).setOnClickListener {
-                presenter.onSkip()
-            }
             findViewById<Button>(R.id.retry).setOnClickListener {
                 presenter.onRegistrationAttempt()
             }
@@ -66,10 +63,6 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             // If we have permission already we can just continue with
             (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
         }
-    }
-
-    override fun registrationSkipped() {
-        (activity as MobileAppIntegrationListener).onIntegrationRegistrationSkipped()
     }
 
     override fun showError() {
