@@ -2,6 +2,8 @@
 
 ## Setup Development Environment
 
+Kishore has been updating
+
 - Download and install [Android Studio](https://developer.android.com/studio)
 
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
