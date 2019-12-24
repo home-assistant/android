@@ -104,8 +104,9 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getUiUrl(isInternal: Boolean): URL? {
-        return localStorage.getString(PREF_REMOTE_UI_URL)?.toHttpUrl()?.toUrl()
-            ?: authenticationRepository.getUrl()
+        val url = authenticationRepository.getUrl()
+        return if (isInternal) url else localStorage.getString(PREF_REMOTE_UI_URL)?.toHttpUrl()?.toUrl()
+            ?: url
     }
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
