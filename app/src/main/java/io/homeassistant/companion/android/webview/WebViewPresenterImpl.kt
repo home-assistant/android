@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.webview
 import android.net.Uri
 import android.util.Log
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +13,8 @@ import kotlinx.coroutines.launch
 
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
-    private val authenticationUseCase: AuthenticationUseCase
+    private val authenticationUseCase: AuthenticationUseCase,
+    private val integrationUseCase: IntegrationUseCase
 ) : WebViewPresenter {
 
     companion object {
@@ -23,7 +25,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            val url = authenticationUseCase.getUrl()
+            val url = integrationUseCase.getUiUrl(false)
                 ?: throw IllegalStateException("Unable to display the webview if we do not have url")
 
             view.loadUrl(

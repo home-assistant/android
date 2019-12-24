@@ -173,6 +173,42 @@ object IntegrationRepositoryImplSpec : Spek({
                     assertThat(isRegistered).isTrue()
                 }
             }
+
+            describe("getUiUrl External with remote ui") {
+                var url: URL? = null
+                beforeEachTest {
+                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
+                    coEvery { localStorage.getString("remote_ui_url") } returns "https://best.com/"
+                    runBlocking { url = repository.getUiUrl(false) }
+                }
+                it("should return the remote ui url") {
+                    assertThat(url).isEqualTo(URL("https://best.com/"))
+                }
+            }
+
+            describe("getUiUrl External without remote ui") {
+                var url: URL? = null
+                beforeEachTest {
+                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
+                    coEvery { localStorage.getString("remote_ui_url") } returns null
+                    runBlocking { url = repository.getUiUrl(false) }
+                }
+                it("should return the auth url") {
+                    assertThat(url).isEqualTo(URL("http://example.com"))
+                }
+            }
+
+            describe("getUiUrl Internal") {
+                var url: URL? = null
+                beforeEachTest {
+                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
+                    coEvery { localStorage.getString("remote_ui_url") } returns "https://best.com"
+                    runBlocking { url = repository.getUiUrl(true) }
+                }
+                it("should return the auth url") {
+                    assertThat(url).isEqualTo(URL("http://example.com"))
+                }
+            }
         }
 
         describe("is not registered") {
@@ -186,6 +222,18 @@ object IntegrationRepositoryImplSpec : Spek({
                 }
                 it("should return false when webhook has no value") {
                     assertThat(isRegistered).isFalse()
+                }
+            }
+
+            describe("getUiUrl") {
+                var url: URL? = null
+                beforeEachTest {
+                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
+                    coEvery { localStorage.getString("remote_ui_url") } returns null
+                    runBlocking { url = repository.getUiUrl(true) }
+                }
+                it("should return the authentication url") {
+                    assertThat(url).asString().isEqualTo("http://example.com")
                 }
             }
         }

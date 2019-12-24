@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import io.homeassistant.companion.android.domain.integration.ZoneAttributes
+import java.net.URL
 import javax.inject.Inject
 import javax.inject.Named
 import okhttp3.HttpUrl
@@ -100,6 +101,12 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isRegistered(): Boolean {
         return localStorage.getString(PREF_WEBHOOK_ID) != null
+    }
+
+    override suspend fun getUiUrl(isInternal: Boolean): URL? {
+        val url = authenticationRepository.getUrl()
+        return if (isInternal) url else localStorage.getString(PREF_REMOTE_UI_URL)?.toHttpUrl()?.toUrl()
+            ?: url
     }
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
