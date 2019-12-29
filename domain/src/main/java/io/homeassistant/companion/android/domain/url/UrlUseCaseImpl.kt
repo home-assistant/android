@@ -25,4 +25,12 @@ class UrlUseCaseImpl @Inject constructor(
     override suspend fun saveUrl(isInternal: Boolean, url: String) {
         urlRepository.saveUrl(isInternal, url)
     }
+
+    override suspend fun getHomeWifiSsid(): String?{
+        return urlRepository.getHomeWifiSsid()
+    }
+
+    override suspend fun saveHomeWifiSsid(ssid: String?) {
+        urlRepository.saveHomeWifiSsid(ssid)
+    }
 }

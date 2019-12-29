@@ -30,8 +30,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
-        findPreference<EditTextPreference>("registration_name")?.summaryProvider =
-            EditTextPreference.SimpleSummaryProvider.getInstance()
         findPreference<Preference>("version").let {
             it!!.summary = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
         }

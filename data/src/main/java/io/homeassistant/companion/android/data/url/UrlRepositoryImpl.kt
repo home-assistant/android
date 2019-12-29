@@ -19,6 +19,7 @@ class UrlRepositoryImpl @Inject constructor(
         private const val PREF_REMOTE_URL = "remote_url"
         private const val PREF_WEBHOOK_ID = "webhook_id"
         private const val PREF_LOCAL_URL = "local_url"
+        private const val PREF_WIFI_SSID = "wifi_ssid"
     }
 
     override suspend fun getApiUrls(): Array<URL> {
@@ -71,7 +72,7 @@ class UrlRepositoryImpl @Inject constructor(
     }
 
     override suspend fun saveUrl(isInternal: Boolean, url: String) {
-        val trimUrl = try {
+        val trimUrl = if(url == "") url else try {
             val httpUrl = url.toHttpUrl()
             HttpUrl.Builder()
                 .scheme(httpUrl.scheme)
@@ -84,6 +85,14 @@ class UrlRepositoryImpl @Inject constructor(
             )
         }
         localStorage.putString(if (isInternal) PREF_LOCAL_URL else PREF_REMOTE_URL, trimUrl)
+    }
+
+    override suspend fun getHomeWifiSsid(): String? {
+        return localStorage.getString(PREF_WIFI_SSID)
+    }
+
+    override suspend fun saveHomeWifiSsid(ssid: String?) {
+        localStorage.putString(PREF_WIFI_SSID, ssid)
     }
 
 }
