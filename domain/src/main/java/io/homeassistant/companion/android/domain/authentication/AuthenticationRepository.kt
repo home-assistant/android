@@ -4,8 +4,6 @@ import java.net.URL
 
 interface AuthenticationRepository {
 
-    suspend fun saveUrl(url: String)
-
     suspend fun registerAuthorizationCode(authorizationCode: String)
 
     suspend fun retrieveExternalAuthentication(): String
@@ -14,9 +12,7 @@ interface AuthenticationRepository {
 
     suspend fun getSessionState(): SessionState
 
-    suspend fun getUrl(): URL?
-
-    suspend fun buildAuthenticationUrl(callbackUrl: String): URL
+    suspend fun buildAuthenticationUrl(isInternal: Boolean, callbackUrl: String): URL
 
     suspend fun buildBearerToken(): String
 }

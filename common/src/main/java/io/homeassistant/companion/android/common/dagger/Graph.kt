@@ -16,19 +16,16 @@ class Graph(
 
     init {
         buildComponent()
-        runBlocking {
-            if (dataComponent.authenticationRepository().getUrl() != null) {
-                this@Graph.url = dataComponent.authenticationRepository().getUrl()!!.toString()
-            }
-            buildComponent()
-        }
+        urlUpdated()
     }
 
     fun urlUpdated() {
         runBlocking {
-            this@Graph.url = dataComponent.authenticationRepository().getUrl()!!.toString()
+            if (dataComponent.urlRepository().getUrl(false) != null) {
+                this@Graph.url = dataComponent.urlRepository().getUrl(false).toString()
+                buildComponent()
+            }
         }
-        buildComponent()
     }
 
     private fun buildComponent() {
@@ -37,6 +34,12 @@ class Graph(
             .dataModule(
                 DataModule(
                     url,
+                    LocalStorageImpl(
+                        application.getSharedPreferences(
+                            "url",
+                            Context.MODE_PRIVATE
+                        )
+                    ),
                     LocalStorageImpl(
                         application.getSharedPreferences(
                             "session",

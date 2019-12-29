@@ -7,10 +7,6 @@ class AuthenticationUseCaseImpl @Inject constructor(
     private val authenticationRepository: AuthenticationRepository
 ) : AuthenticationUseCase {
 
-    override suspend fun saveUrl(url: String) {
-        authenticationRepository.saveUrl(url)
-    }
-
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
         authenticationRepository.registerAuthorizationCode(authorizationCode)
     }
@@ -27,11 +23,7 @@ class AuthenticationUseCaseImpl @Inject constructor(
         return authenticationRepository.getSessionState()
     }
 
-    override suspend fun getUrl(): URL? {
-        return authenticationRepository.getUrl()
-    }
-
-    override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {
-        return authenticationRepository.buildAuthenticationUrl(callbackUrl)
+    override suspend fun buildAuthenticationUrl(isInternal: Boolean, callbackUrl: String): URL {
+        return authenticationRepository.buildAuthenticationUrl(isInternal, callbackUrl)
     }
 }

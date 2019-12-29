@@ -24,7 +24,7 @@ class AuthenticationPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            view.loadUrl(authenticationUseCase.buildAuthenticationUrl(AUTH_CALLBACK).toString())
+            view.loadUrl(authenticationUseCase.buildAuthenticationUrl(false, AUTH_CALLBACK).toString())
         }
     }
 
