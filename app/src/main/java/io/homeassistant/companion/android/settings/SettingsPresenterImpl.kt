@@ -55,9 +55,9 @@ class SettingsPresenterImpl @Inject constructor(
     override fun putString(key: String?, value: String?) {
         mainScope.launch {
             when (key) {
-                "connection_internal" -> urlUseCase.saveUrl(true, value?:"")
+                "connection_internal" -> urlUseCase.saveUrl(true, value ?: "")
                 "connection_internal_wifi" -> urlUseCase.saveHomeWifiSsid(value)
-                "connection_external" -> urlUseCase.saveUrl(false, value?:"")
+                "connection_external" -> urlUseCase.saveUrl(false, value ?: "")
                 "registration_name" -> integrationUseCase.updateRegistration(deviceName = value!!)
                 else -> throw Exception()
             }

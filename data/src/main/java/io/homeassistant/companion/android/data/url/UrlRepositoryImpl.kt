@@ -64,15 +64,15 @@ class UrlRepositoryImpl @Inject constructor(
     override suspend fun getUrl(isInternal: Boolean): URL? {
         val internal = localStorage.getString(PREF_LOCAL_URL)?.toHttpUrlOrNull()?.toUrl()
         val external = localStorage.getString(PREF_REMOTE_URL)?.toHttpUrlOrNull()?.toUrl()
-        return if(isInternal){
-            internal?:external
+        return if (isInternal) {
+            internal ?: external
         } else {
-            external?:internal
+            external ?: internal
         }
     }
 
     override suspend fun saveUrl(isInternal: Boolean, url: String) {
-        val trimUrl = if(url == "") url else try {
+        val trimUrl = if (url == "") null else try {
             val httpUrl = url.toHttpUrl()
             HttpUrl.Builder()
                 .scheme(httpUrl.scheme)
@@ -94,5 +94,4 @@ class UrlRepositoryImpl @Inject constructor(
     override suspend fun saveHomeWifiSsid(ssid: String?) {
         localStorage.putString(PREF_WIFI_SSID, ssid)
     }
-
 }

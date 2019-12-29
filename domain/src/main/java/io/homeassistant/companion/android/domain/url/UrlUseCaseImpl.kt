@@ -5,7 +5,7 @@ import javax.inject.Inject
 
 class UrlUseCaseImpl @Inject constructor(
     private val urlRepository: UrlRepository
-): UrlUseCase {
+) : UrlUseCase {
     override suspend fun getApiUrls(): Array<URL> {
         return urlRepository.getApiUrls()
     }
@@ -26,7 +26,7 @@ class UrlUseCaseImpl @Inject constructor(
         urlRepository.saveUrl(isInternal, url)
     }
 
-    override suspend fun getHomeWifiSsid(): String?{
+    override suspend fun getHomeWifiSsid(): String? {
         return urlRepository.getHomeWifiSsid()
     }
 

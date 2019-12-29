@@ -24,7 +24,6 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_TOKEN_TYPE = "token_type"
     }
 
-
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
         authenticationService.getToken(
             AuthenticationService.GRANT_TYPE_CODE,
