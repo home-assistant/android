@@ -2,13 +2,17 @@ package io.homeassistant.companion.android.webview
 
 import android.content.Context
 import android.content.Intent
+import android.net.http.SslError
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuInflater
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
+import android.webkit.SslErrorHandler
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
@@ -58,7 +62,35 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         webView.apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
-            webViewClient = WebViewClient()
+            webViewClient = object : WebViewClient() {
+                override fun onReceivedError(
+                    view: WebView?,
+                    errorCode: Int,
+                    description: String?,
+                    failingUrl: String?
+                ) {
+                    Log.e(TAG, "onReceivedHttpError: errorCode: $errorCode url:$failingUrl")
+                    showError()
+                }
+
+                override fun onReceivedHttpError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    errorResponse: WebResourceResponse?
+                ) {
+                    Log.e(TAG, "onReceivedHttpError: $errorResponse")
+                    showError()
+                }
+
+                override fun onReceivedSslError(
+                    view: WebView?,
+                    handler: SslErrorHandler?,
+                    error: SslError?
+                ) {
+                    Log.e(TAG, "onReceivedHttpError: $error")
+                    showError()
+                }
+            }
 
             webChromeClient = object : WebChromeClient() {
                 override fun onJsConfirm(
@@ -163,5 +195,15 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun onDestroy() {
         presenter.onFinish()
         super.onDestroy()
+    }
+
+    private fun showError() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.error_connection_failed)
+            .setMessage(R.string.webview_error)
+            .setPositiveButton(R.string.ok) { _, _ ->
+                startActivity(SettingsActivity.newInstance(this))
+            }
+            .show()
     }
 }
