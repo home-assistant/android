@@ -15,7 +15,7 @@ class UrlRepositoryImpl @Inject constructor(
 ) : UrlRepository {
 
     companion object {
-        private const val PREF_CLOUD_URL = "cloud_url"
+        private const val PREF_CLOUDHOOK_URL = "cloudhook_url"
         private const val PREF_REMOTE_URL = "remote_url"
         private const val PREF_WEBHOOK_ID = "webhook_id"
         private const val PREF_LOCAL_URL = "local_url"
@@ -26,7 +26,7 @@ class UrlRepositoryImpl @Inject constructor(
         val retVal = ArrayList<URL>()
         val webhook = localStorage.getString(PREF_WEBHOOK_ID)
 
-        localStorage.getString(PREF_CLOUD_URL)?.let {
+        localStorage.getString(PREF_CLOUDHOOK_URL)?.let {
             retVal.add(it.toHttpUrl().toUrl())
         }
 
@@ -56,7 +56,7 @@ class UrlRepositoryImpl @Inject constructor(
         remoteUiUrl: String?,
         webhookId: String
     ) {
-        localStorage.putString(PREF_CLOUD_URL, cloudHookUrl)
+        localStorage.putString(PREF_CLOUDHOOK_URL, cloudHookUrl)
         localStorage.putString(PREF_REMOTE_URL, remoteUiUrl)
         localStorage.putString(PREF_WEBHOOK_ID, webhookId)
     }
