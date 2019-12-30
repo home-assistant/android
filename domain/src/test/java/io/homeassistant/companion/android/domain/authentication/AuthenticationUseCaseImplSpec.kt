@@ -15,16 +15,6 @@ object AuthenticationUseCaseImplSpec : Spek({
         val authenticationRepository by memoized { mockk<AuthenticationRepository>(relaxUnitFun = true) }
         val useCase by memoized { AuthenticationUseCaseImpl(authenticationRepository) }
 
-        describe("save url") {
-            beforeEachTest {
-                runBlocking { useCase.saveUrl("https://demo.home-assistant.io/") }
-            }
-
-            it("should call the repository") {
-                coVerify { authenticationRepository.saveUrl("https://demo.home-assistant.io/") }
-            }
-        }
-
         describe("register authorization code") {
             beforeEachTest {
                 runBlocking { useCase.registerAuthorizationCode("123456") }
@@ -69,25 +59,13 @@ object AuthenticationUseCaseImplSpec : Spek({
             }
         }
 
-        describe("get url") {
-            var url: URL? = null
-            beforeEachTest {
-                coEvery { authenticationRepository.getUrl() } returns URL("https://demo.home-assistant.io/")
-                url = runBlocking { useCase.getUrl() }
-            }
-
-            it("should return the given url") {
-                assertThat(url).isEqualTo(URL("https://demo.home-assistant.io/"))
-            }
-        }
-
         describe("build authentication url") {
             lateinit var url: URL
             beforeEachTest {
                 coEvery {
-                    authenticationRepository.buildAuthenticationUrl("homeassistant://auth-callback")
+                    authenticationRepository.buildAuthenticationUrl(false,"homeassistant://auth-callback")
                 } returns URL("https://demo.home-assistant.io/auth/authorize?response_type=code&client_id=https://home-assistant.io/android&redirect_uri=homeassistant://auth-callback")
-                url = runBlocking { useCase.buildAuthenticationUrl("homeassistant://auth-callback") }
+                url = runBlocking { useCase.buildAuthenticationUrl(false, "homeassistant://auth-callback") }
             }
 
             it("should return the given url") {

@@ -71,16 +71,6 @@ object IntegrationUseCaseImplSpec : Spek({
             }
         }
 
-        describe("getUiUrl") {
-            beforeEachTest {
-                runBlocking { useCase.getUiUrl(true) }
-            }
-
-            it("should call the repository") {
-                coVerify { integrationRepository.getUiUrl(true) }
-            }
-        }
-
         describe("updateLocation") {
             val location = mockk<UpdateLocation>()
             beforeEachTest {

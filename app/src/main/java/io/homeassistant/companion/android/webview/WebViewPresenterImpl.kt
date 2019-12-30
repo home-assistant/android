@@ -1,10 +1,7 @@
 package io.homeassistant.companion.android.webview
 
-import android.content.Context
 import android.net.Uri
-import android.net.wifi.WifiManager
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import javax.inject.Inject
@@ -28,9 +25,8 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            val wifiManager = (view as AppCompatActivity).applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            val ssid = wifiManager.connectionInfo.ssid
-            val url = urlUseCase.getUrl("\"$ssid\"" == wifiManager.connectionInfo.ssid)
+            val ssid = view.getCurrentSsid()
+            val url = urlUseCase.getUrl("\"$ssid\"" == urlUseCase.getHomeWifiSsid())
 
             view.loadUrl(
                 Uri.parse(url.toString())
