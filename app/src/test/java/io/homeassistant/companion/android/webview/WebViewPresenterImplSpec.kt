@@ -37,7 +37,7 @@ object WebViewPresenterImplSpec : Spek({
             beforeEachTest {
                 coEvery { view.getCurrentSsid() } returns "\"Not-a-ssid\""
                 coEvery { urlUseCase.getHomeWifiSsid() } returns "Not-a-ssid"
-                coEvery { urlUseCase.getUrl(false) } returns URL("https://demo.home-assistant.io/")
+                coEvery { urlUseCase.getUrl(true) } returns URL("https://demo.home-assistant.io/")
                 mockkStatic(Uri::class)
                 every { Uri.parse("https://demo.home-assistant.io/") } returns mockk {
                     every {
