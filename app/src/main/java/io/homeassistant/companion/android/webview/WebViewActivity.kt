@@ -197,7 +197,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onDestroy()
     }
 
-    private fun showError() {
+    override fun showError() {
         AlertDialog.Builder(this)
             .setTitle(R.string.error_connection_failed)
             .setMessage(R.string.webview_error)

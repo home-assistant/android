@@ -26,9 +26,10 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onViewReady() {
         mainScope.launch {
             val ssid = view.getCurrentSsid()
+            val homeSsid = urlUseCase.getHomeWifiSsid()
             // Reason for quotes around ssid:
             // https://developer.android.com/reference/android/net/wifi/WifiInfo.html#getSSID()
-            val url = urlUseCase.getUrl("\"$ssid\"" == urlUseCase.getHomeWifiSsid())
+            val url = urlUseCase.getUrl(ssid == "\"$homeSsid\"")
 
             view.loadUrl(
                 Uri.parse(url.toString())
@@ -47,6 +48,7 @@ class WebViewPresenterImpl @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
                 view.setExternalAuth("$callback(false)")
+                view.showError()
             }
         }
     }

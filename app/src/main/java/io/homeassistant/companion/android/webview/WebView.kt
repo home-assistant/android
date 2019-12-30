@@ -9,4 +9,6 @@ interface WebView {
     fun openOnBoarding()
 
     fun getCurrentSsid(): String
+
+    fun showError()
 }
