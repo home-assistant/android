@@ -32,4 +32,8 @@ integration enabled on your home assistant instance.</string>
     <string name="device_registration">Device Registration</string>
     <string name="device_name">Device Name</string>
     <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again.</string>
+    <string name="pref_connection_title">Connection Information</string>
+    <string name="pref_connection_url">Home Assistant URL</string>
+    <string name="pref_connection_wifi">Home Network WiFi SSID</string>
+    <string name="pref_connection_internal">Internal Connection URL</string>
 </resources>

@@ -3,18 +3,18 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
-        android:title="Connection Information">
+        android:title="@string/pref_connection_title">
         <EditTextPreference
             android:key="connection_external"
-            android:title="Home Assistant URL"
+            android:title="@string/pref_connection_url"
             app:useSimpleSummaryProvider="true"/>
         <EditTextPreference
             android:key="connection_internal_wifi"
-            android:title="Home Network WiFi SSID"
+            android:title="@string/pref_connection_wifi"
             app:useSimpleSummaryProvider="true"/>
         <EditTextPreference
             android:key="connection_internal"
-            android:title="Internal Connection URL"
+            android:title="@string/pref_connection_internal"
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
