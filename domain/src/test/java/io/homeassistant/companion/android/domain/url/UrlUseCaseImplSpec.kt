@@ -74,11 +74,11 @@ object UrlUseCaseImplSpec : Spek({
 
         describe("saveUrl") {
             beforeEachTest {
-                runBlocking { useCase.saveUrl(true, "1") }
+                runBlocking { useCase.saveUrl("1", true) }
             }
 
             it("should call the repository") {
-                coVerify { urlRepository.saveUrl(true, "1") }
+                coVerify { urlRepository.saveUrl("1", true) }
             }
         }
 

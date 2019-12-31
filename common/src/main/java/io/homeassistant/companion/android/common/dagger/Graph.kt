@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.common.dagger
 
 import android.app.Application
 import android.content.Context
+import android.net.wifi.WifiManager
 import io.homeassistant.companion.android.common.LocalStorageImpl
+import io.homeassistant.companion.android.common.wifi.WifiHelperImpl
 import kotlinx.coroutines.runBlocking
 
 class Graph(
@@ -21,8 +23,8 @@ class Graph(
 
     fun urlUpdated() {
         runBlocking {
-            if (dataComponent.urlRepository().getUrl(false) != null) {
-                this@Graph.url = dataComponent.urlRepository().getUrl(false).toString()
+            if (dataComponent.urlRepository().getUrl() != null) {
+                this@Graph.url = dataComponent.urlRepository().getUrl().toString()
                 buildComponent()
             }
         }
@@ -51,7 +53,8 @@ class Graph(
                             "integration",
                             Context.MODE_PRIVATE
                         )
-                    )
+                    ),
+                    WifiHelperImpl(application.getSystemService(Context.WIFI_SERVICE) as WifiManager)
                 )
             )
             .build()

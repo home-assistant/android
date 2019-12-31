@@ -52,15 +52,15 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getSessionState(): SessionState {
-        return if (retrieveSession() != null && urlRepository.getUrl(false) != null) {
+        return if (retrieveSession() != null && urlRepository.getUrl() != null) {
             SessionState.CONNECTED
         } else {
             SessionState.ANONYMOUS
         }
     }
 
-    override suspend fun buildAuthenticationUrl(isInternal: Boolean, callbackUrl: String): URL {
-        val url = urlRepository.getUrl(isInternal)
+    override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {
+        val url = urlRepository.getUrl()
 
         return url!!.toHttpUrlOrNull()!!
             .newBuilder()

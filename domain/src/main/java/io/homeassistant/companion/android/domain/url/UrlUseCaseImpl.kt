@@ -18,12 +18,12 @@ class UrlUseCaseImpl @Inject constructor(
         urlRepository.saveRegistrationUrls(cloudHookUrl, remoteUiUrl, webhookId)
     }
 
-    override suspend fun getUrl(isInternal: Boolean): URL? {
+    override suspend fun getUrl(isInternal: Boolean?): URL? {
         return urlRepository.getUrl(isInternal)
     }
 
-    override suspend fun saveUrl(isInternal: Boolean, url: String) {
-        urlRepository.saveUrl(isInternal, url)
+    override suspend fun saveUrl(url: String, isInternal: Boolean?) {
+        urlRepository.saveUrl(url, isInternal)
     }
 
     override suspend fun getHomeWifiSsid(): String? {

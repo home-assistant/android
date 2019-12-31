@@ -63,9 +63,9 @@ object AuthenticationUseCaseImplSpec : Spek({
             lateinit var url: URL
             beforeEachTest {
                 coEvery {
-                    authenticationRepository.buildAuthenticationUrl(false, "homeassistant://auth-callback")
+                    authenticationRepository.buildAuthenticationUrl("homeassistant://auth-callback")
                 } returns URL("https://demo.home-assistant.io/auth/authorize?response_type=code&client_id=https://home-assistant.io/android&redirect_uri=homeassistant://auth-callback")
-                url = runBlocking { useCase.buildAuthenticationUrl(false, "homeassistant://auth-callback") }
+                url = runBlocking { useCase.buildAuthenticationUrl("homeassistant://auth-callback") }
             }
 
             it("should return the given url") {

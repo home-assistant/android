@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.webview
 import android.content.Context
 import android.content.Intent
 import android.net.http.SslError
-import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuInflater
@@ -167,11 +166,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun openOnBoarding() {
         finish()
         startActivity(Intent(this, OnboardingActivity::class.java))
-    }
-
-    override fun getCurrentSsid(): String {
-        val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-        return wifiManager.connectionInfo.ssid
     }
 
     override fun onBackPressed() {

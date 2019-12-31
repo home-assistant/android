@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.data.authentication.AuthenticationServ
 import io.homeassistant.companion.android.data.integration.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.data.integration.IntegrationService
 import io.homeassistant.companion.android.data.url.UrlRepositoryImpl
+import io.homeassistant.companion.android.data.wifi.WifiHelper
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import io.homeassistant.companion.android.domain.url.UrlRepository
@@ -21,7 +22,8 @@ class DataModule(
     private val url: String,
     private val urlStorage: LocalStorage,
     private val sessionLocalStorage: LocalStorage,
-    private val integrationLocalStorage: LocalStorage
+    private val integrationLocalStorage: LocalStorage,
+    private val wifiHelper: WifiHelper
 ) {
 
     @Provides
@@ -34,6 +36,9 @@ class DataModule(
     @Provides
     fun providesIntegrationService(homeAssistantRetrofit: HomeAssistantRetrofit) =
         homeAssistantRetrofit.retrofit.create(IntegrationService::class.java)
+
+    @Provides
+    fun providesWifiHelper() = wifiHelper
 
     @Provides
     @Named("url")

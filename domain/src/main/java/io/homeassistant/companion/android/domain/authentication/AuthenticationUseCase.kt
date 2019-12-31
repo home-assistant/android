@@ -12,5 +12,5 @@ interface AuthenticationUseCase {
 
     suspend fun getSessionState(): SessionState
 
-    suspend fun buildAuthenticationUrl(isInternal: Boolean, callbackUrl: String): URL
+    suspend fun buildAuthenticationUrl(callbackUrl: String): URL
 }

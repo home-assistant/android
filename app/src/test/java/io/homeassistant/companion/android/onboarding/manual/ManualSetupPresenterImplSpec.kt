@@ -32,11 +32,11 @@ object ManualSetupPresenterImplSpec : Spek({
         describe("on click ok with valid url") {
             beforeEachTest {
                 presenter.onClickOk("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false")
-                coEvery { urlUseCase.saveUrl(true, "https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false") } just runs
+                coEvery { urlUseCase.saveUrl("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false") } just runs
             }
 
             it("should save the url") {
-                coVerifyAll { urlUseCase.saveUrl(true, "https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false") }
+                coVerifyAll { urlUseCase.saveUrl("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false", true) }
             }
 
             it("should notify the listener") {
@@ -46,12 +46,12 @@ object ManualSetupPresenterImplSpec : Spek({
 
         describe("on click with invalid url") {
             beforeEachTest {
-                coEvery { urlUseCase.saveUrl(true, "home assistant") } throws MalformedHttpUrlException()
+                coEvery { urlUseCase.saveUrl("home assistant", true) } throws MalformedHttpUrlException()
                 presenter.onClickOk("home assistant")
             }
 
             it("should save the url") {
-                coVerifyAll { urlUseCase.saveUrl(true, "home assistant") }
+                coVerifyAll { urlUseCase.saveUrl("home assistant", true) }
             }
 
             it("should display url error") {

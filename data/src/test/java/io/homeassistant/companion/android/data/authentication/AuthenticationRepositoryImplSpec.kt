@@ -97,9 +97,9 @@ object AuthenticationRepositoryImplSpec : Spek({
         describe("build auth url") {
             lateinit var authenticationUrl: URL
             beforeEachTest {
-                coEvery { urlRepository.getUrl(true) } returns URL("https://demo.home-assistant.io/")
+                coEvery { urlRepository.getUrl() } returns URL("https://demo.home-assistant.io/")
                 authenticationUrl =
-                    runBlocking { repository.buildAuthenticationUrl(true, "homeassistant://auth-callback") }
+                    runBlocking { repository.buildAuthenticationUrl("homeassistant://auth-callback") }
             }
 
             it("should return the authentication url") {
@@ -109,7 +109,7 @@ object AuthenticationRepositoryImplSpec : Spek({
 
         describe("connected user with valid access token") {
             beforeEachTest {
-                coEvery { urlRepository.getUrl(true) } returns URL("https://demo.home-assistant.io/")
+                coEvery { urlRepository.getUrl() } returns URL("https://demo.home-assistant.io/")
                 coEvery { localStorage.getString("access_token") } returns "ABCDEFGH"
                 coEvery { localStorage.getLong("expires_date") } returns 1547605320
                 coEvery { localStorage.getString("refresh_token") } returns "IJKLMNOPQRST"

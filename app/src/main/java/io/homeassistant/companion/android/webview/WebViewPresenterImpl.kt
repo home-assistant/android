@@ -25,11 +25,7 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            val ssid = view.getCurrentSsid()
-            val homeSsid = urlUseCase.getHomeWifiSsid()
-            // Reason for quotes around ssid:
-            // https://developer.android.com/reference/android/net/wifi/WifiInfo.html#getSSID()
-            val url = urlUseCase.getUrl(ssid == "\"$homeSsid\"")
+            val url = urlUseCase.getUrl()
 
             view.loadUrl(
                 Uri.parse(url.toString())

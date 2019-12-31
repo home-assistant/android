@@ -41,6 +41,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         PermissionManager.restartLocationTracking(context!!, activity!!)
     }
 
+    override fun onUrlChanged() {
+        (activity?.application as GraphComponentAccessor).urlUpdated()
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,

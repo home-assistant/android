@@ -8,9 +8,9 @@ interface UrlUseCase {
 
     suspend fun saveRegistrationUrls(cloudHookUrl: String, remoteUiUrl: String, webhookId: String)
 
-    suspend fun getUrl(isInternal: Boolean): URL?
+    suspend fun getUrl(isInternal: Boolean? = null): URL?
 
-    suspend fun saveUrl(isInternal: Boolean, url: String)
+    suspend fun saveUrl(url: String, isInternal: Boolean? = null)
 
     suspend fun getHomeWifiSsid(): String?
 

@@ -23,7 +23,7 @@ class AuthenticationUseCaseImpl @Inject constructor(
         return authenticationRepository.getSessionState()
     }
 
-    override suspend fun buildAuthenticationUrl(isInternal: Boolean, callbackUrl: String): URL {
-        return authenticationRepository.buildAuthenticationUrl(isInternal, callbackUrl)
+    override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {
+        return authenticationRepository.buildAuthenticationUrl(callbackUrl)
     }
 }

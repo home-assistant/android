@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.data.url
 
 import io.homeassistant.companion.android.data.LocalStorage
+import io.homeassistant.companion.android.data.wifi.WifiHelper
 import io.homeassistant.companion.android.domain.MalformedHttpUrlException
 import io.homeassistant.companion.android.domain.url.UrlRepository
 import java.net.URL
@@ -11,7 +12,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class UrlRepositoryImpl @Inject constructor(
-    @Named("url") private val localStorage: LocalStorage
+    @Named("url") private val localStorage: LocalStorage,
+    private val wifiHelper: WifiHelper
 ) : UrlRepository {
 
     companion object {
@@ -61,17 +63,17 @@ class UrlRepositoryImpl @Inject constructor(
         localStorage.putString(PREF_WEBHOOK_ID, webhookId)
     }
 
-    override suspend fun getUrl(isInternal: Boolean): URL? {
+    override suspend fun getUrl(isInternal: Boolean?): URL? {
         val internal = localStorage.getString(PREF_LOCAL_URL)?.toHttpUrlOrNull()?.toUrl()
         val external = localStorage.getString(PREF_REMOTE_URL)?.toHttpUrlOrNull()?.toUrl()
-        return if (isInternal) {
+        return if (isInternal ?: isInternal()) {
             internal ?: external
         } else {
             external ?: internal
         }
     }
 
-    override suspend fun saveUrl(isInternal: Boolean, url: String) {
+    override suspend fun saveUrl(url: String, isInternal: Boolean?) {
         val trimUrl = if (url == "") null else try {
             val httpUrl = url.toHttpUrl()
             HttpUrl.Builder()
@@ -84,7 +86,7 @@ class UrlRepositoryImpl @Inject constructor(
                 e.message
             )
         }
-        localStorage.putString(if (isInternal) PREF_LOCAL_URL else PREF_REMOTE_URL, trimUrl)
+        localStorage.putString(if (isInternal ?: isInternal()) PREF_LOCAL_URL else PREF_REMOTE_URL, trimUrl)
     }
 
     override suspend fun getHomeWifiSsid(): String? {
@@ -93,5 +95,9 @@ class UrlRepositoryImpl @Inject constructor(
 
     override suspend fun saveHomeWifiSsid(ssid: String?) {
         localStorage.putString(PREF_WIFI_SSID, ssid)
+    }
+
+    private suspend fun isInternal(): Boolean {
+        return wifiHelper.getWifiSsid() == "\"${getHomeWifiSsid()}\""
     }
 }
