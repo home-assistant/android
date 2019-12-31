@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings
 
 import android.os.Bundle
+import androidx.appcompat.app.AlertDialog
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -12,6 +13,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
@@ -29,6 +31,24 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
         setPreferencesFromResource(R.xml.preferences, rootKey)
+
+        val onChangeUrlValidator = Preference.OnPreferenceChangeListener { _, newValue ->
+            val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
+            if (!isValid){
+                AlertDialog.Builder(activity!!)
+                    .setTitle(R.string.url_invalid)
+                    .setMessage(R.string.url_parse_error)
+                    .setPositiveButton(R.string.ok) { _, _ ->}
+                    .show()
+            }
+            isValid
+        }
+
+        findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
+            onChangeUrlValidator
+
+        findPreference<EditTextPreference>("connection_external")?.onPreferenceChangeListener =
+            onChangeUrlValidator
 
         findPreference<Preference>("version")?.let {
             it.summary = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
