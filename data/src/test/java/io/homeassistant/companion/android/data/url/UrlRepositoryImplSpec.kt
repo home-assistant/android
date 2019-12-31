@@ -70,17 +70,17 @@ object UrlRepositoryImplSpec : Spek({
 
         describe("get instance url") {
             describe("remote set, get internal") {
-                lateinit var url: URL
+                var url: URL? = null
                 beforeEachTest {
                     coEvery { localStorage.getString("remote_url") } returns "https://demo.home-assistant.io/"
                     coEvery { localStorage.getString("local_url") } returns null
                     url = runBlocking {
                         repository.getUrl(true)
-                    }!!
+                    }
                 }
 
                 it("should return the remote url") {
-                    Assertions.assertThat(url).isEqualTo(URL("https://demo.home-assistant.io/"))
+                    Assertions.assertThat(url).isNull()
                 }
             }
             describe("remote set, get external") {
@@ -98,17 +98,17 @@ object UrlRepositoryImplSpec : Spek({
                 }
             }
             describe("local set, get internal") {
-                lateinit var url: URL
+                var url: URL? = null
                 beforeEachTest {
                     coEvery { localStorage.getString("remote_url") } returns null
                     coEvery { localStorage.getString("local_url") } returns "https://demo.home-assistant.io/"
                     url = runBlocking {
                         repository.getUrl(false)
-                    }!!
+                    }
                 }
 
                 it("should return the local url") {
-                    Assertions.assertThat(url).isEqualTo(URL("https://demo.home-assistant.io/"))
+                    Assertions.assertThat(url).isNull()
                 }
             }
             describe("local set, get external") {

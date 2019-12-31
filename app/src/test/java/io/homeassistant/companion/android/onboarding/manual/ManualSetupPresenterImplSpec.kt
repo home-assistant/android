@@ -36,7 +36,7 @@ object ManualSetupPresenterImplSpec : Spek({
             }
 
             it("should save the url") {
-                coVerifyAll { urlUseCase.saveUrl("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false", true) }
+                coVerifyAll { urlUseCase.saveUrl("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false", false) }
             }
 
             it("should notify the listener") {
@@ -46,12 +46,12 @@ object ManualSetupPresenterImplSpec : Spek({
 
         describe("on click with invalid url") {
             beforeEachTest {
-                coEvery { urlUseCase.saveUrl("home assistant", true) } throws MalformedHttpUrlException()
+                coEvery { urlUseCase.saveUrl("home assistant", false) } throws MalformedHttpUrlException()
                 presenter.onClickOk("home assistant")
             }
 
             it("should save the url") {
-                coVerifyAll { urlUseCase.saveUrl("home assistant", true) }
+                coVerifyAll { urlUseCase.saveUrl("home assistant", false) }
             }
 
             it("should display url error") {
