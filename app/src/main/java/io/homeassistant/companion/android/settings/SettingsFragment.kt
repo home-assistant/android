@@ -34,11 +34,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         val onChangeUrlValidator = Preference.OnPreferenceChangeListener { _, newValue ->
             val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
-            if (!isValid){
+            if (!isValid) {
                 AlertDialog.Builder(activity!!)
                     .setTitle(R.string.url_invalid)
                     .setMessage(R.string.url_parse_error)
-                    .setPositiveButton(R.string.ok) { _, _ ->}
+                    .setPositiveButton(R.string.ok) { _, _ -> }
                     .show()
             }
             isValid
