@@ -24,7 +24,7 @@ class ManualSetupPresenterImpl @Inject constructor(
     override fun onClickOk(url: String) {
         mainScope.launch {
             try {
-                urlUseCase.saveUrl(url, true)
+                urlUseCase.saveUrl(url, false)
             } catch (e: MalformedHttpUrlException) {
                 Log.e(TAG, "Unable to parse url", e)
                 view.displayUrlError()

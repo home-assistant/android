@@ -66,10 +66,11 @@ class UrlRepositoryImpl @Inject constructor(
     override suspend fun getUrl(isInternal: Boolean?): URL? {
         val internal = localStorage.getString(PREF_LOCAL_URL)?.toHttpUrlOrNull()?.toUrl()
         val external = localStorage.getString(PREF_REMOTE_URL)?.toHttpUrlOrNull()?.toUrl()
+
         return if (isInternal ?: isInternal()) {
-            internal ?: external
+            internal
         } else {
-            external ?: internal
+            external
         }
     }
 

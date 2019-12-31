@@ -4,5 +4,6 @@ import androidx.preference.PreferenceDataStore
 
 interface SettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
+    fun onCreate()
     fun onFinish()
 }
