@@ -126,6 +126,26 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
+    override suspend fun callService(domain: String, service: String, serviceData: HashMap<String, String>) {
+        var wasSuccess = false
+
+        val serviceCallRequest = ServiceCallRequest(domain, service, serviceData)
+
+        for (it in getUrls()) {
+            try {
+                wasSuccess =
+                    integrationService.callService(it, IntegrationRequest("call_service", serviceCallRequest)).isSuccessful
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+            // if we had a successful call we can return
+                if (wasSuccess)
+                    return
+            }
+
+            throw IntegrationException()
+    }
+
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
         val getZonesRequest = IntegrationRequest("get_zones", null)
         var zones: Array<EntityResponse<ZoneAttributes>>? = null

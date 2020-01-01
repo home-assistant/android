@@ -36,6 +36,12 @@ interface IntegrationService {
     ): Response<ResponseBody>
 
     @POST
+    suspend fun callService(
+        @Url url: HttpUrl,
+        @Body request: IntegrationRequest
+    ): Response<ResponseBody>
+
+    @POST
     suspend fun getZones(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest

@@ -18,6 +18,8 @@ interface IntegrationUseCase {
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
 
+    suspend fun callService(domain: String, service: String, serviceData: HashMap<String, String>)
+
     suspend fun getZones(): Array<Entity<ZoneAttributes>>
 
     suspend fun setZoneTrackingEnabled(enabled: Boolean)
