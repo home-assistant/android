@@ -22,10 +22,6 @@ class ButtonWidget : AppWidgetProvider() {
         private const val CALL_SERVICE = "CALL_SERVICE"
     }
 
-    private lateinit var domain: String
-    private lateinit var service: String
-    private lateinit var serviceData: String
-
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
@@ -38,8 +34,6 @@ class ButtonWidget : AppWidgetProvider() {
     ) {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
-            loadServiceCallData(context, appWidgetId)
-
             val intent = Intent(context, ButtonWidget::class.java).apply {
                 action = CALL_SERVICE
                 putExtra("appWidgetId", appWidgetId)
@@ -80,21 +74,42 @@ class ButtonWidget : AppWidgetProvider() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d(TAG, "Broadcast received: " + System.lineSeparator() +
-                "Broadcast action: " + intent.action + System.lineSeparator() +
-                "AppWidgetId: " + intent.getIntExtra("appWidgetId", 0))
+        val action = intent.action
+        val appWidgetId = intent.getIntExtra("appWidgetId", 0)
+
+        Log.d(
+            TAG, "Broadcast received: " + System.lineSeparator() +
+                    "Broadcast action: " + action + System.lineSeparator() +
+                    "AppWidgetId: " + appWidgetId
+        )
 
         super.onReceive(context, intent)
         ensureInjected(context)
-        loadServiceCallData(context, intent.getIntExtra("appWidgetId", 0))
 
-        when (intent.action) {
-            CALL_SERVICE -> callConfiguredService()
+        when (action) {
+            CALL_SERVICE -> callConfiguredService(context, appWidgetId)
         }
     }
 
-    private fun callConfiguredService() {
+    private fun callConfiguredService(context: Context, appWidgetId: Int) {
         Log.d(TAG, "Calling widget service")
+
+        // Load the service call data from Shared Preferences
+        val domain = loadStringPref(context, appWidgetId, PREF_KEY_DOMAIN)
+        val service = loadStringPref(context, appWidgetId, PREF_KEY_SERVICE)
+        val serviceData = loadStringPref(context, appWidgetId, PREF_KEY_SERVICE_DATA)
+
+        Log.d(
+            TAG, "Service Call Data loaded:" + System.lineSeparator() +
+                    "domain: " + domain + System.lineSeparator() +
+                    "service: " + service + System.lineSeparator() +
+                    "service_data: " + serviceData
+        )
+
+        if (domain == null || service == null || serviceData == null) {
+            Log.w(TAG, "Service Call Data incomplete.  Aborting service call")
+            return
+        }
 
         val serviceDataMap = HashMap<String, String>()
         serviceDataMap["entity_id"] = serviceData
@@ -117,19 +132,5 @@ class ButtonWidget : AppWidgetProvider() {
         } else {
             throw Exception("Application Context passed is not of our application!")
         }
-    }
-
-    private fun loadServiceCallData(context: Context, appWidgetId: Int) {
-        // Load the service call data from Shared Preferences
-        domain = loadStringPref(context, appWidgetId, PREF_KEY_DOMAIN) ?: ""
-        service = loadStringPref(context, appWidgetId, PREF_KEY_SERVICE) ?: ""
-        serviceData = loadStringPref(context, appWidgetId, PREF_KEY_SERVICE_DATA) ?: ""
-
-        Log.d(
-            TAG, "Service Call Data loaded:" + System.lineSeparator() +
-                    "domain: " + domain + System.lineSeparator() +
-                    "service: " + service + System.lineSeparator() +
-                    "service_data: " + serviceData
-        )
     }
 }

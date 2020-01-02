@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.firebase.appdistribution'
 apply plugin: 'com.github.triplet.play'
@@ -114,4 +115,3 @@ dependencies {
 // This plugin must stay at the bottom
 // https://developers.google.com/android/guides/google-services-plugin
 apply plugin: 'com.google.gms.google-services'
-apply plugin: 'kotlin-android-extensions'
