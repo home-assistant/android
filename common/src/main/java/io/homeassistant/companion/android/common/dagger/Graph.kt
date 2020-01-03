@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.common.dagger
 
 import android.app.Application
 import android.content.Context
+import android.net.wifi.WifiManager
 import io.homeassistant.companion.android.common.LocalStorageImpl
+import io.homeassistant.companion.android.common.wifi.WifiHelperImpl
 import kotlinx.coroutines.runBlocking
 
 class Graph(
@@ -16,19 +18,16 @@ class Graph(
 
     init {
         buildComponent()
-        runBlocking {
-            if (dataComponent.authenticationRepository().getUrl() != null) {
-                this@Graph.url = dataComponent.authenticationRepository().getUrl()!!.toString()
-            }
-            buildComponent()
-        }
+        urlUpdated()
     }
 
     fun urlUpdated() {
         runBlocking {
-            this@Graph.url = dataComponent.authenticationRepository().getUrl()!!.toString()
+            if (dataComponent.urlRepository().getUrl() != null) {
+                this@Graph.url = dataComponent.urlRepository().getUrl().toString()
+                buildComponent()
+            }
         }
-        buildComponent()
     }
 
     private fun buildComponent() {
@@ -37,6 +36,12 @@ class Graph(
             .dataModule(
                 DataModule(
                     url,
+                    LocalStorageImpl(
+                        application.getSharedPreferences(
+                            "url",
+                            Context.MODE_PRIVATE
+                        )
+                    ),
                     LocalStorageImpl(
                         application.getSharedPreferences(
                             "session",
@@ -48,7 +53,8 @@ class Graph(
                             "integration",
                             Context.MODE_PRIVATE
                         )
-                    )
+                    ),
+                    WifiHelperImpl(application.getSystemService(Context.WIFI_SERVICE) as WifiManager)
                 )
             )
             .build()

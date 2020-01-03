@@ -15,16 +15,6 @@ object AuthenticationUseCaseImplSpec : Spek({
         val authenticationRepository by memoized { mockk<AuthenticationRepository>(relaxUnitFun = true) }
         val useCase by memoized { AuthenticationUseCaseImpl(authenticationRepository) }
 
-        describe("save url") {
-            beforeEachTest {
-                runBlocking { useCase.saveUrl("https://demo.home-assistant.io/") }
-            }
-
-            it("should call the repository") {
-                coVerify { authenticationRepository.saveUrl("https://demo.home-assistant.io/") }
-            }
-        }
-
         describe("register authorization code") {
             beforeEachTest {
                 runBlocking { useCase.registerAuthorizationCode("123456") }
@@ -66,18 +56,6 @@ object AuthenticationUseCaseImplSpec : Spek({
 
             it("should return the given SessionState") {
                 assertThat(sessionState).isEqualTo(SessionState.CONNECTED)
-            }
-        }
-
-        describe("get url") {
-            var url: URL? = null
-            beforeEachTest {
-                coEvery { authenticationRepository.getUrl() } returns URL("https://demo.home-assistant.io/")
-                url = runBlocking { useCase.getUrl() }
-            }
-
-            it("should return the given url") {
-                assertThat(url).isEqualTo(URL("https://demo.home-assistant.io/"))
             }
         }
 

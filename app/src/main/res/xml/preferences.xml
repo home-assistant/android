@@ -1,11 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <PreferenceCategory
+        android:title="@string/pref_connection_title">
+        <EditTextPreference
+            android:key="connection_external"
+            android:title="@string/pref_connection_url"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:key="connection_internal_wifi"
+            android:title="@string/pref_connection_wifi"
+            app:useSimpleSummaryProvider="true"/>
+        <EditTextPreference
+            android:key="connection_internal"
+            android:title="@string/pref_connection_internal"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/device_registration">
         <EditTextPreference
             android:key="registration_name"
-            android:title="@string/device_name"/>
+            android:title="@string/device_name"
+            app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/location">

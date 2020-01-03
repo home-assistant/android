@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.data.authentication
 
 import io.homeassistant.companion.android.data.LocalStorage
-import io.homeassistant.companion.android.domain.MalformedHttpUrlException
 import io.homeassistant.companion.android.domain.authentication.SessionState
+import io.homeassistant.companion.android.domain.url.UrlRepository
 import io.mockk.Called
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -29,61 +29,13 @@ object AuthenticationRepositoryImplSpec : Spek({
     describe("a repository") {
         val localStorage by memoized { mockk<LocalStorage>(relaxUnitFun = true) }
         val authenticationService by memoized { mockk<AuthenticationService>(relaxUnitFun = true) }
+        val urlRepository by memoized { mockk<UrlRepository>(relaxed = true) }
         val repository by memoized {
             AuthenticationRepositoryImpl(
                 authenticationService,
-                localStorage
+                localStorage,
+                urlRepository
             )
-        }
-
-        mapOf(
-            "https://demo.home-assistant.io:8123/lovelace/0/default_view?home_assistant=1&true=false" to "https://demo.home-assistant.io:8123/",
-            "https://demo.home-assistant.io/lovelace/0/default_view?home_assistant=1&true=false" to "https://demo.home-assistant.io/",
-            "https://demo.home-assistant.io" to "https://demo.home-assistant.io/",
-            "https://192.168.1.1:8123/lovelace/0" to "https://192.168.1.1:8123/",
-            "https://192.168.1.1:8123" to "https://192.168.1.1:8123/",
-            "https://192.168.1.1" to "https://192.168.1.1/"
-        ).forEach {
-            describe("save valid url \"${it.key}\"") {
-                beforeEachTest {
-                    runBlocking { repository.saveUrl(it.key) }
-                }
-
-                it("should save url") {
-                    coVerifyAll { localStorage.putString("url", it.value) }
-                }
-            }
-        }
-
-        listOf(
-            "",
-            "home assistant",
-            "http://192.168..132:8123",
-            "http://....:8123",
-            "http://......",
-            "ftp://192.168.1.1"
-        ).forEach {
-            describe("save invalid url \"$it\"") {
-                lateinit var throwable: Throwable
-                beforeEachTest {
-                    runBlocking {
-                        try {
-                            repository.saveUrl(it)
-                        } catch (e: Exception) {
-                            throwable = e
-                        }
-                    }
-                }
-
-                it("shouldn't save url") {
-                    coVerify(exactly = 0) {
-                        localStorage.putString("url", "https://demo.home-assistant.io:8123")
-                    }
-                }
-                it("should throw an exception") {
-                    assertThat(throwable).isInstanceOf(MalformedHttpUrlException::class.java)
-                }
-            }
         }
 
         describe("get token on success") {
@@ -145,7 +97,7 @@ object AuthenticationRepositoryImplSpec : Spek({
         describe("build auth url") {
             lateinit var authenticationUrl: URL
             beforeEachTest {
-                coEvery { localStorage.getString("url") } returns "https://demo.home-assistant.io/"
+                coEvery { urlRepository.getUrl() } returns URL("https://demo.home-assistant.io/")
                 authenticationUrl =
                     runBlocking { repository.buildAuthenticationUrl("homeassistant://auth-callback") }
             }
@@ -157,7 +109,7 @@ object AuthenticationRepositoryImplSpec : Spek({
 
         describe("connected user with valid access token") {
             beforeEachTest {
-                coEvery { localStorage.getString("url") } returns "https://demo.home-assistant.io/"
+                coEvery { urlRepository.getUrl() } returns URL("https://demo.home-assistant.io/")
                 coEvery { localStorage.getString("access_token") } returns "ABCDEFGH"
                 coEvery { localStorage.getLong("expires_date") } returns 1547605320
                 coEvery { localStorage.getString("refresh_token") } returns "IJKLMNOPQRST"
@@ -174,19 +126,6 @@ object AuthenticationRepositoryImplSpec : Spek({
 
                 it("should be connected") {
                     assertThat(sessionState).isEqualTo(SessionState.CONNECTED)
-                }
-            }
-
-            describe("get instance url") {
-                lateinit var url: URL
-                beforeEachTest {
-                    url = runBlocking {
-                        repository.getUrl()
-                    }!!
-                }
-
-                it("should return the url") {
-                    assertThat(url).isEqualTo(URL("https://demo.home-assistant.io/"))
                 }
             }
 
@@ -320,19 +259,6 @@ object AuthenticationRepositoryImplSpec : Spek({
 
                 it("should be anonymous") {
                     assertThat(sessionState).isEqualTo(SessionState.ANONYMOUS)
-                }
-            }
-
-            describe("get instance url") {
-                var url: URL? = null
-                beforeEachTest {
-                    url = runBlocking {
-                        repository.getUrl()
-                    }
-                }
-
-                it("should return null") {
-                    assertThat(url).isNull()
                 }
             }
 

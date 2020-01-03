@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.manual
 
 import io.homeassistant.companion.android.domain.MalformedHttpUrlException
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
+import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.mockk.coEvery
 import io.mockk.coVerifyAll
 import io.mockk.just
@@ -25,18 +25,18 @@ object ManualSetupPresenterImplSpec : Spek({
     }
 
     describe("presenter") {
-        val authenticationUseCase by memoized { mockk<AuthenticationUseCase>(relaxUnitFun = true) }
+        val urlUseCase by memoized { mockk<UrlUseCase>(relaxUnitFun = true) }
         val view by memoized { mockk<ManualSetupView>(relaxUnitFun = true) }
-        val presenter by memoized { ManualSetupPresenterImpl(view, authenticationUseCase) }
+        val presenter by memoized { ManualSetupPresenterImpl(view, urlUseCase) }
 
         describe("on click ok with valid url") {
             beforeEachTest {
                 presenter.onClickOk("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false")
-                coEvery { authenticationUseCase.saveUrl("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false") } just runs
+                coEvery { urlUseCase.saveUrl("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false") } just runs
             }
 
             it("should save the url") {
-                coVerifyAll { authenticationUseCase.saveUrl("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false") }
+                coVerifyAll { urlUseCase.saveUrl("https://demo.home-assistant.io:8123/lovelace/default_view?home_assistant=1&true=false", false) }
             }
 
             it("should notify the listener") {
@@ -46,12 +46,12 @@ object ManualSetupPresenterImplSpec : Spek({
 
         describe("on click with invalid url") {
             beforeEachTest {
-                coEvery { authenticationUseCase.saveUrl("home assistant") } throws MalformedHttpUrlException()
+                coEvery { urlUseCase.saveUrl("home assistant", false) } throws MalformedHttpUrlException()
                 presenter.onClickOk("home assistant")
             }
 
             it("should save the url") {
-                coVerifyAll { authenticationUseCase.saveUrl("home assistant") }
+                coVerifyAll { urlUseCase.saveUrl("home assistant", false) }
             }
 
             it("should display url error") {
