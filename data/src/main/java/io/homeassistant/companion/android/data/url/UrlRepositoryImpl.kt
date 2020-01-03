@@ -59,8 +59,10 @@ class UrlRepositoryImpl @Inject constructor(
         webhookId: String
     ) {
         localStorage.putString(PREF_CLOUDHOOK_URL, cloudHookUrl)
-        localStorage.putString(PREF_REMOTE_URL, remoteUiUrl)
         localStorage.putString(PREF_WEBHOOK_ID, webhookId)
+        remoteUiUrl?.let {
+            localStorage.putString(PREF_REMOTE_URL, it)
+        }
     }
 
     override suspend fun getUrl(isInternal: Boolean?): URL? {
