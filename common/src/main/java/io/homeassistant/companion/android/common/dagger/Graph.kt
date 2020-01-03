@@ -8,7 +8,8 @@ import io.homeassistant.companion.android.common.wifi.WifiHelperImpl
 import kotlinx.coroutines.runBlocking
 
 class Graph(
-    private val application: Application
+    private val application: Application,
+    private val instanceId: Int
 ) {
 
     lateinit var appComponent: AppComponent
@@ -38,19 +39,19 @@ class Graph(
                     url,
                     LocalStorageImpl(
                         application.getSharedPreferences(
-                            "url",
+                            "url_$instanceId",
                             Context.MODE_PRIVATE
                         )
                     ),
                     LocalStorageImpl(
                         application.getSharedPreferences(
-                            "session",
+                            "session_$instanceId",
                             Context.MODE_PRIVATE
                         )
                     ),
                     LocalStorageImpl(
                         application.getSharedPreferences(
-                            "integration",
+                            "integration_$instanceId",
                             Context.MODE_PRIVATE
                         )
                     ),

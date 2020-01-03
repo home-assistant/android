@@ -30,11 +30,11 @@ class DataModule(
     fun provideEndPoint() = url
 
     @Provides
-    fun provideAuthenticationService(homeAssistantRetrofit: HomeAssistantRetrofit) =
+    fun provideAuthenticationService(homeAssistantRetrofit: HomeAssistantRetrofit): AuthenticationService =
         homeAssistantRetrofit.retrofit.create(AuthenticationService::class.java)
 
     @Provides
-    fun providesIntegrationService(homeAssistantRetrofit: HomeAssistantRetrofit) =
+    fun providesIntegrationService(homeAssistantRetrofit: HomeAssistantRetrofit): IntegrationService =
         homeAssistantRetrofit.retrofit.create(IntegrationService::class.java)
 
     @Provides
@@ -54,11 +54,11 @@ class DataModule(
 
     @Provides
     @Named("manufacturer")
-    fun provideDeviceManufacturer() = Build.MANUFACTURER
+    fun provideDeviceManufacturer(): String = Build.MANUFACTURER
 
     @Provides
     @Named("model")
-    fun provideDeviceModel() = Build.MODEL
+    fun provideDeviceModel(): String = Build.MODEL
 
     @Provides
     @Named("osVersion")
