@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.net.wifi.WifiManager
 import io.homeassistant.companion.android.common.LocalStorageImpl
+import io.homeassistant.companion.android.common.migrations.Migrations
 import io.homeassistant.companion.android.common.wifi.WifiHelperImpl
 import kotlinx.coroutines.runBlocking
 
@@ -18,6 +19,9 @@ class Graph(
     private var url = "http://localhost/"
 
     init {
+        Migrations(application)
+            .migrate()
+
         buildComponent()
         urlUpdated()
     }
