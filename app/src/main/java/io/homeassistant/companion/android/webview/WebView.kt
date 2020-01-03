@@ -7,4 +7,6 @@ interface WebView {
     fun setExternalAuth(script: String)
 
     fun openOnBoarding()
+
+    fun showError()
 }

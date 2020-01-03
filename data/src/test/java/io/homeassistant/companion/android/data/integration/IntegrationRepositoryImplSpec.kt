@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import io.homeassistant.companion.android.domain.integration.ZoneAttributes
+import io.homeassistant.companion.android.domain.url.UrlRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
@@ -30,11 +31,13 @@ object IntegrationRepositoryImplSpec : Spek({
         val localStorage by memoized { mockk<LocalStorage>(relaxUnitFun = true) }
         val integrationService by memoized { mockk<IntegrationService>(relaxUnitFun = true) }
         val authenticationRepository by memoized { mockk<AuthenticationRepository>(relaxUnitFun = true) }
+        val urlRepository by memoized { mockk<UrlRepository>(relaxUnitFun = true) }
 
         val repository by memoized {
             IntegrationRepositoryImpl(
                 integrationService,
                 authenticationRepository,
+                urlRepository,
                 localStorage,
                 "manufacturer",
                 "model",
@@ -87,10 +90,11 @@ object IntegrationRepositoryImplSpec : Spek({
 
             it("should save response data") {
                 coVerify {
-                    localStorage.putString("cloud_url", "https://home-assistant.io/1/")
-                    localStorage.putString("remote_ui_url", "https://home-assistant.io/2/")
+                    urlRepository.saveRegistrationUrls(
+                        "https://home-assistant.io/1/",
+                        "https://home-assistant.io/2/",
+                        "FGHIJ")
                     localStorage.putString("secret", "ABCDE")
-                    localStorage.putString("webhook_id", "FGHIJ")
                 }
             }
 
@@ -129,10 +133,11 @@ object IntegrationRepositoryImplSpec : Spek({
                     integrationService.updateRegistration(any(), IntegrationRequest("update_registration", registerDeviceRequest))
                 } returns Response.success(null)
 
-                coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
-                coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
-                coEvery { localStorage.getString("cloud_url") } returns "http://best.com/hook/id"
-                coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+                coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                    URL("http://best.com/hook/id"),
+                    URL("http://better.com"),
+                    URL("http://example.com")
+                )
 
                 coEvery { localStorage.getString("app_version") } returns "app_version"
                 coEvery { localStorage.getString("device_name") } returns "device_name"
@@ -162,7 +167,11 @@ object IntegrationRepositoryImplSpec : Spek({
 
         describe("is registered") {
             beforeEachTest {
-                coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
+                coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                    URL("http://best.com/hook/id"),
+                    URL("http://better.com"),
+                    URL("http://example.com")
+                )
             }
             describe("isRegistered") {
                 var isRegistered by Delegates.notNull<Boolean>()
@@ -173,47 +182,11 @@ object IntegrationRepositoryImplSpec : Spek({
                     assertThat(isRegistered).isTrue()
                 }
             }
-
-            describe("getUiUrl External with remote ui") {
-                var url: URL? = null
-                beforeEachTest {
-                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
-                    coEvery { localStorage.getString("remote_ui_url") } returns "https://best.com/"
-                    runBlocking { url = repository.getUiUrl(false) }
-                }
-                it("should return the remote ui url") {
-                    assertThat(url).isEqualTo(URL("https://best.com/"))
-                }
-            }
-
-            describe("getUiUrl External without remote ui") {
-                var url: URL? = null
-                beforeEachTest {
-                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
-                    coEvery { localStorage.getString("remote_ui_url") } returns null
-                    runBlocking { url = repository.getUiUrl(false) }
-                }
-                it("should return the auth url") {
-                    assertThat(url).isEqualTo(URL("http://example.com"))
-                }
-            }
-
-            describe("getUiUrl Internal") {
-                var url: URL? = null
-                beforeEachTest {
-                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
-                    coEvery { localStorage.getString("remote_ui_url") } returns "https://best.com"
-                    runBlocking { url = repository.getUiUrl(true) }
-                }
-                it("should return the auth url") {
-                    assertThat(url).isEqualTo(URL("http://example.com"))
-                }
-            }
         }
 
         describe("is not registered") {
             beforeEachTest {
-                coEvery { localStorage.getString("webhook_id") } returns null
+                coEvery { urlRepository.getApiUrls() } returns arrayOf()
             }
             describe("isRegistered") {
                 var isRegistered by Delegates.notNull<Boolean>()
@@ -224,25 +197,9 @@ object IntegrationRepositoryImplSpec : Spek({
                     assertThat(isRegistered).isFalse()
                 }
             }
-
-            describe("getUiUrl") {
-                var url: URL? = null
-                beforeEachTest {
-                    coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
-                    coEvery { localStorage.getString("remote_ui_url") } returns null
-                    runBlocking { url = repository.getUiUrl(true) }
-                }
-                it("should return the authentication url") {
-                    assertThat(url).asString().isEqualTo("http://example.com")
-                }
-            }
         }
 
         describe("location updated") {
-            beforeEachTest {
-                coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
-                coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
-            }
 
             describe("updateLocation cloud url") {
                 val location = UpdateLocation(
@@ -269,8 +226,11 @@ object IntegrationRepositoryImplSpec : Spek({
                     )
                 )
                 beforeEachTest {
-                    coEvery { localStorage.getString("cloud_url") } returns "http://best.com/hook/id"
-                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://best.com/hook/id"),
+                        URL("http://better.com"),
+                        URL("http://example.com")
+                    )
                     coEvery {
                         integrationService.updateLocation(
                             any(), // "http://example.com/api/webhook/FGHIJ",
@@ -315,8 +275,10 @@ object IntegrationRepositoryImplSpec : Spek({
                     )
                 )
                 beforeEachTest {
-                    coEvery { localStorage.getString("cloud_url") } returns null
-                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://better.com/api/webhook/FGHIJ"),
+                        URL("http://example.com")
+                    )
                     coEvery {
                         integrationService.updateLocation(
                             any(), // "http://example.com/api/webhook/FGHIJ",
@@ -361,8 +323,9 @@ object IntegrationRepositoryImplSpec : Spek({
                     )
                 )
                 beforeEachTest {
-                    coEvery { localStorage.getString("cloud_url") } returns null
-                    coEvery { localStorage.getString("remote_ui_url") } returns null
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://example.com/api/webhook/FGHIJ")
+                    )
                     coEvery {
                         integrationService.updateLocation(
                             any(), // "http://example.com/api/webhook/FGHIJ",
@@ -408,8 +371,11 @@ object IntegrationRepositoryImplSpec : Spek({
                 )
 
                 beforeEachTest {
-                    coEvery { localStorage.getString("cloud_url") } returns "http://best.com/hook/id"
-                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://best.com/hook/id"),
+                        URL("http://better.com/api/webhook/FGHIJ"),
+                        URL("http://example.com")
+                    )
                     coEvery {
                         integrationService.updateLocation(
                             "http://best.com/hook/id".toHttpUrl(),
@@ -457,8 +423,11 @@ object IntegrationRepositoryImplSpec : Spek({
                 lateinit var thrown: Throwable
 
                 beforeEachTest {
-                    coEvery { localStorage.getString("cloud_url") } returns "http://best.com/hook/id"
-                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com"
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://best.com/hook/id"),
+                        URL("http://better.com"),
+                        URL("http://example.com")
+                    )
                     coEvery {
                         integrationService.updateLocation(
                             "http://best.com/hook/id".toHttpUrl(),
@@ -491,59 +460,15 @@ object IntegrationRepositoryImplSpec : Spek({
                     assertThat(thrown).isInstanceOf(IntegrationException::class.java)
                 }
             }
-
-            describe("updateLocation with trailing slash") {
-                val location = UpdateLocation(
-                    "locationName",
-                    arrayOf(45.0, -45.0),
-                    0,
-                    1,
-                    2,
-                    3,
-                    4,
-                    5
-                )
-                val integrationRequest = IntegrationRequest(
-                    "update_location",
-                    UpdateLocationRequest(
-                        location.locationName,
-                        location.gps,
-                        location.gpsAccuracy,
-                        location.battery,
-                        location.speed,
-                        location.altitude,
-                        location.course,
-                        location.verticalAccuracy
-                    )
-                )
-                beforeEachTest {
-                    coEvery { localStorage.getString("cloud_url") } returns null
-                    coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com/"
-                    coEvery {
-                        integrationService.updateLocation(
-                            any(), // "http://example.com/api/webhook/FGHIJ",
-                            any() // integrationRequest
-                        )
-                    } returns Response.success(null)
-                    runBlocking { repository.updateLocation(location) }
-                }
-
-                it("should call the service.") {
-                    coVerify {
-                        integrationService.updateLocation(
-                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
-                            integrationRequest
-                        )
-                    }
-                }
-            }
         }
 
         describe("get zones") {
             beforeEachTest {
-                coEvery { localStorage.getString("cloud_url") } returns "https://best.com"
-                coEvery { localStorage.getString("remote_ui_url") } returns "http://better.com/"
-                coEvery { authenticationRepository.getUrl() } returns URL("http://example.com")
+                coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                    URL("http://best.com/"),
+                    URL("http://better.com"),
+                    URL("http://example.com")
+                )
                 coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
             }
             describe("getZones") {

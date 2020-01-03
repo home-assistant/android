@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.domain.url.UrlUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 
 class SettingsPresenterImpl @Inject constructor(
     private val settingsView: SettingsView,
+    private val urlUseCase: UrlUseCase,
     private val integrationUseCase: IntegrationUseCase
 ) : SettingsPresenter, PreferenceDataStore() {
 
@@ -41,6 +43,9 @@ class SettingsPresenterImpl @Inject constructor(
     override fun getString(key: String?, defValue: String?): String? {
         return runBlocking {
             when (key) {
+                "connection_internal" -> (urlUseCase.getUrl(true) ?: "").toString()
+                "connection_internal_wifi" -> urlUseCase.getHomeWifiSsid()
+                "connection_external" -> (urlUseCase.getUrl(false) ?: "").toString()
                 "registration_name" -> integrationUseCase.getRegistration().deviceName
                 else -> throw Exception()
             }
@@ -50,6 +55,18 @@ class SettingsPresenterImpl @Inject constructor(
     override fun putString(key: String?, value: String?) {
         mainScope.launch {
             when (key) {
+                "connection_internal" -> {
+                    urlUseCase.saveUrl(value ?: "", true)
+                    settingsView.onUrlChanged()
+                }
+                "connection_internal_wifi" -> {
+                    urlUseCase.saveHomeWifiSsid(value)
+                    handleInternalUrlStatus(value)
+                }
+                "connection_external" -> {
+                    urlUseCase.saveUrl(value ?: "", false)
+                    settingsView.onUrlChanged()
+                }
                 "registration_name" -> integrationUseCase.updateRegistration(deviceName = value!!)
                 else -> throw Exception()
             }
@@ -60,7 +77,23 @@ class SettingsPresenterImpl @Inject constructor(
         return this
     }
 
+    override fun onCreate() {
+        mainScope.launch {
+            handleInternalUrlStatus(urlUseCase.getHomeWifiSsid())
+        }
+    }
+
     override fun onFinish() {
         mainScope.cancel()
+    }
+
+    private suspend fun handleInternalUrlStatus(ssid: String?) {
+        if (ssid.isNullOrBlank()) {
+            settingsView.disableInternalConnection()
+            urlUseCase.saveUrl("", true)
+            settingsView.onUrlChanged()
+        } else {
+            settingsView.enableInternalConnection()
+        }
     }
 }

@@ -2,45 +2,26 @@ package io.homeassistant.companion.android.data.authentication
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.data.LocalStorage
-import io.homeassistant.companion.android.domain.MalformedHttpUrlException
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.authentication.SessionState
+import io.homeassistant.companion.android.domain.url.UrlRepository
 import java.net.URL
 import javax.inject.Inject
 import javax.inject.Named
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.threeten.bp.Instant
 
 class AuthenticationRepositoryImpl @Inject constructor(
     private val authenticationService: AuthenticationService,
-    @Named("session") private val localStorage: LocalStorage
+    @Named("session") private val localStorage: LocalStorage,
+    private val urlRepository: UrlRepository
 ) : AuthenticationRepository {
 
     companion object {
-        private const val PREF_URL = "url"
         private const val PREF_ACCESS_TOKEN = "access_token"
         private const val PREF_EXPIRED_DATE = "expires_date"
         private const val PREF_REFRESH_TOKEN = "refresh_token"
         private const val PREF_TOKEN_TYPE = "token_type"
-    }
-
-    override suspend fun saveUrl(url: String) {
-        val trimUrl = try {
-            val httpUrl = url.toHttpUrl()
-            HttpUrl.Builder()
-                .scheme(httpUrl.scheme)
-                .host(httpUrl.host)
-                .port(httpUrl.port)
-                .toString()
-        } catch (e: IllegalArgumentException) {
-            throw MalformedHttpUrlException(
-                e.message
-            )
-        }
-
-        localStorage.putString(PREF_URL, trimUrl)
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
@@ -71,21 +52,17 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getSessionState(): SessionState {
-        return if (retrieveSession() != null) {
+        return if (retrieveSession() != null && urlRepository.getUrl() != null) {
             SessionState.CONNECTED
         } else {
             SessionState.ANONYMOUS
         }
     }
 
-    override suspend fun getUrl(): URL? {
-        return localStorage.getString(PREF_URL)?.toHttpUrlOrNull()?.toUrl()
-    }
-
     override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {
-        val url = localStorage.getString(PREF_URL) ?: throw AuthorizationException()
+        val url = urlRepository.getUrl()
 
-        return url.toHttpUrl()
+        return url!!.toHttpUrlOrNull()!!
             .newBuilder()
             .addPathSegments("auth/authorize")
             .addEncodedQueryParameter("response_type", "code")

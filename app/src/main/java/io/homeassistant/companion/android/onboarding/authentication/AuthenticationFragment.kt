@@ -64,7 +64,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
                     ) {
                         super.onReceivedError(view, request, error)
                         popBack()
-                        showError(getString(R.string.error_onboarding_connection_failed))
+                        showError(getString(R.string.error_connection_failed))
                     }
                 }
             }

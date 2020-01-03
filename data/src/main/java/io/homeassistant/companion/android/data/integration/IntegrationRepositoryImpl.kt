@@ -7,15 +7,15 @@ import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import io.homeassistant.companion.android.domain.integration.ZoneAttributes
-import java.net.URL
+import io.homeassistant.companion.android.domain.url.UrlRepository
 import javax.inject.Inject
 import javax.inject.Named
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
     private val authenticationRepository: AuthenticationRepository,
+    private val urlRepository: UrlRepository,
     @Named("integration") private val localStorage: LocalStorage,
     @Named("manufacturer") private val manufacturer: String,
     @Named("model")private val model: String,
@@ -32,10 +32,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_DEVICE_NAME = "device_name"
         private const val PREF_PUSH_TOKEN = "push_token"
 
-        private const val PREF_CLOUD_URL = "cloud_url"
-        private const val PREF_REMOTE_UI_URL = "remote_ui_url"
         private const val PREF_SECRET = "secret"
-        private const val PREF_WEBHOOK_ID = "webhook_id"
 
         private const val PREF_ZONE_ENABLED = "zone_enabled"
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
@@ -53,7 +50,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                 request
             )
         persistDeviceRegistration(deviceRegistration)
-        persistDeviceRegistrationResponse(response)
+        urlRepository.saveRegistrationUrls(response.cloudhookUrl, response.remoteUiUrl, response.webhookId)
+        localStorage.putString(PREF_SECRET, response.secret)
     }
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
@@ -61,9 +59,9 @@ class IntegrationRepositoryImpl @Inject constructor(
             "update_registration",
             createUpdateRegistrationRequest(deviceRegistration)
         )
-        for (it in getUrls()) {
+        for (it in urlRepository.getApiUrls()) {
             try {
-                if (integrationService.updateRegistration(it, request).isSuccessful) {
+                if (integrationService.updateRegistration(it.toHttpUrlOrNull()!!, request).isSuccessful) {
                     persistDeviceRegistration(deviceRegistration)
                     return
                 }
@@ -92,30 +90,17 @@ class IntegrationRepositoryImpl @Inject constructor(
             localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
     }
 
-    private suspend fun persistDeviceRegistrationResponse(response: RegisterDeviceResponse) {
-        localStorage.putString(PREF_CLOUD_URL, response.cloudhookUrl)
-        localStorage.putString(PREF_REMOTE_UI_URL, response.remoteUiUrl)
-        localStorage.putString(PREF_SECRET, response.secret)
-        localStorage.putString(PREF_WEBHOOK_ID, response.webhookId)
-    }
-
     override suspend fun isRegistered(): Boolean {
-        return localStorage.getString(PREF_WEBHOOK_ID) != null
-    }
-
-    override suspend fun getUiUrl(isInternal: Boolean): URL? {
-        val url = authenticationRepository.getUrl()
-        return if (isInternal) url else localStorage.getString(PREF_REMOTE_UI_URL)?.toHttpUrl()?.toUrl()
-            ?: url
+        return urlRepository.getApiUrls().isNotEmpty()
     }
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
-        for (it in getUrls()) {
+        for (it in urlRepository.getApiUrls()) {
             var wasSuccess = false
             try {
                 wasSuccess =
-                    integrationService.updateLocation(it, updateLocationRequest).isSuccessful
+                    integrationService.updateLocation(it.toHttpUrlOrNull()!!, updateLocationRequest).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
@@ -130,9 +115,9 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
         val getZonesRequest = IntegrationRequest("get_zones", null)
         var zones: Array<EntityResponse<ZoneAttributes>>? = null
-        for (it in getUrls()) {
+        for (it in urlRepository.getApiUrls()) {
             try {
-                zones = integrationService.getZones(it, getZonesRequest)
+                zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
@@ -159,34 +144,6 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isBackgroundTrackingEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
-    }
-
-    // https://developers.home-assistant.io/docs/en/app_integration_sending_data.html#short-note-on-instance-urls
-    private suspend fun getUrls(): Array<HttpUrl> {
-        val retVal = ArrayList<HttpUrl>()
-        val webhook = localStorage.getString(PREF_WEBHOOK_ID)
-
-        localStorage.getString(PREF_CLOUD_URL)?.let {
-            retVal.add(it.toHttpUrl())
-        }
-
-        localStorage.getString(PREF_REMOTE_UI_URL)?.let {
-            retVal.add(
-                it.toHttpUrl().newBuilder()
-                    .addPathSegments("api/webhook/$webhook")
-                    .build()
-            )
-        }
-
-        authenticationRepository.getUrl().toString().let {
-            retVal.add(
-                it.toHttpUrl().newBuilder()
-                    .addPathSegments("api/webhook/$webhook")
-                    .build()
-            )
-        }
-
-        return retVal.toTypedArray()
     }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
