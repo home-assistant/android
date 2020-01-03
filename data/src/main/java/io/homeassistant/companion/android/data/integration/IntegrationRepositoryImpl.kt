@@ -131,10 +131,10 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         val serviceCallRequest = ServiceCallRequest(domain, service, serviceData)
 
-        for (it in getUrls()) {
+        for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
-                    integrationService.callService(it, IntegrationRequest("call_service", serviceCallRequest)).isSuccessful
+                    integrationService.callService(it.toHttpUrlOrNull()!!, IntegrationRequest("call_service", serviceCallRequest)).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
