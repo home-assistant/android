@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.os.Handler
 import android.util.Log
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.R
@@ -41,7 +42,7 @@ class ButtonWidget : AppWidgetProvider() {
 
             val views = RemoteViews(context.packageName, R.layout.widget_button).apply {
                 setOnClickPendingIntent(
-                    R.id.widgetImageView,
+                    R.id.widgetImageButton,
                     PendingIntent.getBroadcast(
                         context,
                         appWidgetId,
@@ -117,6 +118,19 @@ class ButtonWidget : AppWidgetProvider() {
         mainScope.launch {
             try {
                 integrationUseCase.callService(domain, service, serviceDataMap)
+
+                // Change color of background image to show succsseful call
+                val views = RemoteViews(context.packageName, R.layout.widget_button)
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+
+                views.setImageViewResource(R.id.widgetImageButtonBackground, R.drawable.ic_circle_yellow_24dp)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+
+                // Set a timer to change it back after 1 second
+                Handler().postDelayed({
+                    views.setImageViewResource(R.id.widgetImageButtonBackground, R.drawable.ic_circle_white_24dp)
+                    appWidgetManager.updateAppWidget(appWidgetId, views)
+                }, 1000)
             } catch (e: Exception) {
                 Log.e(TAG, "Could not send service call.", e)
             }
