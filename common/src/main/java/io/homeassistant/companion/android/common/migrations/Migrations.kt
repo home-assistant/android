@@ -37,9 +37,26 @@ class Migrations constructor(
 
         url.edit()
             .putString("cloudhook_url", integration.getString("cloud_url", null))
-            .putString("remote_url", integration.getString("remote_ui_url", null))
+            .putString("remote_url", integration.getString("remote_ui_url", auth.getString("url", null)))
             .putString("webhook_id", integration.getString("webhook_id", null))
-            .putString("local_url", auth.getString("url", null))
+            .apply()
+
+        val newAuth = application.getSharedPreferences("session_0", Context.MODE_PRIVATE)
+        newAuth.edit()
+            .putString("access_token", auth.getString("access_token", null))
+            .putLong("expires_date", auth.getLong("expires_date", 0))
+            .putString("refresh_token", auth.getString("refresh_token", null))
+            .putString("token_type", auth.getString("token_type", null))
+            .apply()
+
+        val newIntegration = application.getSharedPreferences("integration_0", Context.MODE_PRIVATE)
+        newIntegration.edit()
+            .putString("app_version", auth.getString("app_version", null))
+            .putString("device_name", auth.getString("device_name", null))
+            .putString("push_token", auth.getString("push_token", null))
+            .putString("secret", auth.getString("secret", null))
+            .putBoolean("zone_enabled", auth.getBoolean("zone_enabled", false))
+            .putBoolean("background_enabled", auth.getBoolean("background_enabled", false))
             .apply()
 
         Log.i(TAG, "Completed Migration #1")
