@@ -6,14 +6,14 @@ import android.util.Log
 
 class Migrations constructor(
     private val application: Application
-){
+) {
     companion object {
         private const val TAG = "Migrations"
         private const val PREF_NAME = "migrations"
         private const val PREF_VERSION = "migration_version"
     }
 
-    fun migrate(){
+    fun migrate() {
         val preferences = application.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         var version = preferences.getInt(PREF_VERSION, 0)
         if (version < 1) {
@@ -27,7 +27,7 @@ class Migrations constructor(
     /**
      * Migrate to url repository and multiple prepare for multiple instances
      */
-    private fun migration1(){
+    private fun migration1() {
         Log.i(TAG, "Starting Migration #1")
         val auth = application.getSharedPreferences("session", Context.MODE_PRIVATE)
         val integration = application.getSharedPreferences("integration", Context.MODE_PRIVATE)
