@@ -16,9 +16,10 @@ class Migrations constructor(
     fun migrate() {
         val preferences = application.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         var version = preferences.getInt(PREF_VERSION, 0)
+
         if (version < 1) {
             migration1()
-            version++
+            version = 1
         }
 
         preferences.edit().putInt(PREF_VERSION, version).apply()
