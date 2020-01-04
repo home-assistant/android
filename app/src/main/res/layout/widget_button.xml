@@ -42,6 +42,8 @@
         android:layout_marginTop="0dp"
         android:text="@string/widget_label_placeholder_text"
         android:textAlignment="center"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textColor="@color/colorOnPrimary"
         android:textSize="12sp" />
 </LinearLayout>
