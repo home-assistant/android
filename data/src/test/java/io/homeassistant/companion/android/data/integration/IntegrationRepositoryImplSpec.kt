@@ -74,7 +74,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 coEvery { localStorage.getString("device_name") } returns "device_name"
                 coEvery { localStorage.getString("push_token") } returns "push_token"
 
-                coEvery {integrationService.discoveryInfo("ABC123")} returns mockk {
+                coEvery { integrationService.discoveryInfo("ABC123") } returns mockk {
                     every { version } returns "0.104.0"
                 }
 
