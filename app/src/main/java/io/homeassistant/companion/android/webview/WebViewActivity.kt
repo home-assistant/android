@@ -94,6 +94,20 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     Log.e(TAG, "onReceivedHttpError: $error")
                     showError()
                 }
+
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    request?.url?.let {
+                        if (!it.toString().contains(webView.url.toString())) {
+                            val browserIntent = Intent(Intent.ACTION_VIEW, it)
+                            startActivity(browserIntent)
+                            return true
+                        }
+                    }
+                    return false
+                }
             }
 
             webChromeClient = object : WebChromeClient() {
@@ -164,15 +178,15 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         when {
                             JSONObject(message).get("type") == "config/get" -> {
                                 val script = "externalBus(" +
-                                    "${JSONObject(
-                                        mapOf(
-                                            "id" to JSONObject(message).get("id"),
-                                            "type" to "result",
-                                            "success" to true,
-                                            "result" to JSONObject(mapOf("hasSettingsScreen" to true))
-                                        )
-                                    )}" +
-                                    ");"
+                                        "${JSONObject(
+                                            mapOf(
+                                                "id" to JSONObject(message).get("id"),
+                                                "type" to "result",
+                                                "success" to true,
+                                                "result" to JSONObject(mapOf("hasSettingsScreen" to true))
+                                            )
+                                        )}" +
+                                        ");"
                                 Log.d(TAG, script)
                                 webView.evaluateJavascript(script) {
                                     Log.d(TAG, "Callback $it")
