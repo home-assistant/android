@@ -18,8 +18,9 @@ class IntegrationRepositoryImpl @Inject constructor(
     private val urlRepository: UrlRepository,
     @Named("integration") private val localStorage: LocalStorage,
     @Named("manufacturer") private val manufacturer: String,
-    @Named("model")private val model: String,
-    @Named("osVersion")private val osVersion: String
+    @Named("model") private val model: String,
+    @Named("osVersion") private val osVersion: String,
+    @Named("deviceId") private val deviceId: String
 ) : IntegrationRepository {
 
     companion object {
@@ -44,6 +45,19 @@ class IntegrationRepositoryImpl @Inject constructor(
         request.appName = APP_NAME
         request.osName = OS_NAME
         request.supportsEncryption = false
+
+        try {
+            val version = integrationService
+                .discoveryInfo(authenticationRepository.buildBearerToken())
+                .version.split(".")
+            // If we are above version 0.104.0 add device_id
+            if (version.size > 2 && (Integer.parseInt(version[0]) > 0 || Integer.parseInt(version[1]) >= 104)) {
+                request.deviceId = deviceId
+            }
+        } catch (e: Exception) {
+            // Ignore errors we don't technically need it need it
+        }
+
         val response =
             integrationService.registerDevice(
                 authenticationRepository.buildBearerToken(),
@@ -162,7 +176,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                 "push_url" to PUSH_URL,
                 "push_token" to (deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
                 ?: "")
-            )
+            ),
+            null
         )
     }
 
