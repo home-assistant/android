@@ -18,7 +18,7 @@ class HomeAssistantApplication : Application(), GraphComponentAccessor {
         Lokalise.updateTranslations()
 
         AndroidThreeTen.init(this)
-        graph = Graph(this)
+        graph = Graph(this, 0)
     }
 
     override val appComponent: AppComponent
