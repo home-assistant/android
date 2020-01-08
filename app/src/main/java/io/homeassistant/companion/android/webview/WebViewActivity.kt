@@ -95,10 +95,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     request: WebResourceRequest?
                 ): Boolean {
                     request?.url?.let {
-                        val browserIntent = Intent(Intent.ACTION_VIEW, it)
-                        startActivity(browserIntent)
+                        if (!it.toString().contains(webView.url.toString())) {
+                            val browserIntent = Intent(Intent.ACTION_VIEW, it)
+                            startActivity(browserIntent)
+                            return true
+                        }
                     }
-                    return true
+                    return false
                 }
             }
 
@@ -140,15 +143,15 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         when {
                             JSONObject(message).get("type") == "config/get" -> {
                                 val script = "externalBus(" +
-                                    "${JSONObject(
-                                        mapOf(
-                                            "id" to JSONObject(message).get("id"),
-                                            "type" to "result",
-                                            "success" to true,
-                                            "result" to JSONObject(mapOf("hasSettingsScreen" to true))
-                                        )
-                                    )}" +
-                                    ");"
+                                        "${JSONObject(
+                                            mapOf(
+                                                "id" to JSONObject(message).get("id"),
+                                                "type" to "result",
+                                                "success" to true,
+                                                "result" to JSONObject(mapOf("hasSettingsScreen" to true))
+                                            )
+                                        )}" +
+                                        ");"
                                 Log.d(TAG, script)
                                 webView.evaluateJavascript(script) {
                                     Log.d(TAG, "Callback $it")
