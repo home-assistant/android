@@ -23,7 +23,8 @@ class DataModule(
     private val urlStorage: LocalStorage,
     private val sessionLocalStorage: LocalStorage,
     private val integrationLocalStorage: LocalStorage,
-    private val wifiHelper: WifiHelper
+    private val wifiHelper: WifiHelper,
+    private val deviceId: String
 ) {
 
     @Provides
@@ -63,6 +64,10 @@ class DataModule(
     @Provides
     @Named("osVersion")
     fun provideDeviceOsVersion() = Build.VERSION.SDK_INT.toString()
+
+    @Provides
+    @Named("deviceId")
+    fun provideDeviceId() = deviceId
 
     @Module
     interface Declaration {

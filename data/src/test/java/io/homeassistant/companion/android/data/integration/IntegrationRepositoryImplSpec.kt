@@ -41,8 +41,76 @@ object IntegrationRepositoryImplSpec : Spek({
                 localStorage,
                 "manufacturer",
                 "model",
-                "osVersion"
+                "osVersion",
+                "deviceId"
             )
+        }
+
+        describe("registerDevicePre 0.104.0") {
+            beforeEachTest {
+                val deviceRegistration = DeviceRegistration(
+                    "appVersion",
+                    "deviceName",
+                    "pushToken"
+                )
+                val registerDeviceRequest = RegisterDeviceRequest(
+                    "io.homeassistant.companion.android",
+                    "Home Assistant",
+                    deviceRegistration.appVersion,
+                    deviceRegistration.deviceName,
+                    "manufacturer",
+                    "model",
+                    "Android",
+                    "osVersion",
+                    false,
+                    hashMapOf(
+                        "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
+                        "push_token" to (deviceRegistration.pushToken ?: "push_token")
+                    ),
+                    "deviceId"
+                )
+
+                coEvery { localStorage.getString("app_version") } returns "app_version"
+                coEvery { localStorage.getString("device_name") } returns "device_name"
+                coEvery { localStorage.getString("push_token") } returns "push_token"
+
+                coEvery { integrationService.discoveryInfo("ABC123") } returns mockk {
+                    every { version } returns "0.104.0"
+                }
+
+                coEvery {
+                    integrationService.registerDevice("ABC123", registerDeviceRequest)
+                } returns mockk {
+                    every { cloudhookUrl } returns "https://home-assistant.io/1/"
+                    every { remoteUiUrl } returns "https://home-assistant.io/2/"
+                    every { secret } returns "ABCDE"
+                    every { webhookId } returns "FGHIJ"
+                }
+
+                coEvery { authenticationRepository.buildBearerToken() } returns "ABC123"
+
+                runBlocking {
+                    repository.registerDevice(deviceRegistration)
+                }
+            }
+
+            it("should save response data") {
+                coVerify {
+                    urlRepository.saveRegistrationUrls(
+                        "https://home-assistant.io/1/",
+                        "https://home-assistant.io/2/",
+                        "FGHIJ")
+                    localStorage.putString("secret", "ABCDE")
+                }
+            }
+
+            it("should save registration data") {
+                coVerify {
+                    localStorage.putString("app_version", "appVersion")
+                    localStorage.putString("device_name", "deviceName")
+                    localStorage.putString("push_token", "pushToken")
+                }
+            }
         }
 
         describe("registerDevice") {
@@ -65,7 +133,8 @@ object IntegrationRepositoryImplSpec : Spek({
                     hashMapOf(
                         "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
                         "push_token" to (deviceRegistration.pushToken ?: "push_token")
-                    )
+                    ),
+                    null
                 )
 
                 coEvery { localStorage.getString("app_version") } returns "app_version"
@@ -126,7 +195,8 @@ object IntegrationRepositoryImplSpec : Spek({
                 hashMapOf(
                     "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
                     "push_token" to (deviceRegistration.pushToken ?: "push_token")
-                )
+                ),
+                null
             )
             beforeEachTest {
                 coEvery {
