@@ -3,11 +3,13 @@ package io.homeassistant.companion.android.webview
 import android.content.Context
 import android.content.Intent
 import android.net.http.SslError
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuInflater
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
+import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -25,6 +27,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import org.json.JSONObject
 
@@ -32,6 +35,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     companion object {
         private const val TAG = "WebviewActivity"
+        private const val CAMERA_REQUEST_CODE = 8675309
+        private const val AUDIO_REQUEST_CODE = 42
 
         fun newInstance(context: Context): Intent {
             return Intent(context, WebViewActivity::class.java)
@@ -108,6 +113,36 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         .create()
                         .show()
                     return true
+                }
+
+                override fun onPermissionRequest(request: PermissionRequest?) {
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        request?.resources?.forEach {
+                            if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
+                                if (PermissionManager.hasPermission(context, android.Manifest.permission.CAMERA)) {
+                                    request.grant(arrayOf(it))
+                                } else {
+                                    requestPermissions(
+                                        arrayOf(android.Manifest.permission.CAMERA),
+                                        CAMERA_REQUEST_CODE
+                                    )
+                                }
+                            } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
+                                if (PermissionManager.hasPermission(context, android.Manifest.permission.RECORD_AUDIO)) {
+                                    request.grant(arrayOf(it))
+                                } else {
+                                    requestPermissions(
+                                        arrayOf(android.Manifest.permission.RECORD_AUDIO),
+                                        AUDIO_REQUEST_CODE
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        // If we are before M we already have permission, just grant it.
+                        request?.grant(request.resources)
+                    }
                 }
             }
 
@@ -199,5 +234,17 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 startActivity(SettingsActivity.newInstance(this))
             }
             .show()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == CAMERA_REQUEST_CODE || requestCode == AUDIO_REQUEST_CODE) {
+            webView.reload()
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
     }
 }
