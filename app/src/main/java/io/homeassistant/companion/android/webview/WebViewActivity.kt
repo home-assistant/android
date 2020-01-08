@@ -89,6 +89,17 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     Log.e(TAG, "onReceivedHttpError: $error")
                     showError()
                 }
+
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    request?.url?.let {
+                        val browserIntent = Intent(Intent.ACTION_VIEW, it)
+                        startActivity(browserIntent)
+                    }
+                    return true
+                }
             }
 
             webChromeClient = object : WebChromeClient() {
