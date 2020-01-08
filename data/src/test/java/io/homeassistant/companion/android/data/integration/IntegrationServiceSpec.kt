@@ -28,7 +28,8 @@ object IntegrationServiceSpec : Spek({
                     "osName",
                     "osVersion",
                     false,
-                    null
+                    null,
+                    "deviceId"
                 )
                 mockService.enqueueResponse(200, "integration/register.json")
                 registrationResponse = runBlocking {
