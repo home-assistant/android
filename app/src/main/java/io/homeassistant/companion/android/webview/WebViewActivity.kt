@@ -48,7 +48,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     lateinit var presenter: WebViewPresenter
     private lateinit var webView: WebView
 
-    private var hasConnected = false
+    private var isConnected = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -181,7 +181,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         val json = JSONObject(message)
                         when (json.get("type")) {
                             "connection-status" -> {
-                                hasConnected = json.getJSONObject("payload")
+                                isConnected = json.getJSONObject("payload")
                                     .getString("event") == "connected"
                             }
                             "config/get" -> {
@@ -236,7 +236,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun loadUrl(url: String) {
         webView.loadUrl(url)
         Handler().postDelayed({
-            if (!hasConnected) {
+            if (!isConnected) {
                 showError()
             }
         }, 5000)
