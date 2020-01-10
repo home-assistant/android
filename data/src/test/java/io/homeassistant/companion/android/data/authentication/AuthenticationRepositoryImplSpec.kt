@@ -152,6 +152,9 @@ object AuthenticationRepositoryImplSpec : Spek({
                 it("should call the service") {
                     coVerify {
                         authenticationService.revokeToken("IJKLMNOPQRST", "revoke")
+                        urlRepository.saveUrl("", true)
+                        urlRepository.saveUrl("", false)
+                        urlRepository.saveHomeWifiSsid(null)
                     }
                 }
 
