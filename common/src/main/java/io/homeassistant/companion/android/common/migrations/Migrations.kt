@@ -51,12 +51,12 @@ class Migrations constructor(
 
         val newIntegration = application.getSharedPreferences("integration_0", Context.MODE_PRIVATE)
         newIntegration.edit()
-            .putString("app_version", auth.getString("app_version", null))
-            .putString("device_name", auth.getString("device_name", null))
-            .putString("push_token", auth.getString("push_token", null))
-            .putString("secret", auth.getString("secret", null))
-            .putBoolean("zone_enabled", auth.getBoolean("zone_enabled", false))
-            .putBoolean("background_enabled", auth.getBoolean("background_enabled", false))
+            .putString("app_version", integration.getString("app_version", null))
+            .putString("device_name", integration.getString("device_name", null))
+            .putString("push_token", integration.getString("push_token", null))
+            .putString("secret", integration.getString("secret", null))
+            .putBoolean("zone_enabled", integration.getBoolean("zone_enabled", false))
+            .putBoolean("background_enabled", integration.getBoolean("background_enabled", false))
             .apply()
 
         Log.i(TAG, "Completed Migration #1")
