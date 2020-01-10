@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.MenuInflater
 import android.webkit.JavascriptInterface
@@ -46,6 +47,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     @Inject
     lateinit var presenter: WebViewPresenter
     private lateinit var webView: WebView
+
+    private var hasConnected = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -175,8 +178,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 fun externalBus(message: String) {
                     Log.d(TAG, "External bus $message")
                     webView.post {
-                        when {
-                            JSONObject(message).get("type") == "config/get" -> {
+                        val json = JSONObject(message)
+                        when (json.get("type")) {
+                            "connection-status" -> {
+                                hasConnected = json.getJSONObject("payload")
+                                    .getString("event") == "connected"
+                            }
+                            "config/get" -> {
                                 val script = "externalBus(" +
                                         "${JSONObject(
                                             mapOf(
@@ -192,7 +200,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     Log.d(TAG, "Callback $it")
                                 }
                             }
-                            JSONObject(message).get("type") == "config_screen/show" -> startActivity(
+                            "config_screen/show" -> startActivity(
                                 SettingsActivity.newInstance(this@WebViewActivity)
                             )
                         }
@@ -227,6 +235,11 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun loadUrl(url: String) {
         webView.loadUrl(url)
+        Handler().postDelayed({
+            if (!hasConnected) {
+                showError()
+            }
+        }, 5000)
     }
 
     override fun setExternalAuth(script: String) {
