@@ -49,6 +49,9 @@ class AuthenticationRepositoryImpl @Inject constructor(
         val session = retrieveSession() ?: throw AuthorizationException()
         authenticationService.revokeToken(session.refreshToken, AuthenticationService.REVOKE_ACTION)
         saveSession(null)
+        urlRepository.saveUrl("", true)
+        urlRepository.saveUrl("", false)
+        urlRepository.saveHomeWifiSsid(null)
     }
 
     override suspend fun getSessionState(): SessionState {
