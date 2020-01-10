@@ -46,6 +46,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     @Inject
     lateinit var presenter: WebViewPresenter
     private lateinit var webView: WebView
+    private lateinit var loadedUrl: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,7 +75,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     failingUrl: String?
                 ) {
                     Log.e(TAG, "onReceivedHttpError: errorCode: $errorCode url:$failingUrl")
-                    showError()
+                    if (failingUrl == loadedUrl) {
+                        showError()
+                    }
                 }
 
                 override fun onReceivedHttpError(
@@ -83,7 +86,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     errorResponse: WebResourceResponse?
                 ) {
                     Log.e(TAG, "onReceivedHttpError: $errorResponse")
-                    showError()
+                    if (request?.url.toString() == loadedUrl) {
+                        showError()
+                    }
                 }
 
                 override fun onReceivedSslError(
@@ -226,6 +231,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     override fun loadUrl(url: String) {
+        loadedUrl = url
         webView.loadUrl(url)
     }
 
