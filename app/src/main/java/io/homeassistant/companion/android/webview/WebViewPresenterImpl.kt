@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.webview
 import android.net.Uri
 import android.util.Log
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
+import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +45,7 @@ class WebViewPresenterImpl @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
                 view.setExternalAuth("$callback(false)")
-                view.showError()
+                view.showError(authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
             }
         }
     }
