@@ -63,6 +63,13 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun clearKnownUrls() {
+        mainScope.launch {
+            urlUseCase.saveUrl("", true)
+            urlUseCase.saveUrl("", false)
+        }
+    }
+
     override fun onFinish() {
         mainScope.cancel()
     }
