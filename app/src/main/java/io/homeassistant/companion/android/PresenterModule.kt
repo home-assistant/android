@@ -9,6 +9,9 @@ import io.homeassistant.companion.android.launch.LaunchView
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationPresenter
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationPresenterImpl
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationView
+import io.homeassistant.companion.android.onboarding.discovery.DiscoveryPresenter
+import io.homeassistant.companion.android.onboarding.discovery.DiscoveryPresenterImpl
+import io.homeassistant.companion.android.onboarding.discovery.DiscoveryView
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenter
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenterImpl
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationView
@@ -26,6 +29,7 @@ import io.homeassistant.companion.android.webview.WebViewPresenterImpl
 class PresenterModule {
 
     private lateinit var launchView: LaunchView
+    private lateinit var discoveryView: DiscoveryView
     private lateinit var authenticationView: AuthenticationView
     private lateinit var manualSetupView: ManualSetupView
     private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
@@ -34,6 +38,10 @@ class PresenterModule {
 
     constructor(launchView: LaunchView) {
         this.launchView = launchView
+    }
+
+    constructor(discoveryView: DiscoveryView) {
+        this.discoveryView = discoveryView
     }
 
     constructor(authenticationView: AuthenticationView) {
@@ -60,6 +68,9 @@ class PresenterModule {
     fun provideLaunchView() = launchView
 
     @Provides
+    fun providesDiscoveryView() = discoveryView
+
+    @Provides
     fun provideAuthenticationView() = authenticationView
 
     @Provides
@@ -79,6 +90,9 @@ class PresenterModule {
 
         @Binds
         fun bindLaunchPresenter(presenter: LaunchPresenterImpl): LaunchPresenter
+
+        @Binds
+        fun bindDiscoveryPresenter(presenter: DiscoveryPresenterImpl): DiscoveryPresenter
 
         @Binds
         fun bindAuthenticationPresenterImpl(presenter: AuthenticationPresenterImpl): AuthenticationPresenter
