@@ -110,14 +110,22 @@ class AuthenticationRepositoryImpl @Inject constructor(
                 session.refreshToken,
                 AuthenticationService.CLIENT_ID
             ).let {
-                val refreshSession = Session(
-                    it.accessToken,
-                    Instant.now().epochSecond + it.expiresIn,
-                    session.refreshToken,
-                    it.tokenType
-                )
-                saveSession(refreshSession)
-                refreshSession
+                if (it.isSuccessful) {
+                    val refreshedToken = it.body() ?: throw AuthorizationException()
+                    val refreshSession = Session(
+                        refreshedToken.accessToken,
+                        Instant.now().epochSecond + refreshedToken.expiresIn,
+                        session.refreshToken,
+                        refreshedToken.tokenType
+                    )
+                    saveSession(refreshSession)
+                    return@let refreshSession
+                } else if (it.code() == 400 &&
+                    it.errorBody()?.string()?.contains("invalid_grant") == true
+                ) {
+                    revokeSession()
+                }
+                throw AuthorizationException()
             }
         }
 
