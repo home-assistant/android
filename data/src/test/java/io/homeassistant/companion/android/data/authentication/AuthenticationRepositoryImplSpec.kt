@@ -193,10 +193,13 @@ object AuthenticationRepositoryImplSpec : Spek({
                         "https://home-assistant.io/android"
                     )
                 } returns mockk {
-                    every { accessToken } returns "HGFEDCBA"
-                    every { expiresIn } returns 1800
-                    every { refreshToken } returns null
-                    every { tokenType } returns "Bearer"
+                    every { isSuccessful } returns true
+                    every { body() } returns mockk {
+                        every { accessToken } returns "HGFEDCBA"
+                        every { expiresIn } returns 1800
+                        every { refreshToken } returns null
+                        every { tokenType } returns "Bearer"
+                    }
                 }
             }
 

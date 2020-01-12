@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.data.authentication
 
+import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.POST
@@ -27,7 +28,7 @@ interface AuthenticationService {
         @Field("grant_type") grandType: String,
         @Field("refresh_token") refreshToken: String,
         @Field("client_id") clientId: String
-    ): Token
+    ): Response<Token>
 
     @FormUrlEncoded
     @POST("auth/token")

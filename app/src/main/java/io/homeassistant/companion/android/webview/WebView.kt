@@ -8,5 +8,5 @@ interface WebView {
 
     fun openOnBoarding()
 
-    fun showError()
+    fun showError(isAuthenticationError: Boolean = false)
 }

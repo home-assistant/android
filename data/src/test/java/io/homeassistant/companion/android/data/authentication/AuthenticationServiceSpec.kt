@@ -54,7 +54,7 @@ object AuthenticationServiceSpec : Spek({
                         AuthenticationService.GRANT_TYPE_REFRESH,
                         "IJKLMNOPQRST",
                         AuthenticationService.CLIENT_ID
-                    )
+                    ).body()!!
                 }
                 request = mockService.takeRequest()
             }
@@ -73,6 +73,35 @@ object AuthenticationServiceSpec : Spek({
                 assertThat(token.expiresIn).isEqualTo(1800)
                 assertThat(token.refreshToken).isNull()
                 assertThat(token.tokenType).isEqualTo("Bearer")
+            }
+        }
+
+        describe("refresh token on failure") {
+            lateinit var errorBody: String
+            lateinit var request: RecordedRequest
+            beforeEachTest {
+                mockService.enqueueResponse(400, "authentication/refresh_token_error.json")
+                errorBody = runBlocking {
+                    mockService.get().refreshToken(
+                        AuthenticationService.GRANT_TYPE_REFRESH,
+                        "IJKLMNOPQRST",
+                        AuthenticationService.CLIENT_ID
+                    ).errorBody()?.string()!!
+                }
+                request = mockService.takeRequest()
+            }
+
+            it("should create a query") {
+                assertThat(request.method).isEqualTo("POST")
+                assertThat(request.path).isEqualTo("/auth/token")
+                assertThat(request.body.readUtf8())
+                    .contains("grant_type=refresh_token")
+                    .contains("refresh_token=IJKLMNOPQRST")
+                    .contains("client_id=https%3A%2F%2Fhome-assistant.io%2Fandroid")
+            }
+
+            it("should contain error") {
+                assertThat(errorBody).contains("\"error\": \"invalid_grant\"")
             }
         }
 

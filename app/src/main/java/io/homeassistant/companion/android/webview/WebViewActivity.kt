@@ -50,6 +50,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private lateinit var loadedUrl: String
 
     private var isConnected = false
+    private var isShowingError = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -142,7 +143,11 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         request?.resources?.forEach {
                             if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
-                                if (PermissionManager.hasPermission(context, android.Manifest.permission.CAMERA)) {
+                                if (PermissionManager.hasPermission(
+                                        context,
+                                        android.Manifest.permission.CAMERA
+                                    )
+                                ) {
                                     request.grant(arrayOf(it))
                                 } else {
                                     requestPermissions(
@@ -151,7 +156,11 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     )
                                 }
                             } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
-                                if (PermissionManager.hasPermission(context, android.Manifest.permission.RECORD_AUDIO)) {
+                                if (PermissionManager.hasPermission(
+                                        context,
+                                        android.Manifest.permission.RECORD_AUDIO
+                                    )
+                                ) {
                                     request.grant(arrayOf(it))
                                 } else {
                                     requestPermissions(
@@ -259,13 +268,23 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onDestroy()
     }
 
-    override fun showError() {
+    override fun showError(isAuthenticationError: Boolean) {
+        if (isShowingError)
+            return
+        isShowingError = true
+
         AlertDialog.Builder(this)
             .setTitle(R.string.error_connection_failed)
-            .setMessage(R.string.webview_error)
+            .setMessage(if (isAuthenticationError) R.string.error_auth_revoked else R.string.webview_error)
             .setPositiveButton(R.string.ok) { _, _ ->
-                startActivity(SettingsActivity.newInstance(this))
+                if (isAuthenticationError) {
+                    presenter.clearKnownUrls()
+                    openOnBoarding()
+                } else {
+                    startActivity(SettingsActivity.newInstance(this))
+                }
             }
+            .setOnDismissListener { isShowingError = false }
             .show()
     }
 
