@@ -7,24 +7,23 @@ import java.net.URL
 import okio.internal.commonToUtf8String
 
 class HomeAssistantSearcher constructor(
-    private val nsdManager: NsdManager
+    private val nsdManager: NsdManager,
+    private val added: (instance: HomeAssistantInstance) -> Unit
 ) : NsdManager.DiscoveryListener {
 
     companion object {
-        private const val SERVICE_TYPE = "_home-assistant._tcp."
+        private const val SERVICE_TYPE = "_home-assistant._tcp"
 
         private const val TAG = "HomeAssistantSearcher"
     }
 
     private var isSearching = false
 
-    val foundInstances = arrayListOf<HomeAssistantInstance>()
-
     fun beginSearch() {
         if (isSearching)
             return
         isSearching = true
-        nsdManager.discoverServices("_home-assistant._tcp", NsdManager.PROTOCOL_DNS_SD, this)
+        nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this)
     }
 
     fun stopSearch() {
@@ -39,25 +38,24 @@ class HomeAssistantSearcher constructor(
         Log.d(TAG, "Service discovery started")
     }
 
-    override fun onServiceFound(service: NsdServiceInfo) {
+    override fun onServiceFound(foundService: NsdServiceInfo) {
         // A service was found! Do something with it.
-        Log.d(TAG, "Service discovery success: $service")
+        Log.d(TAG, "Service discovery success: $foundService")
 
-        if (service.serviceType == SERVICE_TYPE) {
-            Log.i(TAG, "Service discovery found HA: $service")
-//            Thread.sleep(50)
-            nsdManager.resolveService(service, object : NsdManager.ResolveListener {
-                override fun onResolveFailed(serviceInfo: NsdServiceInfo?, errorCode: Int) {
-                    Log.w(TAG, "Failed to resolve service: $service, error: $errorCode")
+        if (foundService.serviceType.startsWith(SERVICE_TYPE)) {
+            Log.i(TAG, "Service discovery found HA: $foundService")
+            nsdManager.resolveService(foundService, object : NsdManager.ResolveListener {
+                override fun onResolveFailed(failedService: NsdServiceInfo?, errorCode: Int) {
+                    Log.w(TAG, "Failed to resolve service: $failedService, error: $errorCode")
                 }
 
-                override fun onServiceResolved(serviceInfo: NsdServiceInfo?) {
-                    Log.i(TAG, "Service resolved: $serviceInfo")
-                    serviceInfo?.let {
-                        foundInstances.add(HomeAssistantInstance(
-                            serviceInfo.serviceName,
-                            URL(serviceInfo.attributes["base_url"]!!.commonToUtf8String()),
-                            serviceInfo.attributes["version"]!!.commonToUtf8String()))
+                override fun onServiceResolved(resolvedService: NsdServiceInfo?) {
+                    Log.i(TAG, "Service resolved: $resolvedService")
+                    resolvedService?.let {
+                        added(HomeAssistantInstance(
+                            it.serviceName,
+                            URL(it.attributes["base_url"]!!.commonToUtf8String()),
+                            it.attributes["version"]!!.commonToUtf8String()))
                     }
                 }
             })
