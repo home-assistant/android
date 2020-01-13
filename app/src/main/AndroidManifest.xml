@@ -35,6 +35,8 @@
         <receiver android:name=".widgets.ButtonWidget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE" />
+                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data

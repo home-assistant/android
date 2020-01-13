@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.RemoteViews
 import io.homeassistant.companion.android.R
 import kotlinx.android.synthetic.main.widget_button_configure.*
 
@@ -15,36 +14,30 @@ class ButtonWidgetConfigureActivity : Activity() {
     private var onClickListener = View.OnClickListener {
         val context = this@ButtonWidgetConfigureActivity
 
-        // When the button is clicked, store the service call data locally
-        saveServiceCallData(
-            context, appWidgetId,
-            context.widget_text_config_domain.text.toString(),
-            context.widget_text_config_service.text.toString(),
+        // Set up a broadcast intent and pass the service call data as extras
+        val intent = Intent()
+        intent.action = ButtonWidget.RECEIVE_DATA
+        intent.putExtra(
+            ButtonWidget.EXTRA_DOMAIN,
+            context.widget_text_config_domain.text.toString()
+        )
+        intent.putExtra(
+            ButtonWidget.EXTRA_SERVICE,
+            context.widget_text_config_service.text.toString()
+        )
+        intent.putExtra(
+            ButtonWidget.EXTRA_SERVICE_DATA,
             context.widget_text_config_service_data.text.toString()
         )
-
-        // Save the label text and set the TextView of the widget
-        val labelText: String = context.widget_text_config_label.text.toString()
-        saveStringPref(context, appWidgetId, PREF_KEY_LABEL, labelText)
-
-        val views = RemoteViews(context.packageName, R.layout.widget_button)
-        views.setTextViewText(R.id.widgetLabel, labelText)
-
-        // It is the responsibility of the configuration activity to update the app widget
-        AppWidgetManager.getInstance(context)
-            .updateAppWidget(appWidgetId, views)
+        intent.putExtra(
+            ButtonWidget.EXTRA_LABEL,
+            context.widget_text_config_label.text.toString()
+        )
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        context.sendBroadcast(intent)
 
         // Make sure we pass back the original appWidgetId
         setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
-
-        // An issue I encountered: rather than the RESULT_OK calling ACTION_APPWIDGET_UPDATE,
-        // the update is being called at creation of the activity and not at the end.
-        // I am adding here an update broadcast specifically to get the widget to update post-config
-        val intent = Intent()
-        intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(appWidgetId))
-        context.sendBroadcast(intent)
-
         finish()
     }
 
