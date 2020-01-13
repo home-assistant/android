@@ -21,4 +21,10 @@
     <string name="pref_location_background_title">Fona atrašanās vietas noteikšana</string>
     <string name="pref_location_background_summary">Periodiska atrašanās vietas atjaunošana fonā</string>
     <string name="application_version">Aplikācijas versija</string>
+    <string name="location">Atrašanās vieta</string>
+    <string name="app_version_info">Informācija par lietotnes versiju</string>
+    <string name="device_registration">Ierīces reģistrācija</string>
+    <string name="device_name">Ierīces nosaukums</string>
+    <string name="ok">Ok</string>
+    <string name="error_onboarding_connection_failed">Nevarēja pieslēgties Jūsu Home Assistant serveri</string>
 </resources>
