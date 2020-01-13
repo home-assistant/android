@@ -21,4 +21,17 @@
     <string name="pref_location_background_title">Śledzenie lokalizacji w tle</string>
     <string name="pref_location_background_summary">Okresowo aktualizuj lokalizację w tle.</string>
     <string name="application_version">Wersja aplikacji</string>
+    <string name="location">Lokalizacja</string>
+    <string name="app_version_info">Informacje o wersji aplikacji</string>
+    <string name="device_registration">Rejestracja urządzenia</string>
+    <string name="device_name">Nazwa urządzenia</string>
+    <string name="ok">Ok</string>
+    <string name="error_onboarding_connection_failed">Nie można połączyć się z Home Assistant\'em.</string>
+    <string name="error_connection_failed">Nie można połączyć się z Home Assistant\'em.</string>
+    <string name="webview_error">Wystąpił błąd podczas ładowania Home Assistant\'a, sprawdź ustawienia połączenia i spróbuj ponownie.</string>
+    <string name="pref_connection_title">Informacje o połączeniu</string>
+    <string name="pref_connection_url">Adres URL Home Assistant\'a</string>
+    <string name="pref_connection_wifi">SSID domowej sieci Wi-Fi</string>
+    <string name="pref_connection_internal">Lokalny adres URL połączenia</string>
+    <string name="url_invalid">Nieprawidłowy adres URL</string>
 </resources>
