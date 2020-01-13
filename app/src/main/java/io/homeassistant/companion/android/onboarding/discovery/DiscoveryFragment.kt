@@ -66,7 +66,7 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
                 getItem(position)?.let {
                     v.findViewById<AppCompatTextView>(R.id.name).text = it.name
                     v.findViewById<AppCompatTextView>(R.id.url).text = it.url.toString()
-                    v.findViewById<AppCompatTextView>(R.id.version).text = it.version
+//                    v.findViewById<AppCompatTextView>(R.id.version).text = it.version
                 }
 
                 return v
@@ -106,7 +106,11 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
     }
 
     override fun onInstanceFound(instance: HomeAssistantInstance) {
-        if(!instances.contains(instance)) {
+        if (!instances.contains(instance)) {
+            instances.add(instance)
+            instances.add(instance)
+            instances.add(instance)
+            instances.add(instance)
             instances.add(instance)
             activity?.runOnUiThread {
                 listViewAdapter.notifyDataSetChanged()

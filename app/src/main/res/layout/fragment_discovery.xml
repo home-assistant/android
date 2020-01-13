@@ -10,6 +10,7 @@
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/title"
         style="@style/TextAppearance.HomeAssistant.Title"
+        android:layout_marginTop="30pt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"

@@ -8,20 +8,11 @@
     android:padding="10dp">
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/name"
-        style="@style/TextAppearance.HomeAssistant.Medium"
+        style="@style/TextAppearance.HomeAssistant.Headline"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:text="Home"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"/>
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/version"
-        style="@style/TextAppearance.HomeAssistant.Medium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        tools:text="0.104.1"
-        android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"/>
 
     <androidx.appcompat.widget.AppCompatTextView
@@ -32,5 +23,12 @@
         tools:text="http://demo.home-assistant.io/"
         android:layout_alignParentLeft="true"
         android:layout_below="@+id/name"/>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/navigate_next"
+        android:layout_centerInParent="true"
+        android:layout_alignParentRight="true" />
 
 </RelativeLayout>
