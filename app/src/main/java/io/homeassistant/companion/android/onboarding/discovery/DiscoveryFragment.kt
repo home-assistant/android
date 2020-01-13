@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
+import android.widget.Toast
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.Fragment
@@ -53,7 +54,7 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
 
         homeAssistantSearcher = HomeAssistantSearcher(
             getSystemService(context!!, NsdManager::class.java)!!,
-            this::instanceFound
+            this
         )
 
         listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(context!!, R.layout.instance_item, instances) {
@@ -104,10 +105,16 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
         (activity as DiscoveryListener).onHomeAssistantDiscover()
     }
 
-    private fun instanceFound(instance: HomeAssistantInstance) {
-        instances.add(instance)
-        activity?.runOnUiThread {
-            listViewAdapter.notifyDataSetChanged()
+    override fun onInstanceFound(instance: HomeAssistantInstance) {
+        if(!instances.contains(instance)) {
+            instances.add(instance)
+            activity?.runOnUiThread {
+                listViewAdapter.notifyDataSetChanged()
+            }
         }
+    }
+
+    override fun onScanError() {
+        Toast.makeText(context, R.string.failed_scan, Toast.LENGTH_LONG).show()
     }
 }

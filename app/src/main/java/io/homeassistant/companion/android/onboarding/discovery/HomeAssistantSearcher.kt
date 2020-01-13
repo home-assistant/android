@@ -8,7 +8,7 @@ import okio.internal.commonToUtf8String
 
 class HomeAssistantSearcher constructor(
     private val nsdManager: NsdManager,
-    private val added: (instance: HomeAssistantInstance) -> Unit
+    private val discoveryView: DiscoveryView
 ) : NsdManager.DiscoveryListener {
 
     companion object {
@@ -46,13 +46,14 @@ class HomeAssistantSearcher constructor(
             Log.i(TAG, "Service discovery found HA: $foundService")
             nsdManager.resolveService(foundService, object : NsdManager.ResolveListener {
                 override fun onResolveFailed(failedService: NsdServiceInfo?, errorCode: Int) {
+                    discoveryView.onScanError()
                     Log.w(TAG, "Failed to resolve service: $failedService, error: $errorCode")
                 }
 
                 override fun onServiceResolved(resolvedService: NsdServiceInfo?) {
                     Log.i(TAG, "Service resolved: $resolvedService")
                     resolvedService?.let {
-                        added(HomeAssistantInstance(
+                        discoveryView.onInstanceFound(HomeAssistantInstance(
                             it.serviceName,
                             URL(it.attributes["base_url"]!!.commonToUtf8String()),
                             it.attributes["version"]!!.commonToUtf8String()))
@@ -74,6 +75,7 @@ class HomeAssistantSearcher constructor(
 
     override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
         Log.e(TAG, "Discovery failed: Error code:$errorCode")
+        discoveryView.onScanError()
         stopSearch()
     }
 
