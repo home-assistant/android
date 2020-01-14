@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets
 
 import android.app.Activity
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -17,6 +18,7 @@ class ButtonWidgetConfigureActivity : Activity() {
         // Set up a broadcast intent and pass the service call data as extras
         val intent = Intent()
         intent.action = ButtonWidget.RECEIVE_DATA
+        intent.component = ComponentName(context, ButtonWidget::class.java)
         intent.putExtra(
             ButtonWidget.EXTRA_DOMAIN,
             context.widget_text_config_domain.text.toString()
