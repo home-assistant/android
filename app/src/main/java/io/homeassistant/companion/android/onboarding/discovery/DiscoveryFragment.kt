@@ -115,5 +115,8 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
 
     override fun onScanError() {
         Toast.makeText(context, R.string.failed_scan, Toast.LENGTH_LONG).show()
+        if (instances.isEmpty()) {
+            (activity as DiscoveryListener).onSelectManualSetup()
+        }
     }
 }

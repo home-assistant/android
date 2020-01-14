@@ -39,28 +39,23 @@ class HomeAssistantSearcher constructor(
     }
 
     override fun onServiceFound(foundService: NsdServiceInfo) {
-        // A service was found! Do something with it.
-        Log.d(TAG, "Service discovery success: $foundService")
+        Log.i(TAG, "Service discovery found HA: $foundService")
+        nsdManager.resolveService(foundService, object : NsdManager.ResolveListener {
+            override fun onResolveFailed(failedService: NsdServiceInfo?, errorCode: Int) {
+                discoveryView.onScanError()
+                Log.w(TAG, "Failed to resolve service: $failedService, error: $errorCode")
+            }
 
-        if (foundService.serviceType.startsWith(SERVICE_TYPE)) {
-            Log.i(TAG, "Service discovery found HA: $foundService")
-            nsdManager.resolveService(foundService, object : NsdManager.ResolveListener {
-                override fun onResolveFailed(failedService: NsdServiceInfo?, errorCode: Int) {
-                    discoveryView.onScanError()
-                    Log.w(TAG, "Failed to resolve service: $failedService, error: $errorCode")
+            override fun onServiceResolved(resolvedService: NsdServiceInfo?) {
+                Log.i(TAG, "Service resolved: $resolvedService")
+                resolvedService?.let {
+                    discoveryView.onInstanceFound(HomeAssistantInstance(
+                        it.serviceName,
+                        URL(it.attributes["base_url"]!!.commonToUtf8String()),
+                        it.attributes["version"]!!.commonToUtf8String()))
                 }
-
-                override fun onServiceResolved(resolvedService: NsdServiceInfo?) {
-                    Log.i(TAG, "Service resolved: $resolvedService")
-                    resolvedService?.let {
-                        discoveryView.onInstanceFound(HomeAssistantInstance(
-                            it.serviceName,
-                            URL(it.attributes["base_url"]!!.commonToUtf8String()),
-                            it.attributes["version"]!!.commonToUtf8String()))
-                    }
-                }
-            })
-        }
+            }
+        })
     }
 
     override fun onServiceLost(service: NsdServiceInfo) {
