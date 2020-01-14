@@ -117,50 +117,54 @@ class ButtonWidget : AppWidgetProvider() {
         Log.d(TAG, "Calling widget service")
 
         mainScope.launch {
-            try {
-                // Load the service call data from Shared Preferences
-                val domain = widgetStorage.loadDomain(appWidgetId)
-                val service = widgetStorage.loadService(appWidgetId)
-                val serviceData = widgetStorage.loadServiceData(appWidgetId)
+            // Change color of background image for feedback
+            val views = RemoteViews(context.packageName, R.layout.widget_button)
+            val appWidgetManager = AppWidgetManager.getInstance(context)
 
-                Log.d(
-                    TAG, "Service Call Data loaded:" + System.lineSeparator() +
-                            "domain: " + domain + System.lineSeparator() +
-                            "service: " + service + System.lineSeparator() +
-                            "service_data: " + serviceData
-                )
+            // Set default feedback as negative
+            var feedback = R.drawable.ic_circle_red_24dp
 
-                if (domain == null || service == null || serviceData == null) {
-                    Log.w(TAG, "Service Call Data incomplete.  Aborting service call")
-                    return@launch
-                }
+            // Load the service call data from Shared Preferences
+            val domain = widgetStorage.loadDomain(appWidgetId)
+            val service = widgetStorage.loadService(appWidgetId)
+            val serviceData = widgetStorage.loadServiceData(appWidgetId)
 
+            Log.d(
+                TAG, "Service Call Data loaded:" + System.lineSeparator() +
+                        "domain: " + domain + System.lineSeparator() +
+                        "service: " + service + System.lineSeparator() +
+                        "service_data: " + serviceData
+            )
+
+            if (domain == null || service == null || serviceData == null) {
+                Log.w(TAG, "Service Call Data incomplete.  Aborting service call")
+            } else {
+                // If everything loaded correctly, package the service data and attempt the call
                 val serviceDataMap = HashMap<String, String>()
                 serviceDataMap["entity_id"] = serviceData
 
-                integrationUseCase.callService(domain, service, serviceDataMap)
+                try {
+                    integrationUseCase.callService(domain, service, serviceDataMap)
 
-                // Change color of background image to show succsseful call
-                val views = RemoteViews(context.packageName, R.layout.widget_button)
-                val appWidgetManager = AppWidgetManager.getInstance(context)
+                    // If service call does not throw an exception, send positive feedback
+                    feedback = R.drawable.ic_circle_yellow_24dp
+                } catch (e: Exception) {
+                    Log.e(TAG, "Could not send service call.", e)
+                }
+            }
 
+            // Update widget with feedback color
+            views.setImageViewResource(R.id.widgetImageButtonBackground, feedback)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+
+            // Set a timer to change it back after 1 second
+            Handler().postDelayed({
                 views.setImageViewResource(
                     R.id.widgetImageButtonBackground,
-                    R.drawable.ic_circle_yellow_24dp
+                    R.drawable.ic_circle_white_24dp
                 )
                 appWidgetManager.updateAppWidget(appWidgetId, views)
-
-                // Set a timer to change it back after 1 second
-                Handler().postDelayed({
-                    views.setImageViewResource(
-                        R.id.widgetImageButtonBackground,
-                        R.drawable.ic_circle_white_24dp
-                    )
-                    appWidgetManager.updateAppWidget(appWidgetId, views)
-                }, 1000)
-            } catch (e: Exception) {
-                Log.e(TAG, "Could not send service call.", e)
-            }
+            }, 1000)
         }
     }
 
