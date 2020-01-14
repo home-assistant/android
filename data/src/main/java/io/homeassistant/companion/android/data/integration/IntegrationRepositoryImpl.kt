@@ -134,16 +134,19 @@ class IntegrationRepositoryImpl @Inject constructor(
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
-                    integrationService.callService(it.toHttpUrlOrNull()!!, IntegrationRequest("call_service", serviceCallRequest)).isSuccessful
+                    integrationService.callService(
+                        it.toHttpUrlOrNull()!!,
+                        IntegrationRequest("call_service", serviceCallRequest)
+                    ).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
             // if we had a successful call we can return
-                if (wasSuccess)
-                    return
-            }
+            if (wasSuccess)
+                return
+        }
 
-            throw IntegrationException()
+        throw IntegrationException()
     }
 
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
