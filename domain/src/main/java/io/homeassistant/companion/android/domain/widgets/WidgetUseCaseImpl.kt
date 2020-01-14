@@ -6,58 +6,41 @@ class WidgetUseCaseImpl @Inject constructor(
     private val widgetRepository: WidgetRepository
 ) : WidgetUseCase {
 
-    companion object {
-        internal const val PREF_PREFIX_KEY = "widget_"
-        internal const val PREF_KEY_DOMAIN = "domain"
-        internal const val PREF_KEY_SERVICE = "service"
-        internal const val PREF_KEY_SERVICE_DATA = "serviceData"
-        internal const val PREF_KEY_LABEL = "label"
-    }
-
     override suspend fun saveServiceCallData(
         appWidgetId: Int,
         domainStr: String,
         serviceStr: String,
         serviceDataStr: String
     ) {
-        widgetRepository.saveStringPref(
-            PREF_PREFIX_KEY + PREF_KEY_DOMAIN + appWidgetId,
-            domainStr
-        )
-        widgetRepository.saveStringPref(
-            PREF_PREFIX_KEY + PREF_KEY_SERVICE + appWidgetId,
-            serviceStr
-        )
-        widgetRepository.saveStringPref(
-            PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId,
+        widgetRepository.saveServiceCallData(
+            appWidgetId,
+            domainStr,
+            serviceStr,
             serviceDataStr
         )
     }
 
     override suspend fun loadDomain(appWidgetId: Int): String? {
-        return widgetRepository.loadStringPref(PREF_PREFIX_KEY + PREF_KEY_DOMAIN + appWidgetId)
+        return widgetRepository.loadDomain(appWidgetId)
     }
 
     override suspend fun loadService(appWidgetId: Int): String? {
-        return widgetRepository.loadStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE + appWidgetId)
+        return widgetRepository.loadService(appWidgetId)
     }
 
     override suspend fun loadServiceData(appWidgetId: Int): String? {
-        return widgetRepository.loadStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId)
+        return widgetRepository.loadServiceData(appWidgetId)
     }
 
     override suspend fun loadLabel(appWidgetId: Int): String? {
-        return widgetRepository.loadStringPref(PREF_PREFIX_KEY + PREF_KEY_LABEL + appWidgetId)
+        return widgetRepository.loadLabel(appWidgetId)
     }
 
     override suspend fun saveLabel(appWidgetId: Int, data: String?) {
-        widgetRepository.saveStringPref(PREF_PREFIX_KEY + PREF_KEY_LABEL + appWidgetId, data)
+        widgetRepository.saveLabel(appWidgetId, data)
     }
 
     override suspend fun deleteWidgetData(appWidgetId: Int) {
-        widgetRepository.saveStringPref(PREF_PREFIX_KEY + PREF_KEY_DOMAIN + appWidgetId, null)
-        widgetRepository.saveStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE + appWidgetId, null)
-        widgetRepository.saveStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId, null)
-        widgetRepository.saveStringPref(PREF_PREFIX_KEY + PREF_KEY_LABEL + appWidgetId, null)
+        widgetRepository.deleteWidgetData(appWidgetId)
     }
 }
