@@ -48,26 +48,7 @@ class ButtonWidget : AppWidgetProvider() {
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
             mainScope.launch {
-                val intent = Intent(context, ButtonWidget::class.java).apply {
-                    action = CALL_SERVICE
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                }
-
-                val views = RemoteViews(context.packageName, R.layout.widget_button).apply {
-                    setOnClickPendingIntent(
-                        R.id.widgetImageButton,
-                        PendingIntent.getBroadcast(
-                            context,
-                            appWidgetId,
-                            intent,
-                            PendingIntent.FLAG_UPDATE_CURRENT
-                        )
-                    )
-                    setTextViewText(
-                        R.id.widgetLabel,
-                        widgetStorage.loadLabel(appWidgetId)
-                    )
-                }
+                val views = getWidgetRemoteViews(context, appWidgetId)
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }
         }
@@ -109,12 +90,42 @@ class ButtonWidget : AppWidgetProvider() {
         }
     }
 
+    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+        // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
+        // and label need to be re-assigned, or the next time the layout updates
+        // (e.g home screen rotation) the widget will fall back on its default layout
+        // without any click listener being applied
+
+        val intent = Intent(context, ButtonWidget::class.java).apply {
+            action = CALL_SERVICE
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+
+        val views = RemoteViews(context.packageName, R.layout.widget_button).apply {
+            setOnClickPendingIntent(
+                R.id.widgetImageButton,
+                PendingIntent.getBroadcast(
+                    context,
+                    appWidgetId,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            )
+            setTextViewText(
+                R.id.widgetLabel,
+                widgetStorage.loadLabel(appWidgetId)
+            )
+        }
+
+        return views
+    }
+
     private fun callConfiguredService(context: Context, appWidgetId: Int) {
         Log.d(TAG, "Calling widget service")
 
         mainScope.launch {
             // Change color of background image for feedback
-            val views = RemoteViews(context.packageName, R.layout.widget_button)
+            val views = getWidgetRemoteViews(context, appWidgetId)
             val appWidgetManager = AppWidgetManager.getInstance(context)
 
             // Set default feedback as negative
