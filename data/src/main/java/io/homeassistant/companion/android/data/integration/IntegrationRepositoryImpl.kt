@@ -159,6 +159,14 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun isBackgroundTrackingEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
     }
+    
+    override suspend fun setFullScreenEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
+    }
+
+    override suspend fun isFullScreenEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
+    }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
