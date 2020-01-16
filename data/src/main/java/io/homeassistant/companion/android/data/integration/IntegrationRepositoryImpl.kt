@@ -37,6 +37,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_ZONE_ENABLED = "zone_enabled"
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
+        private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
