@@ -167,7 +167,6 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
             } catch (e: Exception) {
-                e.printStackTrace()
                 // Ignore failure until we are out of URLS to try!
             }
 
