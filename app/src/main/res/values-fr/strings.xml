@@ -34,7 +34,4 @@
     <string name="pref_connection_internal">URL interne de connexion</string>
     <string name="url_invalid">Url invalide</string>
     <string name="error_auth_revoked">Votre autorisation ne semble plus valide, merci de vous reconnecter à Home Assistant.</string>
-    <string name="other_settings">Autres Paramètres</string>
-    <string name="fullscreen">Plein écran</string>
-    <string name="fullscreen_def">Mettre l\'application en plein écran</string>
 </resources>
