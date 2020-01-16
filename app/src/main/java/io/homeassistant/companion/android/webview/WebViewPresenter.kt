@@ -9,6 +9,8 @@ interface WebViewPresenter {
     fun onRevokeExternalAuth(callback: String)
 
     fun clearKnownUrls()
+    
+    fun isFS(key: String): Boolean
 
     fun onFinish()
 }
