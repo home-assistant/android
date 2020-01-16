@@ -37,21 +37,21 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun onGetExternalAuth(callback: String) {
-        mainScope.launch {
-            try {
-                view.setExternalAuth("$callback(true, ${authenticationUseCase.retrieveExternalAuthentication()})")
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to retrieve external auth", e)
-                view.setExternalAuth("$callback(false)")
-                view.showError(authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
-            }
-        }
+        //mainScope.launch {
+            //try {
+            //    view.setExternalAuth("$callback(true, ${authenticationUseCase.retrieveExternalAuthentication()})")
+            //} catch (e: Exception) {
+            //    Log.e(TAG, "Unable to retrieve external auth", e)
+            //    view.setExternalAuth("$callback(false)")
+                //view.showError(authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
+            //}
+        //}
     }
 
     override fun onRevokeExternalAuth(callback: String) {
         mainScope.launch {
             try {
-                authenticationUseCase.revokeSession()
+                //authenticationUseCase.revokeSession()
                 view.setExternalAuth("$callback(true)")
                 view.openOnBoarding()
             } catch (e: Exception) {
@@ -67,18 +67,17 @@ class WebViewPresenterImpl @Inject constructor(
             urlUseCase.saveUrl("", false)
         }
     }
+    
+    override fun isFS(key: String): Boolean {
+        return runBlocking {
+            return@runBlocking when (key) {
+                "fullscreen" -> integrationUseCase.isFullScreenEnabled()
+                else -> throw Exception()
+            }
+        }
+    }
 
     override fun onFinish() {
         mainScope.cancel()
-    }
-
-    override fun isFS(key: String): Boolean {
-        //return runBlocking {
-        //    return@runBlocking when (key) {
-        //        "fullscreen" -> integrationUseCase.isFullScreenEnabled()
-        //        else -> throw Exception()
-        //    }
-        //}
-        return false
-    }
+    }    
 }
