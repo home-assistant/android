@@ -31,7 +31,7 @@ object WebViewPresenterImplSpec : Spek({
     describe("presenter") {
         val urlUseCase by memoized { mockk<UrlUseCase>(relaxUnitFun = true) }
         val integrationUseCase by memoized { mockk<IntegrationUseCase>(relaxUnitFun = true) }
-        val authenticationUseCase by memoized { mockk<AuthenticationUseCase>(relaxUnitFun = true) }        
+        val authenticationUseCase by memoized { mockk<AuthenticationUseCase>(relaxUnitFun = true) }
         val view by memoized { mockk<WebView>(relaxUnitFun = true) }
         val presenter by memoized { WebViewPresenterImpl(view, urlUseCase, integrationUseCase, authenticationUseCase) }
 
