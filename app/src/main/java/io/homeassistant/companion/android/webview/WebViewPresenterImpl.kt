@@ -69,7 +69,7 @@ class WebViewPresenterImpl @Inject constructor(
             urlUseCase.saveUrl("", false)
         }
     }
-    
+
     override fun onFinish() {
         mainScope.cancel()
     }
