@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="app_name">Home Assistant</string>
+    <string name="scanning_network">Recherche de Home Assistant</string>
+    <string name="home_assistant_not_discover">Impossible de trouver Home Assistant</string>
+    <string name="connect_to_home_internet">Assurez-vous que votre appareil android est connecté à Internet.</string>
+    <string name="scan_again">Relancer la recherche</string>
+    <string name="manual_setup">Saisir l\'URL manuellement</string>
+    <string name="input_url">URL de Home Assistant</string>
+    <string name="input_url_hint">https://example.duckdns.org:8123</string>
+    <string name="status_of_mobile_app_integration">Statut de l\'intégration de l\'application mobile</string>
+    <string name="checking_with_home_assistant">Vérification dans Home Assistant</string>
+    <string name="skip">Passer</string>
+    <string name="retry">Retenter</string>
+    <string name="ok">Ok</string>
+    <string name="attempting_registration">Enregistremenbt de l\' application…</string>
+    <string name="unable_to_register">Impossible d\'enregistrer l\'application</string>
+    <string name="error_with_registration">Véririfez que l\'intégration de l\'application mobile est bien activée dans Home Assistant.</string>
+    <string name="error_connection_failed">Impossible de se connecter à Home Assistant.</string>
+    <string name="url_parse_error">Impossible d\'analyser l\'URL de Home Assistant. Elle doit être du type https://example.com</string>
+    <string name="pref_location_zone_title">Suivi par zone</string>
+    <string name="pref_location_zone_summary">Importer des zones existantes dans Home Assistant en tant que géorepérage pour un suivi basé sur une zone.</string>
+    <string name="pref_location_background_title">Suivi de la localisation en tâche de fond</string>
+    <string name="pref_location_background_summary">Mettre à jour périodiquement votre localisation en tâche de fond.</string>
+    <string name="application_version">Version de l\'Application</string>
+    <string name="location">Localisation</string>
+    <string name="app_version_info">Information sur la version de l\'application</string>
+    <string name="device_registration">Enregistrement de l\'appareil</string>
+    <string name="device_name">Nom de l\'appareil</string>
+    <string name="webview_error">Une erreur a été rencontrée lors du chargement de Home Assistant, merci de vérifier le paramétrage de la connexion, puis essayer à nouveau.</string>
+    <string name="pref_connection_title">Informations sur la connexion</string>
+    <string name="pref_connection_url">URL de Home Assistant</string>
+    <string name="pref_connection_wifi">WiFi SSID du réseau local</string>
+    <string name="pref_connection_internal">URL interne de connexion</string>
+    <string name="url_invalid">Url invalide</string>
+    <string name="error_auth_revoked">Votre autorisation ne semble plus valide, merci de vous reconnecter à Home Assistant.</string>
+    <string name="other_settings">Autres Paramètres</string>
+    <string name="fullscreen">Plein écran</string>
+    <string name="fullscreen_def">Mettre l\'application en plein écran</string>
+</resources>
