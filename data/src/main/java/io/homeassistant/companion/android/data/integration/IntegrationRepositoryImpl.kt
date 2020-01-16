@@ -160,7 +160,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun isBackgroundTrackingEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
     }
-    
+
     override suspend fun setFullScreenEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
     }
