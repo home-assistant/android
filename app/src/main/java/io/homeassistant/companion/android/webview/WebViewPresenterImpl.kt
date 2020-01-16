@@ -4,6 +4,7 @@ import android.net.Uri
 import android.util.Log
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
