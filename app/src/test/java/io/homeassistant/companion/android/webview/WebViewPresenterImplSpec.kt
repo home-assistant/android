@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.webview
 
 import android.net.Uri
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.mockk.coEvery
 import io.mockk.every
