@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
     private val urlUseCase: UrlUseCase,
+    private val integrationUseCase: IntegrationUseCase,
     private val authenticationUseCase: AuthenticationUseCase
 ) : WebViewPresenter {
 
@@ -70,6 +71,15 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isFS(key: String): Boolean {
+        return runBlocking {
+            return@runBlocking when (key) {
+                "fullscreen" -> integrationUseCase.isFullScreenEnabled()
+                else -> throw Exception()
+            }
+        }
+    }
+    
     override fun onFinish() {
         mainScope.cancel()
     }
