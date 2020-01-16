@@ -4,7 +4,7 @@ import android.net.Uri
 import android.util.Log
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+// import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -12,7 +12,7 @@ import javax.inject.Inject
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
     private val urlUseCase: UrlUseCase,
-    //private val integrationUseCase: IntegrationUseCase,
+    private val intUseCase: io.homeassistant.companion.android.domain.integration.IntegrationUseCase,
     private val authenticationUseCase: AuthenticationUseCase
 ) : WebViewPresenter {
 
@@ -67,15 +67,14 @@ class WebViewPresenterImpl @Inject constructor(
             urlUseCase.saveUrl("", false)
         }
     }
-    
+
     override fun isFS(key: String): Boolean {
-        //return runBlocking {
-        //    return@runBlocking when (key) {
-        //        "fullscreen" -> integrationUseCase.isFullScreenEnabled()
-        //        else -> throw Exception()
-        //    }
-        //}
-        return false
+         return runBlocking {
+            return@runBlocking when (key) {
+                "fullscreen" -> intUseCase.isFullScreenEnabled()
+                else -> throw Exception()
+            }
+         }
     }
 
     override fun onFinish() {
