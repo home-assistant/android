@@ -245,6 +245,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 or android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
     }
     
+    private fun showSystemUI() {
+        window.decorView.systemUiVisibility = (android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
+    }
+    
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(LokaliseContextWrapper.wrap(newBase))
     }
