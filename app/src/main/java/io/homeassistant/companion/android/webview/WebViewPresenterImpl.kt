@@ -6,8 +6,8 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
-import javax.inject.Inject
 import kotlinx.coroutines.*
+import javax.inject.Inject
 
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
@@ -68,6 +68,10 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun onFinish() {
+        mainScope.cancel()
+    }
+
     override fun isFS(key: String): Boolean {
         return runBlocking {
             return@runBlocking when (key) {
@@ -75,9 +79,5 @@ class WebViewPresenterImpl @Inject constructor(
                 else -> throw Exception()
             }
         }
-    }
-    
-    override fun onFinish() {
-        mainScope.cancel()
     }
 }
