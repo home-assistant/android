@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
     private val urlUseCase: UrlUseCase,
-    private val integrationUseCase: IntegrationUseCase,
     private val authenticationUseCase: AuthenticationUseCase
 ) : WebViewPresenter {
 
