@@ -38,4 +38,7 @@ integration enabled on your home assistant instance.</string>
     <string name="pref_connection_internal">Internal Connection URL</string>
     <string name="url_invalid">Url Invalid</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
+    <string name="other_settings">Other Settings</string>
+    <string name="fullscreen">Fullscreen</string>
+    <string name="fullscreen_def">Put application in full screen</string>
 </resources>
