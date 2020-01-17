@@ -11,8 +11,6 @@ import io.homeassistant.companion.android.domain.url.UrlRepository
 import javax.inject.Inject
 import javax.inject.Named
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.ResponseBody
-import retrofit2.Response
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
