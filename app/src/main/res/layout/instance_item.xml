@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp">
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/name"
+        style="@style/TextAppearance.HomeAssistant.Headline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="Home"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/url"
+        style="@style/TextAppearance.HomeAssistant.Medium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="http://demo.home-assistant.io/"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/name"/>
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/navigate_next"
+        android:layout_centerInParent="true"
+        android:layout_alignParentRight="true" />
+
+</RelativeLayout>

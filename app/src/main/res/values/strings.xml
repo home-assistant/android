@@ -38,4 +38,6 @@ integration enabled on your home assistant instance.</string>
     <string name="pref_connection_internal">Internal Connection URL</string>
     <string name="url_invalid">Url Invalid</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
+    <string name="select_instance">Select the instance you would \nlike to connect to:</string>
+    <string name="failed_scan">Scanning for Home Assistant failed.</string>
 </resources>
