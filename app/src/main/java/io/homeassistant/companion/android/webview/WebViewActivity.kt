@@ -226,7 +226,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if(hasFocus){
+        if (hasFocus) {
             presenter.onViewReady()
         }
     }
