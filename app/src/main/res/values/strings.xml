@@ -44,9 +44,10 @@ integration enabled on your home assistant instance.</string>
     <string name="configure_service_call">Configure Service Call</string>
     <string name="configure_widget_label">Widget Label</string>
     <string name="add_widget">Add widget</string>
-    <string name="widget_text_hint_service_domain">domain</string>
-    <string name="widget_text_hint_service_service">service</string>
-    <string name="widget_text_hint_service_data">entity_id</string>
-    <string name="widget_text_hint_label">Light Switch</string>
+    <string name="widget_text_hint_service_domain">Domain</string>
+    <string name="widget_text_hint_service_service">Service</string>
+    <string name="widget_text_hint_service_data">Entity ID</string>
+    <string name="widget_text_hint_label">Label</string>
     <string name="widget_label_placeholder_text">Label</string>
+    <string name="widget_spinner_icon">Icon:</string>
 </resources>

@@ -6,6 +6,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Spinner
 import io.homeassistant.companion.android.R
 import kotlinx.android.synthetic.main.widget_button_configure.*
 
@@ -34,6 +35,10 @@ class ButtonWidgetConfigureActivity : Activity() {
         intent.putExtra(
             ButtonWidget.EXTRA_LABEL,
             context.widget_text_config_label.text.toString()
+        )
+        intent.putExtra(
+            ButtonWidget.EXTRA_ICON,
+            context.widget_config_spinner.selectedItemId.toInt()
         )
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         context.sendBroadcast(intent)
@@ -67,5 +72,16 @@ class ButtonWidgetConfigureActivity : Activity() {
             finish()
             return
         }
+
+        // Set up icon spinner
+        val icons = intArrayOf(
+            R.drawable.ic_flash_on_black_24dp,
+            R.drawable.ic_lightbulb_outline_black_24dp,
+            R.drawable.ic_home_black_24dp,
+            R.drawable.ic_power_settings_new_black_24dp
+        )
+
+        findViewById<Spinner>(R.id.widget_config_spinner).adapter =
+            ButtonWidgetConfigSpinnerAdaptor(this, icons)
     }
 }

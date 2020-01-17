@@ -32,8 +32,16 @@ class WidgetUseCaseImpl @Inject constructor(
         return widgetRepository.loadServiceData(appWidgetId)
     }
 
+    override suspend fun loadIcon(appWidgetId: Int): Int? {
+        return widgetRepository.loadIcon(appWidgetId)
+    }
+
     override suspend fun loadLabel(appWidgetId: Int): String? {
         return widgetRepository.loadLabel(appWidgetId)
+    }
+
+    override suspend fun saveIcon(appWidgetId: Int, data: Int) {
+        widgetRepository.saveIcon(appWidgetId, data)
     }
 
     override suspend fun saveLabel(appWidgetId: Int, data: String?) {

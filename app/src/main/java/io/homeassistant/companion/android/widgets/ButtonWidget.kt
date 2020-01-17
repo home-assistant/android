@@ -31,6 +31,7 @@ class ButtonWidget : AppWidgetProvider() {
         internal const val EXTRA_SERVICE = "EXTRA_SERVICE"
         internal const val EXTRA_SERVICE_DATA = "EXTRA_SERVICE_DATA"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
+        internal const val EXTRA_ICON = "EXTRA_ICON"
     }
 
     @Inject
@@ -102,6 +103,10 @@ class ButtonWidget : AppWidgetProvider() {
         }
 
         val views = RemoteViews(context.packageName, R.layout.widget_button).apply {
+            setImageViewResource(
+                R.id.widgetImageButton,
+                widgetStorage.loadIcon(appWidgetId) ?: R.drawable.ic_flash_on_black_24dp
+            )
             setOnClickPendingIntent(
                 R.id.widgetImageButton,
                 PendingIntent.getBroadcast(
@@ -182,6 +187,7 @@ class ButtonWidget : AppWidgetProvider() {
         val service: String? = extras.getString(EXTRA_SERVICE)
         val serviceData: String? = extras.getString(EXTRA_SERVICE_DATA)
         val label: String? = extras.getString(EXTRA_LABEL)
+        val icon: Int = extras.getInt(EXTRA_ICON)
 
         if (domain == null || service == null || serviceData == null) {
             Log.e(TAG, "Did not receive complete service call data")
@@ -199,6 +205,7 @@ class ButtonWidget : AppWidgetProvider() {
 
             widgetStorage.saveServiceCallData(appWidgetId, domain, service, serviceData)
             widgetStorage.saveLabel(appWidgetId, label)
+            widgetStorage.saveIcon(appWidgetId, icon)
 
             // It is the responsibility of the configuration activity to update the app widget
             // This method is only called during the initial setup of the widget,
