@@ -228,7 +228,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onResume() {
         super.onResume()
-            if (presenter.isFS())
+            if (presenter.isFullScreen())
                 hideSystemUI()
             else
                 showSystemUI()
