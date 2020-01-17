@@ -61,11 +61,16 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
         supportFragmentManager
             .beginTransaction()
             .replace(R.id.content, ManualSetupFragment.newInstance())
+            .addToBackStack(null)
             .commit()
     }
 
     override fun onHomeAssistantDiscover() {
-        throw NotImplementedError()
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, AuthenticationFragment.newInstance())
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun onSelectUrl() {
