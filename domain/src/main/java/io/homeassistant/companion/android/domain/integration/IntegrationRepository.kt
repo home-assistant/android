@@ -17,4 +17,6 @@ interface IntegrationRepository {
 
     suspend fun setBackgroundTrackingEnabled(enabled: Boolean)
     suspend fun isBackgroundTrackingEnabled(): Boolean
+
+    suspend fun getThemeColor(): String
 }

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.webview
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
@@ -255,6 +256,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 showError()
             }
         }, 5000)
+    }
+
+    override fun setStatusBarColor(color: Int) {
+        window.statusBarColor = color
     }
 
     override fun setExternalAuth(script: String) {

@@ -40,4 +40,10 @@ interface IntegrationService {
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
     ): Array<EntityResponse<ZoneAttributes>>
+
+    @POST
+    suspend fun getConfig(
+        @Url url: HttpUrl,
+        @Body request: IntegrationRequest
+    ): GetConfigResponse
 }

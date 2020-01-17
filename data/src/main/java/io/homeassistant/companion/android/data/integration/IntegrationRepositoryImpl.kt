@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.domain.url.UrlRepository
 import javax.inject.Inject
 import javax.inject.Named
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.ResponseBody
+import retrofit2.Response
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -158,6 +160,23 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isBackgroundTrackingEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
+    }
+
+    override suspend fun getThemeColor(): String {
+        val getConfigRequest = IntegrationRequest("get_config", null)
+        var response: GetConfigResponse? = null
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+
+            if (response != null)
+                return response.themeColor
+        }
+
+        throw IntegrationException()
     }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
