@@ -230,7 +230,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onWindowFocusChanged(hasFocus)
 
         if (hasFocus)
-            if (presenter.isFS("fullscreen"))
+            if (presenter.isFS())
                 hideSystemUI()
             else
                 showSystemUI()
