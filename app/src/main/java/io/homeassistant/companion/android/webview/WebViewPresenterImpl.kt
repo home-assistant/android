@@ -1,9 +1,11 @@
 package io.homeassistant.companion.android.webview
 
+import android.graphics.Color
 import android.net.Uri
 import android.util.Log
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +17,8 @@ import kotlinx.coroutines.launch
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
     private val urlUseCase: UrlUseCase,
-    private val authenticationUseCase: AuthenticationUseCase
+    private val authenticationUseCase: AuthenticationUseCase,
+    private val integrationUseCase: IntegrationUseCase
 ) : WebViewPresenter {
 
     companion object {
@@ -35,6 +38,8 @@ class WebViewPresenterImpl @Inject constructor(
                     .build()
                     .toString()
             )
+
+            view.setStatusBarColor(Color.parseColor(integrationUseCase.getThemeColor()))
         }
     }
 

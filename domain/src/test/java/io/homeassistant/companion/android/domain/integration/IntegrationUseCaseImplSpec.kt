@@ -131,5 +131,15 @@ object IntegrationUseCaseImplSpec : Spek({
                 coVerify { integrationRepository.isBackgroundTrackingEnabled() }
             }
         }
+
+        describe("getThemeColor") {
+            beforeEachTest {
+                runBlocking { useCase.getThemeColor() }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.getThemeColor() }
+            }
+        }
     }
 })

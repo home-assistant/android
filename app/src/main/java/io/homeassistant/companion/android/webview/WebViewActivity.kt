@@ -257,6 +257,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }, 5000)
     }
 
+    override fun setStatusBarColor(color: Int) {
+        window.statusBarColor = color
+    }
+
     override fun setExternalAuth(script: String) {
         webView.post {
             webView.evaluateJavascript(script, null)
