@@ -226,10 +226,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         presenter.onViewReady()
     }
 
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-
-        if (hasFocus)
+    override fun onResume() {
+        super.onResume()
             if (presenter.isFS())
                 hideSystemUI()
             else
