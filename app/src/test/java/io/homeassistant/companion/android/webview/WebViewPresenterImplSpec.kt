@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.webview
 
 import android.net.Uri
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.mockk.coEvery
 import io.mockk.every
@@ -18,7 +19,6 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object WebViewPresenterImplSpec : Spek({
-
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
     }
@@ -30,8 +30,9 @@ object WebViewPresenterImplSpec : Spek({
     describe("presenter") {
         val urlUseCase by memoized { mockk<UrlUseCase>(relaxUnitFun = true) }
         val authenticationUseCase by memoized { mockk<AuthenticationUseCase>(relaxUnitFun = true) }
+        val integrationUseCase by memoized { mockk<IntegrationUseCase>(relaxUnitFun = true) }
         val view by memoized { mockk<WebView>(relaxUnitFun = true) }
-        val presenter by memoized { WebViewPresenterImpl(view, urlUseCase, authenticationUseCase) }
+        val presenter by memoized { WebViewPresenterImpl(view, urlUseCase, authenticationUseCase, integrationUseCase) }
 
         describe("on view ready empty query ") {
             beforeEachTest {
