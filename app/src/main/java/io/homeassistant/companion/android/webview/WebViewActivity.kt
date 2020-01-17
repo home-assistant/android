@@ -223,7 +223,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 }
             }, "externalApp")
         }
-        
+
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
             if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0)
                 hideSystemUI()
