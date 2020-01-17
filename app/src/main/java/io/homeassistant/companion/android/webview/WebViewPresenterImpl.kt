@@ -73,12 +73,9 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun isFS(key: String): Boolean {
+    override fun isFS(): Boolean {
         return runBlocking {
-            return@runBlocking when (key) {
-                "fullscreen" -> integrationUseCase.isFullScreenEnabled()
-                else -> throw Exception()
-            }
+            integrationUseCase.isFullScreenEnabled()
         }
     }
 
