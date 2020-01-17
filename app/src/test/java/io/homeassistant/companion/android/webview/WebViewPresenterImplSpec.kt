@@ -19,7 +19,6 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object WebViewPresenterImplSpec : Spek({
-AuthenticationUseCase
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
     }
