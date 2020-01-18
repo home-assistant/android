@@ -222,8 +222,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 }
             }, "externalApp")
         }
+    }
 
-        presenter.onViewReady()
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if(hasFocus){
+            presenter.onViewReady()
+        }
     }
 
     override fun attachBaseContext(newBase: Context) {

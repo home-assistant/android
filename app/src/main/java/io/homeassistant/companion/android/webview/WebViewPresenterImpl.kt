@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.net.URL
 
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
@@ -27,17 +28,22 @@ class WebViewPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
+    private var url:URL? = null
+
     override fun onViewReady() {
         mainScope.launch {
-            val url = urlUseCase.getUrl()
+            val oldUrl = url
+            url = urlUseCase.getUrl()
 
-            view.loadUrl(
-                Uri.parse(url.toString())
-                    .buildUpon()
-                    .appendQueryParameter("external_auth", "1")
-                    .build()
-                    .toString()
-            )
+            if(oldUrl != url) {
+                view.loadUrl(
+                    Uri.parse(url.toString())
+                        .buildUpon()
+                        .appendQueryParameter("external_auth", "1")
+                        .build()
+                        .toString()
+                )
+            }
 
             try {
                 view.setStatusBarColor(Color.parseColor(integrationUseCase.getThemeColor()))
