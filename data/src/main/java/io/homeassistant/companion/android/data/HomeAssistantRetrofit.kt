@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.data
 
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -16,6 +17,7 @@ class HomeAssistantRetrofit @Inject constructor(url: String) {
         .addConverterFactory(
             JacksonConverterFactory.create(
                 ObjectMapper()
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                     .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
                     .registerKotlinModule()
             )
