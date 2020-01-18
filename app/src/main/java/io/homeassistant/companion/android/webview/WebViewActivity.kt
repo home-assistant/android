@@ -111,7 +111,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     request: WebResourceRequest?
                 ): Boolean {
                     request?.url?.let {
-                        if(!webView.url.toString().contains(it.toString())) {
+                        if (!webView.url.toString().contains(it.toString())) {
                             val browserIntent = Intent(Intent.ACTION_VIEW, it)
                             startActivity(browserIntent)
                             return true
