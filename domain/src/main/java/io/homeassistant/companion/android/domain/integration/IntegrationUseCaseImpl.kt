@@ -40,7 +40,7 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.updateLocation(updateLocation)
     }
 
-    override suspend fun callService(domain: String, service: String, serviceData: HashMap<String, String>) {
+    override suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>) {
         return integrationRepository.callService(domain, service, serviceData)
     }
 

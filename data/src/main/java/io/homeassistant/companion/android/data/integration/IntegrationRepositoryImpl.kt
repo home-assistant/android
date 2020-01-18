@@ -126,7 +126,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
-    override suspend fun callService(domain: String, service: String, serviceData: HashMap<String, String>) {
+    override suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>) {
         var wasSuccess = false
 
         val serviceCallRequest = ServiceCallRequest(domain, service, serviceData)

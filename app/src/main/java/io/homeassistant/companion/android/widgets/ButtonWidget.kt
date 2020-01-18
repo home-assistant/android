@@ -162,7 +162,7 @@ class ButtonWidget : AppWidgetProvider() {
                 Log.w(TAG, "Service Call Data incomplete.  Aborting service call")
             } else {
                 // If everything loaded correctly, package the service data and attempt the call
-                val serviceDataMap = HashMap<String, String>()
+                val serviceDataMap = HashMap<String, Any>()
                 serviceDataMap["entity_id"] = serviceData
 
                 try {

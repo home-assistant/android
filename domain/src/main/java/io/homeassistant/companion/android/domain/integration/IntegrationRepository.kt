@@ -20,5 +20,5 @@ interface IntegrationRepository {
 
     suspend fun getThemeColor(): String
 
-    suspend fun callService(domain: String, service: String, serviceData: HashMap<String, String>)
+    suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 }
