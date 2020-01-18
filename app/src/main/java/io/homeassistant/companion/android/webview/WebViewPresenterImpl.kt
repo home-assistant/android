@@ -17,8 +17,8 @@ import kotlinx.coroutines.runBlocking
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
     private val urlUseCase: UrlUseCase,
-    private val integrationUseCase: IntegrationUseCase,
-    private val authenticationUseCase: AuthenticationUseCase
+    private val authenticationUseCase: AuthenticationUseCase,
+    private val integrationUseCase: IntegrationUseCase
 ) : WebViewPresenter {
 
     companion object {
