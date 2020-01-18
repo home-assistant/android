@@ -25,6 +25,8 @@ interface IntegrationUseCase {
 
     suspend fun setBackgroundTrackingEnabled(enabled: Boolean)
     suspend fun isBackgroundTrackingEnabled(): Boolean
+    
+    suspend fun getThemeColor(): String
 
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
