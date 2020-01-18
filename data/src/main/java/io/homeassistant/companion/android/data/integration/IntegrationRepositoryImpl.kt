@@ -160,6 +160,23 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun isBackgroundTrackingEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
     }
+    
+    override suspend fun getThemeColor(): String {
+        val getConfigRequest = IntegrationRequest("get_config", null)
+        var response: GetConfigResponse? = null
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+
+            if (response != null)
+                return response.themeColor
+        }
+
+        throw IntegrationException()
+    }
 
     override suspend fun setFullScreenEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
