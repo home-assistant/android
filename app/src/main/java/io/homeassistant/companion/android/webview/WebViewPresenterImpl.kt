@@ -35,6 +35,12 @@ class WebViewPresenterImpl @Inject constructor(
             val oldUrl = url
             url = urlUseCase.getUrl()
 
+            /*
+            We only want to cause the UI to reload if the URL that we need to load has changed.  An
+            example of this would be opening the app on wifi with a local url then loosing wifi
+            signal and reopening app.  Without this we would still be trying to use the internal
+            url externally.
+             */
             if (oldUrl != url) {
                 view.loadUrl(
                     Uri.parse(url.toString())
