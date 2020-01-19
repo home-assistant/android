@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webview
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.http.SslError
@@ -52,6 +53,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var isConnected = false
     private var isShowingError = false
 
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
@@ -109,7 +111,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     request: WebResourceRequest?
                 ): Boolean {
                     request?.url?.let {
-                        if (!it.toString().contains(webView.url.toString())) {
+                        if (!webView.url.toString().contains(it.toString())) {
                             val browserIntent = Intent(Intent.ACTION_VIEW, it)
                             startActivity(browserIntent)
                             return true
@@ -186,6 +188,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 @JavascriptInterface
                 fun revokeExternalAuth(callback: String) {
                     presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
+                    openOnBoarding()
+                    finish()
                 }
 
                 @JavascriptInterface
