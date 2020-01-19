@@ -1,14 +1,40 @@
 package io.homeassistant.companion.android.data
 
+import io.homeassistant.companion.android.domain.url.UrlRepository
 import java.io.IOException
+import java.net.URL
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 
 class HomeAssistantMockService<T>(private val c: Class<T>) {
 
     private val mockServer: MockWebServer = MockWebServer()
-    private val homeAssistantRetrofit =
-        HomeAssistantRetrofit(mockServer.url("/").toString()).retrofit
+    private val homeAssistantRetrofit = HomeAssistantRetrofit(object : UrlRepository {
+        override suspend fun getApiUrls(): Array<URL> {
+            return arrayOf(getUrl()!!)
+        }
+
+        override suspend fun saveRegistrationUrls(
+            cloudHookUrl: String?,
+            remoteUiUrl: String?,
+            webhookId: String
+        ) {
+        }
+
+        override suspend fun getUrl(isInternal: Boolean?): URL? {
+            return mockServer.url("/").toUrl()
+        }
+
+        override suspend fun saveUrl(url: String, isInternal: Boolean?) {
+        }
+
+        override suspend fun getHomeWifiSsid(): String? {
+            return null
+        }
+
+        override suspend fun saveHomeWifiSsid(ssid: String?) {
+        }
+    }).retrofit
 
     fun get(): T {
         return homeAssistantRetrofit.create(c)

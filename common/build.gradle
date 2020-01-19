@@ -15,7 +15,7 @@ dependencies {
     implementation project(':domain')
     implementation project(':data')
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion"
 
     implementation "com.google.dagger:dagger:${daggerVersion}"
