@@ -102,6 +102,6 @@ class UrlRepositoryImpl @Inject constructor(
 
     private suspend fun isInternal(): Boolean {
         return !localStorage.getString(PREF_LOCAL_URL).isNullOrBlank() &&
-                wifiHelper.getWifiSsid() == "\"${getHomeWifiSsid()}\""
+                wifiHelper.getWifiSsid().contains(getHomeWifiSsid().toString())
     }
 }
