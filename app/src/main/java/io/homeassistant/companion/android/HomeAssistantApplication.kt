@@ -23,8 +23,4 @@ class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
     override val appComponent: AppComponent
         get() = graph.appComponent
-
-    override fun urlUpdated() {
-        graph.urlUpdated()
-    }
 }

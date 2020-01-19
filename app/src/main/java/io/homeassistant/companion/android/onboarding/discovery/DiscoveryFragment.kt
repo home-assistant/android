@@ -100,7 +100,6 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
     }
 
     override fun onUrlSaved() {
-        (activity?.application as GraphComponentAccessor).urlUpdated()
         (activity as DiscoveryListener).onHomeAssistantDiscover()
     }
 

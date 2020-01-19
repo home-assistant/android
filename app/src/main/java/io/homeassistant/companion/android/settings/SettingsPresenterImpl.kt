@@ -57,7 +57,6 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "connection_internal" -> {
                     urlUseCase.saveUrl(value ?: "", true)
-                    settingsView.onUrlChanged()
                 }
                 "connection_internal_wifi" -> {
                     urlUseCase.saveHomeWifiSsid(value)
@@ -65,7 +64,6 @@ class SettingsPresenterImpl @Inject constructor(
                 }
                 "connection_external" -> {
                     urlUseCase.saveUrl(value ?: "", false)
-                    settingsView.onUrlChanged()
                 }
                 "registration_name" -> integrationUseCase.updateRegistration(deviceName = value!!)
                 else -> throw Exception()
@@ -91,7 +89,6 @@ class SettingsPresenterImpl @Inject constructor(
         if (ssid.isNullOrBlank()) {
             settingsView.disableInternalConnection()
             urlUseCase.saveUrl("", true)
-            settingsView.onUrlChanged()
         } else {
             settingsView.enableInternalConnection()
         }
