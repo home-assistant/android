@@ -19,16 +19,12 @@ import javax.inject.Named
 
 @Module(includes = [DataModule.Declaration::class])
 class DataModule(
-    private val url: String,
     private val urlStorage: LocalStorage,
     private val sessionLocalStorage: LocalStorage,
     private val integrationLocalStorage: LocalStorage,
     private val wifiHelper: WifiHelper,
     private val deviceId: String
 ) {
-
-    @Provides
-    fun provideEndPoint() = url
 
     @Provides
     fun provideAuthenticationService(homeAssistantRetrofit: HomeAssistantRetrofit): AuthenticationService =
