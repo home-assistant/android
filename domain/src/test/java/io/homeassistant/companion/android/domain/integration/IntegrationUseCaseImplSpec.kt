@@ -82,6 +82,17 @@ object IntegrationUseCaseImplSpec : Spek({
             }
         }
 
+        describe("callService") {
+            val serviceData = mockk<HashMap<String, Any>>()
+            beforeEachTest {
+                runBlocking { useCase.callService("domain", "service", serviceData) }
+            }
+
+            it("should call the repository") {
+                coVerify { integrationRepository.callService("domain", "service", serviceData) }
+            }
+        }
+
         describe("getZones") {
             beforeEachTest {
                 runBlocking { useCase.getZones() }
