@@ -62,7 +62,6 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
     }
 
     override fun urlSaved() {
-        (activity?.application as GraphComponentAccessor).urlUpdated()
         (activity as ManualSetupListener).onSelectUrl()
     }
 

@@ -8,7 +8,6 @@ import android.provider.Settings
 import io.homeassistant.companion.android.common.LocalStorageImpl
 import io.homeassistant.companion.android.common.migrations.Migrations
 import io.homeassistant.companion.android.common.wifi.WifiHelperImpl
-import kotlinx.coroutines.runBlocking
 
 class Graph(
     private val application: Application,
@@ -18,23 +17,12 @@ class Graph(
     lateinit var appComponent: AppComponent
     private lateinit var dataComponent: DataComponent
     private lateinit var domainComponent: DomainComponent
-    private var url = "http://localhost/"
 
     init {
         Migrations(application)
             .migrate()
 
         buildComponent()
-        urlUpdated()
-    }
-
-    fun urlUpdated() {
-        runBlocking {
-            if (dataComponent.urlRepository().getUrl() != null) {
-                this@Graph.url = dataComponent.urlRepository().getUrl().toString()
-                buildComponent()
-            }
-        }
     }
 
     @SuppressLint("HardwareIds")
@@ -43,7 +31,6 @@ class Graph(
             .builder()
             .dataModule(
                 DataModule(
-                    url,
                     LocalStorageImpl(
                         application.getSharedPreferences(
                             "url_$instanceId",
