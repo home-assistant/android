@@ -104,9 +104,12 @@ class ButtonWidget : AppWidgetProvider() {
         }
 
         val views = RemoteViews(context.packageName, R.layout.widget_button).apply {
+            val iconName = widgetStorage.loadIcon(appWidgetId) ?: "ic_flash_on_black_24dp"
+            val icon = context.resources.getIdentifier(iconName, "drawable", `package`)
+
             setImageViewResource(
                 R.id.widgetImageButton,
-                widgetStorage.loadIcon(appWidgetId) ?: R.drawable.ic_flash_on_black_24dp
+                icon
             )
             setOnClickPendingIntent(
                 R.id.widgetImageButton,
@@ -222,7 +225,9 @@ class ButtonWidget : AppWidgetProvider() {
 
             widgetStorage.saveServiceCallData(appWidgetId, domain, service, serviceData)
             widgetStorage.saveLabel(appWidgetId, label)
-            widgetStorage.saveIcon(appWidgetId, icon)
+
+            val iconName = context.resources.getResourceEntryName(icon)
+            widgetStorage.saveIcon(appWidgetId, iconName)
 
             // It is the responsibility of the configuration activity to update the app widget
             // This method is only called during the initial setup of the widget,

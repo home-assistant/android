@@ -50,16 +50,16 @@ class WidgetRepositoryImpl @Inject constructor(
         return loadStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId)
     }
 
-    override suspend fun loadIcon(appWidgetId: Int): Int? {
-        return loadLongPref(PREF_PREFIX_KEY + PREF_KEY_ICON + appWidgetId)?.toInt()
+    override suspend fun loadIcon(appWidgetId: Int): String? {
+        return loadStringPref(PREF_PREFIX_KEY + PREF_KEY_ICON + appWidgetId)
     }
 
     override suspend fun loadLabel(appWidgetId: Int): String? {
         return loadStringPref(PREF_PREFIX_KEY + PREF_KEY_LABEL + appWidgetId)
     }
 
-    override suspend fun saveIcon(appWidgetId: Int, data: Int) {
-        saveLongPref(PREF_PREFIX_KEY + PREF_KEY_ICON + appWidgetId, data.toLong())
+    override suspend fun saveIcon(appWidgetId: Int, resName: String?) {
+        saveStringPref(PREF_PREFIX_KEY + PREF_KEY_ICON + appWidgetId, resName)
     }
 
     override suspend fun saveLabel(appWidgetId: Int, data: String?) {
@@ -70,16 +70,8 @@ class WidgetRepositoryImpl @Inject constructor(
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_DOMAIN + appWidgetId, null)
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE + appWidgetId, null)
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId, null)
-        saveLongPref(PREF_PREFIX_KEY + PREF_KEY_ICON + appWidgetId, null)
+        saveStringPref(PREF_PREFIX_KEY + PREF_KEY_ICON + appWidgetId, null)
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_LABEL + appWidgetId, null)
-    }
-
-    override suspend fun saveLongPref(key: String, data: Long?) {
-        localStorage.putLong(key, data)
-    }
-
-    override suspend fun loadLongPref(key: String): Long? {
-        return localStorage.getLong(key)
     }
 
     override suspend fun saveStringPref(key: String, data: String?) {

@@ -29,7 +29,7 @@
             android:layout_margin="0dp"
             android:contentDescription="@string/widget_image_description"
             android:background="@null"
-            android:src="@drawable/ic_lightbulb_outline_black_24dp"
+            android:src="@drawable/ic_flash_on_black_24dp"
             android:scaleType="centerInside"
             android:adjustViewBounds="true"
             />

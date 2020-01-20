@@ -13,10 +13,10 @@ interface WidgetUseCase {
     suspend fun loadService(appWidgetId: Int): String?
     suspend fun loadServiceData(appWidgetId: Int): String?
 
-    suspend fun loadIcon(appWidgetId: Int): Int?
+    suspend fun loadIcon(appWidgetId: Int): String?
     suspend fun loadLabel(appWidgetId: Int): String?
 
-    suspend fun saveIcon(appWidgetId: Int, data: Int)
+    suspend fun saveIcon(appWidgetId: Int, resName: String?)
     suspend fun saveLabel(appWidgetId: Int, data: String?)
 
     suspend fun deleteWidgetData(appWidgetId: Int)
