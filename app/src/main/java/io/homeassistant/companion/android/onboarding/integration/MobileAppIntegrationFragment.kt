@@ -12,6 +12,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ViewFlipper
+import androidx.appcompat.widget.AppCompatButton
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -25,8 +28,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     companion object {
         private const val LOADING_VIEW = 0
         private const val ERROR_VIEW = 1
-
-        private const val IGNORE_OPT_REQUEST = 0
+        private const val SETTINGS_VIEW = 2
 
         fun newInstance(): MobileAppIntegrationFragment {
             return MobileAppIntegrationFragment()
@@ -37,6 +39,10 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     lateinit var presenter: MobileAppIntegrationPresenter
 
     private lateinit var viewFlipper: ViewFlipper
+    private lateinit var zoneTracking: SwitchCompat
+    private lateinit var zoneTrackingSummary: AppCompatTextView
+    private lateinit var backgroundTracking: SwitchCompat
+    private lateinit var backgroundTrackingSummary: AppCompatTextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,18 +66,42 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 presenter.onRegistrationAttempt()
             }
 
+            findViewById<AppCompatButton>(R.id.location_perms).apply {
+                setOnClickListener {
+                    PermissionManager.requestLocationPermissions(this@MobileAppIntegrationFragment)
+                }
+            }
+
+            val hasLocationPermission = PermissionManager.hasLocationPermissions(context)
+
+            zoneTracking = findViewById<SwitchCompat>(R.id.location_zone).apply {
+                setOnClickListener {
+                    presenter.onToggleZoneTracking(it.isSelected)
+                }
+                isEnabled = hasLocationPermission
+            }
+            zoneTrackingSummary = findViewById(R.id.location_zone_summary)
+            zoneTrackingSummary.isEnabled = hasLocationPermission
+
+            backgroundTracking = findViewById<SwitchCompat>(R.id.location_background).apply {
+                setOnClickListener {
+                    presenter.onToggleBackgroundTracking(it.isSelected)
+                }
+                isEnabled = hasLocationPermission
+            }
+            backgroundTrackingSummary = findViewById(R.id.location_background_summary)
+            backgroundTrackingSummary.isEnabled = hasLocationPermission
+
+            findViewById<AppCompatButton>(R.id.finish).setOnClickListener {
+                (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
+            }
+
             presenter.onRegistrationAttempt()
         }
     }
 
     override fun deviceRegistered() {
-        if (!PermissionManager.hasLocationPermissions(context!!)) {
-            PermissionManager.requestLocationPermissions(this)
-        } else {
-            // If we have permission already we can just continue with
-            presenter.onGrantedLocationPermission(context!!, activity!!)
-            requestBackgroundAccess()
-        }
+        viewFlipper.displayedChild = SETTINGS_VIEW
     }
 
     override fun showError() {
@@ -83,6 +113,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun onDestroy() {
+        PermissionManager.restartLocationTracking(context!!, activity!!)
         presenter.onFinish()
         super.onDestroy()
     }
@@ -95,11 +126,18 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (PermissionManager.validateLocationPermissions(requestCode, permissions, grantResults)) {
-            presenter.onGrantedLocationPermission(context!!, activity!!)
-            requestBackgroundAccess()
+            zoneTracking.isEnabled = true
+            zoneTrackingSummary.isEnabled = true
+            backgroundTracking.isEnabled = true
+            backgroundTrackingSummary.isEnabled = true
         } else {
-            (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
+            zoneTracking.isEnabled = false
+            zoneTrackingSummary.isEnabled = false
+            backgroundTracking.isEnabled = false
+            backgroundTrackingSummary.isEnabled = false
         }
+
+        requestBackgroundAccess()
     }
 
     @SuppressLint("BatteryLife")
@@ -113,15 +151,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                 Uri.parse("package:${activity?.packageName}")
             )
-            startActivityForResult(intent, IGNORE_OPT_REQUEST)
-        } else {
-            (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == IGNORE_OPT_REQUEST) {
-            (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
+            startActivity(intent)
         }
     }
 }
