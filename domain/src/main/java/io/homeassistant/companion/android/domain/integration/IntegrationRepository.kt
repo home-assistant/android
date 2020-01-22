@@ -19,4 +19,6 @@ interface IntegrationRepository {
     suspend fun isBackgroundTrackingEnabled(): Boolean
 
     suspend fun getThemeColor(): String
+
+    suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 }

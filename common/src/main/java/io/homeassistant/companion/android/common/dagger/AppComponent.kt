@@ -4,6 +4,7 @@ import dagger.Component
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.domain.widgets.WidgetUseCase
 
 @Component(dependencies = [DomainComponent::class])
 interface AppComponent {
@@ -13,4 +14,6 @@ interface AppComponent {
     fun authenticationUseCase(): AuthenticationUseCase
 
     fun integrationUseCase(): IntegrationUseCase
+
+    fun widgetUseCase(): WidgetUseCase
 }

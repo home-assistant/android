@@ -11,10 +11,12 @@ import io.homeassistant.companion.android.data.authentication.AuthenticationServ
 import io.homeassistant.companion.android.data.integration.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.data.integration.IntegrationService
 import io.homeassistant.companion.android.data.url.UrlRepositoryImpl
+import io.homeassistant.companion.android.data.widgets.WidgetRepositoryImpl
 import io.homeassistant.companion.android.data.wifi.WifiHelper
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import io.homeassistant.companion.android.domain.url.UrlRepository
+import io.homeassistant.companion.android.domain.widgets.WidgetRepository
 import javax.inject.Named
 
 @Module(includes = [DataModule.Declaration::class])
@@ -22,6 +24,7 @@ class DataModule(
     private val urlStorage: LocalStorage,
     private val sessionLocalStorage: LocalStorage,
     private val integrationLocalStorage: LocalStorage,
+    private val widgetLocalStorage: LocalStorage,
     private val wifiHelper: WifiHelper,
     private val deviceId: String
 ) {
@@ -50,6 +53,10 @@ class DataModule(
     fun provideIntegrationLocalStorage() = integrationLocalStorage
 
     @Provides
+    @Named("widget")
+    fun provideWidgetLocalStorage() = widgetLocalStorage
+
+    @Provides
     @Named("manufacturer")
     fun provideDeviceManufacturer(): String = Build.MANUFACTURER
 
@@ -75,5 +82,8 @@ class DataModule(
 
         @Binds
         fun bindIntegrationService(repository: IntegrationRepositoryImpl): IntegrationRepository
+
+        @Binds
+        fun bindWidgetRepositoryImpl(repository: WidgetRepositoryImpl): WidgetRepository
     }
 }
