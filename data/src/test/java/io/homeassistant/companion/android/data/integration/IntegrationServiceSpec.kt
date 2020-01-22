@@ -80,5 +80,39 @@ object IntegrationServiceSpec : Spek({
                 assertThat(response.isSuccessful).isTrue()
             }
         }
+
+        describe("callService") {
+            lateinit var response: Response<ResponseBody>
+
+            beforeEachTest {
+                val domain = "light"
+                val service = "toggle"
+                val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
+
+                val serviceCallRequest = ServiceCallRequest(
+                    domain,
+                    service,
+                    serviceDataMap
+                )
+
+                val integrationRequest = IntegrationRequest(
+                    "call_service",
+                    serviceCallRequest
+                )
+
+                mockService.enqueueResponse(200, "integration/empty.json")
+                response = runBlocking {
+                    mockService.get().callService(mockService.getMockServer().url("/path/to/hook"), integrationRequest)
+                }
+                request = mockService.takeRequest()
+            }
+            it("should serialize request") {
+                assertThat(request.method).isEqualTo("POST")
+                assertThat(request.path).isEqualTo("/path/to/hook")
+            }
+            it("should return success") {
+                assertThat(response.isSuccessful).isTrue()
+            }
+        }
     }
 })

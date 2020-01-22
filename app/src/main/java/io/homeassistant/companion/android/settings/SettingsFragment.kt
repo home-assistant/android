@@ -64,10 +64,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         PermissionManager.restartLocationTracking(context!!, activity!!)
     }
 
-    override fun onUrlChanged() {
-        (activity?.application as GraphComponentAccessor).urlUpdated()
-    }
-
     override fun disableInternalConnection() {
         findPreference<EditTextPreference>("connection_internal")?.let {
             it.isEnabled = false

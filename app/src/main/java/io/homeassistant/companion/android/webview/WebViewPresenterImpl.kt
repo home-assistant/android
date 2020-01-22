@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
+import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,17 +28,28 @@ class WebViewPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
+    private var url: URL? = null
+
     override fun onViewReady() {
         mainScope.launch {
-            val url = urlUseCase.getUrl()
+            val oldUrl = url
+            url = urlUseCase.getUrl()
 
-            view.loadUrl(
-                Uri.parse(url.toString())
-                    .buildUpon()
-                    .appendQueryParameter("external_auth", "1")
-                    .build()
-                    .toString()
-            )
+            /*
+            We only want to cause the UI to reload if the URL that we need to load has changed.  An
+            example of this would be opening the app on wifi with a local url then loosing wifi
+            signal and reopening app.  Without this we would still be trying to use the internal
+            url externally.
+             */
+            if (oldUrl != url) {
+                view.loadUrl(
+                    Uri.parse(url.toString())
+                        .buildUpon()
+                        .appendQueryParameter("external_auth", "1")
+                        .build()
+                        .toString()
+                )
+            }
 
             try {
                 view.setStatusBarColor(Color.parseColor(integrationUseCase.getThemeColor()))
