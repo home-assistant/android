@@ -1,0 +1,59 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minHeight="40dp"
+    android:minWidth="40dp"
+    android:orientation="vertical"
+    android:padding="@dimen/widget_margin">
+
+    <FrameLayout
+        android:id="@+id/widgetImageButtonFrameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ImageView
+            android:id="@+id/widgetImageButtonBackground"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="0dp"
+            android:contentDescription="@string/widget_image_description"
+            android:src="@drawable/ic_circle_white_24dp"
+            android:scaleType="fitCenter"
+            />
+
+        <ImageButton
+            android:id="@+id/widgetImageButton"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="0dp"
+            android:contentDescription="@string/widget_image_description"
+            android:background="@null"
+            android:src="@drawable/ic_flash_on_black_24dp"
+            android:scaleType="centerInside"
+            android:adjustViewBounds="true"
+            />
+
+        <ProgressBar
+            android:id="@+id/widgetProgressBar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:visibility="invisible"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/colorAccent"
+            />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/widgetLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="0dp"
+        android:text="@string/widget_label_placeholder_text"
+        android:textAlignment="center"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/colorOnPrimary"
+        android:textSize="12sp" />
+</LinearLayout>

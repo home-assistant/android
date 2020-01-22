@@ -532,6 +532,236 @@ object IntegrationRepositoryImplSpec : Spek({
             }
         }
 
+        describe("call a service") {
+
+            describe("callService cloud url") {
+                val domain = "light"
+                val service = "toggle"
+                val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
+
+                val serviceCallRequest = ServiceCallRequest(
+                    domain,
+                    service,
+                    serviceDataMap
+                )
+
+                val integrationRequest = IntegrationRequest(
+                    "call_service",
+                    serviceCallRequest
+                )
+
+                beforeEachTest {
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://best.com/hook/id"),
+                        URL("http://better.com"),
+                        URL("http://example.com")
+                    )
+                    coEvery {
+                        integrationService.callService(
+                            any(), // "http://example.com/api/webhook/FGHIJ",
+                            any() // integrationRequest
+                        )
+                    } returns Response.success(null)
+                    runBlocking { repository.callService(domain, service, serviceDataMap) }
+                }
+
+                it("should call the service.") {
+                    coVerify {
+                        integrationService.callService(
+                            "http://best.com/hook/id".toHttpUrl(),
+                            integrationRequest
+                        )
+                    }
+                }
+            }
+
+            describe("callService remote ui url") {
+                val domain = "light"
+                val service = "toggle"
+                val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
+
+                val serviceCallRequest = ServiceCallRequest(
+                    domain,
+                    service,
+                    serviceDataMap
+                )
+
+                val integrationRequest = IntegrationRequest(
+                    "call_service",
+                    serviceCallRequest
+                )
+
+                beforeEachTest {
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://better.com/api/webhook/FGHIJ"),
+                        URL("http://example.com")
+                    )
+                    coEvery {
+                        integrationService.callService(
+                            any(), // "http://example.com/api/webhook/FGHIJ",
+                            any() // integrationRequest
+                        )
+                    } returns Response.success(null)
+                    runBlocking { repository.callService(domain, service, serviceDataMap) }
+                }
+
+                it("should call the service.") {
+                    coVerify {
+                        integrationService.callService(
+                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
+                            integrationRequest
+                        )
+                    }
+                }
+            }
+
+            describe("callService auth url") {
+                val domain = "light"
+                val service = "toggle"
+                val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
+
+                val serviceCallRequest = ServiceCallRequest(
+                    domain,
+                    service,
+                    serviceDataMap
+                )
+
+                val integrationRequest = IntegrationRequest(
+                    "call_service",
+                    serviceCallRequest
+                )
+
+                beforeEachTest {
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://example.com/api/webhook/FGHIJ")
+                    )
+                    coEvery {
+                        integrationService.callService(
+                            any(), // "http://example.com/api/webhook/FGHIJ",
+                            any() // integrationRequest
+                        )
+                    } returns Response.success(null)
+                    runBlocking { repository.callService(domain, service, serviceDataMap) }
+                }
+
+                it("should call the service.") {
+                    coVerify {
+                        integrationService.callService(
+                            "http://example.com/api/webhook/FGHIJ".toHttpUrl(),
+                            integrationRequest
+                        )
+                    }
+                }
+            }
+
+            describe("callService fail then succeeds") {
+                val domain = "light"
+                val service = "toggle"
+                val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
+
+                val serviceCallRequest = ServiceCallRequest(
+                    domain,
+                    service,
+                    serviceDataMap
+                )
+
+                val integrationRequest = IntegrationRequest(
+                    "call_service",
+                    serviceCallRequest
+                )
+
+                beforeEachTest {
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://best.com/hook/id"),
+                        URL("http://better.com/api/webhook/FGHIJ"),
+                        URL("http://example.com")
+                    )
+                    coEvery {
+                        integrationService.callService(
+                            "http://best.com/hook/id".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } returns mockk {
+                        every { isSuccessful } returns false
+                    }
+                    coEvery {
+                        integrationService.callService(
+                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } returns Response.success(null)
+                    runBlocking { repository.callService(domain, service, serviceDataMap) }
+                }
+
+                it("should call service 2 times") {
+                    coVerifyAll {
+                        integrationService.callService(
+                            "http://best.com/hook/id".toHttpUrl(),
+                            integrationRequest
+                        )
+                        integrationService.callService(
+                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
+                            integrationRequest
+                        )
+                    }
+                }
+            }
+
+            describe("callService failure") {
+                val domain = "light"
+                val service = "toggle"
+                val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
+
+                lateinit var thrown: Throwable
+
+                beforeEachTest {
+                    coEvery { urlRepository.getApiUrls() } returns arrayOf(
+                        URL("http://best.com/hook/id"),
+                        URL("http://better.com"),
+                        URL("http://example.com")
+                    )
+                    coEvery {
+                        integrationService.callService(
+                            "http://best.com/hook/id".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } returns mockk {
+                        every { isSuccessful } returns false
+                    }
+                    coEvery {
+                        integrationService.callService(
+                            "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } returns mockk {
+                        every { isSuccessful } returns false
+                    }
+                    coEvery {
+                        integrationService.callService(
+                            "http://example.com/api/webhook/FGHIJ".toHttpUrl(),
+                            any() // integrationRequest
+                        )
+                    } returns mockk {
+                        every { isSuccessful } returns false
+                    }
+
+                    thrown = catchThrowable {
+                        runBlocking {
+                            repository.callService(
+                                domain,
+                                service,
+                                serviceDataMap
+                            )
+                        }
+                    }
+                }
+
+                it("should throw an exception") {
+                    assertThat(thrown).isInstanceOf(IntegrationException::class.java)
+                }
+            }
+        }
+
         describe("get zones") {
             beforeEachTest {
                 coEvery { urlRepository.getApiUrls() } returns arrayOf(

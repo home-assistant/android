@@ -32,6 +32,24 @@
         android:networkSecurityConfig="@xml/network_security_config"
         tools:ignore="GoogleAppIndexingWarning">
 
+        <receiver android:name=".widgets.ButtonWidget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE" />
+                <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.RECEIVE_DATA" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/button_widget_info" />
+        </receiver>
+
+        <activity android:name=".widgets.ButtonWidgetConfigureActivity">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name=".background.LocationBroadcastReceiver"
             android:enabled="true"
