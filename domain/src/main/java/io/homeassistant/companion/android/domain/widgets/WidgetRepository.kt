@@ -20,7 +20,4 @@ interface WidgetRepository {
     suspend fun saveLabel(appWidgetId: Int, data: String?)
 
     suspend fun deleteWidgetData(appWidgetId: Int)
-
-    suspend fun saveStringPref(key: String, data: String?)
-    suspend fun loadStringPref(key: String): String?
 }

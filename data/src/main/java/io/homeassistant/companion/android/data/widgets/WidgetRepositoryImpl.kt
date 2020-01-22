@@ -74,11 +74,11 @@ class WidgetRepositoryImpl @Inject constructor(
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_LABEL + appWidgetId, null)
     }
 
-    override suspend fun saveStringPref(key: String, data: String?) {
+    private suspend fun saveStringPref(key: String, data: String?) {
         localStorage.putString(key, data)
     }
 
-    override suspend fun loadStringPref(key: String): String? {
+    private suspend fun loadStringPref(key: String): String? {
         return localStorage.getString(key)
     }
 }
