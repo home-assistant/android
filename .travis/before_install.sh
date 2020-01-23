@@ -10,7 +10,6 @@ then
     mv upload_keystore.keystore app/release_keystore.keystore
     mv home-assistant-mobile-apps-0b13292f44c4.json app/playStorePublishServiceCredentialsFile.json
     mv home-assistant-mobile-apps-5fd6b9dd0fdb.json firebaseAppDistributionServiceCredentialsFile.json
-    mkdir app/src/debug
     mv .travis/mock-google-services.json app/src/debug/google-services.json
 else
     mv .travis/mock-google-services.json app/google-services.json
