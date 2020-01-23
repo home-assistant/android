@@ -240,11 +240,15 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
             presenter.onViewReady()
-            if (presenter.isFullScreen())
-                hideSystemUI()
-            else
-                showSystemUI()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (presenter.isFullScreen())
+            hideSystemUI()
+        else
+            showSystemUI()
     }
 
     private fun hideSystemUI() {
