@@ -1,14 +1,11 @@
 package io.homeassistant.companion.android.onboarding.integration
 
-import android.app.Activity
-import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,6 +40,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
 
                 try {
                     integrationUseCase.registerDevice(deviceRegistration)
+                    // TODO: Get the name of the instance to display
                     view.deviceRegistered()
                 } catch (e: Exception) {
                     Log.e(TAG, "Error with registering application", e)
@@ -56,11 +54,15 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         }
     }
 
-    override fun onGrantedLocationPermission(context: Context, activity: Activity) {
+    override fun onToggleZoneTracking(enabled: Boolean) {
         mainScope.launch {
-            integrationUseCase.setZoneTrackingEnabled(true)
-            integrationUseCase.setBackgroundTrackingEnabled(true)
-            PermissionManager.restartLocationTracking(context, activity)
+            integrationUseCase.setZoneTrackingEnabled(enabled)
+        }
+    }
+
+    override fun onToggleBackgroundTracking(enabled: Boolean) {
+        mainScope.launch {
+            integrationUseCase.setBackgroundTrackingEnabled(enabled)
         }
     }
 
