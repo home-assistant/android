@@ -73,7 +73,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "registration_name" -> {
                     try {
                         integrationUseCase.updateRegistration(deviceName = value!!)
-                    } catch (e: Exception){
+                    } catch (e: Exception) {
                         Log.e(TAG, "Issue updating registration with new device name", e)
                     }
                 }

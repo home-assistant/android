@@ -51,7 +51,7 @@ class HomeAssistantSearcher constructor(
                 resolvedService?.let {
                     val baseUrl = it.attributes["base_url"]
                     val version = it.attributes["version"]
-                    if(baseUrl != null && version != null) {
+                    if (baseUrl != null && version != null) {
                         discoveryView.onInstanceFound(
                             HomeAssistantInstance(
                                 it.serviceName,

@@ -24,7 +24,7 @@ class AuthenticationPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            try{
+            try {
                 view.loadUrl(authenticationUseCase.buildAuthenticationUrl(AUTH_CALLBACK).toString())
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to create auth url and/or load it.", e)
