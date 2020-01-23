@@ -65,8 +65,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
                         error: WebResourceError?
                     ) {
                         super.onReceivedError(view, request, error)
-                        showError(getString(R.string.error_connection_failed))
-                        popBack()
+                        showError()
                     }
                 }
             }
@@ -92,13 +91,11 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         super.onDestroy()
     }
 
-    fun popBack() {
-        fragmentManager?.popBackStack()
-    }
-    fun showError(title: String) {
+    override fun showError() {
         AlertDialog.Builder(context)
-            .setTitle(title)
+            .setTitle(R.string.error_connection_failed)
             .setPositiveButton(R.string.ok) { _, _ -> }
             .show()
+        fragmentManager?.popBackStack()
     }
 }
