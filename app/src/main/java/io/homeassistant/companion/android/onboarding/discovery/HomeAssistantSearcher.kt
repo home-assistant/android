@@ -49,10 +49,17 @@ class HomeAssistantSearcher constructor(
             override fun onServiceResolved(resolvedService: NsdServiceInfo?) {
                 Log.i(TAG, "Service resolved: $resolvedService")
                 resolvedService?.let {
-                    discoveryView.onInstanceFound(HomeAssistantInstance(
-                        it.serviceName,
-                        URL(it.attributes["base_url"]!!.commonToUtf8String()),
-                        it.attributes["version"]!!.commonToUtf8String()))
+                    val baseUrl = it.attributes["base_url"]
+                    val version = it.attributes["version"]
+                    if (baseUrl != null && version != null) {
+                        discoveryView.onInstanceFound(
+                            HomeAssistantInstance(
+                                it.serviceName,
+                                URL(baseUrl.commonToUtf8String()),
+                                version.commonToUtf8String()
+                            )
+                        )
+                    }
                 }
             }
         })

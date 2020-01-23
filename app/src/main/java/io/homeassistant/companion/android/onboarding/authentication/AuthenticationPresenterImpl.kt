@@ -24,7 +24,12 @@ class AuthenticationPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            view.loadUrl(authenticationUseCase.buildAuthenticationUrl(AUTH_CALLBACK).toString())
+            try {
+                view.loadUrl(authenticationUseCase.buildAuthenticationUrl(AUTH_CALLBACK).toString())
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to create auth url and/or load it.", e)
+                view.showError()
+            }
         }
     }
 
@@ -36,6 +41,8 @@ class AuthenticationPresenterImpl @Inject constructor(
                     authenticationUseCase.registerAuthorizationCode(code)
                 } catch (e: Exception) {
                     Log.e(TAG, "unable to register code")
+                    view.showError()
+                    return@launch
                 }
                 view.openWebview()
             }
