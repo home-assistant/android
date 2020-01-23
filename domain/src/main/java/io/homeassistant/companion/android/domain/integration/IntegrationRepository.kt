@@ -21,7 +21,4 @@ interface IntegrationRepository {
     suspend fun getThemeColor(): String
 
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
-
-    suspend fun setFullScreenEnabled(enabled: Boolean)
-    suspend fun isFullScreenEnabled(): Boolean
 }
