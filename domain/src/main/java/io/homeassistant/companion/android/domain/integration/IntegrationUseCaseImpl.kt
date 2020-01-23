@@ -67,12 +67,4 @@ class IntegrationUseCaseImpl @Inject constructor(
     override suspend fun getThemeColor(): String {
         return integrationRepository.getThemeColor()
     }
-
-    override suspend fun setFullScreenEnabled(enabled: Boolean) {
-        return integrationRepository.setFullScreenEnabled(enabled)
-    }
-
-    override suspend fun isFullScreenEnabled(): Boolean {
-        return integrationRepository.isFullScreenEnabled()
-    }
 }
