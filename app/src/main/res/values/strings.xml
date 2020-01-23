@@ -25,7 +25,7 @@ integration enabled on your home assistant instance.</string>
     <string name="pref_location_zone_title">Zone Based Tracking</string>
     <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
     <string name="pref_location_background_title">Background Location Tracking</string>
-    <string name="pref_location_background_summary">Update your location behind the scenes, periodically.</string>
+    <string name="pref_location_background_summary">Update your location behind the scenes, periodically.  For best performance please allow background access.</string>
     <string name="application_version">Application Version</string>
     <string name="location">Location</string>
     <string name="app_version_info">App Version Info</string>
@@ -50,4 +50,8 @@ integration enabled on your home assistant instance.</string>
     <string name="widget_text_hint_label">Label</string>
     <string name="widget_label_placeholder_text">Label</string>
     <string name="widget_spinner_icon">Icon:</string>
+    <string name="connected_to_home_assistant">Connected to Home Assistant</string>
+    <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="finish">Finish</string>
 </resources>
