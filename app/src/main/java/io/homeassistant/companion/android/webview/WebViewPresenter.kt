@@ -9,7 +9,7 @@ interface WebViewPresenter {
     fun onRevokeExternalAuth(callback: String)
 
     fun clearKnownUrls()
-    
+
     fun isFullScreen(): Boolean
 
     fun onFinish()
