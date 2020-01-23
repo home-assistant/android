@@ -90,6 +90,12 @@ class WebViewPresenterImpl @Inject constructor(
             urlUseCase.saveUrl("", false)
         }
     }
+    
+    override fun isFullScreen(): Boolean {
+        return runBlocking {
+            integrationUseCase.isFullScreenEnabled()
+        }
+    }
 
     override fun onFinish() {
         mainScope.cancel()
