@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.MenuInflater
+import android.view.View
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
