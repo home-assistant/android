@@ -54,4 +54,7 @@ integration enabled on your home assistant instance.</string>
     <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
     <string name="grant_permission">Grant Permission</string>
     <string name="finish">Finish</string>
+    <string name="other_settings">Other Settings</string>
+    <string name="fullscreen">Fullscreen</string>
+    <string name="fullscreen_def">Put application in full screen</string>
 </resources>
