@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings
 
+import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
@@ -16,6 +17,10 @@ class SettingsPresenterImpl @Inject constructor(
     private val urlUseCase: UrlUseCase,
     private val integrationUseCase: IntegrationUseCase
 ) : SettingsPresenter, PreferenceDataStore() {
+
+    companion object {
+        private const val TAG = "SettingsPresenter"
+    }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -65,7 +70,13 @@ class SettingsPresenterImpl @Inject constructor(
                 "connection_external" -> {
                     urlUseCase.saveUrl(value ?: "", false)
                 }
-                "registration_name" -> integrationUseCase.updateRegistration(deviceName = value!!)
+                "registration_name" -> {
+                    try {
+                        integrationUseCase.updateRegistration(deviceName = value!!)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Issue updating registration with new device name", e)
+                    }
+                }
                 else -> throw Exception()
             }
         }
