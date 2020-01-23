@@ -30,6 +30,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         private const val ERROR_VIEW = 1
         private const val SETTINGS_VIEW = 2
 
+        private const val BACKGROUND_REQUEST = 99
+
         fun newInstance(): MobileAppIntegrationFragment {
             return MobileAppIntegrationFragment()
         }
@@ -79,6 +81,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                     presenter.onToggleZoneTracking(it.isSelected)
                 }
                 isEnabled = hasLocationPermission
+                isChecked = hasLocationPermission
             }
             zoneTrackingSummary = findViewById(R.id.location_zone_summary)
             zoneTrackingSummary.isEnabled = hasLocationPermission
@@ -88,6 +91,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                     presenter.onToggleBackgroundTracking(it.isSelected)
                 }
                 isEnabled = hasLocationPermission
+                isChecked = hasLocationPermission && isIgnoringBatteryOptimizations()
             }
             backgroundTrackingSummary = findViewById(R.id.location_background_summary)
             backgroundTrackingSummary.isEnabled = hasLocationPermission
@@ -128,6 +132,9 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         if (PermissionManager.validateLocationPermissions(requestCode, permissions, grantResults)) {
             zoneTracking.isEnabled = true
             zoneTrackingSummary.isEnabled = true
+            zoneTracking.isChecked = true
+            presenter.onToggleZoneTracking(true)
+
             backgroundTracking.isEnabled = true
             backgroundTrackingSummary.isEnabled = true
         } else {
@@ -140,18 +147,31 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         requestBackgroundAccess()
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == BACKGROUND_REQUEST && isIgnoringBatteryOptimizations()) {
+            zoneTracking.isChecked = true
+            presenter.onToggleBackgroundTracking(true)
+        }
+    }
+
     @SuppressLint("BatteryLife")
     private fun requestBackgroundAccess() {
-        val packageName = activity?.packageName ?: ""
         val intent: Intent
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-            context?.getSystemService(PowerManager::class.java)?.isIgnoringBatteryOptimizations(packageName) == false
-        ) {
+        if (!isIgnoringBatteryOptimizations()) {
             intent = Intent(
                 Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                 Uri.parse("package:${activity?.packageName}")
             )
-            startActivity(intent)
+            startActivityForResult(intent, BACKGROUND_REQUEST)
         }
+    }
+
+    private fun isIgnoringBatteryOptimizations(): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                context?.getSystemService(PowerManager::class.java)
+                    ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
+                ?: false
     }
 }
