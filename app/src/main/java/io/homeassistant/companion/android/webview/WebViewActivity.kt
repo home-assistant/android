@@ -244,6 +244,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 hideSystemUI()
             else
                 showSystemUI()
+        }
     }
 
     private fun hideSystemUI() {
