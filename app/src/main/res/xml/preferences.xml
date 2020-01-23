@@ -38,14 +38,6 @@
             android:summary="@string/pref_location_background_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="@string/other_settings">
-        <SwitchPreference
-            android:key="fullscreen"
-            android:icon="@drawable/ic_fullscreen"
-            android:title="@string/fullscreen"
-            android:summary="@string/fullscreen_def"/>
-    </PreferenceCategory>
-    <PreferenceCategory
         android:title="@string/app_version_info">
         <Preference
             android:key="version"

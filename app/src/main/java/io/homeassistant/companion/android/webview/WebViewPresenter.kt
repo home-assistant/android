@@ -10,7 +10,5 @@ interface WebViewPresenter {
 
     fun clearKnownUrls()
 
-    fun isFullScreen(): Boolean
-
     fun onFinish()
 }
