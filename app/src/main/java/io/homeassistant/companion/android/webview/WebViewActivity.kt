@@ -230,7 +230,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
             if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0)
-                if (presenter.isFullScreen())                                                                
+                if (presenter.isFullScreen())
                     hideSystemUI()
         }
 
