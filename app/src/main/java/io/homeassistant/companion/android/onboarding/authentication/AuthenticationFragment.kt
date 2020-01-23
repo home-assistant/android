@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.authentication
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -41,6 +42,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
             .inject(this)
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -63,8 +65,8 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
                         error: WebResourceError?
                     ) {
                         super.onReceivedError(view, request, error)
-                        popBack()
                         showError(getString(R.string.error_connection_failed))
+                        popBack()
                     }
                 }
             }
