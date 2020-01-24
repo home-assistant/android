@@ -29,6 +29,8 @@ class SettingsPresenterImpl @Inject constructor(
             return@runBlocking when (key) {
                 "location_zone" -> integrationUseCase.isZoneTrackingEnabled()
                 "location_background" -> integrationUseCase.isBackgroundTrackingEnabled()
+                "fullscreen" -> integrationUseCase.isFullScreenEnabled()
+                "hide_nav" -> integrationUseCase.isHideNavigationBarEnabled()
                 else -> throw Exception()
             }
         }
@@ -39,6 +41,8 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "location_zone" -> integrationUseCase.setZoneTrackingEnabled(value)
                 "location_background" -> integrationUseCase.setBackgroundTrackingEnabled(value)
+                "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
+                "hide_nav" -> integrationUseCase.setHideNavigationBarEnabled(value)
                 else -> throw Exception()
             }
             settingsView.onLocationSettingChanged()

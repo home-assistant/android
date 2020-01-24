@@ -44,6 +44,22 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             isValid
         }
 
+        val onChangeSwitchFullScreen = Preference.OnPreferenceChangeListener { _, newValue ->
+            if (newValue == true)
+                findPreference<SwitchPreference>("hide_nav")?.let {
+                 it.isChecked = false
+                }
+            true
+        }
+
+        val onChangeSwitchHideNavigation = Preference.OnPreferenceChangeListener { _, newValue ->
+            if (newValue == true)
+                findPreference<SwitchPreference>("fullscreen")?.let {
+                    it.isChecked = false
+                }
+            true
+        }
+
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
 
@@ -53,6 +69,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("version")?.let {
             it.summary = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
         }
+
+        findPreference<SwitchPreference>("fullscreen")?.onPreferenceChangeListener =
+            onChangeSwitchFullScreen
+
+        findPreference<SwitchPreference>("hide_nav")?.onPreferenceChangeListener =
+            onChangeSwitchHideNavigation
 
         presenter.onCreate()
     }

@@ -38,6 +38,19 @@
             android:summary="@string/pref_location_background_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:title="@string/fullscreen">
+        <SwitchPreference
+            android:key="fullscreen"
+            android:icon="@drawable/ic_fullscreen"
+            android:title="@string/fullscreen"
+            android:summary="@string/fullscreen_def"/>
+        <SwitchPreference
+            android:key="hide_nav"
+            android:icon="@drawable/ic_hide_navigation"
+            android:title="@string/hide_nav"
+            android:summary="@string/hide_nav_def"/>
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/app_version_info">
         <Preference
             android:key="version"

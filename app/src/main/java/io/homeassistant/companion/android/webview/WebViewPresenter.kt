@@ -10,5 +10,9 @@ interface WebViewPresenter {
 
     fun clearKnownUrls()
 
+    fun isFullScreen(): Boolean
+
+    fun isHideNavigationBar(): Boolean
+
     fun onFinish()
 }
