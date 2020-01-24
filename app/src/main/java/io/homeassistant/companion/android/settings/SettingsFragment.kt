@@ -47,7 +47,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         val onChangeSwitchFullScreen = Preference.OnPreferenceChangeListener { _, newValue ->
             if (newValue == true)
                 findPreference<SwitchPreference>("hide_nav")?.let {
-                 it.isChecked = false
+                    it.isChecked = false
                 }
             true
         }
