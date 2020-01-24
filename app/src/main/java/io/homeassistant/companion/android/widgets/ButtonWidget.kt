@@ -166,7 +166,7 @@ class ButtonWidget : AppWidgetProvider() {
             } else {
                 // If everything loaded correctly, package the service data and attempt the call
                 val serviceDataMap = HashMap<String, Any>()
-                if(entityId != null ) {
+                if (entityId != null) {
                     serviceDataMap["entity_id"] = entityId
                 }
 
