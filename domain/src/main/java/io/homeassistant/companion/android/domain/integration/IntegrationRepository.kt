@@ -20,5 +20,9 @@ interface IntegrationRepository {
 
     suspend fun getThemeColor(): String
 
+    suspend fun getServices(): Array<Service>
+
+    suspend fun getEntities(): Array<Entity<Any>>
+
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 }

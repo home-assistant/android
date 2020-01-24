@@ -64,6 +64,14 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.isBackgroundTrackingEnabled()
     }
 
+    override suspend fun getServices(): Array<Service> {
+        return integrationRepository.getServices()
+    }
+
+    override suspend fun getEntities(): Array<Entity<Any>> {
+        return integrationRepository.getEntities()
+    }
+
     override suspend fun getThemeColor(): String {
         return integrationRepository.getThemeColor()
     }

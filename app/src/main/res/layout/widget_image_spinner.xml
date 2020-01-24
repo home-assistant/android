@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal" >
@@ -10,6 +11,6 @@
         android:layout_height="40dp"
         android:padding="8dp"
         android:scaleType="fitCenter"
-        android:contentDescription="@string/widget_spinner_icon" />
+        tools:src="@drawable/ic_flash_on_black_24dp"/>
 
 </LinearLayout>

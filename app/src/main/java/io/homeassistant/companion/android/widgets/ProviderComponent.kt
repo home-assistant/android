@@ -7,4 +7,6 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 interface ProviderComponent {
 
     fun inject(receiver: ButtonWidget)
+
+    fun inject(activity: ButtonWidgetConfigureActivity)
 }

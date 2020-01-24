@@ -23,6 +23,16 @@ interface IntegrationService {
         @Body request: RegisterDeviceRequest
     ): RegisterDeviceResponse
 
+    @GET("/api/services")
+    suspend fun getServices(
+        @Header("Authorization") auth: String
+    ): Array<DomainResponse>
+
+    @GET("/api/states")
+    suspend fun getStates(
+        @Header("Authorization") auth: String
+    ): Array<EntityResponse<Any>>
+
     @POST
     suspend fun updateRegistration(
         @Url url: HttpUrl,

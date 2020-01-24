@@ -22,7 +22,7 @@ class WidgetRepositoryImpl @Inject constructor(
         appWidgetId: Int,
         domainStr: String,
         serviceStr: String,
-        serviceDataStr: String
+        entityIdStr: String?
     ) {
         saveStringPref(
             PREF_PREFIX_KEY + PREF_KEY_DOMAIN + appWidgetId,
@@ -34,7 +34,7 @@ class WidgetRepositoryImpl @Inject constructor(
         )
         saveStringPref(
             PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId,
-            serviceDataStr
+            entityIdStr
         )
     }
 

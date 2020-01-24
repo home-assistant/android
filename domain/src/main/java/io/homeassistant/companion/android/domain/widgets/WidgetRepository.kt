@@ -6,7 +6,7 @@ interface WidgetRepository {
         appWidgetId: Int,
         domainStr: String,
         serviceStr: String,
-        serviceDataStr: String
+        entityIdStr: String?
     )
 
     suspend fun loadDomain(appWidgetId: Int): String?
