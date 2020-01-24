@@ -63,7 +63,7 @@ object WidgetUseCaseImplSpec : Spek({
 
         describe("load service data") {
             beforeEachTest {
-                runBlocking { useCase.loadServiceData(1) }
+                runBlocking { useCase.loadEntityId(1) }
             }
 
             it("should call the repository") {

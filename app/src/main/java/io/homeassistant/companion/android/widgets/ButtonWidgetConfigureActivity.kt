@@ -47,7 +47,7 @@ class ButtonWidgetConfigureActivity : Activity() {
             services.getItem(context.service.selectedItemPosition)?.service
         )
         intent.putExtra(
-            ButtonWidget.EXTRA_SERVICE_DATA,
+            ButtonWidget.EXTRA_ENTITY_ID,
             entities.getItem(entity_id.selectedItemPosition)?.entityId
         )
         intent.putExtra(
@@ -95,6 +95,7 @@ class ButtonWidgetConfigureActivity : Activity() {
 
             services.addAll(integrationUseCase.getServices().sortedBy { it.domain + it.service })
             entities.addAll(integrationUseCase.getEntities().sortedBy { it.entityId })
+            entities.insert(null, 0)
             runOnUiThread {
                 services.notifyDataSetChanged()
                 entities.notifyDataSetChanged()
