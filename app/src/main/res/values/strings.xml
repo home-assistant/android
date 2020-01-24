@@ -15,7 +15,6 @@ to your home internet.</string>
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>
     <string name="skip">Skip</string>
     <string name="retry">Retry</string>
-    <string name="ok">Ok</string>
     <string name="attempting_registration">Registering application…</string>
     <string name="unable_to_register">Unable to Register Application</string>
     <string name="error_with_registration">Please check to ensure you have the mobile_app

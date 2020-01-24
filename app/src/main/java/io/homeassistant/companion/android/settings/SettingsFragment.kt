@@ -38,7 +38,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 AlertDialog.Builder(activity!!)
                     .setTitle(R.string.url_invalid)
                     .setMessage(R.string.url_parse_error)
-                    .setPositiveButton(R.string.ok) { _, _ -> }
+                    .setPositiveButton(android.R.string.ok) { _, _ -> }
                     .show()
             }
             isValid
