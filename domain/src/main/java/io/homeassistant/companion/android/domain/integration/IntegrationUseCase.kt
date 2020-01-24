@@ -28,5 +28,9 @@ interface IntegrationUseCase {
     suspend fun setBackgroundTrackingEnabled(enabled: Boolean)
     suspend fun isBackgroundTrackingEnabled(): Boolean
 
+    suspend fun getServices(): Array<Service>
+
+    suspend fun getEntities(): Array<Entity<Any>>
+
     suspend fun getThemeColor(): String
 }

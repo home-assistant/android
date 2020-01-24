@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" >
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -10,79 +11,96 @@
         android:padding="16dp">
 
         <TextView
+            style="@style/TextAppearance.HomeAssistant.Headline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/configure_service_call" />
 
-        <com.google.android.material.textfield.TextInputLayout
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
+            android:layout_height="50dp"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/widget_text_config_domain"
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="@string/widget_text_hint_service_domain"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:labelFor="@id/service"
+                android:padding="5dp"
+                android:text="@string/label_service" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/widget_text_config_service"
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/service"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/widget_text_hint_service_service"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/widget_text_config_service_data"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/widget_text_hint_service_data"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_height="wrap_content" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:labelFor="@id/entity_id"
+                android:padding="5dp"
+                android:text="@string/label_entity_id" />
+
+            <androidx.appcompat.widget.AppCompatSpinner
+                android:id="@+id/entity_id"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:text="Icon:" />
+                android:padding="5dp"
+                android:text="@string/label_icon" />
 
             <Spinner
                 android:id="@+id/widget_config_spinner"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/widget_text_config_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/widget_text_hint_label"
-                android:inputType="text" />
-        </com.google.android.material.textfield.TextInputLayout>
+                tools:listitem="@layout/widget_image_spinner" />
+        </LinearLayout>
 
-        <Button
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:text="@string/label_label" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+        </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/add_button"
+            style="@style/Widget.HomeAssistant.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="end"
             android:layout_marginTop="8dp"
             android:text="@string/add_widget" />
 

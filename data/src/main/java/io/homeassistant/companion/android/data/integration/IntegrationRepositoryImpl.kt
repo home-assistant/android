@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationRe
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
+import io.homeassistant.companion.android.domain.integration.Service
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import io.homeassistant.companion.android.domain.integration.ZoneAttributes
 import io.homeassistant.companion.android.domain.url.UrlRepository
@@ -198,6 +199,31 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
 
         throw IntegrationException()
+    }
+
+    override suspend fun getServices(): Array<Service> {
+        val response = integrationService.getServices(authenticationRepository.buildBearerToken())
+
+        return response.flatMap {
+            it.services.map { service ->
+                Service(it.domain, service.key)
+            }
+        }.toTypedArray()
+    }
+
+    override suspend fun getEntities(): Array<Entity<Any>> {
+        val response = integrationService.getStates(authenticationRepository.buildBearerToken())
+
+        return response.map {
+            Entity(
+                it.entityId,
+                it.state,
+                it.attributes,
+                it.lastChanged,
+                it.lastUpdated,
+                it.context
+            )
+        }.toTypedArray()
     }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
