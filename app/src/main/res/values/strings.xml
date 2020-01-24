@@ -42,7 +42,6 @@ integration enabled on your home assistant instance.</string>
     <string name="failed_scan">Scanning for Home Assistant failed.</string>
     <string name="widget_image_description">Home Assistant Widget</string>
     <string name="configure_service_call">Configure Service Call</string>
-    <string name="configure_widget_label">Widget Label</string>
     <string name="add_widget">Add widget</string>
     <string name="label_service">Service:</string>
     <string name="label_entity_id">Entity ID:</string>

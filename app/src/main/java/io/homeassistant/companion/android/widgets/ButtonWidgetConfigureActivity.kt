@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Service
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_button_configure.*
-import kotlinx.android.synthetic.main.widget_button_configure.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -93,8 +92,9 @@ class ButtonWidgetConfigureActivity : Activity() {
         entity_id.adapter = entities
 
         mainScope.launch {
-            services.addAll(integrationUseCase.getServices().toList())
-            entities.addAll(integrationUseCase.getEntities().toList())
+
+            services.addAll(integrationUseCase.getServices().sortedBy { it.domain+it.service })
+            entities.addAll(integrationUseCase.getEntities().sortedBy { it.entityId })
             runOnUiThread {
                 services.notifyDataSetChanged()
                 entities.notifyDataSetChanged()
