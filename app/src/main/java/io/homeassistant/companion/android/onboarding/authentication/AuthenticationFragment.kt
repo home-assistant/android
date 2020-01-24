@@ -94,7 +94,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     override fun showError() {
         AlertDialog.Builder(context)
             .setTitle(R.string.error_connection_failed)
-            .setPositiveButton(R.string.ok) { _, _ -> }
+            .setPositiveButton(android.R.string.ok) { _, _ -> }
             .show()
         fragmentManager?.popBackStack()
     }

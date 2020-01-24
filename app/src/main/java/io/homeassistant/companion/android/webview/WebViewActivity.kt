@@ -289,7 +289,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         AlertDialog.Builder(this)
             .setTitle(R.string.error_connection_failed)
             .setMessage(if (isAuthenticationError) R.string.error_auth_revoked else R.string.webview_error)
-            .setPositiveButton(R.string.ok) { _, _ ->
+            .setPositiveButton(android.R.string.ok) { _, _ ->
                 if (isAuthenticationError) {
                     presenter.clearKnownUrls()
                     openOnBoarding()
