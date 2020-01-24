@@ -6,11 +6,30 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Spinner
+import android.widget.ArrayAdapter
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.domain.integration.Entity
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.domain.integration.Service
+import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_button_configure.*
+import kotlinx.android.synthetic.main.widget_button_configure.view.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class ButtonWidgetConfigureActivity : Activity() {
+    @Inject
+    lateinit var integrationUseCase: IntegrationUseCase
+
+    private lateinit var services: ArrayAdapter<Service>
+    private lateinit var entities: ArrayAdapter<Entity<Any>>
+
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
     private var onClickListener = View.OnClickListener {
@@ -22,19 +41,19 @@ class ButtonWidgetConfigureActivity : Activity() {
         intent.component = ComponentName(context, ButtonWidget::class.java)
         intent.putExtra(
             ButtonWidget.EXTRA_DOMAIN,
-            context.widget_text_config_domain.text.toString()
+            services.getItem(context.service.selectedItemPosition)?.domain
         )
         intent.putExtra(
             ButtonWidget.EXTRA_SERVICE,
-            context.widget_text_config_service.text.toString()
+            services.getItem(context.service.selectedItemPosition)?.service
         )
         intent.putExtra(
             ButtonWidget.EXTRA_SERVICE_DATA,
-            context.widget_text_config_service_data.text.toString()
+            entities.getItem(entity_id.selectedItemPosition)?.entityId
         )
         intent.putExtra(
             ButtonWidget.EXTRA_LABEL,
-            context.widget_text_config_label.text.toString()
+            label.text.toString()
         )
         intent.putExtra(
             ButtonWidget.EXTRA_ICON,
@@ -51,12 +70,38 @@ class ButtonWidgetConfigureActivity : Activity() {
     public override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
 
+        DaggerProviderComponent
+            .builder()
+            .appComponent((application as GraphComponentAccessor).appComponent)
+            .build()
+            .inject(this)
+
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
         setContentView(R.layout.widget_button_configure)
-        findViewById<View>(R.id.add_button).setOnClickListener(onClickListener)
+
+        services = SingleItemArrayAdapter(this) {
+            if (it != null) "${it.domain}.${it.service}" else ""
+        }
+        service.adapter = services
+
+        entities = SingleItemArrayAdapter(this) {
+            it?.entityId ?: ""
+        }
+        entity_id.adapter = entities
+
+        mainScope.launch {
+            services.addAll(integrationUseCase.getServices().toList())
+            entities.addAll(integrationUseCase.getEntities().toList())
+            runOnUiThread {
+                services.notifyDataSetChanged()
+                entities.notifyDataSetChanged()
+            }
+        }
+
+        add_button.setOnClickListener(onClickListener)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -81,7 +126,11 @@ class ButtonWidgetConfigureActivity : Activity() {
             R.drawable.ic_power_settings_new_black_24dp
         )
 
-        findViewById<Spinner>(R.id.widget_config_spinner).adapter =
-            ButtonWidgetConfigSpinnerAdaptor(this, icons)
+        widget_config_spinner.adapter = ButtonWidgetConfigSpinnerAdaptor(this, icons)
+    }
+
+    override fun onDestroy() {
+        mainScope.cancel()
+        super.onDestroy()
     }
 }
