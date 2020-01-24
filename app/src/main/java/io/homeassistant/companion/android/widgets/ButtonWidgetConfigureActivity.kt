@@ -93,7 +93,7 @@ class ButtonWidgetConfigureActivity : Activity() {
 
         mainScope.launch {
 
-            services.addAll(integrationUseCase.getServices().sortedBy { it.domain+it.service })
+            services.addAll(integrationUseCase.getServices().sortedBy { it.domain + it.service })
             entities.addAll(integrationUseCase.getEntities().sortedBy { it.entityId })
             runOnUiThread {
                 services.notifyDataSetChanged()
