@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
@@ -88,6 +89,12 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.launch {
             urlUseCase.saveUrl("", true)
             urlUseCase.saveUrl("", false)
+        }
+    }
+
+    override fun isFullScreen(): Boolean {
+        return runBlocking {
+            integrationUseCase.isFullScreenEnabled()
         }
     }
 
