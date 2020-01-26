@@ -41,6 +41,7 @@
         android:title="@string/other_settings">
         <SwitchPreference
             android:key="fullscreen"
+            android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
     </PreferenceCategory>
