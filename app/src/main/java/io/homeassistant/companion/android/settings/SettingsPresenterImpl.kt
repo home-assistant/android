@@ -43,7 +43,8 @@ class SettingsPresenterImpl @Inject constructor(
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
                 else -> throw Exception()
             }
-            settingsView.onLocationSettingChanged()
+            if (key == "location_zone" || key == "location_background")
+                settingsView.onLocationSettingChanged()
         }
     }
 
