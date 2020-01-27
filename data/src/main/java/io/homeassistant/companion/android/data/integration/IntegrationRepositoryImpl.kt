@@ -38,6 +38,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_ZONE_ENABLED = "zone_enabled"
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
+        private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -182,6 +183,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isBackgroundTrackingEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
+    }
+
+    override suspend fun setFullScreenEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
+    }
+
+    override suspend fun isFullScreenEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
     }
 
     override suspend fun getThemeColor(): String {

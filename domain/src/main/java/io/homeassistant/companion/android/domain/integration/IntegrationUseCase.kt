@@ -28,6 +28,9 @@ interface IntegrationUseCase {
     suspend fun setBackgroundTrackingEnabled(enabled: Boolean)
     suspend fun isBackgroundTrackingEnabled(): Boolean
 
+    suspend fun setFullScreenEnabled(enabled: Boolean)
+    suspend fun isFullScreenEnabled(): Boolean
+
     suspend fun getServices(): Array<Service>
 
     suspend fun getEntities(): Array<Entity<Any>>
