@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="app_name">Home Assistant</string>
+    <string name="scanning_network">Söker efter Home Assistant</string>
+    <string name="home_assistant_not_discover">Det gick inte att hitta din \n Home Assistant instans</string>
+    <string name="connect_to_home_internet">Se till att din telefon är ansluten \n till ditt hemnätverk.</string>
+    <string name="scan_again">sök igen</string>
+    <string name="manual_setup">Ange adress manuellt</string>
+    <string name="input_url">Home Assistant URL</string>
+    <string name="input_url_hint">https://example.duckdns.org:8123</string>
+    <string name="status_of_mobile_app_integration">Status för mobilappsintegrering:</string>
+    <string name="checking_with_home_assistant">Kontrollerar med Home Assistant</string>
+    <string name="skip">Hoppa över</string>
+    <string name="retry">Försök igen</string>
+    <string name="attempting_registration">Registrerar app…</string>
+    <string name="unable_to_register">Det gick inte att registrera Appen</string>
+    <string name="error_with_registration">Kontrollera att du har mobilen_app \n integration aktiverad i din Home Assistant instans.</string>
+    <string name="url_parse_error">Det gick inte att tolka din Home Assistant URL. Den ska se ut som https://example.com</string>
+    <string name="pref_location_zone_title">Zonbaserad spårning</string>
+    <string name="pref_location_zone_summary">Importera befintliga Home Assistant zoner som geofences för zonbaserad spårning.</string>
+    <string name="pref_location_background_title">Platsspårning i bakgrunden</string>
+    <string name="pref_location_background_summary">Uppdatera din plats i bakgrunden med jämna mellanrum.</string>
+    <string name="application_version">Appversion</string>
+    <string name="location">Position</string>
+    <string name="app_version_info">Appversionsinformation</string>
+    <string name="device_registration">Enhetsregistrering</string>
+    <string name="device_name">Enhets-ID</string>
+    <string name="ok">Ok</string>
+    <string name="error_onboarding_connection_failed">Kunde inte ansluta till Home Assistant</string>
+    <string name="error_connection_failed">Kunde inte ansluta till Home Assistant</string>
+    <string name="webview_error">Det uppstod ett fel vid anslutningen av Home Assistant, granska anslutningsinställningarna och försök igen.</string>
+    <string name="pref_connection_title">Anslutningsinformation</string>
+    <string name="pref_connection_url">Home Assistant URL</string>
+    <string name="pref_connection_wifi">Hemnätverk WiFi SSID</string>
+    <string name="pref_connection_internal">Intern URL</string>
+    <string name="url_invalid">Ogiltig URL</string>
+    <string name="fullscreen_def">Sätt applikationen i helskärm</string>
+</resources>

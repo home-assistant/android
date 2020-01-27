@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
     <string name="app_name">Home Assistant</string>
-    <string name="scanning_network">Ricerca Home Assistant in corso.
-Scansione della rete</string>
-    <string name="home_assistant_not_discover">Impossibile trovate 
-il tuo Home Assistant</string>
-    <string name="connect_to_home_internet">Assicurati che il telefono sia collegato 
-a Internet di casa tua.</string>
+    <string name="scanning_network">Ricerca Home Assistant in corso.\nScansione della rete</string>
+    <string name="home_assistant_not_discover">Impossibile trovate \nil tuo Home Assistant</string>
+    <string name="connect_to_home_internet">Assicurati che il telefono sia collegato \na Internet di casa tua.</string>
     <string name="scan_again">Cerca di nuovo</string>
     <string name="manual_setup">inserisci l\'indirizzo manualmente</string>
     <string name="input_url">URL Home Assistant</string>
@@ -15,14 +12,50 @@ a Internet di casa tua.</string>
     <string name="checking_with_home_assistant">Verifica Home Assistant in corso</string>
     <string name="skip">Salta</string>
     <string name="retry">Riprova</string>
-    <string name="attempting_registration">Tentativo di registrazione dell\'applicazione...</string>
+    <string name="attempting_registration">Registrazione dell\'applicazione in corso…</string>
     <string name="unable_to_register">Impossibile registrare l\'applicazione</string>
-    <string name="error_with_registration">Varifica di avere l\'integrazione mobile_app abilitata 
-sul tuo home assistant.</string>
+    <string name="error_with_registration">Verifica di avere l\'integrazione mobile_app abilitata \nsulla tua istanza di Home Assistant.</string>
     <string name="url_parse_error">Impossibile analizzare l\'URL di Home Assistant. Dovrebbe somigliare a https://esempio.com</string>
-    <string name="pref_location_zone_title">Zone Based Tracking</string>
-    <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
-    <string name="pref_location_background_title">Background Location Tracking</string>
-    <string name="pref_location_background_summary">Update your location behind the scenes, periodically.</string>
-    <string name="application_version">Application Version</string>
+    <string name="pref_location_zone_title">Tracciamento basato sulla zona</string>
+    <string name="pref_location_zone_summary">Importa le zone di Home Assistant esistenti come geofence per il monitoraggio basato sulle zone.</string>
+    <string name="pref_location_background_title">Tracciamento della posizione in background</string>
+    <string name="pref_location_background_summary">Aggiorna la tua posizione dietro le quinte, periodicamente.</string>
+    <string name="application_version">Versione dell\'applicazione</string>
+    <string name="location">Posizione</string>
+    <string name="app_version_info">Informazioni sulla versione dell\'app</string>
+    <string name="device_registration">Registrazione del dispositivo</string>
+    <string name="device_name">Nome del dispositivo</string>
+    <string name="ok">Ok</string>
+    <string name="error_onboarding_connection_failed">Impossibile connettersi a Home Assistant.</string>
+    <string name="error_connection_failed">Impossibile connettersi a Home Assistant.</string>
+    <string name="webview_error">Si è verificato un errore durante il caricamento di Home Assistant, rivedere le impostazioni di connessione e riprovare.</string>
+    <string name="pref_connection_title">Informazioni sulla connessione</string>
+    <string name="pref_connection_url">URL di Home Assistant</string>
+    <string name="pref_connection_wifi">SSID WiFi della rete domestica</string>
+    <string name="pref_connection_internal">URL di connessione interno</string>
+    <string name="url_invalid">URL non valido</string>
+    <string name="error_auth_revoked">Sembra che la tua autorizzazione sia stata revocata, si prega di riconnettersi a Home Assistant.</string>
+    <string name="select_instance">Seleziona l\'istanza alla quale vorresti connetterti:</string>
+    <string name="failed_scan">Scansione per Home Assistant non riuscita.</string>
+    <string name="widget_image_description">Home Assistant Widget</string>
+    <string name="configure_service_call">Configurare la Chiamata del Servizio</string>
+    <string name="configure_widget_label">Etichetta Widget</string>
+    <string name="add_widget">Aggiungi Widget</string>
+    <string name="widget_text_hint_service_domain">Dominio</string>
+    <string name="widget_text_hint_service_service">Servizio</string>
+    <string name="widget_text_hint_service_data">ID Entità</string>
+    <string name="widget_text_hint_label">Etichetta</string>
+    <string name="widget_label_placeholder_text">Etichetta</string>
+    <string name="widget_spinner_icon">Icona:</string>
+    <string name="connected_to_home_assistant">Connesso a Home Assistant</string>
+    <string name="permission_explanation">Per poter utilizzare funzioni di localizzazione o diversi URL di connessione basati su SSID WiFi abbiamo bisogno di accedere alla tua posizione. Se si desiderano aggiornamenti in background coerenti, sarà necessario consentire anche l\'elaborazione in background</string>
+    <string name="grant_permission">Concedere l\'Autorizzazione</string>
+    <string name="finish">Fine</string>
+    <string name="other_settings">Altre impostazioni</string>
+    <string name="fullscreen">A schermo intero</string>
+    <string name="fullscreen_def">Metti l\'applicazione a schermo intero</string>
+    <string name="label_service">Servizio:</string>
+    <string name="label_entity_id">ID Entità:</string>
+    <string name="label_label">Etichetta:</string>
+    <string name="label_icon">Icona:</string>
 </resources>
