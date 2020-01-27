@@ -21,6 +21,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
 import io.homeassistant.companion.android.BuildConfig
@@ -232,6 +233,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0)
                 if (presenter.isFullScreen())
                     hideSystemUI()
+        }
+        val swipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
+        swipeRefresh.setOnRefreshListener {
+            swipeRefresh.isRefreshing = false
+            if(::loadedUrl.isInitialized)
+                loadUrl(loadedUrl)
         }
     }
 
