@@ -12,7 +12,7 @@
     <string name="checking_with_home_assistant">Salīdzina datus ar Home Assistant</string>
     <string name="skip">Izlaist</string>
     <string name="retry">Mēģināt vēlreiz</string>
-    <string name="attempting_registration">Notiek aplikācijas reģistrēšana...</string>
+    <string name="attempting_registration">Notiek aplikācijas reģistrēšana…</string>
     <string name="unable_to_register">Nevarēja reģistrēt aplikācjiu</string>
     <string name="error_with_registration">Lūdzu pārbaudiet, vai \"mobile_app\" integrācija ir iespējota Jūsu Home Assistant servera konfigurācijā.</string>
     <string name="url_parse_error">Nevarēja apstrādāt Jūsu Home Assistant URL. URL būtu jāizskatās šādi: https://example.com</string>
@@ -21,4 +21,21 @@
     <string name="pref_location_background_title">Fona atrašanās vietas noteikšana</string>
     <string name="pref_location_background_summary">Periodiska atrašanās vietas atjaunošana fonā</string>
     <string name="application_version">Aplikācijas versija</string>
+    <string name="location">Atrašanās vieta</string>
+    <string name="app_version_info">Informācija par lietotnes versiju</string>
+    <string name="device_registration">Ierīces reģistrācija</string>
+    <string name="device_name">Ierīces nosaukums</string>
+    <string name="ok">Ok</string>
+    <string name="error_onboarding_connection_failed">Nevarēja pieslēgties Jūsu Home Assistant serverim</string>
+    <string name="error_connection_failed">Nevarēja pieslēgties Jūsu Home Assistant serverim</string>
+    <string name="webview_error">Ielādējot Home Assistant, radās kļūda. Lūdzu pārskatiet savienojuma iestatījumus un mēģiniet vēlreiz.</string>
+    <string name="pref_connection_title">Informācija par savienojumu</string>
+    <string name="pref_connection_url">Home Assistant URL</string>
+    <string name="pref_connection_wifi">Mājas tīkla WiFi SSID</string>
+    <string name="pref_connection_internal">Iekšējā savienojuma URL</string>
+    <string name="url_invalid">URL nav derīgs</string>
+    <string name="error_auth_revoked">Izskatās, ka jūsu autorizācija ir atsaukta, lūdzu atkārtoti izveidojiet savienojumu ar Home Assistant.</string>
+    <string name="select_instance">Atlasiet instanci, ar kuru vēlaties izveidot savienojumu:</string>
+    <string name="failed_scan">Neizdevās atrast Home Assistant serveri jūsu tīklā.</string>
+    <string name="fullscreen_def">Ielieciet lietojumprogrammu pilnekrāna režīmā</string>
 </resources>
