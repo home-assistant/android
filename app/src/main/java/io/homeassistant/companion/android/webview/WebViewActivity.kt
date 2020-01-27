@@ -237,7 +237,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         val swipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipe_refresh)
         swipeRefresh.setOnRefreshListener {
             swipeRefresh.isRefreshing = false
-            if(::loadedUrl.isInitialized)
+            if (::loadedUrl.isInitialized)
                 loadUrl(loadedUrl)
         }
     }
