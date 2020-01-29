@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.data.integration
+package io.homeassistant.companion.android.data.integration.entities
 
 import java.util.Calendar
 

@@ -1,6 +1,11 @@
 package io.homeassistant.companion.android.data.integration
 
 import io.homeassistant.companion.android.data.LocalStorage
+import io.homeassistant.companion.android.data.integration.entities.EntityResponse
+import io.homeassistant.companion.android.data.integration.entities.IntegrationRequest
+import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceRequest
+import io.homeassistant.companion.android.data.integration.entities.ServiceCallRequest
+import io.homeassistant.companion.android.data.integration.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.Entity
@@ -53,22 +58,23 @@ object IntegrationRepositoryImplSpec : Spek({
                     "deviceName",
                     "pushToken"
                 )
-                val registerDeviceRequest = RegisterDeviceRequest(
-                    "io.homeassistant.companion.android",
-                    "Home Assistant",
-                    deviceRegistration.appVersion,
-                    deviceRegistration.deviceName,
-                    "manufacturer",
-                    "model",
-                    "Android",
-                    "osVersion",
-                    false,
-                    hashMapOf(
-                        "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
-                        "push_token" to (deviceRegistration.pushToken ?: "push_token")
-                    ),
-                    "deviceId"
-                )
+                val registerDeviceRequest =
+                    RegisterDeviceRequest(
+                        "io.homeassistant.companion.android",
+                        "Home Assistant",
+                        deviceRegistration.appVersion,
+                        deviceRegistration.deviceName,
+                        "manufacturer",
+                        "model",
+                        "Android",
+                        "osVersion",
+                        false,
+                        hashMapOf(
+                            "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
+                            "push_token" to (deviceRegistration.pushToken ?: "push_token")
+                        ),
+                        "deviceId"
+                    )
 
                 coEvery { localStorage.getString("app_version") } returns "app_version"
                 coEvery { localStorage.getString("device_name") } returns "device_name"
@@ -120,22 +126,23 @@ object IntegrationRepositoryImplSpec : Spek({
                     "deviceName",
                     "pushToken"
                 )
-                val registerDeviceRequest = RegisterDeviceRequest(
-                    "io.homeassistant.companion.android",
-                    "Home Assistant",
-                    deviceRegistration.appVersion,
-                    deviceRegistration.deviceName,
-                    "manufacturer",
-                    "model",
-                    "Android",
-                    "osVersion",
-                    false,
-                    hashMapOf(
-                        "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
-                        "push_token" to (deviceRegistration.pushToken ?: "push_token")
-                    ),
-                    null
-                )
+                val registerDeviceRequest =
+                    RegisterDeviceRequest(
+                        "io.homeassistant.companion.android",
+                        "Home Assistant",
+                        deviceRegistration.appVersion,
+                        deviceRegistration.deviceName,
+                        "manufacturer",
+                        "model",
+                        "Android",
+                        "osVersion",
+                        false,
+                        hashMapOf(
+                            "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
+                            "push_token" to (deviceRegistration.pushToken ?: "push_token")
+                        ),
+                        null
+                    )
 
                 coEvery { localStorage.getString("app_version") } returns "app_version"
                 coEvery { localStorage.getString("device_name") } returns "device_name"
@@ -182,25 +189,31 @@ object IntegrationRepositoryImplSpec : Spek({
                 "deviceName",
                 "pushToken"
             )
-            val registerDeviceRequest = RegisterDeviceRequest(
-                null,
-                null,
-                deviceRegistration.appVersion,
-                deviceRegistration.deviceName,
-                "manufacturer",
-                "model",
-                null,
-                "osVersion",
-                null,
-                hashMapOf(
-                    "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
-                    "push_token" to (deviceRegistration.pushToken ?: "push_token")
-                ),
-                null
-            )
+            val registerDeviceRequest =
+                RegisterDeviceRequest(
+                    null,
+                    null,
+                    deviceRegistration.appVersion,
+                    deviceRegistration.deviceName,
+                    "manufacturer",
+                    "model",
+                    null,
+                    "osVersion",
+                    null,
+                    hashMapOf(
+                        "push_url" to "https://mobile-apps.home-assistant.io/api/sendPushNotification",
+                        "push_token" to (deviceRegistration.pushToken ?: "push_token")
+                    ),
+                    null
+                )
             beforeEachTest {
                 coEvery {
-                    integrationService.updateRegistration(any(), IntegrationRequest("update_registration", registerDeviceRequest))
+                    integrationService.updateRegistration(any(),
+                        IntegrationRequest(
+                            "update_registration",
+                            registerDeviceRequest
+                        )
+                    )
                 } returns Response.success(null)
 
                 coEvery { urlRepository.getApiUrls() } returns arrayOf(
@@ -222,7 +235,11 @@ object IntegrationRepositoryImplSpec : Spek({
                 coVerify {
                     integrationService.updateRegistration(
                         "http://best.com/hook/id".toHttpUrl(),
-                        IntegrationRequest("update_registration", registerDeviceRequest))
+                        IntegrationRequest(
+                            "update_registration",
+                            registerDeviceRequest
+                        )
+                    )
                 }
             }
 
@@ -282,19 +299,20 @@ object IntegrationRepositoryImplSpec : Spek({
                     4,
                     5
                 )
-                val integrationRequest = IntegrationRequest(
-                    "update_location",
-                    UpdateLocationRequest(
-                        location.locationName,
-                        location.gps,
-                        location.gpsAccuracy,
-                        location.battery,
-                        location.speed,
-                        location.altitude,
-                        location.course,
-                        location.verticalAccuracy
+                val integrationRequest =
+                    IntegrationRequest(
+                        "update_location",
+                        UpdateLocationRequest(
+                            location.locationName,
+                            location.gps,
+                            location.gpsAccuracy,
+                            location.battery,
+                            location.speed,
+                            location.altitude,
+                            location.course,
+                            location.verticalAccuracy
+                        )
                     )
-                )
                 beforeEachTest {
                     coEvery { urlRepository.getApiUrls() } returns arrayOf(
                         URL("http://best.com/hook/id"),
@@ -331,19 +349,20 @@ object IntegrationRepositoryImplSpec : Spek({
                     4,
                     5
                 )
-                val integrationRequest = IntegrationRequest(
-                    "update_location",
-                    UpdateLocationRequest(
-                        location.locationName,
-                        location.gps,
-                        location.gpsAccuracy,
-                        location.battery,
-                        location.speed,
-                        location.altitude,
-                        location.course,
-                        location.verticalAccuracy
+                val integrationRequest =
+                    IntegrationRequest(
+                        "update_location",
+                        UpdateLocationRequest(
+                            location.locationName,
+                            location.gps,
+                            location.gpsAccuracy,
+                            location.battery,
+                            location.speed,
+                            location.altitude,
+                            location.course,
+                            location.verticalAccuracy
+                        )
                     )
-                )
                 beforeEachTest {
                     coEvery { urlRepository.getApiUrls() } returns arrayOf(
                         URL("http://better.com/api/webhook/FGHIJ"),
@@ -379,19 +398,20 @@ object IntegrationRepositoryImplSpec : Spek({
                     4,
                     5
                 )
-                val integrationRequest = IntegrationRequest(
-                    "update_location",
-                    UpdateLocationRequest(
-                        location.locationName,
-                        location.gps,
-                        location.gpsAccuracy,
-                        location.battery,
-                        location.speed,
-                        location.altitude,
-                        location.course,
-                        location.verticalAccuracy
+                val integrationRequest =
+                    IntegrationRequest(
+                        "update_location",
+                        UpdateLocationRequest(
+                            location.locationName,
+                            location.gps,
+                            location.gpsAccuracy,
+                            location.battery,
+                            location.speed,
+                            location.altitude,
+                            location.course,
+                            location.verticalAccuracy
+                        )
                     )
-                )
                 beforeEachTest {
                     coEvery { urlRepository.getApiUrls() } returns arrayOf(
                         URL("http://example.com/api/webhook/FGHIJ")
@@ -426,19 +446,20 @@ object IntegrationRepositoryImplSpec : Spek({
                     4,
                     5
                 )
-                val integrationRequest = IntegrationRequest(
-                    "update_location",
-                    UpdateLocationRequest(
-                        location.locationName,
-                        location.gps,
-                        location.gpsAccuracy,
-                        location.battery,
-                        location.speed,
-                        location.altitude,
-                        location.course,
-                        location.verticalAccuracy
+                val integrationRequest =
+                    IntegrationRequest(
+                        "update_location",
+                        UpdateLocationRequest(
+                            location.locationName,
+                            location.gps,
+                            location.gpsAccuracy,
+                            location.battery,
+                            location.speed,
+                            location.altitude,
+                            location.course,
+                            location.verticalAccuracy
+                        )
                     )
-                )
 
                 beforeEachTest {
                     coEvery { urlRepository.getApiUrls() } returns arrayOf(
@@ -539,16 +560,18 @@ object IntegrationRepositoryImplSpec : Spek({
                 val service = "toggle"
                 val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
 
-                val serviceCallRequest = ServiceCallRequest(
-                    domain,
-                    service,
-                    serviceDataMap
-                )
+                val serviceCallRequest =
+                    ServiceCallRequest(
+                        domain,
+                        service,
+                        serviceDataMap
+                    )
 
-                val integrationRequest = IntegrationRequest(
-                    "call_service",
-                    serviceCallRequest
-                )
+                val integrationRequest =
+                    IntegrationRequest(
+                        "call_service",
+                        serviceCallRequest
+                    )
 
                 beforeEachTest {
                     coEvery { urlRepository.getApiUrls() } returns arrayOf(
@@ -580,16 +603,18 @@ object IntegrationRepositoryImplSpec : Spek({
                 val service = "toggle"
                 val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
 
-                val serviceCallRequest = ServiceCallRequest(
-                    domain,
-                    service,
-                    serviceDataMap
-                )
+                val serviceCallRequest =
+                    ServiceCallRequest(
+                        domain,
+                        service,
+                        serviceDataMap
+                    )
 
-                val integrationRequest = IntegrationRequest(
-                    "call_service",
-                    serviceCallRequest
-                )
+                val integrationRequest =
+                    IntegrationRequest(
+                        "call_service",
+                        serviceCallRequest
+                    )
 
                 beforeEachTest {
                     coEvery { urlRepository.getApiUrls() } returns arrayOf(
@@ -620,16 +645,18 @@ object IntegrationRepositoryImplSpec : Spek({
                 val service = "toggle"
                 val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
 
-                val serviceCallRequest = ServiceCallRequest(
-                    domain,
-                    service,
-                    serviceDataMap
-                )
+                val serviceCallRequest =
+                    ServiceCallRequest(
+                        domain,
+                        service,
+                        serviceDataMap
+                    )
 
-                val integrationRequest = IntegrationRequest(
-                    "call_service",
-                    serviceCallRequest
-                )
+                val integrationRequest =
+                    IntegrationRequest(
+                        "call_service",
+                        serviceCallRequest
+                    )
 
                 beforeEachTest {
                     coEvery { urlRepository.getApiUrls() } returns arrayOf(
@@ -659,16 +686,18 @@ object IntegrationRepositoryImplSpec : Spek({
                 val service = "toggle"
                 val serviceDataMap = hashMapOf<String, Any>("entity_id" to "light.dummy_light")
 
-                val serviceCallRequest = ServiceCallRequest(
-                    domain,
-                    service,
-                    serviceDataMap
-                )
+                val serviceCallRequest =
+                    ServiceCallRequest(
+                        domain,
+                        service,
+                        serviceDataMap
+                    )
 
-                val integrationRequest = IntegrationRequest(
-                    "call_service",
-                    serviceCallRequest
-                )
+                val integrationRequest =
+                    IntegrationRequest(
+                        "call_service",
+                        serviceCallRequest
+                    )
 
                 beforeEachTest {
                     coEvery { urlRepository.getApiUrls() } returns arrayOf(
@@ -772,21 +801,22 @@ object IntegrationRepositoryImplSpec : Spek({
                 coEvery { localStorage.getString("webhook_id") } returns "FGHIJ"
             }
             describe("getZones") {
-                val entities = EntityResponse(
-                    "entityId",
-                    "state",
-                    ZoneAttributes(
-                        false,
-                        0.0,
-                        1.1,
-                        2.2F,
-                        "fName",
-                        "icon"
-                    ),
-                    Calendar.getInstance(),
-                    Calendar.getInstance(),
-                    HashMap()
-                )
+                val entities =
+                    EntityResponse(
+                        "entityId",
+                        "state",
+                        ZoneAttributes(
+                            false,
+                            0.0,
+                            1.1,
+                            2.2F,
+                            "fName",
+                            "icon"
+                        ),
+                        Calendar.getInstance(),
+                        Calendar.getInstance(),
+                        HashMap()
+                    )
                 var zones: Array<Entity<ZoneAttributes>>? = null
                 beforeEachTest {
                     coEvery { integrationService.getZones(any(), any()) } returns arrayOf(entities)
