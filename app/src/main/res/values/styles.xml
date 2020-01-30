@@ -6,7 +6,6 @@
         <item name="colorAccent">@color/colorAccent</item>
         <item name="colorButtonNormal">@color/colorPrimary</item>
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
-        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="27">shortEdges</item>
     </style>
 
     <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.MaterialComponents.Headline1">
