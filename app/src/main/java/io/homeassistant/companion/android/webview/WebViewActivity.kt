@@ -345,7 +345,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     @TargetApi(28)
     private fun isCutout(): Boolean {
         var cutout = false
-        if (window.decorView.rootWindowInsets.displayCutout != null)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && window.decorView.rootWindowInsets.displayCutout != null)
             cutout = true
         return cutout
     }
