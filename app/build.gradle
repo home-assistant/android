@@ -101,7 +101,7 @@ dependencies {
 
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
 
-    implementation('com.lokalise.android:sdk:2.0.0-beta-4') { transitive = true }
+    implementation('com.lokalise.android:sdk:2.0.0-beta-5')
 
     implementation 'com.google.android.gms:play-services-location:17.0.0'
     implementation "com.google.firebase:firebase-core:17.2.2"
