@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.content.Context
 import android.content.Intent
 import android.net.http.SslError
