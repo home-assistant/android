@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
+import android.annotation.TargetApi
 import android.content.Context
 import android.content.Intent
 import android.net.http.SslError
@@ -247,12 +248,16 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun hideSystemUI() {
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN
-                or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+        if (Build.VERSION.SDK_INT >= 28 && isCutout())
+            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+        else
+            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
     }
 
     private fun showSystemUI() {
@@ -335,5 +340,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
+    }
+
+    @TargetApi(28)
+    private fun isCutout(): Boolean {
+        var cutout = false
+        if (window.decorView.rootWindowInsets.displayCutout != null)
+            cutout = true
+        return cutout
     }
 }
