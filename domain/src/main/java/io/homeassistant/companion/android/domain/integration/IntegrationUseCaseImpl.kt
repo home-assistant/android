@@ -44,6 +44,10 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.callService(domain, service, serviceData)
     }
 
+    override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
+        return integrationRepository.fireEvent(eventType, eventData)
+    }
+
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
         return integrationRepository.getZones()
     }

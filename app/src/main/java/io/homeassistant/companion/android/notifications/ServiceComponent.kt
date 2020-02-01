@@ -7,4 +7,6 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 interface ServiceComponent {
 
     fun inject(service: MessagingService)
+
+    fun inject(receiver: NotificationActionReceiver)
 }

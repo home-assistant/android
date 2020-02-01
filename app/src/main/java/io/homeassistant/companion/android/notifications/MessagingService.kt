@@ -44,14 +44,25 @@ class MessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d(TAG, "From: ${remoteMessage.from}")
 
+        val actions = ArrayList<NotificationAction>()
         // Check if message contains a data payload.
-        remoteMessage.data.isNotEmpty().let {
+        remoteMessage.data.let {
             Log.d(TAG, "Message data payload: " + remoteMessage.data)
+            for(i in 1..3) {
+                if (it.containsKey("action_${i}_key")) {
+                    actions.add(
+                        NotificationAction(
+                            it["action_${i}_key"]!!,
+                            it["action_${i}_title"].toString()
+                        )
+                    )
+                }
+            }
         }
 
         remoteMessage.notification?.let {
             Log.d(TAG, "Message Notification: ${it.title} -> ${it.body}")
-            sendNotification(it.title, it.body!!)
+            sendNotification(it.title, it.body!!, actions)
         }
     }
 
@@ -60,7 +71,7 @@ class MessagingService : FirebaseMessagingService() {
      *
      * @param messageBody FCM message body received.
      */
-    private fun sendNotification(messageTitle: String?, messageBody: String) {
+    private fun sendNotification(messageTitle: String?, messageBody: String, actions: List<NotificationAction>) {
         val intent = Intent(this, WebViewActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent,
@@ -77,6 +88,16 @@ class MessagingService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)
+//            .addAction(NotificationCompat.Action(0, "", PendingIntent.getBroadcast(applicationContext, 0, Intent())))
+
+        actions.forEach {
+            val actionIntent = Intent(this, NotificationActionReceiver::class.java).apply {
+                action = NotificationActionReceiver.FIRE_EVENT
+                putExtra(NotificationActionReceiver.EXTRA_ACTION_KEY, it.key)
+            }
+            val actionPendingIntent = PendingIntent.getBroadcast(this, it.key.hashCode(), actionIntent, PendingIntent.FLAG_CANCEL_CURRENT)
+            notificationBuilder.addAction(0, it.title, actionPendingIntent)
+        }
 
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 

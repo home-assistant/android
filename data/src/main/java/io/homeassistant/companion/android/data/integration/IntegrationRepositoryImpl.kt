@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.data.integration
 
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.data.integration.entities.EntityResponse
+import io.homeassistant.companion.android.data.integration.entities.FireEventRequest
 import io.homeassistant.companion.android.data.integration.entities.GetConfigResponse
 import io.homeassistant.companion.android.data.integration.entities.IntegrationRequest
 import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceRequest
@@ -153,6 +154,33 @@ class IntegrationRepositoryImpl @Inject constructor(
                         IntegrationRequest(
                             "call_service",
                             serviceCallRequest
+                        )
+                    ).isSuccessful
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+            // if we had a successful call we can return
+            if (wasSuccess)
+                return
+        }
+
+        throw IntegrationException()
+    }
+
+    override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
+        var wasSuccess = false
+
+        val fireEventRequest = FireEventRequest(eventType, eventData)
+
+
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                wasSuccess =
+                    integrationService.fireEvent(
+                        it.toHttpUrlOrNull()!!,
+                        IntegrationRequest(
+                            "fire_event",
+                            fireEventRequest
                         )
                     ).isSuccessful
             } catch (e: Exception) {
