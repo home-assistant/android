@@ -48,12 +48,13 @@ class MessagingService : FirebaseMessagingService() {
         // Check if message contains a data payload.
         remoteMessage.data.let {
             Log.d(TAG, "Message data payload: " + remoteMessage.data)
-            for(i in 1..3) {
+            for (i in 1..3) {
                 if (it.containsKey("action_${i}_key")) {
                     actions.add(
                         NotificationAction(
                             it["action_${i}_key"]!!,
-                            it["action_${i}_title"].toString()
+                            it["action_${i}_title"].toString(),
+                            it
                         )
                     )
                 }
@@ -88,14 +89,19 @@ class MessagingService : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)
-//            .addAction(NotificationCompat.Action(0, "", PendingIntent.getBroadcast(applicationContext, 0, Intent())))
 
         actions.forEach {
             val actionIntent = Intent(this, NotificationActionReceiver::class.java).apply {
                 action = NotificationActionReceiver.FIRE_EVENT
-                putExtra(NotificationActionReceiver.EXTRA_ACTION_KEY, it.key)
+                putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION, it)
             }
-            val actionPendingIntent = PendingIntent.getBroadcast(this, it.key.hashCode(), actionIntent, PendingIntent.FLAG_CANCEL_CURRENT)
+            val actionPendingIntent = PendingIntent.getBroadcast(
+                this,
+                it.key.hashCode(),
+                actionIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT
+            )
+
             notificationBuilder.addAction(0, it.title, actionPendingIntent)
         }
 

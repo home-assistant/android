@@ -5,17 +5,17 @@ import android.content.Context
 import android.content.Intent
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class NotificationActionReceiver : BroadcastReceiver() {
 
     companion object {
         const val FIRE_EVENT = "FIRE_EVENT"
-        const val EXTRA_ACTION_KEY = "EXTRA_ACTION_KEY"
+        const val EXTRA_NOTIFICATION_ACTION = "EXTRA_ACTION_KEY"
     }
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
@@ -29,12 +29,10 @@ class NotificationActionReceiver : BroadcastReceiver() {
             .build()
             .inject(this)
 
-        val actionKey = intent?.getStringExtra(EXTRA_ACTION_KEY) ?: "ANDROID_ACTION_UNKNOWN"
-
-        ioScope.launch {
-            integrationUseCase.fireEvent(actionKey, mapOf())
+        intent?.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)?.let {
+            ioScope.launch {
+                integrationUseCase.fireEvent(it.key, it.data)
+            }
         }
-
     }
-
 }

@@ -172,7 +172,6 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         val fireEventRequest = FireEventRequest(eventType, eventData)
 
-
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
