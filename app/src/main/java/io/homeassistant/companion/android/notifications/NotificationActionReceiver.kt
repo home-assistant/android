@@ -31,7 +31,10 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         intent?.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)?.let {
             ioScope.launch {
-                integrationUseCase.fireEvent(it.key, it.data)
+                integrationUseCase.fireEvent(
+                    "mobile_app_notification_action",
+                    it.data.plus(Pair("action", it.key))
+                )
             }
         }
     }
