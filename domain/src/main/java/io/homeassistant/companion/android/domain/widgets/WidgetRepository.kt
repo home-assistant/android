@@ -6,12 +6,14 @@ interface WidgetRepository {
         appWidgetId: Int,
         domainStr: String,
         serviceStr: String,
-        entityIdStr: String?
+        serviceDataCount: Int,
+        serviceDataArray: Array<String>,
+        serviceFieldArray: Array<String>
     )
 
     suspend fun loadDomain(appWidgetId: Int): String?
     suspend fun loadService(appWidgetId: Int): String?
-    suspend fun loadServiceData(appWidgetId: Int): String?
+    suspend fun loadServiceData(appWidgetId: Int): HashMap<String, Any>?
 
     suspend fun loadIcon(appWidgetId: Int): String?
     suspend fun loadLabel(appWidgetId: Int): String?
