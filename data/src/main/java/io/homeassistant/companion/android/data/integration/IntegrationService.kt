@@ -1,5 +1,12 @@
 package io.homeassistant.companion.android.data.integration
 
+import io.homeassistant.companion.android.data.integration.entities.DiscoveryInfoResponse
+import io.homeassistant.companion.android.data.integration.entities.DomainResponse
+import io.homeassistant.companion.android.data.integration.entities.EntityResponse
+import io.homeassistant.companion.android.data.integration.entities.GetConfigResponse
+import io.homeassistant.companion.android.data.integration.entities.IntegrationRequest
+import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceRequest
+import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceResponse
 import io.homeassistant.companion.android.domain.integration.ZoneAttributes
 import okhttp3.HttpUrl
 import okhttp3.ResponseBody
@@ -47,6 +54,12 @@ interface IntegrationService {
 
     @POST
     suspend fun callService(
+        @Url url: HttpUrl,
+        @Body request: IntegrationRequest
+    ): Response<ResponseBody>
+
+    @POST
+    suspend fun fireEvent(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
     ): Response<ResponseBody>

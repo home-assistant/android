@@ -64,6 +64,11 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".notifications.NotificationActionReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
         <activity android:name=".launch.LaunchActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

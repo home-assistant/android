@@ -1,6 +1,13 @@
 package io.homeassistant.companion.android.data.integration
 
 import io.homeassistant.companion.android.data.LocalStorage
+import io.homeassistant.companion.android.data.integration.entities.EntityResponse
+import io.homeassistant.companion.android.data.integration.entities.FireEventRequest
+import io.homeassistant.companion.android.data.integration.entities.GetConfigResponse
+import io.homeassistant.companion.android.data.integration.entities.IntegrationRequest
+import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceRequest
+import io.homeassistant.companion.android.data.integration.entities.ServiceCallRequest
+import io.homeassistant.companion.android.data.integration.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.Entity
@@ -71,10 +78,11 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
-        val request = IntegrationRequest(
-            "update_registration",
-            createUpdateRegistrationRequest(deviceRegistration)
-        )
+        val request =
+            IntegrationRequest(
+                "update_registration",
+                createUpdateRegistrationRequest(deviceRegistration)
+            )
         for (it in urlRepository.getApiUrls()) {
             try {
                 if (integrationService.updateRegistration(it.toHttpUrlOrNull()!!, request).isSuccessful) {
@@ -131,14 +139,48 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>) {
         var wasSuccess = false
 
-        val serviceCallRequest = ServiceCallRequest(domain, service, serviceData)
+        val serviceCallRequest =
+            ServiceCallRequest(
+                domain,
+                service,
+                serviceData
+            )
 
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
                     integrationService.callService(
                         it.toHttpUrlOrNull()!!,
-                        IntegrationRequest("call_service", serviceCallRequest)
+                        IntegrationRequest(
+                            "call_service",
+                            serviceCallRequest
+                        )
+                    ).isSuccessful
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+            // if we had a successful call we can return
+            if (wasSuccess)
+                return
+        }
+
+        throw IntegrationException()
+    }
+
+    override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
+        var wasSuccess = false
+
+        val fireEventRequest = FireEventRequest(eventType, eventData)
+
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                wasSuccess =
+                    integrationService.fireEvent(
+                        it.toHttpUrlOrNull()!!,
+                        IntegrationRequest(
+                            "fire_event",
+                            fireEventRequest
+                        )
                     ).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
@@ -152,7 +194,11 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
-        val getZonesRequest = IntegrationRequest("get_zones", null)
+        val getZonesRequest =
+            IntegrationRequest(
+                "get_zones",
+                null
+            )
         var zones: Array<EntityResponse<ZoneAttributes>>? = null
         for (it in urlRepository.getApiUrls()) {
             try {
@@ -194,7 +240,11 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getThemeColor(): String {
-        val getConfigRequest = IntegrationRequest("get_config", null)
+        val getConfigRequest =
+            IntegrationRequest(
+                "get_config",
+                null
+            )
         var response: GetConfigResponse? = null
         for (it in urlRepository.getApiUrls()) {
             try {
