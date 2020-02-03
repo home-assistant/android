@@ -87,4 +87,12 @@ class IntegrationUseCaseImpl @Inject constructor(
     override suspend fun getThemeColor(): String {
         return integrationRepository.getThemeColor()
     }
+
+    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
+        return integrationRepository.registerSensor(sensorRegistration)
+    }
+
+    override suspend fun updateSensors(sensors: Array<Sensor<Any>>) {
+        return integrationRepository.updateSensors(sensors)
+    }
 }

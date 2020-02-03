@@ -5,6 +5,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuInflater
 import androidx.appcompat.app.AppCompatActivity
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
 import io.homeassistant.companion.android.DaggerPresenterComponent
@@ -12,7 +14,9 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
+import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.webview.WebViewActivity
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class LaunchActivity : AppCompatActivity(), LaunchView {
@@ -33,6 +37,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
 
         sendBroadcast(intent)
+
+        startSensorWorker()
 
         presenter.onViewReady()
     }
@@ -61,5 +67,13 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
 
     override fun getMenuInflater(): MenuInflater {
         return LokaliseMenuInflater(this)
+    }
+
+    private fun startSensorWorker() {
+        val sensorWorker =
+            PeriodicWorkRequestBuilder<SensorWorker>(15, TimeUnit.MINUTES)
+            .build()
+
+        WorkManager.getInstance(applicationContext).enqueue(sensorWorker)
     }
 }

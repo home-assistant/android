@@ -6,12 +6,15 @@ import io.homeassistant.companion.android.data.integration.entities.FireEventReq
 import io.homeassistant.companion.android.data.integration.entities.GetConfigResponse
 import io.homeassistant.companion.android.data.integration.entities.IntegrationRequest
 import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceRequest
+import io.homeassistant.companion.android.data.integration.entities.SensorRequest
 import io.homeassistant.companion.android.data.integration.entities.ServiceCallRequest
 import io.homeassistant.companion.android.data.integration.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
+import io.homeassistant.companion.android.domain.integration.Sensor
+import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.Service
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import io.homeassistant.companion.android.domain.integration.ZoneAttributes
@@ -283,6 +286,62 @@ class IntegrationRepositoryImpl @Inject constructor(
                 it.context
             )
         }.toTypedArray()
+    }
+
+    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
+        val integrationRequest = IntegrationRequest(
+            "register_sensor",
+            SensorRequest(
+                sensorRegistration.uniqueId,
+                sensorRegistration.state,
+                sensorRegistration.type,
+                sensorRegistration.icon,
+                sensorRegistration.attributes,
+                sensorRegistration.name,
+                sensorRegistration.deviceClass,
+                sensorRegistration.unitOfMeasurement
+            )
+        )
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                integrationService.registerSensor(it.toHttpUrlOrNull()!!, integrationRequest)?.let {
+                    // If we created sensor or it already exists
+                    if (it.isSuccessful || it.code() == 409) {
+                        return
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+        }
+        throw IntegrationException()
+    }
+
+    override suspend fun updateSensors(sensors: Array<Sensor<Any>>) {
+        val integrationRequest = IntegrationRequest(
+            "update_sensor_states",
+            sensors.map {
+                SensorRequest(
+                    it.uniqueId,
+                    it.state,
+                    it.type,
+                    it.icon,
+                    it.attributes
+                )
+            }
+        )
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest)?.let {
+                    if (it.isSuccessful) {
+                        return
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+        }
+        throw IntegrationException()
     }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
