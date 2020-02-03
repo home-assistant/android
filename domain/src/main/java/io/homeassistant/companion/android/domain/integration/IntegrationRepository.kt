@@ -28,4 +28,6 @@ interface IntegrationRepository {
     suspend fun getEntities(): Array<Entity<Any>>
 
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
+
+    suspend fun fireEvent(eventType: String, eventData: Map<String, Any>)
 }
