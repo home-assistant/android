@@ -18,23 +18,13 @@ object WidgetUseCaseImplSpec : Spek({
         val useCase by memoized { WidgetUseCaseImpl(widgetRepository) }
 
         describe("save service call data") {
-            val serviceFields = ArrayList<String>()
-            val serviceData = ArrayList<String>()
-
-            serviceFields.add("entity_id")
-            serviceFields.add("mode")
-            serviceData.add("entity.id")
-            serviceData.add("on")
-
             beforeEachTest {
                 runBlocking {
                     useCase.saveServiceCallData(
                         1,
                         "domain",
                         "service",
-                        2,
-                        serviceFields.toTypedArray(),
-                        serviceData.toTypedArray()
+                        "{entity_id=light.dummy_light}"
                     )
                 }
             }
@@ -45,9 +35,7 @@ object WidgetUseCaseImplSpec : Spek({
                         1,
                         "domain",
                         "service",
-                        2,
-                        serviceFields.toTypedArray(),
-                        serviceData.toTypedArray()
+                        "{entity_id=light.dummy_light}"
                     )
                 }
             }

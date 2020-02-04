@@ -12,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.AutoCompleteTextView
 import android.widget.LinearLayout
+import com.google.gson.Gson
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Entity
@@ -73,8 +74,7 @@ class ButtonWidgetConfigureActivity : Activity() {
         )
 
         // Analyze and send service data
-        val serviceFields: ArrayList<String> = ArrayList()
-        val serviceData: ArrayList<String> = ArrayList()
+        val serviceDataMap = HashMap<String, Any>()
         for (i in 0 until widget_config_fields_layout.childCount) {
             val dynamicFieldLayout: LinearLayout =
                 widget_config_fields_layout.getChildAt(i) as LinearLayout
@@ -84,25 +84,17 @@ class ButtonWidgetConfigureActivity : Activity() {
             // Don't store data that's empty (or just whitespace)
             if (!autocompleteTextView.text.isBlank()) {
                 // Rebuild service field name
-                serviceFields.add(
-                    dynamicFieldLayout.dynamic_autocomplete_label.text.toString()
-                        .toLowerCase().replace(" ", "_")
-                )
-                serviceData.add(autocompleteTextView.text.toString())
+                val field = dynamicFieldLayout.dynamic_autocomplete_label.text.toString()
+                    .toLowerCase().replace(" ", "_")
+                val data = autocompleteTextView.text.toString()
+
+                serviceDataMap[field] = data
             }
         }
 
         intent.putExtra(
-            ButtonWidget.EXTRA_SERVICE_DATA_COUNT,
-            serviceData.size
-        )
-        intent.putExtra(
             ButtonWidget.EXTRA_SERVICE_DATA,
-            serviceData
-        )
-        intent.putExtra(
-            ButtonWidget.EXTRA_SERVICE_FIELD,
-            serviceFields
+            Gson().toJson(serviceDataMap)
         )
 
         context.sendBroadcast(intent)
@@ -114,7 +106,7 @@ class ButtonWidgetConfigureActivity : Activity() {
 
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
         if (hasFocus && view is AutoCompleteTextView) {
-            (view as AutoCompleteTextView).showDropDown()
+            view.showDropDown()
         }
     }
 

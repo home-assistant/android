@@ -10,6 +10,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import com.google.gson.Gson
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
@@ -31,8 +32,6 @@ class ButtonWidget : AppWidgetProvider() {
         internal const val EXTRA_DOMAIN = "EXTRA_DOMAIN"
         internal const val EXTRA_SERVICE = "EXTRA_SERVICE"
         internal const val EXTRA_SERVICE_DATA = "EXTRA_SERVICE_DATA"
-        internal const val EXTRA_SERVICE_DATA_COUNT = "EXTRA_SERVICE_DATA_COUNT"
-        internal const val EXTRA_SERVICE_FIELD = "EXTRA_SERVICE_FIELD"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_ICON = "EXTRA_ICON"
     }
@@ -154,21 +153,25 @@ class ButtonWidget : AppWidgetProvider() {
             // Load the service call data from Shared Preferences
             val domain = widgetStorage.loadDomain(appWidgetId)
             val service = widgetStorage.loadService(appWidgetId)
-            val serviceData = widgetStorage.loadServiceData(appWidgetId)
+            val serviceDataJson = widgetStorage.loadServiceData(appWidgetId)
 
             Log.d(
                 TAG, "Service Call Data loaded:" + System.lineSeparator() +
                         "domain: " + domain + System.lineSeparator() +
                         "service: " + service + System.lineSeparator() +
-                        "service_data: " + serviceData
+                        "service_data: " + serviceDataJson
             )
 
-            if (domain == null || service == null || serviceData == null) {
+            if (domain == null || service == null || serviceDataJson == null) {
                 Log.w(TAG, "Service Call Data incomplete.  Aborting service call")
             } else {
                 // If everything loaded correctly, package the service data and attempt the call
+
+                // Convert JSON to HashMap
+                val serviceDataMap = Gson().fromJson(serviceDataJson, HashMap<String, Any>()::class.java)
+
                 try {
-                    integrationUseCase.callService(domain, service, serviceData)
+                    integrationUseCase.callService(domain, service, serviceDataMap)
 
                     // If service call does not throw an exception, send positive feedback
                     feedbackColor = R.drawable.ic_circle_green_24dp
@@ -204,13 +207,11 @@ class ButtonWidget : AppWidgetProvider() {
 
         val domain: String? = extras.getString(EXTRA_DOMAIN)
         val service: String? = extras.getString(EXTRA_SERVICE)
-        val serviceData: ArrayList<String>? = extras.getStringArrayList(EXTRA_SERVICE_DATA)
-        val serviceDataCount = extras.getInt(EXTRA_SERVICE_DATA_COUNT)
-        val serviceFields: ArrayList<String>? = extras.getStringArrayList(EXTRA_SERVICE_FIELD)
+        val serviceData: String? = extras.getString(EXTRA_SERVICE_DATA)
         val label: String? = extras.getString(EXTRA_LABEL)
         val icon: Int = extras.getInt(EXTRA_ICON)
 
-        if (domain == null || service == null || serviceData == null || serviceFields == null) {
+        if (domain == null || service == null || serviceData == null) {
             Log.e(TAG, "Did not receive complete service call data")
             return
         }
@@ -228,9 +229,7 @@ class ButtonWidget : AppWidgetProvider() {
                 appWidgetId,
                 domain,
                 service,
-                serviceDataCount,
-                serviceData.toTypedArray(),
-                serviceFields.toTypedArray()
+                serviceData
             )
             widgetStorage.saveLabel(appWidgetId, label)
 

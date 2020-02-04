@@ -24,9 +24,7 @@ class WidgetRepositoryImpl @Inject constructor(
         appWidgetId: Int,
         domainStr: String,
         serviceStr: String,
-        serviceDataCount: Int,
-        serviceDataArray: Array<String>,
-        serviceFieldArray: Array<String>
+        serviceDataStr: String
     ) {
         saveStringPref(
             PREF_PREFIX_KEY + PREF_KEY_DOMAIN + appWidgetId,
@@ -37,21 +35,10 @@ class WidgetRepositoryImpl @Inject constructor(
             serviceStr
         )
 
-        saveLongPref(
-            PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA_COUNT + appWidgetId,
-            serviceDataCount.toLong()
+        saveStringPref(
+            PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId,
+            serviceDataStr
         )
-
-        for (i in 0 until serviceDataCount) {
-            saveStringPref(
-                PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId + i,
-                serviceDataArray[i]
-            )
-            saveStringPref(
-                PREF_PREFIX_KEY + PREF_KEY_SERVICE_FIELDS + appWidgetId + i,
-                serviceFieldArray[i]
-            )
-        }
     }
 
     override suspend fun loadDomain(appWidgetId: Int): String? {
@@ -62,22 +49,8 @@ class WidgetRepositoryImpl @Inject constructor(
         return loadStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE + appWidgetId)
     }
 
-    override suspend fun loadServiceData(appWidgetId: Int): HashMap<String, Any>? {
-        val count = loadLongPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA_COUNT + appWidgetId)
-
-        // If the amount of data is zero, return a null map
-        count ?: return null
-
-        val serviceDataMap: HashMap<String, Any> = HashMap()
-        for (i in 0 until count) {
-            val serviceField = loadStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE_FIELDS + appWidgetId + i)
-            val serviceData = loadStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId + i)
-
-            if ((serviceField != null) && (serviceData != null))
-                serviceDataMap[serviceField] = serviceData
-        }
-
-        return serviceDataMap
+    override suspend fun loadServiceData(appWidgetId: Int): String? {
+        return loadStringPref(PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId)
     }
 
     override suspend fun loadIcon(appWidgetId: Int): String? {
@@ -110,13 +83,5 @@ class WidgetRepositoryImpl @Inject constructor(
 
     private suspend fun loadStringPref(key: String): String? {
         return localStorage.getString(key)
-    }
-
-    private suspend fun saveLongPref(key: String, data: Long?) {
-        localStorage.putLong(key, data)
-    }
-
-    private suspend fun loadLongPref(key: String): Long? {
-        return localStorage.getLong(key)
     }
 }

@@ -10,17 +10,13 @@ class WidgetUseCaseImpl @Inject constructor(
         appWidgetId: Int,
         domainStr: String,
         serviceStr: String,
-        serviceDataCount: Int,
-        serviceDataArray: Array<String>,
-        serviceFieldArray: Array<String>
+        serviceData: String
     ) {
         widgetRepository.saveServiceCallData(
             appWidgetId,
             domainStr,
             serviceStr,
-            serviceDataCount,
-            serviceDataArray,
-            serviceFieldArray
+            serviceData
         )
     }
 
@@ -32,7 +28,7 @@ class WidgetUseCaseImpl @Inject constructor(
         return widgetRepository.loadService(appWidgetId)
     }
 
-    override suspend fun loadServiceData(appWidgetId: Int): HashMap<String, Any>? {
+    override suspend fun loadServiceData(appWidgetId: Int): String? {
         return widgetRepository.loadServiceData(appWidgetId)
     }
 

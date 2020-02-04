@@ -15,48 +15,6 @@ class SingleItemArrayAdapter<T>(
 
     private var filterItems = ArrayList<T>()
 
-    private var containsFilter: Filter = object : Filter() {
-        override fun performFiltering(constraint: CharSequence?): FilterResults {
-            val result = FilterResults()
-
-            constraint?.let {
-                val containSeq = ArrayList<T>()
-
-                for (i in 0 until filterItems.size) {
-                    val item = filterItems[i]
-                    if (createText(item).contains(constraint)) {
-                        containSeq.add(item!!)
-                    }
-                }
-                result.values = containSeq
-                result.count = containSeq.size
-            }
-            return result
-        }
-
-        override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-            results?.let {
-                if (results.count > 0) {
-                    clear()
-                    @Suppress("UNCHECKED_CAST")
-                    (results.values as ArrayList<T>).forEach {
-                        add(it)
-                    }
-                    notifyDataSetChanged()
-                }
-            }
-        }
-
-        override fun convertResultToString(resultValue: Any?): CharSequence {
-            if (resultValue != null) {
-                @Suppress("UNCHECKED_CAST")
-                return createText(resultValue as T)
-            } else {
-                return ""
-            }
-        }
-    }
-
     internal fun sort() {
         val comparator = Comparator { t1: T, t2: T ->
             createText(t1).compareTo(createText(t2))
@@ -65,18 +23,55 @@ class SingleItemArrayAdapter<T>(
         filterItems.sortWith(comparator)
     }
 
-    /*override fun add(`object`: T?) {
-        super.add(`object`)
-        if (`object` != null) filterItems.add(`object`)
-    }*/
-
     override fun addAll(collection: MutableCollection<out T>) {
         super.addAll(collection)
         filterItems.addAll(collection)
     }
 
     override fun getFilter(): Filter {
-        return containsFilter
+        return object : Filter() {
+            override fun performFiltering(constraint: CharSequence?): FilterResults {
+                val result = FilterResults()
+
+                constraint?.let {
+                    val containSeq = ArrayList<T>()
+
+                    for (i in 0 until filterItems.size) {
+                        val item = filterItems[i]
+                        if (createText(item).contains(constraint)) {
+                            containSeq.add(item!!)
+                        }
+                    }
+                    result.values = containSeq
+                    result.count = containSeq.size
+                }
+                return result
+            }
+
+            override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+                results?.let {
+                    clear()
+
+                    if (results.count > 0) {
+                        @Suppress("UNCHECKED_CAST")
+                        (results.values as ArrayList<T>).forEach {
+                            add(it)
+                        }
+                    }
+
+                    notifyDataSetChanged()
+                }
+            }
+
+            override fun convertResultToString(resultValue: Any?): CharSequence {
+                if (resultValue != null) {
+                    @Suppress("UNCHECKED_CAST")
+                    return createText(resultValue as T)
+                } else {
+                    return ""
+                }
+            }
+        }
     }
 
     override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
