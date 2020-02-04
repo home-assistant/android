@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -62,9 +63,25 @@ class MessagingService : FirebaseMessagingService() {
         }
 
         remoteMessage.notification?.let {
+            if (it.body == "request_location_update") {
+                Log.d(TAG, "Request location update")
+                if (actions.size != 0) {
+                    Log.w(TAG, "Ignoring received actions since location update was requested")
+                }
+                requestAccurateLocationUpdate()
+                return
+            }
+
             Log.d(TAG, "Message Notification: ${it.title} -> ${it.body}")
             sendNotification(it.title, it.body!!, actions)
         }
+    }
+
+    private fun requestAccurateLocationUpdate() {
+        val intent = Intent(this, LocationBroadcastReceiver::class.java)
+        intent.action = LocationBroadcastReceiver.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+
+        sendBroadcast(intent)
     }
 
     /**
