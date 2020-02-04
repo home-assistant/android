@@ -8,10 +8,10 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.AutoCompleteTextView
 import android.widget.LinearLayout
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
@@ -35,6 +35,8 @@ class ButtonWidgetConfigureActivity : Activity() {
 
     private var services = HashMap<String, Service>()
     private var entities = HashMap<String, Entity<Any>>()
+    private var dynamicFields = ArrayList<Pair<String, String>>()
+    private lateinit var dynamicFieldAdapter: WidgetDynamicFieldAdapter
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -112,7 +114,6 @@ class ButtonWidgetConfigureActivity : Activity() {
 
     private val serviceTextWatcher: TextWatcher = (object : TextWatcher {
         override fun afterTextChanged(p0: Editable?) {
-            val context = this@ButtonWidgetConfigureActivity
             val serviceText: String = p0.toString()
 
             if (services.keys.contains(serviceText)) {
@@ -128,66 +129,24 @@ class ButtonWidgetConfigureActivity : Activity() {
                 val fieldKeys = fields.keys
                 Log.d(TAG, "Fields applicable to this service: $fields")
 
-                fieldKeys.sorted().forEach {
-                    Log.d(TAG, "Creating a text input box for $it")
+                fieldKeys.sorted().forEach { fieldKey ->
+                    Log.d(TAG, "Creating a text input box for $fieldKey")
 
-                    // Create a new text input for each field
-                    val dynamicFieldLayout = LayoutInflater.from(context).inflate(
-                        R.layout.widget_button_configure_dynamic_field,
-                        null,
-                        false
-                    ) as LinearLayout
-                    val autoCompleteTextView = dynamicFieldLayout.dynamic_autocomplete_textview
-
-                    // Set label for the text view
-                    // Reformat text to "Capital Words" intead of "capital_words"
-                    dynamicFieldLayout.dynamic_autocomplete_label.text =
-                        it.split("_").map {
-                            if (it == "id") it.toUpperCase()
-                            else it.capitalize()
-                        }.joinToString(" ")
-
-                    // If field is looking for an entity_id,
-                    // populate the autocomplete with the list of entities
-                    if (it == "entity_id" && entities.isNotEmpty()) {
-                        // Only populate with entities for the domain
-                        // or for homeassistant domain, which should be able
-                        // to manipulate entities in any domain
-                        val domain = services[serviceText]!!.domain
-                        val domainEntities: ArrayList<String> = ArrayList()
-                        if (domain == ("homeassistant")) {
-                            domainEntities.addAll(entities.keys)
-                        } else {
-                            entities.keys.forEach {
-                                if (it.startsWith(domain) || it.startsWith("group")) {
-                                    domainEntities.add(it)
-                                }
-                            }
-                        }
-
-                        val adapter = SingleItemArrayAdapter<String>(context) { it!! }
-                        adapter.addAll(domainEntities.sorted().toMutableList())
-                        autoCompleteTextView.setAdapter(adapter)
-                        autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
-                    } else if (fields[it]!!.values != null) {
-                        // If a non-"entity_id" field has specific values,
-                        // populate the autocomplete with valid values
-                        val fieldAdapter = SingleItemArrayAdapter<String>(context) { it!! }
-                        fieldAdapter.addAll(fields[it]!!.values!!.sorted().toMutableList())
-                        autoCompleteTextView.setAdapter(fieldAdapter)
-                        autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
-                    }
-
-                    // Insert the created dynamic layout
+                    // Insert a dynamic layout
                     // IDs get priority and go at the top, since the other fields
                     // are usually optional but the ID is required
-                    if (it.contains("_id"))
-                        widget_config_fields_layout.addView(dynamicFieldLayout, 0)
+                    if (fieldKey.contains("_id"))
+                        dynamicFields.add(0, Pair(serviceText, fieldKey))
                     else
-                        widget_config_fields_layout.addView(dynamicFieldLayout)
+                        dynamicFields.add(Pair(serviceText, fieldKey))
+
+                    dynamicFieldAdapter.notifyDataSetChanged()
                 }
             } else {
-                widget_config_fields_layout.removeAllViews()
+                if (dynamicFields.size > 0) {
+                    dynamicFields.clear()
+                    dynamicFieldAdapter.notifyDataSetChanged()
+                }
             }
         }
 
@@ -258,6 +217,10 @@ class ButtonWidgetConfigureActivity : Activity() {
         widget_text_config_service.addTextChangedListener(serviceTextWatcher)
 
         add_button.setOnClickListener(onClickListener)
+
+        dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
+        widget_config_fields_layout.adapter = dynamicFieldAdapter
+        widget_config_fields_layout.layoutManager = LinearLayoutManager(this)
 
         // Set up icon spinner
         val icons = intArrayOf(
