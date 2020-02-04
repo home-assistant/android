@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.Service
@@ -16,10 +17,16 @@ class WidgetDynamicFieldAdapter(
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
+    private val fieldTextViewList = ArrayList<TextView>()
+
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
         if (hasFocus && view is AutoCompleteTextView) {
             view.showDropDown()
         }
+    }
+
+    internal fun getText(position: Int): String {
+        return fieldTextViewList[position].text.toString()
     }
 
     override fun getItemCount(): Int {
@@ -86,5 +93,8 @@ class WidgetDynamicFieldAdapter(
             autoCompleteTextView.setAdapter(fieldAdapter)
             autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
         }
+
+        // Bind the textview to an easily-accessible list for faster fetching of text
+        fieldTextViewList.add(position, autoCompleteTextView)
     }
 }

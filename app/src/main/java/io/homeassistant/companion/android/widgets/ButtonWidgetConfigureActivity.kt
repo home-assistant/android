@@ -10,7 +10,6 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.AutoCompleteTextView
-import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import io.homeassistant.companion.android.R
@@ -77,20 +76,12 @@ class ButtonWidgetConfigureActivity : Activity() {
 
         // Analyze and send service data
         val serviceDataMap = HashMap<String, Any>()
-        for (i in 0 until widget_config_fields_layout.childCount) {
-            val dynamicFieldLayout: LinearLayout =
-                widget_config_fields_layout.getChildAt(i) as LinearLayout
-            val autocompleteTextView: AutoCompleteTextView =
-                dynamicFieldLayout.findViewById(R.id.dynamic_autocomplete_textview)
+        for (i in 0 until dynamicFields.size) {
+            val fieldText = dynamicFieldAdapter.getText(i)
 
             // Don't store data that's empty (or just whitespace)
-            if (!autocompleteTextView.text.isBlank()) {
-                // Rebuild service field name
-                val field = dynamicFieldLayout.dynamic_autocomplete_label.text.toString()
-                    .toLowerCase().replace(" ", "_")
-                val data = autocompleteTextView.text.toString()
-
-                serviceDataMap[field] = data
+            if (!fieldText.isBlank()) {
+                serviceDataMap[dynamicFields[i].second] = fieldText
             }
         }
 
