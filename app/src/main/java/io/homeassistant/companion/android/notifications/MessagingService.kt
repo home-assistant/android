@@ -131,9 +131,13 @@ class MessagingService : FirebaseMessagingService() {
                     .bigLargeIcon(null))
         }
 
+        // TODO: This message id probably isn't the best
+        val messageId = (messageBody + messageTitle).hashCode()
+
         actions.forEach {
             val actionIntent = Intent(this, NotificationActionReceiver::class.java).apply {
                 action = NotificationActionReceiver.FIRE_EVENT
+                putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
                 putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION, it)
             }
             val actionPendingIntent = PendingIntent.getBroadcast(
@@ -156,8 +160,7 @@ class MessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // TODO: This message id probably isn't the best
-        notificationManager.notify((messageBody + messageTitle).hashCode(), notificationBuilder.build())
+        notificationManager.notify(messageId, notificationBuilder.build())
     }
 
     private suspend fun getImageBitmap(url: String): Bitmap = withContext(Dispatchers.IO) {
