@@ -12,7 +12,7 @@
     <string name="checking_with_home_assistant">Salīdzina datus ar Home Assistant</string>
     <string name="skip">Izlaist</string>
     <string name="retry">Mēģināt vēlreiz</string>
-    <string name="attempting_registration">Notiek aplikācijas reģistrēšana…</string>
+    <string name="attempting_registration">Notiek aplikācijas reģistrēšana...</string>
     <string name="unable_to_register">Nevarēja reģistrēt aplikācjiu</string>
     <string name="error_with_registration">Lūdzu pārbaudiet, vai \"mobile_app\" integrācija ir iespējota Jūsu Home Assistant servera konfigurācijā.</string>
     <string name="url_parse_error">Nevarēja apstrādāt Jūsu Home Assistant URL. URL būtu jāizskatās šādi: https://example.com</string>

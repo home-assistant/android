@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">Home Assistant</string>
     <string name="scanning_network">Recherche de Home Assistant sur le réseau</string>
-    <string name="home_assistant_not_discover">Impossible de trouver votre \n Instance Home Assistant</string>
-    <string name="connect_to_home_internet">Assurez-vous que votre téléphone est connecté \n à Internet à votre domicile (réseau local)</string>
+    <string name="home_assistant_not_discover">Impossible de trouver votre instance Home Assistant</string>
+    <string name="connect_to_home_internet">Assurez-vous que votre appareil est connecté à Internet à votre domicile (réseau local)</string>
     <string name="scan_again">Rechercher à nouveau</string>
     <string name="manual_setup">Entrer l\'adresse manuellement</string>
     <string name="input_url">URL de Home Assistant</string>
@@ -35,9 +35,9 @@
     <string name="pref_connection_internal">URL de connexion interne</string>
     <string name="url_invalid">URL non valide</string>
     <string name="error_auth_revoked">Il semble que votre autorisation ait été révoquée, veuillez vous reconnecter à Home Assistant.</string>
-    <string name="select_instance">Sélectionnez l\'instance que vous souhaitez vous connecter :</string>
+    <string name="select_instance">Sélectionnez l\'instance à laquelle vous souhaitez vous connecter :</string>
     <string name="failed_scan">La recherche de Home Assistant a échoué.</string>
-    <string name="widget_image_description">Home Assistant Widget</string>
+    <string name="widget_image_description">Widget Home Assistant</string>
     <string name="configure_service_call">Configurer l\'appel du service</string>
     <string name="configure_widget_label">Étiquette du widget</string>
     <string name="add_widget">Ajouter un widget</string>
@@ -46,7 +46,7 @@
     <string name="widget_text_hint_service_data">ID de l\'entité</string>
     <string name="widget_text_hint_label">Étiquette</string>
     <string name="widget_label_placeholder_text">Étiquette</string>
-    <string name="widget_spinner_icon">Icone</string>
+    <string name="widget_spinner_icon">Icône :</string>
     <string name="connected_to_home_assistant">Connecté à Home Assistant</string>
     <string name="permission_explanation">Afin d\'utiliser les fonctions de suivi de localisation ou les différentes URLs de connexion basées sur les SSID WiFi, nous avons besoin d\'accéder à votre position. Si vous souhaitez des mises à jour cohérentes en arrière-plan, vous devrez également autoriser le traitement en arrière-plan</string>
     <string name="grant_permission">Donner la permission</string>
@@ -56,5 +56,6 @@
     <string name="fullscreen_def">Mettre l\'application en plein écran</string>
     <string name="label_service">Service :</string>
     <string name="label_entity_id">ID d\'entité :</string>
+    <string name="label_label">Étiquette :</string>
     <string name="label_icon">Icône :</string>
 </resources>
