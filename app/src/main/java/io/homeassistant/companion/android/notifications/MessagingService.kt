@@ -132,7 +132,7 @@ class MessagingService : FirebaseMessagingService() {
         }
 
         // TODO: This message id probably isn't the best
-        val messageId = (messageBody + messageTitle).hashCode()
+        val messageId = (messageBody + messageTitle + System.currentTimeMillis()).hashCode()
 
         actions.forEach {
             val actionIntent = Intent(this, NotificationActionReceiver::class.java).apply {
