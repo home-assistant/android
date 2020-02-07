@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
@@ -18,15 +20,20 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.lang.Exception
+import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MessagingService : FirebaseMessagingService() {
     companion object {
         const val TAG = "MessagingService"
+        const val TITLE = "title"
+        const val MESSAGE = "message"
+        const val IMAGE_URL = "image"
     }
 
     @Inject
@@ -60,20 +67,28 @@ class MessagingService : FirebaseMessagingService() {
                     )
                 }
             }
-        }
 
-        remoteMessage.notification?.let {
-            if (it.body == "request_location_update") {
+            if (!it.containsKey(MESSAGE)) {
+                Log.e(TAG, "Message missing from notification.")
+                return
+            }
+
+            val title = it[TITLE]
+            val message = it[MESSAGE]!!
+            val imageUrl = it[IMAGE_URL]
+
+            if (message == "request_location_update") {
                 Log.d(TAG, "Request location update")
                 if (actions.size != 0) {
                     Log.w(TAG, "Ignoring received actions since location update was requested")
                 }
                 requestAccurateLocationUpdate()
-                return
+            } else {
+                mainScope.launch {
+                    Log.d(TAG, "Message Notification: $title -> $message")
+                    sendNotification(title, message, imageUrl, actions)
+                }
             }
-
-            Log.d(TAG, "Message Notification: ${it.title} -> ${it.body}")
-            sendNotification(it.title, it.body!!, actions)
         }
     }
 
@@ -89,7 +104,7 @@ class MessagingService : FirebaseMessagingService() {
      *
      * @param messageBody FCM message body received.
      */
-    private fun sendNotification(messageTitle: String?, messageBody: String, actions: List<NotificationAction>) {
+    private suspend fun sendNotification(messageTitle: String?, messageBody: String, imageUrl: String?, actions: List<NotificationAction>) {
         val intent = Intent(this, WebViewActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent,
@@ -107,9 +122,22 @@ class MessagingService : FirebaseMessagingService() {
             .setSound(defaultSoundUri)
             .setContentIntent(pendingIntent)
 
+        if (imageUrl != null) {
+            val bitmap = getImageBitmap(imageUrl)
+            notificationBuilder
+                .setLargeIcon(bitmap)
+                .setStyle(NotificationCompat.BigPictureStyle()
+                    .bigPicture(bitmap)
+                    .bigLargeIcon(null))
+        }
+
+        // TODO: This message id probably isn't the best
+        val messageId = (messageBody + messageTitle + System.currentTimeMillis()).hashCode()
+
         actions.forEach {
             val actionIntent = Intent(this, NotificationActionReceiver::class.java).apply {
                 action = NotificationActionReceiver.FIRE_EVENT
+                putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
                 putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION, it)
             }
             val actionPendingIntent = PendingIntent.getBroadcast(
@@ -132,8 +160,11 @@ class MessagingService : FirebaseMessagingService() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // TODO: This message id probably isn't the best
-        notificationManager.notify((messageBody + messageTitle).hashCode(), notificationBuilder.build())
+        notificationManager.notify(messageId, notificationBuilder.build())
+    }
+
+    private suspend fun getImageBitmap(url: String): Bitmap = withContext(Dispatchers.IO) {
+        return@withContext BitmapFactory.decodeStream(URL(url).openStream())
     }
 
     /**

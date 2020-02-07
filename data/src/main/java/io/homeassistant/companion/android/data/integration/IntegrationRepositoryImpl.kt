@@ -35,7 +35,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val APP_ID = "io.homeassistant.companion.android"
         private const val APP_NAME = "Home Assistant"
         private const val OS_NAME = "Android"
-        private const val PUSH_URL = "https://mobile-apps.home-assistant.io/api/sendPushNotification"
+        private const val PUSH_URL = "https://mobile-apps.home-assistant.io/api/sendPush/android/v1"
 
         private const val PREF_APP_VERSION = "app_version"
         private const val PREF_DEVICE_NAME = "device_name"
