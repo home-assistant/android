@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Service
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_button_configure.*
-import kotlinx.android.synthetic.main.widget_button_configure_dynamic_field.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,7 +33,7 @@ class ButtonWidgetConfigureActivity : Activity() {
 
     private var services = HashMap<String, Service>()
     private var entities = HashMap<String, Entity<Any>>()
-    private var dynamicFields = ArrayList<Pair<String, String>>()
+    private var dynamicFields = ArrayList<ServiceFieldBinder>()
     private lateinit var dynamicFieldAdapter: WidgetDynamicFieldAdapter
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -76,12 +75,9 @@ class ButtonWidgetConfigureActivity : Activity() {
 
         // Analyze and send service data
         val serviceDataMap = HashMap<String, Any>()
-        for (i in 0 until dynamicFields.size) {
-            val fieldText = dynamicFieldAdapter.getText(i)
-
-            // Don't store data that's empty (or just whitespace)
-            if (!fieldText.isBlank()) {
-                serviceDataMap[dynamicFields[i].second] = fieldText
+        dynamicFields.forEach {
+            if (it.value != null) {
+                serviceDataMap[it.field] = it.value!!
             }
         }
 
@@ -112,7 +108,7 @@ class ButtonWidgetConfigureActivity : Activity() {
 
                 // Make sure there are not already any dynamic fields created
                 // This can happen if selecting the drop-down twice or pasting
-                widget_config_fields_layout.removeAllViews()
+                dynamicFields.clear()
 
                 // We only call this if servicesAvailable was fetched and is not null,
                 // so we can safely assume that it is not null here
@@ -127,12 +123,12 @@ class ButtonWidgetConfigureActivity : Activity() {
                     // IDs get priority and go at the top, since the other fields
                     // are usually optional but the ID is required
                     if (fieldKey.contains("_id"))
-                        dynamicFields.add(0, Pair(serviceText, fieldKey))
+                        dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
                     else
-                        dynamicFields.add(Pair(serviceText, fieldKey))
-
-                    dynamicFieldAdapter.notifyDataSetChanged()
+                        dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
                 }
+
+                dynamicFieldAdapter.notifyDataSetChanged()
             } else {
                 if (dynamicFields.size > 0) {
                     dynamicFields.clear()

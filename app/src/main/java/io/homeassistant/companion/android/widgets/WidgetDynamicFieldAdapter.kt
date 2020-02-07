@@ -1,10 +1,11 @@
 package io.homeassistant.companion.android.widgets
 
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.Service
@@ -13,20 +14,14 @@ import kotlinx.android.synthetic.main.widget_button_configure_dynamic_field.view
 class WidgetDynamicFieldAdapter(
     private val services: HashMap<String, Service>,
     private val entities: HashMap<String, Entity<Any>>,
-    private val serviceFieldList: ArrayList<Pair<String, String>>
+    private val serviceFieldList: ArrayList<ServiceFieldBinder>
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
-
-    private val fieldTextViewList = ArrayList<TextView>()
 
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
         if (hasFocus && view is AutoCompleteTextView) {
             view.showDropDown()
         }
-    }
-
-    internal fun getText(position: Int): String {
-        return fieldTextViewList[position].text.toString()
     }
 
     override fun getItemCount(): Int {
@@ -50,8 +45,8 @@ class WidgetDynamicFieldAdapter(
         val autoCompleteTextView = dynamicFieldLayout.dynamic_autocomplete_textview
         val context = dynamicFieldLayout.context
 
-        val serviceText: String = serviceFieldList[position].first
-        val fieldKey = serviceFieldList[position].second
+        val serviceText: String = serviceFieldList[position].service
+        val fieldKey = serviceFieldList[position].field
 
         // Set label for the text view
         // Reformat text to "Capital Words" intead of "capital_words"
@@ -94,7 +89,26 @@ class WidgetDynamicFieldAdapter(
             autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
         }
 
-        // Bind the textview to an easily-accessible list for faster fetching of text
-        fieldTextViewList.add(position, autoCompleteTextView)
+        // Populate textview with stored text for that field
+        // Currently value can by Any? but will currently only be storing String?
+        // This may have to be changed later if multi-select gets implemented
+        if (serviceFieldList[position].value != null) {
+            serviceFieldList[position].value as String
+        }
+
+        // Have the text view store its text for later recall
+        autoCompleteTextView.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(p0: Editable?) {
+                // Don't store data that's empty (or just whitespace)
+                if (!p0.isNullOrBlank()) {
+                    serviceFieldList[position].value = p0.toString()
+                } else {
+                    serviceFieldList[position].value = null
+                }
+            }
+
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+        })
     }
 }
