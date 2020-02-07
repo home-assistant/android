@@ -11,7 +11,7 @@
     <string name="checking_with_home_assistant">Kontrola pomocí Home Assistant</string>
     <string name="skip">Přeskočit</string>
     <string name="retry">Opakovat</string>
-    <string name="attempting_registration">Registrace aplikace…</string>
+    <string name="attempting_registration">Registrace aplikace...</string>
     <string name="unable_to_register">Nelze zaregistrovat aplikaci</string>
     <string name="error_with_registration">Ověřte, zda máte mobile_app \nintegraci povolenou v Home Assistant.</string>
     <string name="url_parse_error">Nelze analyzovat adresu URL vašeho Home Assistant. Měla by vypadat jako https://example.com</string>
@@ -33,4 +33,28 @@
     <string name="pref_connection_wifi">Domácí síť WiFi SSID</string>
     <string name="pref_connection_internal">Interní adresa URL</string>
     <string name="url_invalid">Neplatná adresa URL</string>
+    <string name="error_auth_revoked">Zdá se, že vaše autorizace byla zrušena, znovu se připojte k Home Assistant.</string>
+    <string name="select_instance">Vyberte instanci, ke které se chcete připojt:</string>
+    <string name="failed_scan">Vyhledání Home Assistant se nezdařilo.</string>
+    <string name="widget_image_description">Widget Home Assistant</string>
+    <string name="configure_service_call">Konfigurovat službu volání</string>
+    <string name="configure_widget_label">Popisek widgetu</string>
+    <string name="add_widget">Přidat widget</string>
+    <string name="widget_text_hint_service_domain">Doména</string>
+    <string name="widget_text_hint_service_service">Služba</string>
+    <string name="widget_text_hint_service_data">ID entity</string>
+    <string name="widget_text_hint_label">Označení</string>
+    <string name="widget_label_placeholder_text">Označení</string>
+    <string name="widget_spinner_icon">Ikona:</string>
+    <string name="connected_to_home_assistant">Připojeno k Home Assistant</string>
+    <string name="permission_explanation">Abychom mohli používat funkce sledování polohy nebo různé adresy URL připojení založené na WiFi SSID, potřebujeme přístup k vaší poloze. Pokud chcete konzistentní aktualizace na pozadí, budete také muset povolit zpracování na pozadí</string>
+    <string name="grant_permission">Udělení oprávnění</string>
+    <string name="finish">Dokončit</string>
+    <string name="other_settings">Další nastavení</string>
+    <string name="fullscreen">Fullscreen</string>
+    <string name="fullscreen_def">Dejte aplikaci na celou obrazovku</string>
+    <string name="label_service">Služba</string>
+    <string name="label_entity_id">ID entity</string>
+    <string name="label_label">Označení:</string>
+    <string name="label_icon">Ikona:</string>
 </resources>

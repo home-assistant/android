@@ -12,7 +12,7 @@
     <string name="checking_with_home_assistant">Verific cu Home Assistant-ul</string>
     <string name="skip">Nu acum</string>
     <string name="retry">Reîncercați</string>
-    <string name="attempting_registration">Aplicația se înregistrează…</string>
+    <string name="attempting_registration">Aplicația se înregistrează...</string>
     <string name="unable_to_register">Nu s-au putut înregistra</string>
     <string name="error_with_registration">Te rog verifică dacă este activată integrarea pentru mobile_app în configurația Home Assistant-ului.</string>
     <string name="url_parse_error">Nu am putut analiza adresa Home Assistant-ului. Ar trebui sa arate așa: https:///example.com</string>
@@ -21,7 +21,7 @@
     <string name="pref_location_background_title">Urmărirea poziție in fundal.</string>
     <string name="pref_location_background_summary">Actualizați-vă periodic poziția în fundal.</string>
     <string name="application_version">Versiunea aplicației</string>
-    <string name="location">Poziție</string>
+    <string name="location">Localizare</string>
     <string name="app_version_info">Informații despre versiunea aplicației</string>
     <string name="device_registration">Înregistrare dispozitiv</string>
     <string name="device_name">Numele dispozitivului</string>
@@ -37,5 +37,19 @@
     <string name="error_auth_revoked">Se pare că autorizația dvs. a fost revocată, vă rugăm să vă reconectați la Home Assistant.</string>
     <string name="select_instance">Selectați instanța la care doriți să vă conectați:</string>
     <string name="failed_scan">Scanarea pentru Home Assistant a eșuat.</string>
+    <string name="add_widget">Adaugă widgetul</string>
+    <string name="widget_text_hint_service_domain">Domeniu</string>
+    <string name="widget_text_hint_service_service">Serviciu</string>
+    <string name="widget_text_hint_label">Etichetă</string>
+    <string name="widget_label_placeholder_text">Etichetă</string>
+    <string name="widget_spinner_icon">Iconiță:</string>
+    <string name="connected_to_home_assistant">Conectat la Home Assistant</string>
+    <string name="grant_permission">Acordă permisiunea</string>
+    <string name="finish">Finalizează</string>
+    <string name="other_settings">Alte setări</string>
+    <string name="fullscreen">Ecran complet</string>
     <string name="fullscreen_def">Puneți aplicația pe ecran complet</string>
+    <string name="label_service">Serviciu:</string>
+    <string name="label_label">Etichetă:</string>
+    <string name="label_icon">Iconiță:</string>
 </resources>

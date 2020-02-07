@@ -12,7 +12,7 @@
     <string name="checking_with_home_assistant">Tjekker med Home Assistant</string>
     <string name="skip">Spring over</string>
     <string name="retry">Prøv igen</string>
-    <string name="attempting_registration">Registrerer applikationen…</string>
+    <string name="attempting_registration">Registrerer applikationen...</string>
     <string name="unable_to_register">Kunne ikke registrere applikationen</string>
     <string name="error_with_registration">Kontroller, at du har mobile_app-integration\naktiveret på din Home Assistant-instans.</string>
     <string name="url_parse_error">Kan ikke fortolke din Home Assistant-webadresse. Det skal ligne https://eksempel.com</string>
