@@ -14,6 +14,8 @@ class WidgetRepositoryImpl @Inject constructor(
         internal const val PREF_KEY_DOMAIN = "domain"
         internal const val PREF_KEY_SERVICE = "service"
         internal const val PREF_KEY_SERVICE_DATA = "serviceData"
+        internal const val PREF_KEY_SERVICE_DATA_COUNT = "serviceDataCount"
+        internal const val PREF_KEY_SERVICE_FIELDS = "serviceFields"
         internal const val PREF_KEY_ICON = "icon"
         internal const val PREF_KEY_LABEL = "label"
     }
@@ -22,7 +24,7 @@ class WidgetRepositoryImpl @Inject constructor(
         appWidgetId: Int,
         domainStr: String,
         serviceStr: String,
-        entityIdStr: String?
+        serviceDataStr: String
     ) {
         saveStringPref(
             PREF_PREFIX_KEY + PREF_KEY_DOMAIN + appWidgetId,
@@ -32,9 +34,10 @@ class WidgetRepositoryImpl @Inject constructor(
             PREF_PREFIX_KEY + PREF_KEY_SERVICE + appWidgetId,
             serviceStr
         )
+
         saveStringPref(
             PREF_PREFIX_KEY + PREF_KEY_SERVICE_DATA + appWidgetId,
-            entityIdStr
+            serviceDataStr
         )
     }
 

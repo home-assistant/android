@@ -5,8 +5,13 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
 import android.view.View
-import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.gson.Gson
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Entity
@@ -21,11 +26,15 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class ButtonWidgetConfigureActivity : Activity() {
+    private val TAG: String = "ButtonWidgetConfigAct"
+
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    private lateinit var services: ArrayAdapter<Service>
-    private lateinit var entities: ArrayAdapter<Entity<Any>>
+    private var services = HashMap<String, Service>()
+    private var entities = HashMap<String, Entity<Any>>()
+    private var dynamicFields = ArrayList<ServiceFieldBinder>()
+    private lateinit var dynamicFieldAdapter: WidgetDynamicFieldAdapter
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -38,27 +47,45 @@ class ButtonWidgetConfigureActivity : Activity() {
         val intent = Intent()
         intent.action = ButtonWidget.RECEIVE_DATA
         intent.component = ComponentName(context, ButtonWidget::class.java)
+
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+
+        // Analyze and send service and domain
+        val serviceText = context.widget_text_config_service.text.toString()
+        val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
+        val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
         intent.putExtra(
             ButtonWidget.EXTRA_DOMAIN,
-            services.getItem(context.service.selectedItemPosition)?.domain
+            domain
         )
         intent.putExtra(
             ButtonWidget.EXTRA_SERVICE,
-            services.getItem(context.service.selectedItemPosition)?.service
+            service
         )
-        intent.putExtra(
-            ButtonWidget.EXTRA_ENTITY_ID,
-            entities.getItem(entity_id.selectedItemPosition)?.entityId
-        )
+
+        // Fetch and send label and icon
         intent.putExtra(
             ButtonWidget.EXTRA_LABEL,
-            label.text.toString()
+            context.label.text.toString()
         )
         intent.putExtra(
             ButtonWidget.EXTRA_ICON,
             context.widget_config_spinner.selectedItemId.toInt()
         )
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+
+        // Analyze and send service data
+        val serviceDataMap = HashMap<String, Any>()
+        dynamicFields.forEach {
+            if (it.value != null) {
+                serviceDataMap[it.field] = it.value!!
+            }
+        }
+
+        intent.putExtra(
+            ButtonWidget.EXTRA_SERVICE_DATA,
+            Gson().toJson(serviceDataMap)
+        )
+
         context.sendBroadcast(intent)
 
         // Make sure we pass back the original appWidgetId
@@ -66,43 +93,66 @@ class ButtonWidgetConfigureActivity : Activity() {
         finish()
     }
 
+    private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
+        if (hasFocus && view is AutoCompleteTextView) {
+            view.showDropDown()
+        }
+    }
+
+    private val serviceTextWatcher: TextWatcher = (object : TextWatcher {
+        override fun afterTextChanged(p0: Editable?) {
+            val serviceText: String = p0.toString()
+
+            if (services.keys.contains(serviceText)) {
+                Log.d(TAG, "Valid domain and service--processing dynamic fields")
+
+                // Make sure there are not already any dynamic fields created
+                // This can happen if selecting the drop-down twice or pasting
+                dynamicFields.clear()
+
+                // We only call this if servicesAvailable was fetched and is not null,
+                // so we can safely assume that it is not null here
+                val fields = services[serviceText]!!.serviceData.fields
+                val fieldKeys = fields.keys
+                Log.d(TAG, "Fields applicable to this service: $fields")
+
+                fieldKeys.sorted().forEach { fieldKey ->
+                    Log.d(TAG, "Creating a text input box for $fieldKey")
+
+                    // Insert a dynamic layout
+                    // IDs get priority and go at the top, since the other fields
+                    // are usually optional but the ID is required
+                    if (fieldKey.contains("_id"))
+                        dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
+                    else
+                        dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
+                }
+
+                dynamicFieldAdapter.notifyDataSetChanged()
+            } else {
+                if (dynamicFields.size > 0) {
+                    dynamicFields.clear()
+                    dynamicFieldAdapter.notifyDataSetChanged()
+                }
+            }
+        }
+
+        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+    })
+
+    private fun getServiceString(service: Service): String {
+        return "${service.domain}.${service.service}"
+    }
+
     public override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
-
-        DaggerProviderComponent
-            .builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         // Set the result to CANCELED.  This will cause the widget host to cancel
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
         setContentView(R.layout.widget_button_configure)
-
-        services = SingleItemArrayAdapter(this) {
-            if (it != null) "${it.domain}.${it.service}" else ""
-        }
-        service.adapter = services
-
-        entities = SingleItemArrayAdapter(this) {
-            it?.entityId ?: ""
-        }
-        entity_id.adapter = entities
-
-        mainScope.launch {
-
-            services.addAll(integrationUseCase.getServices().sortedBy { it.domain + it.service })
-            entities.addAll(integrationUseCase.getEntities().sortedBy { it.entityId })
-            entities.insert(null, 0)
-            runOnUiThread {
-                services.notifyDataSetChanged()
-                entities.notifyDataSetChanged()
-            }
-        }
-
-        add_button.setOnClickListener(onClickListener)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -118,6 +168,46 @@ class ButtonWidgetConfigureActivity : Activity() {
             finish()
             return
         }
+
+        // Inject components
+        DaggerProviderComponent
+            .builder()
+            .appComponent((application as GraphComponentAccessor).appComponent)
+            .build()
+            .inject(this)
+
+        val serviceAdapter = SingleItemArrayAdapter<Service>(this) {
+            if (it != null) getServiceString(it) else ""
+        }
+        widget_text_config_service.setAdapter(serviceAdapter)
+        widget_text_config_service.onFocusChangeListener = dropDownOnFocus
+
+        mainScope.launch {
+            // Fetch services
+            integrationUseCase.getServices().forEach {
+                services[getServiceString(it)] = it
+            }
+            serviceAdapter.addAll(services.values)
+            serviceAdapter.sort()
+
+            // Fetch entities
+            integrationUseCase.getEntities().forEach {
+                entities[it.entityId] = it
+            }
+
+            // Update service adapter
+            runOnUiThread {
+                serviceAdapter.notifyDataSetChanged()
+            }
+        }
+
+        widget_text_config_service.addTextChangedListener(serviceTextWatcher)
+
+        add_button.setOnClickListener(onClickListener)
+
+        dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
+        widget_config_fields_layout.adapter = dynamicFieldAdapter
+        widget_config_fields_layout.layoutManager = LinearLayoutManager(this)
 
         // Set up icon spinner
         val icons = intArrayOf(

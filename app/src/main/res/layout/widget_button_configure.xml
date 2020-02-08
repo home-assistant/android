@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -26,36 +27,26 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:labelFor="@id/service"
+                android:labelFor="@id/widget_text_config_service"
                 android:padding="5dp"
                 android:text="@string/label_service" />
 
-            <androidx.appcompat.widget.AppCompatSpinner
-                android:id="@+id/service"
+            <AutoCompleteTextView
+                android:id="@+id/widget_text_config_service"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:labelFor="@id/entity_id"
-                android:padding="5dp"
-                android:text="@string/label_entity_id" />
-
-            <androidx.appcompat.widget.AppCompatSpinner
-                android:id="@+id/entity_id"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:completionThreshold="0"
+                android:imeOptions="actionNext"
+                android:inputType="text" />
         </LinearLayout>
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/widget_config_fields_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <LinearLayout
+            android:id="@+id/widget_config_icon_layout"
             android:layout_width="match_parent"
             android:layout_height="50dp"
             android:gravity="center"
@@ -91,8 +82,10 @@
             <androidx.appcompat.widget.AppCompatEditText
                 android:id="@+id/label"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
+                android:layout_height="wrap_content"
+                android:hint="@string/widget_text_hint_label"
+                android:imeOptions="actionDone"
+                android:inputType="text" />
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton
@@ -105,4 +98,4 @@
             android:text="@string/add_widget" />
 
     </LinearLayout>
-</ScrollView>
+</androidx.core.widget.NestedScrollView>
