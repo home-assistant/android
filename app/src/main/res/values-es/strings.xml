@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="app_name">Home Assistant</string>
+    <string name="scanning_network">Escaneando la red por Home Assistant</string>
+    <string name="manual_setup">Introducir la dirección manualmente</string>
+    <string name="input_url_hint">https://example.duckdns.org:8123</string>
+    <string name="skip">Omitir</string>
+    <string name="retry">Reintentar</string>
+    <string name="attempting_registration">Registrando aplicación ...</string>
+    <string name="location">Ubicación</string>
+    <string name="device_name">Nombre del dispositivo</string>
+    <string name="ok">Aceptar</string>
+    <string name="pref_connection_title">Información de la conexión</string>
+    <string name="configure_widget_label">Etiqueta del widget</string>
+    <string name="add_widget">Añadir widget</string>
+    <string name="widget_text_hint_service_domain">Dominio</string>
+    <string name="widget_text_hint_service_service">Servicio</string>
+    <string name="widget_text_hint_label">Etiqueta</string>
+    <string name="widget_label_placeholder_text">Etiqueta</string>
+    <string name="widget_spinner_icon">Icono:</string>
+    <string name="connected_to_home_assistant">Conectado a Home Assistant</string>
+    <string name="grant_permission">Conceder permiso</string>
+    <string name="finish">Finalizar</string>
+    <string name="other_settings">Otros ajustes</string>
+    <string name="fullscreen">Pantalla completa</string>
+    <string name="label_service">Servicio:</string>
+    <string name="label_label">Etiqueta:</string>
+    <string name="label_icon">Icono:</string>
+</resources>

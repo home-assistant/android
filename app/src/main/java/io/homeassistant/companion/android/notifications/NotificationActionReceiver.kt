@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.notifications
 
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -15,6 +16,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
     companion object {
         const val FIRE_EVENT = "FIRE_EVENT"
+        const val EXTRA_NOTIFICATION_ID = "EXTRA_NOTIFICATION_ID"
         const val EXTRA_NOTIFICATION_ACTION = "EXTRA_ACTION_KEY"
     }
 
@@ -23,19 +25,24 @@ class NotificationActionReceiver : BroadcastReceiver() {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    override fun onReceive(context: Context?, intent: Intent?) {
+    override fun onReceive(context: Context, intent: Intent) {
         DaggerServiceComponent.builder()
-            .appComponent((context!!.applicationContext as GraphComponentAccessor).appComponent)
+            .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
 
-        intent?.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)?.let {
+        intent.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)?.let {
             ioScope.launch {
                 integrationUseCase.fireEvent(
                     "mobile_app_notification_action",
                     it.data.plus(Pair("action", it.key))
                 )
             }
+        }
+        val messageId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
+        if (messageId != -1) {
+            val notificationService: NotificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationService.cancel(messageId)
         }
     }
 }

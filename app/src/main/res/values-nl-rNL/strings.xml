@@ -12,7 +12,7 @@
     <string name="checking_with_home_assistant">Controleren met Home Assistant</string>
     <string name="skip">Overslaan</string>
     <string name="retry">Opnieuw proberen</string>
-    <string name="attempting_registration">Applicatie registeren…</string>
+    <string name="attempting_registration">Applicatie registeren...</string>
     <string name="unable_to_register">Niet mogelijk om de applicatie te registeren.</string>
     <string name="error_with_registration">Controleer of de mobile_app integratie is ingeschakeld in je Home Assistant instantie.</string>
     <string name="url_parse_error">Je Home Assistant URL lijkt niet te kloppen. Het zou ongeveer hetzelfde moeten zijn als https://example.com</string>
@@ -38,16 +38,24 @@
     <string name="select_instance">Selecteer de instantie waarmee je verbinding wilt maken:</string>
     <string name="failed_scan">Scannen naar Home Assistant is niet gelukt.</string>
     <string name="widget_image_description">Home Assistant Widget</string>
+    <string name="configure_service_call">Serviceaanvraag configureren</string>
     <string name="configure_widget_label">Widget label</string>
     <string name="add_widget">Widget toevoegen</string>
     <string name="widget_text_hint_service_domain">Domein</string>
+    <string name="widget_text_hint_service_service">Services:</string>
+    <string name="widget_text_hint_service_data">Entiteits-ID:</string>
     <string name="widget_text_hint_label">Label</string>
     <string name="widget_label_placeholder_text">Label</string>
     <string name="widget_spinner_icon">Icoon:</string>
     <string name="connected_to_home_assistant">Verbonden met Home Assistant</string>
+    <string name="permission_explanation">Om locatietracking-functies of verschillende verbindings-URL\'s op basis van WiFi SSID te gebruiken, hebben we toegang tot uw locatie nodig. Als u consistente achtergrondupdates wilt, moet u ook achtergrondverwerking toestaan</string>
     <string name="grant_permission">Toestemming verlenen</string>
     <string name="finish">Voltooien</string>
     <string name="other_settings">Overige instellingen</string>
     <string name="fullscreen">Volledig scherm</string>
     <string name="fullscreen_def">Applicatie in volledig scherm weergeven</string>
+    <string name="label_service">Services:</string>
+    <string name="label_entity_id">Entiteits-ID:</string>
+    <string name="label_label">Label</string>
+    <string name="label_icon">Icoon:</string>
 </resources>

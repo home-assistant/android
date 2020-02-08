@@ -12,7 +12,7 @@
     <string name="checking_with_home_assistant">Sprawdzanie z Home Assistant\'em</string>
     <string name="skip">Pomiń</string>
     <string name="retry">Ponów próbę</string>
-    <string name="attempting_registration">Próba zarejestrowania aplikacji…</string>
+    <string name="attempting_registration">Rejestruję aplikację…</string>
     <string name="unable_to_register">Nie można zarejestrować aplikacji</string>
     <string name="error_with_registration">Sprawdź, czy integracja mobile_app jest włączona w Twoim instancji Home Assistant\'a.</string>
     <string name="url_parse_error">Nie można rozpoznać adresu URL Home Assistant\'a. Powinien on wyglądać następująco https://example.com</string>
