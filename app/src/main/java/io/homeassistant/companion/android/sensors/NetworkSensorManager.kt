@@ -31,17 +31,34 @@ class NetworkSensorManager : SensorManager {
         val wifiManager =
             (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
         val conInfo = wifiManager.connectionInfo
+
+        val lastScanStrength = wifiManager.scanResults.firstOrNull {
+            it.BSSID == conInfo.bssid
+        }?.level ?: -1
+
+        var signalStrength = -1
+        if (lastScanStrength != -1){
+            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
+        }
+
+        val icon = "mdi:wifi-strength-" + when(signalStrength){
+            -1 -> "off"
+            0 -> "outline"
+            else -> signalStrength
+        }
+
         return Sensor(
             "wifi_connection",
             conInfo.ssid,
             "sensor",
-            "mdi:wifi-strength-4",
+            icon,
             mapOf(
                 "bssid" to conInfo.bssid,
-                "ip" to getIpAddress(conInfo.ipAddress),
+                "ip_address" to getIpAddress(conInfo.ipAddress),
                 "link_speed" to conInfo.linkSpeed,
                 "is_hidden" to conInfo.hiddenSSID,
-                "frequency" to conInfo.frequency
+                "frequency" to conInfo.frequency,
+                "signal_level" to lastScanStrength
             )
         )
     }

@@ -83,8 +83,8 @@ class BatterySensorManager : SensorManager {
             "sensor",
             batteryIcon,
             mapOf(
-                "isCharging" to isCharging,
-                "chargerType" to chargerType
+                "is_charging" to isCharging,
+                "charger_type" to chargerType
             )
         )
     }
