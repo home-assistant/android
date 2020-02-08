@@ -268,7 +268,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         return response.flatMap {
             it.services.map { service ->
-                Service(it.domain, service.key)
+                Service(it.domain, service.key, service.value)
             }
         }.toTypedArray()
     }

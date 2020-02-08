@@ -6,12 +6,12 @@ interface WidgetUseCase {
         appWidgetId: Int,
         domainStr: String,
         serviceStr: String,
-        entityIdStr: String?
+        serviceData: String
     )
 
     suspend fun loadDomain(appWidgetId: Int): String?
     suspend fun loadService(appWidgetId: Int): String?
-    suspend fun loadEntityId(appWidgetId: Int): String?
+    suspend fun loadServiceData(appWidgetId: Int): String?
 
     suspend fun loadIcon(appWidgetId: Int): String?
     suspend fun loadLabel(appWidgetId: Int): String?

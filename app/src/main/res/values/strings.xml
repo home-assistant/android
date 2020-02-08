@@ -58,4 +58,5 @@
     <string name="label_entity_id">Entity ID:</string>
     <string name="label_label">Label:</string>
     <string name="label_icon">Icon:</string>
+    <string name="label_dynamic_data">Data:</string>
 </resources>
