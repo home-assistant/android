@@ -99,6 +99,7 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "enabled_sensors" -> {
                     integrationUseCase.setEnabledSensors(values ?: mutableSetOf())
+                    settingsView.restartSensorWorker()
                 }
                 else -> throw Exception()
             }

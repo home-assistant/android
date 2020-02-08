@@ -77,8 +77,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             val hasLocationPermission = PermissionManager.hasLocationPermissions(context)
 
             zoneTracking = findViewById<SwitchCompat>(R.id.location_zone).apply {
-                setOnClickListener {
-                    presenter.onToggleZoneTracking(it.isSelected)
+                setOnCheckedChangeListener { _, isChecked ->
+                    presenter.onToggleZoneTracking(isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission
@@ -87,8 +87,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             zoneTrackingSummary.isEnabled = hasLocationPermission
 
             backgroundTracking = findViewById<SwitchCompat>(R.id.location_background).apply {
-                setOnClickListener {
-                    presenter.onToggleBackgroundTracking(it.isSelected)
+                setOnCheckedChangeListener { _, isChecked ->
+                    presenter.onToggleBackgroundTracking(isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission && isIgnoringBatteryOptimizations()
@@ -96,14 +96,15 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             backgroundTrackingSummary = findViewById(R.id.location_background_summary)
             backgroundTrackingSummary.isEnabled = hasLocationPermission
 
-            findViewById<SwitchCompat>(R.id.sensors_enabled)?.setOnClickListener {
-                presenter.onToggleSensors(
-                    if (it.isSelected)
-                        resources.getStringArray(R.array.sensors_values).toSet()
-                    else
-                        setOf<String>()
-                )
-            }
+            findViewById<SwitchCompat>(R.id.sensors_enabled)
+                ?.setOnCheckedChangeListener { _, isChecked ->
+                    presenter.onToggleSensors(
+                        if (isChecked)
+                            resources.getStringArray(R.array.sensors_values).toSet()
+                        else
+                            setOf<String>()
+                    )
+                }
 
             findViewById<AppCompatButton>(R.id.finish).setOnClickListener {
                 (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
