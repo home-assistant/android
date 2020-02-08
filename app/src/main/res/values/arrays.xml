@@ -2,5 +2,6 @@
 <resources>
     <array name="sensors_values">
         <item>battery</item>
+        <item>network</item>
     </array>
 </resources>

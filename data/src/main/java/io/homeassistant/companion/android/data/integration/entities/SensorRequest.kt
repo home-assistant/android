@@ -8,7 +8,7 @@ data class SensorRequest<T>(
     val state: T,
     val type: String,
     val icon: String,
-    val attributes: Map<String, String>,
+    val attributes: Map<String, Any>,
     val name: String? = null,
     val deviceClass: String? = null,
     val unitOfMeasurement: String? = null

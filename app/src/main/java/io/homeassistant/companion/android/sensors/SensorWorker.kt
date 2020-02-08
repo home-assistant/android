@@ -51,6 +51,10 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
             sensorManagers.add(BatterySensorManager())
         }
 
+        if (integrationUseCase.getEnabledSensors()?.contains("network") == true) {
+            sensorManagers.add(NetworkSensorManager())
+        }
+
         sensorManagers.flatMap {
             it.getSensorRegistrations(appContext)
         }.forEach {

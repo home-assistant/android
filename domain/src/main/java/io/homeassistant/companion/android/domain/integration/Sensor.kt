@@ -5,6 +5,6 @@ data class Sensor<T>(
     val state: T,
     val type: String,
     val icon: String,
-    val attributes: Map<String, String>
+    val attributes: Map<String, Any>
 
 )

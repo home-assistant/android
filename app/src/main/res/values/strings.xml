@@ -65,5 +65,6 @@
     <string name="onboard_sensors_enabled_summary">Allow the app to send sensor data back to Home Assistant.</string>
     <string-array name="sensor_names">
         <item>Battery</item>
+        <item>Network</item>
     </string-array>
 </resources>

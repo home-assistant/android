@@ -5,16 +5,16 @@ data class SensorRegistration<T>(
     val state: T,
     val type: String,
     val icon: String,
-    val attributes: Map<String, String>,
+    val attributes: Map<String, Any>,
     val name: String,
-    val deviceClass: String,
+    val deviceClass: String? = null,
     val unitOfMeasurement: String? = null
 
 ) {
     constructor(
         sensor: Sensor<T>,
         name: String,
-        deviceClass: String,
+        deviceClass: String? = null,
         unitOfMeasurement: String? = null
     ) : this(
         sensor.uniqueId,
