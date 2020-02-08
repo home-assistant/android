@@ -96,6 +96,15 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             backgroundTrackingSummary = findViewById(R.id.location_background_summary)
             backgroundTrackingSummary.isEnabled = hasLocationPermission
 
+            findViewById<SwitchCompat>(R.id.sensors_enabled)?.setOnClickListener {
+                presenter.onToggleSensors(
+                    if (it.isSelected)
+                        resources.getStringArray(R.array.sensors_values).toSet()
+                    else
+                        setOf<String>()
+                )
+            }
+
             findViewById<AppCompatButton>(R.id.finish).setOnClickListener {
                 (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
             }

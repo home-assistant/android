@@ -49,6 +49,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_ZONE_ENABLED = "zone_enabled"
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
+        private const val PREF_SENSORS_ENABLED = "sensors_enabled"
+        private const val PREF_SENSORS_REGISTERED = "sensors_registered"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -242,6 +244,14 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
     }
 
+    override suspend fun setEnabledSensors(enabled: Set<String>) {
+        localStorage.putStringSet(PREF_SENSORS_ENABLED, enabled)
+    }
+
+    override suspend fun getEnabledSensors(): Set<String>? {
+        return localStorage.getStringSet(PREF_SENSORS_ENABLED)
+    }
+
     override suspend fun getThemeColor(): String {
         val getConfigRequest =
             IntegrationRequest(
@@ -289,6 +299,11 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
+        val registeredSensors = localStorage.getStringSet(PREF_SENSORS_REGISTERED)
+        if (registeredSensors?.contains(sensorRegistration.uniqueId) == true) {
+            // Already registered
+            return
+        }
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
@@ -304,9 +319,13 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
         for (it in urlRepository.getApiUrls()) {
             try {
-                integrationService.registerSensor(it.toHttpUrlOrNull()!!, integrationRequest)?.let {
+                integrationService.registerSensor(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     // If we created sensor or it already exists
                     if (it.isSuccessful || it.code() == 409) {
+                        localStorage.putStringSet(
+                            PREF_SENSORS_REGISTERED,
+                            registeredSensors.orEmpty().plus(sensorRegistration.uniqueId)
+                        )
                         return
                     }
                 }
@@ -332,7 +351,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
         for (it in urlRepository.getApiUrls()) {
             try {
-                integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest)?.let {
+                integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     if (it.isSuccessful) {
                         return
                     }

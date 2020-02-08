@@ -38,6 +38,16 @@
             android:summary="@string/pref_location_background_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:title="@string/sensors">
+        <MultiSelectListPreference
+            android:key="enabled_sensors"
+            android:title="@string/pref_sensors_enabled_title"
+            android:summary="@string/pref_sensors_enabled_summary"
+            android:entries="@array/sensor_names"
+            android:entryValues="@array/sensors_values"
+            android:defaultValue="@array/sensors_values"/>
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/other_settings">
         <SwitchPreference
             android:key="fullscreen"

@@ -59,4 +59,11 @@
     <string name="label_label">Label:</string>
     <string name="label_icon">Icon:</string>
     <string name="label_dynamic_data">Data:</string>
+    <string name="sensors">Sensors</string>
+    <string name="pref_sensors_enabled_title">Sensors Enabled</string>
+    <string name="pref_sensors_enabled_summary">The list of sensors that will be reported to Home Assistant.</string>
+    <string name="onboard_sensors_enabled_summary">Allow the app to send sensor data back to Home Assistant.</string>
+    <string-array name="sensor_names">
+        <item>Battery</item>
+    </string-array>
 </resources>

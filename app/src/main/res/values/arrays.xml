@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="sensors_values">
+        <item>battery</item>
+    </array>
+</resources>
