@@ -27,15 +27,6 @@ class BatterySensorManager : SensorManager {
                     )
                 )
             }
-            getBatteryChargingState(it)?.let { sensor ->
-                retVal.add(
-                    SensorRegistration(
-                        sensor,
-                        "Battery Charging",
-                        "plug"
-                    )
-                )
-            }
 
             return@let retVal
         } ?: listOf()
@@ -47,9 +38,6 @@ class BatterySensorManager : SensorManager {
             getBatteryLevelSensor(it)?.let { sensor ->
                 retVal.add(sensor)
             }
-            getBatteryChargingState(it)?.let { sensor ->
-                retVal.add(sensor)
-            }
         }
 
         return retVal
@@ -58,23 +46,13 @@ class BatterySensorManager : SensorManager {
     private fun getBatteryLevelSensor(intent: Intent): Sensor<Any>? {
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+        val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
         if (level == -1 || scale == -1) {
             Log.e(TAG, "Issue getting battery level!")
             return null
         }
 
-        return Sensor(
-            "battery_level",
-            (level.toFloat() / scale.toFloat() * 100.0f).toInt(),
-            "sensor",
-            "mdi:battery",
-            mapOf()
-        )
-    }
-
-    private fun getBatteryChargingState(intent: Intent): Sensor<Any>? {
-        val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
         val isCharging: Boolean = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                 status == BatteryManager.BATTERY_STATUS_FULL
 
@@ -85,12 +63,27 @@ class BatterySensorManager : SensorManager {
             else -> "N/A"
         }
 
+        val percent = (level.toFloat() / scale.toFloat() * 100.0f).toInt()
+        var batteryIcon = "mdi:battery"
+        if(isCharging)
+            batteryIcon += "-charging"
+        if(chargerType == "Wireless")
+            batteryIcon += "-wireless"
+
+        val batteryStep = percent / 10
+        batteryIcon += when(batteryStep){
+            0 -> "-outline"
+            10 -> ""
+            else -> "-${batteryStep}0"
+        }
+
         return Sensor(
-            "battery_charging",
-            isCharging,
-            "binary_sensor",
-            "mdi:battery-charging",
+            "battery_level",
+            percent,
+            "sensor",
+            batteryIcon,
             mapOf(
+                "isCharging" to isCharging,
                 "chargerType" to chargerType
             )
         )
