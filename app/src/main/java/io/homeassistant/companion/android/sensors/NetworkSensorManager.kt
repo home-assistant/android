@@ -37,11 +37,11 @@ class NetworkSensorManager : SensorManager {
         }?.level ?: -1
 
         var signalStrength = -1
-        if (lastScanStrength != -1){
+        if (lastScanStrength != -1) {
             signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
         }
 
-        val icon = "mdi:wifi-strength-" + when(signalStrength){
+        val icon = "mdi:wifi-strength-" + when (signalStrength) {
             -1 -> "off"
             0 -> "outline"
             else -> signalStrength

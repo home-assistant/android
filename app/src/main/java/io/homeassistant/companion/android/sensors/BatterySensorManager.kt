@@ -65,13 +65,13 @@ class BatterySensorManager : SensorManager {
 
         val percent = (level.toFloat() / scale.toFloat() * 100.0f).toInt()
         var batteryIcon = "mdi:battery"
-        if(isCharging)
+        if (isCharging)
             batteryIcon += "-charging"
-        if(chargerType == "Wireless")
+        if (chargerType == "Wireless")
             batteryIcon += "-wireless"
 
         val batteryStep = percent / 10
-        batteryIcon += when(batteryStep){
+        batteryIcon += when (batteryStep) {
             0 -> "-outline"
             10 -> ""
             else -> "-${batteryStep}0"
