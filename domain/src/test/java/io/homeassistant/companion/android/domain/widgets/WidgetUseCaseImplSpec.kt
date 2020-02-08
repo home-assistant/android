@@ -24,7 +24,7 @@ object WidgetUseCaseImplSpec : Spek({
                         1,
                         "domain",
                         "service",
-                        "serviceData"
+                        "{\"brightness\":\"255\",\"entity_id\":\"light.dummy_light\",\"color_temp\":\"2700\"}"
                     )
                 }
             }
@@ -35,7 +35,7 @@ object WidgetUseCaseImplSpec : Spek({
                         1,
                         "domain",
                         "service",
-                        "serviceData"
+                        "{\"brightness\":\"255\",\"entity_id\":\"light.dummy_light\",\"color_temp\":\"2700\"}"
                     )
                 }
             }
@@ -63,7 +63,7 @@ object WidgetUseCaseImplSpec : Spek({
 
         describe("load service data") {
             beforeEachTest {
-                runBlocking { useCase.loadEntityId(1) }
+                runBlocking { useCase.loadServiceData(1) }
             }
 
             it("should call the repository") {

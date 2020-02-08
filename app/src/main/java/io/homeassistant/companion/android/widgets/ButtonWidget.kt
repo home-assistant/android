@@ -10,6 +10,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import com.google.gson.Gson
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
@@ -30,7 +31,7 @@ class ButtonWidget : AppWidgetProvider() {
 
         internal const val EXTRA_DOMAIN = "EXTRA_DOMAIN"
         internal const val EXTRA_SERVICE = "EXTRA_SERVICE"
-        internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
+        internal const val EXTRA_SERVICE_DATA = "EXTRA_SERVICE_DATA"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_ICON = "EXTRA_ICON"
     }
@@ -134,7 +135,7 @@ class ButtonWidget : AppWidgetProvider() {
 
         // Set up progress bar as immediate feedback to show the click has been received
         // Success or failure feedback will come from the mainScope coroutine
-        val loadingViews = RemoteViews(context.packageName, R.layout.widget_button)
+        val loadingViews: RemoteViews = RemoteViews(context.packageName, R.layout.widget_button)
         val appWidgetManager = AppWidgetManager.getInstance(context)
 
         loadingViews.setInt(R.id.widgetProgressBar, "setVisibility", View.VISIBLE)
@@ -152,23 +153,22 @@ class ButtonWidget : AppWidgetProvider() {
             // Load the service call data from Shared Preferences
             val domain = widgetStorage.loadDomain(appWidgetId)
             val service = widgetStorage.loadService(appWidgetId)
-            val entityId = widgetStorage.loadEntityId(appWidgetId)
+            val serviceDataJson = widgetStorage.loadServiceData(appWidgetId)
 
             Log.d(
                 TAG, "Service Call Data loaded:" + System.lineSeparator() +
                         "domain: " + domain + System.lineSeparator() +
                         "service: " + service + System.lineSeparator() +
-                        "service_data: " + entityId
+                        "service_data: " + serviceDataJson
             )
 
-            if (domain == null || service == null) {
+            if (domain == null || service == null || serviceDataJson == null) {
                 Log.w(TAG, "Service Call Data incomplete.  Aborting service call")
             } else {
                 // If everything loaded correctly, package the service data and attempt the call
-                val serviceDataMap = HashMap<String, Any>()
-                if (entityId != null) {
-                    serviceDataMap["entity_id"] = entityId
-                }
+
+                // Convert JSON to HashMap
+                val serviceDataMap = Gson().fromJson(serviceDataJson, HashMap<String, Any>()::class.java)
 
                 try {
                     integrationUseCase.callService(domain, service, serviceDataMap)
@@ -207,11 +207,11 @@ class ButtonWidget : AppWidgetProvider() {
 
         val domain: String? = extras.getString(EXTRA_DOMAIN)
         val service: String? = extras.getString(EXTRA_SERVICE)
-        val entityId: String? = extras.getString(EXTRA_ENTITY_ID)
+        val serviceData: String? = extras.getString(EXTRA_SERVICE_DATA)
         val label: String? = extras.getString(EXTRA_LABEL)
         val icon: Int = extras.getInt(EXTRA_ICON)
 
-        if (domain == null || service == null) {
+        if (domain == null || service == null || serviceData == null) {
             Log.e(TAG, "Did not receive complete service call data")
             return
         }
@@ -221,11 +221,16 @@ class ButtonWidget : AppWidgetProvider() {
                 TAG, "Saving service call config data:" + System.lineSeparator() +
                         "domain: " + domain + System.lineSeparator() +
                         "service: " + service + System.lineSeparator() +
-                        "entity_id: " + entityId + System.lineSeparator() +
+                        "service_data: " + serviceData + System.lineSeparator() +
                         "label: " + label
             )
 
-            widgetStorage.saveServiceCallData(appWidgetId, domain, service, entityId)
+            widgetStorage.saveServiceCallData(
+                appWidgetId,
+                domain,
+                service,
+                serviceData
+            )
             widgetStorage.saveLabel(appWidgetId, label)
 
             val iconName = context.resources.getResourceEntryName(icon)

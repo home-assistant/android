@@ -13,4 +13,8 @@ interface LocalStorage {
     suspend fun putBoolean(key: String, value: Boolean)
 
     suspend fun getBoolean(key: String): Boolean
+
+    suspend fun putStringSet(key: String, value: Set<String>)
+
+    suspend fun getStringSet(key: String): Set<String>?
 }
