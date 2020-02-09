@@ -80,7 +80,8 @@ class MessagingService : FirebaseMessagingService() {
      */
     private suspend fun sendNotification(data: Map<String, String>) {
 
-        val messageId = System.currentTimeMillis().toInt()
+        val tag = data["tag"]
+        val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
 
         val intent = Intent(this, WebViewActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -107,7 +108,11 @@ class MessagingService : FirebaseMessagingService() {
 
         handleActions(notificationBuilder, data, messageId)
 
-        notificationManager.notify(messageId, notificationBuilder.build())
+        if (tag != null) {
+            notificationManager.notify(tag, messageId, notificationBuilder.build())
+        } else {
+            notificationManager.notify(messageId, notificationBuilder.build())
+        }
     }
 
     private fun handleText(
