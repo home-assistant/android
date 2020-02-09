@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.webview.WebViewActivity
-import java.lang.Exception
 import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -104,11 +103,18 @@ class MessagingService : FirebaseMessagingService() {
      *
      * @param messageBody FCM message body received.
      */
-    private suspend fun sendNotification(messageTitle: String?, messageBody: String, imageUrl: String?, actions: List<NotificationAction>) {
+    private suspend fun sendNotification(
+        messageTitle: String?,
+        messageBody: String,
+        imageUrl: String?,
+        actions: List<NotificationAction>
+    ) {
         val intent = Intent(this, WebViewActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT)
+        val pendingIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_ONE_SHOT
+        )
 
         // TODO: implement channels
         val channelId = "default"
@@ -124,11 +130,15 @@ class MessagingService : FirebaseMessagingService() {
 
         if (imageUrl != null) {
             val bitmap = getImageBitmap(imageUrl)
-            notificationBuilder
-                .setLargeIcon(bitmap)
-                .setStyle(NotificationCompat.BigPictureStyle()
-                    .bigPicture(bitmap)
-                    .bigLargeIcon(null))
+            if (bitmap != null) {
+                notificationBuilder
+                    .setLargeIcon(bitmap)
+                    .setStyle(
+                        NotificationCompat.BigPictureStyle()
+                            .bigPicture(bitmap)
+                            .bigLargeIcon(null)
+                    )
+            }
         }
 
         // TODO: This message id probably isn't the best
@@ -150,21 +160,30 @@ class MessagingService : FirebaseMessagingService() {
             notificationBuilder.addAction(0, it.title, actionPendingIntent)
         }
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(channelId,
+            val channel = NotificationChannel(
+                channelId,
                 "Default Channel",
-                NotificationManager.IMPORTANCE_DEFAULT)
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
             notificationManager.createNotificationChannel(channel)
         }
 
         notificationManager.notify(messageId, notificationBuilder.build())
     }
 
-    private suspend fun getImageBitmap(url: String): Bitmap = withContext(Dispatchers.IO) {
-        return@withContext BitmapFactory.decodeStream(URL(url).openStream())
+    private suspend fun getImageBitmap(url: String): Bitmap? = withContext(Dispatchers.IO) {
+        var image: Bitmap? = null
+        try {
+            image = BitmapFactory.decodeStream(URL(url).openStream())
+        } catch (e: Exception) {
+            Log.e(TAG, "Couldn't download image for notification", e)
+        }
+        return@withContext image
     }
 
     /**
