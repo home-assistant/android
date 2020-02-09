@@ -99,8 +99,9 @@ class MessagingService : FirebaseMessagingService() {
             .setContentIntent(pendingIntent)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
-            .setAutoCancel(true)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+
+        handleSticky(notificationBuilder, data)
 
         handleText(notificationBuilder, data)
 
@@ -113,6 +114,14 @@ class MessagingService : FirebaseMessagingService() {
         } else {
             notificationManager.notify(messageId, notificationBuilder.build())
         }
+    }
+
+    private fun handleSticky(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        val sticky = data["sticky"]?.toBoolean() ?: false
+        builder.setAutoCancel(!sticky)
     }
 
     private fun handleText(
