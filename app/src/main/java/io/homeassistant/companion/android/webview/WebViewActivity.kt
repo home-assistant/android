@@ -10,8 +10,16 @@ import android.os.Handler
 import android.util.Log
 import android.view.MenuInflater
 import android.view.View
-import android.webkit.*
+import android.webkit.HttpAuthHandler
+import android.webkit.JavascriptInterface
+import android.webkit.JsResult
+import android.webkit.PermissionRequest
+import android.webkit.SslErrorHandler
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -336,17 +344,17 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun authenticationDialog(handler: HttpAuthHandler) {
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
-        val username  = dialogLayout.findViewById<EditText>(R.id.username)
-        val password  = dialogLayout.findViewById<EditText>(R.id.password)
+        val username = dialogLayout.findViewById<EditText>(R.id.username)
+        val password = dialogLayout.findViewById<EditText>(R.id.password)
 
         AlertDialog.Builder(this)
             .setTitle(R.string.auth_request)
             .setView(dialogLayout)
-            .setPositiveButton(android.R.string.ok) { _,_ ->
+            .setPositiveButton(android.R.string.ok) { _, _ ->
                 handler.proceed(username.text.toString(), password.text.toString())
             }
-            .setNeutralButton(android.R.string.cancel){_,_ ->
-                Toast.makeText(applicationContext,R.string.auth_cancel,Toast.LENGTH_SHORT).show()
+            .setNeutralButton(android.R.string.cancel){ _, _ ->
+                Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT).show()
             }
             .show()
     }
