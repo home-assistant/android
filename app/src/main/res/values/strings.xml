@@ -59,4 +59,8 @@
     <string name="label_label">Label:</string>
     <string name="label_icon">Icon:</string>
     <string name="label_dynamic_data">Data:</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="auth_request">Authentication Requested:</string>
+    <string name="auth_cancel">Authentication Cancelled</string>
 </resources>
