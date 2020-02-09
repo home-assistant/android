@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.webview
 
+import android.webkit.HttpAuthHandler
+
 interface WebView {
 
     fun loadUrl(url: String)
@@ -11,4 +13,6 @@ interface WebView {
     fun openOnBoarding()
 
     fun showError(isAuthenticationError: Boolean = false)
+
+    fun authenticationDialog(handler: HttpAuthHandler)
 }
