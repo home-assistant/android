@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -95,12 +96,7 @@ class MessagingService : FirebaseMessagingService() {
         val tag = data["tag"]
         val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
 
-        val intent = Intent(this, WebViewActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT
-        )
+        val pendingIntent = handleIntent(data)
 
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -127,6 +123,26 @@ class MessagingService : FirebaseMessagingService() {
         } else {
             notificationManager.notify(messageId, notificationBuilder.build())
         }
+    }
+
+    private fun handleIntent(
+        data: Map<String, String>
+    ): PendingIntent {
+
+        val intent: Intent
+        if (!data["clickAction"].isNullOrBlank()) {
+            intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(data["clickAction"])
+        } else {
+            intent = Intent(this, WebViewActivity::class.java)
+        }
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+
+        return PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_ONE_SHOT
+        )
     }
 
     private fun handleColor(
