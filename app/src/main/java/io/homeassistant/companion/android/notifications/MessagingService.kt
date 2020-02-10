@@ -59,6 +59,9 @@ class MessagingService : FirebaseMessagingService() {
             if (it[MESSAGE] == "request_location_update") {
                 Log.d(TAG, "Request location update")
                 requestAccurateLocationUpdate()
+            } else if (it[MESSAGE] == "clear_notification" && !it["tag"].isNullOrBlank()) {
+                Log.d(TAG, "Clearing notification with tag: ${it["tag"]}")
+                clearNotification(it["tag"]!!)
             } else {
                 mainScope.launch {
                     Log.d(TAG, "Creating notification with following data: $it")
@@ -73,6 +76,14 @@ class MessagingService : FirebaseMessagingService() {
         intent.action = LocationBroadcastReceiver.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
 
         sendBroadcast(intent)
+    }
+
+    private fun clearNotification(tag: String) {
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val messageId = tag.hashCode()
+
+        notificationManager.cancel(tag, messageId)
     }
 
     /**
