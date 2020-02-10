@@ -220,15 +220,21 @@ class MessagingService : FirebaseMessagingService() {
                 val notificationAction = NotificationAction(
                     data["action_${i}_key"].toString(),
                     data["action_${i}_title"].toString(),
+                    data["action_${i}_uri"],
                     data
                 )
                 val actionIntent = Intent(this, NotificationActionReceiver::class.java).apply {
-                    action = NotificationActionReceiver.FIRE_EVENT
+                    action =
+                        if (notificationAction.key == "URI")
+                            NotificationActionReceiver.OPEN_URI
+                        else
+                            NotificationActionReceiver.FIRE_EVENT
                     putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
                     putExtra(
                         NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION,
                         notificationAction.key
                     )
+                    putExtra(NotificationActionReceiver.EXTRA_URI, notificationAction.uri)
                 }
                 val actionPendingIntent = PendingIntent.getBroadcast(
                     this,
