@@ -121,15 +121,15 @@ class MessagingService : FirebaseMessagingService() {
     private fun handleColor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
-    ){
+    ) {
 
         val colorString = data["color"]
         var color = ContextCompat.getColor(this, R.color.colorPrimary)
 
-        if(!colorString.isNullOrBlank()){
+        if (!colorString.isNullOrBlank()) {
             try {
                 color = Color.parseColor(colorString)
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 Log.e(TAG, "Unable to parse color", e)
             }
         }
