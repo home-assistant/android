@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Color
 import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
@@ -98,8 +99,9 @@ class MessagingService : FirebaseMessagingService() {
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentIntent(pendingIntent)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
-            .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+
+        handleColor(notificationBuilder, data)
 
         handleSticky(notificationBuilder, data)
 
@@ -114,6 +116,25 @@ class MessagingService : FirebaseMessagingService() {
         } else {
             notificationManager.notify(messageId, notificationBuilder.build())
         }
+    }
+
+    private fun handleColor(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ){
+
+        val colorString = data["color"]
+        var color = ContextCompat.getColor(this, R.color.colorPrimary)
+
+        if(!colorString.isNullOrBlank()){
+            try {
+                color = Color.parseColor(colorString)
+            }catch (e: Exception){
+                Log.e(TAG, "Unable to parse color", e)
+            }
+        }
+
+        builder.color = color
     }
 
     private fun handleSticky(
