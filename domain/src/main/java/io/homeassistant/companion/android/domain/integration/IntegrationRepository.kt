@@ -21,9 +21,6 @@ interface IntegrationRepository {
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 
-    suspend fun setEnabledSensors(enabled: Set<String>)
-    suspend fun getEnabledSensors(): Set<String>?
-
     suspend fun getThemeColor(): String
 
     suspend fun getServices(): Array<Service>

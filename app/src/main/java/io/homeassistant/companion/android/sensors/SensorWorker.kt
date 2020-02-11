@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -17,9 +19,12 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
 
     companion object {
         fun start(context: Context) {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED).build()
 
             val sensorWorker =
                 PeriodicWorkRequestBuilder<SensorWorker>(15, TimeUnit.MINUTES)
+                    .setConstraints(constraints)
                     .addTag("sensors")
                     .build()
 
@@ -40,20 +45,10 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
 
-        // If we have no sensors enabled we don't need the worker.
-        if (integrationUseCase.getEnabledSensors().isNullOrEmpty()) {
-            WorkManager.getInstance(appContext).cancelWorkById(id)
-        }
-
-        val sensorManagers = ArrayList<SensorManager>()
-
-        if (integrationUseCase.getEnabledSensors()?.contains("battery") == true) {
-            sensorManagers.add(BatterySensorManager())
-        }
-
-        if (integrationUseCase.getEnabledSensors()?.contains("network") == true) {
-            sensorManagers.add(NetworkSensorManager())
-        }
+        val sensorManagers = arrayOf(
+            BatterySensorManager(),
+            NetworkSensorManager()
+        )
 
         sensorManagers.flatMap {
             it.getSensorRegistrations(appContext)

@@ -4,6 +4,5 @@ interface MobileAppIntegrationPresenter {
     fun onRegistrationAttempt()
     fun onToggleZoneTracking(enabled: Boolean)
     fun onToggleBackgroundTracking(enabled: Boolean)
-    fun onToggleSensors(selected: Set<String>)
     fun onFinish()
 }

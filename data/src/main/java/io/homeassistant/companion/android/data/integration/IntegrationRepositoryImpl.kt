@@ -49,7 +49,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_ZONE_ENABLED = "zone_enabled"
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
-        private const val PREF_SENSORS_ENABLED = "sensors_enabled"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
     }
 
@@ -242,14 +241,6 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isFullScreenEnabled(): Boolean {
         return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
-    }
-
-    override suspend fun setEnabledSensors(enabled: Set<String>) {
-        localStorage.putStringSet(PREF_SENSORS_ENABLED, enabled)
-    }
-
-    override suspend fun getEnabledSensors(): Set<String>? {
-        return localStorage.getStringSet(PREF_SENSORS_ENABLED)
     }
 
     override suspend fun getThemeColor(): String {

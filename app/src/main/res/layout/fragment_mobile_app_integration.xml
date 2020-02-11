@@ -125,20 +125,6 @@
             android:layout_marginEnd="50dp"
             android:text="@string/pref_location_background_summary" />
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/sensors_enabled"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_margin"
-            android:text="@string/pref_sensors_enabled_title"/>
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/sensors_enabled_summary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="50dp"
-            android:text="@string/onboard_sensors_enabled_summary" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"

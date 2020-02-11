@@ -66,12 +66,6 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         }
     }
 
-    override fun onToggleSensors(selected: Set<String>) {
-        mainScope.launch {
-            integrationUseCase.setEnabledSensors(selected)
-        }
-    }
-
     override fun onFinish() {
         mainScope.cancel()
     }

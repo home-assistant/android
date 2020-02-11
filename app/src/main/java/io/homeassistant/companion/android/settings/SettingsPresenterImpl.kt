@@ -85,27 +85,6 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getStringSet(key: String?, defValues: MutableSet<String>?): MutableSet<String> {
-        return runBlocking {
-            when (key) {
-                "enabled_sensors" -> integrationUseCase.getEnabledSensors()?.toMutableSet() ?: defValues ?: mutableSetOf()
-                else -> throw Exception()
-            }
-        }
-    }
-
-    override fun putStringSet(key: String?, values: MutableSet<String>?) {
-        mainScope.launch {
-            when (key) {
-                "enabled_sensors" -> {
-                    integrationUseCase.setEnabledSensors(values ?: mutableSetOf())
-                    settingsView.restartSensorWorker()
-                }
-                else -> throw Exception()
-            }
-        }
-    }
-
     override fun getPreferenceDataStore(): PreferenceDataStore {
         return this
     }
