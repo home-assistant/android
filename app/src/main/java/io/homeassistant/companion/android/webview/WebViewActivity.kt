@@ -10,6 +10,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.MenuInflater
 import android.view.View
+import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
@@ -19,6 +20,8 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.lokalise.sdk.LokaliseContextWrapper
@@ -96,6 +99,15 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     if (request?.url.toString() == loadedUrl) {
                         showError()
                     }
+                }
+
+                override fun onReceivedHttpAuthRequest(
+                    view: WebView,
+                    handler: HttpAuthHandler,
+                    host: String,
+                    realm: String
+                ) {
+                    authenticationDialog(handler)
                 }
 
                 override fun onReceivedSslError(
@@ -326,6 +338,24 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 }
             }
             .setOnDismissListener { isShowingError = false }
+            .show()
+    }
+
+    override fun authenticationDialog(handler: HttpAuthHandler) {
+        val inflater = layoutInflater
+        val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
+        val username = dialogLayout.findViewById<EditText>(R.id.username)
+        val password = dialogLayout.findViewById<EditText>(R.id.password)
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auth_request)
+            .setView(dialogLayout)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                handler.proceed(username.text.toString(), password.text.toString())
+            }
+            .setNeutralButton(android.R.string.cancel) { _, _ ->
+                Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT).show()
+            }
             .show()
     }
 

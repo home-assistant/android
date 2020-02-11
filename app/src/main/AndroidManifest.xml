@@ -55,12 +55,12 @@
         <receiver
             android:name=".background.LocationBroadcastReceiver"
             android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
                 <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE" />
             </intent-filter>
         </receiver>
 

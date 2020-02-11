@@ -59,6 +59,10 @@
     <string name="label_label">Label:</string>
     <string name="label_icon">Icon:</string>
     <string name="label_dynamic_data">Data:</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="auth_request">Authentication Requested:</string>
+    <string name="auth_cancel">Authentication Cancelled</string>
     <string name="sensors">Sensors</string>
     <string name="pref_sensors_enabled_title">Sensors Enabled</string>
     <string name="pref_sensors_enabled_summary">The list of sensors that will be reported to Home Assistant.</string>
