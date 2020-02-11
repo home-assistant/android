@@ -32,7 +32,7 @@ class NetworkSensorManager : SensorManager {
             (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
         val conInfo = wifiManager.connectionInfo
 
-        val ssid = if(conInfo.networkId == -1){
+        val ssid = if (conInfo.networkId == -1) {
             "<not connected>"
         } else {
             conInfo.ssid.removePrefix("\"").removeSuffix("\"")
