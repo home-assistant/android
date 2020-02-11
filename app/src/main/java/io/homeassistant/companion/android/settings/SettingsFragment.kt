@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -74,6 +75,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<EditTextPreference>("connection_internal")?.let {
             it.isEnabled = true
         }
+    }
+
+    override fun restartSensorWorker() {
+        SensorWorker.start(context!!)
     }
 
     override fun onRequestPermissionsResult(
