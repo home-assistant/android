@@ -19,6 +19,7 @@ import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
+import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +54,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         ensureInjected(context)
 
         when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED -> setupLocationTracking(context)
+            Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking(context)
             ACTION_PROCESS_LOCATION -> handleLocationUpdate(context, intent)
             ACTION_PROCESS_GEO -> handleGeoUpdate(context, intent)
@@ -161,6 +162,10 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun sendLocationUpdate(location: Location, context: Context) {
+        // Anytime we send a location we should start the sensor worker.
+        // This is cause it to send sensors then restart the 15 minute interval.
+        SensorWorker.start(context)
+
         Log.d(
             TAG, "Last Location: " +
                     "\nCoords:(${location.latitude}, ${location.longitude})" +

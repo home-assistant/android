@@ -30,4 +30,7 @@ interface IntegrationRepository {
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 
     suspend fun fireEvent(eventType: String, eventData: Map<String, Any>)
+
+    suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
+    suspend fun updateSensors(sensors: Array<Sensor<Any>>)
 }

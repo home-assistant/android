@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationListener
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
+import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener,
@@ -89,6 +90,7 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     }
 
     override fun onIntegrationRegistrationComplete() {
+        SensorWorker.start(applicationContext)
         startWebView()
     }
 

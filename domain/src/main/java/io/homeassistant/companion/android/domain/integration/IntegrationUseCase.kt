@@ -38,4 +38,7 @@ interface IntegrationUseCase {
     suspend fun getEntities(): Array<Entity<Any>>
 
     suspend fun getThemeColor(): String
+
+    suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
+    suspend fun updateSensors(sensors: Array<Sensor<Any>>)
 }

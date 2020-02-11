@@ -77,8 +77,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             val hasLocationPermission = PermissionManager.hasLocationPermissions(context)
 
             zoneTracking = findViewById<SwitchCompat>(R.id.location_zone).apply {
-                setOnClickListener {
-                    presenter.onToggleZoneTracking(it.isSelected)
+                setOnCheckedChangeListener { _, isChecked ->
+                    presenter.onToggleZoneTracking(isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission
@@ -87,8 +87,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             zoneTrackingSummary.isEnabled = hasLocationPermission
 
             backgroundTracking = findViewById<SwitchCompat>(R.id.location_background).apply {
-                setOnClickListener {
-                    presenter.onToggleBackgroundTracking(it.isSelected)
+                setOnCheckedChangeListener { _, isChecked ->
+                    presenter.onToggleBackgroundTracking(isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission && isIgnoringBatteryOptimizations()

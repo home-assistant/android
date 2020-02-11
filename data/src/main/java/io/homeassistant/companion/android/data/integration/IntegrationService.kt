@@ -75,4 +75,16 @@ interface IntegrationService {
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
     ): GetConfigResponse
+
+    @POST
+    suspend fun registerSensor(
+        @Url url: HttpUrl,
+        @Body request: IntegrationRequest
+    ): Response<ResponseBody>
+
+    @POST
+    suspend fun updateSensors(
+        @Url url: HttpUrl,
+        @Body request: IntegrationRequest
+    ): Response<ResponseBody>
 }
