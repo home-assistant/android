@@ -59,11 +59,18 @@ class WidgetDynamicFieldAdapter(
         // If field is looking for an entity_id,
         // populate the autocomplete with the list of entities
         if (fieldKey == "entity_id" && entities.isNotEmpty()) {
+            val domainEntities: ArrayList<String> = ArrayList()
+
             // Only populate with entities for the domain
             // or for homeassistant domain, which should be able
             // to manipulate entities in any domain
             val domain = services[serviceText]!!.domain
-            val domainEntities: ArrayList<String> = ArrayList()
+
+            // Add all as an available entity
+            // all is a special keyword, so it won't be listed in any
+            // domains even though it is available for all of them
+            domainEntities.add("all")
+
             if (domain == ("homeassistant")) {
                 domainEntities.addAll(entities.keys)
             } else {
