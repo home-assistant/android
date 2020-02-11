@@ -232,13 +232,12 @@ class MessagingService : FirebaseMessagingService() {
                     putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
                     putExtra(
                         NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION,
-                        notificationAction.key
+                        notificationAction
                     )
-                    putExtra(NotificationActionReceiver.EXTRA_URI, notificationAction.uri)
                 }
                 val actionPendingIntent = PendingIntent.getBroadcast(
                     this,
-                    0,
+                    notificationAction.key.hashCode(),
                     actionIntent,
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
