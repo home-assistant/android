@@ -32,6 +32,12 @@ class NetworkSensorManager : SensorManager {
             (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
         val conInfo = wifiManager.connectionInfo
 
+        val ssid = if (conInfo.networkId == -1) {
+            "<not connected>"
+        } else {
+            conInfo.ssid.removePrefix("\"").removeSuffix("\"")
+        }
+
         val lastScanStrength = wifiManager.scanResults.firstOrNull {
             it.BSSID == conInfo.bssid
         }?.level ?: -1
@@ -49,7 +55,7 @@ class NetworkSensorManager : SensorManager {
 
         return Sensor(
             "wifi_connection",
-            conInfo.ssid,
+            ssid,
             "sensor",
             icon,
             mapOf(
