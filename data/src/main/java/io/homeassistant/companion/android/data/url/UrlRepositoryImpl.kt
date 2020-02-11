@@ -28,6 +28,11 @@ class UrlRepositoryImpl @Inject constructor(
         val retVal = ArrayList<URL>()
         val webhook = localStorage.getString(PREF_WEBHOOK_ID)
 
+        // If we don't have a webhook id we don't have any urls.
+        if (webhook.isNullOrBlank()) {
+            return arrayOf()
+        }
+
         localStorage.getString(PREF_CLOUDHOOK_URL)?.let {
             retVal.add(it.toHttpUrl().toUrl())
         }
