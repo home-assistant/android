@@ -166,11 +166,11 @@ class ButtonWidget : AppWidgetProvider() {
                 Log.w(TAG, "Service Call Data incomplete.  Aborting service call")
             } else {
                 // If everything loaded correctly, package the service data and attempt the call
-
-                // Convert JSON to HashMap
-                val serviceDataMap = Gson().fromJson(serviceDataJson, HashMap<String, Any>()::class.java)
-
                 try {
+                    // Convert JSON to HashMap
+                    val serviceDataMap =
+                        Gson().fromJson(serviceDataJson, HashMap<String, Any>()::class.java)
+
                     integrationUseCase.callService(domain, service, serviceDataMap)
 
                     // If service call does not throw an exception, send positive feedback
