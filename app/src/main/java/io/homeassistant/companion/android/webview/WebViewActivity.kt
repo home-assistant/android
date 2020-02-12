@@ -329,7 +329,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     override fun showError(isAuthenticationError: Boolean) {
-        if (isShowingError)
+        if (isShowingError || isFinishing)
             return
         isShowingError = true
 
