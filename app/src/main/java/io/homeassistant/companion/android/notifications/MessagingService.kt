@@ -179,6 +179,8 @@ class MessagingService : FirebaseMessagingService() {
         builder
             .setContentTitle(data[TITLE])
             .setContentText(data[MESSAGE])
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText(data[MESSAGE]))
     }
 
     private suspend fun handleImage(
