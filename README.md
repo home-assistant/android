@@ -9,8 +9,11 @@ If you are looking for documentation around the companion applications check out
 
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
 
-- Add an Android app to your Firebase project, follow the on screen instruction download the `google-services.json`
-  to your home-assistant-Android/app folder
+- Add an Android app to your Firebase project, follow the on screen instruction download the `google-services.json` to your home-assistant-Android/app folder.
+
+  The file should contain client IDs for `io.homeassistant.companion.android` _and_ `io.homeassistant.companion.android.debug` for debugging to work properly.
+
+  [You can use the mock services file instead of generating your own.](/.travis/mock-google-services.json)
 
 - Use Android Studio open your source code folder and click Run -> Run 'app'
 
