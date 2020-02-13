@@ -25,7 +25,6 @@
     <string name="app_version_info">Informations sur la version de l\'application</string>
     <string name="device_registration">Enregistrement de l\'appareil</string>
     <string name="device_name">Nom de l\'appareil</string>
-    <string name="ok">Ok</string>
     <string name="error_onboarding_connection_failed">Impossible de se connecter à Home Assistant.</string>
     <string name="error_connection_failed">Impossible de se connecter à Home Assistant.</string>
     <string name="webview_error">Une erreur s\'est produite lors de la connexion à Home Assistant. Veuillez vérifier que les paramètres de connexion sont corrects, puis réessayer de vous connecter.</string>

@@ -25,7 +25,6 @@
     <string name="app_version_info">Informacje o wersji aplikacji</string>
     <string name="device_registration">Rejestracja urządzenia</string>
     <string name="device_name">Nazwa urządzenia</string>
-    <string name="ok">Ok</string>
     <string name="error_onboarding_connection_failed">Nie można połączyć się z Home Assistant\'em.</string>
     <string name="error_connection_failed">Nie można połączyć się z Home Assistant\'em.</string>
     <string name="webview_error">Wystąpił błąd podczas ładowania Home Assistant\'a, sprawdź ustawienia połączenia i spróbuj ponownie.</string>
