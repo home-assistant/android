@@ -64,14 +64,14 @@ class WidgetDynamicFieldAdapter(
             // Only populate with entities for the domain
             // or for homeassistant domain, which should be able
             // to manipulate entities in any domain
-            val domain = services[serviceText]!!.domain
+            val domain = services[serviceText]?.domain
 
             // Add all as an available entity
             // all is a special keyword, so it won't be listed in any
             // domains even though it is available for all of them
             domainEntities.add("all")
 
-            if (domain == ("homeassistant")) {
+            if (domain == ("homeassistant") || domain == null) {
                 domainEntities.addAll(entities.keys)
             } else {
                 entities.keys.forEach {
@@ -85,12 +85,12 @@ class WidgetDynamicFieldAdapter(
             adapter.addAll(domainEntities.sorted().toMutableList())
             autoCompleteTextView.setAdapter(adapter)
             autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
-        } else if (services[serviceText]!!.serviceData.fields[fieldKey]!!.values != null) {
+        } else if (services[serviceText]?.serviceData?.fields?.get(fieldKey)?.values != null) {
             // If a non-"entity_id" field has specific values,
             // populate the autocomplete with valid values
             val fieldAdapter = SingleItemArrayAdapter<String>(context) { it!! }
             fieldAdapter.addAll(
-                services[serviceText]!!.serviceData.fields[fieldKey]!!.values!!.sorted().toMutableList()
+                services[serviceText]!!.serviceData.fields.getValue(fieldKey).values!!.sorted().toMutableList()
             )
             autoCompleteTextView.setAdapter(fieldAdapter)
             autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
