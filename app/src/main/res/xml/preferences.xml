@@ -44,6 +44,11 @@
             android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
+        <EditTextPreference
+            android:key="dim_screen"
+            android:icon="@drawable/ic_brightness"
+            android:title="@string/dim_screen_title"
+            android:summary="@string/dim_screen_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">

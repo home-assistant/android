@@ -64,5 +64,8 @@
     <string name="password">Password</string>
     <string name="auth_request">Authentication Requested:</string>
     <string name="auth_cancel">Authentication Cancelled</string>
-    <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
+    <string name="dim_screen_title">Dim Screen TimeOut</string>
+    <string name="dim_screen_summary">In seconds, 0 or empty for no timeout no keep screen on (default), negative for keep screen on with no timeout</string>
+    <string name="write_request_title">System Settings Access Requested</string>
+    <string name="write_request_message">For this function, app require write access to system settings, want you grant it ?</string>
 </resources>

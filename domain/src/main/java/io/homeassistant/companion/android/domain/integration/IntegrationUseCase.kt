@@ -41,4 +41,7 @@ interface IntegrationUseCase {
 
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
     suspend fun updateSensors(sensors: Array<Sensor<Any>>)
+
+    suspend fun getDimTimeOut(): String?
+    suspend fun setDimTimeOut(time: String?)
 }
