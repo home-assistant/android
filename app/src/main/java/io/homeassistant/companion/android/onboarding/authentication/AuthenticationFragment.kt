@@ -103,7 +103,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     }
 
     override fun showError(message: Int) {
-        if(activity?.isFinishing != false){
+        if (activity?.isFinishing != false) {
             // Activity is done, can't display alert
             return
         }
