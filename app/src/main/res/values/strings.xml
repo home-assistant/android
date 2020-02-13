@@ -65,7 +65,7 @@
     <string name="password">Password</string>
     <string name="auth_request">Authentication Requested:</string>
     <string name="auth_cancel">Authentication Cancelled</string>
-    <string name="dim_screen">Screen Brightness TimeOut (in sec, 0 or empty for no timeout)</string>
+    <string name="dim_screen">Dim Screen TimeOut (in sec, 0 or empty for no timeout)</string>
     <string name="write_request_title">System App Requested</string>
     <string name="write_request_message">For this function, app require write access, do you grant it ?</string>
 </resources>
