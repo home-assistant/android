@@ -9,7 +9,10 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.gson.Gson
 import io.homeassistant.companion.android.R
@@ -91,6 +94,31 @@ class ButtonWidgetConfigureActivity : Activity() {
         // Make sure we pass back the original appWidgetId
         setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
         finish()
+    }
+
+    private val onAddFieldListener = View.OnClickListener {
+        val context = this@ButtonWidgetConfigureActivity
+        val fieldKeyInput = EditText(context)
+        fieldKeyInput.layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        )
+
+        AlertDialog.Builder(context)
+            .setTitle("Field")
+            .setView(fieldKeyInput)
+            .setNegativeButton(android.R.string.cancel) { _, _ -> }
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                dynamicFields.add(
+                    ServiceFieldBinder(
+                        context.widget_text_config_service.text.toString(),
+                        fieldKeyInput.text.toString()
+                    )
+                )
+
+                dynamicFieldAdapter.notifyDataSetChanged()
+            }
+            .show()
     }
 
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
@@ -183,26 +211,38 @@ class ButtonWidgetConfigureActivity : Activity() {
         widget_text_config_service.onFocusChangeListener = dropDownOnFocus
 
         mainScope.launch {
-            // Fetch services
-            integrationUseCase.getServices().forEach {
-                services[getServiceString(it)] = it
-            }
-            serviceAdapter.addAll(services.values)
-            serviceAdapter.sort()
+            try {
+                // Fetch services
+                integrationUseCase.getServices().forEach {
+                    services[getServiceString(it)] = it
+                }
+                serviceAdapter.addAll(services.values)
+                serviceAdapter.sort()
 
-            // Fetch entities
-            integrationUseCase.getEntities().forEach {
-                entities[it.entityId] = it
+                // Update service adapter
+                runOnUiThread {
+                    serviceAdapter.notifyDataSetChanged()
+                }
+            } catch (e: Exception) {
+                // Custom components can cause services to not load
+                // Display error text
+                widget_config_service_error.visibility = View.VISIBLE
             }
 
-            // Update service adapter
-            runOnUiThread {
-                serviceAdapter.notifyDataSetChanged()
+            try {
+                // Fetch entities
+                integrationUseCase.getEntities().forEach {
+                    entities[it.entityId] = it
+                }
+            } catch (e: Exception) {
+                // If entities fail to load, it's okay to pass
+                // an empty map to the dynamicFieldAdapter
             }
         }
 
         widget_text_config_service.addTextChangedListener(serviceTextWatcher)
 
+        add_field_button.setOnClickListener(onAddFieldListener)
         add_button.setOnClickListener(onClickListener)
 
         dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
