@@ -38,8 +38,8 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
-import okhttp3.internal.toNonNegativeInt
 import javax.inject.Inject
+import okhttp3.internal.toNonNegativeInt
 import org.json.JSONObject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
