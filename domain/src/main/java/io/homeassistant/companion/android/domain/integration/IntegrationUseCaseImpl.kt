@@ -95,4 +95,13 @@ class IntegrationUseCaseImpl @Inject constructor(
     override suspend fun updateSensors(sensors: Array<Sensor<Any>>) {
         return integrationRepository.updateSensors(sensors)
     }
+
+    override suspend fun getDimTimeOut(): String?{
+        return integrationRepository.getDimTimeOut()
+    }
+
+    override suspend fun setDimTimeOut(time: String?) {
+        return integrationRepository.setDimTimeOut(time)
+    }
+
 }

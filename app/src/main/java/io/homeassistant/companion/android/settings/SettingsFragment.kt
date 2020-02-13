@@ -1,6 +1,11 @@
 package io.homeassistant.companion.android.settings
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.text.InputType
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
@@ -45,11 +50,42 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             isValid
         }
 
+        val onChangeTimeOutValidator = Preference.OnPreferenceChangeListener { _, _ ->
+            var result = true
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                if (!Settings.System.canWrite(this.requireContext())) {
+                    AlertDialog.Builder(this.requireContext())
+                        .setTitle(R.string.write_request_title)
+                        .setMessage(R.string.write_request_message)
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            startActivity(
+                                Intent(
+                                    Settings.ACTION_MANAGE_WRITE_SETTINGS,
+                                    Uri.parse("package:${activity?.packageName}")
+                                )
+                            )
+                            result = true
+                        }
+                        .setNegativeButton(android.R.string.cancel) { _, _ ->
+                            result = false
+                        }
+                        .show()
+                }
+            result
+        }
+
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
 
         findPreference<EditTextPreference>("connection_external")?.onPreferenceChangeListener =
             onChangeUrlValidator
+
+        findPreference<EditTextPreference>("dim_screen")?.onPreferenceChangeListener =
+            onChangeTimeOutValidator
+
+        findPreference<EditTextPreference>("dim_screen")?.setOnBindEditTextListener { editText ->
+            editText.inputType = InputType.TYPE_CLASS_NUMBER
+        }
 
         findPreference<Preference>("version")?.let {
             it.summary = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"

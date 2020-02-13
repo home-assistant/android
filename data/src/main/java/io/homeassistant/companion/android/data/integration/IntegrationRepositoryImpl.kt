@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.domain.url.UrlRepository
 import javax.inject.Inject
 import javax.inject.Named
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.internal.http2.Settings
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -50,6 +51,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
+        private const val PREF_DIM_TIMEOUT = "0"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -407,5 +409,13 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
 
         return retVal.toTypedArray()
+    }
+
+    override suspend fun getDimTimeOut(): String? {
+        return localStorage.getString(PREF_DIM_TIMEOUT)
+    }
+
+    override suspend fun setDimTimeOut(time: String?) {
+        localStorage.putString(PREF_DIM_TIMEOUT, time)
     }
 }

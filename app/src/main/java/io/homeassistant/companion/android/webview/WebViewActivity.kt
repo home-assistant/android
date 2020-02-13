@@ -7,9 +7,11 @@ import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.provider.Settings
 import android.util.Log
 import android.view.MenuInflater
 import android.view.View
+import android.view.WindowManager
 import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
@@ -36,6 +38,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
+import okhttp3.internal.toNonNegativeInt
 import javax.inject.Inject
 import org.json.JSONObject
 
@@ -55,11 +58,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     lateinit var presenter: WebViewPresenter
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
+    private lateinit var dimHandler: Handler
+    private lateinit var dimRunnable:Runnable
 
     private var isConnected = false
     private var isShowingError = false
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
@@ -252,12 +257,45 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 if (presenter.isFullScreen())
                     hideSystemUI()
         }
+
+        dimHandler = Handler()
+
+        dimRunnable = Runnable {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                if (Settings.System.canWrite(this)) {
+                    val lp = this.window.attributes
+                    lp.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF
+                    this.window.attributes = lp
+                    webView.onPause()
+                }
+        }
+
+        dimScreen(false)
+
+        webView.setOnTouchListener { _, _ ->
+            dimScreen(false)
+            false
+        }
+    }
+
+    private fun dimScreen(onResume: Boolean) {
+        dimHandler.removeCallbacks(dimRunnable)
+        if (this.window.attributes.screenBrightness == WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF || onResume) {
+            val lp = this.window.attributes
+            lp.screenBrightness = -WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+            this.window.attributes = lp
+            webView.onResume()
+        }
+        var time = presenter.getDimTimeOut().toNonNegativeInt(0) * 1000
+        if (time != 0)
+            dimHandler.postDelayed(dimRunnable, time.toLong())
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
             presenter.onViewReady()
+            dimScreen(true)
             if (presenter.isFullScreen())
                 hideSystemUI()
             else

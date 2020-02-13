@@ -55,6 +55,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "connection_internal_wifi" -> urlUseCase.getHomeWifiSsid()
                 "connection_external" -> (urlUseCase.getUrl(false) ?: "").toString()
                 "registration_name" -> integrationUseCase.getRegistration().deviceName
+                "dim_screen" -> integrationUseCase.getDimTimeOut()
                 else -> throw Exception()
             }
         }
@@ -79,6 +80,9 @@ class SettingsPresenterImpl @Inject constructor(
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue updating registration with new device name", e)
                     }
+                }
+                "dim_screen" -> {
+                    integrationUseCase.setDimTimeOut(value)
                 }
                 else -> throw Exception()
             }

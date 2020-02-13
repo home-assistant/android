@@ -98,6 +98,12 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun getDimTimeOut(): String? {
+        return runBlocking {
+            integrationUseCase.getDimTimeOut()
+        }
+    }
+
     override fun onFinish() {
         mainScope.cancel()
     }

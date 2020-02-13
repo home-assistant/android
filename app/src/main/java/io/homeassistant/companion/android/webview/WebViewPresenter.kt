@@ -12,5 +12,7 @@ interface WebViewPresenter {
 
     fun isFullScreen(): Boolean
 
+    fun getDimTimeOut(): String?
+
     fun onFinish()
 }
