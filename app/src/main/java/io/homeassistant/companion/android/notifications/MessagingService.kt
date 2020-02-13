@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.notifications
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -28,6 +29,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import android.media.MediaPlayer
+import android.provider.Settings
+
 
 class MessagingService : FirebaseMessagingService() {
     companion object {
@@ -106,7 +110,6 @@ class MessagingService : FirebaseMessagingService() {
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentIntent(pendingIntent)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
 
         handleColor(notificationBuilder, data)
 
@@ -117,6 +120,8 @@ class MessagingService : FirebaseMessagingService() {
         handleImage(notificationBuilder, data)
 
         handleActions(notificationBuilder, data, messageId)
+
+        handleSound(notificationBuilder, data)
 
         if (tag != null) {
             notificationManager.notify(tag, messageId, notificationBuilder.build())
@@ -253,7 +258,7 @@ class MessagingService : FirebaseMessagingService() {
         notificationManager: NotificationManager
     ): String {
         // TODO: implement channels
-        val channelId = "default"
+        val channelId = "default1"
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -261,9 +266,34 @@ class MessagingService : FirebaseMessagingService() {
                 "Default Channel",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
+            channel.setSound(null, null)
             notificationManager.createNotificationChannel(channel)
         }
         return channelId
+    }
+
+    private fun handleSound(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        var soundString = data["sound"]
+        var sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+        if (!soundString.isNullOrBlank()) {
+            // FIXME: This crashes when applicationID includes the .debug suffix
+            val newSound = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + applicationContext.getPackageName() + "/raw/" + soundString)
+            sound = newSound
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val mp = MediaPlayer.create(applicationContext, sound)
+            val dndState = Settings.Global.getInt(getContentResolver(), "zen_mode")
+            if (dndState == 0) {
+                mp.start()
+            }
+        }
+
+        builder.setSound(sound)
     }
 
     /**
