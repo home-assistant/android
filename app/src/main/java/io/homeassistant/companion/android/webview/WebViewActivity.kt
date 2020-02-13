@@ -59,7 +59,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var dimHandler: Handler
-    private lateinit var dimRunnable:Runnable
+    private lateinit var dimRunnable: Runnable
 
     private var isConnected = false
     private var isShowingError = false
