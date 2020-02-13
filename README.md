@@ -7,7 +7,7 @@ If you are looking for documentation around the companion applications check out
 
 - Download and install [Android Studio](https://developer.android.com/studio)
 
-- Download / clone this repository to a folder on your PC
+- Download / clone this repository to a folder on your computer
 
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
 
