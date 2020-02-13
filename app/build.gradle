@@ -20,7 +20,7 @@ buildscript {
 }
 
 def vCode = "${System.env.VERSION_CODE ?: 1}".toInteger()
-def vName = "1.7.1-${vCode}"
+def vName = "1.7.2-${vCode}"
 
 android {
     compileSdkVersion projectSdkVersion.toInteger()
