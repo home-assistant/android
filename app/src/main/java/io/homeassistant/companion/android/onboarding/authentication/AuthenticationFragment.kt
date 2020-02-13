@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.onboarding.authentication
 
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.net.http.SslError
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,6 +11,7 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -103,7 +103,11 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     }
 
     override fun showError(message: Int) {
-        AlertDialog.Builder(context)
+        if(activity?.isFinishing != false){
+            // Activity is done, can't display alert
+            return
+        }
+        AlertDialog.Builder(context!!)
             .setTitle(R.string.error_connection_failed)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok) { _, _ -> }
