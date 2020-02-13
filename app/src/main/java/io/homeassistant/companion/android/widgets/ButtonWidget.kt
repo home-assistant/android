@@ -113,7 +113,7 @@ class ButtonWidget : AppWidgetProvider() {
                 icon
             )
             setOnClickPendingIntent(
-                R.id.widgetImageButton,
+                R.id.widgetImageButtonLayout,
                 PendingIntent.getBroadcast(
                     context,
                     appWidgetId,
@@ -135,11 +135,12 @@ class ButtonWidget : AppWidgetProvider() {
 
         // Set up progress bar as immediate feedback to show the click has been received
         // Success or failure feedback will come from the mainScope coroutine
-        val loadingViews: RemoteViews = RemoteViews(context.packageName, R.layout.widget_button)
+        val loadingViews: RemoteViews =
+            RemoteViews(context.packageName, R.layout.widget_button)
         val appWidgetManager = AppWidgetManager.getInstance(context)
 
-        loadingViews.setInt(R.id.widgetProgressBar, "setVisibility", View.VISIBLE)
-        loadingViews.setInt(R.id.widgetImageButton, "setVisibility", View.INVISIBLE)
+        loadingViews.setViewVisibility(R.id.widgetProgressBar, View.VISIBLE)
+        loadingViews.setViewVisibility(R.id.widgetImageButtonLayout, View.GONE)
         appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
         mainScope.launch {
@@ -147,7 +148,7 @@ class ButtonWidget : AppWidgetProvider() {
             var views = getWidgetRemoteViews(context, appWidgetId)
 
             // Set default feedback as negative
-            var feedbackColor = R.drawable.ic_circle_red_24dp
+            var feedbackColor = R.drawable.widget_button_background_red
             var feedbackIcon = R.drawable.ic_clear_black_24dp
 
             // Load the service call data from Shared Preferences
@@ -174,18 +175,19 @@ class ButtonWidget : AppWidgetProvider() {
                     integrationUseCase.callService(domain, service, serviceDataMap)
 
                     // If service call does not throw an exception, send positive feedback
-                    feedbackColor = R.drawable.ic_circle_green_24dp
+                    feedbackColor = R.drawable.widget_button_background_green
                     feedbackIcon = R.drawable.ic_check_black_24dp
                 } catch (e: Exception) {
                     Log.e(TAG, "Could not send service call.", e)
                 }
             }
 
-            // Update widget with feedback and reset visibilities
-            views.setImageViewResource(R.id.widgetImageButtonBackground, feedbackColor)
+            // Update widget and set visibilities for feedback
+            views.setInt(R.id.widgetLayout, "setBackgroundResource", feedbackColor)
             views.setImageViewResource(R.id.widgetImageButton, feedbackIcon)
-            views.setInt(R.id.widgetProgressBar, "setVisibility", View.INVISIBLE)
-            views.setInt(R.id.widgetImageButton, "setVisibility", View.VISIBLE)
+            views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
+            views.setViewVisibility(R.id.widgetLabelLayout, View.GONE)
+            views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
             appWidgetManager.updateAppWidget(appWidgetId, views)
 
             // Reload default views in the coroutine to pass to the post handler
@@ -193,9 +195,11 @@ class ButtonWidget : AppWidgetProvider() {
 
             // Set a timer to change it back after 1 second
             Handler().postDelayed({
-                views.setImageViewResource(
-                    R.id.widgetImageButtonBackground,
-                    R.drawable.ic_circle_white_24dp
+                views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
+                views.setInt(
+                    R.id.widgetLayout,
+                    "setBackgroundResource",
+                    R.drawable.widget_button_background_white
                 )
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }, 1000)
