@@ -65,4 +65,5 @@
     <string name="password">Password</string>
     <string name="auth_request">Authentication Requested:</string>
     <string name="auth_cancel">Authentication Cancelled</string>
+    <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
 </resources>

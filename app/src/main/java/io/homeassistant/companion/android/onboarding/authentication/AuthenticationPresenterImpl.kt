@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding.authentication
 
 import android.net.Uri
 import android.util.Log
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -28,7 +29,7 @@ class AuthenticationPresenterImpl @Inject constructor(
                 view.loadUrl(authenticationUseCase.buildAuthenticationUrl(AUTH_CALLBACK).toString())
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to create auth url and/or load it.", e)
-                view.showError()
+                view.showError(R.string.webview_error)
             }
         }
     }
@@ -41,7 +42,7 @@ class AuthenticationPresenterImpl @Inject constructor(
                     authenticationUseCase.registerAuthorizationCode(code)
                 } catch (e: Exception) {
                     Log.e(TAG, "unable to register code")
-                    view.showError()
+                    view.showError(R.string.webview_error)
                     return@launch
                 }
                 view.openWebview()

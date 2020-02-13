@@ -2,10 +2,12 @@ package io.homeassistant.companion.android.onboarding.authentication
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.net.http.SslError
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.SslErrorHandler
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -65,7 +67,16 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
                         error: WebResourceError?
                     ) {
                         super.onReceivedError(view, request, error)
-                        showError()
+                        showError(R.string.webview_error)
+                    }
+
+                    override fun onReceivedSslError(
+                        view: WebView?,
+                        handler: SslErrorHandler?,
+                        error: SslError?
+                    ) {
+                        super.onReceivedSslError(view, handler, error)
+                        showError(R.string.error_ssl)
                     }
                 }
             }
@@ -91,9 +102,10 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         super.onDestroy()
     }
 
-    override fun showError() {
+    override fun showError(message: Int) {
         AlertDialog.Builder(context)
             .setTitle(R.string.error_connection_failed)
+            .setMessage(message)
             .setPositiveButton(android.R.string.ok) { _, _ -> }
             .show()
         fragmentManager?.popBackStack()
