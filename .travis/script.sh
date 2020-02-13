@@ -7,7 +7,6 @@ mkdir -p app/src/main/play/release-notes/en-US/
 cp CHANGES.md app/src/main/play/release-notes/en-US/default.txt
 
 export VERSION_CODE=`git rev-list --count HEAD`
-export VERSION_NAME=`git describe --tags $(git rev-list --tags --max-count=1)`
 
 ./gradlew test
 ./gradlew lint
@@ -17,10 +16,9 @@ if [ "$TRAVIS_PULL_REQUEST" = "false" ]
 then
     if [ -n "$TRAVIS_TAG" ]
     then
-        ./gradlew publishReleaseBundle
-    elif [ "$TRAVIS_BRANCH" = "deployTest" ]
+        echo "Release already in Play Store Console"
+    elif [ "$TRAVIS_BRANCH" = "master" ]
     then
-        #./gradlew assembleRelease appDistributionUploadRelease
-        ./gradlew assembleRelease publishReleaseBundle
+        ./gradlew assembleRelease appDistributionUploadRelease publishReleaseBundle
     fi
 fi
