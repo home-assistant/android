@@ -148,8 +148,6 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
         if (requestCode == BACKGROUND_REQUEST && isIgnoringBatteryOptimizations()) {
             zoneTracking.isChecked = true
             presenter.onToggleBackgroundTracking(true)
@@ -169,7 +167,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
                 context?.getSystemService(PowerManager::class.java)
                     ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
                 ?: false

@@ -25,7 +25,6 @@
     <string name="app_version_info">App-versionsinfo</string>
     <string name="device_registration">Enhedsregistrering</string>
     <string name="device_name">Enhedsnavn</string>
-    <string name="ok">Ok</string>
     <string name="error_onboarding_connection_failed">Kan ikke oprette forbindelse til Home Assistant.</string>
     <string name="error_connection_failed">Kan ikke oprette forbindelse til Home Assistant.</string>
     <string name="webview_error">Der opstod en fejl under indlæsning af Home Assistant. Gennemgå forbindelsesindstillingerne og prøv igen.</string>

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.discovery
 
+import android.annotation.SuppressLint
 import android.net.nsd.NsdManager
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -31,6 +32,7 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
 
     @Inject
     lateinit var presenter: DiscoveryPresenter
+
     private lateinit var homeAssistantSearcher: HomeAssistantSearcher
 
     private lateinit var listViewAdapter: ArrayAdapter<HomeAssistantInstance>
@@ -44,6 +46,11 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
             .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
+
+        homeAssistantSearcher = HomeAssistantSearcher(
+            getSystemService(context!!, NsdManager::class.java)!!,
+            this
+        )
     }
 
     override fun onCreateView(
@@ -52,12 +59,8 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
         savedInstanceState: Bundle?
     ): View? {
 
-        homeAssistantSearcher = HomeAssistantSearcher(
-            getSystemService(context!!, NsdManager::class.java)!!,
-            this
-        )
-
         listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(context!!, R.layout.instance_item, instances) {
+            @SuppressLint("InflateParams")
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val v = convertView ?: LayoutInflater.from(context).inflate(
                     R.layout.instance_item,

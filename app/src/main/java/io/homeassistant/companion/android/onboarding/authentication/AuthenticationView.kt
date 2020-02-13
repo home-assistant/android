@@ -4,7 +4,7 @@ interface AuthenticationView {
 
     fun loadUrl(url: String)
 
-    fun showError()
+    fun showError(message: Int)
 
     fun openWebview()
 }
