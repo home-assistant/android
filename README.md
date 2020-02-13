@@ -30,7 +30,7 @@ If you get stuck while setting up your own environment, you can ask questions in
 
 ## Testing Dev Releases
 
-We are using [Travis](https://travis-ci.com/home-assistant/home-assistant-android) to perform continuous integration both by unit testing, deploying dev releases to [Firebase App Distribution](https://appdistribution.firebase.dev/i/8zf5W4zz) and final releases to the [Play Store](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android) when we add a git tag.
+We are using [Travis](https://travis-ci.com/home-assistant/home-assistant-android) to perform continuous integration both by unit testing, deploying dev releases to [Play Store Beta](https://play.google.com/apps/testing/io.homeassistant.companion.android) and final releases to the [Play Store](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android) when we release.
 
 ## Quality
 
@@ -48,3 +48,14 @@ To run a check with an auto-format:
 
 ## Translating
 The project currently uses [lokalise](https://lokalise.com/public/145814835dd655bc5ab0d0.36753359/) to translate the application.  If you are interested in helping translate go the the link and click start translating!
+
+
+## Generating a release to production
+Edit the build number in `/app/build.gradle` to your desired version.  Be sure to leave `${vCode}`!!
+
+```kotlin
+def vName = "X.X.X-${vCode}"
+```
+Merge that into master and allow the build to complete and validate on the beta channel. (Deploy there automatic)
+
+Once ready to move to production log into play store -> Release Management -> App Releases -> Beta -> Promote to Production

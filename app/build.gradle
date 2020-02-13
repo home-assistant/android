@@ -19,6 +19,9 @@ buildscript {
     }
 }
 
+def vCode = "${System.env.VERSION_CODE ?: 1}".toInteger()
+def vName = "1.7.1-${vCode}"
+
 android {
     compileSdkVersion projectSdkVersion.toInteger()
 
@@ -26,8 +29,8 @@ android {
         applicationId "io.homeassistant.companion.android"
         minSdkVersion projectMinSdkVersion
         targetSdkVersion 29
-        versionCode "${System.env.VERSION_CODE ?: 1}".toInteger()
-        versionName "${System.env.VERSION_NAME ?: "1.0.0"}"
+        versionCode vCode
+        versionName vName
     }
 
     firebaseAppDistribution {
@@ -77,6 +80,7 @@ android {
 
 play {
     serviceAccountCredentials = file("playStorePublishServiceCredentialsFile.json")
+    track = "beta"
 }
 
 dependencies {
