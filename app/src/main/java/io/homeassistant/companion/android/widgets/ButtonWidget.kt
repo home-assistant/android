@@ -139,8 +139,8 @@ class ButtonWidget : AppWidgetProvider() {
             RemoteViews(context.packageName, R.layout.widget_button)
         val appWidgetManager = AppWidgetManager.getInstance(context)
 
-        loadingViews.setInt(R.id.widgetProgressBar, "setVisibility", View.VISIBLE)
-        loadingViews.setInt(R.id.widgetImageButtonLayout, "setVisibility", View.INVISIBLE)
+        loadingViews.setViewVisibility(R.id.widgetProgressBar, View.VISIBLE)
+        loadingViews.setViewVisibility(R.id.widgetImageButtonLayout, View.GONE)
         appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
         mainScope.launch {
@@ -185,9 +185,9 @@ class ButtonWidget : AppWidgetProvider() {
             // Update widget and set visibilities for feedback
             views.setInt(R.id.widgetLayout, "setBackgroundResource", feedbackColor)
             views.setImageViewResource(R.id.widgetImageButton, feedbackIcon)
-            views.setInt(R.id.widgetProgressBar, "setVisibility", View.INVISIBLE)
-            views.setInt(R.id.widgetLabel, "setVisibility", View.GONE)
-            views.setInt(R.id.widgetImageButtonLayout, "setVisibility", View.VISIBLE)
+            views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
+            views.setViewVisibility(R.id.widgetLabelLayout, View.GONE)
+            views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
             appWidgetManager.updateAppWidget(appWidgetId, views)
 
             // Reload default views in the coroutine to pass to the post handler
@@ -195,7 +195,7 @@ class ButtonWidget : AppWidgetProvider() {
 
             // Set a timer to change it back after 1 second
             Handler().postDelayed({
-                views.setInt(R.id.widgetLabel, "setVisibility", View.VISIBLE)
+                views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
                 views.setInt(
                     R.id.widgetLayout,
                     "setBackgroundResource",
