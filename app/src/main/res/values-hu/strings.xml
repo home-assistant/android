@@ -1,65 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
   <string name="app_name">Home Assistant</string>
-  <string name="scanning_network">Scanning the network 
-for Home Assistant</string>
-  <string name="home_assistant_not_discover">Unable to find your 
-Home Assistant instance</string>
-  <string name="connect_to_home_internet">Make sure your phone is connected 
-to your home internet.</string>
-  <string name="scan_again">scan again</string>
-  <string name="manual_setup">enter address manually</string>
+  <string name="scanning_network">Home Assistant
+keresése a hálózaton</string>
+  <string name="home_assistant_not_discover">Nem sikerült megtalálni
+a Home Assistant példányod</string>
+  <string name="connect_to_home_internet">Győződj meg róla, hogy a telefonod az
+otthoni internetedre van csatlakoztatva.</string>
+  <string name="scan_again">újrakeresés</string>
+  <string name="manual_setup">cím manuális megadása</string>
   <string name="input_url">Home Assistant URL</string>
-  <string name="input_url_hint">https://example.duckdns.org:8123</string>
-  <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
-  <string name="checking_with_home_assistant">Checking with Home Assistant</string>
-  <string name="skip">Skip</string>
-  <string name="retry">Retry</string>
-  <string name="attempting_registration">Registering application…</string>
-  <string name="unable_to_register">Unable to Register Application</string>
-  <string name="error_with_registration">Please check to ensure you have the mobile_app 
-integration enabled on your home assistant instance.</string>
-  <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
-  <string name="pref_location_zone_title">Zone Based Tracking</string>
-  <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
-  <string name="pref_location_background_title">Background Location Tracking</string>
-  <string name="pref_location_background_summary">Update your location behind the scenes, periodically.</string>
-  <string name="application_version">Application Version</string>
-  <string name="location">Location</string>
-  <string name="app_version_info">App Version Info</string>
-  <string name="device_registration">Device Registration</string>
-  <string name="device_name">Device Name</string>
-  <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
-  <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
-  <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again.</string>
-  <string name="pref_connection_title">Connection Information</string>
+  <string name="input_url_hint">https://pelda.duckdns.org:8123</string>
+  <string name="status_of_mobile_app_integration">mobile_app integráció állapota:</string>
+  <string name="checking_with_home_assistant">Ellenőrzés a Home Assistant-tal</string>
+  <string name="skip">Kihagyás</string>
+  <string name="retry">Újra</string>
+  <string name="attempting_registration">Alkalmazás regisztrálása...</string>
+  <string name="unable_to_register">Nem lehet regisztrálni az alkalmazást</string>
+  <string name="error_with_registration">Kérlek ellenőrizd, hogy a mobile_app integráció
+engedélyezve van a Home Assistant példányodban.</string>
+  <string name="url_parse_error">Nem sikerült elemezni a Home Assistant URL-t. A következőként kell megadni: https://pelda.com</string>
+  <string name="pref_location_zone_title">Zóna alapú nyomkövetés</string>
+  <string name="pref_location_zone_summary">Meglévő Home Assistant zónák geokerítésként történő importálása a zóna alapú nyomkövetéshez.</string>
+  <string name="pref_location_background_title">Pozíció nyomkövetés a háttérben</string>
+  <string name="pref_location_background_summary">Frissíti a pozíciódat a háttérben, periódikusan.</string>
+  <string name="application_version">Alkalmazás verziója</string>
+  <string name="location">Elhelyezkedés</string>
+  <string name="app_version_info">App verzióinfók</string>
+  <string name="device_registration">Eszköz regisztráció</string>
+  <string name="device_name">Eszköz neve</string>
+  <string name="error_onboarding_connection_failed">Nem lehet csatlakozni a Home Assistant-hoz.</string>
+  <string name="error_connection_failed">Nem lehet csatlakozni a Home Assistant-hoz.</string>
+  <string name="webview_error">Hiba történt a Home Assistant betöltésekor. Kérlek, ellenőrizd a kapcsolat beállításait, majd próbáld újra.</string>
+  <string name="pref_connection_title">Csatlakozási Adatok</string>
   <string name="pref_connection_url">Home Assistant URL</string>
-  <string name="pref_connection_wifi">Home Network WiFi SSID</string>
-  <string name="pref_connection_internal">Internal Connection URL</string>
-  <string name="url_invalid">Url Invalid</string>
-  <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
-  <string name="select_instance">Select the instance you would 
-like to connect to:</string>
-  <string name="failed_scan">Scanning for Home Assistant failed.</string>
+  <string name="pref_connection_wifi">Otthoni WiFi hálózat SSID-ja</string>
+  <string name="pref_connection_internal">Belső kapcsolati URL</string>
+  <string name="url_invalid">Érvénytelen URL</string>
+  <string name="error_auth_revoked">Úgy tűnik, hogy az engedélyed vissza lett vonva. Kérlek, csatlakozz újra a Home Assistant-hoz.</string>
+  <string name="select_instance">Válaszd ki azt a példányt,
+amihez csatlakozni szeretnél:</string>
+  <string name="failed_scan">A Home Assistant keresése sikertelen.</string>
   <string name="widget_image_description">Home Assistant Widget</string>
-  <string name="configure_service_call">Configure Service Call</string>
-  <string name="configure_widget_label">Widget Label</string>
-  <string name="add_widget">Add widget</string>
+  <string name="configure_service_call">Szolgáltatás meghívásának konfigurálása</string>
+  <string name="configure_widget_label">Widget címke</string>
+  <string name="add_widget">Widget hozzáadása</string>
   <string name="widget_text_hint_service_domain">Domain</string>
-  <string name="widget_text_hint_service_service">Service</string>
-  <string name="widget_text_hint_service_data">Entity ID</string>
-  <string name="widget_text_hint_label">Label</string>
-  <string name="widget_label_placeholder_text">Label</string>
-  <string name="widget_spinner_icon">Icon:</string>
-  <string name="connected_to_home_assistant">Connected to Home Assistant</string>
-  <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
-  <string name="grant_permission">Grant Permission</string>
-  <string name="finish">Finish</string>
-  <string name="other_settings">Other Settings</string>
-  <string name="fullscreen">Fullscreen</string>
-  <string name="fullscreen_def">Put application in full screen</string>
-  <string name="label_service">Service:</string>
-  <string name="label_entity_id">Entity ID:</string>
-  <string name="label_label">Label:</string>
-  <string name="label_icon">Icon:</string>
+  <string name="widget_text_hint_service_service">Szolgáltatás</string>
+  <string name="widget_text_hint_service_data">Entitás ID</string>
+  <string name="widget_text_hint_label">Címke</string>
+  <string name="widget_label_placeholder_text">Címke</string>
+  <string name="widget_spinner_icon">Ikon:</string>
+  <string name="connected_to_home_assistant">Csatlakoztatva a Home Assistant-hoz</string>
+  <string name="permission_explanation">A nyomkövető funkciók használatához vagy a WiFi SSID alapú különböző csatlakozási URL-ekhez hozzá kell férnünk a helyzetedhez. Ha folyamatos frissítéseket szeretnél a háttérben, akkor engedélyezned kell a háttérfeldolgozást is.</string>
+  <string name="grant_permission">Engedély megadása</string>
+  <string name="finish">Befejezés</string>
+  <string name="other_settings">Egyéb beállitások</string>
+  <string name="fullscreen">Teljes képernyő</string>
+  <string name="fullscreen_def">Az alkalmazást teljes képernyősre állítja</string>
+  <string name="label_service">Szolgáltatás:</string>
+  <string name="label_entity_id">Entitás ID:</string>
+  <string name="label_label">Címke:</string>
+  <string name="label_icon">Ikon:</string>
+  <string name="label_dynamic_data">Adat:</string>
+  <string name="username">Felhasználónév</string>
+  <string name="password">Jelszó</string>
+  <string name="auth_request">Hitelesítés szükséges:</string>
+  <string name="auth_cancel">Hitelesítés megszakítva</string>
+  <string name="add_service_data_field">Mező hozzáadása</string>
+  <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
+  <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
 </resources>
