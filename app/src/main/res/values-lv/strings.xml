@@ -25,7 +25,6 @@
     <string name="app_version_info">Informācija par lietotnes versiju</string>
     <string name="device_registration">Ierīces reģistrācija</string>
     <string name="device_name">Ierīces nosaukums</string>
-    <string name="ok">Ok</string>
     <string name="error_onboarding_connection_failed">Nevarēja pieslēgties Jūsu Home Assistant serverim</string>
     <string name="error_connection_failed">Nevarēja pieslēgties Jūsu Home Assistant serverim</string>
     <string name="webview_error">Ielādējot Home Assistant, radās kļūda. Lūdzu pārskatiet savienojuma iestatījumus un mēģiniet vēlreiz.</string>

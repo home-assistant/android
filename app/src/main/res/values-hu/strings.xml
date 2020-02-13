@@ -29,7 +29,6 @@ integration enabled on your home assistant instance.</string>
   <string name="app_version_info">App Version Info</string>
   <string name="device_registration">Device Registration</string>
   <string name="device_name">Device Name</string>
-  <string name="ok">Ok</string>
   <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
   <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
   <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again.</string>

@@ -25,7 +25,6 @@
     <string name="app_version_info">Applicatie versie informatie</string>
     <string name="device_registration">Apparaatregistratie</string>
     <string name="device_name">Apparaatnaam</string>
-    <string name="ok">Ok</string>
     <string name="error_onboarding_connection_failed">Niet mogelijk om te verbinden met Home Assistant</string>
     <string name="error_connection_failed">Niet mogelijk om te verbinden met Home Assistant</string>
     <string name="webview_error">Er is een fout opgetreden bij het laden van Home Assistant. Controleer de verbindingsinstellingen en probeer het opnieuw.</string>

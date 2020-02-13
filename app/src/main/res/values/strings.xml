@@ -25,7 +25,6 @@
     <string name="app_version_info">App Version Info</string>
     <string name="device_registration">Device Registration</string>
     <string name="device_name">Device Name</string>
-    <string name="ok">Ok</string>
     <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again.</string>
@@ -65,4 +64,5 @@
     <string name="password">Password</string>
     <string name="auth_request">Authentication Requested:</string>
     <string name="auth_cancel">Authentication Cancelled</string>
+    <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
 </resources>

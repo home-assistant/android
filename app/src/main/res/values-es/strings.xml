@@ -9,7 +9,6 @@
     <string name="attempting_registration">Registrando aplicación ...</string>
     <string name="location">Ubicación</string>
     <string name="device_name">Nombre del dispositivo</string>
-    <string name="ok">Aceptar</string>
     <string name="pref_connection_title">Información de la conexión</string>
     <string name="configure_widget_label">Etiqueta del widget</string>
     <string name="add_widget">Añadir widget</string>

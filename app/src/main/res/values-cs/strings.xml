@@ -24,7 +24,6 @@
     <string name="app_version_info">Informace o verzi aplikace</string>
     <string name="device_registration">Registrace zařízení</string>
     <string name="device_name">Název zařízení</string>
-    <string name="ok">OK</string>
     <string name="error_onboarding_connection_failed">Nelze se připojit k Home Assistant.</string>
     <string name="error_connection_failed">Nelze se připojit k Home Assistant.</string>
     <string name="webview_error">Při načítání Home Assistant došlo k chybě, zkontrolujte nastavení připojení a akci opakujte.</string>

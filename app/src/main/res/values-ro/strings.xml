@@ -25,7 +25,6 @@
     <string name="app_version_info">Informații despre versiunea aplicației</string>
     <string name="device_registration">Înregistrare dispozitiv</string>
     <string name="device_name">Numele dispozitivului</string>
-    <string name="ok">In regula</string>
     <string name="error_onboarding_connection_failed">Nu am reușit să ne conectăm la Home Assistant</string>
     <string name="error_connection_failed">Nu am reușit să ne conectăm la Home Assistant</string>
     <string name="webview_error">A apărut o eroare la încărcarea Home Assistant-ului. Va rog verificați setările de conectare si încercați din nou.</string>
