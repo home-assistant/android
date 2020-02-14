@@ -27,4 +27,6 @@ about: Create a report to help us improve
 
 ```
 
+**Screenshot of problem:**
+
 **Additional information:**
