@@ -58,4 +58,4 @@ def vName = "X.X.X-${vCode}"
 ```
 Merge that into master and allow the build to complete and validate on the beta channel. (Deploy there automatic)
 
-Once ready to move to production log into play store -> Release Management -> App Releases -> Beta -> Promote to Production
+Once ready to move to production tag the master branch and travis will start the promotion from beta -> production.
