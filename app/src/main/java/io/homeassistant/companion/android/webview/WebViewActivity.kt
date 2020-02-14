@@ -265,7 +265,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     val lp = this.window.attributes
                     lp.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF
                     this.window.attributes = lp
-                    webView.onPause()
                 }
         }
 
@@ -283,7 +282,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             val lp = this.window.attributes
             lp.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
             this.window.attributes = lp
-            webView.onResume()
         }
         if (!presenter.getDimTimeOut().isNullOrBlank())
             if (presenter.getDimTimeOut().toString().toLong() > 0)
