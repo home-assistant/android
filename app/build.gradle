@@ -35,7 +35,7 @@ android {
 
     firebaseAppDistribution {
         serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
-        releaseNotesFile = "src/main/play/release-notes/en-US/default.txt"
+        releaseNotesFile = "app/src/main/play/release-notes/en-US/default.txt"
         groups = "continuous-deployment"
     }
 
