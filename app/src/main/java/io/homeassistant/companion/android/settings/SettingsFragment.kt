@@ -52,7 +52,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             onChangeUrlValidator
 
         findPreference<Preference>("version")?.let {
-            it.summary = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+            it.summary = BuildConfig.VERSION_NAME
         }
 
         presenter.onCreate()
