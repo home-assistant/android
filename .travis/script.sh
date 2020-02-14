@@ -5,6 +5,7 @@ set -ev
 if [ "$TRAVIS_PULL_REQUEST" = "true" ]
 then
 
+    echo "Building PR"
     ./gradlew test
     ./gradlew lint
     ./gradlew ktlintCheck
@@ -18,6 +19,7 @@ then
 elif [ "$TRAVIS_BRANCH" = "master" ]
 then
 
+    echo "Building Master"
     mkdir -p app/src/main/play/release-notes/en-US/
     git log --format=%s $(git rev-list --tags --max-count=1)..HEAD > app/src/main/play/release-notes/en-US/default.txt
 
