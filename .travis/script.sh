@@ -2,7 +2,7 @@
 
 set -ev
 
-if [ "$TRAVIS_PULL_REQUEST" = "true" ]
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]
 then
 
     echo "Building PR"
