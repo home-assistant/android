@@ -7,6 +7,7 @@ about: Create a report to help us improve
 - Make sure you run the latest version of the Android app
 - Make sure you run the latest version of Home Assistant
 - Make sure to check the Companion docs for troubleshooting and configuration: https://companion.home-assistant.io/
+  DO NOT DELETE ANY TEXT from this template! All requested information is important.
 -->
 
 **Home Assistant Android version:**
@@ -26,5 +27,7 @@ about: Create a report to help us improve
 ```
 
 ```
+
+**Screenshot of problem:**
 
 **Additional information:**
