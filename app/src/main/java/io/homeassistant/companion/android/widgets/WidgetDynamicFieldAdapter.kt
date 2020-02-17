@@ -6,9 +6,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
+import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.Service
+import java.lang.Exception
 import kotlinx.android.synthetic.main.widget_button_configure_dynamic_field.view.*
 
 class WidgetDynamicFieldAdapter(
@@ -49,12 +51,35 @@ class WidgetDynamicFieldAdapter(
         val fieldKey = serviceFieldList[position].field
 
         // Set label for the text view
-        // Reformat text to "Capital Words" intead of "capital_words"
+        // Reformat text to "Capital Words" instead of "capital_words"
         dynamicFieldLayout.dynamic_autocomplete_label.text =
             fieldKey.split("_").map {
                 if (it == "id") it.toUpperCase()
                 else it.capitalize()
             }.joinToString(" ")
+
+        // If the field has an example, use it as a hint
+        if (services[serviceText]?.serviceData?.fields?.get(fieldKey)?.example != null) {
+            try {
+                // Fetch example text
+                var exampleText =
+                    services[serviceText]?.serviceData?.fields?.get(fieldKey)?.example.toString()
+
+                // Strip of brackets if the example is a list
+                // Lists can be entered as comma-separated strings
+                // e.g. 255, 255, 0 instead of [255, 255, 0]
+                if (exampleText[0] == '[' &&
+                    exampleText[exampleText.length - 1] == ']'
+                ) {
+                    exampleText = exampleText.subSequence(1, exampleText.length - 1).toString()
+                }
+
+                // Set example as hint
+                autoCompleteTextView.hint = exampleText
+            } catch (e: Exception) {
+                // Who knows what custom components will break here
+            }
+        }
 
         // If field is looking for an entity_id,
         // populate the autocomplete with the list of entities
@@ -84,6 +109,7 @@ class WidgetDynamicFieldAdapter(
             val adapter = SingleItemArrayAdapter<String>(context) { it!! }
             adapter.addAll(domainEntities.sorted().toMutableList())
             autoCompleteTextView.setAdapter(adapter)
+            autoCompleteTextView.setTokenizer(CommaTokenizer())
             autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
         } else if (services[serviceText]?.serviceData?.fields?.get(fieldKey)?.values != null) {
             // If a non-"entity_id" field has specific values,
@@ -93,6 +119,7 @@ class WidgetDynamicFieldAdapter(
                 services[serviceText]!!.serviceData.fields.getValue(fieldKey).values!!.sorted().toMutableList()
             )
             autoCompleteTextView.setAdapter(fieldAdapter)
+            autoCompleteTextView.setTokenizer(CommaTokenizer())
             autoCompleteTextView.onFocusChangeListener = dropDownOnFocus
         }
 
@@ -108,7 +135,7 @@ class WidgetDynamicFieldAdapter(
             override fun afterTextChanged(p0: Editable?) {
                 // Don't store data that's empty (or just whitespace)
                 if (!p0.isNullOrBlank()) {
-                    serviceFieldList[position].value = p0.toString()
+                    serviceFieldList[position].value = p0.toString().toJsonType()
                 } else {
                     serviceFieldList[position].value = null
                 }
@@ -117,5 +144,55 @@ class WidgetDynamicFieldAdapter(
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
         })
+    }
+
+    private fun String.toJsonType(): Any? {
+        // Parse the string to one of the following
+        // valid base JSON types:
+        // array, number, boolean, string
+
+        // Check if the text is an array
+        if (this.contains(",")) {
+            val jsonArray = ArrayList<Any>()
+
+            this.split(",").forEach { subString ->
+                // Ignore whitespace
+                if (!subString.isBlank()) {
+                    subString.trim().toJsonType()?.let { jsonArray.add(it) }
+                }
+            }
+
+            // If the array didn't contain anything
+            // but commas, return null
+            if (jsonArray.size == 0) return null
+
+            return jsonArray.toList()
+        }
+
+        // Parse the base types
+        this.trim().let { trimmedStr ->
+            trimmedStr.toIntOrNull()?.let { return it }
+            trimmedStr.toDoubleOrNull()?.let { return it }
+            trimmedStr.toBooleanOrNull()?.let { return it }
+            return this
+        }
+    }
+
+    private fun String.toBooleanOrNull(): Boolean? {
+        // Parse all valid YAML boolean values
+        return when (this.trim().toLowerCase()) {
+            "true" -> true
+            "on" -> true
+            "yes" -> true
+            "y" -> true
+
+            "false" -> false
+            "off" -> false
+            "no" -> false
+            "n" -> false
+
+            // If it's not a valid YAML boolean, return null
+            else -> null
+        }
     }
 }
