@@ -82,6 +82,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
+
         val request =
             IntegrationRequest(
                 "update_registration",
@@ -206,7 +207,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         var zones: Array<EntityResponse<ZoneAttributes>>? = null
         for (it in urlRepository.getApiUrls()) {
             try {
-                zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
+                zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest).body
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
@@ -252,7 +253,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         var response: GetConfigResponse? = null
         for (it in urlRepository.getApiUrls()) {
             try {
-                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest).body
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }

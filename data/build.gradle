@@ -26,6 +26,9 @@ dependencies {
 
     implementation "org.threeten:threetenbp:$threeTenBpVersion"
 
+    implementation "com.goterl.lazycode:lazysodium-java:4.2.5"
+    implementation "net.java.dev.jna:jna:5.5.0"
+
     testImplementation "com.squareup.okhttp3:mockwebserver:$okhttp3Version"
 
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek2Version"

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.data.integration
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.data.integration.entities.EntityResponse
 import io.homeassistant.companion.android.data.integration.entities.IntegrationRequest
+import io.homeassistant.companion.android.data.integration.entities.IntegrationResponse
 import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.data.integration.entities.ServiceCallRequest
 import io.homeassistant.companion.android.data.integration.entities.UpdateLocationRequest
@@ -802,31 +803,35 @@ object IntegrationRepositoryImplSpec : Spek({
             }
             describe("getZones") {
                 val entities =
-                    EntityResponse(
-                        "entityId",
-                        "state",
-                        ZoneAttributes(
-                            false,
-                            0.0,
-                            1.1,
-                            2.2F,
-                            "fName",
-                            "icon"
-                        ),
-                        Calendar.getInstance(),
-                        Calendar.getInstance(),
-                        HashMap()
+                    IntegrationResponse(
+                        false,
+                        arrayOf(EntityResponse(
+                            "entityId",
+                            "state",
+                            ZoneAttributes(
+                                false,
+                                0.0,
+                                1.1,
+                                2.2F,
+                                "fName",
+                                "icon"
+                            ),
+                            Calendar.getInstance(),
+                            Calendar.getInstance(),
+                            HashMap()
+                        )
+                        )
                     )
                 var zones: Array<Entity<ZoneAttributes>>? = null
                 beforeEachTest {
-                    coEvery { integrationService.getZones(any(), any()) } returns arrayOf(entities)
+                    coEvery { integrationService.getZones(any(), any()) } returns entities
                     runBlocking { zones = repository.getZones() }
                 }
                 it("should return true when webhook has a value") {
                     assertThat(zones).isNotNull
                     assertThat(zones!!.size).isEqualTo(1)
                     assertThat(zones!![0]).isNotNull
-                    assertThat(zones!![0].entityId).isEqualTo(entities.entityId)
+                    assertThat(zones!![0].entityId).isEqualTo(entities.body[0].entityId)
                 }
             }
         }

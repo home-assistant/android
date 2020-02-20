@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.data.integration.entities.DomainRespon
 import io.homeassistant.companion.android.data.integration.entities.EntityResponse
 import io.homeassistant.companion.android.data.integration.entities.GetConfigResponse
 import io.homeassistant.companion.android.data.integration.entities.IntegrationRequest
+import io.homeassistant.companion.android.data.integration.entities.IntegrationResponse
 import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceResponse
 import io.homeassistant.companion.android.domain.integration.ZoneAttributes
@@ -68,13 +69,13 @@ interface IntegrationService {
     suspend fun getZones(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
-    ): Array<EntityResponse<ZoneAttributes>>
+    ): IntegrationResponse<Array<EntityResponse<ZoneAttributes>>>
 
     @POST
     suspend fun getConfig(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
-    ): GetConfigResponse
+    ): IntegrationResponse<GetConfigResponse>
 
     @POST
     suspend fun registerSensor(
