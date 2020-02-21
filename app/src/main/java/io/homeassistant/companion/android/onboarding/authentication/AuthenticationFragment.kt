@@ -6,17 +6,14 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.SslErrorHandler
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 
 class AuthenticationFragment : Fragment(), AuthenticationView {
@@ -103,8 +100,8 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     }
 
     override fun showError(message: Int) {
-        if (activity?.isFinishing != false) {
-            // Activity is done, can't display alert
+        if (!isStarted) {
+            // Fragment is at least paused, can't display alert
             return
         }
         AlertDialog.Builder(context!!)
