@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 
 class AuthenticationFragment : Fragment(), AuthenticationView {
@@ -103,8 +104,8 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     }
 
     override fun showError(message: Int) {
-        if (activity?.isFinishing != false) {
-            // Activity is done, can't display alert
+        if (!isStarted) {
+            // Fragment is at least paused, can't display alert
             return
         }
         AlertDialog.Builder(context!!)
