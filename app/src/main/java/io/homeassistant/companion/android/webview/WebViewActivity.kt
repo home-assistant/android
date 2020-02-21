@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
+import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import org.json.JSONObject
 
@@ -329,7 +330,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     override fun showError(isAuthenticationError: Boolean) {
-        if (isShowingError || isFinishing)
+        if (isShowingError || !isStarted)
             return
         isShowingError = true
 
