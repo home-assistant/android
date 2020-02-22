@@ -307,11 +307,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun loadUrl(url: String) {
         loadedUrl = url
         webView.loadUrl(url)
-        Handler().postDelayed({
-            if (!isConnected) {
-                showError()
-            }
-        }, 5000)
+        waitForConnection()
     }
 
     override fun setStatusBarColor(color: Int) {
@@ -334,21 +330,36 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             return
         isShowingError = true
 
-        AlertDialog.Builder(this)
+        val alert = AlertDialog.Builder(this)
             .setTitle(R.string.error_connection_failed)
-            .setMessage(if (isAuthenticationError) R.string.error_auth_revoked else R.string.webview_error)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                if (isAuthenticationError) {
-                    presenter.clearKnownUrls()
-                    openOnBoarding()
-                } else {
-                    startActivity(SettingsActivity.newInstance(this))
-                }
+            .setOnDismissListener {
+                isShowingError = false
+                waitForConnection()
             }
-            .setOnDismissListener { isShowingError = false }
-            .show()
+
+        if (isAuthenticationError) {
+            alert.setMessage(R.string.error_auth_revoked)
+            alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                presenter.clearKnownUrls()
+                openOnBoarding()
+            }
+        } else {
+            alert.setMessage(R.string.webview_error)
+            alert.setPositiveButton(android.R.string.ok) { _, _ ->
+                startActivity(SettingsActivity.newInstance(this))
+            }
+            alert.setNegativeButton(R.string.refresh) { _, _ ->
+                webView.reload()
+                waitForConnection()
+            }
+            alert.setNeutralButton(R.string.wait) { _, _ ->
+                waitForConnection()
+            }
+        }
+        alert.show()
     }
 
+    @SuppressLint("InflateParams")
     override fun authenticationDialog(handler: HttpAuthHandler) {
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
@@ -384,5 +395,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && window.decorView.rootWindowInsets.displayCutout != null)
             cutout = true
         return cutout
+    }
+
+    private fun waitForConnection() {
+        Handler().postDelayed({
+            if (!isConnected) {
+                showError()
+            }
+        }, 5000)
     }
 }
