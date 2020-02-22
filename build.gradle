@@ -24,6 +24,7 @@ allprojects {
         google()
         jcenter()
         maven { url 'https://maven.lokalise.co' }
+        maven { url "https://dl.bintray.com/terl/lazysodium-maven" }
     }
     apply plugin: "org.jlleitschuh.gradle.ktlint"
 

@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.common.dagger
 
 import android.os.Build
+import com.goterl.lazycode.lazysodium.LazySodium
+import com.goterl.lazycode.lazysodium.LazySodiumAndroid
+import com.goterl.lazycode.lazysodium.SodiumAndroid
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -71,6 +74,9 @@ class DataModule(
     @Provides
     @Named("deviceId")
     fun provideDeviceId() = deviceId
+
+    @Provides
+    fun providesSodium() = LazySodiumAndroid(SodiumAndroid()) as LazySodium
 
     @Module
     interface Declaration {

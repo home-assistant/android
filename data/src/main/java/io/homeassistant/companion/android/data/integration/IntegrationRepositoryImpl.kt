@@ -1,5 +1,8 @@
 package io.homeassistant.companion.android.data.integration
 
+import com.goterl.lazycode.lazysodium.LazySodium
+import com.goterl.lazycode.lazysodium.interfaces.SecretBox
+import com.goterl.lazycode.lazysodium.utils.Key
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.data.integration.entities.EntityResponse
 import io.homeassistant.companion.android.data.integration.entities.FireEventRequest
@@ -27,6 +30,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
     private val authenticationRepository: AuthenticationRepository,
     private val urlRepository: UrlRepository,
+    private val lazySodium: LazySodium,
     @Named("integration") private val localStorage: LocalStorage,
     @Named("manufacturer") private val manufacturer: String,
     @Named("model") private val model: String,
@@ -52,12 +56,14 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
     }
 
+    private val nonce = lazySodium.nonce(SecretBox.NONCEBYTES)
+
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
         val request = createUpdateRegistrationRequest(deviceRegistration)
         request.appId = APP_ID
         request.appName = APP_NAME
         request.osName = OS_NAME
-        request.supportsEncryption = false
+        request.supportsEncryption = true
 
         try {
             val version = integrationService
@@ -83,8 +89,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
 
-        val request =
-            IntegrationRequest(
+        val request = createIntegrationRequest(
                 "update_registration",
                 createUpdateRegistrationRequest(deviceRegistration)
             )
@@ -144,22 +149,21 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>) {
         var wasSuccess = false
 
-        val serviceCallRequest =
+        val request = createIntegrationRequest(
+            "call_service",
             ServiceCallRequest(
                 domain,
                 service,
                 serviceData
             )
+        )
 
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
                     integrationService.callService(
                         it.toHttpUrlOrNull()!!,
-                        IntegrationRequest(
-                            "call_service",
-                            serviceCallRequest
-                        )
+                        request
                     ).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
@@ -175,17 +179,14 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
         var wasSuccess = false
 
-        val fireEventRequest = FireEventRequest(eventType, eventData)
+        val request = createIntegrationRequest("fire_event", FireEventRequest(eventType, eventData))
 
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
                     integrationService.fireEvent(
                         it.toHttpUrlOrNull()!!,
-                        IntegrationRequest(
-                            "fire_event",
-                            fireEventRequest
-                        )
+                        request
                     ).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
@@ -200,7 +201,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
         val getZonesRequest =
-            IntegrationRequest(
+            createIntegrationRequest(
                 "get_zones",
                 null
             )
@@ -246,7 +247,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getThemeColor(): String {
         val getConfigRequest =
-            IntegrationRequest(
+            createIntegrationRequest(
                 "get_config",
                 null
             )
@@ -296,7 +297,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             // Already registered
             return
         }
-        val integrationRequest = IntegrationRequest(
+        val integrationRequest = createIntegrationRequest(
             "register_sensor",
             SensorRequest(
                 sensorRegistration.uniqueId,
@@ -329,7 +330,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateSensors(sensors: Array<Sensor<Any>>) {
-        val integrationRequest = IntegrationRequest(
+        val integrationRequest = createIntegrationRequest(
             "update_sensor_states",
             sensors.map {
                 SensorRequest(
@@ -376,8 +377,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun createUpdateLocation(updateLocation: UpdateLocation): IntegrationRequest {
-        return IntegrationRequest(
+    private suspend fun createUpdateLocation(updateLocation: UpdateLocation): IntegrationRequest {
+        return createIntegrationRequest(
             "update_location",
             UpdateLocationRequest(
                 updateLocation.locationName,
@@ -408,5 +409,24 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
 
         return retVal.toTypedArray()
+    }
+
+    private suspend fun createIntegrationRequest(type: String, data: Any?): IntegrationRequest {
+        var response = IntegrationRequest(type, data)
+
+        val secret = localStorage.getString(PREF_SECRET)
+        if (secret != null) {
+
+            // TODO: Make this serialize the data then encrypt correctly.
+            val encryptedData = lazySodium.cryptoSecretBoxEasy("{}", nonce, Key.fromHexString(secret))
+            response = IntegrationRequest(
+                type,
+                null,
+                true,
+                encryptedData
+            )
+        }
+
+        return response
     }
 }
