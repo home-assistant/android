@@ -59,7 +59,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     private var isConnected = false
     private var isShowingError = false
-    private var alertDialog :AlertDialog? = null
+    private var alertDialog: AlertDialog? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
