@@ -50,6 +50,22 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
             NetworkSensorManager()
         )
 
+        registerSensors(sensorManagers)
+
+        val success = integrationUseCase.updateSensors(
+            sensorManagers.flatMap { it.getSensors(appContext) }.toTypedArray()
+        )
+
+        // We failed to update a sensor, we should register all the sensors again.
+        if (!success) {
+            registerSensors(sensorManagers)
+        }
+
+        Result.success()
+    }
+
+    private suspend fun registerSensors(sensorManagers: Array<SensorManager>) {
+
         sensorManagers.flatMap {
             it.getSensorRegistrations(appContext)
         }.forEach {
@@ -57,11 +73,5 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
             // fact we have registered it we can't
             integrationUseCase.registerSensor(it)
         }
-
-        integrationUseCase.updateSensors(
-            sensorManagers.flatMap { it.getSensors(appContext) }.toTypedArray()
-        )
-
-        Result.success()
     }
 }
