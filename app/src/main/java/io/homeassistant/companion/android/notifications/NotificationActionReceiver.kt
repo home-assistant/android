@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Handler
 import android.util.Log
 import android.widget.Toast
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
@@ -52,7 +53,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
         val onFailure: () -> Unit = {
             Handler(context.mainLooper).post {
-                Toast.makeText(context, "Unable to send event to HA.", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, R.string.event_error, Toast.LENGTH_LONG).show()
             }
         }
         when (intent.action) {
