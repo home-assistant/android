@@ -41,8 +41,8 @@ class AuthenticationRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun retrieveExternalAuthentication(): String {
-        return convertSession(ensureValidSession())
+    override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String {
+        return convertSession(ensureValidSession(forceRefresh))
     }
 
     override suspend fun revokeSession() {
@@ -101,10 +101,10 @@ class AuthenticationRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun ensureValidSession(): Session {
+    private suspend fun ensureValidSession(forceRefresh: Boolean = false): Session {
         val session = retrieveSession() ?: throw AuthorizationException()
 
-        if (session.isExpired()) {
+        if (session.isExpired() || forceRefresh) {
             return authenticationService.refreshToken(
                 AuthenticationService.GRANT_TYPE_REFRESH,
                 session.refreshToken,

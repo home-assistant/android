@@ -133,7 +133,7 @@ object AuthenticationRepositoryImplSpec : Spek({
                 lateinit var externalAuth: String
                 beforeEachTest {
                     externalAuth = runBlocking {
-                        repository.retrieveExternalAuthentication()
+                        repository.retrieveExternalAuthentication(false)
                     }
                 }
 
@@ -207,7 +207,7 @@ object AuthenticationRepositoryImplSpec : Spek({
                 lateinit var externalAuth: String
                 beforeEachTest {
                     externalAuth = runBlocking {
-                        repository.retrieveExternalAuthentication()
+                        repository.retrieveExternalAuthentication(false)
                     }
                 }
 
@@ -273,7 +273,7 @@ object AuthenticationRepositoryImplSpec : Spek({
                 beforeEachTest {
                     thrown = catchThrowable {
                         runBlocking {
-                            repository.retrieveExternalAuthentication()
+                            repository.retrieveExternalAuthentication(false)
                         }
                     }
                 }

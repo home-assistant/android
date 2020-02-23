@@ -202,8 +202,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
             addJavascriptInterface(object : Any() {
                 @JavascriptInterface
-                fun getExternalAuth(callback: String) {
-                    presenter.onGetExternalAuth(JSONObject(callback).get("callback") as String)
+                fun getExternalAuth(payload: String) {
+                    JSONObject(payload).let {
+                        presenter.onGetExternalAuth(
+                            it.getString("callback"),
+                            it.has("force") && it.getBoolean("force")
+                        )
+                    }
                 }
 
                 @JavascriptInterface
