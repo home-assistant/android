@@ -260,7 +260,7 @@ class MessagingService : FirebaseMessagingService() {
                 }
                 val actionPendingIntent = PendingIntent.getBroadcast(
                     this,
-                    notificationAction.title.hashCode(),
+                    (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
                     actionIntent,
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
