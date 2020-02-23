@@ -125,7 +125,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleImage(notificationBuilder, data)
 
-        handleActions(notificationBuilder, data, messageId)
+        handleActions(notificationBuilder, data, tag, messageId)
 
         if (tag != null) {
             notificationManager.notify(tag, messageId, notificationBuilder.build())
@@ -234,6 +234,7 @@ class MessagingService : FirebaseMessagingService() {
     private fun handleActions(
         builder: NotificationCompat.Builder,
         data: Map<String, String>,
+        tag: String?,
         messageId: Int
     ) {
         for (i in 1..3) {
@@ -250,6 +251,7 @@ class MessagingService : FirebaseMessagingService() {
                             NotificationActionReceiver.OPEN_URI
                         else
                             NotificationActionReceiver.FIRE_EVENT
+                    putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_TAG, tag)
                     putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
                     putExtra(
                         NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION,

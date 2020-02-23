@@ -22,6 +22,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         const val TAG = "NotifActionReceiver"
         const val FIRE_EVENT = "FIRE_EVENT"
         const val OPEN_URI = "OPEN_URI"
+        const val EXTRA_NOTIFICATION_TAG = "EXTRA_NOTIFICATION_TAG"
         const val EXTRA_NOTIFICATION_ID = "EXTRA_NOTIFICATION_ID"
         const val EXTRA_NOTIFICATION_ACTION = "EXTRA_ACTION_KEY"
     }
@@ -49,11 +50,12 @@ class NotificationActionReceiver : BroadcastReceiver() {
             OPEN_URI -> openUri(context, notificationAction)
         }
 
+        val tag = intent.getStringExtra(EXTRA_NOTIFICATION_TAG)
         val messageId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
         if (messageId != -1) {
             val notificationService: NotificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationService.cancel(messageId)
+            notificationService.cancel(tag, messageId)
         }
 
         // Make sure the notification shade closes
