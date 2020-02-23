@@ -5,7 +5,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
 import android.util.Log
+import android.widget.Toast
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
@@ -34,6 +37,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
             .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
+
         val notificationAction =
             intent.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)
 
@@ -42,32 +46,46 @@ class NotificationActionReceiver : BroadcastReceiver() {
             return
         }
 
-        when (intent.action) {
-            FIRE_EVENT -> fireEvent(notificationAction)
-            OPEN_URI -> openUri(context, notificationAction)
-        }
-
         val messageId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
-        if (messageId != -1) {
-            val notificationService: NotificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationService.cancel(messageId)
+        val onComplete: () -> Unit = {
+            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+                .cancel(messageId)
+        }
+        val onFailure: () -> Unit = {
+            Handler(context.mainLooper).post {
+                Toast.makeText(context, R.string.event_error, Toast.LENGTH_LONG).show()
+            }
+        }
+        when (intent.action) {
+            FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
+            OPEN_URI -> openUri(context, notificationAction, onComplete)
         }
     }
 
-    private fun fireEvent(action: NotificationAction) {
+    private fun fireEvent(
+        action: NotificationAction,
+        onComplete: () -> Unit,
+        onFailure: () -> Unit
+    ) {
         ioScope.launch {
-            integrationUseCase.fireEvent(
-                "mobile_app_notification_action",
-                action.data.plus(Pair("action", action.key))
-            )
+            try {
+                integrationUseCase.fireEvent(
+                    "mobile_app_notification_action",
+                    action.data.plus(Pair("action", action.key))
+                )
+                onComplete()
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to fire event.", e)
+                onFailure()
+            }
         }
     }
 
-    private fun openUri(context: Context, action: NotificationAction) {
+    private fun openUri(context: Context, action: NotificationAction, onComplete: () -> Unit) {
         val newIntent = Intent(Intent.ACTION_VIEW)
         newIntent.data = Uri.parse(action.uri)
         newIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(newIntent)
+        onComplete()
     }
 }
