@@ -223,7 +223,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                             "connection-status" -> {
                                 isConnected = json.getJSONObject("payload")
                                     .getString("event") == "connected"
-                                alertDialog?.cancel()
+                                if (isConnected) {
+                                    alertDialog?.cancel()
+                                }
                             }
                             "config/get" -> {
                                 val script = "externalBus(" +
