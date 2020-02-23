@@ -86,5 +86,5 @@ interface IntegrationService {
     suspend fun updateSensors(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
-    ): Response<ResponseBody>
+    ): Map<String, Map<String, Any>>
 }
