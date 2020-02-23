@@ -26,4 +26,8 @@ class AuthenticationUseCaseImpl @Inject constructor(
     override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {
         return authenticationRepository.buildAuthenticationUrl(callbackUrl)
     }
+
+    override suspend fun buildBearerToken(): String {
+        return authenticationRepository.buildBearerToken()
+    }
 }

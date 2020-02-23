@@ -13,4 +13,6 @@ interface AuthenticationUseCase {
     suspend fun getSessionState(): SessionState
 
     suspend fun buildAuthenticationUrl(callbackUrl: String): URL
+
+    suspend fun buildBearerToken(): String
 }

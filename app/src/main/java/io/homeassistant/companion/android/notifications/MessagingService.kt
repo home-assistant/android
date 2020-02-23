@@ -19,6 +19,7 @@ import com.google.firebase.messaging.RemoteMessage
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
@@ -44,6 +45,9 @@ class MessagingService : FirebaseMessagingService() {
 
     @Inject
     lateinit var urlUseCase: UrlUseCase
+
+    @Inject
+    lateinit var authenticationUseCase: AuthenticationUseCase
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -197,7 +201,7 @@ class MessagingService : FirebaseMessagingService() {
     ) {
         data[IMAGE_URL]?.let {
             val url = UrlHandler.handle(urlUseCase.getUrl(), it)
-            val bitmap = getImageBitmap(url)
+            val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder
                     .setLargeIcon(bitmap)
@@ -210,13 +214,17 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private suspend fun getImageBitmap(url: URL?): Bitmap? = withContext(Dispatchers.IO) {
+    private suspend fun getImageBitmap(url: URL?, requiresAuth: Boolean = false): Bitmap? = withContext(Dispatchers.IO) {
         if (url == null)
             return@withContext null
 
         var image: Bitmap? = null
         try {
-            image = BitmapFactory.decodeStream(url.openStream())
+            val uc = url.openConnection()
+            if (requiresAuth) {
+                uc.setRequestProperty("Authorization", authenticationUseCase.buildBearerToken())
+            }
+            image = BitmapFactory.decodeStream(uc.getInputStream())
         } catch (e: Exception) {
             Log.e(TAG, "Couldn't download image for notification", e)
         }
