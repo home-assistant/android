@@ -19,7 +19,10 @@ import com.google.firebase.messaging.RemoteMessage
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URL
 import javax.inject.Inject
@@ -39,6 +42,12 @@ class MessagingService : FirebaseMessagingService() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
+
+    @Inject
+    lateinit var urlUseCase: UrlUseCase
+
+    @Inject
+    lateinit var authenticationUseCase: AuthenticationUseCase
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -116,7 +125,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleImage(notificationBuilder, data)
 
-        handleActions(notificationBuilder, data, messageId)
+        handleActions(notificationBuilder, data, tag, messageId)
 
         if (tag != null) {
             notificationManager.notify(tag, messageId, notificationBuilder.build())
@@ -128,13 +137,14 @@ class MessagingService : FirebaseMessagingService() {
     private fun handleIntent(
         data: Map<String, String>
     ): PendingIntent {
+        val url = data["clickAction"]
 
-        val intent: Intent
-        if (!data["clickAction"].isNullOrBlank()) {
-            intent = Intent(Intent.ACTION_VIEW)
-            intent.data = Uri.parse(data["clickAction"])
+        val intent = if (UrlHandler.isAbsoluteUrl(url)) {
+            Intent(Intent.ACTION_VIEW).apply {
+                this.data = Uri.parse(url)
+            }
         } else {
-            intent = Intent(this, WebViewActivity::class.java)
+            WebViewActivity.newInstance(this, url)
         }
 
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -179,17 +189,19 @@ class MessagingService : FirebaseMessagingService() {
         builder
             .setContentTitle(data[TITLE])
             .setContentText(data[MESSAGE])
-            .setStyle(NotificationCompat.BigTextStyle()
-                .bigText(data[MESSAGE]))
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(data[MESSAGE])
+            )
     }
 
     private suspend fun handleImage(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        val imageUrl = data[IMAGE_URL]
-        if (imageUrl != null) {
-            val bitmap = getImageBitmap(imageUrl)
+        data[IMAGE_URL]?.let {
+            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
+            val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
             if (bitmap != null) {
                 builder
                     .setLargeIcon(bitmap)
@@ -202,10 +214,17 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private suspend fun getImageBitmap(url: String): Bitmap? = withContext(Dispatchers.IO) {
+    private suspend fun getImageBitmap(url: URL?, requiresAuth: Boolean = false): Bitmap? = withContext(Dispatchers.IO) {
+        if (url == null)
+            return@withContext null
+
         var image: Bitmap? = null
         try {
-            image = BitmapFactory.decodeStream(URL(url).openStream())
+            val uc = url.openConnection()
+            if (requiresAuth) {
+                uc.setRequestProperty("Authorization", authenticationUseCase.buildBearerToken())
+            }
+            image = BitmapFactory.decodeStream(uc.getInputStream())
         } catch (e: Exception) {
             Log.e(TAG, "Couldn't download image for notification", e)
         }
@@ -215,6 +234,7 @@ class MessagingService : FirebaseMessagingService() {
     private fun handleActions(
         builder: NotificationCompat.Builder,
         data: Map<String, String>,
+        tag: String?,
         messageId: Int
     ) {
         for (i in 1..3) {
@@ -231,6 +251,7 @@ class MessagingService : FirebaseMessagingService() {
                             NotificationActionReceiver.OPEN_URI
                         else
                             NotificationActionReceiver.FIRE_EVENT
+                    putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_TAG, tag)
                     putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
                     putExtra(
                         NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION,
@@ -239,7 +260,7 @@ class MessagingService : FirebaseMessagingService() {
                 }
                 val actionPendingIntent = PendingIntent.getBroadcast(
                     this,
-                    notificationAction.key.hashCode(),
+                    (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
                     actionIntent,
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
