@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.util.UrlHandler
 import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -31,10 +32,14 @@ class WebViewPresenterImpl @Inject constructor(
 
     private var url: URL? = null
 
-    override fun onViewReady() {
+    override fun onViewReady(path: String?) {
         mainScope.launch {
             val oldUrl = url
             url = urlUseCase.getUrl()
+
+            if (path != null) {
+                url = UrlHandler.handle(url, path)
+            }
 
             /*
             We only want to cause the UI to reload if the URL that we need to load has changed.  An
@@ -42,7 +47,7 @@ class WebViewPresenterImpl @Inject constructor(
             signal and reopening app.  Without this we would still be trying to use the internal
             url externally.
              */
-            if (oldUrl != url) {
+            if (oldUrl?.host != url?.host) {
                 view.loadUrl(
                     Uri.parse(url.toString())
                         .buildUpon()

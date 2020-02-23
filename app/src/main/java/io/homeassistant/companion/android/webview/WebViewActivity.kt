@@ -43,12 +43,16 @@ import org.json.JSONObject
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 
     companion object {
+        const val EXTRA_PATH = "path"
+
         private const val TAG = "WebviewActivity"
         private const val CAMERA_REQUEST_CODE = 8675309
         private const val AUDIO_REQUEST_CODE = 42
 
-        fun newInstance(context: Context): Intent {
-            return Intent(context, WebViewActivity::class.java)
+        fun newInstance(context: Context, path: String? = null): Intent {
+            return Intent(context, WebViewActivity::class.java).apply {
+                putExtra(EXTRA_PATH, path)
+            }
         }
     }
 
@@ -258,7 +262,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            presenter.onViewReady()
+            presenter.onViewReady(intent.getStringExtra(EXTRA_PATH))
+            intent.removeExtra(EXTRA_PATH)
             if (presenter.isFullScreen())
                 hideSystemUI()
             else
@@ -349,6 +354,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             .show()
     }
 
+    @SuppressLint("InflateParams")
     override fun authenticationDialog(handler: HttpAuthHandler) {
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)

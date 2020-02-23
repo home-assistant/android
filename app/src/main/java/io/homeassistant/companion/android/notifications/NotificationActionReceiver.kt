@@ -8,6 +8,8 @@ import android.net.Uri
 import android.util.Log
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +55,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationService.cancel(messageId)
         }
+
+        // Make sure the notification shade closes
+        context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
     }
 
     private fun fireEvent(action: NotificationAction) {
@@ -65,9 +70,15 @@ class NotificationActionReceiver : BroadcastReceiver() {
     }
 
     private fun openUri(context: Context, action: NotificationAction) {
-        val newIntent = Intent(Intent.ACTION_VIEW)
-        newIntent.data = Uri.parse(action.uri)
-        newIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        context.startActivity(newIntent)
+        val intent = if (UrlHandler.isAbsoluteUrl(action.uri)) {
+            Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.parse(action.uri)
+            }
+        } else {
+            WebViewActivity.newInstance(context, action.uri)
+        }
+
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
     }
 }

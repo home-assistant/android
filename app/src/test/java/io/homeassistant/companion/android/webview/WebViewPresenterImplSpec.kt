@@ -13,11 +13,13 @@ import io.mockk.runs
 import io.mockk.verify
 import java.net.URL
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
+@ExperimentalCoroutinesApi
 object WebViewPresenterImplSpec : Spek({
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
@@ -44,7 +46,7 @@ object WebViewPresenterImplSpec : Spek({
                     } returns "https://demo.home-assistant.io?external_auth=1"
                 }
 
-                presenter.onViewReady()
+                presenter.onViewReady(null)
             }
 
             it("should load the url") {
