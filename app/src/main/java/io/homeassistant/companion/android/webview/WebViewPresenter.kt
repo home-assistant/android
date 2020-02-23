@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.webview
 
 interface WebViewPresenter {
 
-    fun onViewReady()
+    fun onViewReady(path: String?)
 
     fun onGetExternalAuth(callback: String, force: Boolean)
 

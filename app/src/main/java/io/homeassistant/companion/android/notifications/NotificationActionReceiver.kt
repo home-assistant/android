@@ -11,6 +11,8 @@ import android.widget.Toast
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +25,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         const val TAG = "NotifActionReceiver"
         const val FIRE_EVENT = "FIRE_EVENT"
         const val OPEN_URI = "OPEN_URI"
+        const val EXTRA_NOTIFICATION_TAG = "EXTRA_NOTIFICATION_TAG"
         const val EXTRA_NOTIFICATION_ID = "EXTRA_NOTIFICATION_ID"
         const val EXTRA_NOTIFICATION_ACTION = "EXTRA_ACTION_KEY"
     }
@@ -46,10 +49,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
             return
         }
 
+        val tag = intent.getStringExtra(EXTRA_NOTIFICATION_TAG)
         val messageId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
         val onComplete: () -> Unit = {
             (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-                .cancel(messageId)
+                .cancel(tag, messageId)
         }
         val onFailure: () -> Unit = {
             Handler(context.mainLooper).post {
@@ -60,6 +64,9 @@ class NotificationActionReceiver : BroadcastReceiver() {
             FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
             OPEN_URI -> openUri(context, notificationAction, onComplete)
         }
+
+        // Make sure the notification shade closes
+        context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
     }
 
     private fun fireEvent(
@@ -82,10 +89,16 @@ class NotificationActionReceiver : BroadcastReceiver() {
     }
 
     private fun openUri(context: Context, action: NotificationAction, onComplete: () -> Unit) {
-        val newIntent = Intent(Intent.ACTION_VIEW)
-        newIntent.data = Uri.parse(action.uri)
-        newIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        context.startActivity(newIntent)
+        val intent = if (UrlHandler.isAbsoluteUrl(action.uri)) {
+            Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.parse(action.uri)
+            }
+        } else {
+            WebViewActivity.newInstance(context, action.uri)
+        }
+
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
         onComplete()
     }
 }
