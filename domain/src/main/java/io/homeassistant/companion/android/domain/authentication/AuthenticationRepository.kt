@@ -6,7 +6,7 @@ interface AuthenticationRepository {
 
     suspend fun registerAuthorizationCode(authorizationCode: String)
 
-    suspend fun retrieveExternalAuthentication(): String
+    suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String
 
     suspend fun revokeSession()
 

@@ -28,7 +28,7 @@ object AuthenticationUseCaseImplSpec : Spek({
         describe("retrieve external authentication") {
             lateinit var externalAuth: String
             beforeEachTest {
-                coEvery { authenticationRepository.retrieveExternalAuthentication() } returns "{\"access_token\":\"ABCDEFGH\",\"expires_in\":1800}"
+                coEvery { authenticationRepository.retrieveExternalAuthentication(false) } returns "{\"access_token\":\"ABCDEFGH\",\"expires_in\":1800}"
                 externalAuth = runBlocking { useCase.retrieveExternalAuthentication() }
             }
 

@@ -72,4 +72,5 @@ like to connect to:</string>
   <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
     <string name="wait">Wait</string>
     <string name="refresh">Refresh</string>
+    <string name="event_error">Failed to notify HA of picked option.</string>
 </resources>
