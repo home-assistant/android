@@ -327,7 +327,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
-    override suspend fun updateSensors(sensors: Array<Sensor<Any>>) {
+    override suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean {
         val integrationRequest = IntegrationRequest(
             "update_sensor_states",
             sensors.map {
@@ -343,9 +343,13 @@ class IntegrationRepositoryImpl @Inject constructor(
         for (it in urlRepository.getApiUrls()) {
             try {
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
-                    if (it.isSuccessful) {
-                        return
+                    it.forEach { (_, response) ->
+                        if (response["success"] == false) {
+                            localStorage.putStringSet(PREF_SENSORS_REGISTERED, setOf())
+                            return false
+                        }
                     }
+                    return true
                 }
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
