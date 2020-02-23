@@ -6,7 +6,7 @@ interface AuthenticationUseCase {
 
     suspend fun registerAuthorizationCode(authorizationCode: String)
 
-    suspend fun retrieveExternalAuthentication(): String
+    suspend fun retrieveExternalAuthentication(forceRefresh: Boolean = false): String
 
     suspend fun revokeSession()
 

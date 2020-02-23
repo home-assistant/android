@@ -11,8 +11,8 @@ class AuthenticationUseCaseImpl @Inject constructor(
         authenticationRepository.registerAuthorizationCode(authorizationCode)
     }
 
-    override suspend fun retrieveExternalAuthentication(): String {
-        return authenticationRepository.retrieveExternalAuthentication()
+    override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String {
+        return authenticationRepository.retrieveExternalAuthentication(forceRefresh)
     }
 
     override suspend fun revokeSession() {

@@ -57,7 +57,7 @@ object WebViewPresenterImplSpec : Spek({
         describe("on get external auth on success") {
             beforeEachTest {
                 coEvery { authenticationUseCase.retrieveExternalAuthentication() } returns "{\"access_token\":\"ABCDEFGH\",\"expires_in\":1800}"
-                presenter.onGetExternalAuth("externalAuthSetToken")
+                presenter.onGetExternalAuth("externalAuthSetToken", false)
             }
 
             it("should set external auth") {
@@ -68,7 +68,7 @@ object WebViewPresenterImplSpec : Spek({
         describe("on get external auth on error") {
             beforeEachTest {
                 coEvery { authenticationUseCase.retrieveExternalAuthentication() } throws Exception()
-                presenter.onGetExternalAuth("externalAuthSetToken")
+                presenter.onGetExternalAuth("externalAuthSetToken", false)
             }
 
             it("should not crash") {
