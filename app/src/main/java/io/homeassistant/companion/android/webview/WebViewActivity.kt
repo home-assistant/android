@@ -59,6 +59,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     private var isConnected = false
     private var isShowingError = false
+    private var alertDialog :AlertDialog? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -222,6 +223,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                             "connection-status" -> {
                                 isConnected = json.getJSONObject("payload")
                                     .getString("event") == "connected"
+                                alertDialog?.cancel()
                             }
                             "config/get" -> {
                                 val script = "externalBus(" +
@@ -334,6 +336,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             .setTitle(R.string.error_connection_failed)
             .setOnDismissListener {
                 isShowingError = false
+                alertDialog = null
                 waitForConnection()
             }
 
@@ -356,7 +359,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 waitForConnection()
             }
         }
-        alert.show()
+        alertDialog = alert.create()
+        alertDialog?.show()
     }
 
     @SuppressLint("InflateParams")
