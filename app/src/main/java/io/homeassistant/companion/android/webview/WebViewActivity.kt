@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.webview
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.res.Configuration
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
@@ -20,8 +22,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.lokalise.sdk.LokaliseContextWrapper
@@ -44,6 +45,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     companion object {
         const val EXTRA_PATH = "path"
+        
+        private const val WEBVIEW_VIEW = 0
+        private const val FULLSCREEN_VIEW = 1
 
         private const val TAG = "WebviewActivity"
         private const val CAMERA_REQUEST_CODE = 8675309
@@ -58,8 +62,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     @Inject
     lateinit var presenter: WebViewPresenter
+    private lateinit var fullScreenContainer: FrameLayout
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
+    private lateinit var viewFlipper: ViewFlipper
+    private var customViewCallback: WebChromeClient.CustomViewCallback? = null
+    private var fullScreenView: View? = null
 
     private var isConnected = false
     private var isShowingError = false
@@ -69,6 +77,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
+
+        fullScreenContainer = findViewById(R.id.fullScreenContainer)
+        viewFlipper = findViewById(R.id.webview_view_flipper)
 
         DaggerPresenterComponent
             .builder()
@@ -202,6 +213,26 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         // If we are before M we already have permission, just grant it.
                         request?.grant(request.resources)
                     }
+                }
+
+                override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+                    if (fullScreenView != null) {
+                        callback?.onCustomViewHidden()
+                        return
+                    }
+
+                    fullScreenView = view
+                    viewFlipper.displayedChild = FULLSCREEN_VIEW
+                    fullScreenContainer.addView(view)
+                    customViewCallback = callback
+                }
+
+                override fun onHideCustomView() {
+                    super.onHideCustomView()
+                    viewFlipper.displayedChild = WEBVIEW_VIEW
+                    fullScreenContainer.removeView(fullScreenView)
+                    customViewCallback?.onCustomViewHidden()
+                    fullScreenView = null
                 }
             }
 
