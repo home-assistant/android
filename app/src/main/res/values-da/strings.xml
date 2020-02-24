@@ -67,7 +67,10 @@ vil forbinde til:</string>
   <string name="password">Adgangskode</string>
   <string name="auth_request">Godkendelse anmodet:</string>
   <string name="auth_cancel">Godkendelse annulleret</string>
-  <string name="add_service_data_field">Add Field</string>
-  <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
-  <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
+  <string name="add_service_data_field">Tilføj felt</string>
+  <string name="widget_config_service_error">En brugerdefineret komponent forhindrer tjenestedata i at indlæses.</string>
+  <string name="error_ssl">Kan ikke kommunikere med Home Assistant på grund af en SSL-fejl. Sørg for, at dit certifikat er gyldigt.</string>
+  <string name="event_error">Kunne ikke underrette HA om valgt valgmulighed.</string>
+  <string name="wait">Wait</string>
+  <string name="refresh">Refresh</string>
 </resources>
