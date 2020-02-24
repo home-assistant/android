@@ -64,5 +64,8 @@
   <string name="auth_cancel">Authentification annulée</string>
   <string name="add_service_data_field">Ajouter un champ</string>
   <string name="widget_config_service_error">Un composant personnalisé empêche le chargement des données de service.</string>
-  <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
+  <string name="error_ssl">Impossible de communiquer avec Home Assistant en raison d\'une erreur SSL. Veuillez vous assurer que votre certificat est valide.</string>
+  <string name="event_error">Failed to notify HA of picked option.</string>
+  <string name="wait">Wait</string>
+  <string name="refresh">Refresh</string>
 </resources>

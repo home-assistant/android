@@ -1,47 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
   <string name="app_name">Home Assistant</string>
-  <string name="scanning_network">Escaneando la red por Home Assistant</string>
+  <string name="scanning_network">Escaneando la red para Home Assistant</string>
   <string name="home_assistant_not_discover">Incapaz de encontrar su 
 instancia de Home Assistant</string>
-  <string name="connect_to_home_internet">Make sure your phone is connected 
-to your home internet.</string>
-  <string name="scan_again">buscar de nuevo</string>
+  <string name="connect_to_home_internet">Asegúrese de que su teléfono está conectado al internet de su hogar.</string>
+  <string name="scan_again">escanear de nuevo</string>
   <string name="manual_setup">Introducir la dirección manualmente</string>
   <string name="input_url">Home Assistant URL</string>
   <string name="input_url_hint">https://example.duckdns.org:8123</string>
-  <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
-  <string name="checking_with_home_assistant">Checking with Home Assistant</string>
+  <string name="status_of_mobile_app_integration">Estado de la integración con la app móvil:</string>
+  <string name="checking_with_home_assistant">Comprobando con Home Assistant</string>
   <string name="skip">Omitir</string>
   <string name="retry">Reintentar</string>
-  <string name="attempting_registration">Registrando aplicación ...</string>
-  <string name="unable_to_register">Unable to Register Application</string>
-  <string name="error_with_registration">Please check to ensure you have the mobile_app 
-integration enabled on your home assistant instance.</string>
-  <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
-  <string name="pref_location_zone_title">Zone Based Tracking</string>
-  <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
-  <string name="pref_location_background_title">Background Location Tracking</string>
-  <string name="pref_location_background_summary">Update your location behind the scenes, periodically.</string>
+  <string name="attempting_registration">Registrando aplicación...</string>
+  <string name="unable_to_register">No se ha podido registrar la aplicación</string>
+  <string name="error_with_registration">Por favor, compruebe que tiene la integración mobile_app habilitada en su instancia de Home Assistant</string>
+  <string name="url_parse_error">No se ha podido procesar su URL de Home Assistant. La URL tiene que ser como https://example.com</string>
+  <string name="pref_location_zone_title">Tracking basado en zona</string>
+  <string name="pref_location_zone_summary">Importar Zonas de Home Assistant como geofences para tracking basado en zona.</string>
+  <string name="pref_location_background_title">Tracking de localización en segundo plano</string>
+  <string name="pref_location_background_summary">Actualizar la localización en segundo plano periodicamente.</string>
   <string name="application_version">Versión de la aplicación</string>
   <string name="location">Ubicación</string>
-  <string name="app_version_info">App Version Info</string>
-  <string name="device_registration">Device Registration</string>
+  <string name="app_version_info">Información de versión de la app</string>
+  <string name="device_registration">Registro de dispositivo</string>
   <string name="device_name">Nombre del dispositivo</string>
-  <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
-  <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
-  <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again.</string>
+  <string name="error_onboarding_connection_failed">No se ha podido conectar con Home Assistant.</string>
+  <string name="error_connection_failed">No se ha podido conectar con Home Assistant.</string>
+  <string name="webview_error">Ha ocurrido un error cargando Home Assistant, por favor, revise los ajustes de conexión y vuelva a intentarlo.</string>
   <string name="pref_connection_title">Información de la conexión</string>
   <string name="pref_connection_url">Home Assistant URL</string>
-  <string name="pref_connection_wifi">Home Network WiFi SSID</string>
-  <string name="pref_connection_internal">Internal Connection URL</string>
-  <string name="url_invalid">Url Invalid</string>
-  <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
-  <string name="select_instance">Select the instance you would 
-like to connect to:</string>
-  <string name="failed_scan">Scanning for Home Assistant failed.</string>
+  <string name="pref_connection_wifi">SSID Wifi red de hogar</string>
+  <string name="pref_connection_internal">URL de conexión interna</string>
+  <string name="url_invalid">URL invalida</string>
+  <string name="error_auth_revoked">Parece que su autorización fue revocada, por favor vuelva a conectarse a Home Assistant.</string>
+  <string name="select_instance">Seleccione la instancia a la que le gustaría conectar:</string>
+  <string name="failed_scan">Búsqueda de Home Assistant fallida.</string>
   <string name="widget_image_description">Widget de Home Assistant</string>
-  <string name="configure_service_call">Configure Service Call</string>
+  <string name="configure_service_call">Configurar servicio de llamada</string>
   <string name="configure_widget_label">Etiqueta del widget</string>
   <string name="add_widget">Añadir widget</string>
   <string name="widget_text_hint_service_domain">Dominio</string>
@@ -51,12 +48,12 @@ like to connect to:</string>
   <string name="widget_label_placeholder_text">Etiqueta</string>
   <string name="widget_spinner_icon">Icono:</string>
   <string name="connected_to_home_assistant">Conectado a Home Assistant</string>
-  <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
+  <string name="permission_explanation">Para usar las características o diferentes URLs de conexión basadas en su SSID Wifi, necesitamos acceso a su localización. Si quiere actualizaciones constantes en segundo plano, también se necesitará dar permiso a los procesos en segundos plano.</string>
   <string name="grant_permission">Conceder permiso</string>
   <string name="finish">Finalizar</string>
   <string name="other_settings">Otros ajustes</string>
   <string name="fullscreen">Pantalla completa</string>
-  <string name="fullscreen_def">Pon la aplicación en pantalla completa</string>
+  <string name="fullscreen_def">Poner la aplicación en pantalla completa</string>
   <string name="label_service">Servicio:</string>
   <string name="label_entity_id">ID de la entidad</string>
   <string name="label_label">Etiqueta:</string>
@@ -64,9 +61,12 @@ like to connect to:</string>
   <string name="label_dynamic_data">Datos:</string>
   <string name="username">Nombre de usuario</string>
   <string name="password">Contraseña</string>
-  <string name="auth_request">Authentication Requested:</string>
-  <string name="auth_cancel">Authentication Cancelled</string>
-  <string name="add_service_data_field">Add Field</string>
-  <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
-  <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
+  <string name="auth_request">Autenticación solicitada:</string>
+  <string name="auth_cancel">Autenticación cancelada</string>
+  <string name="add_service_data_field">Añadir campo</string>
+  <string name="widget_config_service_error">Un componente personalizado está previniendo datos de servicio desde la carga.</string>
+  <string name="error_ssl">No se ha podido conectar con Home Assistant debido a un error de SSL. Por favor, compruebe que su certificado es válido.</string>
+  <string name="event_error">Failed to notify HA of picked option.</string>
+  <string name="wait">Wait</string>
+  <string name="refresh">Refresh</string>
 </resources>

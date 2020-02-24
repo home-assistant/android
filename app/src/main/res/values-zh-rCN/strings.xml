@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="app_name">Home Assistant</string>
+  <string name="scanning_network">为Home Assistant
+扫描网络</string>
+  <string name="home_assistant_not_discover">无法找到你的 
+Home Assistant实例</string>
+  <string name="connect_to_home_internet">确保手机已连接
+到您的家庭互联网。</string>
+  <string name="scan_again">重新扫描</string>
+  <string name="manual_setup">手动输入地址</string>
+  <string name="input_url">Home Assistant URL地址</string>
+  <string name="input_url_hint">https://example.duckdns.org:8123</string>
+  <string name="status_of_mobile_app_integration">mobile app集成的状态：</string>
+  <string name="checking_with_home_assistant">正在检查Home Assistant</string>
+  <string name="skip">跳过</string>
+  <string name="retry">重试</string>
+  <string name="attempting_registration">正在注册应用程序...</string>
+  <string name="unable_to_register">无法注册应用程序</string>
+  <string name="error_with_registration">请检查你的home assistant实例,确保已经启用了mobile_app集成</string>
+  <string name="url_parse_error">无法解析您的Home Assistant URL地址。它看起来应该像https://example.com</string>
+  <string name="pref_location_zone_title">基于区域的跟踪</string>
+  <string name="pref_location_zone_summary">导入现有的Home Assistant区域作为地理围栏，以进行基于区域的跟踪。</string>
+  <string name="pref_location_background_title">后台位置跟踪</string>
+  <string name="pref_location_background_summary">定期在后台更新您的位置。</string>
+  <string name="application_version">应用版本</string>
+  <string name="location">位置</string>
+  <string name="app_version_info">应用版本信息</string>
+  <string name="device_registration">设备注册</string>
+  <string name="device_name">设备名称</string>
+  <string name="error_onboarding_connection_failed">无法连接到Home Assistant。</string>
+  <string name="error_connection_failed">无法连接到Home Assistant。</string>
+  <string name="webview_error">加载Home Assistant时出错或超时，请检查连接设置，然后重试。</string>
+  <string name="pref_connection_title">连接信息</string>
+  <string name="pref_connection_url">外网 URL 地址</string>
+  <string name="pref_connection_wifi">无线网络 SSID</string>
+  <string name="pref_connection_internal">内网 URL 地址</string>
+  <string name="url_invalid">Url 无效</string>
+  <string name="error_auth_revoked">您的授权似乎已被撤消，请重新连接到Home Assistant。</string>
+  <string name="select_instance">选择你想要连接的实例:</string>
+  <string name="failed_scan">扫描Home Assistant失败。</string>
+  <string name="widget_image_description">Home Assistant小部件</string>
+  <string name="configure_service_call">配置服务</string>
+  <string name="configure_widget_label">小部件标签</string>
+  <string name="add_widget">添加小部件</string>
+  <string name="widget_text_hint_service_domain">域</string>
+  <string name="widget_text_hint_service_service">服务</string>
+  <string name="widget_text_hint_service_data">实体ID</string>
+  <string name="widget_text_hint_label">标签</string>
+  <string name="widget_label_placeholder_text">标签</string>
+  <string name="widget_spinner_icon">图标：</string>
+  <string name="connected_to_home_assistant">连接到 Home Assistant</string>
+  <string name="permission_explanation">为了使用基于 WiFi SSID 的位置跟踪功能或不同的连接 URL，我们需要访问您的位置。如果需要一致的后台更新，还需要程序允许后台运行</string>
+  <string name="grant_permission">授予权限</string>
+  <string name="finish">完成</string>
+  <string name="other_settings">其他设置</string>
+  <string name="fullscreen">全屏</string>
+  <string name="fullscreen_def">全屏显示应用程序</string>
+  <string name="label_service">服务：</string>
+  <string name="label_entity_id">实体ID：</string>
+  <string name="label_label">标签：</string>
+  <string name="label_icon">图标：</string>
+  <string name="label_dynamic_data">数据：</string>
+  <string name="username">用户名</string>
+  <string name="password">密码</string>
+  <string name="auth_request">请求的验证：</string>
+  <string name="auth_cancel">验证已取消</string>
+  <string name="add_service_data_field">添加字段</string>
+  <string name="widget_config_service_error">一个自定义组件阻止加载服务数据。</string>
+  <string name="error_ssl">由于SSL错误，无法与Home Assistant通信。请确保您的证书有效。</string>
+  <string name="event_error">Failed to notify HA of picked option.</string>
+  <string name="wait">Wait</string>
+  <string name="refresh">Refresh</string>
+</resources>
