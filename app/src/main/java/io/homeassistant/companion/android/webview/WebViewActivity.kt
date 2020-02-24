@@ -323,7 +323,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        var bounds = Rect(0, 0, 1920 , 1080)
+        var bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen) {
             if (Build.VERSION.SDK_INT >= 26) {
                 var mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
