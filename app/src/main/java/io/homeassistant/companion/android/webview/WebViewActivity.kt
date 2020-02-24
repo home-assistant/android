@@ -325,7 +325,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onUserLeaveHint()
         var bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen) {
-            if (Build.VERSION.SDK_INT >= 26) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 var mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(Rational(bounds.width(), bounds.height()))
                 mPictureInPictureParamsBuilder.setSourceRectHint(bounds)
