@@ -3,8 +3,7 @@
   <string name="app_name">Home Assistant</string>
   <string name="scanning_network">Prohledávání sítě pro Home Assistant</string>
   <string name="home_assistant_not_discover">Nelze najít  Home Assistant</string>
-  <string name="connect_to_home_internet">Make sure your phone is connected 
-to your home internet.</string>
+  <string name="connect_to_home_internet"></string>
   <string name="scan_again">znovu prohledat</string>
   <string name="manual_setup">zadat adresu ručně</string>
   <string name="input_url">Home Assistant URL</string>
@@ -59,12 +58,15 @@ integraci povolenou v Home Assistant.</string>
   <string name="label_entity_id">ID entity</string>
   <string name="label_label">Označení:</string>
   <string name="label_icon">Ikona:</string>
-  <string name="label_dynamic_data">Data:</string>
-  <string name="username">Username</string>
-  <string name="password">Password</string>
-  <string name="auth_request">Authentication Requested:</string>
-  <string name="auth_cancel">Authentication Cancelled</string>
-  <string name="add_service_data_field">Add Field</string>
-  <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
-  <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
+  <string name="label_dynamic_data"></string>
+  <string name="username"></string>
+  <string name="password"></string>
+  <string name="auth_request"></string>
+  <string name="auth_cancel"></string>
+  <string name="add_service_data_field"></string>
+  <string name="widget_config_service_error"></string>
+  <string name="error_ssl"></string>
+  <string name="event_error"></string>
+  <string name="wait"></string>
+  <string name="refresh"></string>
 </resources>
