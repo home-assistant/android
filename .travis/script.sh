@@ -14,6 +14,9 @@ elif [ -n "$TRAVIS_TAG" ]
 then
 
     echo "Promoting Beta to Production"
+    previous=`git tag -l --sort=-creatordate | head -n 2 | tail -n 1`
+    current=`git tag -l --sort=-creatordate | head -n 1`
+    echo "Full patch change log: https://github.com/home-assistant/home-assistant-android/compare/${previous}...${current}" > app/src/main/play/release-notes/en-US/default.txt
     ./gradlew promoteArtifact --from-track beta --promote-track production
 
 elif [ "$TRAVIS_BRANCH" = "master" ]
@@ -21,7 +24,9 @@ then
 
     echo "Building Master"
     mkdir -p app/src/main/play/release-notes/en-US/
-    git log --format=%s $(git rev-list --tags --max-count=1)..HEAD > app/src/main/play/release-notes/en-US/default.txt
+    git log --format=%s | head -n 1 > app/src/main/play/release-notes/en-US/default.txt
+    previous=`git tag -l --sort=-creatordate | head -n 1`
+    echo "Diff from production: https://github.com/home-assistant/home-assistant-android/compare/${previous}...master" >> app/src/main/play/release-notes/en-US/default.txt
 
     export VERSION_CODE=`git rev-list --count HEAD`
 

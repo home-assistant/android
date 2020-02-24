@@ -81,6 +81,7 @@ android {
 play {
     serviceAccountCredentials = file("playStorePublishServiceCredentialsFile.json")
     track = "beta"
+    resolutionStrategy = "ignore"
 }
 
 dependencies {
