@@ -17,7 +17,7 @@
   <string name="error_with_registration">Überprüfe, ob die mobile_app Integration in deiner Home Assistant-Instanz aktiviert ist.</string>
   <string name="url_parse_error">Die Home Assistant-URL konnte nicht gelesen werden. Sie sollte folgendermaßen aussehen https://example.com</string>
   <string name="pref_location_zone_title">Zonenbasierte Standortbestimmung</string>
-  <string name="pref_location_zone_summary">Importiert vorhandene Home Assistant-Zonen als Geofences für die zonenbasierte Standortbestimmung.</string>
+  <string name="pref_location_zone_summary">Importiert vorhandene Home Assistant Zonen als Geofences für die zonenbasierte Standortbestimmung.</string>
   <string name="pref_location_background_title">Standortbestimmung im Hintergrund</string>
   <string name="pref_location_background_summary">Aktualisiert deinen Standort im Hintergrund in regelmäßigen Abständen.</string>
   <string name="application_version">Applikationsversion</string>
@@ -64,5 +64,8 @@
   <string name="auth_cancel">Authentifizierung abgebrochen</string>
   <string name="add_service_data_field">Feld hinzufügen</string>
   <string name="widget_config_service_error">Eine benutzerdefinierte Komponente verhindert, dass Servicedaten geladen werden.</string>
-  <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
+  <string name="error_ssl">Aufgrund eines SSL-Fehlers kann nicht mit Home Assistant kommuniziert werden. Stellen Sie sicher, dass Ihr Zertifikat gültig ist.</string>
+  <string name="event_error">Failed to notify HA of picked option.</string>
+  <string name="wait">Wait</string>
+  <string name="refresh">Refresh</string>
 </resources>

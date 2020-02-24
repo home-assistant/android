@@ -62,7 +62,10 @@
   <string name="password">Wachtwoord</string>
   <string name="auth_request">Verificatie gevraagd:</string>
   <string name="auth_cancel">Verificatie geannuleerd</string>
-  <string name="add_service_data_field">Add Field</string>
-  <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
-  <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
+  <string name="add_service_data_field">Veld toevoegen</string>
+  <string name="widget_config_service_error">Een aangepast onderdeel voorkomt dat servicegegevens worden geladen.</string>
+  <string name="error_ssl">Niet in staat om te communiceren met de Home Assistant vanwege een SSL-fout.  Zorg ervoor dat uw certificaat geldig is.</string>
+  <string name="event_error">Failed to notify HA of picked option.</string>
+  <string name="wait">Wait</string>
+  <string name="refresh">Refresh</string>
 </resources>
