@@ -150,8 +150,7 @@ class MessagingService : FirebaseMessagingService() {
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
 
         return PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_ONE_SHOT
+            this, 0, intent, 0
         )
     }
 
@@ -251,8 +250,10 @@ class MessagingService : FirebaseMessagingService() {
                             NotificationActionReceiver.OPEN_URI
                         else
                             NotificationActionReceiver.FIRE_EVENT
-                    putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_TAG, tag)
-                    putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
+                    if (data["sticky"]?.toBoolean() == false) {
+                        putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_TAG, tag)
+                        putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
+                    }
                     putExtra(
                         NotificationActionReceiver.EXTRA_NOTIFICATION_ACTION,
                         notificationAction
@@ -262,7 +263,7 @@ class MessagingService : FirebaseMessagingService() {
                     this,
                     (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
                     actionIntent,
-                    PendingIntent.FLAG_CANCEL_CURRENT
+                    0
                 )
 
                 builder.addAction(0, notificationAction.title, actionPendingIntent)
