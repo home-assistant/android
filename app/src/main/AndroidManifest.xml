@@ -83,7 +83,9 @@
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity
             android:name=".webview.WebViewActivity"
-            android:configChanges="orientation|screenSize" />
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
         <activity
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity" />
