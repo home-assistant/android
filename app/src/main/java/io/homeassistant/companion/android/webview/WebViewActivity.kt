@@ -1,13 +1,16 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
+import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
+import android.util.Rational
 import android.view.MenuInflater
 import android.view.View
 import android.webkit.HttpAuthHandler
@@ -21,6 +24,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -60,10 +64,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     lateinit var presenter: WebViewPresenter
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
+    private lateinit var decor: FrameLayout
+    private lateinit var myCustomView: View
 
     private var isConnected = false
     private var isShowingError = false
     private var alertDialog: AlertDialog? = null
+    private var isVideoFullScreen = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,6 +92,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
         }
+
+        decor = window.decorView as FrameLayout
 
         webView = findViewById(R.id.webview)
         webView.apply {
@@ -203,6 +212,21 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         request?.grant(request.resources)
                     }
                 }
+
+                override fun onShowCustomView(view: View, callback: CustomViewCallback) {
+                    myCustomView = view
+                    decor.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT))
+                    hideSystemUI()
+                    isVideoFullScreen = true
+                }
+
+                override fun onHideCustomView() {
+                    decor.removeView(myCustomView)
+                    if (!presenter.isFullScreen())
+                        showSystemUI()
+                    isVideoFullScreen = false
+                    super.onHideCustomView()
+                }
             }
 
             addJavascriptInterface(object : Any() {
@@ -282,10 +306,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     private fun hideSystemUI() {
         if (isCutout())
-            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
         else
-            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -294,7 +318,20 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun showSystemUI() {
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
+        decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        var bounds = Rect(0, 0, 1920, 1080)
+        if (isVideoFullScreen) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                var mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
+                mPictureInPictureParamsBuilder.setAspectRatio(Rational(bounds.width(), bounds.height()))
+                mPictureInPictureParamsBuilder.setSourceRectHint(bounds)
+                enterPictureInPictureMode(mPictureInPictureParamsBuilder.build())
+            }
+        }
     }
 
     override fun attachBaseContext(newBase: Context) {
