@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.util.Log
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.NetworkType
@@ -18,6 +19,7 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
     CoroutineWorker(appContext, workerParams) {
 
     companion object {
+        private const val TAG = "SensorWorker"
         fun start(context: Context) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED).build()
@@ -47,7 +49,8 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
 
         val sensorManagers = arrayOf(
             BatterySensorManager(),
-            NetworkSensorManager()
+            NetworkSensorManager(),
+            GeocodeSensorManager()
         )
 
         registerSensors(sensorManagers)
@@ -71,7 +74,11 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
         }.forEach {
             // I want to call this async but because of the way we need to store the
             // fact we have registered it we can't
-            integrationUseCase.registerSensor(it)
+            try {
+                integrationUseCase.registerSensor(it)
+            } catch (e: Exception) {
+                Log.e(TAG, "Issue registering sensor: ${it.uniqueId}", e)
+            }
         }
     }
 }
