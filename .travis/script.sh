@@ -14,6 +14,7 @@ elif [ -n "$TRAVIS_TAG" ]
 then
 
     echo "Promoting Beta to Production"
+    mkdir -p app/src/main/play/release-notes/en-US/
     previous=`git tag -l --sort=-creatordate | head -n 2 | tail -n 1`
     current=`git tag -l --sort=-creatordate | head -n 1`
     echo "Full patch change log: https://github.com/home-assistant/home-assistant-android/compare/${previous}...${current}" > app/src/main/play/release-notes/en-US/default.txt
