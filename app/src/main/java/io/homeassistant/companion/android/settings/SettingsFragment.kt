@@ -57,8 +57,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 if (BiometricManager.from(activity!!).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
                     Lock.biometric(true, activity!!, findPreference("app_lock"))
                 }
-                else
-                    Lock.pin(set = true, fragment = activity!!, switchLock = switchLock)
+                else Lock.pin(set = true, fragment = activity!!, switchLock = switchLock)
             }
             if (!isValid) {
                 AlertDialog.Builder(activity!!)
