@@ -6,4 +6,5 @@ interface SettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onCreate()
     fun onFinish()
+    fun setPIN(pin: String)
 }

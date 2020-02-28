@@ -103,6 +103,18 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isLockEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isLockEnabled()
+        }
+    }
+
+    override fun getPIN(): String {
+        return runBlocking {
+            integrationUseCase.getPIN()
+        }
+    }
+
     override fun onFinish() {
         mainScope.cancel()
     }

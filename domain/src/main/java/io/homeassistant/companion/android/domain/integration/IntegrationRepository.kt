@@ -21,6 +21,12 @@ interface IntegrationRepository {
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 
+    suspend fun setLockEnabled(enabled: Boolean)
+    suspend fun isLockEnabled(): Boolean
+
+    suspend fun savePIN(pin: String)
+    suspend fun getPIN(): String
+
     suspend fun getThemeColor(): String
 
     suspend fun getServices(): Array<Service>

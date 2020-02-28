@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
+import androidx.biometric.BiometricManager
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -12,6 +13,7 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.util.Lock
 import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -45,11 +47,37 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             isValid
         }
 
+        val onChangeBiometricValidator = Preference.OnPreferenceChangeListener { _, newValue ->
+            val isValid: Boolean
+            if (newValue == false)
+                isValid = true
+            else {
+                isValid = true
+                var switchLock = findPreference<SwitchPreference>("app_lock")
+                if (BiometricManager.from(activity!!).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
+                    Lock.biometric(true, activity!!, findPreference("app_lock"))
+                }
+                else
+                    Lock.pin(set = true, fragment = activity!!, switchLock = switchLock)
+            }
+            if (!isValid) {
+                AlertDialog.Builder(activity!!)
+                    .setTitle(R.string.set_lock_title.toString())
+                    .setMessage(R.string.set_lock_message.toString())
+                    .setPositiveButton(android.R.string.ok) { _, _ -> }
+                    .show()
+            }
+            isValid
+        }
+
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
 
         findPreference<EditTextPreference>("connection_external")?.onPreferenceChangeListener =
             onChangeUrlValidator
+
+        findPreference<SwitchPreference>("app_lock")?.onPreferenceChangeListener =
+            onChangeBiometricValidator
 
         findPreference<Preference>("version")?.let {
             it.summary = BuildConfig.VERSION_NAME

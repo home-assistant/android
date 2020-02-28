@@ -45,11 +45,13 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_PUSH_TOKEN = "push_token"
 
         private const val PREF_SECRET = "secret"
+        private const val PREF_PIN = "pin"
 
         private const val PREF_ZONE_ENABLED = "zone_enabled"
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
+        private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -241,6 +243,22 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isFullScreenEnabled(): Boolean {
         return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
+    }
+
+    override suspend fun setLockEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_BIOMETRIC_ENABLED, enabled)
+    }
+
+    override suspend fun isLockEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_BIOMETRIC_ENABLED)
+    }
+
+    override suspend fun savePIN(pin: String) {
+        localStorage.putString(PREF_PIN, pin)
+    }
+
+    override suspend fun getPIN(): String {
+        return localStorage.getString(PREF_PIN).toString()
     }
 
     override suspend fun getThemeColor(): String {

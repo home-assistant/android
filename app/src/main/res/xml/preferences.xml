@@ -44,6 +44,11 @@
             android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
+        <SwitchPreference
+            android:key="app_lock"
+            android:icon="@drawable/ic_lock"
+            android:title="Lock app"
+            android:summary="Use biometric or PIN (for non biometric device) to unlock app"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">

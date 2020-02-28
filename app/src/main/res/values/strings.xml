@@ -73,4 +73,14 @@ like to connect to:</string>
   <string name="event_error">Failed to notify HA of picked option.</string>
   <string name="wait">Wait</string>
   <string name="refresh">Refresh</string>
+  <string name="lockscreen_title">App Locked !</string>
+  <string name="lockscreen_message">Tap to unlock :</string>
+  <string name="biometric_title">Biometric unlocking</string>
+  <string name="biometric_message">Unlock using your biometric credential</string>
+  <string name="pinscreen_title">Enter your PIN</string>
+  <string name="pinscreen_title_second">Re-Enter your PIN</string>
+  <string name="pinscreen_bad_pin">Incorrect PIN, please retry</string>
+  <string name="pinscreen_not_match">Second PIN doesn\'t match, please retry</string>
+  <string name="set_lock_title">No biometric sensor available</string>
+  <string name="set_lock_message">Using of a PIN code</string>
 </resources>
