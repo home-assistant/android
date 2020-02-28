@@ -344,7 +344,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             button.setOnClickListener {
                 if (BiometricManager.from(application).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
                     Lock.biometric(fragment = this, sharedPref = sharedPref)
-                else Lock.pin(fragment = this, webViewPresenter =  presenter, sharedPref =  sharedPref)            
+                else Lock.pin(fragment = this, webViewPresenter =  presenter, sharedPref =  sharedPref)
+            }
         }
     }
 
