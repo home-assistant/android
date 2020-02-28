@@ -101,13 +101,13 @@ class Lock {
                 if (circleLayout.getChildAt(index) is ImageView) {
                     editImageArray.add(index, circleLayout.getChildAt(index) as ImageView)
                     editImageArray[index].setOnTouchListener { _, _ ->
-                        if ((index != 0 && editImageArray[index-1].tag == "set") || (index == 0)) {
+                        if ((index != 0 && editImageArray[index - 1].tag == "set") || (index == 0)) {
                             for (i in index until (layout.childCount)) {
                                 editImageArray[i].setImageResource(R.drawable.pin_circle)
                                 editImageArray[i].tag = ""
                             }
                             editTextArray[index].requestFocus()
-                            editTextArray[index].postDelayed ({
+                            editTextArray[index].postDelayed({
                                 val imm = editTextArray[index].context.getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
                                 imm.showSoftInput(editTextArray[index], InputMethodManager.SHOW_IMPLICIT)
                             }, 150)
@@ -211,7 +211,6 @@ class Lock {
                                         }
                                     }
                                 }
-
                         }
 
                         override fun beforeTextChanged(
