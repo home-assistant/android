@@ -51,7 +51,6 @@ import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.lockScreen
 import org.json.JSONObject
 
-
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 
     companion object {
@@ -326,7 +325,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             else
                 viewFlipper.displayedChild = viewFlipper.indexOfChild(webView)
         }
-
     }
 
     override fun onPause() {
@@ -344,11 +342,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             viewFlipper.displayedChild = viewFlipper.indexOfChild(lockScreen)
             val button = findViewById<ImageView>(R.id.unlockButton)
             button.setOnClickListener {
-                if (BiometricManager.from(application).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
+                if (BiometricManager.from(application).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
                     Lock.biometric(fragment = this, sharedPref = sharedPref)
-                } else
-                    Lock.pin(fragment = this, webViewPresenter =  presenter, sharedPref =  sharedPref)
-            }
+                else Lock.pin(fragment = this, webViewPresenter =  presenter, sharedPref =  sharedPref)            
         }
     }
 
