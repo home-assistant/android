@@ -21,6 +21,8 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupView
 import io.homeassistant.companion.android.settings.SettingsPresenter
 import io.homeassistant.companion.android.settings.SettingsPresenterImpl
 import io.homeassistant.companion.android.settings.SettingsView
+import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
+import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.webview.WebView
 import io.homeassistant.companion.android.webview.WebViewPresenter
 import io.homeassistant.companion.android.webview.WebViewPresenterImpl
@@ -35,6 +37,8 @@ class PresenterModule {
     private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
     private lateinit var settingsView: SettingsView
     private lateinit var webView: WebView
+    private lateinit var ssidPreference: SsidPreference
+    private lateinit var ssidDialog: SsidDialogFragment
 
     constructor(launchView: LaunchView) {
         this.launchView = launchView
@@ -64,6 +68,14 @@ class PresenterModule {
         this.webView = webView
     }
 
+    constructor(ssidPreference: SsidPreference) {
+        this.ssidPreference = ssidPreference
+    }
+
+    constructor(ssidDialog: SsidDialogFragment) {
+        this.ssidDialog = ssidDialog
+    }
+
     @Provides
     fun provideLaunchView() = launchView
 
@@ -84,6 +96,12 @@ class PresenterModule {
 
     @Provides
     fun provideWebView() = webView
+
+    @Provides
+    fun provideSsidPreference() = ssidPreference
+
+    @Provides
+    fun provideSsidDialog() = ssidDialog
 
     @Module
     interface Declaration {

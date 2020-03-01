@@ -12,7 +12,7 @@ interface UrlUseCase {
 
     suspend fun saveUrl(url: String, isInternal: Boolean? = null)
 
-    suspend fun getHomeWifiSsid(): String?
+    suspend fun getHomeWifiSsids(): Set<String>
 
-    suspend fun saveHomeWifiSsid(ssid: String?)
+    suspend fun saveHomeWifiSsids(ssid: Set<String>)
 }
