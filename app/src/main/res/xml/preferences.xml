@@ -47,8 +47,8 @@
         <SwitchPreference
             android:key="app_lock"
             android:icon="@drawable/ic_lock"
-            android:title="Lock app"
-            android:summary="Use biometric or PIN (for non biometric device) to unlock app"/>
+            android:title="@string/lock_title"
+            android:summary="@string/lock_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">

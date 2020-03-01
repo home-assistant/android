@@ -12,8 +12,8 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.lock.LockActivity
 import io.homeassistant.companion.android.sensors.SensorWorker
-import io.homeassistant.companion.android.util.Lock
 import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -53,10 +53,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 isValid = true
             else {
                 isValid = true
-                var switchLock = findPreference<SwitchPreference>("app_lock")
+                val switchLock = findPreference<SwitchPreference>("app_lock")
                 if (BiometricManager.from(activity!!).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-                    Lock.biometric(true, activity!!, findPreference("app_lock"))
-                else Lock.pin(set = true, fragment = activity!!, switchLock = switchLock)
+                    LockActivity.biometric(set = true, fragment = activity!!, switchLock = switchLock)
+                else
+                    LockActivity.pin(set = true, fragment = activity!!, switchLock = switchLock, settingsPresenter = presenter)
             }
             if (!isValid) {
                 AlertDialog.Builder(activity!!)

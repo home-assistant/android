@@ -30,4 +30,20 @@ class AuthenticationUseCaseImpl @Inject constructor(
     override suspend fun buildBearerToken(): String {
         return authenticationRepository.buildBearerToken()
     }
+
+    override suspend fun setLockEnabled(enabled: Boolean) {
+        return authenticationRepository.setLockEnabled(enabled)
+    }
+
+    override suspend fun isLockEnabled(): Boolean {
+        return authenticationRepository.isLockEnabled()
+    }
+
+    override suspend fun savePIN(pin: String) {
+        return authenticationRepository.savePIN(pin)
+    }
+
+    override suspend fun getPIN(): String {
+        return authenticationRepository.getPIN()
+    }
 }

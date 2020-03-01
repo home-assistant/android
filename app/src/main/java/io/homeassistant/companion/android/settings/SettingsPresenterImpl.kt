@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings
 
 import android.util.Log
 import androidx.preference.PreferenceDataStore
+import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import javax.inject.Inject
@@ -15,7 +16,8 @@ import kotlinx.coroutines.runBlocking
 class SettingsPresenterImpl @Inject constructor(
     private val settingsView: SettingsView,
     private val urlUseCase: UrlUseCase,
-    private val integrationUseCase: IntegrationUseCase
+    private val integrationUseCase: IntegrationUseCase,
+    private val authenticationUseCase: AuthenticationUseCase
 ) : SettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -30,7 +32,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "location_zone" -> integrationUseCase.isZoneTrackingEnabled()
                 "location_background" -> integrationUseCase.isBackgroundTrackingEnabled()
                 "fullscreen" -> integrationUseCase.isFullScreenEnabled()
-                "app_lock" -> integrationUseCase.isLockEnabled()
+                "app_lock" -> authenticationUseCase.isLockEnabled()
                 else -> throw Exception()
             }
         }
@@ -42,7 +44,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "location_zone" -> integrationUseCase.setZoneTrackingEnabled(value)
                 "location_background" -> integrationUseCase.setBackgroundTrackingEnabled(value)
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
-                "app_lock" -> integrationUseCase.setLockEnabled(value)
+                "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 else -> throw Exception()
             }
             if (key == "location_zone" || key == "location_background")
@@ -112,7 +114,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun setPIN(pin: String) {
         mainScope.launch {
-            integrationUseCase.savePIN(pin)
+            authenticationUseCase.savePIN(pin)
         }
     }
 }

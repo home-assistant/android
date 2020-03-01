@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.settings
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.MenuInflater
 import androidx.appcompat.app.AppCompatActivity
@@ -27,10 +26,6 @@ class SettingsActivity : AppCompatActivity() {
             .beginTransaction()
             .replace(R.id.content, SettingsFragment.newInstance())
             .commit()
-        val sharedPref: SharedPreferences = getSharedPreferences("lock", Context.MODE_PRIVATE)
-        val prefEditor = sharedPref.edit()
-        prefEditor.putBoolean("lock", false)
-        prefEditor.apply()
     }
 
     override fun attachBaseContext(newBase: Context) {

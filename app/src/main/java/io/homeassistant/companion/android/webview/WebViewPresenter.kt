@@ -12,9 +12,5 @@ interface WebViewPresenter {
 
     fun isFullScreen(): Boolean
 
-    fun isLockEnabled(): Boolean
-
-    fun getPIN(): String
-
     fun onFinish()
 }

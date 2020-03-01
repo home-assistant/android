@@ -6,6 +6,9 @@ import dagger.Provides
 import io.homeassistant.companion.android.launch.LaunchPresenter
 import io.homeassistant.companion.android.launch.LaunchPresenterImpl
 import io.homeassistant.companion.android.launch.LaunchView
+import io.homeassistant.companion.android.lock.LockPresenter
+import io.homeassistant.companion.android.lock.LockPresenterImpl
+import io.homeassistant.companion.android.lock.LockView
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationPresenter
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationPresenterImpl
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationView
@@ -35,6 +38,7 @@ class PresenterModule {
     private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
     private lateinit var settingsView: SettingsView
     private lateinit var webView: WebView
+    private lateinit var lockView: LockView
 
     constructor(launchView: LaunchView) {
         this.launchView = launchView
@@ -64,6 +68,10 @@ class PresenterModule {
         this.webView = webView
     }
 
+    constructor(lockView: LockView) {
+        this.lockView = lockView
+    }
+
     @Provides
     fun provideLaunchView() = launchView
 
@@ -84,6 +92,9 @@ class PresenterModule {
 
     @Provides
     fun provideWebView() = webView
+
+    @Provides
+    fun provideLockView() = lockView
 
     @Module
     interface Declaration {
@@ -108,5 +119,8 @@ class PresenterModule {
 
         @Binds
         fun bindWebViewPresenterImpl(presenter: WebViewPresenterImpl): WebViewPresenter
+
+        @Binds
+        fun bindLockPresenter(presenter: LockPresenterImpl): LockPresenter
     }
 }

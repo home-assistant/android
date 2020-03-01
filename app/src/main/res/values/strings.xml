@@ -83,4 +83,6 @@ like to connect to:</string>
   <string name="pinscreen_not_match">Second PIN doesn\'t match, please retry</string>
   <string name="set_lock_title">No biometric sensor available</string>
   <string name="set_lock_message">Using of a PIN code</string>
+  <string name="lock_title">Lock app</string>
+  <string name="lock_summary">Use biometric or PIN (for non biometric device) to unlock app</string>
 </resources>

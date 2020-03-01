@@ -76,22 +76,6 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.isFullScreenEnabled()
     }
 
-    override suspend fun setLockEnabled(enabled: Boolean) {
-        return integrationRepository.setLockEnabled(enabled)
-    }
-
-    override suspend fun isLockEnabled(): Boolean {
-        return integrationRepository.isLockEnabled()
-    }
-
-    override suspend fun savePIN(pin: String) {
-        return integrationRepository.savePIN(pin)
-    }
-
-    override suspend fun getPIN(): String {
-        return integrationRepository.getPIN()
-    }
-
     override suspend fun getServices(): Array<Service> {
         return integrationRepository.getServices()
     }

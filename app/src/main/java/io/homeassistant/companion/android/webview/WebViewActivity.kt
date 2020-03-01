@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import android.content.res.Configuration
 import android.graphics.Rect
 import android.net.http.SslError
 import android.os.Build
@@ -27,12 +25,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.Toast
-import android.widget.ViewFlipper
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.biometric.BiometricManager
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
 import io.homeassistant.companion.android.BuildConfig
@@ -44,11 +39,9 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.util.Lock
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
-import kotlinx.android.synthetic.main.activity_webview.lockScreen
 import org.json.JSONObject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -73,10 +66,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
     private lateinit var myCustomView: View
-    private lateinit var viewFlipper: ViewFlipper
-    private lateinit var sharedPref: SharedPreferences
-    private lateinit var prefEditor: SharedPreferences.Editor
-    private lateinit var videoCallback: WebChromeClient.CustomViewCallback
 
     private var isConnected = false
     private var isShowingError = false
@@ -100,16 +89,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         sendBroadcast(intent)
         SensorWorker.start(applicationContext)
 
-        sharedPref = getSharedPreferences("lock", Context.MODE_PRIVATE)
-        prefEditor = sharedPref.edit()
-        prefEditor.putBoolean("lock", presenter.isLockEnabled())
-        prefEditor.apply()
-
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
         }
-
-        viewFlipper = findViewById(R.id.view_flipper)
 
         decor = window.decorView as FrameLayout
 
@@ -236,7 +218,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     decor.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT))
                     hideSystemUI()
                     isVideoFullScreen = true
-                    videoCallback = callback
                 }
 
                 override fun onHideCustomView() {
@@ -320,32 +301,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 hideSystemUI()
             else
                 showSystemUI()
-            if (sharedPref.getBoolean("lock", true))
-                unlock()
-            else
-                viewFlipper.displayedChild = viewFlipper.indexOfChild(webView)
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        prefEditor.putBoolean("lock", true)
-        prefEditor.apply()
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    fun unlock() {
-        if (isVideoFullScreen)
-            videoCallback.onCustomViewHidden()
-
-        if (presenter.isLockEnabled()) {
-            viewFlipper.displayedChild = viewFlipper.indexOfChild(lockScreen)
-            val button = findViewById<ImageView>(R.id.unlockButton)
-            button.setOnClickListener {
-                if (BiometricManager.from(application).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-                    Lock.biometric(fragment = this, sharedPref = sharedPref)
-                else Lock.pin(fragment = this, webViewPresenter = presenter, sharedPref = sharedPref)
-            }
         }
     }
 
@@ -376,22 +331,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 mPictureInPictureParamsBuilder.setSourceRectHint(bounds)
                 enterPictureInPictureMode(mPictureInPictureParamsBuilder.build())
             }
-        }
-    }
-
-    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration?) {
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-        if (isInPictureInPictureMode) {
-            prefEditor.putBoolean("lock", false)
-            prefEditor.apply()
-        }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (isVideoFullScreen) {
-            prefEditor.putBoolean("lock", true)
-            prefEditor.apply()
         }
     }
 
