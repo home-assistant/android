@@ -21,7 +21,6 @@ class UrlRepositoryImpl @Inject constructor(
         private const val PREF_REMOTE_URL = "remote_url"
         private const val PREF_WEBHOOK_ID = "webhook_id"
         private const val PREF_LOCAL_URL = "local_url"
-        private const val PREF_WIFI_SSID = "wifi_ssid" // Keep for backwards compatibility
         private const val PREF_WIFI_SSIDS = "wifi_ssids"
     }
 
@@ -99,17 +98,11 @@ class UrlRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getHomeWifiSsids(): Set<String> {
-        val ssids = localStorage.getStringSet(PREF_WIFI_SSIDS) ?: emptySet()
-        val oldFormatSsid = localStorage.getString(PREF_WIFI_SSID)
-        if (oldFormatSsid != null && !oldFormatSsid.isNullOrBlank()) {
-            return ssids + oldFormatSsid
-        }
-        return ssids
+        return localStorage.getStringSet(PREF_WIFI_SSIDS) ?: emptySet()
     }
 
     override suspend fun saveHomeWifiSsids(ssid: Set<String>) {
         localStorage.putStringSet(PREF_WIFI_SSIDS, ssid)
-        localStorage.remove(PREF_WIFI_SSID) // Remove the old ssid as it will no be part of the ssid set.
     }
 
     private suspend fun isInternal(): Boolean {

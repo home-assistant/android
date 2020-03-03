@@ -8,12 +8,8 @@ import android.widget.TextView
 import androidx.preference.DialogPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.util.getAttribute
-import javax.inject.Inject
 
 class SsidPreference @JvmOverloads constructor(
     context: Context,
@@ -28,20 +24,13 @@ class SsidPreference @JvmOverloads constructor(
         private const val NO_MAX_LINES = -1
     }
 
-    @Inject lateinit var ssidSummaryProvider: SsidSummaryProvider
+    private val ssidSummaryProvider = SsidSummaryProvider()
 
     private var ssids: Set<String> = emptySet()
 
     private val summaryMaxLines: Int
 
     init {
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
-
         val attributes = context.obtainStyledAttributes(attrs, R.styleable.SsidPreference)
         try {
             summaryMaxLines = attributes.getInt(R.styleable.SsidPreference_summaryMaxLines, NO_MAX_LINES)
@@ -74,6 +63,10 @@ class SsidPreference @JvmOverloads constructor(
         this.ssids = ssids
         persistStringSet(ssids)
         notifyChanged()
+    }
+
+    fun getSsids(): Set<String> {
+        return this.ssids
     }
 
     override fun onPreferenceChange(preference: Preference, newValue: Any?): Boolean {
