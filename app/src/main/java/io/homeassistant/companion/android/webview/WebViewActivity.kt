@@ -316,7 +316,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 decor.getChildAt(0).layoutParams.height = decor.height
 
             decor.requestLayout()
-	}
+        }
 
 	if (isCutout())
             decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
