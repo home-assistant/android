@@ -34,7 +34,8 @@ integration enabled on your home assistant instance.</string>
   <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again.</string>
   <string name="pref_connection_title">Connection Information</string>
   <string name="pref_connection_url">Home Assistant URL</string>
-  <string name="pref_connection_wifi">Home Network WiFi SSID</string>
+  <string name="pref_connection_wifi">Home Network WiFi SSIDs</string>
+  <string name="pref_connection_ssids_empty">Configure your WiFi SSID(s)</string>
   <string name="pref_connection_internal">Internal Connection URL</string>
   <string name="url_invalid">Url Invalid</string>
   <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
@@ -73,4 +74,9 @@ like to connect to:</string>
   <string name="event_error">Failed to notify HA of picked option.</string>
   <string name="wait">Wait</string>
   <string name="refresh">Refresh</string>
+  <string name="manage_ssids">Manage SSID(s)</string>
+  <string name="manage_ssids_input">New WiFi SSID</string>
+  <string name="manage_ssids_input_exists">This SSID already exists.</string>
+  <string name="save">Save</string>
+  <string name="cancel">Cancel</string>
 </resources>

@@ -5,13 +5,21 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuInflater
 import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
+import io.homeassistant.companion.android.settings.ssid.SsidPreference
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : AppCompatActivity(),
+    PreferenceFragmentCompat.OnPreferenceDisplayDialogCallback {
 
     companion object {
+        private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
+
         fun newInstance(context: Context): Intent {
             return Intent(context, SettingsActivity::class.java)
         }
@@ -26,6 +34,15 @@ class SettingsActivity : AppCompatActivity() {
             .beginTransaction()
             .replace(R.id.content, SettingsFragment.newInstance())
             .commit()
+    }
+
+    override fun onPreferenceDisplayDialog(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
+        if (pref is SsidPreference) {
+            val ssidDialog = SsidDialogFragment.newInstance("connection_internal_ssids")
+            ssidDialog.show(supportFragmentManager, SSID_DIALOG_TAG)
+            return true
+        }
+        return false
     }
 
     override fun attachBaseContext(newBase: Context) {
