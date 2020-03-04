@@ -123,10 +123,4 @@ class SettingsPresenterImpl @Inject constructor(
             settingsView.enableInternalConnection()
         }
     }
-
-    override fun setPIN(pin: String) {
-        mainScope.launch {
-            authenticationUseCase.savePIN(pin)
-        }
-    }
 }

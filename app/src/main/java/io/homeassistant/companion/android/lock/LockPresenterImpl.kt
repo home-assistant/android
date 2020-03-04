@@ -21,12 +21,6 @@ class LockPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getPIN(): String {
-        return runBlocking {
-            authenticationUseCase.getPIN()
-        }
-    }
-
     override fun onViewReady() {
         mainScope.launch {
                 view.displayWebview()

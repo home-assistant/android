@@ -149,12 +149,4 @@ class AuthenticationRepositoryImpl @Inject constructor(
     override suspend fun isLockEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BIOMETRIC_ENABLED)
     }
-
-    override suspend fun savePIN(pin: String) {
-        localStorage.putString(PREF_PIN, pin)
-    }
-
-    override suspend fun getPIN(): String {
-        return localStorage.getString(PREF_PIN).toString()
-    }
 }

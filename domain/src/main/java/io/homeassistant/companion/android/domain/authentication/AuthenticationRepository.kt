@@ -18,7 +18,4 @@ interface AuthenticationRepository {
 
     suspend fun setLockEnabled(enabled: Boolean)
     suspend fun isLockEnabled(): Boolean
-
-    suspend fun savePIN(pin: String)
-    suspend fun getPIN(): String
 }

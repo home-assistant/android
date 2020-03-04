@@ -56,7 +56,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         val onChangeBiometricValidator = Preference.OnPreferenceChangeListener { _, newValue ->
-            val isValid: Boolean
+            var isValid: Boolean
             if (newValue == false)
                 isValid = true
             else {
@@ -64,15 +64,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 val switchLock = findPreference<SwitchPreference>("app_lock")
                 if (BiometricManager.from(activity!!).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
                     LockActivity.biometric(set = true, fragment = activity!!, switchLock = switchLock)
-                else
-                    LockActivity.pin(set = true, fragment = activity!!, switchLock = switchLock, settingsPresenter = presenter)
-            }
-            if (!isValid) {
-                AlertDialog.Builder(activity!!)
-                    .setTitle(R.string.set_lock_title.toString())
-                    .setMessage(R.string.set_lock_message.toString())
-                    .setPositiveButton(android.R.string.ok) { _, _ -> }
-                    .show()
+                else {
+                    isValid
+                    AlertDialog.Builder(activity!!)
+                        .setTitle(R.string.set_lock_title.toString())
+                        .setMessage(R.string.set_lock_message.toString())
+                        .setPositiveButton(android.R.string.ok) { _, _ -> }
+                        .show()
+                }
             }
             isValid
         }
