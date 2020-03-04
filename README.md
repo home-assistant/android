@@ -47,7 +47,7 @@ To run a check with an auto-format:
 ```
 
 ## Translating
-The project currently uses [lokalise](https://lokalise.com/public/145814835dd655bc5ab0d0.36753359/) to translate the application.  If you are interested in helping translate go the the link and click start translating!
+The project currently uses [lokalise](https://lokalise.com/public/145814835dd655bc5ab0d0.36753359/) to translate the application.  If you are interested in helping translate go to the link and click start translating!
 
 
 ## Generating a release to production
