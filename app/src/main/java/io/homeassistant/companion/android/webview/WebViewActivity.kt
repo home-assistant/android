@@ -305,6 +305,19 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun hideSystemUI() {
+        decor.viewTreeObserver.addOnGlobalLayoutListener {
+            val r = Rect()
+            decor.getWindowVisibleDisplayFrame(r)
+            val height = r.bottom - decor.top
+
+            if ((decor.height - height) > (decor.height / 5))
+                decor.getChildAt(0).layoutParams.height = decor.height - (decor.height - height)
+            else
+                decor.getChildAt(0).layoutParams.height = decor.height
+
+            decor.requestLayout()
+        }
+
         if (isCutout())
             decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
