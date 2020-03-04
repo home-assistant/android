@@ -149,7 +149,7 @@ class ButtonWidget : AppWidgetProvider() {
 
             // Set default feedback as negative
             var feedbackColor = R.drawable.widget_button_background_red
-            var feedbackIcon = R.drawable.ic_clear_black_24dp
+            var feedbackIcon = R.drawable.ic_clear_black
 
             // Load the service call data from Shared Preferences
             val domain = widgetStorage.loadDomain(appWidgetId)

@@ -26,11 +26,11 @@ class UrlUseCaseImpl @Inject constructor(
         urlRepository.saveUrl(url, isInternal)
     }
 
-    override suspend fun getHomeWifiSsid(): String? {
-        return urlRepository.getHomeWifiSsid()
+    override suspend fun getHomeWifiSsids(): Set<String> {
+        return urlRepository.getHomeWifiSsids()
     }
 
-    override suspend fun saveHomeWifiSsid(ssid: String?) {
-        urlRepository.saveHomeWifiSsid(ssid)
+    override suspend fun saveHomeWifiSsids(ssid: Set<String>) {
+        urlRepository.saveHomeWifiSsids(ssid)
     }
 }

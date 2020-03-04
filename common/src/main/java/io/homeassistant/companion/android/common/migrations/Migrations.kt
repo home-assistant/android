@@ -21,6 +21,10 @@ class Migrations constructor(
             migration1()
             version = 1
         }
+        if (version < 2) {
+            migration2()
+            version = 2
+        }
 
         preferences.edit().putInt(PREF_VERSION, version).apply()
     }
@@ -60,5 +64,23 @@ class Migrations constructor(
             .apply()
 
         Log.i(TAG, "Completed Migration #1")
+    }
+
+    /**
+     * Migrate to use the string set for multiple ssids and remove the old ssid.
+     */
+    private fun migration2() {
+        Log.i(TAG, "Starting Migration #2")
+        val url = application.getSharedPreferences("url_0", Context.MODE_PRIVATE)
+
+        val oldSsid = url.getString("wifi_ssid", null)
+        if (!oldSsid.isNullOrBlank()) {
+            url.edit()
+                .putStringSet("wifi_ssids", setOf(oldSsid))
+                .remove("wifi_ssid")
+                .apply()
+        }
+
+        Log.i(TAG, "Completed Migration #2")
     }
 }
