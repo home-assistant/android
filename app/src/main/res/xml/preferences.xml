@@ -8,10 +8,13 @@
             android:key="connection_external"
             android:title="@string/pref_connection_url"
             app:useSimpleSummaryProvider="true"/>
-        <EditTextPreference
-            android:key="connection_internal_wifi"
+        <io.homeassistant.companion.android.settings.ssid.SsidPreference
+            android:key="connection_internal_ssids"
             android:title="@string/pref_connection_wifi"
-            app:useSimpleSummaryProvider="true"/>
+            android:dialogTitle="@string/manage_ssids"
+            android:positiveButtonText="@string/save"
+            android:negativeButtonText="@string/cancel"
+            app:summaryMaxLines="1"/>
         <EditTextPreference
             android:key="connection_internal"
             android:title="@string/pref_connection_internal"

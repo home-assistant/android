@@ -154,7 +154,7 @@ object AuthenticationRepositoryImplSpec : Spek({
                         authenticationService.revokeToken("IJKLMNOPQRST", "revoke")
                         urlRepository.saveUrl("", true)
                         urlRepository.saveUrl("", false)
-                        urlRepository.saveHomeWifiSsid(null)
+                        urlRepository.saveHomeWifiSsids(emptySet())
                     }
                 }
 

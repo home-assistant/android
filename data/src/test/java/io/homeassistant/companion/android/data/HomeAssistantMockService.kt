@@ -28,11 +28,11 @@ class HomeAssistantMockService<T>(private val c: Class<T>) {
         override suspend fun saveUrl(url: String, isInternal: Boolean?) {
         }
 
-        override suspend fun getHomeWifiSsid(): String? {
-            return null
+        override suspend fun getHomeWifiSsids(): Set<String> {
+            return emptySet()
         }
 
-        override suspend fun saveHomeWifiSsid(ssid: String?) {
+        override suspend fun saveHomeWifiSsids(ssid: Set<String>) {
         }
     }).retrofit
 

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Rect
 import android.net.http.SslError
 import android.os.Build
@@ -71,6 +72,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var isShowingError = false
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
+    private var videoHeight = 0
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -305,6 +307,19 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun hideSystemUI() {
+        decor.viewTreeObserver.addOnGlobalLayoutListener {
+            val r = Rect()
+            decor.getWindowVisibleDisplayFrame(r)
+            val height = r.bottom - decor.top
+
+            if ((decor.height - height) > (decor.height / 5))
+                decor.getChildAt(0).layoutParams.height = decor.height - (decor.height - height)
+            else
+                decor.getChildAt(0).layoutParams.height = decor.height
+
+            decor.requestLayout()
+        }
+
         if (isCutout())
             decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
@@ -321,8 +336,21 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
     }
 
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        if (isInPictureInPictureMode) {
+            (decor.getChildAt(3) as FrameLayout).layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
+            decor.requestLayout()
+        } else {
+            if (decor.getChildAt(3) != null) {
+                (decor.getChildAt(3) as FrameLayout).layoutParams.height = videoHeight
+                decor.requestLayout()
+            }
+        }
+    }
+
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
+        videoHeight = decor.height
         var bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

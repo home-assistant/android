@@ -54,7 +54,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         saveSession(null)
         urlRepository.saveUrl("", true)
         urlRepository.saveUrl("", false)
-        urlRepository.saveHomeWifiSsid(null)
+        urlRepository.saveHomeWifiSsids(emptySet())
     }
 
     override suspend fun getSessionState(): SessionState {

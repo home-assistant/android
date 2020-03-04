@@ -17,4 +17,6 @@ interface LocalStorage {
     suspend fun putStringSet(key: String, value: Set<String>)
 
     suspend fun getStringSet(key: String): Set<String>?
+
+    suspend fun remove(key: String)
 }

@@ -2,6 +2,10 @@ ext {
     projectSdkVersion = '29'
     projectMinSdkVersion = '21'
 
+    androidxCoreVersion = '1.2.0'
+    lifecycleVersion = '2.2.0'
+    recyclerViewVersion = '1.1.0'
+
     retrofit2Version = '2.6.2'
     okhttp3Version = '4.2.2'
     jacksonVersion = '2.10.1'

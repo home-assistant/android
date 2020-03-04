@@ -14,11 +14,19 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.lock.LockActivity
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
+import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
+
+    companion object {
+        private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
+
+        fun newInstance() = SettingsFragment()
+    }
 
     @Inject
     lateinit var presenter: SettingsPresenter
@@ -108,6 +116,21 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         SensorWorker.start(context!!)
     }
 
+    override fun onDisplayPreferenceDialog(preference: Preference) {
+        if (preference is SsidPreference) {
+            // check if dialog is already showing
+            val fm = fragmentManager
+            if (fm == null || fm.findFragmentByTag(SSID_DIALOG_TAG) != null) {
+                return
+            }
+            val ssidDialog = SsidDialogFragment.newInstance("connection_internal_ssids")
+            ssidDialog.setTargetFragment(this, 0)
+            ssidDialog.show(fm, SSID_DIALOG_TAG)
+        } else {
+            super.onDisplayPreferenceDialog(preference)
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -122,9 +145,5 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             findPreference<SwitchPreference>("location_zone")!!.isChecked = false
             findPreference<SwitchPreference>("location_background")!!.isChecked = false
         }
-    }
-
-    companion object {
-        fun newInstance() = SettingsFragment()
     }
 }

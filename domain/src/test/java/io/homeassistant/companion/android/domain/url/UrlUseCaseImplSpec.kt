@@ -82,23 +82,23 @@ object UrlUseCaseImplSpec : Spek({
             }
         }
 
-        describe("getHomeWifiSsid") {
+        describe("getHomeWifiSsids") {
             beforeEachTest {
-                runBlocking { useCase.getHomeWifiSsid() }
+                runBlocking { useCase.getHomeWifiSsids() }
             }
 
             it("should call the repository") {
-                coVerify { urlRepository.getHomeWifiSsid() }
+                coVerify { urlRepository.getHomeWifiSsids() }
             }
         }
 
         describe("saveHomeWifiSsid") {
             beforeEachTest {
-                runBlocking { useCase.saveHomeWifiSsid("1") }
+                runBlocking { useCase.saveHomeWifiSsids(setOf("1", "2")) }
             }
 
             it("should call the repository") {
-                coVerify { urlRepository.saveHomeWifiSsid("1") }
+                coVerify { urlRepository.saveHomeWifiSsids(setOf("1", "2")) }
             }
         }
     }
