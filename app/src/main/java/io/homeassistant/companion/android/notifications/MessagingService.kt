@@ -147,7 +147,7 @@ class MessagingService : FirebaseMessagingService() {
             WebViewActivity.newInstance(this, url)
         }
 
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
         return PendingIntent.getActivity(
             this, 0, intent, 0
