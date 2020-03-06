@@ -68,76 +68,80 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="@dimen/activity_margin"
-        android:orientation="vertical">
-
-        <androidx.appcompat.widget.AppCompatTextView
-            style="@style/TextAppearance.HomeAssistant.Headline"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_margin"
-            android:text="@string/connected_to_home_assistant"
-            android:textAlignment="center" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            style="@style/TextAppearance.HomeAssistant.Title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_margin"
-            android:text="@string/permission_explanation" />
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/location_perms"
-            style="@style/Widget.HomeAssistant.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:text="@string/grant_permission" />
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/location_zone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_margin"
-            android:text="@string/pref_location_zone_title" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/location_zone_summary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="50dp"
-            android:text="@string/pref_location_zone_summary" />
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/location_background"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/activity_margin"
-            android:text="@string/pref_location_background_title" />
-
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/location_background_summary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="50dp"
-            android:text="@string/pref_location_background_summary" />
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="end|bottom">
+            android:layout_height="wrap_content"
+            android:padding="@dimen/activity_margin"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/TextAppearance.HomeAssistant.Headline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/activity_margin"
+                android:text="@string/connected_to_home_assistant"
+                android:textAlignment="center" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                style="@style/TextAppearance.HomeAssistant.Title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/activity_margin"
+                android:text="@string/permission_explanation" />
 
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/finish"
-                style="@style/Widget.HomeAssistant.Button.Outlined"
+                android:id="@+id/location_perms"
+                style="@style/Widget.HomeAssistant.Button.Colored"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/finish" />
-        </LinearLayout>
-    </LinearLayout>
+                android:layout_gravity="end"
+                android:text="@string/grant_permission" />
 
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/location_zone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/activity_margin"
+                android:text="@string/pref_location_zone_title" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/location_zone_summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="50dp"
+                android:text="@string/pref_location_zone_summary" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/location_background"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/activity_margin"
+                android:text="@string/pref_location_background_title" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/location_background_summary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="50dp"
+                android:text="@string/pref_location_background_summary" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="end|bottom">
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/finish"
+                    style="@style/Widget.HomeAssistant.Button.Outlined"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/finish" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 </ViewFlipper>
