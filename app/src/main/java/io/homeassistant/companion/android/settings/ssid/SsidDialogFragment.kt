@@ -20,6 +20,7 @@ class SsidDialogFragment : PreferenceDialogFragmentCompat() {
         }
     }
 
+    private lateinit var binding: DialogSsidBinding
     private val ssidAdapter = SsidRecyclerViewAdapter()
 
     @SuppressLint("InflateParams")
@@ -29,19 +30,12 @@ class SsidDialogFragment : PreferenceDialogFragmentCompat() {
 
     @Suppress("UNCHECKED_CAST")
     override fun onBindDialogView(view: View) {
-        val binding = DialogSsidBinding.bind(view)
+        binding = DialogSsidBinding.bind(view)
+
+        binding.actionAdd.setOnClickListener { addSsidFromInput() }
         binding.inputSsid.setOnEditorActionListener { _, actionId, _ ->
             return@setOnEditorActionListener when (actionId) {
-                EditorInfo.IME_ACTION_DONE -> {
-                    val result = submitSsid(binding.inputSsid.text.toString())
-                    if (result) {
-                        binding.inputContainer.error = null
-                        binding.inputSsid.text = null
-                    } else {
-                        binding.inputContainer.error = getString(R.string.manage_ssids_input_exists)
-                    }
-                    result
-                }
+                EditorInfo.IME_ACTION_DONE -> addSsidFromInput()
                 else -> false
             }
         }
@@ -52,18 +46,16 @@ class SsidDialogFragment : PreferenceDialogFragmentCompat() {
         ssidAdapter.submitSet(ssids)
     }
 
-    private fun getSsidPreference(): SsidPreference {
-        return preference as SsidPreference
-    }
-
-    override fun onDialogClosed(positiveResult: Boolean) {
-        if (positiveResult) {
-            val ssids = ssidAdapter.currentList.toSortedSet()
-            val ssidPreference = getSsidPreference()
-            if (preference.callChangeListener(ssids)) {
-                ssidPreference.setSsids(ssids)
-            }
+    private fun addSsidFromInput(): Boolean {
+        val input = binding.inputSsid.text?.toString() ?: return false
+        val result = if (!input.isBlank()) submitSsid(input) else return false
+        if (result) {
+            binding.inputContainer.error = null
+            binding.inputSsid.text = null
+        } else {
+            binding.inputContainer.error = getString(R.string.manage_ssids_input_exists)
         }
+        return result
     }
 
     private fun submitSsid(ssid: String): Boolean {
@@ -73,5 +65,23 @@ class SsidDialogFragment : PreferenceDialogFragmentCompat() {
         }
         ssidAdapter.submitList(ssids + ssid)
         return true
+    }
+
+    private fun getSsidPreference(): SsidPreference {
+        return preference as SsidPreference
+    }
+
+    override fun onDialogClosed(positiveResult: Boolean) {
+        if (positiveResult) {
+            val ssids = ssidAdapter.currentList.toSortedSet()
+            val input = binding.inputSsid.text?.toString()
+            if (!input.isNullOrBlank()) {
+                ssids.add(input)
+            }
+            val ssidPreference = getSsidPreference()
+            if (preference.callChangeListener(ssids)) {
+                ssidPreference.setSsids(ssids)
+            }
+        }
     }
 }
