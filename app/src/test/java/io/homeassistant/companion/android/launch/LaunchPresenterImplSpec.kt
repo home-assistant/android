@@ -75,6 +75,7 @@ object LaunchPresenterImplSpec : Spek({
             beforeEachTest {
                 coEvery { authenticationUseCase.getSessionState() } returns SessionState.CONNECTED
                 coEvery { integrationUseCase.isRegistered() } returns true
+                coEvery { authenticationUseCase.isLockEnabled() } returns false
             }
 
             describe("on view ready") {
@@ -84,6 +85,24 @@ object LaunchPresenterImplSpec : Spek({
 
                 it("should display the webview") {
                     verify { view.displayWebview() }
+                }
+            }
+        }
+
+        describe("connected state") {
+            beforeEachTest {
+                coEvery { authenticationUseCase.getSessionState() } returns SessionState.CONNECTED
+                coEvery { integrationUseCase.isRegistered() } returns true
+                coEvery { authenticationUseCase.isLockEnabled() } returns true
+            }
+
+            describe("on view ready") {
+                beforeEachTest {
+                    presenter.onViewReady()
+                }
+
+                it("should display the lockview") {
+                    verify { view.displayLockView() }
                 }
             }
         }

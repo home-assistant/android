@@ -120,6 +120,7 @@ dependencies {
     implementation "com.google.firebase:firebase-messaging:20.1.0"
 
     implementation "androidx.work:work-runtime-ktx:2.3.2"
+    implementation 'androidx.biometric:biometric:1.0.1'
 
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek2Version"
     testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek2Version"

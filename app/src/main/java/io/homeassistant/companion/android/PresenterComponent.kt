@@ -3,6 +3,7 @@ package io.homeassistant.companion.android
 import dagger.Component
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.lock.LockActivity
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
@@ -30,6 +31,8 @@ interface PresenterComponent {
     fun inject(fragment: SettingsFragment)
 
     fun inject(activity: WebViewActivity)
+
+    fun inject(activity: LockActivity)
 
     fun inject(dialog: SsidDialogFragment)
 }

@@ -74,6 +74,14 @@ like to connect to:</string>
   <string name="event_error">Failed to notify HA of picked option.</string>
   <string name="wait">Wait</string>
   <string name="refresh">Refresh</string>
+  <string name="lockscreen_title">App Locked !</string>
+  <string name="lockscreen_message">Tap to unlock :</string>
+  <string name="biometric_title">Home Assistant need to be unlock</string>
+  <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
+  <string name="set_lock_title">App Locking Error</string>
+  <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
+  <string name="lock_title">Lock app</string>
+  <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
   <string name="manage_ssids">Manage SSID(s)</string>
   <string name="manage_ssids_input">New WiFi SSID</string>
   <string name="manage_ssids_input_exists">This SSID already exists.</string>

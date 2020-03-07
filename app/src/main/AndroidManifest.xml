@@ -81,6 +81,7 @@
         </activity>
         
         <activity android:name=".onboarding.OnboardingActivity" />
+        <activity android:name=".lock.LockActivity"/>
         <activity
             android:name=".webview.WebViewActivity"
             android:supportsPictureInPicture="true"
