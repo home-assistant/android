@@ -47,6 +47,11 @@
             android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
+        <SwitchPreference
+            android:key="app_lock"
+            android:icon="@drawable/ic_lock"
+            android:title="@string/lock_title"
+            android:summary="@string/lock_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">
