@@ -23,7 +23,6 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_REFRESH_TOKEN = "refresh_token"
         private const val PREF_TOKEN_TYPE = "token_type"
 
-        private const val PREF_PIN = "pin"
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
     }
 

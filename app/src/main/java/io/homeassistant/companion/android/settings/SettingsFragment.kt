@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.settings
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -12,7 +14,6 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.lock.LockActivity
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
@@ -61,14 +62,13 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 isValid = true
             else {
                 isValid = true
-                val switchLock = findPreference<SwitchPreference>("app_lock")
                 if (BiometricManager.from(activity!!).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-                    LockActivity.biometric(set = true, fragment = activity!!, switchLock = switchLock)
+                    promptForUnlock()
                 else {
-                    isValid
+                    isValid = false
                     AlertDialog.Builder(activity!!)
-                        .setTitle(R.string.set_lock_title.toString())
-                        .setMessage(R.string.set_lock_message.toString())
+                        .setTitle(R.string.set_lock_title)
+                        .setMessage(R.string.set_lock_message)
                         .setPositiveButton(android.R.string.ok) { _, _ -> }
                         .show()
                 }
@@ -144,5 +144,32 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             findPreference<SwitchPreference>("location_zone")!!.isChecked = false
             findPreference<SwitchPreference>("location_background")!!.isChecked = false
         }
+    }
+
+    private fun promptForUnlock() {
+        val executor = ContextCompat.getMainExecutor(activity!!)
+        val switchLock = findPreference<SwitchPreference>("app_lock")
+        val biometricPrompt = BiometricPrompt(activity!!, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationError(
+                    errorCode: Int,
+                    errString: CharSequence
+                ) {
+                    super.onAuthenticationError(errorCode, errString)
+                    switchLock?.isChecked = false
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    switchLock?.isChecked = false
+                }
+            })
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(activity!!.resources.getString(R.string.biometric_title))
+            .setSubtitle(activity!!.resources.getString(R.string.biometric_message))
+            .setDeviceCredentialAllowed(true)
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
     }
 }

@@ -8,8 +8,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
-import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
@@ -23,48 +21,6 @@ class LockActivity : AppCompatActivity(), LockView {
 
         fun newInstance(context: Context): Intent {
             return Intent(context, LockActivity::class.java)
-        }
-
-        fun biometric(
-            set: Boolean = false,
-            fragment: FragmentActivity,
-            lockViewPresenter: LockPresenter? = null,
-            switchLock: SwitchPreference? = null
-        ) {
-
-            val executor = ContextCompat.getMainExecutor(fragment)
-            val biometricPrompt = BiometricPrompt(fragment, executor,
-                object : BiometricPrompt.AuthenticationCallback() {
-                    override fun onAuthenticationError(
-                        errorCode: Int,
-                        errString: CharSequence
-                    ) {
-                        super.onAuthenticationError(errorCode, errString)
-                        if (set)
-                            switchLock?.isChecked = false
-                    }
-
-                    override fun onAuthenticationFailed() {
-                        super.onAuthenticationFailed()
-                        if (set)
-                            switchLock?.isChecked = false
-                    }
-
-                    override fun onAuthenticationSucceeded(
-                        result: BiometricPrompt.AuthenticationResult
-                    ) {
-                        super.onAuthenticationSucceeded(result)
-                        if (!set)
-                            lockViewPresenter?.onViewReady()
-                    }
-                })
-            val promptInfo = BiometricPrompt.PromptInfo.Builder()
-                .setTitle(fragment.resources.getString(R.string.biometric_title))
-                .setSubtitle(fragment.resources.getString(R.string.biometric_message))
-                .setDeviceCredentialAllowed(true)
-                .build()
-
-            biometricPrompt.authenticate(promptInfo)
         }
     }
 
@@ -86,13 +42,31 @@ class LockActivity : AppCompatActivity(), LockView {
             val button = findViewById<ImageView>(R.id.unlockButton)
             button.setOnClickListener {
                 if (BiometricManager.from(this).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
-                    biometric(
-                        fragment = this,
-                        lockViewPresenter = presenter
-                    )
+                    promptForUnlock()
                 }
             }
         }
+    }
+
+    private fun promptForUnlock() {
+
+        val executor = ContextCompat.getMainExecutor(this)
+        val biometricPrompt = BiometricPrompt(this, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(
+                    result: BiometricPrompt.AuthenticationResult
+                ) {
+                    super.onAuthenticationSucceeded(result)
+                    presenter.onViewReady()
+                }
+            })
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(this.resources.getString(R.string.biometric_title))
+            .setSubtitle(this.resources.getString(R.string.biometric_message))
+            .setDeviceCredentialAllowed(true)
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
     }
 
     override fun displayWebview() {
