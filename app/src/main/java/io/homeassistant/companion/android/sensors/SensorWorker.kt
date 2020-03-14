@@ -47,11 +47,14 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
 
-        val sensorManagers = arrayOf(
+        val sensorManagers = arrayListOf(
             BatterySensorManager(),
-            NetworkSensorManager(),
-            GeocodeSensorManager()
+            NetworkSensorManager()
         )
+
+        if (integrationUseCase.isBackgroundTrackingEnabled()) {
+            sensorManagers.add(GeocodeSensorManager())
+        }
 
         registerSensors(sensorManagers)
 
@@ -67,7 +70,7 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
         Result.success()
     }
 
-    private suspend fun registerSensors(sensorManagers: Array<SensorManager>) {
+    private suspend fun registerSensors(sensorManagers: List<SensorManager>) {
 
         sensorManagers.flatMap {
             it.getSensorRegistrations(appContext)

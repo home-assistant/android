@@ -4,6 +4,7 @@ import android.content.Context
 import android.location.Geocoder
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Tasks
+import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
@@ -33,6 +34,9 @@ class GeocodeSensorManager : SensorManager {
 
     private fun getGeocodedLocation(context: Context): Sensor<Any>? {
         Tasks.await(LocationServices.getFusedLocationProviderClient(context).lastLocation)?.let {
+            if (it.accuracy > LocationBroadcastReceiver.MINIMUM_ACCURACY)
+                return null
+
             Geocoder(context)
                 .getFromLocation(it.latitude, it.longitude, 1)
                 .firstOrNull()?.let { address ->
