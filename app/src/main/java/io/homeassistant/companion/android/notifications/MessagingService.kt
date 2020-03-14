@@ -250,7 +250,7 @@ class MessagingService : FirebaseMessagingService() {
                             NotificationActionReceiver.OPEN_URI
                         else
                             NotificationActionReceiver.FIRE_EVENT
-                    if (data["sticky"]?.toBoolean() == false) {
+                    if (data["sticky"]?.toBoolean() != true) {
                         putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_TAG, tag)
                         putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
                     }
