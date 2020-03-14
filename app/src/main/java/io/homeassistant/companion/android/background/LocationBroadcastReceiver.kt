@@ -31,6 +31,8 @@ import kotlinx.coroutines.runBlocking
 class LocationBroadcastReceiver : BroadcastReceiver() {
 
     companion object {
+        const val MINIMUM_ACCURACY = 200
+
         const val ACTION_REQUEST_LOCATION_UPDATES =
             "io.homeassistant.companion.android.background.REQUEST_UPDATES"
         const val ACTION_REQUEST_ACCURATE_LOCATION_UPDATE =
@@ -41,8 +43,6 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
 
         private const val TAG = "LocBroadcastReceiver"
-
-        private const val MINIMUM_ACCURACY = 200
     }
 
     @Inject
