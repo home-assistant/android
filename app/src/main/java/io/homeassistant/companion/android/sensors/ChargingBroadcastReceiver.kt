@@ -6,13 +6,12 @@ import android.content.Intent
 import android.util.Log
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import java.lang.Exception
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class ChargingBroadcastReceiver @Inject constructor(
+class ChargingBroadcastReceiver(
     private val integrationUseCase: IntegrationUseCase
 ) : BroadcastReceiver() {
     private val ioScope = CoroutineScope(Dispatchers.IO)
