@@ -6,6 +6,7 @@ import com.lokalise.sdk.Lokalise
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.sensors.SensorWorker
 
 class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
@@ -19,6 +20,8 @@ class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
         AndroidThreeTen.init(this)
         graph = Graph(this, 0)
+        // Start the sensor worker if they start the app. The only other place we start this ia Boot BroadcastReceiver
+        SensorWorker.start(this)
     }
 
     override val appComponent: AppComponent

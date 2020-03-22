@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.util.Log
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -27,11 +30,9 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
             val sensorWorker =
                 PeriodicWorkRequestBuilder<SensorWorker>(15, TimeUnit.MINUTES)
                     .setConstraints(constraints)
-                    .addTag("sensors")
                     .build()
 
-            WorkManager.getInstance(context).cancelAllWorkByTag("sensors")
-            WorkManager.getInstance(context).enqueue(sensorWorker)
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, sensorWorker)
         }
     }
 
@@ -43,6 +44,16 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
             .appComponent((appContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
+
+        // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
+        // This should be nearly instantaneous allowing automations to fire immediately when a phone is plugged
+        // in or unplugged.
+        appContext.registerReceiver(
+            ChargingBroadcastReceiver(integrationUseCase), IntentFilter().apply {
+                addAction(Intent.ACTION_POWER_CONNECTED)
+                addAction(Intent.ACTION_POWER_DISCONNECTED)
+            }
+        )
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {

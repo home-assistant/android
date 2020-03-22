@@ -46,6 +46,13 @@
                 android:resource="@xml/button_widget_info" />
         </receiver>
 
+        <!-- Start things like SensorWorker on device boot -->
+        <receiver android:name=".HomeAssistantBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+
         <activity android:name=".widgets.ButtonWidgetConfigureActivity">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
