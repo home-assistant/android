@@ -49,7 +49,7 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
         // This should be nearly instantaneous allowing automations to fire immediately when a phone is plugged
         // in or unplugged.
         appContext.registerReceiver(
-            ChargingBroadcastReceiver(integrationUseCase), IntentFilter().apply {
+            ChargingBroadcastReceiver(), IntentFilter().apply {
                 addAction(Intent.ACTION_POWER_CONNECTED)
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             }

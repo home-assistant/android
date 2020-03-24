@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.sensors.SensorWorker
  */
 class HomeAssistantBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        SensorWorker.start(context)
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+            SensorWorker.start(context)
+        }
     }
 }
