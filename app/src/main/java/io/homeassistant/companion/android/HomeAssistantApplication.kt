@@ -20,7 +20,7 @@ class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
         AndroidThreeTen.init(this)
         graph = Graph(this, 0)
-        // Start the sensor worker if they start the app. The only other place we start this a Boot BroadcastReceiver
+        // Start the sensor worker if they start the app. The only other place we start this ia Boot BroadcastReceiver
         SensorWorker.start(this)
     }
 

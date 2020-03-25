@@ -53,6 +53,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         ensureInjected(context)
 
         when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking(context)
             ACTION_PROCESS_LOCATION -> handleLocationUpdate(context, intent)
             ACTION_PROCESS_GEO -> handleGeoUpdate(context, intent)

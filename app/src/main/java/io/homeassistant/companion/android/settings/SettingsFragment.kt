@@ -95,7 +95,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         if (!PermissionManager.hasLocationPermissions(context!!)) {
             PermissionManager.requestLocationPermissions(this)
         }
-        PermissionManager.restartLocationTracking(context!!, activity!!)
+        PermissionManager.restartLocationTracking(context!!)
     }
 
     override fun disableInternalConnection() {
@@ -133,7 +133,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (PermissionManager.validateLocationPermissions(requestCode, permissions, grantResults)) {
-            PermissionManager.restartLocationTracking(context!!, activity!!)
+            PermissionManager.restartLocationTracking(context!!)
         } else {
             // If we don't have permissions, don't let them in!
             findPreference<SwitchPreference>("location_zone")!!.isChecked = false
