@@ -59,7 +59,11 @@ class BatterySensorManager : SensorManager {
         return retVal
     }
 
-    private fun getBatteryIcon(batteryStep: Int, isCharging: Boolean = false, chargerType: String? = null, chargingStatus: String? = null): String {
+    private fun getBatteryPercentage(level: Int, scale: Int): Int {
+        return (level.toFloat() / scale.toFloat() * 100.0f).toInt()
+    }
+
+    private fun getBatteryIcon(percentage: Int, isCharging: Boolean = false, chargerType: String? = null, chargingStatus: String? = null): String {
         var batteryIcon = "mdi:battery"
 
         if (chargingStatus == "unknown") {
@@ -74,6 +78,7 @@ class BatterySensorManager : SensorManager {
         if (chargerType == "wireless")
             batteryIcon += "-wireless"
 
+        val batteryStep: Int = percentage / 10
         batteryIcon += when (batteryStep) {
             0 -> "-outline"
             10 -> ""
@@ -92,14 +97,13 @@ class BatterySensorManager : SensorManager {
             return null
         }
 
-        val percentage: Int = (level.toFloat() / scale.toFloat() * 100.0f).toInt()
-        val batteryStep: Int = percentage / 10
+        val percentage: Int = getBatteryPercentage(level, scale)
 
         return Sensor(
             "battery_level",
             percentage,
             "sensor",
-            getBatteryIcon(batteryStep),
+            getBatteryIcon(percentage),
             mapOf()
         )
     }
@@ -132,14 +136,13 @@ class BatterySensorManager : SensorManager {
             else -> "unknown"
         }
 
-        val percentage: Int = (level.toFloat() / scale.toFloat() * 100.0f).toInt()
-        val batteryStep: Int = percentage / 10
+        val percentage: Int = getBatteryPercentage(level, scale)
 
         return Sensor(
             "battery_state",
             chargingStatus,
             "sensor",
-            getBatteryIcon(batteryStep, isCharging, chargerType, chargingStatus),
+            getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
             mapOf(
                 "is_charging" to isCharging,
                 "charger_type" to chargerType
