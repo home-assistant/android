@@ -45,6 +45,18 @@ class BatterySensorManager : SensorManager {
         return retVal
     }
 
+    private fun getBatteryIcon(batteryStep: Int): String {
+        var batteryIcon = "mdi:battery"
+
+        batteryIcon += when (batteryStep) {
+            0 -> "-outline"
+            10 -> ""
+            else -> "-${batteryStep}0"
+        }
+
+        return batteryIcon
+    }
+
     private fun getBatteryLevelSensor(intent: Intent): Sensor<Any>? {
         val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale: Int = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
@@ -54,21 +66,14 @@ class BatterySensorManager : SensorManager {
             return null
         }
 
-        val percent = (level.toFloat() / scale.toFloat() * 100.0f).toInt()
-        val batteryStep = percent / 10
-
-        var batteryIcon = "mdi:battery"
-        batteryIcon += when (batteryStep) {
-            0 -> "-outline"
-            10 -> ""
-            else -> "-${batteryStep}0"
-        }
+        val percentage: Int = (level.toFloat() / scale.toFloat() * 100.0f).toInt()
+        val batteryStep: Int = percentage / 10
 
         return Sensor(
             "battery_level",
-            percent,
+            percentage,
             "sensor",
-            batteryIcon,
+            getBatteryIcon(batteryStep),
             mapOf()
         )
     }
