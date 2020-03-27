@@ -45,8 +45,20 @@ class BatterySensorManager : SensorManager {
         return retVal
     }
 
-    private fun getBatteryIcon(batteryStep: Int): String {
+    private fun getBatteryIcon(batteryStep: Int, isCharging: Boolean = false, chargerType: String? = null, chargingStatus: String? = null): String {
         var batteryIcon = "mdi:battery"
+
+        if (chargingStatus == "unknown") {
+            batteryIcon += "-unknown"
+
+            return batteryIcon
+        }
+
+        if (isCharging)
+            batteryIcon += "-charging"
+
+        if (chargerType == "wireless")
+            batteryIcon += "-wireless"
 
         batteryIcon += when (batteryStep) {
             0 -> "-outline"
