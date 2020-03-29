@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.util
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -65,11 +64,11 @@ class PermissionManager {
             fragment.requestPermissions(getLocationPermissionArray(), LOCATION_REQUEST_CODE)
         }
 
-        fun restartLocationTracking(context: Context, activity: Activity) {
+        fun restartLocationTracking(context: Context) {
             val intent = Intent(context, LocationBroadcastReceiver::class.java)
             intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
 
-            activity.sendBroadcast(intent)
+            context.sendBroadcast(intent)
         }
     }
 }
