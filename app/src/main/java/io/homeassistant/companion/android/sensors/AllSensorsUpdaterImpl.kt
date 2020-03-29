@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.util.Log
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.SensorUpdater
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 
 class AllSensorsUpdaterImpl(
     private val integrationUseCase: IntegrationUseCase,
@@ -14,11 +14,14 @@ class AllSensorsUpdaterImpl(
     }
 
     override suspend fun updateSensors() {
-        val sensorManagers = arrayOf(
+        val sensorManagers = mutableListOf(
             BatterySensorManager(),
-            NetworkSensorManager(),
-            GeocodeSensorManager()
+            NetworkSensorManager()
         )
+
+        if (integrationUseCase.isBackgroundTrackingEnabled()) {
+            sensorManagers.add(GeocodeSensorManager())
+        }
 
         registerSensors(sensorManagers)
 
@@ -32,7 +35,7 @@ class AllSensorsUpdaterImpl(
         }
     }
 
-    private suspend fun registerSensors(sensorManagers: Array<SensorManager>) {
+    private suspend fun registerSensors(sensorManagers: List<SensorManager>) {
 
         sensorManagers.flatMap {
             it.getSensorRegistrations(appContext)
