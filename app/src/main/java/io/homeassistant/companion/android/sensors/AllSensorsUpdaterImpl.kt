@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.integration.SensorUpdater
+import io.homeassistant.companion.android.SensorUpdater
 
 class AllSensorsUpdaterImpl(
     private val integrationUseCase: IntegrationUseCase,

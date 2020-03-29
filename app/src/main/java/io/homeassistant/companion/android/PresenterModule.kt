@@ -3,7 +3,6 @@ package io.homeassistant.companion.android
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
-import io.homeassistant.companion.android.domain.integration.SensorUpdater
 import io.homeassistant.companion.android.launch.LaunchPresenter
 import io.homeassistant.companion.android.launch.LaunchPresenterImpl
 import io.homeassistant.companion.android.launch.LaunchView
