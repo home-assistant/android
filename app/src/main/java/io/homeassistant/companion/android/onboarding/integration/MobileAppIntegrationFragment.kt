@@ -117,7 +117,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun onDestroy() {
-        PermissionManager.restartLocationTracking(context!!, activity!!)
+        PermissionManager.restartLocationTracking(context!!)
         presenter.onFinish()
         super.onDestroy()
     }

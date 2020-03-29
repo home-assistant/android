@@ -6,6 +6,4 @@ interface SettingsView {
     fun disableInternalConnection()
 
     fun enableInternalConnection()
-
-    fun restartSensorWorker()
 }

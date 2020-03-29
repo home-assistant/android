@@ -1,13 +1,14 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import android.util.Log
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import io.homeassistant.companion.android.SensorUpdater
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import java.util.concurrent.TimeUnit
@@ -15,9 +16,10 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class SensorWorker(private val appContext: Context, workerParams: WorkerParameters) :
-    CoroutineWorker(appContext, workerParams) {
-
+class SensorWorker(
+    appContext: Context,
+    workerParams: WorkerParameters
+) : CoroutineWorker(appContext, workerParams) {
     companion object {
         private const val TAG = "SensorWorker"
         fun start(context: Context) {
@@ -27,61 +29,27 @@ class SensorWorker(private val appContext: Context, workerParams: WorkerParamete
             val sensorWorker =
                 PeriodicWorkRequestBuilder<SensorWorker>(15, TimeUnit.MINUTES)
                     .setConstraints(constraints)
-                    .addTag("sensors")
                     .build()
 
-            WorkManager.getInstance(context).cancelAllWorkByTag("sensors")
-            WorkManager.getInstance(context).enqueue(sensorWorker)
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, sensorWorker)
         }
     }
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
+    val allSensorUpdater: SensorUpdater
+
     init {
         DaggerSensorComponent.builder()
             .appComponent((appContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
+        allSensorUpdater = AllSensorsUpdaterImpl(integrationUseCase, applicationContext)
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-
-        val sensorManagers = arrayListOf(
-            BatterySensorManager(),
-            NetworkSensorManager()
-        )
-
-        if (integrationUseCase.isBackgroundTrackingEnabled()) {
-            sensorManagers.add(GeocodeSensorManager())
-        }
-
-        registerSensors(sensorManagers)
-
-        val success = integrationUseCase.updateSensors(
-            sensorManagers.flatMap { it.getSensors(appContext) }.toTypedArray()
-        )
-
-        // We failed to update a sensor, we should register all the sensors again.
-        if (!success) {
-            registerSensors(sensorManagers)
-        }
-
+        allSensorUpdater.updateSensors()
         Result.success()
-    }
-
-    private suspend fun registerSensors(sensorManagers: List<SensorManager>) {
-
-        sensorManagers.flatMap {
-            it.getSensorRegistrations(appContext)
-        }.forEach {
-            // I want to call this async but because of the way we need to store the
-            // fact we have registered it we can't
-            try {
-                integrationUseCase.registerSensor(it)
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue registering sensor: ${it.uniqueId}", e)
-            }
-        }
     }
 }
