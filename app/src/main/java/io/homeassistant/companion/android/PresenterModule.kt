@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenter
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenterImpl
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupView
-import io.homeassistant.companion.android.sensors.AllSensorsUpdaterImpl
 import io.homeassistant.companion.android.settings.SettingsPresenter
 import io.homeassistant.companion.android.settings.SettingsPresenterImpl
 import io.homeassistant.companion.android.settings.SettingsView
@@ -123,8 +122,5 @@ class PresenterModule {
 
         @Binds
         fun bindLockPresenter(presenter: LockPresenterImpl): LockPresenter
-
-        @Binds
-        fun bindSensorUpdater(sensorUpdater: AllSensorsUpdaterImpl): SensorUpdater
     }
 }
