@@ -72,6 +72,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
+    private var pausedUrl: String? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -467,6 +468,18 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        pausedUrl = webView.url
+        webView.loadUrl("about:blank")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (pausedUrl != null)
+            webView.loadUrl(pausedUrl)
     }
 
     private fun isCutout(): Boolean {
