@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.location.Geocoder
+import android.util.Log
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Tasks
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
@@ -9,6 +10,11 @@ import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class GeocodeSensorManager : SensorManager {
+
+    companion object {
+        private const val TAG = "GeocodeSM"
+    }
+
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
         val sensor = getGeocodedLocation(context)
         if (sensor != null) {
@@ -37,28 +43,33 @@ class GeocodeSensorManager : SensorManager {
             if (it.accuracy > LocationBroadcastReceiver.MINIMUM_ACCURACY)
                 return null
 
-            Geocoder(context)
-                .getFromLocation(it.latitude, it.longitude, 1)
-                .firstOrNull()?.let { address ->
-                    return Sensor(
-                        "geocoded_location",
-                        if (address.maxAddressLineIndex >= 0) address.getAddressLine(0) else "Unknown",
-                        "sensor",
-                        "mdi:map",
-                        mapOf(
-                            "Administrative Area" to address.adminArea,
-                            "Country" to address.countryName,
-                            "ISO Country Code" to address.countryCode,
-                            "Locality" to address.locality,
-                            "Location" to listOf(address.latitude, address.longitude),
-                            "Postal Code" to address.postalCode,
-                            "Sub Administrative Area" to address.subAdminArea,
-                            "Sub Locality" to address.subLocality,
-                            "Sub Thoroughfare" to address.subThoroughfare,
-                            "Thoroughfare" to address.thoroughfare
+            try {
+                Geocoder(context)
+                    .getFromLocation(it.latitude, it.longitude, 1)
+                    .firstOrNull()?.let { address ->
+                        return Sensor(
+                            "geocoded_location",
+                            if (address.maxAddressLineIndex >= 0) address.getAddressLine(0) else "Unknown",
+                            "sensor",
+                            "mdi:map",
+                            mapOf(
+                                "Administrative Area" to address.adminArea,
+                                "Country" to address.countryName,
+                                "ISO Country Code" to address.countryCode,
+                                "Locality" to address.locality,
+                                "Location" to listOf(address.latitude, address.longitude),
+                                "Postal Code" to address.postalCode,
+                                "Sub Administrative Area" to address.subAdminArea,
+                                "Sub Locality" to address.subLocality,
+                                "Sub Thoroughfare" to address.subThoroughfare,
+                                "Thoroughfare" to address.thoroughfare
+                            )
                         )
-                    )
-                }
+                    }
+            } catch (e: Exception) {
+                // We don't want to crash if the device cannot get a geocoded location
+                Log.e(TAG, "Issue getting geocoded location ", e)
+            }
         }
         return null
     }
