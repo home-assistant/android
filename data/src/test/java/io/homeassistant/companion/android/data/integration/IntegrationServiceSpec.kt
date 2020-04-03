@@ -66,8 +66,7 @@ object IntegrationServiceSpec : Spek({
                         1,
                         2,
                         3,
-                        4,
-                        5
+                        4
                     )
                 val integrationRequest =
                     IntegrationRequest(
