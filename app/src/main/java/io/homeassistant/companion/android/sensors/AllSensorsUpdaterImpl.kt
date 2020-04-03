@@ -25,9 +25,14 @@ class AllSensorsUpdaterImpl(
 
         registerSensors(sensorManagers)
 
-        val success = integrationUseCase.updateSensors(
-            sensorManagers.flatMap { it.getSensors(appContext) }.toTypedArray()
-        )
+        var success = false
+        try {
+            success = integrationUseCase.updateSensors(
+                sensorManagers.flatMap { it.getSensors(appContext) }.toTypedArray()
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception while updating sensors.", e)
+        }
 
         // We failed to update a sensor, we should register all the sensors again.
         if (!success) {
