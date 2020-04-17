@@ -13,11 +13,11 @@ apply(plugin = "com.google.firebase.appdistribution")
 buildscript {
     repositories {
         google()
-        maven(url = "https://plugins.gradle.org/m2/")
+        maven(url = Config.Repository.gradle)
     }
     dependencies {
-        classpath("com.github.triplet.gradle:play-publisher:2.7.5")
-        classpath("de.mannodermaus.gradle.plugins:android-junit5:1.6.0.0")
+        classpath(Config.Plugin.playPublisher)
+        classpath(Config.Plugin.androidJunit5)
     }
 }
 
@@ -29,7 +29,8 @@ android {
         minSdkVersion(Config.Android.minSdk)
         targetSdkVersion(Config.Android.targetSdk)
 
-        val vCode: Int = "${System.getenv("VERSION_CODE") ?: 1}".toInt()
+        val envCode = System.getenv("VERSION_CODE")
+        val vCode = envCode?.toIntOrNull() ?: 1
         versionCode = vCode
         versionName = "${Config.version}-$vCode"
     }
@@ -92,41 +93,40 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":domain"))
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Config.Dependency.Kotlin.core}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Config.Dependency.Kotlin.coroutines}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Config.Dependency.Kotlin.coroutines}")
+    implementation(Config.Dependency.Kotlin.core)
+    implementation(Config.Dependency.Kotlin.coroutines)
+    implementation(Config.Dependency.Kotlin.coroutinesAndroid)
 
-    implementation("com.google.dagger:dagger:${Config.Dependency.Google.dagger}")
-    kapt("com.google.dagger:dagger-compiler:${Config.Dependency.Google.dagger}")
+    implementation(Config.Dependency.Google.dagger)
+    kapt(Config.Dependency.Google.daggerCompiler)
 
-    implementation("androidx.appcompat:appcompat:${Config.Dependency.AndroidX.appcompat}")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:${Config.Dependency.AndroidX.lifecycle}")
-    implementation("androidx.constraintlayout:constraintlayout:${Config.Dependency.AndroidX.constraintlayout}")
-    implementation("androidx.recyclerview:recyclerview:${Config.Dependency.AndroidX.recyclerview}")
-    implementation("androidx.preference:preference-ktx:1.1.1")
-    implementation("com.google.android.material:material:1.1.0")
+    implementation(Config.Dependency.AndroidX.appcompat)
+    implementation(Config.Dependency.AndroidX.lifecycle)
+    implementation(Config.Dependency.AndroidX.constraintlayout)
+    implementation(Config.Dependency.AndroidX.recyclerview)
+    implementation(Config.Dependency.AndroidX.preference)
+    implementation(Config.Dependency.Google.material)
 
-    implementation("com.jakewharton.threetenabp:threetenabp:${Config.Dependency.Misc.threeTenAbp}") {
+    implementation(Config.Dependency.Misc.threeTenAbp) {
         exclude(group = "org.threeten")
     }
 
-    implementation("com.crashlytics.sdk.android:crashlytics:2.10.1")
+    implementation(Config.Dependency.Misc.crashlytics)
+    implementation(Config.Dependency.Misc.lokalize)
 
-    implementation("com.lokalise.android:sdk:2.0.0-beta-5")
+    implementation(Config.Dependency.Play.location)
+    implementation(Config.Dependency.Firebase.core)
+    implementation(Config.Dependency.Firebase.iid)
+    implementation(Config.Dependency.Firebase.messaging)
 
-    implementation("com.google.android.gms:play-services-location:17.0.0")
-    implementation("com.google.firebase:firebase-core:17.3.0")
-    implementation("com.google.firebase:firebase-iid:20.1.5")
-    implementation("com.google.firebase:firebase-messaging:20.1.5")
+    implementation(Config.Dependency.AndroidX.workManager)
+    implementation(Config.Dependency.AndroidX.biometric)
 
-    implementation("androidx.work:work-runtime-ktx:2.3.4")
-    implementation("androidx.biometric:biometric:1.0.1")
-
-    testImplementation("org.spekframework.spek2:spek-dsl-jvm:${Config.Dependency.Testing.spek2}")
-    testImplementation("org.spekframework.spek2:spek-runner-junit5:${Config.Dependency.Testing.spek2}")
-    testImplementation("org.assertj:assertj-core:${Config.Dependency.Testing.assertJ}")
-    testImplementation("io.mockk:mockk:${Config.Dependency.Testing.mockk}")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Config.Dependency.Kotlin.coroutines}")
+    testImplementation(Config.Dependency.Testing.spek2Jvm)
+    testImplementation(Config.Dependency.Testing.spek2JUnit)
+    testImplementation(Config.Dependency.Testing.assertJ)
+    testImplementation(Config.Dependency.Testing.mockk)
+    testImplementation(Config.Dependency.Kotlin.coroutinesTest)
 }
 
 // This plugin must stay at the bottom

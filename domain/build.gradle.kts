@@ -15,13 +15,13 @@ tasks.withType<Test> {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Config.Dependency.Kotlin.core}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Config.Dependency.Kotlin.coroutines}")
+    implementation(Config.Dependency.Kotlin.core)
+    implementation(Config.Dependency.Kotlin.coroutines)
 
-    implementation("javax.inject:javax.inject:1")
+    implementation(Config.Dependency.Misc.javaxInject)
 
-    testImplementation("org.spekframework.spek2:spek-dsl-jvm:${Config.Dependency.Testing.spek2}")
-    testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:${Config.Dependency.Testing.spek2}")
-    testImplementation("org.assertj:assertj-core:${Config.Dependency.Testing.assertJ}")
-    testImplementation("io.mockk:mockk:${Config.Dependency.Testing.mockk}")
+    testImplementation(Config.Dependency.Testing.spek2Jvm)
+    testRuntimeOnly(Config.Dependency.Testing.spek2JUnit)
+    testImplementation(Config.Dependency.Testing.assertJ)
+    testImplementation(Config.Dependency.Testing.mockk)
 }

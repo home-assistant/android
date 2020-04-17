@@ -10,18 +10,17 @@ android {
     defaultConfig {
         minSdkVersion(Config.Android.minSdk)
     }
-
 }
 
 dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${Config.Dependency.Kotlin.core}")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Config.Dependency.Kotlin.coroutines}")
+    implementation(Config.Dependency.Kotlin.core)
+    implementation(Config.Dependency.Kotlin.coroutines)
 
-    implementation("com.google.dagger:dagger:${Config.Dependency.Google.dagger}")
-    kapt ("com.google.dagger:dagger-compiler:${Config.Dependency.Google.dagger}")
+    implementation(Config.Dependency.Google.dagger)
+    kapt (Config.Dependency.Google.daggerCompiler)
 
-    implementation("com.squareup.retrofit2:retrofit:${Config.Dependency.Square.retrofit}")
+    implementation(Config.Dependency.Square.retrofit)
 }
