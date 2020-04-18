@@ -87,4 +87,11 @@ like to connect to:</string>
   <string name="manage_ssids_input_exists">This SSID already exists.</string>
   <string name="save">Save</string>
   <string name="cancel">Cancel</string>
+
+  <string name="ha_wear_device_type_error">Unable to determine the type of the device connected to this watch.</string>
+  <string name="ha_wear_not_supporting_apple">Home assistant on Wear doesn\'t over support for watches connected to Apple devices.</string>
+  <string name="ha_phone_app_not_reachable">Home assistant on your phone is not reachable, either install home assistant or make sure your phone is reachable.</string>
+  <string name="ha_session_inactive">Unable to find an active session, make sure you have setup Home Assistant correctly on your phone.</string>
+  <string name="launch_store">Launch</string>
+
 </resources>

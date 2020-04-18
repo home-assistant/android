@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.data.authentication
 
+import io.homeassistant.companion.android.domain.authentication.Session
 import org.assertj.core.api.Assertions.assertThat
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe

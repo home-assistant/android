@@ -19,8 +19,8 @@ class AuthenticationUseCaseImpl @Inject constructor(
         authenticationRepository.revokeSession()
     }
 
-    override suspend fun getSessionState(): SessionState {
-        return authenticationRepository.getSessionState()
+    override suspend fun getSessionState(validate: Boolean): SessionState {
+        return authenticationRepository.getSessionState(validate)
     }
 
     override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {
@@ -29,6 +29,14 @@ class AuthenticationUseCaseImpl @Inject constructor(
 
     override suspend fun buildBearerToken(): String {
         return authenticationRepository.buildBearerToken()
+    }
+
+    override suspend fun retrieveSession(): Session? {
+        return authenticationRepository.retrieveSession()
+    }
+
+    override suspend fun saveSession(session: Session?) {
+        authenticationRepository.saveSession(session)
     }
 
     override suspend fun setLockEnabled(enabled: Boolean) {

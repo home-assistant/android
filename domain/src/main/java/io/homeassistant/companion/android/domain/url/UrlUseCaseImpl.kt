@@ -10,12 +10,17 @@ class UrlUseCaseImpl @Inject constructor(
         return urlRepository.getApiUrls()
     }
 
+    override suspend fun getBaseApiUrls(): Map<String, String> {
+        return urlRepository.getBaseApiUrls()
+    }
+
     override suspend fun saveRegistrationUrls(
-        cloudHookUrl: String,
-        remoteUiUrl: String,
-        webhookId: String
+        cloudHookUrl: String?,
+        remoteUiUrl: String?,
+        webhookId: String,
+        localUrl: String?
     ) {
-        urlRepository.saveRegistrationUrls(cloudHookUrl, remoteUiUrl, webhookId)
+        urlRepository.saveRegistrationUrls(cloudHookUrl, remoteUiUrl, webhookId, localUrl)
     }
 
     override suspend fun getUrl(isInternal: Boolean?): URL? {

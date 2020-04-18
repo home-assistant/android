@@ -1,4 +1,5 @@
 object Config {
+    const val applicationId = "io.homeassistant.companion.android"
     const val version = "1.8.0"
 
     object Plugin {
@@ -21,6 +22,7 @@ object Config {
     object Android {
         const val compileSdk = 29
         const val minSdk = 21
+        const val wearMinSdk = 23
         const val targetSdk = 29
     }
 
@@ -41,21 +43,32 @@ object Config {
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
             const val material = "com.google.android.material:material:1.1.0"
+
+            private const val wearVersion = "2.5.0"
+            const val wearable = "com.google.android.wearable:wearable:$wearVersion"
+            const val wearableSupport = "com.google.android.support:wearable:$wearVersion"
         }
 
         object AndroidX {
+            const val core = "androidx.core:core-ktx:1.2.0"
             const val appcompat = "androidx.appcompat:appcompat:1.1.0"
-            const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
+
+            private const val lifecycleVersion = "2.2.0"
+            const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion"
+            const val lifecycleExtensions = "androidx.lifecycle:lifecycle-extensions:$lifecycleVersion"
+            const val lifecycleJava8 = "androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion"
+
             const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"
             const val constraintlayout = "androidx.constraintlayout:constraintlayout:1.1.3"
             const val preference = "androidx.preference:preference-ktx:1.1.1"
-
             const val workManager = "androidx.work:work-runtime-ktx:2.3.4"
             const val biometric = "androidx.biometric:biometric:1.0.1"
+            const val wear = "androidx.wear:wear:1.0.0"
         }
 
         object Play {
             const val location = "com.google.android.gms:play-services-location:17.0.0"
+            const val wearable = "com.google.android.gms:play-services-wearable:17.0.0"
         }
 
         object Firebase {

@@ -106,6 +106,13 @@
             </intent-filter>
         </service>
 
+        <service android:name=".background.WearDataListenerService">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data android:scheme="wear" android:host="*" />
+            </intent-filter>
+        </service>
+
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_ic_notification" />

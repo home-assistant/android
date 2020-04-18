@@ -58,15 +58,32 @@ class UrlRepositoryImpl @Inject constructor(
         return retVal.toTypedArray()
     }
 
+    override suspend fun getBaseApiUrls(): Map<String, String> {
+        val urls = mutableMapOf<String, String>()
+        val webhook = localStorage.getString(PREF_WEBHOOK_ID)
+
+        // If we don't have a webhook id we don't have any urls.
+        if (webhook.isNullOrBlank()) {
+            return urls
+        }
+        urls[PREF_WEBHOOK_ID] = webhook
+        localStorage.getString(PREF_CLOUDHOOK_URL)?.let { urls.put(PREF_CLOUDHOOK_URL, it) }
+        localStorage.getString(PREF_REMOTE_URL)?.let { urls.put(PREF_REMOTE_URL, it) }
+        localStorage.getString(PREF_LOCAL_URL)?.let { urls.put(PREF_LOCAL_URL, it) }
+        return urls
+    }
+
     override suspend fun saveRegistrationUrls(
         cloudHookUrl: String?,
         remoteUiUrl: String?,
-        webhookId: String
+        webhookId: String,
+        localUrl: String?
     ) {
         localStorage.putString(PREF_CLOUDHOOK_URL, cloudHookUrl)
         localStorage.putString(PREF_WEBHOOK_ID, webhookId)
-        remoteUiUrl?.let {
-            localStorage.putString(PREF_REMOTE_URL, it)
+        localStorage.putString(PREF_REMOTE_URL, remoteUiUrl)
+        if (localUrl != null) {
+            localStorage.putString(PREF_LOCAL_URL, localUrl)
         }
     }
 

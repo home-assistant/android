@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.data.authentication
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.data.LocalStorage
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.domain.authentication.Session
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.url.UrlRepository
 import java.net.URL
@@ -56,8 +57,8 @@ class AuthenticationRepositoryImpl @Inject constructor(
         urlRepository.saveHomeWifiSsids(emptySet())
     }
 
-    override suspend fun getSessionState(): SessionState {
-        return if (retrieveSession() != null && urlRepository.getUrl() != null) {
+    override suspend fun getSessionState(validate: Boolean): SessionState {
+        return if (retrieveSession(validate) != null && urlRepository.getUrl() != null) {
             SessionState.CONNECTED
         } else {
             SessionState.ANONYMOUS
@@ -90,16 +91,20 @@ class AuthenticationRepositoryImpl @Inject constructor(
         )
     }
 
-    private suspend fun retrieveSession(): Session? {
+    override suspend fun retrieveSession(validate: Boolean): Session? {
         val accessToken = localStorage.getString(PREF_ACCESS_TOKEN)
         val expiredDate = localStorage.getLong(PREF_EXPIRED_DATE)
         val refreshToken = localStorage.getString(PREF_REFRESH_TOKEN)
         val tokenType = localStorage.getString(PREF_TOKEN_TYPE)
 
-        return if (accessToken != null && expiredDate != null && refreshToken != null && tokenType != null) {
-            Session(accessToken, expiredDate, refreshToken, tokenType)
+        if (accessToken != null && expiredDate != null && refreshToken != null && tokenType != null) {
+            val session = Session(accessToken, expiredDate, refreshToken, tokenType)
+            if (validate) {
+                return if (session.isExpired()) null else session
+            }
+            return session
         } else {
-            null
+            return null
         }
     }
 
@@ -114,12 +119,13 @@ class AuthenticationRepositoryImpl @Inject constructor(
             ).let {
                 if (it.isSuccessful) {
                     val refreshedToken = it.body() ?: throw AuthorizationException()
-                    val refreshSession = Session(
-                        refreshedToken.accessToken,
-                        Instant.now().epochSecond + refreshedToken.expiresIn,
-                        session.refreshToken,
-                        refreshedToken.tokenType
-                    )
+                    val refreshSession =
+                        Session(
+                            refreshedToken.accessToken,
+                            Instant.now().epochSecond + refreshedToken.expiresIn,
+                            session.refreshToken,
+                            refreshedToken.tokenType
+                        )
                     saveSession(refreshSession)
                     return@let refreshSession
                 } else if (it.code() == 400 &&
@@ -134,7 +140,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         return session
     }
 
-    private suspend fun saveSession(session: Session?) {
+    override suspend fun saveSession(session: Session?) {
         localStorage.putString(PREF_ACCESS_TOKEN, session?.accessToken)
         localStorage.putLong(PREF_EXPIRED_DATE, session?.expiresTimestamp)
         localStorage.putString(PREF_REFRESH_TOKEN, session?.refreshToken)

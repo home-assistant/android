@@ -25,7 +25,7 @@ android {
     compileSdkVersion(Config.Android.compileSdk)
 
     defaultConfig {
-        applicationId = "io.homeassistant.companion.android"
+        applicationId = Config.applicationId
         minSdkVersion(Config.Android.minSdk)
         targetSdkVersion(Config.Android.targetSdk)
 
@@ -39,6 +39,11 @@ android {
         isEnabled = true
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
     firebaseAppDistribution {
         serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
         releaseNotesFile = "app/src/main/play/release-notes/en-US/default.txt"
@@ -47,10 +52,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("release_keystore.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
-            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
+            storeFile = file("../release_keystore.jks")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "homeassistant"
+            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: "homeassistant"
+            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: "homeassistant"
             isV1SigningEnabled = true
             isV2SigningEnabled = true
         }
@@ -61,7 +66,7 @@ android {
             applicationIdSuffix = ".debug"
         }
         named("release").configure {
-            isDebuggable = false
+            isDebuggable = true
             isJniDebuggable = false
             isZipAlignEnabled = true
             signingConfig = signingConfigs.getByName("release")
@@ -92,20 +97,25 @@ play {
 dependencies {
     implementation(project(":common"))
     implementation(project(":domain"))
+    api(project(":resources"))
+    wearApp(project(":wear"))
 
     implementation(Config.Dependency.Kotlin.core)
     implementation(Config.Dependency.Kotlin.coroutines)
     implementation(Config.Dependency.Kotlin.coroutinesAndroid)
 
+    implementation(Config.Dependency.Google.material)
     implementation(Config.Dependency.Google.dagger)
     kapt(Config.Dependency.Google.daggerCompiler)
 
+    implementation(Config.Dependency.AndroidX.core)
     implementation(Config.Dependency.AndroidX.appcompat)
     implementation(Config.Dependency.AndroidX.lifecycle)
     implementation(Config.Dependency.AndroidX.constraintlayout)
     implementation(Config.Dependency.AndroidX.recyclerview)
     implementation(Config.Dependency.AndroidX.preference)
-    implementation(Config.Dependency.Google.material)
+    implementation(Config.Dependency.AndroidX.workManager)
+    implementation(Config.Dependency.AndroidX.biometric)
 
     implementation(Config.Dependency.Misc.threeTenAbp) {
         exclude(group = "org.threeten")
@@ -115,12 +125,11 @@ dependencies {
     implementation(Config.Dependency.Misc.lokalize)
 
     implementation(Config.Dependency.Play.location)
+    implementation(Config.Dependency.Play.wearable)
+
     implementation(Config.Dependency.Firebase.core)
     implementation(Config.Dependency.Firebase.iid)
     implementation(Config.Dependency.Firebase.messaging)
-
-    implementation(Config.Dependency.AndroidX.workManager)
-    implementation(Config.Dependency.AndroidX.biometric)
 
     testImplementation(Config.Dependency.Testing.spek2Jvm)
     testImplementation(Config.Dependency.Testing.spek2JUnit)

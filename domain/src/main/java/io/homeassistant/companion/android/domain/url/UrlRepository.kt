@@ -6,7 +6,11 @@ interface UrlRepository {
 
     suspend fun getApiUrls(): Array<URL>
 
-    suspend fun saveRegistrationUrls(cloudHookUrl: String?, remoteUiUrl: String?, webhookId: String)
+    suspend fun getBaseApiUrls(): Map<String, String>
+
+    suspend fun saveRegistrationUrls(
+        cloudHookUrl: String?, remoteUiUrl: String?, webhookId: String, localUrl: String? = null
+    )
 
     suspend fun getUrl(isInternal: Boolean? = null): URL?
 
