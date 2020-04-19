@@ -19,6 +19,7 @@ dependencies {
     implementation(Config.Dependency.Kotlin.coroutines)
 
     implementation(Config.Dependency.Misc.javaxInject)
+    implementation(Config.Dependency.Misc.threeTenBp)
 
     testImplementation(Config.Dependency.Testing.spek2Jvm)
     testRuntimeOnly(Config.Dependency.Testing.spek2JUnit)

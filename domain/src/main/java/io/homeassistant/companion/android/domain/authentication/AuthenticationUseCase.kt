@@ -10,7 +10,7 @@ interface AuthenticationUseCase {
 
     suspend fun revokeSession()
 
-    suspend fun getSessionState(validate: Boolean = false): SessionState
+    suspend fun getSessionState(): SessionState
 
     suspend fun buildAuthenticationUrl(callbackUrl: String): URL
 

@@ -47,10 +47,11 @@ class LaunchPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            val sessionState = authenticationUseCase.getSessionState(true)
+            val sessionState = authenticationUseCase.getSessionState()
             val registered = integrationUseCase.isRegistered()
             if (sessionState == SessionState.CONNECTED && registered) {
-                delay(1500) // Prevents flashing.
+                view.showProgressBar(false)
+                delay(1500)
                 view.displayNextScreen()
             } else {
                 onRefresh()

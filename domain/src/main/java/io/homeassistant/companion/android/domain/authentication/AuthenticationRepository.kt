@@ -10,13 +10,13 @@ interface AuthenticationRepository {
 
     suspend fun revokeSession()
 
-    suspend fun getSessionState(validate: Boolean = false): SessionState
+    suspend fun getSessionState(): SessionState
 
     suspend fun buildAuthenticationUrl(callbackUrl: String): URL
 
     suspend fun buildBearerToken(): String
 
-    suspend fun retrieveSession(validate: Boolean = false): Session?
+    suspend fun retrieveSession(): Session?
     suspend fun saveSession(session: Session?)
 
     suspend fun setLockEnabled(enabled: Boolean)

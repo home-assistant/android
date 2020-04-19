@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.domain.authentication
 
+import org.threeten.bp.Instant
 import java.io.Serializable
-import java.util.*
 
 data class Session(
     val accessToken: String,
@@ -12,5 +12,5 @@ data class Session(
 
     fun isExpired() = expiresIn() < 0
 
-    fun expiresIn() = expiresTimestamp - Date().time
+    fun expiresIn() = expiresTimestamp - Instant.now().epochSecond
 }

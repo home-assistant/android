@@ -57,8 +57,8 @@ class AuthenticationRepositoryImpl @Inject constructor(
         urlRepository.saveHomeWifiSsids(emptySet())
     }
 
-    override suspend fun getSessionState(validate: Boolean): SessionState {
-        return if (retrieveSession(validate) != null && urlRepository.getUrl() != null) {
+    override suspend fun getSessionState(): SessionState {
+        return if (retrieveSession() != null && urlRepository.getUrl() != null) {
             SessionState.CONNECTED
         } else {
             SessionState.ANONYMOUS
@@ -91,20 +91,16 @@ class AuthenticationRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun retrieveSession(validate: Boolean): Session? {
+    override suspend fun retrieveSession(): Session? {
         val accessToken = localStorage.getString(PREF_ACCESS_TOKEN)
         val expiredDate = localStorage.getLong(PREF_EXPIRED_DATE)
         val refreshToken = localStorage.getString(PREF_REFRESH_TOKEN)
         val tokenType = localStorage.getString(PREF_TOKEN_TYPE)
 
-        if (accessToken != null && expiredDate != null && refreshToken != null && tokenType != null) {
-            val session = Session(accessToken, expiredDate, refreshToken, tokenType)
-            if (validate) {
-                return if (session.isExpired()) null else session
-            }
-            return session
+        return if (accessToken != null && expiredDate != null && refreshToken != null && tokenType != null) {
+            Session(accessToken, expiredDate, refreshToken, tokenType)
         } else {
-            return null
+            null
         }
     }
 

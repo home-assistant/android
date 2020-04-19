@@ -19,8 +19,8 @@ class AuthenticationUseCaseImpl @Inject constructor(
         authenticationRepository.revokeSession()
     }
 
-    override suspend fun getSessionState(validate: Boolean): SessionState {
-        return authenticationRepository.getSessionState(validate)
+    override suspend fun getSessionState(): SessionState {
+        return authenticationRepository.getSessionState()
     }
 
     override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {

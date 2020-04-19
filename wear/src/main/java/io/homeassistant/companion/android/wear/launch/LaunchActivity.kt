@@ -65,12 +65,12 @@ class LaunchActivity : WearableActivity(), LaunchView {
         binding.stateInfo.text = if (message != null) getString(message) else null
     }
 
-    override fun showActionButton(message: Int?, icon: Int?, action: (Activity.() -> Unit)?) {
+    override fun showActionButton(message: Int?, icon: Int?, action: (() -> Unit)?) {
         binding.actionButton.isVisible = message != null
         if (message != null && icon != null) {
             binding.actionButtonText.text = getString(message)
             binding.actionButtonText.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, 0, 0, 0)
-            binding.actionButton.setOnClickListener { action?.invoke(this) }
+            binding.actionButton.setOnClickListener { action?.invoke() }
         } else {
             binding.actionButton.setOnClickListener(null)
         }
