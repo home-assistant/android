@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.wear.ui.launch
+package io.homeassistant.companion.android.wear.launch
 
 import android.app.Activity
 import android.content.Intent
@@ -8,29 +8,19 @@ import android.support.wearable.activity.WearableActivity
 import android.support.wearable.phone.PhoneDeviceType
 import android.util.Log
 import androidx.core.view.isVisible
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
-import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.wearable.CapabilityClient
-import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.Node
-import com.google.android.gms.wearable.PutDataMapRequest
-import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.wearable.intent.RemoteIntent
 import io.homeassistant.companion.android.wear.DaggerPresenterComponent
 import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.databinding.ActivityLaunchBinding
-import io.homeassistant.companion.android.wear.ui.launch.LaunchPresenterImpl.Companion.CONFIG_PATH
+import io.homeassistant.companion.android.wear.launch.LaunchPresenterImpl.Companion.CONFIG_PATH
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
 import io.homeassistant.companion.android.wear.util.extensions.await
 import io.homeassistant.companion.android.wear.util.extensions.catch
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.lang.Exception
 import javax.inject.Inject
 
 class LaunchActivity : WearableActivity(), LaunchView {

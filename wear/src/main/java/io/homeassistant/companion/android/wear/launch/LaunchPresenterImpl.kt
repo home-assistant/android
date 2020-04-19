@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.wear.ui.launch
+package io.homeassistant.companion.android.wear.launch
 
 import android.os.Handler
 import android.os.Looper

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.wear.ui.launch
+package io.homeassistant.companion.android.wear.launch
 
 import android.app.Activity
 import com.google.android.gms.wearable.Node
