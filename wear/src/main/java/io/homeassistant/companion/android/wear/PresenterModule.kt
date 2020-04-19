@@ -3,9 +3,9 @@ package io.homeassistant.companion.android.wear
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
-import io.homeassistant.companion.android.wear.ui.launch.LaunchPresenter
-import io.homeassistant.companion.android.wear.ui.launch.LaunchPresenterImpl
-import io.homeassistant.companion.android.wear.ui.launch.LaunchView
+import io.homeassistant.companion.android.wear.launch.LaunchPresenter
+import io.homeassistant.companion.android.wear.launch.LaunchPresenterImpl
+import io.homeassistant.companion.android.wear.launch.LaunchView
 
 @Module(includes = [PresenterModule.Declaration::class])
 class PresenterModule {

@@ -47,8 +47,9 @@ class LaunchPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         mainScope.launch {
-            val sessionValid = authenticationUseCase.getSessionState(true) == SessionState.CONNECTED
-            if (sessionValid && integrationUseCase.isRegistered()) {
+            val sessionState = authenticationUseCase.getSessionState(true)
+            val registered = integrationUseCase.isRegistered()
+            if (sessionState == SessionState.CONNECTED && registered) {
                 delay(1500) // Prevents flashing.
                 view.displayNextScreen()
             } else {
