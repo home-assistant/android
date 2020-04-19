@@ -87,4 +87,6 @@ like to connect to:</string>
   <string name="manage_ssids_input_exists">This SSID already exists.</string>
   <string name="save">Save</string>
   <string name="cancel">Cancel</string>
+  <string name="dialog_add_panel_shortcut_title">Add Shortcut</string>
+  <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
 </resources>
