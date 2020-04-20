@@ -31,7 +31,6 @@ import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
@@ -49,7 +48,6 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
 import org.json.JSONObject
-import java.util.logging.Logger
 import javax.inject.Inject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -223,7 +221,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
                 override fun onShowCustomView(view: View, callback: CustomViewCallback) {
                     myCustomView = view
-                    decor.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT))
+                    decor.addView(
+                        view,
+                        FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            FrameLayout.LayoutParams.WRAP_CONTENT
+                        )
+                    )
                     hideSystemUI()
                     isVideoFullScreen = true
                 }
@@ -405,9 +409,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
     }
 
-    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration
+    ) {
         if (isInPictureInPictureMode) {
-            (decor.getChildAt(3) as FrameLayout).layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
+            (decor.getChildAt(3) as FrameLayout).layoutParams.height =
+                FrameLayout.LayoutParams.MATCH_PARENT
             decor.requestLayout()
         } else {
             if (decor.getChildAt(3) != null) {
@@ -424,7 +432,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         if (isVideoFullScreen) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 var mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
-                mPictureInPictureParamsBuilder.setAspectRatio(Rational(bounds.width(), bounds.height()))
+                mPictureInPictureParamsBuilder.setAspectRatio(
+                    Rational(
+                        bounds.width(),
+                        bounds.height()
+                    )
+                )
                 mPictureInPictureParamsBuilder.setSourceRectHint(bounds)
                 enterPictureInPictureMode(mPictureInPictureParamsBuilder.build())
             }
