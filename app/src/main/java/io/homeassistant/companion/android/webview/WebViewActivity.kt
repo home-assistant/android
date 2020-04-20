@@ -47,8 +47,8 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
-import org.json.JSONObject
 import javax.inject.Inject
+import org.json.JSONObject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -345,7 +345,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                                         pinShortcutInfo,
                                                         successCallback.intentSender
                                                     )
-
                                                 }
                                                 .show()
                                         }
