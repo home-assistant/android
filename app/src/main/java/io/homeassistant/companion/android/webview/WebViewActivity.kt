@@ -49,7 +49,6 @@ import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import org.json.JSONObject
-import java.util.logging.Logger
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -301,10 +300,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                             json.getJSONObject("payload").toString(),
                                             Panel::class.java
                                         )
-                                        val logger =
-                                            Logger.getLogger(WebViewActivity::class.java.name)
-                                        logger.warning("TIMMO - Panel: " + panel.toString())
-
                                         val title: String? = when (panel.title) {
                                             "calendar" -> getString(R.string.calendar)
                                             "config" -> getString(R.string.config)
@@ -318,7 +313,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                             "states" -> getString(R.string.states)
                                             else -> panel.title
                                         }
-                                        logger.warning("TIMMO - Title: " + title)
                                         if (!title.isNullOrEmpty()) {
                                             AlertDialog.Builder(this@WebViewActivity)
                                                 .setTitle(R.string.dialog_add_panel_shortcut_title)
