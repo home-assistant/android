@@ -8,6 +8,14 @@
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
     </style>
 
+    <style name="Theme.HomeAssistant.Dark" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorButtonNormal">@color/colorPrimary</item>
+        <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert.Dark</item>
+    </style>
+
     <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.MaterialComponents.Headline1">
         <item name="android:textSize">20sp</item>
         <item name="android:textColor">@android:color/black</item>
@@ -37,5 +45,6 @@
     </style>
 
     <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert" />
+    <style name="Theme.HomeAssistant.Dialog.Alert.Dark" parent="Theme.MaterialComponents.Dialog.Alert" />
 
 </resources>

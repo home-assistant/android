@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.wear.launch
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -17,9 +16,11 @@ import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.databinding.ActivityLaunchBinding
 import io.homeassistant.companion.android.wear.launch.LaunchPresenterImpl.Companion.CONFIG_PATH
+import io.homeassistant.companion.android.wear.navigation.NavigationActivity
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
 import io.homeassistant.companion.android.wear.util.extensions.await
 import io.homeassistant.companion.android.wear.util.extensions.catch
+import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
 import javax.inject.Inject
 
@@ -40,11 +41,8 @@ class LaunchActivity : WearableActivity(), LaunchView {
         setAmbientEnabled()
         setContentView(binding.root)
 
-        DaggerPresenterComponent
-            .builder()
-            .appComponent(appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
+        DaggerPresenterComponent.factory()
+            .create(appComponent, domainComponent, PresenterModule(this))
             .inject(this)
 
         messageClient.addListener(launchPresenter)
@@ -93,7 +91,8 @@ class LaunchActivity : WearableActivity(), LaunchView {
     }
 
     override fun displayNextScreen() {
-
+        startActivity(Intent(this, NavigationActivity::class.java))
+        finishAffinity()
     }
 
     override suspend fun getNodeWithInstalledApp(): Node? {

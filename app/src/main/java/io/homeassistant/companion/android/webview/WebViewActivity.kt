@@ -36,10 +36,11 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
+import io.homeassistant.companion.android.util.appComponent
+import io.homeassistant.companion.android.util.domainComponent
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import org.json.JSONObject
@@ -78,11 +79,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
 
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
+        DaggerPresenterComponent.factory()
+            .create(appComponent, domainComponent, PresenterModule(this))
             .inject(this)
 
         val intent = Intent(this, LocationBroadcastReceiver::class.java)
@@ -349,10 +347,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         videoHeight = decor.height
-        var bounds = Rect(0, 0, 1920, 1080)
+        val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                var mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
+                val mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(Rational(bounds.width(), bounds.height()))
                 mPictureInPictureParamsBuilder.setSourceRectHint(bounds)
                 enterPictureInPictureMode(mPictureInPictureParamsBuilder.build())

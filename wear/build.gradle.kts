@@ -79,6 +79,7 @@ dependencies {
     implementation(Config.Dependency.AndroidX.lifecycle)
     implementation(Config.Dependency.AndroidX.lifecycleExtensions)
     implementation(Config.Dependency.AndroidX.lifecycleJava8)
+    implementation(Config.Dependency.AndroidX.fragment)
     implementation(Config.Dependency.AndroidX.recyclerview)
     implementation(Config.Dependency.AndroidX.wear)
 

@@ -19,8 +19,9 @@ import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.util.PermissionManager
+import io.homeassistant.companion.android.util.appComponent
+import io.homeassistant.companion.android.util.domainComponent
 import javax.inject.Inject
 
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
@@ -49,11 +50,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
+        DaggerPresenterComponent.factory()
+            .create(appComponent, domainComponent, PresenterModule(this))
             .inject(this)
     }
 
@@ -117,7 +115,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun onDestroy() {
-        PermissionManager.restartLocationTracking(context!!)
+        PermissionManager.restartLocationTracking(requireContext())
         presenter.onFinish()
         super.onDestroy()
     }

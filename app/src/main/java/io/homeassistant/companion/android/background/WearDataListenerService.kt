@@ -24,9 +24,8 @@ class WearDataListenerService : WearableListenerService() {
 
     override fun onCreate() {
         super.onCreate()
-        DaggerServiceComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
-            .build()
+        val graphAccessor = applicationContext as GraphComponentAccessor
+        DaggerServiceComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
             .inject(this)
     }
 
@@ -47,7 +46,10 @@ class WearDataListenerService : WearableListenerService() {
                     })
                     bundle.putStringArrayList("ssids", ArrayList(ssids))
                     bundle.putBundle("session", bundleOf(
-                        "access" to session.accessToken, "expires" to session.expiresTimestamp, "refresh" to session.refreshToken, "type" to session.tokenType
+                        "access" to session.accessToken,
+                        "expires" to session.expiresTimestamp,
+                        "refresh" to session.refreshToken,
+                        "type" to session.tokenType
                     ))
                 }
                 replyMessage(messageEvent.sourceNodeId, DataMap.fromBundle(bundle))

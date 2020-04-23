@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="page_action_create_top_padding">22dp</dimen>
+    <dimen name="page_action_create_bottom_padding">50dp</dimen>
+</resources>

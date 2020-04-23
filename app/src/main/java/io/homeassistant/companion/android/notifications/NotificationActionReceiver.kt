@@ -36,9 +36,8 @@ class NotificationActionReceiver : BroadcastReceiver() {
     lateinit var integrationUseCase: IntegrationUseCase
 
     override fun onReceive(context: Context, intent: Intent) {
-        DaggerServiceComponent.builder()
-            .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
+        val graphAccessor = context.applicationContext as GraphComponentAccessor
+        DaggerServiceComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
             .inject(this)
 
         val notificationAction =

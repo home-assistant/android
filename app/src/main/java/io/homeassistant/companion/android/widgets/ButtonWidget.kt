@@ -135,8 +135,7 @@ class ButtonWidget : AppWidgetProvider() {
 
         // Set up progress bar as immediate feedback to show the click has been received
         // Success or failure feedback will come from the mainScope coroutine
-        val loadingViews: RemoteViews =
-            RemoteViews(context.packageName, R.layout.widget_button)
+        val loadingViews = RemoteViews(context.packageName, R.layout.widget_button)
         val appWidgetManager = AppWidgetManager.getInstance(context)
 
         loadingViews.setViewVisibility(R.id.widgetProgressBar, View.VISIBLE)
@@ -250,9 +249,8 @@ class ButtonWidget : AppWidgetProvider() {
 
     private fun ensureInjected(context: Context) {
         if (context.applicationContext is GraphComponentAccessor) {
-            DaggerProviderComponent.builder()
-                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
+            val graphAccessor = context.applicationContext as GraphComponentAccessor
+            DaggerProviderComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
                 .inject(this)
         } else {
             throw Exception("Application Context passed is not of our application!")

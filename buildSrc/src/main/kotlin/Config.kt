@@ -58,12 +58,19 @@ object Config {
             const val lifecycleExtensions = "androidx.lifecycle:lifecycle-extensions:$lifecycleVersion"
             const val lifecycleJava8 = "androidx.lifecycle:lifecycle-common-java8:$lifecycleVersion"
 
+            const val fragment = "androidx.fragment:fragment-ktx:1.2.4"
+
             const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"
             const val constraintlayout = "androidx.constraintlayout:constraintlayout:1.1.3"
             const val preference = "androidx.preference:preference-ktx:1.1.1"
             const val workManager = "androidx.work:work-runtime-ktx:2.3.4"
             const val biometric = "androidx.biometric:biometric:1.0.1"
             const val wear = "androidx.wear:wear:1.0.0"
+
+            private const val roomVersion = "2.2.5"
+            const val room = "androidx.room:room-runtime:$roomVersion"
+            const val roomCompiler = "androidx.room:room-compiler:$roomVersion"
+            const val roomKtx = "androidx.room:room-ktx:$roomVersion"
         }
 
         object Play {

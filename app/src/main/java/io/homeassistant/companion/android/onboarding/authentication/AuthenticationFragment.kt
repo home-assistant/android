@@ -16,7 +16,8 @@ import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.util.appComponent
+import io.homeassistant.companion.android.util.domainComponent
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 
@@ -37,11 +38,8 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
+        DaggerPresenterComponent.factory()
+            .create(appComponent, domainComponent, PresenterModule(this))
             .inject(this)
     }
 
@@ -108,11 +106,11 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
             // Fragment is at least paused, can't display alert
             return
         }
-        AlertDialog.Builder(context!!)
+        AlertDialog.Builder(requireContext())
             .setTitle(R.string.error_connection_failed)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok) { _, _ -> }
             .show()
-        fragmentManager?.popBackStack()
+        childFragmentManager.popBackStack()
     }
 }

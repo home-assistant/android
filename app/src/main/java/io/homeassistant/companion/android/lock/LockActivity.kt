@@ -11,7 +11,8 @@ import androidx.core.content.ContextCompat
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.util.appComponent
+import io.homeassistant.companion.android.util.domainComponent
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 
@@ -31,11 +32,8 @@ class LockActivity : AppCompatActivity(), LockView {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_lock)
 
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
+        DaggerPresenterComponent.factory()
+            .create(appComponent, domainComponent, PresenterModule(this))
             .inject(this)
 
         if (presenter.isLockEnabled()) {

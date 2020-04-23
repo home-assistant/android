@@ -20,13 +20,12 @@ dependencies {
     implementation(Config.Dependency.Kotlin.core)
     implementation(Config.Dependency.Kotlin.coroutines)
 
-    implementation(Config.Dependency.Misc.javaxInject)
-
     implementation(Config.Dependency.Square.retrofit)
     implementation(Config.Dependency.Square.retrofitJacksonConverter)
     implementation(Config.Dependency.Square.okhttp)
     implementation(Config.Dependency.Square.okhttpInterceptor)
     implementation(Config.Dependency.Misc.jackson)
+    implementation(Config.Dependency.Misc.javaxInject)
 
     implementation(Config.Dependency.Misc.threeTenBp)
 

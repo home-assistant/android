@@ -1,19 +1,15 @@
 package io.homeassistant.companion.android.common.dagger
 
 import dagger.Component
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.url.UrlUseCase
-import io.homeassistant.companion.android.domain.widgets.WidgetUseCase
+import javax.inject.Singleton
 
-@Component(dependencies = [DomainComponent::class])
+@Singleton
+@Component
 interface AppComponent {
 
-    fun urlUseCase(): UrlUseCase
+    @Component.Factory
+    interface Factory {
+        fun create(): AppComponent
+    }
 
-    fun authenticationUseCase(): AuthenticationUseCase
-
-    fun integrationUseCase(): IntegrationUseCase
-
-    fun widgetUseCase(): WidgetUseCase
 }

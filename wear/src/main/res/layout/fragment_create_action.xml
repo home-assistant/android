@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false"
+    android:paddingTop="@dimen/page_action_create_top_padding"
+    android:paddingBottom="@dimen/page_action_create_bottom_padding"
+    android:scrollbars="none"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/create_action_header"
+            android:textColor="@color/primary_text_dark" />
+
+        <EditText
+            android:id="@+id/actionNameInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/action_name"
+            android:importantForAutofill="no"
+            android:inputType="textNoSuggestions" />
+
+        <EditText
+            android:id="@+id/actionActionInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="@string/action"
+            android:importantForAutofill="no"
+            android:inputType="textNoSuggestions" />
+
+        <TextView
+            android:id="@+id/actionIcon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="?attr/selectableItemBackground"
+            android:drawableStart="@drawable/ic_flash_on_black_24dp"
+            android:drawablePadding="8dp"
+            android:drawableTint="@android:color/white"
+            android:gravity="center_vertical"
+            android:minHeight="32dp"
+            android:tag="0"
+            android:text="@string/action_icon" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/actionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/ic_check_black_24dp"
+            app:backgroundTint="?attr/colorAccent"
+            app:fabSize="normal"
+            app:tint="@android:color/white" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

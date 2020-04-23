@@ -94,4 +94,21 @@ like to connect to:</string>
   <string name="ha_session_inactive">Unable to find an active session, make sure you have setup Home Assistant correctly on your phone.</string>
   <string name="launch_store">Launch</string>
 
+  <string name="page_actions">Actions</string>
+  <string name="page_settings">Settings</string>
+
+  <string name="create_first_action">Create your first action!</string>
+  <string name="action_subtitle">Action: %s</string>
+  <string name="confirmation_action_send">Action triggered</string>
+  <string name="confirmation_action_send_failure">Failure triggering action</string>
+  <string name="confirmation_action_created">Action created!</string>
+  <string name="confirmation_action_created_failure">Unable to create this action.</string>
+
+  <string name="create_action_header">Create Action</string>
+  <string name="action_name">Name</string>
+  <string name="action_name_required">The name is required!</string>
+  <string name="action_icon">Icon</string>
+  <string name="action">Action</string>
+  <string name="action_required">The action is required!</string>
+
 </resources>

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.wear
 
 import android.app.Application
 import io.homeassistant.companion.android.common.dagger.AppComponent
+import io.homeassistant.companion.android.common.dagger.DomainComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 
@@ -14,7 +15,7 @@ class HomeAssistantApplication : Application(), GraphComponentAccessor {
         graph = Graph(this, 0)
     }
 
-    override val appComponent: AppComponent
-        get() = graph.appComponent
+    override val appComponent: AppComponent get() = graph.appComponent
+    override val domainComponent: DomainComponent get() = graph.domainComponent
 
 }

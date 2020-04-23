@@ -16,7 +16,7 @@ class Graph(
 
     lateinit var appComponent: AppComponent
     private lateinit var dataComponent: DataComponent
-    private lateinit var domainComponent: DomainComponent
+    lateinit var domainComponent: DomainComponent
 
     init {
         Migrations(application)
@@ -27,9 +27,11 @@ class Graph(
 
     @SuppressLint("HardwareIds")
     private fun buildComponent() {
+        appComponent = DaggerAppComponent.factory().create()
         dataComponent = DaggerDataComponent
-            .builder()
-            .dataModule(
+            .factory()
+            .create(
+                appComponent,
                 DataModule(
                     LocalStorageImpl(
                         application.getSharedPreferences(
@@ -56,18 +58,14 @@ class Graph(
                         )
                     ),
                     WifiHelperImpl(application.getSystemService(Context.WIFI_SERVICE) as WifiManager),
-                    Settings.Secure.getString(application.contentResolver, Settings.Secure.ANDROID_ID)
-                )
+                    Settings.Secure.getString(
+                        application.contentResolver,
+                        Settings.Secure.ANDROID_ID
+                    )
+                ),
+                application
             )
-            .build()
 
-        domainComponent = DaggerDomainComponent
-            .builder()
-            .dataComponent(dataComponent)
-            .build()
-
-        appComponent = DaggerAppComponent.builder()
-            .domainComponent(domainComponent)
-            .build()
+        domainComponent = DaggerDomainComponent.factory().create(dataComponent)
     }
 }

@@ -198,10 +198,8 @@ class ButtonWidgetConfigureActivity : Activity() {
         }
 
         // Inject components
-        DaggerProviderComponent
-            .builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
+        val graphAccessor = application as GraphComponentAccessor
+        DaggerProviderComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
             .inject(this)
 
         val serviceAdapter = SingleItemArrayAdapter<Service>(this) {

@@ -20,6 +20,7 @@ class SensorWorker(
     appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
+
     companion object {
         private const val TAG = "SensorWorker"
         fun start(context: Context) {
@@ -38,12 +39,11 @@ class SensorWorker(
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    val allSensorUpdater: SensorUpdater
+    private val allSensorUpdater: SensorUpdater
 
     init {
-        DaggerSensorComponent.builder()
-            .appComponent((appContext as GraphComponentAccessor).appComponent)
-            .build()
+        val graphAccessor = appContext as GraphComponentAccessor
+        DaggerSensorComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
             .inject(this)
         allSensorUpdater = AllSensorsUpdaterImpl(integrationUseCase, applicationContext)
     }

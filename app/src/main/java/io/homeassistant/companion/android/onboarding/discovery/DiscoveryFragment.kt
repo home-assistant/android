@@ -16,7 +16,8 @@ import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.util.appComponent
+import io.homeassistant.companion.android.util.domainComponent
 import javax.inject.Inject
 
 class DiscoveryFragment : Fragment(), DiscoveryView {
@@ -40,15 +41,12 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
+        DaggerPresenterComponent.factory()
+            .create(appComponent, domainComponent, PresenterModule(this))
             .inject(this)
 
         homeAssistantSearcher = HomeAssistantSearcher(
-            getSystemService(context!!, NsdManager::class.java)!!,
+            getSystemService(requireContext(), NsdManager::class.java)!!,
             this
         )
     }
@@ -59,7 +57,7 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
         savedInstanceState: Bundle?
     ): View? {
 
-        listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(context!!, R.layout.instance_item, instances) {
+        listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(requireContext(), R.layout.instance_item, instances) {
             @SuppressLint("InflateParams")
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val v = convertView ?: LayoutInflater.from(context).inflate(

@@ -53,9 +53,8 @@ class MessagingService : FirebaseMessagingService() {
 
     override fun onCreate() {
         super.onCreate()
-        DaggerServiceComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
-            .build()
+        val graphAccessor = applicationContext as GraphComponentAccessor
+        DaggerServiceComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
             .inject(this)
     }
 
@@ -89,8 +88,7 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun clearNotification(tag: String) {
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val messageId = tag.hashCode()
 
         notificationManager.cancel(tag, messageId)
