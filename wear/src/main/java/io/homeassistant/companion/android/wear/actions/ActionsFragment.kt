@@ -9,11 +9,11 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.wear.activity.ConfirmationActivity
-import androidx.wear.widget.WearableLinearLayoutManager
 import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.wear.DaggerPresenterComponent
 import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
+import io.homeassistant.companion.android.wear.create.CreateActionActivity
 import io.homeassistant.companion.android.wear.databinding.FragmentActionsBinding
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
 import io.homeassistant.companion.android.wear.util.extensions.domainComponent
@@ -46,12 +46,17 @@ class ActionsFragment : Fragment(), ActionsView {
         super.onViewCreated(view, savedInstanceState)
         val recyclerView = binding.recyclerView
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
-        recyclerView.isEdgeItemsCenteringEnabled = true
+        recyclerView.isEdgeItemsCenteringEnabled = false
+        recyclerView.isCircularScrollingGestureEnabled = false
         recyclerView.adapter = adapter
 
         val progress = binding.confirmationProgress
-        progress.totalTime = 3000L
-        progress.setOnClickListener { progress.stopTimer() }
+        progress.totalTime = 2000
+        progress.setOnClickListener { hideConfirmation() }
+
+        binding.actionButton.setOnClickListener {
+            startActivity(Intent(requireContext(), CreateActionActivity::class.java))
+        }
 
         presenter.onViewReady()
     }
@@ -62,14 +67,21 @@ class ActionsFragment : Fragment(), ActionsView {
     }
 
     override fun showConfirmation(action: WearAction) {
-        val clearConfirmation = binding.clearConfirmationProgress.apply { isVisible = true }
-        val confirmationProgress = binding.confirmationProgress
-        confirmationProgress.setOnTimerFinishedListener {
-            clearConfirmation.isVisible = false
-            confirmationProgress.stopTimer()
+        val confirmationProgress = binding.confirmationProgress.apply { isVisible = true }
+        confirmationProgress.setOnTimerFinishedListener { hideConfirmation(action) }
+        confirmationProgress.startTimer()
+    }
+
+    override fun hideConfirmation(action: WearAction?) {
+        binding.confirmationProgress.apply {
+            stopTimer()
+            isVisible = false
             presenter.executeAction(action)
         }
-        confirmationProgress.startTimer()
+    }
+
+    override fun showProgress(show: Boolean) {
+        binding.progress.isVisible = show
     }
 
     override fun showConfirmed(confirmedType: Int) {

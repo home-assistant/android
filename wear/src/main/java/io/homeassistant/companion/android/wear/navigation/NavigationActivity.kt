@@ -25,10 +25,6 @@ class NavigationActivity : AppCompatActivity(), WearableNavigationDrawerView.OnI
         binding.topDrawer.setAdapter(adapter)
         binding.topDrawer.addOnItemSelectedListener(this)
 
-        binding.actionButton.setOnClickListener {
-            startActivity(Intent(this, CreateActionActivity::class.java))
-        }
-
         val navigationPages = pages
         adapter.submitPages(navigationPages)
         onItemSelected(0)

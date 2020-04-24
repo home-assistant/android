@@ -10,28 +10,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <LinearLayout
-        android:id="@+id/actionButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@drawable/bg_ripple_accent"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent">
-
-        <ImageView
-            android:id="@+id/actionButtonText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="4dp"
-            android:contentDescription="@null"
-            android:src="@drawable/ic_add_white_24dp"
-            android:gravity="center" />
-
-    </LinearLayout>
-
     <androidx.wear.widget.drawer.WearableNavigationDrawerView
         android:id="@+id/topDrawer"
         android:layout_width="match_parent"
