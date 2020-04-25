@@ -92,15 +92,16 @@ class ActionsFragment : Fragment(), ActionsView {
         binding.progress.isVisible = show
     }
 
-    override fun showConfirmed(confirmedType: Int) {
-        val message = when (confirmedType) {
-            ConfirmationActivity.SUCCESS_ANIMATION -> getString(R.string.confirmation_action_send)
-            ConfirmationActivity.FAILURE_ANIMATION -> getString(R.string.confirmation_action_send_failure)
+    override fun showConfirmed(confirmedType: Int, message: Int) {
+        val showDuration = when (confirmedType) {
+            ConfirmationActivity.SUCCESS_ANIMATION -> 1000
+            ConfirmationActivity.FAILURE_ANIMATION -> 2000
             else -> throw UnsupportedOperationException("Only the success or failure animation are supported!")
         }
         val intent = Intent(requireContext(), ConfirmationActivity::class.java)
             .putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, confirmedType)
-            .putExtra(ConfirmationActivity.EXTRA_MESSAGE, message)
+            .putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(message))
+            .putExtra(ConfirmationActivity.EXTRA_ANIMATION_DURATION_MILLIS, showDuration)
         startActivity(intent)
     }
 

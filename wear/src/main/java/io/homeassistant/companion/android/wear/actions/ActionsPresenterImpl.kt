@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.common.actions.WearActionUseCase
 import io.homeassistant.companion.android.common.util.ProgressTimeLatch
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.util.extensions.catch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,10 +52,12 @@ class ActionsPresenterImpl @Inject constructor(
                 catch { integrationUseCase.fireEvent("mobile_app_wear_action", actionMap) }
             }
             progressLatch.refreshing = false
-            val confirmType = if (result != null) ConfirmationActivity.SUCCESS_ANIMATION
-                                   else ConfirmationActivity.FAILURE_ANIMATION
             isLoading.set(false)
-            view.showConfirmed(confirmType)
+            if (result != null) {
+                view.showConfirmed(ConfirmationActivity.SUCCESS_ANIMATION, R.string.confirmation_action_send)
+            } else {
+                view.showConfirmed(ConfirmationActivity.FAILURE_ANIMATION, R.string.confirmation_action_send_failure)
+            }
         }
     }
 

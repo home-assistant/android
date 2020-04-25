@@ -65,7 +65,7 @@ object Config {
             const val preference = "androidx.preference:preference-ktx:1.1.1"
             const val workManager = "androidx.work:work-runtime-ktx:2.3.4"
             const val biometric = "androidx.biometric:biometric:1.0.1"
-            const val wear = "androidx.wear:wear:1.0.0"
+            const val wear = "androidx.wear:wear:1.1.0-alpha01"
 
             private const val roomVersion = "2.2.5"
             const val room = "androidx.room:room-runtime:$roomVersion"

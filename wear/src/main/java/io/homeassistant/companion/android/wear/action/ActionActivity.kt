@@ -80,9 +80,15 @@ class ActionActivity : AppCompatActivity(), ActionView {
     }
 
     override fun showConfirmed(confirmType: Int, message: Int) {
+        val showDuration = when (confirmType) {
+            ConfirmationActivity.SUCCESS_ANIMATION -> 1000
+            ConfirmationActivity.FAILURE_ANIMATION -> 2000
+            else -> throw UnsupportedOperationException("Only the success or failure animation are supported!")
+        }
         val intent = Intent(this, ConfirmationActivity::class.java)
             .putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, confirmType)
             .putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(message))
+            .putExtra(ConfirmationActivity.EXTRA_ANIMATION_DURATION_MILLIS, showDuration)
         startActivity(intent)
         finish()
     }

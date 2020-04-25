@@ -7,5 +7,5 @@ interface ActionsView {
     fun showConfirmation(action: WearAction)
     fun hideConfirmation(action: WearAction? = null)
     fun showProgress(show: Boolean)
-    fun showConfirmed(confirmedType: Int)
+    fun showConfirmed(confirmedType: Int, message: Int)
 }

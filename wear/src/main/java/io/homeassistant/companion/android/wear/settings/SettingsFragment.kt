@@ -52,9 +52,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     }
 
     override fun showConfirmed(confirmedType: Int, message: Int) {
+        val showDuration = when (confirmedType) {
+            ConfirmationActivity.SUCCESS_ANIMATION -> 1000
+            ConfirmationActivity.FAILURE_ANIMATION -> 2000
+            else -> throw UnsupportedOperationException("Only the success or failure animation are supported!")
+        }
         val intent = Intent(requireContext(), ConfirmationActivity::class.java)
             .putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, confirmedType)
             .putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(message))
+            .putExtra(ConfirmationActivity.EXTRA_ANIMATION_DURATION_MILLIS, showDuration)
         startActivity(intent)
     }
 }
