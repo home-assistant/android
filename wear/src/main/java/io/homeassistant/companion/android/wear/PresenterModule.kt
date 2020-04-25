@@ -6,9 +6,9 @@ import dagger.Provides
 import io.homeassistant.companion.android.wear.actions.ActionsPresenter
 import io.homeassistant.companion.android.wear.actions.ActionsPresenterImpl
 import io.homeassistant.companion.android.wear.actions.ActionsView
-import io.homeassistant.companion.android.wear.create.CreateActionPresenter
-import io.homeassistant.companion.android.wear.create.CreateActionPresenterImpl
-import io.homeassistant.companion.android.wear.create.CreateActionView
+import io.homeassistant.companion.android.wear.action.ActionPresenter
+import io.homeassistant.companion.android.wear.action.ActionPresenterImpl
+import io.homeassistant.companion.android.wear.action.ActionView
 import io.homeassistant.companion.android.wear.launch.LaunchPresenter
 import io.homeassistant.companion.android.wear.launch.LaunchPresenterImpl
 import io.homeassistant.companion.android.wear.launch.LaunchView
@@ -21,7 +21,7 @@ class PresenterModule {
 
     private lateinit var launchView: LaunchView
     private lateinit var actionsView: ActionsView
-    private lateinit var createActionView: CreateActionView
+    private lateinit var actionView: ActionView
     private lateinit var settingsView: SettingsView
 
     constructor(launchView: LaunchView) {
@@ -32,8 +32,8 @@ class PresenterModule {
         this.actionsView = actionsView
     }
 
-    constructor(createActionView: CreateActionView) {
-        this.createActionView = createActionView
+    constructor(actionView: ActionView) {
+        this.actionView = actionView
     }
 
     constructor(settingsView: SettingsView) {
@@ -42,7 +42,7 @@ class PresenterModule {
 
     @Provides fun provideLaunchView() = launchView
     @Provides fun provideActionsView() = actionsView
-    @Provides fun provideCreateActionView() = createActionView
+    @Provides fun provideCreateActionView() = actionView
     @Provides fun provideSettingsView() = settingsView
 
     @Module
@@ -50,7 +50,7 @@ class PresenterModule {
 
         @Binds fun bindLaunchPresenter(presenter: LaunchPresenterImpl): LaunchPresenter
         @Binds fun bindActionsPresenter(presenter: ActionsPresenterImpl): ActionsPresenter
-        @Binds fun bindCreateActionPresenter(presenter: CreateActionPresenterImpl): CreateActionPresenter
+        @Binds fun bindCreateActionPresenter(presenter: ActionPresenterImpl): ActionPresenter
         @Binds fun bindSettingsPresenter(presenter: SettingsPresenterImpl) : SettingsPresenter
 
     }

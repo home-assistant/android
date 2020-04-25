@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import io.homeassistant.companion.android.common.actions.WearAction
 import kotlinx.coroutines.flow.Flow
 
@@ -16,6 +17,9 @@ interface WearActionsDao  {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun createAction(action: WearAction): Long
+
+    @Update
+    suspend fun updateAction(action: WearAction): Int
 
     @Delete
     suspend fun deleteAction(action: WearAction): Int

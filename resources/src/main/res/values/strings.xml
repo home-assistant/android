@@ -105,8 +105,11 @@ like to connect to:</string>
   <string name="confirmation_action_send_failure">Failure triggering action</string>
   <string name="confirmation_action_created">Action created!</string>
   <string name="confirmation_action_created_failure">Unable to create this action.</string>
+  <string name="confirmation_action_updated">Action updated!</string>
+  <string name="confirmation_action_updated_failure">Unable to update this action.</string>
 
-  <string name="create_action_header">Create Action</string>
+  <string name="action_header_create">Create Action</string>
+  <string name="action_header_update">Update Action</string>
   <string name="action_name">Name</string>
   <string name="action_name_required">The name is required!</string>
   <string name="action_icon">Icon</string>

@@ -37,7 +37,7 @@
 
         <activity android:name=".navigation.NavigationActivity" />
 
-        <activity android:name=".create.CreateActionActivity" />
+        <activity android:name=".action.ActionActivity" />
 
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
 

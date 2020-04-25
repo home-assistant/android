@@ -14,8 +14,12 @@ class WearActionRepositoryImpl @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getAllActions(): Flow<List<WearAction>> = actionsDao.allActions().flowOn(Dispatchers.IO)
 
-    override suspend fun createAction(action: WearAction): Boolean {
-        return actionsDao.createAction(action) != -1L
+    override suspend fun saveAction(action: WearAction): Boolean {
+        return if (action.id != null && action.id > 0) {
+            actionsDao.updateAction(action) > 0
+        } else {
+            actionsDao.createAction(action) != -1L
+        }
     }
 
     override suspend fun deleteAction(id: Long): Boolean {

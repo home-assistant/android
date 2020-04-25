@@ -12,14 +12,19 @@ import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.databinding.ItemActionBinding
 import io.homeassistant.companion.android.wear.util.resources.actionIconById
 
-class ActionsAdapter(private val onClick: (WearAction) -> Unit) : ListAdapter<WearAction, ActionsAdapter.ViewHolder>(
+class ActionsAdapter(
+    private val onClick: (WearAction) -> Unit,
+    private val onLongClick: (WearAction) -> Unit
+) : ListAdapter<WearAction, ActionsAdapter.ViewHolder>(
     AsyncDifferConfig.Builder(WearActionListDiffer()).build()
 ) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val binding = ItemActionBinding.inflate(inflater, parent, false)
-        return ViewHolder(binding) { index: Int -> onClick(getItem(index)) }
+        val click = { index: Int -> onClick(getItem(index)) }
+        val longClick = { index: Int -> onLongClick(getItem(index)) }
+        return ViewHolder(binding, click, longClick)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -31,12 +36,17 @@ class ActionsAdapter(private val onClick: (WearAction) -> Unit) : ListAdapter<We
 
     class ViewHolder(
         binding: ItemActionBinding,
-        private val onClick: (Int) -> Unit
-    ) : RecyclerView.ViewHolder(binding.root), View.OnClickListener {
+        private val onClick: (Int) -> Unit,
+        private val onLongClick: (Int) -> Unit
+    ) : RecyclerView.ViewHolder(binding.root), View.OnClickListener, View.OnLongClickListener {
 
-        init { itemView.setOnClickListener(this) }
+        init {
+            itemView.setOnClickListener(this)
+            itemView.setOnLongClickListener(this)
+        }
 
         override fun onClick(v: View) = onClick(adapterPosition)
+        override fun onLongClick(v: View?): Boolean = onLongClick(adapterPosition).run { true }
     }
 
     private class WearActionListDiffer :  DiffUtil.ItemCallback<WearAction>() {

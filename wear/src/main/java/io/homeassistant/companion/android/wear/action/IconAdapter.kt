@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.wear.create
+package io.homeassistant.companion.android.wear.action
 
 import android.content.Context
 import android.view.LayoutInflater

@@ -13,7 +13,8 @@ import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.wear.DaggerPresenterComponent
 import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
-import io.homeassistant.companion.android.wear.create.CreateActionActivity
+import io.homeassistant.companion.android.wear.action.ActionActivity
+import io.homeassistant.companion.android.wear.action.ActionActivityArgs
 import io.homeassistant.companion.android.wear.databinding.FragmentActionsBinding
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
 import io.homeassistant.companion.android.wear.util.extensions.domainComponent
@@ -24,7 +25,10 @@ class ActionsFragment : Fragment(), ActionsView {
     @Inject lateinit var presenter: ActionsPresenter
 
     private lateinit var binding: FragmentActionsBinding
-    private val adapter by lazy { ActionsAdapter(presenter::onActionClick) }
+
+    private val adapter by lazy {
+        ActionsAdapter(presenter::onActionClick, ::onActionLongClick)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,10 +59,14 @@ class ActionsFragment : Fragment(), ActionsView {
         progress.setOnClickListener { hideConfirmation() }
 
         binding.actionButton.setOnClickListener {
-            startActivity(Intent(requireContext(), CreateActionActivity::class.java))
+            startActivity(Intent(requireContext(), ActionActivity::class.java))
         }
 
         presenter.onViewReady()
+    }
+
+    private fun onActionLongClick(action: WearAction) {
+        ActionActivityArgs(action).startActivity(requireActivity())
     }
 
     override fun onActionsLoaded(actions: List<WearAction>) {

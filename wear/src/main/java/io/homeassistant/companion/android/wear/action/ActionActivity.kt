@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.wear.create
+package io.homeassistant.companion.android.wear.action
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,16 +9,20 @@ import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.wear.DaggerPresenterComponent
 import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
+import io.homeassistant.companion.android.wear.buildArgs
 import io.homeassistant.companion.android.wear.databinding.FragmentCreateActionBinding
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
 import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
 import io.homeassistant.companion.android.wear.util.resources.actionIconById
+import io.homeassistant.companion.android.wear.util.resources.setActionIcon
 import javax.inject.Inject
 
-class CreateActionActivity : AppCompatActivity(), CreateActionView {
+class ActionActivity : AppCompatActivity(), ActionView {
 
-    @Inject lateinit var presenter: CreateActionPresenter
+    @Inject lateinit var presenter: ActionPresenter
+
+    private lateinit var args: ActionActivityArgs
 
     private val binding by viewBinding(FragmentCreateActionBinding::inflate)
 
@@ -30,25 +34,37 @@ class CreateActionActivity : AppCompatActivity(), CreateActionView {
             .create(appComponent, domainComponent, PresenterModule(this), this)
             .inject(this)
 
+        args = ActionActivityArgs.buildArgs(intent, savedInstanceState)
+
         binding.actionIcon.setOnClickListener { showIconSelectAlertDialog() }
         binding.actionButton.setOnClickListener {
             val action = buildWearAction() ?: return@setOnClickListener
-            presenter.createAction(action)
+            presenter.saveAction(action)
+        }
+
+        val action = args.action
+        if (action != null) {
+            binding.heading.setText(R.string.action_header_update)
+            binding.actionNameInput.setText(action.name)
+            binding.actionActionInput.setText(action.action)
+            binding.actionIcon.setActionIcon(action.icon)
+        } else {
+            binding.heading.setText(R.string.action_header_create)
         }
 
         presenter.onViewReady()
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        args.saveInstance(outState)
+    }
+
     private fun showIconSelectAlertDialog () {
-        val adapter = IconAdapter(this)
-        val dialog = AlertDialog.Builder(this)
-            .setAdapter(adapter) { _, index ->
-                val iconId = actionIconById(index)
-                binding.actionIcon.setCompoundDrawablesWithIntrinsicBounds(iconId, 0, 0,0)
-                binding.actionIcon.tag = index
-            }
-            .create()
-        dialog.show()
+        AlertDialog.Builder(this)
+            .setAdapter(IconAdapter(this)) { _, index -> binding.actionIcon.setActionIcon(index) }
+            .setNegativeButton(R.string.cancel) { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 
     private fun buildWearAction(): WearAction? {
@@ -60,7 +76,8 @@ class CreateActionActivity : AppCompatActivity(), CreateActionView {
         if (name.isBlank() || action.isBlank()) {
             return null
         }
-        return WearAction(icon = icon, name = name, action = action)
+        return args.action?.copy(icon = icon, name = name, action = action)
+            ?: WearAction(icon = icon, name = name, action = action)
     }
 
     override fun showConfirmed(confirmType: Int, message: Int) {
