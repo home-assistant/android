@@ -107,6 +107,8 @@ like to connect to:</string>
   <string name="confirmation_action_created_failure">Unable to create this action.</string>
   <string name="confirmation_action_updated">Action updated!</string>
   <string name="confirmation_action_updated_failure">Unable to update this action.</string>
+  <string name="confirmation_action_deleted">Action deleted!</string>
+  <string name="confirmation_action_deleted_failure">Unable to delete this action.</string>
 
   <string name="action_header_create">Create Action</string>
   <string name="action_header_update">Update Action</string>

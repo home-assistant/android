@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.wear.actions
 
-import androidx.wear.activity.ConfirmationActivity
+import androidx.wear.activity.ConfirmationActivity.FAILURE_ANIMATION
+import androidx.wear.activity.ConfirmationActivity.SUCCESS_ANIMATION
 import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.common.actions.WearActionUseCase
 import io.homeassistant.companion.android.common.util.ProgressTimeLatch
@@ -54,9 +55,9 @@ class ActionsPresenterImpl @Inject constructor(
             progressLatch.refreshing = false
             isLoading.set(false)
             if (result != null) {
-                view.showConfirmed(ConfirmationActivity.SUCCESS_ANIMATION, R.string.confirmation_action_send)
+                view.showConfirmed(SUCCESS_ANIMATION, R.string.confirmation_action_send)
             } else {
-                view.showConfirmed(ConfirmationActivity.FAILURE_ANIMATION, R.string.confirmation_action_send_failure)
+                view.showConfirmed(FAILURE_ANIMATION, R.string.confirmation_action_send_failure)
             }
         }
     }

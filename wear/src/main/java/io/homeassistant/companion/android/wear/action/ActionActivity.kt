@@ -4,13 +4,14 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.wear.activity.ConfirmationActivity
 import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.wear.DaggerPresenterComponent
 import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
+import io.homeassistant.companion.android.wear.databinding.ActivityActionBinding
 import io.homeassistant.companion.android.wear.ui.buildArgs
-import io.homeassistant.companion.android.wear.databinding.FragmentCreateActionBinding
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
 import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
@@ -23,7 +24,7 @@ class ActionActivity : AppCompatActivity(), ActionView {
 
     private lateinit var args: ActionActivityArgs
 
-    private val binding by viewBinding(FragmentCreateActionBinding::inflate)
+    private val binding by viewBinding(ActivityActionBinding::inflate)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +48,8 @@ class ActionActivity : AppCompatActivity(), ActionView {
             binding.actionNameInput.setText(action.name)
             binding.actionActionInput.setText(action.action)
             binding.actionIcon.setActionIcon(action.icon)
+            binding.deleteButton.isVisible = true
+            binding.deleteButton.setOnClickListener { presenter.deleteAction(action) }
         } else {
             binding.heading.setText(R.string.action_header_create)
         }

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:clipToPadding="false"
     android:paddingTop="@dimen/page_action_create_top_padding"
     android:paddingBottom="@dimen/page_action_create_bottom_padding"
@@ -60,16 +60,35 @@
             android:tag="0"
             android:text="@string/action_icon" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/actionButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_marginTop="16dp"
-            android:src="@drawable/ic_check_black_24dp"
-            app:backgroundTint="?attr/colorAccent"
-            app:fabSize="normal"
-            app:tint="@android:color/white" />
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/deleteButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="32dp"
+                android:src="@drawable/ic_cc_clear"
+                android:visibility="gone"
+                app:backgroundTint="@color/colorWarning"
+                app:fabSize="normal"
+                app:tint="@android:color/white"
+                tools:visibility="visible"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/actionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_check_black_24dp"
+                app:backgroundTint="?attr/colorAccent"
+                app:fabSize="normal"
+                app:tint="@android:color/white" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

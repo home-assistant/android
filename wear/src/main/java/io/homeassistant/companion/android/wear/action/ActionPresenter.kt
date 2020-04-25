@@ -6,6 +6,7 @@ interface ActionPresenter {
 
     fun onViewReady()
     fun saveAction(action: WearAction)
+    fun deleteAction(action: WearAction)
     fun finish()
 
 }
