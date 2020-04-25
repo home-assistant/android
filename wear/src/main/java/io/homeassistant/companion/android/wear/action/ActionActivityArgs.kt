@@ -4,9 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import io.homeassistant.companion.android.common.actions.WearAction
-import io.homeassistant.companion.android.wear.ActivityArgs
+import io.homeassistant.companion.android.wear.ui.ActivityArgs
 
-class ActionActivityArgs(val action: WearAction?) : ActivityArgs {
+class ActionActivityArgs(val action: WearAction?) :
+    ActivityArgs {
 
     companion object : ActivityArgs.Factory<ActionActivityArgs> {
         private const val KEY_ACTION = "ActionActivityArgs.ACTION"

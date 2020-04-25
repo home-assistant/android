@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.wear
+package io.homeassistant.companion.android.wear.ui
 
 import android.app.Activity
 import android.content.Intent

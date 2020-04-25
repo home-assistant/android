@@ -9,12 +9,11 @@ import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.wear.DaggerPresenterComponent
 import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
-import io.homeassistant.companion.android.wear.buildArgs
+import io.homeassistant.companion.android.wear.ui.buildArgs
 import io.homeassistant.companion.android.wear.databinding.FragmentCreateActionBinding
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
 import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
-import io.homeassistant.companion.android.wear.util.resources.actionIconById
 import io.homeassistant.companion.android.wear.util.resources.setActionIcon
 import javax.inject.Inject
 
