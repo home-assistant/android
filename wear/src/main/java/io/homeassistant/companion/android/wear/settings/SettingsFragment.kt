@@ -1,20 +1,60 @@
 package io.homeassistant.companion.android.wear.settings
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.fragment.app.Fragment
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.wear.activity.ConfirmationActivity
+import io.homeassistant.companion.android.wear.DaggerPresenterComponent
+import io.homeassistant.companion.android.wear.PresenterModule
+import io.homeassistant.companion.android.wear.R
+import io.homeassistant.companion.android.wear.databinding.ViewRecyclerviewBinding
+import io.homeassistant.companion.android.wear.util.extensions.appComponent
+import io.homeassistant.companion.android.wear.util.extensions.domainComponent
+import io.homeassistant.companion.android.wear.util.extensions.requirePreference
+import javax.inject.Inject
 
-class SettingsFragment : Fragment() {
+class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return TextView(requireContext()).apply { text = "Dit iss een settings fragment" }
+    @Inject lateinit var presenter: SettingsPresenter
+
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        DaggerPresenterComponent.factory()
+            .create(appComponent, domainComponent, PresenterModule(this), requireContext())
+            .inject(this)
+
+        setPreferencesFromResource(R.xml.settings, rootKey)
+
+        val resyncButton = requirePreference<Preference>("resync_settings")
+        resyncButton.setOnPreferenceClickListener {
+            presenter.syncSettings()
+            return@setOnPreferenceClickListener true
+        }
+
+        presenter.onViewReady()
     }
 
+    override fun onCreateRecyclerView(infl: LayoutInflater, parent: ViewGroup, state: Bundle?): RecyclerView {
+        val binding = ViewRecyclerviewBinding.inflate(infl, parent, false)
+        val recyclerView = binding.recyclerView
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.isCircularScrollingGestureEnabled = false
+        recyclerView.isEdgeItemsCenteringEnabled = false
+        return recyclerView
+    }
+
+    override fun displaySyncInProgress(inProgress: Boolean) {
+
+    }
+
+    override fun showConfirmed(confirmedType: Int, message: Int) {
+        val intent = Intent(requireContext(), ConfirmationActivity::class.java)
+            .putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, confirmedType)
+            .putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(message))
+        startActivity(intent)
+    }
 }

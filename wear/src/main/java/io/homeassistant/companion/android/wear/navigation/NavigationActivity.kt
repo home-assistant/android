@@ -1,13 +1,10 @@
 package io.homeassistant.companion.android.wear.navigation
 
-import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.widget.drawer.WearableNavigationDrawerView
 import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.actions.ActionsFragment
-import io.homeassistant.companion.android.wear.create.CreateActionActivity
 import io.homeassistant.companion.android.wear.databinding.ActivityNavigationBinding
 import io.homeassistant.companion.android.wear.settings.SettingsFragment
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding

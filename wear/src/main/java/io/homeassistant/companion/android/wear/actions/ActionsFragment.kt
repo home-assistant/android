@@ -29,7 +29,7 @@ class ActionsFragment : Fragment(), ActionsView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this))
+            .create(appComponent, domainComponent, PresenterModule(this), requireContext())
             .inject(this)
     }
 
@@ -46,7 +46,7 @@ class ActionsFragment : Fragment(), ActionsView {
         super.onViewCreated(view, savedInstanceState)
         val recyclerView = binding.recyclerView
         recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
-        recyclerView.isEdgeItemsCenteringEnabled = false
+        recyclerView.isEdgeItemsCenteringEnabled = true
         recyclerView.isCircularScrollingGestureEnabled = false
         recyclerView.adapter = adapter
 

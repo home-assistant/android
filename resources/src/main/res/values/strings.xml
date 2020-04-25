@@ -91,8 +91,10 @@ like to connect to:</string>
   <string name="ha_wear_device_type_error">Unable to determine the type of the device connected to this watch.</string>
   <string name="ha_wear_not_supporting_apple">Home assistant on Wear doesn\'t over support for watches connected to Apple devices.</string>
   <string name="ha_phone_app_not_reachable">Home assistant on your phone is not reachable, either install home assistant or make sure your phone is reachable.</string>
+  <string name="ha_phone_app_not_reachable_short">Home assistant on your phone is not reachable.</string>
   <string name="ha_session_inactive">Unable to find an active session, make sure you have setup Home Assistant correctly on your phone.</string>
   <string name="launch_store">Launch</string>
+  <string name="ha_settings_synced">Settings have been synced</string>
 
   <string name="page_actions">Actions</string>
   <string name="page_settings">Settings</string>
@@ -110,5 +112,8 @@ like to connect to:</string>
   <string name="action_icon">Icon</string>
   <string name="action">Action</string>
   <string name="action_required">The action is required!</string>
+
+  <string name="resync_settings">Resync Settings</string>
+  <string name="resync_settings_summary">Resync the settings from your phone</string>
 
 </resources>

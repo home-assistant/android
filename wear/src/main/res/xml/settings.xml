@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/page_settings">
+
+        <Preference
+            android:key="resync_settings"
+            android:icon="@drawable/ic_reload"
+            android:title="@string/resync_settings"
+            android:summary="@string/resync_settings_summary"/>
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

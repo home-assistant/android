@@ -82,6 +82,7 @@ dependencies {
     implementation(Config.Dependency.AndroidX.fragment)
     implementation(Config.Dependency.AndroidX.recyclerview)
     implementation(Config.Dependency.AndroidX.wear)
+    implementation(Config.Dependency.AndroidX.preference)
 
     implementation(Config.Dependency.Google.material)
     implementation(Config.Dependency.Google.dagger)

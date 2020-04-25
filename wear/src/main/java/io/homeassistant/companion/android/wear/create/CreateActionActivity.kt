@@ -27,7 +27,7 @@ class CreateActionActivity : AppCompatActivity(), CreateActionView {
         setContentView(binding.root)
 
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this))
+            .create(appComponent, domainComponent, PresenterModule(this), this)
             .inject(this)
 
         binding.actionIcon.setOnClickListener { showIconSelectAlertDialog() }

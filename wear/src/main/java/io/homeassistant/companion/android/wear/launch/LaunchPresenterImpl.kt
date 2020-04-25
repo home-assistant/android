@@ -4,12 +4,15 @@ import android.os.Handler
 import android.os.Looper
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.MessageEvent
+import io.homeassistant.companion.android.common.util.ProgressTimeLatch
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.Session
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.wear.R
+import io.homeassistant.companion.android.wear.background.SettingsSyncCallback
+import io.homeassistant.companion.android.wear.background.SettingsSyncManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,24 +24,17 @@ import javax.inject.Inject
 
 class LaunchPresenterImpl @Inject constructor(
     private val view: LaunchView,
+    private val syncManager: SettingsSyncManager,
     private val authenticationUseCase: AuthenticationUseCase,
-    private val integrationUseCase: IntegrationUseCase,
-    private val urlUseCase: UrlUseCase
-) : LaunchPresenter {
-
-    companion object {
-        const val CONFIG_PATH = "/config"
-
-        private const val KEY_ACTIVE_SESSION = "activeSession"
-        private const val KEY_URLS = "urls"
-        private const val KEY_SSIDS = "ssids"
-        private const val KEY_SESSION = "session"
-    }
+    private val integrationUseCase: IntegrationUseCase
+) : LaunchPresenter, SettingsSyncCallback {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val progressLatch = ProgressTimeLatch(defaultValue = false, refreshingToggle = view::showProgressBar)
+
     private val handler = Handler(Looper.getMainLooper())
     private val delayedShow = Runnable {
-        view.showProgressBar(false)
+        progressLatch.refreshing = false
         view.showActionButton(R.string.retry, R.drawable.ic_reload) {
             view.showActionButton(null)
             mainScope.launch { onRefresh() }
@@ -46,12 +42,15 @@ class LaunchPresenterImpl @Inject constructor(
     }
 
     override fun onViewReady() {
+        syncManager.syncCallback = this
+
         mainScope.launch {
-            val sessionState = authenticationUseCase.getSessionState()
+            progressLatch.refreshing = true
+            val sessionState = withContext(Dispatchers.IO) { authenticationUseCase.getSessionState() }
             val registered = integrationUseCase.isRegistered()
             if (sessionState == SessionState.CONNECTED && registered) {
-                view.showProgressBar(false)
-                delay(1500)
+                progressLatch.refreshing = false
+                withContext(Dispatchers.IO) { delay(1500) }
                 view.displayNextScreen()
             } else {
                 onRefresh()
@@ -61,50 +60,30 @@ class LaunchPresenterImpl @Inject constructor(
 
     override suspend fun onRefresh() {
         handler.removeCallbacks(delayedShow)
-        view.showProgressBar(true)
-        val nodeWithAppInstalled = withContext(Dispatchers.IO) { view.getNodeWithInstalledApp() }
-        if (nodeWithAppInstalled == null) {
+        progressLatch.refreshing = true
+        val connectedDevice = withContext(Dispatchers.IO) { syncManager.getNodeWithInstalledApp() }
+        if (connectedDevice == null) {
             view.displayUnreachable()
         } else {
             handler.postDelayed(delayedShow, 5000)
-            view.sendMessage(nodeWithAppInstalled.id)
+            syncManager.sendMessage(connectedDevice.id)
         }
     }
 
-    override fun onMessageReceived(message: MessageEvent) {
-        when (message.path) {
-            CONFIG_PATH -> {
-                handler.removeCallbacks(delayedShow)
-                val dataMap = DataMap.fromByteArray(message.data)
-                if (!dataMap.getBoolean(KEY_ACTIVE_SESSION)) {
-                    view.displayInactiveSession()
-                }
-                mainScope.launch {
-                    val sessionMap = dataMap.getDataMap(KEY_SESSION)
-                    val session = Session(
-                        accessToken = sessionMap.getString("access"),
-                        expiresTimestamp = sessionMap.getLong("expires"),
-                        refreshToken = sessionMap.getString("refresh"),
-                        tokenType = sessionMap.getString("type")
-                    )
-                    authenticationUseCase.saveSession(session)
+    override fun onConfigReceived() = handler.removeCallbacks(delayedShow)
 
-                    val ssids = dataMap.getStringArrayList(KEY_SSIDS).toSet()
-                    urlUseCase.saveHomeWifiSsids(ssids)
+    override fun onInactiveSession() {
+        progressLatch.refreshing = false
+        view.displayInactiveSession()
+    }
 
-                    val urlMap = dataMap.getDataMap(KEY_URLS)
-                    val cloudUrl = urlMap.getString("cloudhook_url")
-                    val remoteUrl = urlMap.getString("remote_url")
-                    val localUrl = urlMap.getString("local_url")
-                    val webhookId = urlMap.getString("webhook_id")
-                    urlUseCase.saveRegistrationUrls(cloudUrl, remoteUrl, webhookId, localUrl)
-                    view.displayNextScreen()
-                }
-            }
-        }
+    override fun onConfigSynced() {
+        progressLatch.refreshing = false
+        view.displayNextScreen()
     }
 
     override fun onFinish() {
+        syncManager.cancel()
         handler.removeCallbacks(delayedShow)
         mainScope.cancel()
     }

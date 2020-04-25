@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.HomeAssistant.Wear" parent="Theme.HomeAssistant.Dark">
+        <item name="preferenceTheme">@style/Theme.HomeAssistant.Wear.Preference</item>
+    </style>
+
+    <style name="Theme.HomeAssistant.Wear.Preference" parent="@style/PreferenceThemeOverlay">
+        <item name="preferenceCategoryStyle">@style/Theme.HomeAssistant.Wear.Preference.Category</item>
+    </style>
+
+    <style name="Theme.HomeAssistant.Wear.Preference.Category" parent="@style/Preference.Category.Material">
+        <item name="android:layout" tools:ignore="PrivateResource">
+            @layout/preference_category
+        </item>
+    </style>
+</resources>
