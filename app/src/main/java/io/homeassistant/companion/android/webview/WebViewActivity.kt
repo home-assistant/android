@@ -270,6 +270,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     .getString("event") == "connected"
                                 if (isConnected) {
                                     alertDialog?.cancel()
+                                    setupPanelShortcuts()
                                 }
                             }
                             "config/get" -> {
@@ -375,8 +376,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 if (presenter.isFullScreen())
                     hideSystemUI()
         }
-
-        setupPanelShortcuts()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -581,7 +580,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun setupPanelShortcuts() {
-        if (isConnected && Build.VERSION.SDK_INT >= 25) {
+        if (Build.VERSION.SDK_INT >= 25) {
             val panels = presenter.getPanels()
 
             val shortcutManager = getSystemService(ShortcutManager::class.java)
