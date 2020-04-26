@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.actions.ActionsFragment
 import io.homeassistant.companion.android.wear.databinding.ActivityNavigationBinding
 import io.homeassistant.companion.android.wear.settings.SettingsFragment
+import io.homeassistant.companion.android.wear.util.extensions.requireDrawable
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
 
 class NavigationActivity : AppCompatActivity(), WearableNavigationDrawerView.OnItemSelectedListener {
@@ -19,18 +20,17 @@ class NavigationActivity : AppCompatActivity(), WearableNavigationDrawerView.OnI
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
+        adapter.submitPages(pages)
         binding.topDrawer.setAdapter(adapter)
         binding.topDrawer.addOnItemSelectedListener(this)
 
-        val navigationPages = pages
-        adapter.submitPages(navigationPages)
         onItemSelected(0)
     }
 
     private val pages: List<NavigationItem>
         get() = arrayListOf(
-            NavigationItem(getString(R.string.page_actions), getDrawable(R.drawable.ic_home_assistant)!!, NavigationPage.ACTIONS),
-            NavigationItem(getString(R.string.page_settings), getDrawable(R.drawable.ic_settings)!!, NavigationPage.SETTINGS)
+            NavigationItem(getString(R.string.page_actions), requireDrawable(R.drawable.ic_home_assistant), NavigationPage.ACTIONS),
+            NavigationItem(getString(R.string.page_settings), requireDrawable(R.drawable.ic_settings), NavigationPage.SETTINGS)
         )
 
     override fun onItemSelected(pos: Int) {

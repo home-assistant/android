@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.wear.util.extensions
 
+import android.graphics.drawable.Drawable
+import androidx.annotation.DrawableRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import io.homeassistant.companion.android.common.dagger.AppComponent
@@ -22,3 +24,7 @@ val Fragment.domainComponent: DomainComponent
  */
 val Fragment.isStarted: Boolean
     get() = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+
+fun Fragment.requireDrawable(@DrawableRes resourceId: Int): Drawable {
+    return requireContext().requireDrawable(resourceId)
+}

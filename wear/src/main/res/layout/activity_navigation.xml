@@ -15,6 +15,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="?attr/colorAccent"
-        app:navigationStyle="multiPage" />
+        app:navigationStyle="singlePage" />
 
 </androidx.wear.widget.drawer.WearableDrawerLayout>
