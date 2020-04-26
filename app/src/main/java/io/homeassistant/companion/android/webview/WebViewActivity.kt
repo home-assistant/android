@@ -581,34 +581,28 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun setupPanelShortcuts() {
-        waitForConnection()
         if (isConnected && Build.VERSION.SDK_INT >= 25) {
             val panels = presenter.getPanels()
 
             val shortcutManager = getSystemService(ShortcutManager::class.java)
-            val shortcuts = ArrayList<ShortcutInfo>()
-            var count = 0
-            panels.map { panel ->
-                if (!panel.title.isNullOrEmpty() && panel.component_name.contains("lovelace") && count < 6) {
-                    count++
-                    shortcuts.add(
-                        ShortcutInfo.Builder(
-                            this,
-                            panel.component_name
-                        )
-                            .setShortLabel(panel.title!!)
-                            .setLongLabel(panel.title!!)
-                            .setIcon(Icon.createWithResource(this, R.drawable.app_icon))
-                            .setIntent(
-                                newInstance(this, panel.url_path).apply {
-                                    this.action = Intent.ACTION_VIEW
-                                }
-                            )
-                            .build()
+            shortcutManager!!.dynamicShortcuts = panels
+                .filter { panel -> !panel.title.isNullOrEmpty() && panel.component_name.contains("lovelace") }
+                .take(5)
+                .map { panel ->
+                    ShortcutInfo.Builder(
+                        this,
+                        panel.component_name
                     )
+                        .setShortLabel(panel.title!!)
+                        .setLongLabel(panel.title!!)
+                        .setIcon(Icon.createWithResource(this, R.drawable.app_icon))
+                        .setIntent(
+                            newInstance(this, panel.url_path).apply {
+                                this.action = Intent.ACTION_VIEW
+                            }
+                        )
+                        .build()
                 }
             }
-            shortcutManager!!.dynamicShortcuts = shortcuts
         }
     }
-}
