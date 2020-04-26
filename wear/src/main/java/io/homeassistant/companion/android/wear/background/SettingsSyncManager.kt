@@ -45,12 +45,18 @@ class SettingsSyncManager @Inject constructor(
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
     var syncCallback: SettingsSyncCallback? = null
 
-    suspend fun getNodeWithInstalledApp(): Node? {
+    suspend fun getNodeWithInstalledApp(): CapabilityResult? {
         val capabilityInfo = catch {
             capabilityClient.getCapability(CAPABILITY_PHONE, CapabilityClient.FILTER_ALL).await()
         }
-        val nodes: MutableSet<Node> = capabilityInfo?.nodes ?: return null
-        return nodes.find { node -> node.isNearby }
+        val nodes: MutableSet<Node>? = capabilityInfo?.nodes
+        if (nodes == null || nodes.isEmpty()) {
+            return CapabilityResult(Result.FAILURE)
+        }
+        val foundDevice = nodes.find { node -> node.isNearby }
+            ?: return CapabilityResult(Result.NOT_NEARBY)
+
+        return CapabilityResult(Result.SUCCESS, foundDevice)
     }
 
     suspend fun sendMessage(nodeId: String): Boolean {

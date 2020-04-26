@@ -8,6 +8,7 @@ import androidx.wear.activity.ConfirmationActivity.SUCCESS_ANIMATION
 import io.homeassistant.companion.android.common.util.ProgressTimeLatch
 import io.homeassistant.companion.android.wear.BuildConfig
 import io.homeassistant.companion.android.wear.R
+import io.homeassistant.companion.android.wear.background.Result
 import io.homeassistant.companion.android.wear.background.SettingsSyncCallback
 import io.homeassistant.companion.android.wear.background.SettingsSyncManager
 import kotlinx.coroutines.CoroutineScope
@@ -38,16 +39,20 @@ class SettingsPresenterImpl @Inject constructor(
     override fun syncSettings() {
         mainScope.launch {
             progressLatch.refreshing = true
-            val connectedDevice = withContext(Dispatchers.IO) { syncManager.getNodeWithInstalledApp() }
-            if (connectedDevice == null) {
+            val capabilityResult = withContext(Dispatchers.IO) { syncManager.getNodeWithInstalledApp() }
+            if (capabilityResult == null || capabilityResult.result == Result.FAILURE) {
                 progressLatch.refreshing = false
                 view.showConfirmed(FAILURE_ANIMATION, R.string.ha_phone_app_not_reachable)
-                return@launch
-            }
-            val result = withContext(Dispatchers.IO) { syncManager.sendMessage(connectedDevice.id) }
-            handler.postDelayed(delayedShow, 5000)
-            if (BuildConfig.DEBUG) {
-                Log.d("SettingsPresenter", "Send sync message result: $result")
+            } else if (capabilityResult.result == Result.NOT_NEARBY) {
+                progressLatch.refreshing = false
+                view.showConfirmed(FAILURE_ANIMATION, R.string.ha_state_handheld_not_nearby)
+            } else {
+                val deviceId = capabilityResult.deviceNode.id
+                val result = withContext(Dispatchers.IO) { syncManager.sendMessage(deviceId) }
+                handler.postDelayed(delayedShow, 5000)
+                if (BuildConfig.DEBUG) {
+                    Log.d("SettingsPresenter", "Send sync message result: $result")
+                }
             }
         }
     }
@@ -56,7 +61,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun onInactiveSession() {
         progressLatch.refreshing = false
-        view.showConfirmed(FAILURE_ANIMATION, R.string.ha_session_inactive)
+        view.showConfirmed(FAILURE_ANIMATION, R.string.ha_state_session_inactive)
     }
 
     override fun onConfigSynced() {

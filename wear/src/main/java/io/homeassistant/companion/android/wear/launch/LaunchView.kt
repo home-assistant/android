@@ -6,6 +6,7 @@ interface LaunchView {
     fun showActionButton(message: Int?, icon: Int? = null, action: (() -> Unit)? = null)
 
     fun displayUnreachable()
+    fun displayNotNearby()
     fun displayInactiveSession()
     fun displayNextScreen()
 }

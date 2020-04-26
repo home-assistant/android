@@ -92,7 +92,8 @@ like to connect to:</string>
   <string name="ha_wear_not_supporting_apple">Home assistant on Wear doesn\'t over support for watches connected to Apple devices.</string>
   <string name="ha_phone_app_not_reachable">Home assistant on your phone is not reachable, either install home assistant or make sure your phone is reachable.</string>
   <string name="ha_phone_app_not_reachable_short">Home assistant on your phone is not reachable.</string>
-  <string name="ha_session_inactive">Unable to find an active session, make sure you have setup Home Assistant correctly on your phone.</string>
+  <string name="ha_state_handheld_not_nearby">The handheld is not close enough to connect to.</string>
+  <string name="ha_state_session_inactive">Unable to find an active session, make sure you have setup Home Assistant correctly on your phone.</string>
   <string name="launch_store">Launch</string>
   <string name="ha_settings_synced">Settings have been synced</string>
 

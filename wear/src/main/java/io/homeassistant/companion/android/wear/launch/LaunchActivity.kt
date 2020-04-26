@@ -73,9 +73,15 @@ class LaunchActivity : WearableActivity(), LaunchView {
         setStateInfo(R.string.ha_phone_app_not_reachable)
     }
 
-    override fun displayInactiveSession() {
-        setStateInfo(R.string.ha_session_inactive)
+    override fun displayNotNearby() {
+        showActionButton(R.string.retry, R.drawable.ic_reload) {
+            showActionButton(null)
+            launchPresenter.onRefresh()
+        }
+        setStateInfo(R.string.ha_state_handheld_not_nearby)
     }
+
+    override fun displayInactiveSession() = setStateInfo(R.string.ha_state_session_inactive)
 
     override fun displayNextScreen() {
         startActivity(Intent(this, NavigationActivity::class.java))
