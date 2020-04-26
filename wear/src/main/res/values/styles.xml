@@ -5,6 +5,7 @@
     </style>
 
     <style name="Theme.HomeAssistant.Wear.Preference" parent="@style/PreferenceThemeOverlay">
+        <item name="android:layout">@layout/fragment_settings</item>
         <item name="preferenceCategoryStyle">@style/Theme.HomeAssistant.Wear.Preference.Category</item>
     </style>
 

@@ -35,7 +35,7 @@
             android:layout_marginTop="8dp"
             android:hint="@string/action_name"
             android:importantForAutofill="no"
-            android:inputType="textNoSuggestions" />
+            android:inputType="text" />
 
         <EditText
             android:id="@+id/actionActionInput"
@@ -44,7 +44,7 @@
             android:layout_marginTop="16dp"
             android:hint="@string/action"
             android:importantForAutofill="no"
-            android:inputType="textNoSuggestions" />
+            android:inputType="text" />
 
         <TextView
             android:id="@+id/actionIcon"
@@ -77,7 +77,7 @@
                 app:backgroundTint="@color/colorWarning"
                 app:fabSize="normal"
                 app:tint="@android:color/white"
-                tools:visibility="visible"/>
+                tools:visibility="visible" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/actionButton"
