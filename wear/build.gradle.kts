@@ -22,9 +22,9 @@ android {
     signingConfigs {
         create("release") {
             storeFile = file("../release_keystore.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "homeassistant"
-            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: "homeassistant"
-            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: "homeassistant"
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
+            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
             isV1SigningEnabled = true
             isV2SigningEnabled = true
         }
@@ -35,7 +35,7 @@ android {
             applicationIdSuffix = ".debug"
         }
         named("release").configure {
-            isDebuggable = true
+            isDebuggable = false
             isJniDebuggable = false
             isZipAlignEnabled = true
             signingConfig = signingConfigs.getByName("release")
