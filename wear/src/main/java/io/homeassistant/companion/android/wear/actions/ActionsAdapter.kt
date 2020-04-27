@@ -8,9 +8,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.common.actions.WearAction
-import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.databinding.ItemActionBinding
-import io.homeassistant.companion.android.wear.util.resources.actionIconById
 
 class ActionsAdapter(
     private val onClick: (WearAction) -> Unit,
@@ -30,7 +28,7 @@ class ActionsAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val action = getItem(position) ?: return
         val binding = ItemActionBinding.bind(holder.itemView)
-        binding.icon.setImageResource(actionIconById(action.icon))
+        binding.icon.setIcon(action.icon)
         binding.name.text = action.name
     }
 
@@ -45,8 +43,8 @@ class ActionsAdapter(
             itemView.setOnLongClickListener(this)
         }
 
-        override fun onClick(v: View) = onClick(adapterPosition)
-        override fun onLongClick(v: View?): Boolean = onLongClick(adapterPosition).run { true }
+        override fun onClick(v: View) = onClick(bindingAdapterPosition)
+        override fun onLongClick(v: View?): Boolean = onLongClick(bindingAdapterPosition).run { true }
     }
 
     private class WearActionListDiffer :  DiffUtil.ItemCallback<WearAction>() {

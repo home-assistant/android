@@ -35,7 +35,7 @@
             android:layout_marginTop="8dp"
             android:hint="@string/action_name"
             android:importantForAutofill="no"
-            android:inputType="text" />
+            android:inputType="text|textCapWords" />
 
         <EditText
             android:id="@+id/actionActionInput"
@@ -44,21 +44,39 @@
             android:layout_marginTop="16dp"
             android:hint="@string/action"
             android:importantForAutofill="no"
-            android:inputType="text" />
+            android:inputType="text|textWebEditText" />
 
-        <TextView
-            android:id="@+id/actionIcon"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="?attr/selectableItemBackground"
-            android:drawableStart="@drawable/ic_flash_on_black_24dp"
-            android:drawablePadding="8dp"
-            android:drawableTint="@android:color/white"
-            android:gravity="center_vertical"
-            android:minHeight="32dp"
-            android:tag="0"
-            android:text="@string/action_icon" />
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/actionIconInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:digits="abcdefghijklmnopqrstuvwxyz1234567890-"
+                android:ellipsize="end"
+                android:hint="@string/action_icon_hint"
+                android:imeOptions="actionDone"
+                android:importantForAutofill="no"
+                android:inputType="text|textNoSuggestions"
+                android:maxLines="1" />
+
+            <net.steamcrafted.materialiconlib.MaterialIconView
+                android:id="@+id/actionIconPreview"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center"
+                app:materialIconColor="@android:color/white"
+                app:materialIconSize="24dp"
+                tools:src="@drawable/ic_lightbulb_outline_black_24dp"
+                tools:tint="@android:color/white" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

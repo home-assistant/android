@@ -75,6 +75,7 @@ class LaunchActivity : WearableActivity(), LaunchView {
 
     override fun displayNotNearby() {
         showActionButton(R.string.retry, R.drawable.ic_reload) {
+            setStateInfo(null)
             showActionButton(null)
             launchPresenter.onRefresh()
         }

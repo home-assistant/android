@@ -114,6 +114,7 @@ object Config {
             const val threeTenBp = "org.threeten:threetenbp:1.4.0"
             const val threeTenAbp = "com.jakewharton.threetenabp:threetenabp:1.2.1"
             const val javaxInject = "javax.inject:javax.inject:1"
+            const val mdi = "net.steamcrafted:materialiconlib:1.1.5"
         }
     }
 

@@ -3,18 +3,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@drawable/bg_circle_ripple_white"
     android:gravity="center"
     android:padding="16dp"
     android:orientation="vertical">
 
-    <ImageView
+    <net.steamcrafted.materialiconlib.MaterialIconView
         android:id="@+id/icon"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:contentDescription="@null"
-        android:tint="@android:color/white"
-        tools:src="@drawable/ic_lightbulb_outline_black_24dp"/>
+        app:materialIconColor="@android:color/white"
+        app:materialIconSize="24dp"
+        tools:src="@drawable/ic_lightbulb_outline_black_24dp"
+        tools:tint="@android:color/white"/>
 
     <TextView
         android:id="@+id/name"

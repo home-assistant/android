@@ -24,7 +24,6 @@ android {
     }
 }
 
-
 tasks.withType<KotlinCompile>().all {
     kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
 }
@@ -44,4 +43,6 @@ dependencies {
     kapt (Config.Dependency.Google.daggerCompiler)
 
     implementation(Config.Dependency.Square.retrofit)
+
+    api(Config.Dependency.Misc.mdi)
 }

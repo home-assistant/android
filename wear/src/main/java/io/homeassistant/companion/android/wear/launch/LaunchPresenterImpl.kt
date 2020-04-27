@@ -38,8 +38,10 @@ class LaunchPresenterImpl @Inject constructor(
     private val handler = Handler(Looper.getMainLooper())
     private val delayedShow = Runnable {
         progressLatch.refreshing = false
+        view.setStateInfo(R.string.ha_phone_app_not_reachable)
         view.showActionButton(R.string.retry, R.drawable.ic_reload) {
             view.showActionButton(null)
+            view.setStateInfo(null)
             onRefresh()
         }
     }
@@ -53,7 +55,6 @@ class LaunchPresenterImpl @Inject constructor(
             val registered = integrationUseCase.isRegistered()
             if (sessionState == SessionState.CONNECTED && registered) {
                 progressLatch.refreshing = false
-                withContext(Dispatchers.IO) { delay(1500) }
                 view.displayNextScreen()
             } else {
                 onRefresh()
@@ -67,8 +68,10 @@ class LaunchPresenterImpl @Inject constructor(
             progressLatch.refreshing = true
             val capabilityResult = withContext(Dispatchers.IO) { syncManager.getNodeWithInstalledApp() }
             if (capabilityResult == null || capabilityResult.result == Result.FAILURE) {
+                progressLatch.refreshing = false
                 view.displayUnreachable()
             } else if (capabilityResult.result == Result.NOT_NEARBY) {
+                progressLatch.refreshing = false
                 view.displayNotNearby()
             } else {
                 handler.postDelayed(delayedShow, 5000)

@@ -53,6 +53,9 @@ class SettingsSyncManager @Inject constructor(
         if (nodes == null || nodes.isEmpty()) {
             return CapabilityResult(Result.FAILURE)
         }
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Nodes found: $nodes")
+        }
         val foundDevice = nodes.find { node -> node.isNearby }
             ?: return CapabilityResult(Result.NOT_NEARBY)
 
