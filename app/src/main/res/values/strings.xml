@@ -99,4 +99,6 @@ like to connect to:</string>
   <string name="profile">Profile</string>
   <string name="shopping_list">Shopping List</string>
   <string name="states">Overview</string>
+  <string name="shortcuts">Shortcuts</string>
+  <string name="shortcuts_summary">Add shortcuts to launcher</string>
 </resources>

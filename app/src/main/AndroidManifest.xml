@@ -97,6 +97,9 @@
         <activity
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity" />
+        <activity
+            android:name=".shortcuts.ShortcutsActivity"
+            android:parentActivityName=".settings.SettingsActivity" />
 
         <service
             android:name=".notifications.MessagingService"
