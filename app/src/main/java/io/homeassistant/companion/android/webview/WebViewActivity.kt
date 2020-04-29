@@ -7,8 +7,8 @@ import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.content.res.Configuration
-import android.graphics.drawable.Icon
 import android.graphics.Rect
+import android.graphics.drawable.Icon
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
@@ -526,6 +526,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         )
                         .build()
                 }
-            }
         }
     }
+}
