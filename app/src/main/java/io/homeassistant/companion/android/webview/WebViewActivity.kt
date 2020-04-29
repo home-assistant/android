@@ -1,15 +1,14 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
-import android.app.PendingIntent
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.content.res.Configuration
-import android.graphics.Rect
 import android.graphics.drawable.Icon
+import android.graphics.Rect
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
@@ -33,20 +32,18 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.google.gson.Gson
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
+import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.DaggerPresenterComponent
+import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.Panel
-import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
+import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import org.json.JSONObject
 
