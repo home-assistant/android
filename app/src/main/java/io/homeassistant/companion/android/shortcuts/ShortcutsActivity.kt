@@ -27,5 +27,4 @@ class ShortcutsActivity : AppCompatActivity() {
             .add(R.id.content, ShortcutsFragment.newInstance())
             .commit()
     }
-
 }

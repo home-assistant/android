@@ -34,16 +34,16 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.background.LocationBroadcastReceiver
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.util.PermissionManager
+import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import org.json.JSONObject
 

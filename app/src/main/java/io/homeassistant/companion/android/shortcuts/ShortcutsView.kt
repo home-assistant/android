@@ -1,4 +1,3 @@
 package io.homeassistant.companion.android.shortcuts
 
-interface ShortcutsView {
-}
+interface ShortcutsView {}
