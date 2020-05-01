@@ -29,6 +29,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 class SettingsPresenterImpl @Inject constructor(
@@ -41,6 +42,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
     private val progressLatch = ProgressTimeLatch(defaultValue = false, refreshingToggle = view::displaySyncInProgress)
+    private val isLoading = AtomicBoolean(false)
 
     private val handler = Handler(Looper.getMainLooper())
     private val delayedShow = Runnable {
@@ -52,13 +54,20 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     override fun syncSettings() {
+        if (isLoading.get()) {
+            return
+        }
+        isLoading.set(true)
+
         mainScope.launch {
             progressLatch.refreshing = true
             val capabilityResult = withContext(Dispatchers.IO) { syncManager.getNodeWithInstalledApp() }
             if (capabilityResult == null || capabilityResult.result == Result.FAILURE) {
+                isLoading.set(false)
                 progressLatch.refreshing = false
                 view.showConfirmed(FAILURE_ANIMATION, R.string.ha_phone_app_not_reachable)
             } else if (capabilityResult.result == Result.NOT_NEARBY) {
+                isLoading.set(false)
                 progressLatch.refreshing = false
                 view.showConfirmed(FAILURE_ANIMATION, R.string.ha_state_handheld_not_nearby)
             } else {
@@ -76,10 +85,12 @@ class SettingsPresenterImpl @Inject constructor(
         handler.removeCallbacks(delayedShow)
         when (result) {
             is FailedSyncResult -> {
+                isLoading.set(false)
                 progressLatch.refreshing = false
                 view.showConfirmed(FAILURE_ANIMATION, R.string.ha_state_session_inactive)
             }
             is InActiveSessionSyncResult -> {
+                isLoading.set(false)
                 progressLatch.refreshing = false
                 view.showConfirmed(FAILURE_ANIMATION, R.string.ha_state_session_inactive)
             }
@@ -87,6 +98,8 @@ class SettingsPresenterImpl @Inject constructor(
                 val registeredDevice = withContext(Dispatchers.IO) {
                     saveSettings(result) && updateDevice()
                 }
+                isLoading.set(false)
+                progressLatch.refreshing = false
                 if (registeredDevice) {
                     view.showConfirmed(SUCCESS_ANIMATION, R.string.ha_settings_synced)
                 } else {
