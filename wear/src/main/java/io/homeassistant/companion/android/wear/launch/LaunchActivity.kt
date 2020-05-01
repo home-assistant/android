@@ -73,13 +73,13 @@ class LaunchActivity : WearableActivity(), LaunchView {
         setStateInfo(R.string.ha_phone_app_not_reachable)
     }
 
-    override fun displayNotNearby() {
+    override fun displayRetryActionButton(stateMessage: Int) {
         showActionButton(R.string.retry, R.drawable.ic_reload) {
             setStateInfo(null)
             showActionButton(null)
             launchPresenter.onRefresh()
         }
-        setStateInfo(R.string.ha_state_handheld_not_nearby)
+        setStateInfo(stateMessage)
     }
 
     override fun displayInactiveSession() = setStateInfo(R.string.ha_state_session_inactive)

@@ -87,9 +87,20 @@ dependencies {
     implementation(Config.Dependency.Google.material)
     implementation(Config.Dependency.Google.dagger)
     kapt(Config.Dependency.Google.daggerCompiler)
-
     implementation(Config.Dependency.Google.wearableSupport)
     compileOnly(Config.Dependency.Google.wearable)
 
+    implementation(Config.Dependency.Firebase.iid)
+
     implementation(Config.Dependency.Play.wearable)
+
+    implementation(Config.Dependency.Misc.crashlytics)
+    implementation(Config.Dependency.Misc.lokalize)
+    implementation(Config.Dependency.Misc.threeTenAbp) {
+        exclude(group = "org.threeten")
+    }
 }
+
+// This plugin must stay at the bottom
+// https://developers.google.com/android/guides/google-services-plugin
+apply(plugin = "com.google.gms.google-services")

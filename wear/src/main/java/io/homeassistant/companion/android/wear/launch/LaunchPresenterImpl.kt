@@ -1,26 +1,31 @@
 package io.homeassistant.companion.android.wear.launch
 
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.google.android.gms.wearable.DataMap
-import com.google.android.gms.wearable.MessageEvent
+import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.common.util.ProgressTimeLatch
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.homeassistant.companion.android.domain.authentication.Session
 import io.homeassistant.companion.android.domain.authentication.SessionState
+import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.wear.BuildConfig
 import io.homeassistant.companion.android.wear.R
+import io.homeassistant.companion.android.wear.background.FailedSyncResult
+import io.homeassistant.companion.android.wear.background.InActiveSessionSyncResult
 import io.homeassistant.companion.android.wear.background.Result
 import io.homeassistant.companion.android.wear.background.SettingsSyncCallback
 import io.homeassistant.companion.android.wear.background.SettingsSyncManager
+import io.homeassistant.companion.android.wear.background.SettingsUrl.*
+import io.homeassistant.companion.android.wear.background.SuccessSyncResult
+import io.homeassistant.companion.android.wear.background.SyncResult
+import io.homeassistant.companion.android.wear.util.extensions.await
+import io.homeassistant.companion.android.wear.util.extensions.catch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -29,10 +34,11 @@ class LaunchPresenterImpl @Inject constructor(
     private val view: LaunchView,
     private val syncManager: SettingsSyncManager,
     private val authenticationUseCase: AuthenticationUseCase,
-    private val integrationUseCase: IntegrationUseCase
+    private val integrationUseCase: IntegrationUseCase,
+    private val urlUseCase: UrlUseCase
 ) : LaunchPresenter, SettingsSyncCallback {
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
     private val progressLatch = ProgressTimeLatch(defaultValue = false, refreshingToggle = view::showProgressBar)
 
     private val handler = Handler(Looper.getMainLooper())
@@ -54,8 +60,13 @@ class LaunchPresenterImpl @Inject constructor(
             val sessionState = withContext(Dispatchers.IO) { authenticationUseCase.getSessionState() }
             val registered = integrationUseCase.isRegistered()
             if (sessionState == SessionState.CONNECTED && registered) {
+                val updated = withContext(Dispatchers.IO) { updateDevice() }
                 progressLatch.refreshing = false
-                view.displayNextScreen()
+                if (updated) {
+                    view.displayNextScreen()
+                } else {
+                    view.displayRetryActionButton(R.string.error_with_registration)
+                }
             } else {
                 onRefresh()
             }
@@ -72,7 +83,7 @@ class LaunchPresenterImpl @Inject constructor(
                 view.displayUnreachable()
             } else if (capabilityResult.result == Result.NOT_NEARBY) {
                 progressLatch.refreshing = false
-                view.displayNotNearby()
+                view.displayRetryActionButton(R.string.ha_state_handheld_not_nearby)
             } else {
                 handler.postDelayed(delayedShow, 5000)
 
@@ -85,16 +96,59 @@ class LaunchPresenterImpl @Inject constructor(
         }
     }
 
-    override fun onConfigReceived() = handler.removeCallbacks(delayedShow)
-
-    override fun onInactiveSession() {
-        progressLatch.refreshing = false
-        view.displayInactiveSession()
+    override fun onSyncResult(result: SyncResult) {
+        handler.removeCallbacks(delayedShow)
+        when (result) {
+            is FailedSyncResult -> {
+                progressLatch.refreshing = false
+                view.displayRetryActionButton(R.string.ha_state_failed_sync)
+            }
+            is InActiveSessionSyncResult -> {
+                progressLatch.refreshing = false
+                view.displayInactiveSession()
+            }
+            is SuccessSyncResult -> mainScope.launch {
+                val registeredDevice = withContext(Dispatchers.IO) {
+                    saveSettings(result) && registerDevice()
+                }
+                progressLatch.refreshing = false
+                if (registeredDevice) {
+                    view.displayNextScreen()
+                } else {
+                    view.displayRetryActionButton(R.string.unable_to_register)
+                }
+            }
+        }
     }
 
-    override fun onConfigSynced() {
-        progressLatch.refreshing = false
-        view.displayNextScreen()
+    private suspend fun saveSettings(result: SuccessSyncResult): Boolean {
+        val urlMap = result.urls
+        val webhookUrl = urlMap[WEBHOOK] ?: return false
+        urlUseCase.saveRegistrationUrls(urlMap[CLOUDHOOK], urlMap[REMOTE], webhookUrl, urlMap[LOCAL])
+        authenticationUseCase.saveSession(result.session)
+        urlUseCase.saveHomeWifiSsids(result.ssids.toSet())
+        return true
+    }
+
+    private suspend fun registerDevice(): Boolean {
+        val token = catch { FirebaseInstanceId.getInstance().instanceId.await() } ?: return false
+        val registration = DeviceRegistration(
+            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+            Build.MODEL ?: "UNKNOWN",
+            token.token
+        )
+        return catch { integrationUseCase.registerDevice(registration) } != null
+    }
+
+    private suspend fun updateDevice(): Boolean {
+        val token = catch { FirebaseInstanceId.getInstance().instanceId.await() } ?: return false
+        return catch { integrationUseCase.updateRegistration(
+            appVersion= "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+            manufacturer = Build.MANUFACTURER ?: "UNKNOWN",
+            model = Build.MODEL ?: "UNKNOWN",
+            osVersion = Build.VERSION.SDK_INT.toString(),
+            pushToken = token.token
+        ) } != null
     }
 
     override fun onFinish() {
