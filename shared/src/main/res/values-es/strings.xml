@@ -13,7 +13,7 @@ instancia de Home Assistant</string>
   <string name="checking_with_home_assistant">Comprobando con Home Assistant</string>
   <string name="skip">Omitir</string>
   <string name="retry">Reintentar</string>
-  <string name="attempting_registration">Registrando aplicación...</string>
+  <string name="attempting_registration">Registrando aplicación…</string>
   <string name="unable_to_register">No se ha podido registrar la aplicación</string>
   <string name="error_with_registration">Por favor, compruebe que tiene la integración mobile_app habilitada en su instancia de Home Assistant</string>
   <string name="url_parse_error">No se ha podido procesar su URL de Home Assistant. La URL tiene que ser como https://example.com</string>

@@ -97,7 +97,7 @@ play {
 dependencies {
     implementation(project(":common"))
     implementation(project(":domain"))
-    api(project(":resources"))
+    implementation(project(":shared"))
     wearApp(project(":wear"))
 
     implementation(Config.Dependency.Kotlin.core)

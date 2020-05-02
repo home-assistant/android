@@ -12,7 +12,7 @@
   <string name="checking_with_home_assistant">Controleren met Home Assistant</string>
   <string name="skip">Overslaan</string>
   <string name="retry">Opnieuw</string>
-  <string name="attempting_registration">Applicatie registeren...</string>
+  <string name="attempting_registration">Applicatie registeren…</string>
   <string name="unable_to_register">Niet mogelijk om de applicatie te registeren.</string>
   <string name="error_with_registration">Controleer of de mobile_app integratie is ingeschakeld in je Home Assistant instantie.</string>
   <string name="url_parse_error">Je Home Assistant URL lijkt niet te kloppen. Het zou ongeveer hetzelfde moeten zijn als https://example.com</string>

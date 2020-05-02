@@ -15,7 +15,7 @@ Home Assistant实例</string>
   <string name="checking_with_home_assistant">正在检查Home Assistant</string>
   <string name="skip">跳过</string>
   <string name="retry">重试</string>
-  <string name="attempting_registration">正在注册应用程序...</string>
+  <string name="attempting_registration">正在注册应用程序…</string>
   <string name="unable_to_register">无法注册应用程序</string>
   <string name="error_with_registration">请检查你的home assistant实例,确保已经启用了mobile_app集成</string>
   <string name="url_parse_error">无法解析您的Home Assistant URL地址。它看起来应该像https://example.com</string>

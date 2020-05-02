@@ -15,7 +15,7 @@ a Internet di casa tua.</string>
   <string name="checking_with_home_assistant">Verifica Home Assistant in corso</string>
   <string name="skip">Salta</string>
   <string name="retry">Riprova</string>
-  <string name="attempting_registration">Registrazione dell\'applicazione in corso...</string>
+  <string name="attempting_registration">Registrazione dell\'applicazione in corso…</string>
   <string name="unable_to_register">Impossibile registrare l\'applicazione</string>
   <string name="error_with_registration">Verifica di avere l\'integrazione mobile_app abilitata 
 sulla tua istanza di Home Assistant.</string>

@@ -14,7 +14,7 @@
   <string name="checking_with_home_assistant">Kontrollerar med Home Assistant</string>
   <string name="skip">Hoppa över</string>
   <string name="retry">Försök igen</string>
-  <string name="attempting_registration">Registrerar app...</string>
+  <string name="attempting_registration">Registrerar app…</string>
   <string name="unable_to_register">Det gick inte att registrera Appen</string>
   <string name="error_with_registration">Kontrollera att du har mobilen_app 
  integration aktiverad i din Home Assistant instans.</string>

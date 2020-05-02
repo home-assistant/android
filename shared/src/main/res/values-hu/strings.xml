@@ -15,7 +15,7 @@ otthoni internetedre van csatlakoztatva.</string>
   <string name="checking_with_home_assistant">Ellenőrzés a Home Assistant-tal</string>
   <string name="skip">Kihagyás</string>
   <string name="retry">Újra</string>
-  <string name="attempting_registration">Alkalmazás regisztrálása...</string>
+  <string name="attempting_registration">Alkalmazás regisztrálása…</string>
   <string name="unable_to_register">Nem lehet regisztrálni az alkalmazást</string>
   <string name="error_with_registration">Kérlek ellenőrizd, hogy a mobile_app integráció
 engedélyezve van a Home Assistant példányodban.</string>

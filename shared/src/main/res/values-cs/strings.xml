@@ -13,7 +13,7 @@ to your home internet.</string>
   <string name="checking_with_home_assistant">Kontrola pomocí Home Assistant</string>
   <string name="skip">Přeskočit</string>
   <string name="retry">Opakovat</string>
-  <string name="attempting_registration">Registrace aplikace...</string>
+  <string name="attempting_registration">Registrace aplikace…</string>
   <string name="unable_to_register">Nelze zaregistrovat aplikaci</string>
   <string name="error_with_registration">Ověřte, zda máte mobile_app 
 integraci povolenou v Home Assistant.</string>

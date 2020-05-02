@@ -70,7 +70,7 @@ android {
 dependencies {
     implementation(project(":common"))
     implementation(project(":domain"))
-    implementation(project(":resources"))
+    implementation(project(":shared"))
 
     implementation(Config.Dependency.Kotlin.core)
     implementation(Config.Dependency.Kotlin.coroutines)

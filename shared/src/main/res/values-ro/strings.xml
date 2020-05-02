@@ -13,7 +13,7 @@
   <string name="checking_with_home_assistant">Verific cu Home Assistant-ul</string>
   <string name="skip">Nu acum</string>
   <string name="retry">Reîncercați</string>
-  <string name="attempting_registration">Aplicația se înregistrează...</string>
+  <string name="attempting_registration">Aplicația se înregistrează…</string>
   <string name="unable_to_register">Nu s-au putut înregistra</string>
   <string name="error_with_registration">Te rog verifică dacă este activată integrarea pentru mobile_app în configurația Home Assistant-ului.</string>
   <string name="url_parse_error">Nu am putut analiza adresa Home Assistant-ului. Ar trebui sa arate așa: https:///example.com</string>

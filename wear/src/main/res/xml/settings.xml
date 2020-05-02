@@ -3,11 +3,17 @@
 
     <PreferenceCategory android:title="@string/page_settings">
 
+        <SwitchPreference
+            android:key="update_sensors"
+            android:title="@string/sensor_update_settings"
+            android:summary="@string/sensor_update_settings_summary"/>
+<!--        android:icon="@drawable/ic_watch"-->
+
         <Preference
             android:key="resync_settings"
-            android:icon="@drawable/ic_reload"
             android:title="@string/resync_settings"
             android:summary="@string/resync_settings_summary"/>
+<!--        android:icon="@drawable/ic_reload"-->
 
     </PreferenceCategory>
 

@@ -12,6 +12,7 @@
 
     <include
         layout="@layout/image_frame"
+        android:visibility="gone"
         tools:ignore="PrivateResource" />
 
     <RelativeLayout
@@ -29,7 +30,8 @@
             android:textAlignment="center"
             android:textColor="@android:color/white"
             android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            tools:text="@tools:sample/lorem" />
 
         <TextView
             android:id="@android:id/summary"
@@ -42,8 +44,9 @@
             android:maxLines="10"
             android:singleLine="true"
             android:textAlignment="viewStart"
+            android:textColor="?android:attr/textColorSecondary"
             android:textSize="12sp"
-            android:textColor="?android:attr/textColorSecondary" />
+            tools:text="@tools:sample/lorem" />
 
     </RelativeLayout>
 

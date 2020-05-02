@@ -122,6 +122,8 @@ like to connect to:</string>
   <string name="action">Action</string>
   <string name="action_required">The action is required!</string>
 
+  <string name="sensor_update_settings">Update sensors</string>
+  <string name="sensor_update_settings_summary">Update the battery and wifi connected state periodically. This can cause an increase of battery usage.</string>
   <string name="resync_settings">Resync Settings</string>
   <string name="resync_settings_summary">Resync the settings from your phone</string>
 
