@@ -110,7 +110,7 @@ class MessagingService : FirebaseMessagingService() {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val channelId = handleChannel(notificationManager)
+        val channelId = handleChannel(notificationManager, data)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentIntent(pendingIntent)
@@ -272,15 +272,23 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun handleChannel(
-        notificationManager: NotificationManager
+        notificationManager: NotificationManager,
+        data: Map<String, String>
     ): String {
-        // TODO: implement channels
-        val channelId = "default"
+        // Define some values for a default channel
+        var channelId = "default"
+        var channelName = "Default Channel"
+
+        if (data.containsKey("channel")) {
+            channelId = data["channel"].toString().trim().replace(" ", "_")
+            channelName = data["channel"].toString().trim()
+        }
+
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Default Channel",
+                channelName,
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             notificationManager.createNotificationChannel(channel)
