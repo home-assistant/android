@@ -82,8 +82,6 @@ class LaunchActivity : WearableActivity(), LaunchView {
         setStateInfo(stateMessage)
     }
 
-    override fun displayInactiveSession() = setStateInfo(R.string.ha_state_session_inactive)
-
     override fun displayNextScreen() {
         startActivity(Intent(this, NavigationActivity::class.java))
         finishAffinity()

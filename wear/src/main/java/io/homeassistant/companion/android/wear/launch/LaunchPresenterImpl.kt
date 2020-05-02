@@ -99,13 +99,14 @@ class LaunchPresenterImpl @Inject constructor(
     override fun onSyncResult(result: SyncResult) {
         handler.removeCallbacks(delayedShow)
         when (result) {
-            is FailedSyncResult -> {
-                progressLatch.refreshing = false
-                view.displayRetryActionButton(R.string.ha_state_failed_sync)
-            }
+            is FailedSyncResult,
             is InActiveSessionSyncResult -> {
+                val message =
+                    if (result is FailedSyncResult) R.string.ha_state_failed_sync
+                    else R.string.ha_state_session_inactive
+
                 progressLatch.refreshing = false
-                view.displayInactiveSession()
+                view.displayRetryActionButton(message)
             }
             is SuccessSyncResult -> mainScope.launch {
                 val registeredDevice = withContext(Dispatchers.IO) {

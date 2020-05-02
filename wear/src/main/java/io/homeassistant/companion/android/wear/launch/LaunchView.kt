@@ -9,6 +9,5 @@ interface LaunchView {
 
     fun displayUnreachable()
     fun displayRetryActionButton(@StringRes stateMessage: Int)
-    fun displayInactiveSession()
     fun displayNextScreen()
 }
