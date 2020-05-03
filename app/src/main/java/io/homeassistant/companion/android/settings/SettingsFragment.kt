@@ -15,12 +15,12 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
-import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.util.PermissionManager
-import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import javax.inject.Inject
 
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
