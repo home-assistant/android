@@ -19,8 +19,8 @@ import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.util.PermissionManager
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
