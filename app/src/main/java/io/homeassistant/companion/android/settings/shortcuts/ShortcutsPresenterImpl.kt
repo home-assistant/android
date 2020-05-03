@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.shortcuts
+package io.homeassistant.companion.android.settings.shortcuts
 
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Panel
@@ -16,16 +16,6 @@ class ShortcutsPresenterImpl @Inject constructor(
 
     companion object {
         private const val TAG = "ShortcutsPresenter"
-    }
-
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
-    override fun onCreate() {
-        mainScope.launch {}
-    }
-
-    override fun onFinish() {
-        mainScope.cancel()
     }
 
     override fun getPanels(): Array<Panel> {

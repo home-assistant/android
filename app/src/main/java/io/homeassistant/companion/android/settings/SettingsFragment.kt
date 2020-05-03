@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
@@ -18,7 +17,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
-import io.homeassistant.companion.android.shortcuts.ShortcutsActivity
+import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -79,7 +78,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         val onClickShortcuts = Preference.OnPreferenceClickListener {
-            startActivity(Intent(context, ShortcutsActivity::class.java))
+            fragmentManager!!
+                .beginTransaction()
+                .replace(R.id.content, ShortcutsFragment.newInstance())
+                .addToBackStack(getString(R.string.shortcuts))
+                .commit()
             true
         }
 

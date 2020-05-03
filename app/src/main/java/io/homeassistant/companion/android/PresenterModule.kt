@@ -24,9 +24,9 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupView
 import io.homeassistant.companion.android.settings.SettingsPresenter
 import io.homeassistant.companion.android.settings.SettingsPresenterImpl
 import io.homeassistant.companion.android.settings.SettingsView
-import io.homeassistant.companion.android.shortcuts.ShortcutsPresenter
-import io.homeassistant.companion.android.shortcuts.ShortcutsPresenterImpl
-import io.homeassistant.companion.android.shortcuts.ShortcutsView
+import io.homeassistant.companion.android.settings.shortcuts.ShortcutsPresenter
+import io.homeassistant.companion.android.settings.shortcuts.ShortcutsPresenterImpl
+import io.homeassistant.companion.android.settings.shortcuts.ShortcutsView
 import io.homeassistant.companion.android.webview.WebView
 import io.homeassistant.companion.android.webview.WebViewPresenter
 import io.homeassistant.companion.android.webview.WebViewPresenterImpl

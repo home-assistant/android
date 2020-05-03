@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.shortcuts
+package io.homeassistant.companion.android.settings.shortcuts
 
 import android.app.PendingIntent
 import android.content.Intent
@@ -44,8 +44,6 @@ class ShortcutsFragment : Fragment(), ShortcutsView {
             .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
-
-        presenter.onCreate()
     }
 
     override fun onCreateView(

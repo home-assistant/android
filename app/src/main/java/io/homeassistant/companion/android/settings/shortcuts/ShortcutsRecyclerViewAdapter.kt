@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.shortcuts
+package io.homeassistant.companion.android.settings.shortcuts
 
 import android.content.Context
 import android.view.LayoutInflater
