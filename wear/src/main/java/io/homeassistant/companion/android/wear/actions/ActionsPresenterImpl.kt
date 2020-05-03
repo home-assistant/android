@@ -7,7 +7,7 @@ import io.homeassistant.companion.android.common.actions.WearActionUseCase
 import io.homeassistant.companion.android.common.util.ProgressTimeLatch
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.wear.R
-import io.homeassistant.companion.android.wear.util.extensions.catch
+import io.homeassistant.companion.android.util.extensions.catch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -50,7 +50,12 @@ class ActionsPresenterImpl @Inject constructor(
             progressLatch.refreshing = true
             val actionMap = mapOf("action" to action.action)
             val result = withContext(Dispatchers.IO) {
-                catch { integrationUseCase.fireEvent("mobile_app_wear_action", actionMap) }
+                catch {
+                    integrationUseCase.fireEvent(
+                        "mobile_app_wear_action",
+                        actionMap
+                    )
+                }
             }
             progressLatch.refreshing = false
             isLoading.set(false)

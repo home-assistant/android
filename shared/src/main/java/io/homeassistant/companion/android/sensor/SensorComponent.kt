@@ -1,7 +1,6 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.sensor
 
 import dagger.Component
-import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.DomainComponent
 import io.homeassistant.companion.android.common.dagger.SensorScope

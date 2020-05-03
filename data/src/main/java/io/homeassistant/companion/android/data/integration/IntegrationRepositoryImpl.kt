@@ -289,7 +289,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         }.toTypedArray()
     }
 
-    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
+    override suspend fun registerSensor(sensorRegistration: SensorRegistration<*>) {
         val registeredSensors = localStorage.getStringSet(PREF_SENSORS_REGISTERED)
         if (registeredSensors?.contains(sensorRegistration.uniqueId) == true) {
             // Already registered
@@ -327,7 +327,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
-    override suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean {
+    override suspend fun updateSensors(sensors: List<Sensor<*>>): Boolean {
         val integrationRequest = IntegrationRequest(
             "update_sensor_states",
             sensors.map {

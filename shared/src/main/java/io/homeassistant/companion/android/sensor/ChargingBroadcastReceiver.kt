@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.sensor
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -12,12 +12,14 @@ import kotlinx.coroutines.launch
 class ChargingBroadcastReceiver(
     private val integrationUseCase: IntegrationUseCase
 ) : BroadcastReceiver() {
+
     private val ioScope = CoroutineScope(Dispatchers.IO)
     private var updateJob: Job? = null
+
     override fun onReceive(context: Context, intent: Intent?) {
         updateJob?.cancel()
         updateJob = ioScope.launch {
-            AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
+            SensorUpdateManager(context, integrationUseCase).updateSensors()
         }
     }
 }

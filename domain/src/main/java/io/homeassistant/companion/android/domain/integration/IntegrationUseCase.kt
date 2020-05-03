@@ -39,6 +39,6 @@ interface IntegrationUseCase {
 
     suspend fun getThemeColor(): String
 
-    suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
-    suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean
+    suspend fun registerSensor(sensorRegistration: SensorRegistration<*>)
+    suspend fun updateSensors(sensors: List<Sensor<*>>): Boolean
 }

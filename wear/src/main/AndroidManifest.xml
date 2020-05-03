@@ -43,6 +43,19 @@
 
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
 
+        <receiver
+            android:name=".notification.NotificationActionReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
+        <service
+            android:name=".notification.MessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

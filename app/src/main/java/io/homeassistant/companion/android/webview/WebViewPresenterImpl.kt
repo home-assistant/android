@@ -7,7 +7,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
-import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.extensions.handle
 import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +38,7 @@ class WebViewPresenterImpl @Inject constructor(
             url = urlUseCase.getUrl()
 
             if (path != null) {
-                url = UrlHandler.handle(url, path)
+                url = url.handle(path)
             }
 
             /*

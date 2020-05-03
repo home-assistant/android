@@ -17,7 +17,7 @@ import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
-import io.homeassistant.companion.android.util.PermissionManager
+import io.homeassistant.companion.android.util.extensions.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

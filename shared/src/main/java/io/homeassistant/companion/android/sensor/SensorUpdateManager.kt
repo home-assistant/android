@@ -1,35 +1,33 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.sensor
 
 import android.content.Context
 import android.util.Log
-import io.homeassistant.companion.android.SensorUpdater
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 
-class AllSensorsUpdaterImpl(
-    private val integrationUseCase: IntegrationUseCase,
-    private val appContext: Context
+class SensorUpdateManager(
+    private val appContext: Context,
+    private val integrationUseCase: IntegrationUseCase
 ) : SensorUpdater {
+
     companion object {
         private const val TAG = "AllSensorsUpdaterImpl"
     }
 
-    override suspend fun updateSensors() {
+    override suspend fun updateSensors(): Boolean {
         val sensorManagers = mutableListOf(
-            BatterySensorManager(),
-            NetworkSensorManager()
+            BatterySensorManager(appContext),
+            NetworkSensorManager(appContext)
         )
 
         if (integrationUseCase.isBackgroundTrackingEnabled()) {
-            sensorManagers.add(GeocodeSensorManager())
+            sensorManagers.add(GeocodeSensorManager(appContext))
         }
 
         registerSensors(sensorManagers)
 
         var success = false
         try {
-            success = integrationUseCase.updateSensors(
-                sensorManagers.flatMap { it.getSensors(appContext) }.toTypedArray()
-            )
+            success = integrationUseCase.updateSensors(sensorManagers.flatMap { it.getSensors() })
         } catch (e: Exception) {
             Log.e(TAG, "Exception while updating sensors.", e)
         }
@@ -38,19 +36,17 @@ class AllSensorsUpdaterImpl(
         if (!success) {
             registerSensors(sensorManagers)
         }
+        return success
     }
 
     private suspend fun registerSensors(sensorManagers: List<SensorManager>) {
-
-        sensorManagers.flatMap {
-            it.getSensorRegistrations(appContext)
-        }.forEach {
+        sensorManagers.flatMap { it.getSensorRegistrations() }.forEach { registration ->
             // I want to call this async but because of the way we need to store the
             // fact we have registered it we can't
             try {
-                integrationUseCase.registerSensor(it)
+                integrationUseCase.registerSensor(registration)
             } catch (e: Exception) {
-                Log.e(TAG, "Issue registering sensor: ${it.uniqueId}", e)
+                Log.e(TAG, "Issue registering sensor: ${registration.uniqueId}", e)
             }
         }
     }

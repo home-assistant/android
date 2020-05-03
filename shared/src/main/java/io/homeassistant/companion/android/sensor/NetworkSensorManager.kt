@@ -1,35 +1,24 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.sensor
 
 import android.content.Context
 import android.net.wifi.WifiManager
 import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
-class NetworkSensorManager : SensorManager {
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        val sensorRegistrations = mutableListOf<SensorRegistration<Any>>()
+class NetworkSensorManager (private val context: Context): SensorManager {
 
-        sensorRegistrations.add(
-            SensorRegistration(
-                getWifiConnectionSensor(context),
-                "Wifi Connection"
-            )
-        )
-
-        return sensorRegistrations
+    override suspend fun getSensorRegistrations(): List<SensorRegistration<*>> {
+        return listOf(SensorRegistration(getWifiConnectionSensor(), "Wifi Connection"))
     }
 
-    override fun getSensors(context: Context): List<Sensor<Any>> {
-        val sensors = mutableListOf<Sensor<Any>>()
-
-        sensors.add(getWifiConnectionSensor(context))
-
-        return sensors
+    override suspend fun getSensors(): List<Sensor<*>> {
+        return listOf(getWifiConnectionSensor())
     }
 
-    private fun getWifiConnectionSensor(context: Context): Sensor<Any> {
+    private fun getWifiConnectionSensor(): Sensor<Any> {
         val wifiManager =
-            (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+            context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+
         val conInfo = wifiManager.connectionInfo
 
         val ssid = if (conInfo.networkId == -1) {

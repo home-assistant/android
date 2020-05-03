@@ -1,25 +1,22 @@
-package io.homeassistant.companion.android.notifications
+package io.homeassistant.companion.android.notification
 
 import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Handler
 import android.util.Log
 import android.widget.Toast
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.util.UrlHandler
-import io.homeassistant.companion.android.webview.WebViewActivity
-import javax.inject.Inject
+import io.homeassistant.companion.android.resources.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class NotificationActionReceiver : BroadcastReceiver() {
+abstract class AbstractNotificationActionReceiver : BroadcastReceiver() {
 
     companion object {
         const val TAG = "NotifActionReceiver"
@@ -30,14 +27,14 @@ class NotificationActionReceiver : BroadcastReceiver() {
         const val EXTRA_NOTIFICATION_ACTION = "EXTRA_ACTION_KEY"
     }
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+    protected val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
     override fun onReceive(context: Context, intent: Intent) {
         val graphAccessor = context.applicationContext as GraphComponentAccessor
-        DaggerServiceComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
+        DaggerNotificationComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
             .inject(this)
 
         val notificationAction =
@@ -54,14 +51,14 @@ class NotificationActionReceiver : BroadcastReceiver() {
             (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
                 .cancel(tag, messageId)
         }
-        val onFailure: () -> Unit = {
+        val onFailure: (Int) -> Unit = { resourceId ->
             Handler(context.mainLooper).post {
-                Toast.makeText(context, R.string.event_error, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, resourceId, Toast.LENGTH_LONG).show()
             }
         }
         when (intent.action) {
             FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
-            OPEN_URI -> openUri(context, notificationAction, onComplete)
+            OPEN_URI -> openUri(context, notificationAction, onComplete, onFailure)
         }
 
         // Make sure the notification shade closes
@@ -71,7 +68,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     private fun fireEvent(
         action: NotificationAction,
         onComplete: () -> Unit,
-        onFailure: () -> Unit
+        onFailure: (Int) -> Unit
     ) {
         ioScope.launch {
             try {
@@ -82,22 +79,16 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 onComplete()
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to fire event.", e)
-                onFailure()
+                onFailure(R.string.event_error)
             }
         }
     }
 
-    private fun openUri(context: Context, action: NotificationAction, onComplete: () -> Unit) {
-        val intent = if (UrlHandler.isAbsoluteUrl(action.uri)) {
-            Intent(Intent.ACTION_VIEW).apply {
-                data = Uri.parse(action.uri)
-            }
-        } else {
-            WebViewActivity.newInstance(context, action.uri)
-        }
+    protected abstract fun openUri(
+        context: Context,
+        action: NotificationAction,
+        onComplete: () -> Unit,
+        onFailure: (Int) -> Unit
+    )
 
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        context.startActivity(intent)
-        onComplete()
-    }
 }

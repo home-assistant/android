@@ -31,6 +31,6 @@ interface IntegrationRepository {
 
     suspend fun fireEvent(eventType: String, eventData: Map<String, Any>)
 
-    suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
-    suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean
+    suspend fun registerSensor(sensorRegistration: SensorRegistration<*>)
+    suspend fun updateSensors(sensors: List<Sensor<*>>): Boolean
 }

@@ -1,7 +1,6 @@
-package io.homeassistant.companion.android.notifications
+package io.homeassistant.companion.android.background
 
 import dagger.Component
-import io.homeassistant.companion.android.background.WearDataListenerService
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.DomainComponent
 import io.homeassistant.companion.android.common.dagger.ServiceScope
@@ -14,10 +13,6 @@ interface ServiceComponent {
     interface Factory {
         fun create(appComponent: AppComponent, domainComponent: DomainComponent): ServiceComponent
     }
-
-    fun inject(service: MessagingService)
-
-    fun inject(receiver: NotificationActionReceiver)
 
     fun inject(service: WearDataListenerService)
 

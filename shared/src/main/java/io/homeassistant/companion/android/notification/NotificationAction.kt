@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.notifications
+package io.homeassistant.companion.android.notification
 
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize

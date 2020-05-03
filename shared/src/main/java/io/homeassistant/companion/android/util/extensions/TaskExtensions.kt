@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.wear.util.extensions
+package io.homeassistant.companion.android.util.extensions
 
 import com.google.android.gms.tasks.Task
 import kotlin.coroutines.resume

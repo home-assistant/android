@@ -21,8 +21,9 @@ import io.homeassistant.companion.android.wear.background.SettingsSyncManager
 import io.homeassistant.companion.android.wear.background.SettingsUrl
 import io.homeassistant.companion.android.wear.background.SuccessSyncResult
 import io.homeassistant.companion.android.wear.background.SyncResult
-import io.homeassistant.companion.android.wear.util.extensions.await
-import io.homeassistant.companion.android.wear.util.extensions.catch
+import io.homeassistant.companion.android.util.extensions.await
+import io.homeassistant.companion.android.util.extensions.catch
+import io.homeassistant.companion.android.wear.background.capability.CapabilityManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,6 +36,7 @@ import javax.inject.Inject
 class SettingsPresenterImpl @Inject constructor(
     private val view: SettingsView,
     private val syncManager: SettingsSyncManager,
+    private val capabilityManager: CapabilityManager,
     private val authenticationUseCase: AuthenticationUseCase,
     private val integrationUseCase: IntegrationUseCase,
     private val urlUseCase: UrlUseCase
@@ -61,7 +63,7 @@ class SettingsPresenterImpl @Inject constructor(
 
         mainScope.launch {
             progressLatch.refreshing = true
-            val capabilityResult = withContext(Dispatchers.IO) { syncManager.getNodeWithInstalledApp() }
+            val capabilityResult = withContext(Dispatchers.IO) { capabilityManager.getNodeWithInstalledApp() }
             if (capabilityResult == null || capabilityResult.result == Result.FAILURE) {
                 isLoading.set(false)
                 progressLatch.refreshing = false
@@ -119,14 +121,17 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     private suspend fun updateDevice(): Boolean {
-        val token = catch { FirebaseInstanceId.getInstance().instanceId.await() } ?: return false
-        return catch { integrationUseCase.updateRegistration(
-            appVersion= "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-            manufacturer = Build.MANUFACTURER ?: "UNKNOWN",
-            model = Build.MODEL ?: "UNKNOWN",
-            osVersion = Build.VERSION.SDK_INT.toString(),
-            pushToken = token.token
-        ) } != null
+        val token = catch { FirebaseInstanceId.getInstance().instanceId.await() }
+            ?: return false
+        return catch {
+            integrationUseCase.updateRegistration(
+                appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                manufacturer = Build.MANUFACTURER ?: "UNKNOWN",
+                model = Build.MODEL ?: "UNKNOWN",
+                osVersion = Build.VERSION.SDK_INT.toString(),
+                pushToken = token.token
+            )
+        } != null
     }
 
     override fun finish() {

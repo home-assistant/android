@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.background
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.core.os.bundleOf
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.MessageEvent
@@ -9,14 +12,19 @@ import com.google.android.gms.wearable.WearableListenerService
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
-import io.homeassistant.companion.android.notifications.DaggerServiceComponent
+import io.homeassistant.companion.android.util.extensions.catch
+import io.homeassistant.companion.android.util.extensions.isAbsoluteUrl
+import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class WearDataListenerService : WearableListenerService() {
 
     private companion object {
+        private const val TAG = "WearDataListenerService"
+
         private const val PATH_CONFIG = "/config"
+        private const val PATH_ACTION = "/action"
     }
 
     @Inject lateinit var authenticationUseCase: AuthenticationUseCase
@@ -52,15 +60,35 @@ class WearDataListenerService : WearableListenerService() {
                         "type" to session.tokenType
                     ))
                 }
-                replyMessage(messageEvent.sourceNodeId, DataMap.fromBundle(bundle))
+                replyMessage(messageEvent.sourceNodeId, PATH_CONFIG, DataMap.fromBundle(bundle))
+            }
+            PATH_ACTION -> {
+                val dataMap = catch { DataMap.fromByteArray(messageEvent.data) }
+                if (dataMap == null) {
+                    Log.e(TAG, "Path: ${messageEvent.path} - Unable to parse data")
+                    return@runBlocking
+                }
+                val actionUrl = dataMap.getString("ActionUri")
+                if (actionUrl == null) {
+                    Log.e(TAG, "Path: ${messageEvent.path} - no action uri provided")
+                    return@runBlocking
+                }
+                val intent = if (actionUrl.isAbsoluteUrl()) {
+                    Intent(Intent.ACTION_VIEW).setData(Uri.parse(actionUrl))
+                } else {
+                    WebViewActivity.newInstance(this@WearDataListenerService, actionUrl)
+                }
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                startActivity(intent)
             }
         }
     }
 
-    private fun replyMessage(nodeId: String, dataMap: DataMap) {
+    private fun replyMessage(nodeId: String, path: String, dataMap: DataMap) {
         val messageClient = Wearable.getMessageClient(this)
         val dataByteArray = dataMap.toByteArray()
-        messageClient.sendMessage(nodeId, PATH_CONFIG, dataByteArray)
+        messageClient.sendMessage(nodeId, path, dataByteArray)
     }
 
 }

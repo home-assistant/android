@@ -61,19 +61,7 @@
         </activity>
 
         <receiver
-            android:name=".background.LocationBroadcastReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
-            android:name=".notifications.NotificationActionReceiver"
+            android:name=".notification.NotificationActionReceiver"
             android:enabled="true"
             android:exported="true" />
 
@@ -100,7 +88,7 @@
             android:parentActivityName=".webview.WebViewActivity" />
 
         <service
-            android:name=".notifications.MessagingService"
+            android:name=".notification.MessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -114,12 +102,6 @@
             </intent-filter>
         </service>
 
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_stat_ic_notification" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/colorPrimary" />
     </application>
 
 </manifest>

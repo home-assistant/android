@@ -3,7 +3,7 @@ package io.homeassistant.companion.android
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.sensor.SensorWorker
 import io.homeassistant.companion.android.util.PermissionManager
 
 /**
