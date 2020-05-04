@@ -24,6 +24,9 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupView
 import io.homeassistant.companion.android.settings.SettingsPresenter
 import io.homeassistant.companion.android.settings.SettingsPresenterImpl
 import io.homeassistant.companion.android.settings.SettingsView
+import io.homeassistant.companion.android.settings.shortcuts.ShortcutsPresenter
+import io.homeassistant.companion.android.settings.shortcuts.ShortcutsPresenterImpl
+import io.homeassistant.companion.android.settings.shortcuts.ShortcutsView
 import io.homeassistant.companion.android.webview.WebView
 import io.homeassistant.companion.android.webview.WebViewPresenter
 import io.homeassistant.companion.android.webview.WebViewPresenterImpl
@@ -37,6 +40,7 @@ class PresenterModule {
     private lateinit var manualSetupView: ManualSetupView
     private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
     private lateinit var settingsView: SettingsView
+    private lateinit var shortcutsView: ShortcutsView
     private lateinit var webView: WebView
     private lateinit var lockView: LockView
 
@@ -62,6 +66,10 @@ class PresenterModule {
 
     constructor(settingsView: SettingsView) {
         this.settingsView = settingsView
+    }
+
+    constructor(shortcutsView: ShortcutsView) {
+        this.shortcutsView = shortcutsView
     }
 
     constructor(webView: WebView) {
@@ -91,6 +99,9 @@ class PresenterModule {
     fun provideSettingsView() = settingsView
 
     @Provides
+    fun provideShortcutsView() = shortcutsView
+
+    @Provides
     fun provideWebView() = webView
 
     @Provides
@@ -116,6 +127,9 @@ class PresenterModule {
 
         @Binds
         fun bindSettingsPresenter(presenter: SettingsPresenterImpl): SettingsPresenter
+
+        @Binds
+        fun bindShortcutsPresenter(presenter: ShortcutsPresenterImpl): ShortcutsPresenter
 
         @Binds
         fun bindWebViewPresenterImpl(presenter: WebViewPresenterImpl): WebViewPresenter

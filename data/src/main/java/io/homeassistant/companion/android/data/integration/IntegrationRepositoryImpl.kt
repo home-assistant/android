@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationRe
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
+import io.homeassistant.companion.android.domain.integration.Panel
 import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.Service
@@ -259,6 +260,27 @@ class IntegrationRepositoryImpl @Inject constructor(
 
             if (response != null)
                 return response.themeColor
+        }
+
+        throw IntegrationException()
+    }
+
+    override suspend fun getPanels(): Array<Panel> {
+        val getPanelsRequest =
+            IntegrationRequest(
+                "get_panels",
+                null
+            )
+        var response: Array<Panel>? = null
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                response = integrationService.getPanels(it.toHttpUrlOrNull()!!, getPanelsRequest)
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+
+            if (response !== null)
+                return response
         }
 
         throw IntegrationException()

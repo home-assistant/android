@@ -6,6 +6,7 @@ import android.util.Log
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.domain.integration.Panel
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
 import java.net.URL
@@ -87,6 +88,12 @@ class WebViewPresenterImpl @Inject constructor(
                 Log.e(TAG, "Unable to revoke session", e)
                 view.setExternalAuth("$callback(false)")
             }
+        }
+    }
+
+    override fun getPanels(): Array<Panel> {
+        return runBlocking {
+            integrationUseCase.getPanels()
         }
     }
 

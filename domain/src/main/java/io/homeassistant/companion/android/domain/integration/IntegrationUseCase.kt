@@ -12,6 +12,7 @@ interface IntegrationUseCase {
         pushUrl: String? = null,
         pushToken: String? = null
     )
+
     suspend fun getRegistration(): DeviceRegistration
 
     suspend fun isRegistered(): Boolean
@@ -39,6 +40,9 @@ interface IntegrationUseCase {
 
     suspend fun getThemeColor(): String
 
+    suspend fun getPanels(): Array<Panel>
+
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
+
     suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean
 }
