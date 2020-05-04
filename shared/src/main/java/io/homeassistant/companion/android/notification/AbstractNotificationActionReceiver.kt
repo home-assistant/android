@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.notification
 
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,6 +9,7 @@ import android.widget.Toast
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.resources.R
+import io.homeassistant.companion.android.util.extensions.notificationManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,8 +48,7 @@ abstract class AbstractNotificationActionReceiver : BroadcastReceiver() {
         val tag = intent.getStringExtra(EXTRA_NOTIFICATION_TAG)
         val messageId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
         val onComplete: () -> Unit = {
-            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-                .cancel(tag, messageId)
+            context.notificationManager.cancel(tag, messageId)
         }
         val onFailure: (Int) -> Unit = { resourceId ->
             Handler(context.mainLooper).post {

@@ -8,9 +8,11 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreference
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.activity.ConfirmationActivity
+import io.homeassistant.companion.android.sensor.SensorWorker
 import io.homeassistant.companion.android.wear.DaggerPresenterComponent
 import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
@@ -35,7 +37,17 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         setPreferencesFromResource(R.xml.settings, rootKey)
 
-        val resyncButton = requirePreference<Preference>("resync_settings")
+        val updateSensors: SwitchPreference = requirePreference("update_sensors")
+        updateSensors.setOnPreferenceChangeListener { _, newValue ->
+            if (newValue as Boolean) {
+                SensorWorker.start(requireContext())
+            } else {
+                SensorWorker.clearJobs(requireContext())
+            }
+            return@setOnPreferenceChangeListener true
+        }
+
+        val resyncButton: Preference = requirePreference("resync_settings")
         resyncButton.setOnPreferenceClickListener {
             presenter.syncSettings()
             return@setOnPreferenceClickListener true

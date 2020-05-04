@@ -6,6 +6,13 @@ plugins {
     id("io.fabric")
 }
 
+buildscript {
+    repositories {
+        google()
+        maven(url = Config.Repository.gradle)
+    }
+}
+
 android {
     compileSdkVersion(Config.Android.compileSdk)
 
@@ -84,6 +91,7 @@ dependencies {
     implementation(Config.Dependency.AndroidX.recyclerview)
     implementation(Config.Dependency.AndroidX.wear)
     implementation(Config.Dependency.AndroidX.preference)
+    implementation(Config.Dependency.AndroidX.workManager)
 
     implementation(Config.Dependency.Google.material)
     implementation(Config.Dependency.Google.dagger)

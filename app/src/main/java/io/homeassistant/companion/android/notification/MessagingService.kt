@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 @SuppressLint("MissingFirebaseInstanceTokenRefresh")
 class MessagingService : AbstractMessagingService() {
 
-    override fun handleIntent(actionUrl: String?): PendingIntent {
+    override fun handleIntent(notificationTag: String?, messageId: Int, actionUrl: String?): PendingIntent {
         val intent = if (actionUrl.isAbsoluteUrl()) {
             Intent(Intent.ACTION_VIEW).setData(Uri.parse(actionUrl))
         } else {
@@ -21,4 +21,5 @@ class MessagingService : AbstractMessagingService() {
         return PendingIntent.getActivity(this, 0, intent, 0)
     }
 
+    override fun actionHandler(): Class<*> = NotificationActionReceiver::class.java
 }

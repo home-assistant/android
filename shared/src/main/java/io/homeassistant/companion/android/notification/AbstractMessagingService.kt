@@ -1,17 +1,12 @@
 package io.homeassistant.companion.android.notification
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.app.Notification
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.media.RingtoneManager
-import android.net.Uri
-import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -30,6 +25,8 @@ import io.homeassistant.companion.android.notification.AbstractNotificationActio
 import io.homeassistant.companion.android.resources.R
 import io.homeassistant.companion.android.util.extensions.handle
 import io.homeassistant.companion.android.util.extensions.isAbsoluteUrl
+import io.homeassistant.companion.android.util.extensions.notificationManager
+import io.homeassistant.companion.android.util.extensions.saveChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -53,10 +50,6 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
     @Inject lateinit var authenticationUseCase: AuthenticationUseCase
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
-    private val notificationManager by lazy {
-        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    }
 
     override fun onCreate() {
         super.onCreate()
@@ -105,14 +98,17 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
 
         val messageId = notificationTag?.hashCode() ?: System.currentTimeMillis().toInt()
 
-        val pendingIntent = handleIntent(data["clickAction"])
+        val pendingIntent = handleIntent(notificationTag, messageId, data["clickAction"])
 
-        val channelId = handleChannel()
+        // TODO: implement channels
+        val channelId = "default"
+        saveChannel("default", "Default Channel")
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentIntent(pendingIntent)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+            .setColor(ContextCompat.getColor(this, R.color.colorPrimary))
+            .setDefaults(Notification.DEFAULT_ALL)
 
         val stickyNotification = data["sticky"]?.toBoolean() ?: false
 
@@ -141,7 +137,7 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         }
     }
 
-    protected abstract fun handleIntent(actionUrl: String?): PendingIntent
+    protected abstract fun handleIntent(notificationTag: String?, messageId: Int, actionUrl: String?): PendingIntent
 
     private fun handleColor(builder: NotificationCompat.Builder, colorString: String?) {
         var color = ContextCompat.getColor(this, R.color.colorPrimary)
@@ -199,6 +195,8 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         }
     }
 
+    protected abstract fun actionHandler(): Class<*>
+
     private fun handleActions(
         builder: NotificationCompat.Builder,
         tag: String?,
@@ -218,7 +216,7 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
 
         actions.asSequence()
             .forEach { action ->
-                val intent = Intent(this, AbstractNotificationActionReceiver::class.java)
+                val intent = Intent(this, actionHandler())
                     .setAction(if (action.key == "URI") OPEN_URI else FIRE_EVENT)
                     .putExtra(EXTRA_NOTIFICATION_ACTION, action)
 
@@ -238,21 +236,6 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
                     builder.addAction(0, action.title, pendingIntent)
                 }
             }
-    }
-
-    private fun handleChannel(): String {
-        // TODO: implement channels
-        val channelId = "default"
-        // Since android Oreo notification channel is needed.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Default Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            notificationManager.createNotificationChannel(channel)
-        }
-        return channelId
     }
 
     /**
