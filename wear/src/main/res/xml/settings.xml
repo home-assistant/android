@@ -7,13 +7,21 @@
             android:key="update_sensors"
             android:title="@string/sensor_update_settings"
             android:summary="@string/sensor_update_settings_summary"/>
-<!--        android:icon="@drawable/ic_watch"-->
+
+        <SwitchPreference
+            android:key="location_zone"
+            android:title="@string/pref_location_zone_title"
+            android:summary="@string/pref_location_zone_summary"/>
+
+        <SwitchPreference
+            android:key="location_background"
+            android:title="@string/pref_location_background_title"
+            android:summary="@string/pref_location_background_summary"/>
 
         <Preference
             android:key="resync_settings"
             android:title="@string/resync_settings"
             android:summary="@string/resync_settings_summary"/>
-<!--        android:icon="@drawable/ic_reload"-->
 
     </PreferenceCategory>
 

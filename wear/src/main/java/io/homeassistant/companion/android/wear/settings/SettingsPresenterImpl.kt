@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.wear.settings
 
-import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -13,7 +12,6 @@ import io.homeassistant.companion.android.common.util.ProgressTimeLatch
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
-import io.homeassistant.companion.android.sensor.SensorWorker
 import io.homeassistant.companion.android.settings.PreferenceChangeCallback
 import io.homeassistant.companion.android.settings.SettingsPreferenceDataStore
 import io.homeassistant.companion.android.wear.BuildConfig
@@ -39,7 +37,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 class SettingsPresenterImpl @Inject constructor(
-    private val appContext: Context,
     private val view: SettingsView,
     private val dataStore: SettingsPreferenceDataStore,
     private val syncManager: SettingsSyncManager,
@@ -60,6 +57,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         syncManager.syncCallback = this
+        dataStore.changeCallback = this
     }
 
     override fun dataStore(): PreferenceDataStore {
@@ -68,13 +66,9 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun onPreferenceChanged(key: String, value: Any?) {
         when (key) {
-            "update_sensors" -> {
-                if (value as Boolean) {
-                    SensorWorker.start(appContext)
-                } else {
-                    SensorWorker.clearJobs(appContext)
-                }
-            }
+            "location_zone",
+            "location_background" -> view.onLocationSettingChanged()
+            "update_sensors" -> view.onSensorSettingChanged(value as Boolean)
         }
     }
 

@@ -33,6 +33,7 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     override fun onCreate() {
+        dataStore.changeCallback = this
         mainScope.launch {
             handleInternalUrlStatus(urlUseCase.getHomeWifiSsids())
         }

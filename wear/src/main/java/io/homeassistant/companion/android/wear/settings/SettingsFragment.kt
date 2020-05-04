@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.wear.activity.ConfirmationActivity
 import io.homeassistant.companion.android.sensor.SensorWorker
+import io.homeassistant.companion.android.util.extensions.PermissionManager
 import io.homeassistant.companion.android.wear.DaggerPresenterComponent
 import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
@@ -80,4 +81,30 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             startActivity(intent)
         }
     }
+
+    override fun onLocationSettingChanged() {
+        if (!PermissionManager.hasLocationPermissions(requireContext())) {
+            PermissionManager.requestLocationPermissions(this)
+        }
+        PermissionManager.restartLocationTracking(requireContext())
+    }
+
+    override fun onSensorSettingChanged(value: Boolean) {
+        if (value) {
+            SensorWorker.start(requireContext())
+        } else {
+            SensorWorker.clearJobs(requireContext())
+        }
+    }
+
+    override fun onRequestPermissionsResult(code: Int, permissions: Array<out String>, results: IntArray) {
+        super.onRequestPermissionsResult(code, permissions, results)
+        if (PermissionManager.validateLocationPermissions(code, permissions, results)) {
+            PermissionManager.restartLocationTracking(requireContext())
+        } else {
+            requirePreference<SwitchPreference>("location_zone").isChecked = false
+            requirePreference<SwitchPreference>("location_background").isChecked = false
+        }
+    }
+
 }
