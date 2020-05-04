@@ -96,7 +96,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             onChangeBiometricValidator
 
         val shortcuts = findPreference<Preference>("shortcuts")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && presenter.getPanels().isNotEmpty()) {
             shortcuts?.onPreferenceClickListener =
                 onClickShortcuts
         } else {
