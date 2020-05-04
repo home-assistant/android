@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings.shortcuts
 
+import android.util.Log
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Panel
 import javax.inject.Inject
@@ -15,7 +16,13 @@ class ShortcutsPresenterImpl @Inject constructor(
 
     override fun getPanels(): Array<Panel> {
         return runBlocking {
-            integrationUseCase.getPanels()
+            var panels = arrayOf<Panel>()
+            try {
+                panels = integrationUseCase.getPanels()
+            } catch (e: Exception) {
+                Log.e(TAG, "Issue getting panels.", e)
+            }
+            panels
         }
     }
 }
