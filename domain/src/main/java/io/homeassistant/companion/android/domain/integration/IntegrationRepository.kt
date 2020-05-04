@@ -21,6 +21,9 @@ interface IntegrationRepository {
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 
+    suspend fun updateSensors(): Boolean
+    suspend fun setUpdateSensors(update: Boolean)
+
     suspend fun getThemeColor(): String
 
     suspend fun getPanels(): Array<Panel>
@@ -32,7 +35,6 @@ interface IntegrationRepository {
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 
     suspend fun fireEvent(eventType: String, eventData: Map<String, Any>)
-
     suspend fun registerSensor(sensorRegistration: SensorRegistration<*>)
     suspend fun updateSensors(sensors: List<Sensor<*>>): Boolean
 }

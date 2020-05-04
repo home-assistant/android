@@ -76,6 +76,14 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.isFullScreenEnabled()
     }
 
+    override suspend fun updateSensors(): Boolean {
+        return integrationRepository.updateSensors()
+    }
+
+    override suspend fun setUpdateSensors(update: Boolean) {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getServices(): Array<Service> {
         return integrationRepository.getServices()
     }

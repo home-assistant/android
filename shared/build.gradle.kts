@@ -26,6 +26,7 @@ dependencies {
     implementation(Config.Dependency.Kotlin.coroutines)
     implementation(Config.Dependency.Kotlin.coroutinesAndroid)
 
+    implementation(Config.Dependency.AndroidX.preference)
     implementation(Config.Dependency.AndroidX.workManager)
 
     implementation(Config.Dependency.Google.material)

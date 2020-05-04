@@ -34,6 +34,9 @@ interface IntegrationUseCase {
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 
+    suspend fun updateSensors(): Boolean
+    suspend fun setUpdateSensors(update: Boolean)
+
     suspend fun getServices(): Array<Service>
 
     suspend fun getEntities(): Array<Entity<Any>>

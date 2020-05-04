@@ -1,9 +1,11 @@
 package io.homeassistant.companion.android.wear.settings
 
+import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.preference.PreferenceDataStore
 import androidx.wear.activity.ConfirmationActivity.FAILURE_ANIMATION
 import androidx.wear.activity.ConfirmationActivity.SUCCESS_ANIMATION
 import com.google.firebase.iid.FirebaseInstanceId
@@ -11,6 +13,9 @@ import io.homeassistant.companion.android.common.util.ProgressTimeLatch
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.sensor.SensorWorker
+import io.homeassistant.companion.android.settings.PreferenceChangeCallback
+import io.homeassistant.companion.android.settings.SettingsPreferenceDataStore
 import io.homeassistant.companion.android.wear.BuildConfig
 import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.background.FailedSyncResult
@@ -34,13 +39,15 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 class SettingsPresenterImpl @Inject constructor(
+    private val appContext: Context,
     private val view: SettingsView,
+    private val dataStore: SettingsPreferenceDataStore,
     private val syncManager: SettingsSyncManager,
     private val capabilityManager: CapabilityManager,
     private val authenticationUseCase: AuthenticationUseCase,
     private val integrationUseCase: IntegrationUseCase,
     private val urlUseCase: UrlUseCase
-) : SettingsPresenter, SettingsSyncCallback {
+) : SettingsPresenter, SettingsSyncCallback, PreferenceChangeCallback {
 
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
     private val progressLatch = ProgressTimeLatch(defaultValue = false, refreshingToggle = view::displaySyncInProgress)
@@ -53,6 +60,22 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun onViewReady() {
         syncManager.syncCallback = this
+    }
+
+    override fun dataStore(): PreferenceDataStore {
+        return dataStore
+    }
+
+    override fun onPreferenceChanged(key: String, value: Any?) {
+        when (key) {
+            "update_sensors" -> {
+                if (value as Boolean) {
+                    SensorWorker.start(appContext)
+                } else {
+                    SensorWorker.clearJobs(appContext)
+                }
+            }
+        }
     }
 
     override fun syncSettings() {
@@ -121,8 +144,7 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     private suspend fun updateDevice(): Boolean {
-        val token = catch { FirebaseInstanceId.getInstance().instanceId.await() }
-            ?: return false
+        val token = catch { FirebaseInstanceId.getInstance().instanceId.await() } ?: return false
         return catch {
             integrationUseCase.updateRegistration(
                 appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
@@ -137,6 +159,7 @@ class SettingsPresenterImpl @Inject constructor(
     override fun finish() {
         handler.removeCallbacks(delayedShow)
         mainScope.cancel()
+        dataStore.cancel()
         syncManager.cancel()
     }
 

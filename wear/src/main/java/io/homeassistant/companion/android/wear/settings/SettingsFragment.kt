@@ -35,17 +35,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             .create(appComponent, domainComponent, PresenterModule(this), requireContext())
             .inject(this)
 
-        setPreferencesFromResource(R.xml.settings, rootKey)
+        preferenceManager.preferenceDataStore = presenter.dataStore()
 
-        val updateSensors: SwitchPreference = requirePreference("update_sensors")
-        updateSensors.setOnPreferenceChangeListener { _, newValue ->
-            if (newValue as Boolean) {
-                SensorWorker.start(requireContext())
-            } else {
-                SensorWorker.clearJobs(requireContext())
-            }
-            return@setOnPreferenceChangeListener true
-        }
+        setPreferencesFromResource(R.xml.settings, rootKey)
 
         val resyncButton: Preference = requirePreference("resync_settings")
         resyncButton.setOnPreferenceClickListener {
