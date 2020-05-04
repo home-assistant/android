@@ -6,6 +6,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.commit
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -76,11 +77,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         val onClickShortcuts = Preference.OnPreferenceClickListener {
-            fragmentManager!!
-                .beginTransaction()
-                .replace(R.id.content, ShortcutsFragment.newInstance())
-                .addToBackStack(getString(R.string.shortcuts))
-                .commit()
+            requireActivity().supportFragmentManager.commit {
+                replace(R.id.content, ShortcutsFragment.newInstance())
+                addToBackStack(getString(R.string.shortcuts))
+            }
             true
         }
 
