@@ -29,7 +29,7 @@ If you are looking for documentation around the companion applications check out
 If you get stuck while setting up your own environment, you can ask questions in the **#devs_mobile_apps** channel on [Discord](https://discord.gg/c5DvZ4e).
 
 ### Push Notifications
-If you want to work on push notifications or use a development build with push notifications please go the server side code [HERE](https://github.com/home-assistant/mobile-apps-fcm-push) and deploy it to your firebase project.  Once you have your URL to the service exchange that for your local builds [PUSH_URL](https://github.com/home-assistant/android/blob/master/data/src/main/java/io/homeassistant/companion/android/data/integration/IntegrationRepositoryImpl.kt#L42).
+If you want to work on push notifications or use a development build with push notifications please go the server side code [HERE](https://github.com/home-assistant/mobile-apps-fcm-push) and deploy it to your firebase project.  Once you have your androidV1 URL to the deployed service, exchange that for your local builds [PUSH_URL](https://github.com/home-assistant/android/blob/master/data/src/main/java/io/homeassistant/companion/android/data/integration/IntegrationRepositoryImpl.kt#L42).
 
 ## Testing Dev Releases
 
