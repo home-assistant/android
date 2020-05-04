@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -34,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.net.URL
+import java.util.*
 import javax.inject.Inject
 
 abstract class AbstractMessagingService : FirebaseMessagingService() {
@@ -43,6 +45,11 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         const val TITLE = "title"
         const val MESSAGE = "message"
         const val IMAGE_URL = "image"
+
+        // special action constants
+        const val REQUEST_LOCATION_UPDATE = "request_location_update"
+        const val CLEAR_NOTIFICATION = "clear_notification"
+        const val REMOVE_CHANNEL = "remove_channel"
     }
 
     @Inject lateinit var integrationUseCase: IntegrationUseCase
@@ -68,9 +75,11 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
 
         val messageKey = messageData[MESSAGE]
         val notificationTag = messageData["tag"]
+        val channel = messageData["channel"]
         when {
-            messageKey == "request_location_update" -> requestAccurateLocationUpdate()
-            messageKey == "clear_notification" && !notificationTag.isNullOrBlank() -> clearNotification(notificationTag)
+            messageKey == REQUEST_LOCATION_UPDATE -> requestAccurateLocationUpdate()
+            messageKey == CLEAR_NOTIFICATION && !notificationTag.isNullOrBlank() -> clearNotification(notificationTag)
+            messageKey == REMOVE_CHANNEL && !channel.isNullOrBlank() -> removeNotificationChannel(channel)
             else -> sendNotification(notificationTag, messageData)
         }
     }
@@ -89,6 +98,13 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         notificationManager.cancel(tag, messageId)
     }
 
+    private fun removeNotificationChannel(channelName: String) {
+        val channelID: String = createChannelID(channelName)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.deleteNotificationChannel(channelID)
+        }
+    }
+
     /**
      * Create and show a simple notification containing the received FCM message.
      *
@@ -100,9 +116,7 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
 
         val pendingIntent = handleIntent(notificationTag, messageId, data["clickAction"])
 
-        // TODO: implement channels
-        val channelId = "default"
-        saveChannel("default", "Default Channel")
+        val channelId = handleChannel(data["channel"])
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentIntent(pendingIntent)
@@ -236,6 +250,21 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
                     builder.addAction(0, action.title, pendingIntent)
                 }
             }
+    }
+
+    private fun handleChannel(channel: String?): String {
+        // Define some values for a default channel
+        val channelID = createChannelID(channel ?: "default")
+        val channelName = channel?.trim() ?: "Default Channel"
+        saveChannel(channelID, channelName)
+        return channelID
+    }
+
+    private fun createChannelID(channelName: String): String {
+        return channelName
+            .trim()
+            .toLowerCase(Locale.getDefault())
+            .replace(" ", "_")
     }
 
     /**
