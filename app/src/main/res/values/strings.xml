@@ -87,4 +87,18 @@ like to connect to:</string>
   <string name="manage_ssids_input_exists">This SSID already exists.</string>
   <string name="save">Save</string>
   <string name="cancel">Cancel</string>
+  <string name="dialog_add_panel_shortcut_title">Add Shortcut</string>
+  <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
+  <string name="calendar">Calendar</string>
+  <string name="config">Configuration</string>
+  <string name="developer_tools">Developer Tools</string>
+  <string name="history">History</string>
+  <string name="logbook">Logbook</string>
+  <string name="mailbox">Mailbox</string>
+  <string name="map">Map</string>
+  <string name="profile">Profile</string>
+  <string name="shopping_list">Shopping List</string>
+  <string name="states">Overview</string>
+  <string name="shortcuts">Shortcuts</string>
+  <string name="shortcuts_summary">Add shortcuts to launcher</string>
 </resources>
