@@ -38,6 +38,11 @@ class MessagingService : FirebaseMessagingService() {
         const val TITLE = "title"
         const val MESSAGE = "message"
         const val IMAGE_URL = "image"
+
+        // special action constants
+        const val REQUEST_LOCATION_UPDATE = "request_location_update"
+        const val CLEAR_NOTIFICATION = "clear_notification"
+        const val REMOVE_CHANNEL = "remove_channel"
     }
 
     @Inject
@@ -66,14 +71,20 @@ class MessagingService : FirebaseMessagingService() {
         remoteMessage.data.let {
             Log.d(TAG, "Message data payload: " + remoteMessage.data)
 
-            if (it[MESSAGE] == "request_location_update") {
-                Log.d(TAG, "Request location update")
-                requestAccurateLocationUpdate()
-            } else if (it[MESSAGE] == "clear_notification" && !it["tag"].isNullOrBlank()) {
-                Log.d(TAG, "Clearing notification with tag: ${it["tag"]}")
-                clearNotification(it["tag"]!!)
-            } else {
-                mainScope.launch {
+            when {
+                it[MESSAGE] == REQUEST_LOCATION_UPDATE -> {
+                    Log.d(TAG, "Request location update")
+                    requestAccurateLocationUpdate()
+                }
+                it[MESSAGE] == CLEAR_NOTIFICATION && !it["tag"].isNullOrBlank() -> {
+                    Log.d(TAG, "Clearing notification with tag: ${it["tag"]}")
+                    clearNotification(it["tag"]!!)
+                }
+                it[MESSAGE] == REMOVE_CHANNEL && !it["channel"].isNullOrBlank() -> {
+                    Log.d(TAG, "Removing Notification channel ${it["tag"]}")
+                    removeNotificationChannel(it["channel"]!!)
+                }
+                else -> mainScope.launch {
                     Log.d(TAG, "Creating notification with following data: $it")
                     sendNotification(it)
                 }
@@ -96,6 +107,17 @@ class MessagingService : FirebaseMessagingService() {
         notificationManager.cancel(tag, messageId)
     }
 
+    private fun removeNotificationChannel(channelName: String) {
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val channelID: String = createChannelID(channelName)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationManager.deleteNotificationChannel(channelID)
+        }
+    }
+
     /**
      * Create and show a simple notification containing the received FCM message.
      *
@@ -110,7 +132,7 @@ class MessagingService : FirebaseMessagingService() {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val channelId = handleChannel(notificationManager)
+        val channelId = handleChannel(notificationManager, data)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentIntent(pendingIntent)
@@ -272,20 +294,37 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun handleChannel(
-        notificationManager: NotificationManager
+        notificationManager: NotificationManager,
+        data: Map<String, String>
     ): String {
-        // TODO: implement channels
-        val channelId = "default"
+        // Define some values for a default channel
+        var channelID = "default"
+        var channelName = "Default Channel"
+
+        if (data.containsKey("channel")) {
+            channelID = createChannelID(data["channel"].toString())
+            channelName = data["channel"].toString().trim()
+        }
+
         // Since android Oreo notification channel is needed.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelId,
-                "Default Channel",
+                channelID,
+                channelName,
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             notificationManager.createNotificationChannel(channel)
         }
-        return channelId
+        return channelID
+    }
+
+    private fun createChannelID(
+        channelName: String
+    ): String {
+        return channelName
+            .trim()
+            .toLowerCase()
+            .replace(" ", "_")
     }
 
     /**
