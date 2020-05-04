@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Handler
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.CallSuper
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.resources.R
@@ -32,6 +33,7 @@ abstract class AbstractNotificationActionReceiver : BroadcastReceiver() {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
+    @CallSuper
     override fun onReceive(context: Context, intent: Intent) {
         val graphAccessor = context.applicationContext as GraphComponentAccessor
         DaggerNotificationComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)

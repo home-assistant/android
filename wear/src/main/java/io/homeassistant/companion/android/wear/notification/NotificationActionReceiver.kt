@@ -1,15 +1,28 @@
 package io.homeassistant.companion.android.wear.notification
 
 import android.content.Context
+import android.content.Intent
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.notification.AbstractNotificationActionReceiver
+import io.homeassistant.companion.android.notification.DaggerNotificationComponent
 import io.homeassistant.companion.android.notification.NotificationAction
 import io.homeassistant.companion.android.wear.R
+import io.homeassistant.companion.android.wear.background.BackgroundModule
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class NotificationActionReceiver : AbstractNotificationActionReceiver() {
 
     @Inject lateinit var uriLauncher: NotificationActionUriLauncher
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val graphAccessor = context.applicationContext as GraphComponentAccessor
+        DaggerNotificationAppComponent.factory()
+            .create(graphAccessor.appComponent, graphAccessor.domainComponent, BackgroundModule(), context)
+            .inject(this)
+
+        super.onReceive(context, intent)
+    }
 
     override fun openUri(
         context: Context,

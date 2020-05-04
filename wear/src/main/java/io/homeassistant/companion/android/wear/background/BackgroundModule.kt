@@ -6,7 +6,6 @@ import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.Wearable
 import dagger.Module
 import dagger.Provides
-import javax.inject.Singleton
 
 @Module
 class BackgroundModule {

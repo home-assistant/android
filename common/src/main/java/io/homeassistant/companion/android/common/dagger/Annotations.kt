@@ -24,6 +24,10 @@ annotation class ServiceScope
 
 @Scope
 @Retention(AnnotationRetention.RUNTIME)
+annotation class NotificationScope
+
+@Scope
+@Retention(AnnotationRetention.RUNTIME)
 annotation class SensorScope
 
 @Scope

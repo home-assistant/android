@@ -3,9 +3,9 @@ package io.homeassistant.companion.android.notification
 import dagger.Component
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.DomainComponent
-import io.homeassistant.companion.android.common.dagger.ServiceScope
+import io.homeassistant.companion.android.common.dagger.NotificationScope
 
-@ServiceScope
+@NotificationScope
 @Component(dependencies = [AppComponent::class, DomainComponent::class])
 interface NotificationComponent {
 

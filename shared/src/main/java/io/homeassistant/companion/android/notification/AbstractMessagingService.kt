@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import java.net.URL
 import java.util.*
 import javax.inject.Inject
+import kotlin.collections.HashMap
 
 abstract class AbstractMessagingService : FirebaseMessagingService() {
 
@@ -139,7 +140,7 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         val actions: List<NotificationAction> = (1..3).mapNotNull { actionKey ->
             val key = data["action_${actionKey}_key"] ?: return@mapNotNull null
             val title = data["action_${actionKey}_title"].toString()
-            return@mapNotNull NotificationAction(key, title, data["action_${actionKey}_uri"], data)
+            return@mapNotNull NotificationAction(key, title, data["action_${actionKey}_uri"], HashMap(data))
         }
 
         handleActions(notificationBuilder, notificationTag, messageId, stickyNotification, actions)
@@ -244,11 +245,7 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
                     intent,
                     PendingIntent.FLAG_UPDATE_CURRENT
                 )
-                if (isWearable) {
-                    extender.addAction(NotificationCompat.Action(0, action.title, pendingIntent))
-                } else {
-                    builder.addAction(0, action.title, pendingIntent)
-                }
+                builder.addAction(0, action.title, pendingIntent)
             }
     }
 
