@@ -81,7 +81,7 @@ class IntegrationUseCaseImpl @Inject constructor(
     }
 
     override suspend fun setUpdateSensors(update: Boolean) {
-        TODO("Not yet implemented")
+        integrationRepository.setUpdateSensors(update)
     }
 
     override suspend fun getServices(): Array<Service> {
