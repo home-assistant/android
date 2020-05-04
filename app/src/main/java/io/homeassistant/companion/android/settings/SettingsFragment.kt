@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings
 
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricManager
@@ -13,6 +14,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.util.PermissionManager
@@ -73,6 +75,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             isValid
         }
 
+        val onClickShortcuts = Preference.OnPreferenceClickListener {
+            fragmentManager!!
+                .beginTransaction()
+                .replace(R.id.content, ShortcutsFragment.newInstance())
+                .addToBackStack(getString(R.string.shortcuts))
+                .commit()
+            true
+        }
+
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
 
@@ -81,6 +92,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         findPreference<SwitchPreference>("app_lock")?.onPreferenceChangeListener =
             onChangeBiometricValidator
+
+        val shortcuts = findPreference<Preference>("shortcuts")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            shortcuts?.onPreferenceClickListener =
+                onClickShortcuts
+        } else {
+            shortcuts?.isVisible = false
+        }
 
         findPreference<Preference>("version")?.let {
             it.summary = BuildConfig.VERSION_NAME

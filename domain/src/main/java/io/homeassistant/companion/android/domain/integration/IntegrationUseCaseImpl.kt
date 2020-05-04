@@ -84,6 +84,10 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.getEntities()
     }
 
+    override suspend fun getPanels(): Array<Panel> {
+        return integrationRepository.getPanels()
+    }
+
     override suspend fun getThemeColor(): String {
         return integrationRepository.getThemeColor()
     }

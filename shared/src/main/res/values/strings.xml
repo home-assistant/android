@@ -89,6 +89,21 @@ like to connect to:</string>
   <string name="save">Save</string>
   <string name="cancel">Cancel</string>
 
+    <string name="dialog_add_panel_shortcut_title">Add Shortcut</string>
+    <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
+    <string name="calendar">Calendar</string>
+    <string name="config">Configuration</string>
+    <string name="developer_tools">Developer Tools</string>
+    <string name="history">History</string>
+    <string name="logbook">Logbook</string>
+    <string name="mailbox">Mailbox</string>
+    <string name="map">Map</string>
+    <string name="profile">Profile</string>
+    <string name="shopping_list">Shopping List</string>
+    <string name="states">Overview</string>
+    <string name="shortcuts">Shortcuts</string>
+    <string name="shortcuts_summary">Add shortcuts to launcher</string>
+
   <string name="ha_wear_device_type_error">Unable to determine the type of the device connected to this watch.</string>
   <string name="ha_wear_not_supporting_apple">Home assistant on Wear doesn\'t over support for watches connected to Apple devices.</string>
   <string name="ha_phone_app_not_reachable">Home assistant on your phone is not reachable, either install home assistant or make sure your phone is reachable.</string>
@@ -127,5 +142,4 @@ like to connect to:</string>
   <string name="sensor_update_settings_summary">Update the battery and wifi connected state periodically. This can cause an increase of battery usage.</string>
   <string name="resync_settings">Resync Settings</string>
   <string name="resync_settings_summary">Resync the settings from your phone</string>
-
 </resources>
