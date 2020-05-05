@@ -1,37 +1,45 @@
 package io.homeassistant.companion.android.wear.navigation
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.widget.drawer.WearableNavigationDrawerView
+import io.homeassistant.companion.android.wear.DaggerPresenterComponent
+import io.homeassistant.companion.android.wear.PresenterModule
 import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.actions.ActionsFragment
 import io.homeassistant.companion.android.wear.databinding.ActivityNavigationBinding
 import io.homeassistant.companion.android.wear.settings.SettingsFragment
+import io.homeassistant.companion.android.wear.util.extensions.appComponent
+import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import io.homeassistant.companion.android.wear.util.extensions.requireDrawable
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
+import javax.inject.Inject
 
-class NavigationActivity : AppCompatActivity(), WearableNavigationDrawerView.OnItemSelectedListener {
+class NavigationActivity : AppCompatActivity(), NavigationView, WearableNavigationDrawerView.OnItemSelectedListener {
+
+    @Inject lateinit var presenter: NavigationPresenter
 
     private val binding by viewBinding(ActivityNavigationBinding::inflate)
 
     private val adapter = NavigationAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        DaggerPresenterComponent.factory()
+            .create(appComponent, domainComponent, PresenterModule(this), this)
+            .inject(this)
+
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        adapter.submitPages(pages)
+        adapter.submitPages(presenter.getPages())
         binding.topDrawer.setAdapter(adapter)
         binding.topDrawer.addOnItemSelectedListener(this)
 
         onItemSelected(0)
-    }
 
-    private val pages: List<NavigationItem>
-        get() = arrayListOf(
-            NavigationItem(getString(R.string.page_actions), requireDrawable(R.drawable.ic_home_assistant), NavigationPage.ACTIONS),
-            NavigationItem(getString(R.string.page_settings), requireDrawable(R.drawable.ic_settings), NavigationPage.SETTINGS)
-        )
+        presenter.onViewReady()
+    }
 
     override fun onItemSelected(pos: Int) {
         val item = adapter.getPage(pos)
@@ -56,4 +64,7 @@ class NavigationActivity : AppCompatActivity(), WearableNavigationDrawerView.OnI
         transaction.commit()
     }
 
+    override fun displayError(messageId: Int) {
+        Toast.makeText(this, messageId, Toast.LENGTH_LONG).show()
+    }
 }

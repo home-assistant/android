@@ -62,13 +62,8 @@ class LaunchPresenterImpl @Inject constructor(
             val sessionState = withContext(Dispatchers.IO) { authenticationUseCase.getSessionState() }
             val registered = integrationUseCase.isRegistered()
             if (sessionState == SessionState.CONNECTED && registered) {
-                val updated = withContext(Dispatchers.IO) { updateDevice() }
                 progressLatch.refreshing = false
-                if (updated) {
-                    view.displayNextScreen()
-                } else {
-                    view.displayRetryActionButton(R.string.error_with_registration)
-                }
+                view.displayNextScreen()
             } else {
                 onRefresh()
             }
@@ -134,32 +129,13 @@ class LaunchPresenterImpl @Inject constructor(
     }
 
     private suspend fun registerDevice(): Boolean {
-        val token = catch { FirebaseInstanceId.getInstance().instanceId.await() }
-            ?: return false
+        val token = catch { FirebaseInstanceId.getInstance().instanceId.await() } ?: return false
         val registration = DeviceRegistration(
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
             Build.MODEL ?: "UNKNOWN",
             token.token
         )
-        return catch {
-            integrationUseCase.registerDevice(
-                registration
-            )
-        } != null
-    }
-
-    private suspend fun updateDevice(): Boolean {
-        val token = catch { FirebaseInstanceId.getInstance().instanceId.await() }
-            ?: return false
-        return catch {
-            integrationUseCase.updateRegistration(
-                appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                manufacturer = Build.MANUFACTURER ?: "UNKNOWN",
-                model = Build.MODEL ?: "UNKNOWN",
-                osVersion = Build.VERSION.SDK_INT.toString(),
-                pushToken = token.token
-            )
-        } != null
+        return catch { integrationUseCase.registerDevice(registration) } != null
     }
 
     override fun onFinish() {

@@ -17,14 +17,14 @@ class MessagingService : AbstractMessagingService() {
 
     override fun actionHandler(): Class<*> = NotificationActionReceiver::class.java
 
-    override fun handleIntent(notificationTag: String?, messageId: Int, actionUrl: String?): PendingIntent {
-        val notificationAction = NotificationAction(EXTRA_ACTION_URL, EXTRA_ACTION_URL, actionUrl, HashMap())
+    override fun handleIntent(notificationTag: String?, messageId: Int, actionUrl: String): PendingIntent {
+        val dummyWithActionUrl = NotificationAction(EXTRA_ACTION_URL, EXTRA_ACTION_URL, actionUrl, HashMap())
 
         val intent = Intent(this, NotificationActionReceiver::class.java)
             .setAction(OPEN_URI)
             .putExtra(AbstractNotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
             .putExtra(AbstractNotificationActionReceiver.EXTRA_NOTIFICATION_TAG, notificationTag)
-            .putExtra(AbstractNotificationActionReceiver.EXTRA_NOTIFICATION_ACTION, notificationAction)
+            .putExtra(AbstractNotificationActionReceiver.EXTRA_NOTIFICATION_ACTION, dummyWithActionUrl)
 
         return PendingIntent.getBroadcast(this, messageId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }

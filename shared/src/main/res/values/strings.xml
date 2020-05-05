@@ -19,6 +19,7 @@ to your home internet.</string>
   <string name="unable_to_register">Unable to Register Application</string>
   <string name="error_with_registration">Please check to ensure you have the mobile_app 
 integration enabled on your home assistant instance.</string>
+  <string name="error_with_registration_short">Enable mobile_app or reboot home assistant</string>
   <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
   <string name="pref_location_zone_title">Zone Based Tracking</string>
   <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
@@ -105,7 +106,7 @@ like to connect to:</string>
     <string name="shortcuts_summary">Add shortcuts to launcher</string>
 
   <string name="ha_wear_device_type_error">Unable to determine the type of the device connected to this watch.</string>
-  <string name="ha_wear_not_supporting_apple">Home assistant on Wear doesn\'t over support for watches connected to Apple devices.</string>
+  <string name="ha_wear_not_supporting_apple">Home assistant on Wear doesn\'t offer support for watches connected to Apple devices.</string>
   <string name="ha_phone_app_not_reachable">Home assistant on your phone is not reachable, either install home assistant or make sure your phone is reachable.</string>
   <string name="ha_phone_app_not_reachable_short">Home assistant on your phone is not reachable.</string>
   <string name="ha_state_handheld_not_nearby">The handheld is not close enough to connect to.</string>

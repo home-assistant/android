@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.notification
 import android.app.Notification
 import android.app.PendingIntent
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -28,10 +27,7 @@ import io.homeassistant.companion.android.util.extensions.handle
 import io.homeassistant.companion.android.util.extensions.isAbsoluteUrl
 import io.homeassistant.companion.android.util.extensions.notificationManager
 import io.homeassistant.companion.android.util.extensions.saveChannel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.net.URL
@@ -56,8 +52,6 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
     @Inject lateinit var integrationUseCase: IntegrationUseCase
     @Inject lateinit var urlUseCase: UrlUseCase
     @Inject lateinit var authenticationUseCase: AuthenticationUseCase
-
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onCreate() {
         super.onCreate()
@@ -115,7 +109,9 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
 
         val messageId = notificationTag?.hashCode() ?: System.currentTimeMillis().toInt()
 
-        val pendingIntent = handleIntent(notificationTag, messageId, data["clickAction"])
+        val pendingIntent = data["clickAction"]?.let { action ->
+            handleIntent(notificationTag, messageId, action)
+        }
 
         val channelId = handleChannel(data["channel"])
 
@@ -152,7 +148,7 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         }
     }
 
-    protected abstract fun handleIntent(notificationTag: String?, messageId: Int, actionUrl: String?): PendingIntent
+    protected abstract fun handleIntent(notificationTag: String?, messageId: Int, actionUrl: String): PendingIntent
 
     private fun handleColor(builder: NotificationCompat.Builder, colorString: String?) {
         var color = ContextCompat.getColor(this, R.color.colorPrimary)
@@ -219,34 +215,23 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         sticky: Boolean,
         actions: List<NotificationAction>
     ) {
-        if (actions.isEmpty()) {
-            return
-        }
+        actions.forEach { action ->
+            val intent = Intent(this, actionHandler())
+                .setAction(if (action.key == "URI") OPEN_URI else FIRE_EVENT)
+                .putExtra(EXTRA_NOTIFICATION_ACTION, action)
 
-        val isWearable = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
-        val extender = NotificationCompat.WearableExtender()
-        if (isWearable) {
-            builder.extend(extender.setDismissalId(tag).setContentAction(0))
-        }
-
-        actions.asSequence()
-            .forEach { action ->
-                val intent = Intent(this, actionHandler())
-                    .setAction(if (action.key == "URI") OPEN_URI else FIRE_EVENT)
-                    .putExtra(EXTRA_NOTIFICATION_ACTION, action)
-
-                if (sticky) {
-                    intent.putExtra(EXTRA_NOTIFICATION_TAG, tag).putExtra(EXTRA_NOTIFICATION_ID, messageId)
-                }
-
-                val pendingIntent = PendingIntent.getBroadcast(
-                    this,
-                    (action.title.hashCode() + System.currentTimeMillis()).toInt(),
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-                builder.addAction(0, action.title, pendingIntent)
+            if (sticky) {
+                intent.putExtra(EXTRA_NOTIFICATION_TAG, tag).putExtra(EXTRA_NOTIFICATION_ID, messageId)
             }
+
+            val pendingIntent = PendingIntent.getBroadcast(
+                this,
+                (action.title.hashCode() + System.currentTimeMillis()).toInt(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            builder.addAction(0, action.title, pendingIntent)
+        }
     }
 
     private fun handleChannel(channel: String?): String {
@@ -268,10 +253,13 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
      * Called if InstanceID token is updated. This may occur if the security of
      * the previous token had been compromised. Note that this is called when the InstanceID token
      * is initially generated so this is where you would retrieve the token.
+     *
+     * This function is called from a worker thread so we can stay on the same thread to update
+     * the registration with the (new) received token.
      */
     override fun onNewToken(token: String) {
-        Log.d(TAG, "Refreshed token: $token")
-        mainScope.launch {
+        runBlocking {
+            Log.d(TAG, "Refreshed token: $token")
             try {
                 integrationUseCase.updateRegistration(pushToken = token)
             } catch (e: Exception) {
