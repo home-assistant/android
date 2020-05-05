@@ -3,7 +3,7 @@
 ## Documentation
 If you are looking for documentation around the companion applications check out the [Home Assistant Companion Documentation](https://companion.home-assistant.io/).  This will provide you instructions on using the applications.
 
-## Setup Development Environment
+## Setup App Development Environment
 
 - Download and install [Android Studio](https://developer.android.com/studio)
 
@@ -16,7 +16,7 @@ If you are looking for documentation around the companion applications check out
 - Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder
 
   [You can also use the mock services file instead of generating your own](/.travis/mock-google-services.json)
-  The file should contain client IDs for `io.homeassistant.companion.android` and `io.homeassistant.companion.android.debug` for debugging to work properly
+  The file should contain client IDs for `io.homeassistant.companion.android` and `io.homeassistant.companion.android.debug` for debugging to work properly.  **If you do not generate your own file push notification will never work**
 
 - Start Android Studio, open your source code folder and check if the Gradle build will be successful
 
@@ -26,7 +26,10 @@ If you are looking for documentation around the companion applications check out
 
 - :tada:
 
-If you get stuck while setting up your own environment, you can ask questions in the **#devs_apps** channel on [Discord](https://discord.gg/c5DvZ4e).
+If you get stuck while setting up your own environment, you can ask questions in the **#devs_mobile_apps** channel on [Discord](https://discord.gg/c5DvZ4e).
+
+### Push Notifications
+If you want to work on push notifications or use a development build with push notifications please go the server side code [HERE](https://github.com/home-assistant/mobile-apps-fcm-push) and deploy it to your firebase project.  Once you have your androidV1 URL to the deployed service, exchange that for your local builds [PUSH_URL](https://github.com/home-assistant/android/blob/master/data/src/main/java/io/homeassistant/companion/android/data/integration/IntegrationRepositoryImpl.kt#L42).
 
 ## Testing Dev Releases
 
