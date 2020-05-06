@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.settings
 
+import android.util.Log
 import androidx.preference.PreferenceDataStore
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Panel
 import io.homeassistant.companion.android.domain.url.UrlUseCase
@@ -10,13 +10,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class SettingsPresenterImpl @Inject constructor(
     private val settingsView: SettingsView,
     private val dataStore: SettingsPreferenceDataStore,
     private val urlUseCase: UrlUseCase,
-    private val integrationUseCase: IntegrationUseCase,
+    private val integrationUseCase: IntegrationUseCase
 ) : SettingsPresenter, PreferenceChangeCallback {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -58,7 +59,7 @@ class SettingsPresenterImpl @Inject constructor(
             try {
                 panels = integrationUseCase.getPanels()
             } catch (e: Exception) {
-                Log.e(SettingsPresenterImpl.TAG, "Issue getting panels.", e)
+                Log.e("SettingsPresenterImpl", "Issue getting panels.", e)
             }
             panels
         }
