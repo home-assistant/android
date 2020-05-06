@@ -39,6 +39,11 @@ android {
         isEnabled = true
     }
 
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
     firebaseAppDistribution {
         serviceCredentialsFile = "firebaseAppDistributionServiceCredentialsFile.json"
         releaseNotesFile = "app/src/main/play/release-notes/en-US/default.txt"
