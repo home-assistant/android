@@ -19,7 +19,7 @@ to your home internet.</string>
   <string name="unable_to_register">Unable to Register Application</string>
   <string name="error_with_registration">Please check to ensure you have the mobile_app 
 integration enabled on your home assistant instance.</string>
-  <string name="error_with_registration_short">Enable mobile_app or reboot home assistant</string>
+  <string name="error_with_registration_short">Error please check your connection, enable mobile_app or reboot home assistant</string>
   <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
   <string name="pref_location_zone_title">Zone Based Tracking</string>
   <string name="pref_location_zone_summary">Import existing Home Assistant zones as geofences for zone based tracking.</string>
