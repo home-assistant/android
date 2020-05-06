@@ -12,7 +12,6 @@ import androidx.wear.activity.ConfirmationActivity
 import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.wear.DaggerPresenterComponent
 import io.homeassistant.companion.android.wear.PresenterModule
-import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.action.ActionActivity
 import io.homeassistant.companion.android.wear.action.ActionActivityArgs
 import io.homeassistant.companion.android.wear.databinding.FragmentActionsBinding

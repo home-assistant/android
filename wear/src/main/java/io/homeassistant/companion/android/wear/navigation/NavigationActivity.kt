@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.wear.databinding.ActivityNavigationBin
 import io.homeassistant.companion.android.wear.settings.SettingsFragment
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
 import io.homeassistant.companion.android.wear.util.extensions.domainComponent
-import io.homeassistant.companion.android.wear.util.extensions.requireDrawable
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
 import javax.inject.Inject
 
