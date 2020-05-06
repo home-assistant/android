@@ -19,11 +19,8 @@ data class WearAction(
     @ColumnInfo(name = "wear_action_id")
     val id: Long? = null,
 
-    @ColumnInfo(name = "wear_action_icon_raw")
-    val iconRaw: String,
-
     @ColumnInfo(name = "wear_action_icon")
-    val icon: MaterialDrawableBuilder.IconValue?,
+    val icon: MaterialDrawableBuilder.IconValue,
 
     @ColumnInfo(name = "wear_action_name")
     val name: String,

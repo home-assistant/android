@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "48e909c645f50f19f945f876f4d1cee9",
+    "identityHash": "4d8073fda77155f41a83403e2fda98b4",
     "entities": [
       {
         "tableName": "wear_actions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`wear_action_id` INTEGER PRIMARY KEY AUTOINCREMENT, `wear_action_icon_raw` TEXT NOT NULL, `wear_action_icon` TEXT, `wear_action_name` TEXT NOT NULL, `wear_action` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`wear_action_id` INTEGER PRIMARY KEY AUTOINCREMENT, `wear_action_icon` TEXT NOT NULL, `wear_action_name` TEXT NOT NULL, `wear_action` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -15,16 +15,10 @@
             "notNull": false
           },
           {
-            "fieldPath": "iconRaw",
-            "columnName": "wear_action_icon_raw",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
             "fieldPath": "icon",
             "columnName": "wear_action_icon",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "name",
@@ -52,7 +46,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '48e909c645f50f19f945f876f4d1cee9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4d8073fda77155f41a83403e2fda98b4')"
     ]
   }
 }

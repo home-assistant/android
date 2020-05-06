@@ -47,34 +47,31 @@
             android:inputType="text|textWebEditText" />
 
         <LinearLayout
+            android:id="@+id/actionIconContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:orientation="horizontal">
 
-            <EditText
-                android:id="@+id/actionIconInput"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
-                android:layout_weight="1"
-                android:digits="abcdefghijklmnopqrstuvwxyz1234567890-"
-                android:ellipsize="end"
-                android:hint="@string/action_icon_hint"
-                android:imeOptions="actionDone"
-                android:importantForAutofill="no"
-                android:inputType="text|textNoSuggestions"
-                android:maxLines="1" />
-
             <net.steamcrafted.materialiconlib.MaterialIconView
                 android:id="@+id/actionIconPreview"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_gravity="center"
                 app:materialIconColor="@android:color/white"
                 app:materialIconSize="24dp"
                 tools:src="@drawable/ic_lightbulb_outline_black_24dp"
                 tools:tint="@android:color/white" />
+
+            <TextView
+                android:id="@+id/actionIconName"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:gravity="center_vertical"
+                android:ellipsize="end"
+                android:hint="@string/action_icon_hint"
+                android:maxLines="2" />
 
         </LinearLayout>
 
