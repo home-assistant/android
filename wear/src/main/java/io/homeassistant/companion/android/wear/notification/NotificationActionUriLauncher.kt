@@ -24,7 +24,7 @@ class NotificationActionUriLauncher @Inject constructor(
         private const val EXTRA_ACTION_URI = "ActionUri"
     }
 
-    suspend fun launchAction(actionUri: String): Boolean {
+    suspend fun launchAction(actionUri: String?): Boolean {
         val capabilityResult = capabilityManager.getNodeWithInstalledApp()
         if (capabilityResult == null || capabilityResult.result == Result.FAILURE) {
             logI("Failure trying to figure out to which device the action needs to be send.")

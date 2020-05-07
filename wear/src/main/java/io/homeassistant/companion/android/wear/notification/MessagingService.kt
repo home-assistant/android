@@ -17,7 +17,9 @@ class MessagingService : AbstractMessagingService() {
 
     override fun actionHandler(): Class<*> = NotificationActionReceiver::class.java
 
-    override fun handleIntent(notificationTag: String?, messageId: Int, actionUrl: String): PendingIntent {
+    override fun handleIntent(
+        notificationTag: String?, messageId: Int, actionUrl: String?
+    ): PendingIntent {
         val dummyWithActionUrl = NotificationAction(EXTRA_ACTION_URL, EXTRA_ACTION_URL, actionUrl, HashMap())
 
         val intent = Intent(this, NotificationActionReceiver::class.java)

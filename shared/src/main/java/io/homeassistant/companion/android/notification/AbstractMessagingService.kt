@@ -106,9 +106,7 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
 
         val messageId = notificationTag?.hashCode() ?: System.currentTimeMillis().toInt()
 
-        val pendingIntent = data["clickAction"]?.let { action ->
-            handleIntent(notificationTag, messageId, action)
-        }
+        val pendingIntent = handleIntent(notificationTag, messageId, data["clickAction"])
 
         val channelId = handleChannel(data["channel"])
 
@@ -145,7 +143,9 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         }
     }
 
-    protected abstract fun handleIntent(notificationTag: String?, messageId: Int, actionUrl: String): PendingIntent
+    protected abstract fun handleIntent(
+        notificationTag: String?, messageId: Int, actionUrl: String?
+    ): PendingIntent
 
     private fun handleColor(builder: NotificationCompat.Builder, colorString: String?) {
         var color = ContextCompat.getColor(this, R.color.colorPrimary)

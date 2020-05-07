@@ -27,9 +27,8 @@ class NotificationActionReceiver : AbstractNotificationActionReceiver() {
         onComplete: () -> Unit,
         onFailure: (Int) -> Unit
     ) {
-        val actionUri = action.uri ?: return
         ioScope.launch {
-            if (uriLauncher.launchAction(actionUri)) {
+            if (uriLauncher.launchAction(action.uri)) {
                 onComplete()
             } else {
                 onFailure(R.string.failed_launch_action_uri)

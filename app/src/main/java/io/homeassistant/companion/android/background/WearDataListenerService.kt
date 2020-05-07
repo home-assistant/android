@@ -68,10 +68,6 @@ class WearDataListenerService : WearableListenerService() {
                     return@runBlocking
                 }
                 val actionUrl = dataMap.getString("ActionUri")
-                if (actionUrl == null) {
-                    Log.e(TAG, "Path: ${messageEvent.path} - no action uri provided")
-                    return@runBlocking
-                }
                 val intent = if (actionUrl.isAbsoluteUrl()) {
                     Intent(Intent.ACTION_VIEW).setData(Uri.parse(actionUrl))
                 } else {
