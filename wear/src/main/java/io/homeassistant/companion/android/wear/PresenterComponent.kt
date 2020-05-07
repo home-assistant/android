@@ -1,10 +1,7 @@
 package io.homeassistant.companion.android.wear
 
-import android.content.Context
-import dagger.BindsInstance
 import dagger.Component
 import io.homeassistant.companion.android.common.dagger.AppComponent
-import io.homeassistant.companion.android.common.dagger.DomainComponent
 import io.homeassistant.companion.android.common.dagger.PresenterScope
 import io.homeassistant.companion.android.wear.actions.ActionsFragment
 import io.homeassistant.companion.android.wear.background.BackgroundModule
@@ -15,7 +12,7 @@ import io.homeassistant.companion.android.wear.settings.SettingsFragment
 
 @PresenterScope
 @Component(
-    dependencies = [AppComponent::class, DomainComponent::class],
+    dependencies = [AppComponent::class],
     modules = [PresenterModule::class, BackgroundModule::class]
 )
 interface PresenterComponent {
@@ -24,9 +21,7 @@ interface PresenterComponent {
     interface Factory {
         fun create(
             appComponent: AppComponent,
-            domainComponent: DomainComponent,
-            presenterModule: PresenterModule,
-            @BindsInstance context: Context
+            presenterModule: PresenterModule
         ): PresenterComponent
     }
 

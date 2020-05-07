@@ -33,8 +33,7 @@ class WearDataListenerService : WearableListenerService() {
     override fun onCreate() {
         super.onCreate()
         val graphAccessor = applicationContext as GraphComponentAccessor
-        DaggerServiceComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
-            .inject(this)
+        DaggerServiceComponent.factory().create(graphAccessor.appComponent).inject(this)
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) = runBlocking {

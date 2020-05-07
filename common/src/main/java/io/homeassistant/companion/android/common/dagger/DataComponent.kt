@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.dagger
 
+import android.app.Application
 import android.content.Context
 import dagger.BindsInstance
 import dagger.Component
@@ -11,17 +12,18 @@ import io.homeassistant.companion.android.domain.url.UrlRepository
 import io.homeassistant.companion.android.domain.widgets.WidgetRepository
 
 @DataScope
-@Component(dependencies = [AppComponent::class], modules = [DataModule::class, DatabaseModule::class])
+@Component(modules = [DataModule::class, DatabaseModule::class])
 interface DataComponent {
 
     @Component.Factory
     interface Factory {
         fun create(
-            appComponent: AppComponent,
             dataModule: DataModule,
-            @BindsInstance context: Context
+            @BindsInstance application: Application
         ): DataComponent
     }
+
+    fun context(): Context
 
     fun urlRepository(): UrlRepository
 

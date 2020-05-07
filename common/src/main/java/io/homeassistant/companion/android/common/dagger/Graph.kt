@@ -27,11 +27,9 @@ class Graph(
 
     @SuppressLint("HardwareIds")
     private fun buildComponent() {
-        appComponent = DaggerAppComponent.factory().create()
         dataComponent = DaggerDataComponent
             .factory()
             .create(
-                appComponent,
                 DataModule(
                     LocalStorageImpl(
                         application.getSharedPreferences(
@@ -65,7 +63,7 @@ class Graph(
                 ),
                 application
             )
-
         domainComponent = DaggerDomainComponent.factory().create(dataComponent)
+        appComponent = DaggerAppComponent.factory().create(domainComponent)
     }
 }

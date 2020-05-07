@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.appComponent
-import io.homeassistant.companion.android.util.domainComponent
 import javax.inject.Inject
 
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
@@ -51,7 +50,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         super.onCreate(savedInstanceState)
 
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this))
+            .create(appComponent, PresenterModule(this))
             .inject(this)
     }
 

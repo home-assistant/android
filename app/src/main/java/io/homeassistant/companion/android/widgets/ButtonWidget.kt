@@ -250,8 +250,7 @@ class ButtonWidget : AppWidgetProvider() {
     private fun ensureInjected(context: Context) {
         if (context.applicationContext is GraphComponentAccessor) {
             val graphAccessor = context.applicationContext as GraphComponentAccessor
-            DaggerProviderComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
-                .inject(this)
+            DaggerProviderComponent.factory().create(graphAccessor.appComponent).inject(this)
         } else {
             throw Exception("Application Context passed is not of our application!")
         }

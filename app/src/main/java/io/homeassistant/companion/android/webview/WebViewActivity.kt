@@ -43,7 +43,6 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.appComponent
-import io.homeassistant.companion.android.util.domainComponent
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import org.json.JSONObject
@@ -83,7 +82,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         setContentView(R.layout.activity_webview)
 
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this))
+            .create(appComponent, PresenterModule(this))
             .inject(this)
 
         val intent = Intent(this, LocationBroadcastReceiver::class.java)

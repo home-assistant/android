@@ -17,14 +17,13 @@ import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 @PresenterScope
-@Component(dependencies = [AppComponent::class, DomainComponent::class], modules = [PresenterModule::class])
+@Component(dependencies = [AppComponent::class], modules = [PresenterModule::class])
 interface PresenterComponent {
 
     @Component.Factory
     interface Factory {
         fun create(
             appComponent: AppComponent,
-            domainComponent: DomainComponent,
             presenterModule: PresenterModule
         ): PresenterComponent
     }

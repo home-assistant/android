@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.databinding.FragmentSettingsBinding
 import io.homeassistant.companion.android.wear.databinding.ViewRecyclerviewBinding
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
-import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import io.homeassistant.companion.android.wear.util.extensions.isStarted
 import io.homeassistant.companion.android.wear.util.extensions.requirePreference
 import javax.inject.Inject
@@ -33,7 +32,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this), requireContext())
+            .create(appComponent, PresenterModule(this))
             .inject(this)
 
         preferenceManager.preferenceDataStore = presenter.dataStore()

@@ -15,9 +15,6 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 val Fragment.appComponent: AppComponent
     get() = (requireActivity().application as GraphComponentAccessor).appComponent
 
-val Fragment.domainComponent: DomainComponent
-    get() = (requireActivity().application as GraphComponentAccessor).domainComponent
-
 /**
  * Check if the state of the fragment is at least started,
  * meaning onStart has been called but the state has not reached onSavedInstanceState (yet).

@@ -45,10 +45,7 @@ class SensorWorker(appContext: Context, workerParams: WorkerParameters) : Corout
 
     init {
         val graphAccessor = appContext as GraphComponentAccessor
-
-        DaggerSensorComponent.factory()
-            .create(graphAccessor.appComponent, graphAccessor.domainComponent)
-            .inject(this)
+        DaggerSensorComponent.factory().create(graphAccessor.appComponent).inject(this)
 
         allSensorUpdater = SensorUpdateManager(applicationContext, integrationUseCase)
     }

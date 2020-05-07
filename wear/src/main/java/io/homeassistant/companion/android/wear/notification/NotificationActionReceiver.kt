@@ -17,10 +17,7 @@ class NotificationActionReceiver : AbstractNotificationActionReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val graphAccessor = context.applicationContext as GraphComponentAccessor
-        DaggerNotificationAppComponent.factory()
-            .create(graphAccessor.appComponent, graphAccessor.domainComponent, BackgroundModule(), context)
-            .inject(this)
-
+        DaggerNotificationAppComponent.factory().create(graphAccessor.appComponent).inject(this)
         super.onReceive(context, intent)
     }
 

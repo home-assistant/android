@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.appComponent
-import io.homeassistant.companion.android.util.domainComponent
 import javax.inject.Inject
 
 class ManualSetupFragment : Fragment(), ManualSetupView {
@@ -32,7 +31,7 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         super.onCreate(savedInstanceState)
 
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this))
+            .create(appComponent, PresenterModule(this))
             .inject(this)
     }
 

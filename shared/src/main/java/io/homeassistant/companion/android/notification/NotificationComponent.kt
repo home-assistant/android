@@ -6,12 +6,12 @@ import io.homeassistant.companion.android.common.dagger.DomainComponent
 import io.homeassistant.companion.android.common.dagger.NotificationScope
 
 @NotificationScope
-@Component(dependencies = [AppComponent::class, DomainComponent::class])
+@Component(dependencies = [AppComponent::class])
 interface NotificationComponent {
 
     @Component.Factory
     interface Factory {
-        fun create(appComponent: AppComponent, domainComponent: DomainComponent): NotificationComponent
+        fun create(appComponent: AppComponent): NotificationComponent
     }
 
     fun inject(service: AbstractMessagingService)

@@ -20,7 +20,6 @@ import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.appComponent
-import io.homeassistant.companion.android.util.domainComponent
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -37,7 +36,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this))
+            .create(appComponent, PresenterModule(this))
             .inject(this)
 
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()

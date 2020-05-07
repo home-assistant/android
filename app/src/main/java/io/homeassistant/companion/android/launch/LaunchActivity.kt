@@ -11,7 +11,6 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.lock.LockActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.util.appComponent
-import io.homeassistant.companion.android.util.domainComponent
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 
@@ -23,7 +22,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         super.onCreate(savedInstanceState)
 
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this))
+            .create(appComponent, PresenterModule(this))
             .inject(this)
 
         presenter.onViewReady()

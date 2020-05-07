@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.wear.databinding.ActivityActionBinding
 import io.homeassistant.companion.android.wear.databinding.ViewRecyclerviewBinding
 import io.homeassistant.companion.android.wear.ui.buildArgs
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
-import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
 import net.steamcrafted.materialiconlib.MaterialDrawableBuilder.IconValue
 import javax.inject.Inject
@@ -34,7 +33,7 @@ class ActionActivity : AppCompatActivity(), ActionView {
         setContentView(binding.root)
 
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this), this)
+            .create(appComponent, PresenterModule(this))
             .inject(this)
 
         args = ActionActivityArgs.buildArgs(intent, savedInstanceState)

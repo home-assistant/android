@@ -63,9 +63,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     private fun ensureInjected(context: Context) {
         if (context.applicationContext is GraphComponentAccessor) {
             val graphAccessor = context.applicationContext as GraphComponentAccessor
-            DaggerReceiverComponent.factory()
-                .create(graphAccessor.appComponent, graphAccessor.domainComponent)
-                .inject(this)
+            DaggerReceiverComponent.factory().create(graphAccessor.appComponent).inject(this)
         } else {
             throw Exception("Application Context passed is not of our application!")
         }

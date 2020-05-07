@@ -36,8 +36,7 @@ abstract class AbstractNotificationActionReceiver : BroadcastReceiver() {
     @CallSuper
     override fun onReceive(context: Context, intent: Intent) {
         val graphAccessor = context.applicationContext as GraphComponentAccessor
-        DaggerNotificationComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
-            .inject(this)
+        DaggerNotificationComponent.factory().create(graphAccessor.appComponent).inject(this)
 
         val notificationAction =
             intent.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)

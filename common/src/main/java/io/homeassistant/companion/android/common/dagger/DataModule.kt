@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.common.dagger
 
+import android.app.Application
+import android.content.Context
 import android.os.Build
 import dagger.Binds
 import dagger.Module
@@ -30,6 +32,11 @@ class DataModule(
     private val wifiHelper: WifiHelper,
     private val deviceId: String
 ) {
+
+    @Provides
+    fun provideContext(application: Application): Context {
+        return application.applicationContext
+    }
 
     @Provides
     fun provideAuthenticationService(homeAssistantRetrofit: HomeAssistantRetrofit): AuthenticationService =

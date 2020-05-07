@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.databinding.ActivityLaunchBinding
 import io.homeassistant.companion.android.wear.navigation.NavigationActivity
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
-import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
 import javax.inject.Inject
 
@@ -33,7 +32,7 @@ class LaunchActivity : WearableActivity(), LaunchView {
         setContentView(binding.root)
 
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this), this)
+            .create(appComponent, PresenterModule(this))
             .inject(this)
 
         when (PhoneDeviceType.getPhoneDeviceType(this@LaunchActivity)) {

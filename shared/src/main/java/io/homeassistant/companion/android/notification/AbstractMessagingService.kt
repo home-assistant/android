@@ -56,10 +56,7 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
     override fun onCreate() {
         super.onCreate()
         val graphAccessor = applicationContext as GraphComponentAccessor
-
-        DaggerNotificationComponent.factory()
-            .create(graphAccessor.appComponent, graphAccessor.domainComponent)
-            .inject(this)
+        DaggerNotificationComponent.factory().create(graphAccessor.appComponent).inject(this)
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage): Unit = runBlocking {

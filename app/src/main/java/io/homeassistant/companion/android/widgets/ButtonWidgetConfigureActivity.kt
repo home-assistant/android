@@ -199,8 +199,7 @@ class ButtonWidgetConfigureActivity : Activity() {
 
         // Inject components
         val graphAccessor = application as GraphComponentAccessor
-        DaggerProviderComponent.factory().create(graphAccessor.appComponent, graphAccessor.domainComponent)
-            .inject(this)
+        DaggerProviderComponent.factory().create(graphAccessor.appComponent).inject(this)
 
         val serviceAdapter = SingleItemArrayAdapter<Service>(this) {
             if (it != null) getServiceString(it) else ""

@@ -11,7 +11,6 @@ import io.homeassistant.companion.android.wear.actions.ActionsFragment
 import io.homeassistant.companion.android.wear.databinding.ActivityNavigationBinding
 import io.homeassistant.companion.android.wear.settings.SettingsFragment
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
-import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
 import javax.inject.Inject
 
@@ -25,7 +24,7 @@ class NavigationActivity : AppCompatActivity(), NavigationView, WearableNavigati
 
     override fun onCreate(savedInstanceState: Bundle?) {
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this), this)
+            .create(appComponent, PresenterModule(this))
             .inject(this)
 
         super.onCreate(savedInstanceState)

@@ -10,9 +10,6 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 val Activity.appComponent: AppComponent
     get() = (application as GraphComponentAccessor).appComponent
 
-val Activity.domainComponent: DomainComponent
-    get() = (application as GraphComponentAccessor).domainComponent
-
 /**
  * Check if the state of the activity is at least started,
  * meaning onStart has been called but the state has not reached onSavedInstanceState (yet).

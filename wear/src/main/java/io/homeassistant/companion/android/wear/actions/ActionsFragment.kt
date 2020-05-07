@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.wear.action.ActionActivity
 import io.homeassistant.companion.android.wear.action.ActionActivityArgs
 import io.homeassistant.companion.android.wear.databinding.FragmentActionsBinding
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
-import io.homeassistant.companion.android.wear.util.extensions.domainComponent
 import javax.inject.Inject
 
 class ActionsFragment : Fragment(), ActionsView {
@@ -32,7 +31,7 @@ class ActionsFragment : Fragment(), ActionsView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         DaggerPresenterComponent.factory()
-            .create(appComponent, domainComponent, PresenterModule(this), requireContext())
+            .create(appComponent, PresenterModule(this))
             .inject(this)
     }
 

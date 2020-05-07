@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.dagger
 
+import android.content.Context
 import dagger.Component
 import io.homeassistant.companion.android.common.actions.WearActionUseCase
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
@@ -15,6 +16,8 @@ interface DomainComponent {
     interface Factory {
         fun create(dataComponent: DataComponent): DomainComponent
     }
+
+    fun context(): Context
 
     fun urlUseCase(): UrlUseCase
 
