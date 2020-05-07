@@ -3,5 +3,11 @@
     android:id="@+id/recyclerView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="16dp"
-    android:clipToPadding="false"/>
+    android:clipToPadding="false"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:paddingBottom="16dp">
+
+    <requestFocus />
+
+</androidx.wear.widget.WearableRecyclerView>
