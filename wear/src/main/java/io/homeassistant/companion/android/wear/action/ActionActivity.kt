@@ -39,6 +39,10 @@ class ActionActivity : AppCompatActivity(), ActionView {
 
         args = ActionActivityArgs.buildArgs(intent, savedInstanceState)
 
+        binding.confirmationProgress.apply {
+            totalTime = 2000
+            setOnClickListener { hideConfirmation() }
+        }
         binding.actionIconContainer.setOnClickListener { showIconDialog() }
         binding.actionButton.setOnClickListener {
             val action = buildWearAction() ?: return@setOnClickListener
@@ -53,7 +57,7 @@ class ActionActivity : AppCompatActivity(), ActionView {
             binding.actionIconName.text = action.icon.name
             binding.actionIconPreview.setIcon(action.icon)
             binding.deleteButton.isVisible = true
-            binding.deleteButton.setOnClickListener { presenter.deleteAction(action) }
+            binding.deleteButton.setOnClickListener { showConfirmation(action) }
         } else {
             val icon = IconValue.HOME_ASSISTANT
             binding.heading.setText(R.string.action_header_create)
@@ -106,6 +110,22 @@ class ActionActivity : AppCompatActivity(), ActionView {
         }
 
         dialog.show()
+    }
+
+    private fun showConfirmation(action: WearAction) {
+        val confirmationProgress = binding.confirmationProgress.apply { isVisible = true }
+        confirmationProgress.setOnTimerFinishedListener {
+            hideConfirmation()
+            presenter.deleteAction(action)
+        }
+        confirmationProgress.startTimer()
+    }
+
+    private fun hideConfirmation() {
+        binding.confirmationProgress.apply {
+            stopTimer()
+            isVisible = false
+        }
     }
 
     override fun showConfirmed(confirmType: Int, message: Int) {

@@ -1,110 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:clipToPadding="false"
-    android:paddingTop="@dimen/page_action_create_top_padding"
-    android:paddingBottom="@dimen/page_action_create_bottom_padding"
-    android:scrollbars="none"
-    app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintLeft_toLeftOf="parent"
-    app:layout_constraintRight_toRightOf="parent"
-    app:layout_constraintTop_toTopOf="parent">
+    android:layout_height="match_parent">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/heading"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="@color/primary_text_dark"
-            tools:text="@string/action_header_create" />
-
-        <EditText
-            android:id="@+id/actionNameInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:hint="@string/action_name"
-            android:importantForAutofill="no"
-            android:inputType="text|textCapWords" />
-
-        <EditText
-            android:id="@+id/actionActionInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:hint="@string/action"
-            android:importantForAutofill="no"
-            android:inputType="text|textWebEditText" />
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:paddingTop="@dimen/page_action_create_top_padding"
+        android:paddingBottom="@dimen/page_action_create_bottom_padding"
+        android:scrollbars="none"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
-            android:id="@+id/actionIconContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal">
-
-            <net.steamcrafted.materialiconlib.MaterialIconView
-                android:id="@+id/actionIconPreview"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_gravity="center"
-                app:materialIconColor="@android:color/white"
-                app:materialIconSize="24dp"
-                tools:src="@drawable/ic_lightbulb_outline_black_24dp"
-                tools:tint="@android:color/white" />
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/actionIconName"
+                android:id="@+id/heading"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="@color/primary_text_dark"
+                tools:text="@string/action_header_create" />
+
+            <EditText
+                android:id="@+id/actionNameInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/action_name"
+                android:importantForAutofill="no"
+                android:inputType="text|textCapWords" />
+
+            <EditText
+                android:id="@+id/actionActionInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="@string/action"
+                android:importantForAutofill="no"
+                android:inputType="text|textWebEditText" />
+
+            <LinearLayout
+                android:id="@+id/actionIconContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
+
+                <net.steamcrafted.materialiconlib.MaterialIconView
+                    android:id="@+id/actionIconPreview"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    app:materialIconColor="@android:color/white"
+                    app:materialIconSize="24dp"
+                    tools:src="@drawable/ic_lightbulb_outline_black_24dp"
+                    tools:tint="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/actionIconName"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp"
+                    android:gravity="center_vertical"
+                    android:ellipsize="end"
+                    android:hint="@string/action_icon_hint"
+                    android:maxLines="2" />
+
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginStart="8dp"
-                android:gravity="center_vertical"
-                android:ellipsize="end"
-                android:hint="@string/action_icon_hint"
-                android:maxLines="2" />
+                android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/deleteButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="32dp"
+                    android:src="@drawable/ic_cc_clear"
+                    android:visibility="gone"
+                    app:backgroundTint="@color/colorWarning"
+                    app:fabSize="normal"
+                    app:tint="@android:color/white"
+                    tools:visibility="visible" />
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/actionButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_check_black_24dp"
+                    app:backgroundTint="?attr/colorAccent"
+                    app:fabSize="normal"
+                    app:tint="@android:color/white" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="16dp"
-            android:gravity="center"
-            android:orientation="horizontal">
+    </androidx.core.widget.NestedScrollView>
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/deleteButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="32dp"
-                android:src="@drawable/ic_cc_clear"
-                android:visibility="gone"
-                app:backgroundTint="@color/colorWarning"
-                app:fabSize="normal"
-                app:tint="@android:color/white"
-                tools:visibility="visible" />
+    <androidx.wear.widget.CircularProgressLayout
+        android:id="@+id/confirmationProgress"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/actionButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_check_black_24dp"
-                app:backgroundTint="?attr/colorAccent"
-                app:fabSize="normal"
-                app:tint="@android:color/white" />
+        <ImageView
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:background="@drawable/bg_circle_ripple_warning"
+            android:contentDescription="@null"
+            android:padding="20dp"
+            android:src="@drawable/ic_cc_clear" />
 
-        </LinearLayout>
+    </androidx.wear.widget.CircularProgressLayout>
 
-    </LinearLayout>
-
-</androidx.core.widget.NestedScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>
