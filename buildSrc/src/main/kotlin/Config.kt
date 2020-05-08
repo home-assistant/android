@@ -1,6 +1,6 @@
 object Config {
     const val applicationId = "io.homeassistant.companion.android"
-    const val version = "1.8.0"
+    const val version = "1.9.0"
 
     object Plugin {
         const val android = "com.android.tools.build:gradle:3.6.3"
