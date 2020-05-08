@@ -265,25 +265,9 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
+    // TODO: Use websocket to get panels.
     override suspend fun getPanels(): Array<Panel> {
-        val getPanelsRequest =
-            IntegrationRequest(
-                "get_panels",
-                null
-            )
-        var response: Array<Panel>? = null
-        for (it in urlRepository.getApiUrls()) {
-            try {
-                response = integrationService.getPanels(it.toHttpUrlOrNull()!!, getPanelsRequest)
-            } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
-            }
-
-            if (response !== null)
-                return response
-        }
-
-        throw IntegrationException()
+        return arrayOf()
     }
 
     override suspend fun getServices(): Array<Service> {
