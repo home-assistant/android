@@ -43,8 +43,8 @@ class ActionsAdapter(
             itemView.setOnLongClickListener(this)
         }
 
-        override fun onClick(v: View) = onClick(bindingAdapterPosition)
-        override fun onLongClick(v: View?): Boolean = onLongClick(bindingAdapterPosition).run { true }
+        override fun onClick(v: View) = onClick(adapterPosition)
+        override fun onLongClick(v: View?): Boolean = onLongClick(adapterPosition).run { true }
     }
 
     private class WearActionListDiffer :  DiffUtil.ItemCallback<WearAction>() {

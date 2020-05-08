@@ -31,7 +31,7 @@ class IconAdapter(
     override fun getItemCount(): Int = icons.size
 
     class ViewHolder(view: View, clickListener: (Int) -> Unit) : RecyclerView.ViewHolder(view) {
-        init { itemView.setOnClickListener { clickListener(bindingAdapterPosition) } }
+        init { itemView.setOnClickListener { clickListener(adapterPosition) } }
     }
 
 }

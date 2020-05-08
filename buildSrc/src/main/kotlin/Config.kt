@@ -31,7 +31,7 @@ object Config {
             const val version = "1.3.72"
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
 
-            private const val coroutinesVersion = "1.3.3"
+            private const val coroutinesVersion = "1.3.6"
             const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}"
             const val coroutinesAndroid = "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}"
             const val coroutinesTest = "org.jetbrains.kotlinx:kotlinx-coroutines-test:${coroutinesVersion}"
@@ -65,7 +65,7 @@ object Config {
             const val preference = "androidx.preference:preference-ktx:1.1.1"
             const val workManager = "androidx.work:work-runtime-ktx:2.3.4"
             const val biometric = "androidx.biometric:biometric:1.0.1"
-            const val wear = "androidx.wear:wear:1.1.0-alpha01"
+            const val wear = "androidx.wear:wear:1.1.0-beta01"
 
             private const val roomVersion = "2.2.5"
             const val room = "androidx.room:room-runtime:$roomVersion"
@@ -79,9 +79,9 @@ object Config {
         }
 
         object Firebase {
-            const val core = "com.google.firebase:firebase-core:17.3.0"
-            const val iid = "com.google.firebase:firebase-iid:20.1.5"
-            const val messaging = "com.google.firebase:firebase-messaging:20.1.5"
+            const val core = "com.google.firebase:firebase-core:17.4.1"
+            const val iid = "com.google.firebase:firebase-iid:20.1.7"
+            const val messaging = "com.google.firebase:firebase-messaging:20.1.7"
         }
 
         object Square {
@@ -89,7 +89,7 @@ object Config {
             const val retrofit = "com.squareup.retrofit2:retrofit:${retrofitVersion}"
             const val retrofitJacksonConverter = "com.squareup.retrofit2:converter-jackson:${retrofitVersion}"
 
-            private const val okhttpVersion = "4.5.0"
+            private const val okhttpVersion = "4.6.0"
             const val okhttp = "com.squareup.okhttp3:okhttp:$okhttpVersion"
             const val okhttpInterceptor = "com.squareup.okhttp3:logging-interceptor:$okhttpVersion"
             const val okhttpMockServer = "com.squareup.okhttp3:mockwebserver:$okhttpVersion"
@@ -109,10 +109,10 @@ object Config {
 
         object Misc {
             const val crashlytics = "com.crashlytics.sdk.android:crashlytics:2.10.1"
-            const val lokalize = "com.lokalise.android:sdk:2.0.0-beta-5"
-            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1"
-            const val threeTenBp = "org.threeten:threetenbp:1.4.0"
-            const val threeTenAbp = "com.jakewharton.threetenabp:threetenabp:1.2.1"
+            const val lokalize = "com.lokalise.android:sdk:2.0.0-beta-6"
+            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.0"
+            const val threeTenBp = "org.threeten:threetenbp:1.4.4"
+            const val threeTenAbp = "com.jakewharton.threetenabp:threetenabp:1.2.4"
             const val javaxInject = "javax.inject:javax.inject:1"
             const val mdi = "net.steamcrafted:materialiconlib:1.1.5"
         }
