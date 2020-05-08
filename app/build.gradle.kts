@@ -98,7 +98,6 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":domain"))
     implementation(project(":shared"))
-    wearApp(project(":wear"))
 
     implementation(Config.Dependency.Kotlin.core)
     implementation(Config.Dependency.Kotlin.coroutines)
