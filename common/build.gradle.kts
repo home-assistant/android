@@ -17,7 +17,7 @@ android {
             annotationProcessorOptions {
                 arguments = mapOf(
                     "room.schemaLocation" to "$projectDir/schemas",
-                    "dagger.gradle.incremental" to "true"
+                    "room.incremental" to "true"
                 )
             }
         }
