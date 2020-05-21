@@ -14,11 +14,17 @@ class HomeAssistantMockService<T>(private val c: Class<T>) {
             return arrayOf(getUrl()!!)
         }
 
+        override suspend fun getBaseApiUrls(): Map<String, String> {
+            return mapOf()
+        }
+
         override suspend fun saveRegistrationUrls(
             cloudHookUrl: String?,
             remoteUiUrl: String?,
-            webhookId: String
+            webhookId: String,
+            localUrl: String?
         ) {
+
         }
 
         override suspend fun getUrl(isInternal: Boolean?): URL? {
