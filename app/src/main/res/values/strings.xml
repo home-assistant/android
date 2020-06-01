@@ -106,4 +106,5 @@ like to connect to:</string>
   <string name="delete">Delete</string>
   <string name="cab_selected">selected</string>
   <string name="cab_messages">Messages</string>
+  <string name="settings">Settings</string>
 </resources>

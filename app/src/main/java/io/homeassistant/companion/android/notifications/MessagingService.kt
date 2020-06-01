@@ -24,13 +24,10 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.webview.WebViewActivity
+import kotlinx.coroutines.*
 import java.net.URL
+import java.text.DateFormat
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MessagingService : FirebaseMessagingService() {
     companion object {
@@ -156,6 +153,43 @@ class MessagingService : FirebaseMessagingService() {
         } else {
             notificationManager.notify(messageId, notificationBuilder.build())
         }
+
+        saveMessageToDb(data)
+
+    }
+
+    private fun saveMessageToDb(data: Map<String, String>) {
+
+        //TODO: Not getting the tag??
+
+        val db = NotificationsDB(this)
+        val tag = data[TAG]
+        val title = data[TITLE]
+        val message = data[MESSAGE]
+        val image = data[IMAGE_URL]
+        val time = DateFormat.getDateTimeInstance().format(System.currentTimeMillis())
+        val read = true // TODO: Change this to false when ready to monitor read state
+
+        try {
+
+            db.open()
+            db.addMessage(tag, title, message, image, time, read, "incoming")
+
+            //TODO - remove logger...
+            Log.d("test", tag + title + message + image + time + read + "incoming")
+
+        } catch (e: java.lang.Exception) {
+
+            e.printStackTrace()
+            //TODO - handle errors?
+
+        } finally {
+
+            db.close()
+
+        }
+
+
     }
 
     private fun handleIntent(

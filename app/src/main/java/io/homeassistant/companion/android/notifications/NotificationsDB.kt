@@ -6,8 +6,6 @@ import android.database.Cursor
 import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.text.TextUtils
-import java.util.*
 
 class NotificationsDB (private val c: Context) {
 
@@ -22,15 +20,37 @@ class NotificationsDB (private val c: Context) {
     }
 
     @Throws(SQLException::class)
-    fun fetchMessages(): Cursor {
+    fun addMessage(
+        tag: String?, title: String?, message: String?, image: String?,
+        timestamp: String, read: Boolean, direction: String
+    ) {
 
-        return d!!.rawQuery("SELECT * FROM " + SQLITE_TABLE_MESSAGE_STREAM + " ORDER BY "
-                + KEY_ENTRY_UID, null)
+        val content = ContentValues()
+
+        content.put(KEY_TAG, tag)
+        content.put(KEY_TITLE, title)
+        content.put(KEY_MESSAGE, message)
+        content.put(KEY_IMAGE_URI, image)
+        content.put(KEY_TIMESTAMP, timestamp)
+        content.put(KEY_READ, read)
+        content.put(KEY_DIRECTION, direction)
+
+        d?.insert(SQLITE_TABLE_MESSAGE_STREAM, null, content)
 
     }
 
     @Throws(SQLException::class)
-    fun clearAllMessages() {
+    fun fetchMessages(): Cursor {
+
+        return d!!.rawQuery(
+            "SELECT * FROM " + SQLITE_TABLE_MESSAGE_STREAM + " ORDER BY "
+                    + KEY_ENTRY_UID, null
+        )
+
+    }
+
+    @Throws(SQLException::class)
+    fun deleteAllMessages() {
 
         d!!.execSQL("SQLITE_TABLE" + SQLITE_TABLE_MESSAGE_STREAM)
 
@@ -40,6 +60,13 @@ class NotificationsDB (private val c: Context) {
     fun deleteMessage(s: String) {
 
         d!!.delete(SQLITE_TABLE_MESSAGE_STREAM, "$KEY_ENTRY_UID = ? ", arrayOf(s))
+
+    }
+
+    @Throws(SQLException::class)
+    fun clearMessage(s: String) {
+
+        d!!.delete(SQLITE_TABLE_MESSAGE_STREAM, "$KEY_TAG = ? ", arrayOf(s))
 
     }
 
@@ -68,10 +95,13 @@ class NotificationsDB (private val c: Context) {
     companion object {
 
         const val KEY_ENTRY_UID = "_id"
+        const val KEY_TAG = "tag"
         const val KEY_TITLE = "title"
         const val KEY_MESSAGE = "message"
         const val KEY_IMAGE_URI = "image_uri"
         const val KEY_TIMESTAMP = "timestamp"
+        const val KEY_READ = "read_boolean"
+        const val KEY_DIRECTION = "direction"
 
         private const val DATABASE_VERSION = 1 //To upgrade DB increase this number
         private const val DATABASE_NAME = "Local.db"
@@ -79,8 +109,9 @@ class NotificationsDB (private val c: Context) {
         private const val DATABASE_CREATE_MESSAGE_STREAM = (
                 "CREATE TABLE if not exists " + SQLITE_TABLE_MESSAGE_STREAM + " (" +
                         KEY_ENTRY_UID + " integer PRIMARY KEY autoincrement," +
-                        KEY_TITLE + "," + KEY_MESSAGE + "," + KEY_IMAGE_URI + "," +
-                        KEY_TIMESTAMP + "," +  " UNIQUE (" + KEY_ENTRY_UID + "));")
+                        KEY_TAG + "," + KEY_TITLE + "," + KEY_MESSAGE + "," +
+                        KEY_IMAGE_URI + "," + KEY_TIMESTAMP + "," + KEY_READ + "," +
+                        KEY_DIRECTION + "," + " UNIQUE (" + KEY_ENTRY_UID + "));")
 
     }
 

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.notifications
 
+import android.content.Intent
 import android.database.Cursor
 import android.os.Bundle
 import android.view.ActionMode
@@ -11,10 +12,12 @@ import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cursoradapter.widget.SimpleCursorAdapter
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.settings.SettingsActivity
 import kotlinx.android.synthetic.main.activity_notifications.*
-import java.util.ArrayList
+import java.util.*
 
-class NotificationsActivity : AppCompatActivity(){
+
+class NotificationsActivity : AppCompatActivity() {
 
     private var db: NotificationsDB? = null
     private lateinit var stream: ListView
@@ -71,7 +74,7 @@ class NotificationsActivity : AppCompatActivity(){
             columns, matrix, 0)
 
         stream.adapter = adapter
-        stream.choiceMode = AbsListView.CHOICE_MODE_MULTIPLE
+        stream.choiceMode = AbsListView.CHOICE_MODE_MULTIPLE_MODAL
         stream.verticalScrollbarPosition = View.SCROLLBAR_POSITION_RIGHT
 
         stream.setMultiChoiceModeListener(object : AbsListView.MultiChoiceModeListener {
@@ -98,6 +101,7 @@ class NotificationsActivity : AppCompatActivity(){
                 menu.clear()
                 menuInflater.inflate(R.menu.menu_selected_notifications, menu)
                 onCreateActionMode(mode, menu)
+                supportActionBar?.hide()
 
                 return true
 
@@ -164,6 +168,8 @@ class NotificationsActivity : AppCompatActivity(){
 
             override fun onDestroyActionMode(mode: ActionMode) {
 
+                supportActionBar?.show()
+
             }
 
         })
@@ -195,5 +201,25 @@ class NotificationsActivity : AppCompatActivity(){
 
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_settings, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+        return when (item.itemId) {
+            R.id.action_settings -> {
+
+                startActivity(Intent(this, SettingsActivity::class.java))
+                true
+
+            }
+
+            else -> super.onOptionsItemSelected(item)
+
+        }
+
+    }
 
 }

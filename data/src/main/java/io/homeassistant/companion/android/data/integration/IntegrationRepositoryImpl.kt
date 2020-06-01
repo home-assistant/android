@@ -1,28 +1,13 @@
 package io.homeassistant.companion.android.data.integration
 
 import io.homeassistant.companion.android.data.LocalStorage
-import io.homeassistant.companion.android.data.integration.entities.EntityResponse
-import io.homeassistant.companion.android.data.integration.entities.FireEventRequest
-import io.homeassistant.companion.android.data.integration.entities.GetConfigResponse
-import io.homeassistant.companion.android.data.integration.entities.IntegrationRequest
-import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceRequest
-import io.homeassistant.companion.android.data.integration.entities.SensorRequest
-import io.homeassistant.companion.android.data.integration.entities.ServiceCallRequest
-import io.homeassistant.companion.android.data.integration.entities.UpdateLocationRequest
+import io.homeassistant.companion.android.data.integration.entities.*
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.domain.integration.DeviceRegistration
-import io.homeassistant.companion.android.domain.integration.Entity
-import io.homeassistant.companion.android.domain.integration.IntegrationRepository
-import io.homeassistant.companion.android.domain.integration.Panel
-import io.homeassistant.companion.android.domain.integration.Sensor
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.domain.integration.Service
-import io.homeassistant.companion.android.domain.integration.UpdateLocation
-import io.homeassistant.companion.android.domain.integration.ZoneAttributes
+import io.homeassistant.companion.android.domain.integration.*
 import io.homeassistant.companion.android.domain.url.UrlRepository
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 import javax.inject.Named
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -39,7 +24,9 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val APP_ID = "io.homeassistant.companion.android"
         private const val APP_NAME = "Home Assistant"
         private const val OS_NAME = "Android"
-        private const val PUSH_URL = "https://mobile-apps.home-assistant.io/api/sendPush/android/v1"
+
+        //TODO: Set this back before commits!
+        private const val PUSH_URL = "https://us-central1-ha-reg.cloudfunctions.net/androidV1"
 
         private const val PREF_APP_VERSION = "app_version"
         private const val PREF_DEVICE_NAME = "device_name"
