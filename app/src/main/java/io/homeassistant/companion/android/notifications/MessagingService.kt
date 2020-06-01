@@ -24,10 +24,14 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.webview.WebViewActivity
-import kotlinx.coroutines.*
 import java.net.URL
 import java.text.DateFormat
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MessagingService : FirebaseMessagingService() {
     companion object {
@@ -64,7 +68,7 @@ class MessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d(TAG, "From: ${remoteMessage.from}")
 
-        //TODO: Save message to database
+        // TODO: Save message to database
 
         // Check if message contains a data payload.
         remoteMessage.data.let {
@@ -155,12 +159,11 @@ class MessagingService : FirebaseMessagingService() {
         }
 
         saveMessageToDb(data)
-
     }
 
     private fun saveMessageToDb(data: Map<String, String>) {
 
-        //TODO: Not getting the tag??
+        // TODO: Not getting the tag??
 
         val db = NotificationsDB(this)
         val tag = data[TAG]
@@ -175,21 +178,16 @@ class MessagingService : FirebaseMessagingService() {
             db.open()
             db.addMessage(tag, title, message, image, time, read, "incoming")
 
-            //TODO - remove logger...
+            // TODO - remove logger...
             Log.d("test", tag + title + message + image + time + read + "incoming")
-
         } catch (e: java.lang.Exception) {
 
             e.printStackTrace()
-            //TODO - handle errors?
-
+            // TODO - handle errors?
         } finally {
 
             db.close()
-
         }
-
-
     }
 
     private fun handleIntent(

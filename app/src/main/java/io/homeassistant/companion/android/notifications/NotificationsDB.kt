@@ -7,7 +7,7 @@ import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class NotificationsDB (private val c: Context) {
+class NotificationsDB(private val c: Context) {
 
     private var d: SQLiteDatabase? = null
 
@@ -16,13 +16,17 @@ class NotificationsDB (private val c: Context) {
 
         val mDbHelper = DatabaseHelper(c)
         d = mDbHelper.writableDatabase
-
     }
 
     @Throws(SQLException::class)
     fun addMessage(
-        tag: String?, title: String?, message: String?, image: String?,
-        timestamp: String, read: Boolean, direction: String
+        tag: String?,
+        title: String?,
+        message: String?,
+        image: String?,
+        timestamp: String,
+        read: Boolean,
+        direction: String
     ) {
 
         val content = ContentValues()
@@ -36,38 +40,33 @@ class NotificationsDB (private val c: Context) {
         content.put(KEY_DIRECTION, direction)
 
         d?.insert(SQLITE_TABLE_MESSAGE_STREAM, null, content)
-
     }
 
     @Throws(SQLException::class)
     fun fetchMessages(): Cursor {
 
         return d!!.rawQuery(
-            "SELECT * FROM " + SQLITE_TABLE_MESSAGE_STREAM + " ORDER BY "
-                    + KEY_ENTRY_UID, null
+            "SELECT * FROM " + SQLITE_TABLE_MESSAGE_STREAM + " ORDER BY " +
+                    KEY_ENTRY_UID, null
         )
-
     }
 
     @Throws(SQLException::class)
     fun deleteAllMessages() {
 
         d!!.execSQL("SQLITE_TABLE" + SQLITE_TABLE_MESSAGE_STREAM)
-
     }
 
     @Throws(SQLException::class)
     fun deleteMessage(s: String) {
 
         d!!.delete(SQLITE_TABLE_MESSAGE_STREAM, "$KEY_ENTRY_UID = ? ", arrayOf(s))
-
     }
 
     @Throws(SQLException::class)
     fun clearMessage(s: String) {
 
         d!!.delete(SQLITE_TABLE_MESSAGE_STREAM, "$KEY_TAG = ? ", arrayOf(s))
-
     }
 
     fun close() {
@@ -80,16 +79,13 @@ class NotificationsDB (private val c: Context) {
         override fun onCreate(d: SQLiteDatabase) {
 
             d.execSQL(DATABASE_CREATE_MESSAGE_STREAM)
-
         }
 
         override fun onUpgrade(d: SQLiteDatabase, iOld: Int, iNew: Int) {
 
-            //If table needs to be updated do it here and change DATABASE_VERSION below
+            // If table needs to be updated do it here and change DATABASE_VERSION below
             onCreate(d)
-
         }
-
     }
 
     companion object {
@@ -103,7 +99,7 @@ class NotificationsDB (private val c: Context) {
         const val KEY_READ = "read_boolean"
         const val KEY_DIRECTION = "direction"
 
-        private const val DATABASE_VERSION = 1 //To upgrade DB increase this number
+        private const val DATABASE_VERSION = 1 // To upgrade DB increase this number
         private const val DATABASE_NAME = "Local.db"
         private const val SQLITE_TABLE_MESSAGE_STREAM = "class_list"
         private const val DATABASE_CREATE_MESSAGE_STREAM = (
@@ -112,7 +108,5 @@ class NotificationsDB (private val c: Context) {
                         KEY_TAG + "," + KEY_TITLE + "," + KEY_MESSAGE + "," +
                         KEY_IMAGE_URI + "," + KEY_TIMESTAMP + "," + KEY_READ + "," +
                         KEY_DIRECTION + "," + " UNIQUE (" + KEY_ENTRY_UID + "));")
-
     }
-
 }

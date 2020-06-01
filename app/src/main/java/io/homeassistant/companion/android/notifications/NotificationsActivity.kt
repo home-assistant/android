@@ -14,8 +14,6 @@ import androidx.cursoradapter.widget.SimpleCursorAdapter
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.SettingsActivity
 import kotlinx.android.synthetic.main.activity_notifications.*
-import java.util.*
-
 
 class NotificationsActivity : AppCompatActivity() {
 
@@ -23,44 +21,38 @@ class NotificationsActivity : AppCompatActivity() {
     private lateinit var stream: ListView
     private lateinit var adapter: SimpleCursorAdapter
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_notifications)
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        //TODO: Add menu item for settings (and launch settings activity from it!)
+        // TODO: Add menu item for settings (and launch settings activity from it!)
 
         loadDatabase()
         generateStream()
-
     }
 
     override fun onPause() {
 
         super.onPause()
         db?.close()
-
     }
 
-    private fun loadDatabase(){
+    private fun loadDatabase() {
 
         db = NotificationsDB(this)
 
         try {
 
             db?.open()
-
         } catch (e: Exception) {
 
             e.printStackTrace()
-
         }
-
     }
 
-    private fun generateStream(){
+    private fun generateStream() {
 
         stream = message_stream
         stream.emptyView = empty_stream
@@ -79,21 +71,23 @@ class NotificationsActivity : AppCompatActivity() {
 
         stream.setMultiChoiceModeListener(object : AbsListView.MultiChoiceModeListener {
 
-            override fun onItemCheckedStateChanged(mode: ActionMode, position: Int,
-                                                   id: Long, checked: Boolean) {
+            override fun onItemCheckedStateChanged(
+                mode: ActionMode,
+                position: Int,
+                id: Long,
+                checked: Boolean
+            ) {
 
                 mode.invalidate()
-
             }
 
             override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
 
                 mode.title = getString(R.string.cab_messages)
-                mode.subtitle = (stream.checkedItemCount.toString()
-                        + " " + getString(R.string.cab_selected))
+                mode.subtitle = (stream.checkedItemCount.toString() +
+                        " " + getString(R.string.cab_selected))
 
                 return true
-
             }
 
             override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
@@ -104,7 +98,6 @@ class NotificationsActivity : AppCompatActivity() {
                 supportActionBar?.hide()
 
                 return true
-
             }
 
             override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
@@ -127,9 +120,7 @@ class NotificationsActivity : AppCompatActivity() {
                                 val messageDelete = cursor1
                                     .getString(cursor1.getColumnIndexOrThrow("_id"))
                                 messageIdArray.add(messageDelete)
-
                             }
-
                         }
 
                         val messageIDs = messageIdArray
@@ -148,32 +139,24 @@ class NotificationsActivity : AppCompatActivity() {
 
                             for (selectAll in 0 until stream.count)
                                 stream.setItemChecked(selectAll, true)
-
                         } else {
 
                             for (selectAll in 0 until stream.count)
                                 stream.setItemChecked(selectAll, false)
-
                         }
 
                         return true
-
                     }
-
                 }
 
                 return false
-
             }
 
             override fun onDestroyActionMode(mode: ActionMode) {
 
                 supportActionBar?.show()
-
             }
-
         })
-
     }
 
     private fun deleteMessages(vararg messageID: String) {
@@ -187,18 +170,14 @@ class NotificationsActivity : AppCompatActivity() {
             try {
 
                 db?.deleteMessage(messageToDelete)
-
             } catch (e: Exception) {
 
                 e.printStackTrace()
-
             }
-
         }
 
         adapter.notifyDataSetChanged()
         generateStream()
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -213,13 +192,9 @@ class NotificationsActivity : AppCompatActivity() {
 
                 startActivity(Intent(this, SettingsActivity::class.java))
                 true
-
             }
 
             else -> super.onOptionsItemSelected(item)
-
         }
-
     }
-
 }
