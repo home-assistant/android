@@ -1,20 +1,22 @@
 package io.homeassistant.companion.android.notifications
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.database.Cursor
+import android.net.Uri
 import android.os.Bundle
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.AbsListView
+import android.widget.AdapterView
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cursoradapter.widget.SimpleCursorAdapter
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.SettingsActivity
 import kotlinx.android.synthetic.main.activity_notifications.*
-
 
 class NotificationsActivity : AppCompatActivity() {
 
@@ -30,12 +32,11 @@ class NotificationsActivity : AppCompatActivity() {
 
         loadDatabase()
         generateStream()
-
     }
 
-    override fun onPause() {
+    override fun onDestroy() {
 
-        super.onPause()
+        super.onDestroy()
         db?.close()
     }
 
@@ -79,6 +80,21 @@ class NotificationsActivity : AppCompatActivity() {
         stream.adapter = adapter
         stream.choiceMode = AbsListView.CHOICE_MODE_MULTIPLE_MODAL
         stream.verticalScrollbarPosition = View.SCROLLBAR_POSITION_RIGHT
+
+        stream.onItemClickListener = AdapterView.OnItemClickListener { listView, _, position, _ ->
+
+            val cursor = listView.getItemAtPosition(position) as Cursor
+            val link = cursor.getString(cursor.getColumnIndexOrThrow("image_uri"))
+
+            if (link != null) {
+
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)))
+                } catch (e: ActivityNotFoundException) {
+                    e.printStackTrace()
+                }
+            }
+        }
 
         stream.setMultiChoiceModeListener(object : AbsListView.MultiChoiceModeListener {
 
@@ -189,7 +205,6 @@ class NotificationsActivity : AppCompatActivity() {
 
         adapter.notifyDataSetChanged()
         generateStream()
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -209,5 +224,4 @@ class NotificationsActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
 }

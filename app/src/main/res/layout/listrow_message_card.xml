@@ -53,7 +53,7 @@
             android:background="@color/colorOnPrimary"
             app:layout_constraintTop_toBottomOf="@id/text_message"
             app:layout_constraintBottom_toTopOf="@id/timestamp"
-            android:autoLink="web"/>
+            android:textColor="@color/colorAccent"/>
 
         <TextView
             android:id="@+id/timestamp"

@@ -174,18 +174,15 @@ class MessagingService : FirebaseMessagingService() {
 
             db.open()
             db.addMessage(tag, title, message, image, time, read, "incoming")
-
         } catch (e: java.lang.Exception) {
 
             e.printStackTrace()
-
         } finally {
 
             db.close()
         }
 
         refreshMessageStreamIfOpen()
-
     }
 
     private fun clearFromDb(tag: String) {
@@ -196,24 +193,20 @@ class MessagingService : FirebaseMessagingService() {
 
             db.open()
             db.clearMessage(tag)
-
         } catch (e: java.lang.Exception) {
 
             e.printStackTrace()
-
         } finally {
 
             db.close()
         }
 
         refreshMessageStreamIfOpen()
-
     }
 
     private fun refreshMessageStreamIfOpen() {
 
         // TODO - if message activity is open, refresh the stream
-
     }
 
     private fun handleIntent(
