@@ -10,7 +10,7 @@
     android:padding="8dp"
     app:cardCornerRadius="8dp">
 
-    <RelativeLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/message_card_bg_selector"
@@ -29,22 +29,41 @@
 
         <TextView
             android:id="@+id/text_title"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/colorPrimary"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:background="@color/colorOnPrimary"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/text_message"/>
 
         <TextView
             android:id="@+id/text_message"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/text_title"
-            android:paddingTop="16dp"
-            android:textColor="@color/colorPrimaryDark"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:background="@color/colorOnPrimary"
+            app:layout_constraintTop_toBottomOf="@id/text_title"
+            app:layout_constraintBottom_toTopOf="@id/image_box"/>
 
-    </RelativeLayout>
+        <TextView
+            android:id="@+id/image_box"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorOnPrimary"
+            app:layout_constraintTop_toBottomOf="@id/text_message"
+            app:layout_constraintBottom_toTopOf="@id/timestamp"
+            android:autoLink="web"/>
+
+        <TextView
+            android:id="@+id/timestamp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorOnPrimary"
+            app:layout_constraintTop_toBottomOf="@id/image_box"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:textAlignment="viewEnd"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.cardview.widget.CardView>

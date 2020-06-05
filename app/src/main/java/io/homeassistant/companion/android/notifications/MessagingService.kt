@@ -68,8 +68,6 @@ class MessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d(TAG, "From: ${remoteMessage.from}")
 
-        // TODO: Save message to database
-
         // Check if message contains a data payload.
         remoteMessage.data.let {
             Log.d(TAG, "Message data payload: " + remoteMessage.data)
@@ -108,6 +106,7 @@ class MessagingService : FirebaseMessagingService() {
         val messageId = tag.hashCode()
 
         notificationManager.cancel(tag, messageId)
+        clearFromDb(tag)
     }
 
     private fun removeNotificationChannel(channelName: String) {
@@ -163,31 +162,58 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun saveMessageToDb(data: Map<String, String>) {
 
-        // TODO: Not getting the tag??
-
         val db = NotificationsDB(this)
-        val tag = data[TAG]
+        val tag = data["tag"]
         val title = data[TITLE]
         val message = data[MESSAGE]
         val image = data[IMAGE_URL]
         val time = DateFormat.getDateTimeInstance().format(System.currentTimeMillis())
-        val read = true // TODO: Change this to false when ready to monitor read state
+        val read = true // Change this to false when ready to monitor read state
 
         try {
 
             db.open()
             db.addMessage(tag, title, message, image, time, read, "incoming")
 
-            // TODO - remove logger...
-            Log.d("test", tag + title + message + image + time + read + "incoming")
         } catch (e: java.lang.Exception) {
 
             e.printStackTrace()
-            // TODO - handle errors?
+
         } finally {
 
             db.close()
         }
+
+        refreshMessageStreamIfOpen()
+
+    }
+
+    private fun clearFromDb(tag: String) {
+
+        val db = NotificationsDB(this)
+
+        try {
+
+            db.open()
+            db.clearMessage(tag)
+
+        } catch (e: java.lang.Exception) {
+
+            e.printStackTrace()
+
+        } finally {
+
+            db.close()
+        }
+
+        refreshMessageStreamIfOpen()
+
+    }
+
+    private fun refreshMessageStreamIfOpen() {
+
+        // TODO - if message activity is open, refresh the stream
+
     }
 
     private fun handleIntent(
@@ -201,6 +227,7 @@ class MessagingService : FirebaseMessagingService() {
             }
         } else {
             WebViewActivity.newInstance(this, url)
+            // TODO: Open Notifications Activity here, with webview primed in back-stack
         }
 
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK

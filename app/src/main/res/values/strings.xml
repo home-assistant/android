@@ -101,8 +101,8 @@ like to connect to:</string>
   <string name="states">Overview</string>
   <string name="shortcuts">Shortcuts</string>
   <string name="shortcuts_summary">Add shortcuts to launcher</string>
-    <string name="no_messages">There are no messages to view</string>
-    <string name="select_all">Select all</string>
+  <string name="no_messages">There are no messages to view</string>
+  <string name="select_all">Select all</string>
   <string name="delete">Delete</string>
   <string name="cab_selected">selected</string>
   <string name="cab_messages">Messages</string>

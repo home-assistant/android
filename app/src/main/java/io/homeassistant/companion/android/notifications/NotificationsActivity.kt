@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.SettingsActivity
 import kotlinx.android.synthetic.main.activity_notifications.*
 
+
 class NotificationsActivity : AppCompatActivity() {
 
     private var db: NotificationsDB? = null
@@ -27,10 +28,9 @@ class NotificationsActivity : AppCompatActivity() {
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        // TODO: Add menu item for settings (and launch settings activity from it!)
-
         loadDatabase()
         generateStream()
+
     }
 
     override fun onPause() {
@@ -59,8 +59,19 @@ class NotificationsActivity : AppCompatActivity() {
 
         val messages = db?.fetchMessages()
 
-        val columns = arrayOf(NotificationsDB.KEY_TITLE, NotificationsDB.KEY_MESSAGE)
-        val matrix = intArrayOf(R.id.text_title, R.id.text_message)
+        val columns = arrayOf(
+            NotificationsDB.KEY_TITLE,
+            NotificationsDB.KEY_MESSAGE,
+            NotificationsDB.KEY_IMAGE_URI,
+            NotificationsDB.KEY_TIMESTAMP
+            )
+
+        val matrix = intArrayOf(
+            R.id.text_title,
+            R.id.text_message,
+            R.id.image_box,
+            R.id.timestamp
+        )
 
         adapter = SimpleCursorAdapter(this, R.layout.listrow_message_card, messages,
             columns, matrix, 0)
@@ -178,6 +189,7 @@ class NotificationsActivity : AppCompatActivity() {
 
         adapter.notifyDataSetChanged()
         generateStream()
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -197,4 +209,5 @@ class NotificationsActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
 }

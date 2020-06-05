@@ -52,12 +52,6 @@ class NotificationsDB(private val c: Context) {
     }
 
     @Throws(SQLException::class)
-    fun deleteAllMessages() {
-
-        d!!.execSQL("SQLITE_TABLE" + SQLITE_TABLE_MESSAGE_STREAM)
-    }
-
-    @Throws(SQLException::class)
     fun deleteMessage(s: String) {
 
         d!!.delete(SQLITE_TABLE_MESSAGE_STREAM, "$KEY_ENTRY_UID = ? ", arrayOf(s))
