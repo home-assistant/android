@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URL
+import java.text.DateFormat
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -105,6 +106,7 @@ class MessagingService : FirebaseMessagingService() {
         val messageId = tag.hashCode()
 
         notificationManager.cancel(tag, messageId)
+        clearFromDb(tag)
     }
 
     private fun removeNotificationChannel(channelName: String) {
@@ -154,6 +156,57 @@ class MessagingService : FirebaseMessagingService() {
         } else {
             notificationManager.notify(messageId, notificationBuilder.build())
         }
+
+        saveMessageToDb(data)
+    }
+
+    private fun saveMessageToDb(data: Map<String, String>) {
+
+        val db = NotificationsDB(this)
+        val tag = data["tag"]
+        val title = data[TITLE]
+        val message = data[MESSAGE]
+        val image = data[IMAGE_URL]
+        val time = DateFormat.getDateTimeInstance().format(System.currentTimeMillis())
+        val read = true // Change this to false when ready to monitor read state
+
+        try {
+
+            db.open()
+            db.addMessage(tag, title, message, image, time, read, "incoming")
+        } catch (e: java.lang.Exception) {
+
+            e.printStackTrace()
+        } finally {
+
+            db.close()
+        }
+
+        refreshMessageStreamIfOpen()
+    }
+
+    private fun clearFromDb(tag: String) {
+
+        val db = NotificationsDB(this)
+
+        try {
+
+            db.open()
+            db.clearMessage(tag)
+        } catch (e: java.lang.Exception) {
+
+            e.printStackTrace()
+        } finally {
+
+            db.close()
+        }
+
+        refreshMessageStreamIfOpen()
+    }
+
+    private fun refreshMessageStreamIfOpen() {
+
+        // TODO - if message activity is open, refresh the stream
     }
 
     private fun handleIntent(
@@ -167,6 +220,7 @@ class MessagingService : FirebaseMessagingService() {
             }
         } else {
             WebViewActivity.newInstance(this, url)
+            // TODO: Open Notifications Activity here, with webview primed in back-stack
         }
 
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK

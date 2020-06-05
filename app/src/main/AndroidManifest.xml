@@ -94,9 +94,11 @@
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+        <activity android:name=".notifications.NotificationsActivity"
+            android:parentActivityName=".webview.WebViewActivity" />
         <activity
             android:name=".settings.SettingsActivity"
-            android:parentActivityName=".webview.WebViewActivity" />
+            android:parentActivityName=".notifications.NotificationsActivity" />
 
         <service
             android:name=".notifications.MessagingService"

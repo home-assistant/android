@@ -40,10 +40,12 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.notifications.NotificationsActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
+import io.homeassistant.companion.android.webview.WebViewActivity.Companion.newInstance
 import javax.inject.Inject
 import org.json.JSONObject
 
@@ -286,8 +288,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     Log.d(TAG, "Callback $it")
                                 }
                             }
-                            "config_screen/show" -> startActivity(
-                                SettingsActivity.newInstance(this@WebViewActivity)
+                            "config_screen/show" -> startActivity(Intent(
+                                this@WebViewActivity,
+                                NotificationsActivity::class.java)
                             )
                         }
                     }
