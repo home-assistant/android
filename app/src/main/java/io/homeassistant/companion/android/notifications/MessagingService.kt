@@ -13,7 +13,9 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.text.HtmlCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import io.homeassistant.companion.android.R
@@ -37,7 +39,11 @@ class MessagingService : FirebaseMessagingService() {
         const val TAG = "MessagingService"
         const val TITLE = "title"
         const val MESSAGE = "message"
+        const val SUBJECT = "subject"
+        const val PRIORITY = "priority"
         const val IMAGE_URL = "image"
+        const val TTL = "ttl"
+        const val ICON = "icon"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -125,19 +131,26 @@ class MessagingService : FirebaseMessagingService() {
     private suspend fun sendNotification(data: Map<String, String>) {
 
         val tag = data["tag"]
+        val group = data["group"]
         val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
+        val groupId = group?.hashCode() ?: 0
 
         val pendingIntent = handleIntent(data)
 
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManagerCompat = NotificationManagerCompat.from(this)
 
-        val channelId = handleChannel(notificationManager, data)
+        val channelId = handleChannel(notificationManagerCompat, data)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentIntent(pendingIntent)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+
+        handleLargeIcon(notificationBuilder, data)
+
+        handleGroup(notificationBuilder, data)
+
+        handleTtl(notificationBuilder, data)
 
         handleColor(notificationBuilder, data)
 
@@ -149,11 +162,33 @@ class MessagingService : FirebaseMessagingService() {
 
         handleActions(notificationBuilder, data, tag, messageId)
 
-        if (tag != null) {
-            notificationManager.notify(tag, messageId, notificationBuilder.build())
-        } else {
-            notificationManager.notify(messageId, notificationBuilder.build())
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            handleLegacyPriority(notificationBuilder, data)
         }
+
+        notificationManagerCompat.apply {
+            notify(tag, messageId, notificationBuilder.build())
+            if (group != null) {
+                notify(group, groupId, getGroupNotificationBuilder(channelId, group, data).build())
+            }
+        }
+    }
+
+    private fun getGroupNotificationBuilder(
+        channelId: String,
+        group: String?,
+        data: Map<String, String>
+    ): NotificationCompat.Builder {
+        var groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_stat_ic_notification)
+            .setStyle(
+                NotificationCompat.InboxStyle().setSummaryText(group)
+            )
+            .setGroup(group)
+            .setGroupSummary(true)
+
+        handleColor(groupNotificationBuilder, data)
+        return groupNotificationBuilder
     }
 
     private fun handleIntent(
@@ -195,6 +230,75 @@ class MessagingService : FirebaseMessagingService() {
         builder.color = color
     }
 
+    private fun handleLegacyPriority(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+
+        val priority = data[PRIORITY]
+
+        when (priority) {
+            "high" -> {
+                builder.setPriority(NotificationCompat.PRIORITY_HIGH)
+            }
+            "low" -> {
+                builder.setPriority(NotificationCompat.PRIORITY_LOW)
+            }
+            "max" -> {
+                builder.setPriority(NotificationCompat.PRIORITY_MAX)
+            }
+            "min" -> {
+                builder.setPriority(NotificationCompat.PRIORITY_MIN)
+            }
+            else -> {
+                builder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            }
+        }
+    }
+
+    private fun handleImportance(
+        data: Map<String, String>
+    ): Int {
+
+        val priority = data[PRIORITY]
+
+        when (priority) {
+            "high" -> {
+                return NotificationManager.IMPORTANCE_HIGH
+            }
+            "low" -> {
+                return NotificationManager.IMPORTANCE_LOW
+            }
+            "max" -> {
+                return NotificationManager.IMPORTANCE_MAX
+            }
+            "min" -> {
+                return NotificationManager.IMPORTANCE_MIN
+            }
+            else -> {
+                return NotificationManager.IMPORTANCE_DEFAULT
+            }
+        }
+    }
+
+    private fun handleTtl(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        val ttl = data[TTL]?.toLong() ?: -1
+        if (ttl >= 0) builder.setTimeoutAfter(ttl)
+    }
+
+    private fun handleGroup(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        val group = data["group"]
+        if (!group.isNullOrBlank()) {
+            builder.setGroup(group)
+        }
+    }
+
     private fun handleSticky(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
@@ -209,11 +313,29 @@ class MessagingService : FirebaseMessagingService() {
     ) {
         builder
             .setContentTitle(data[TITLE])
-            .setContentText(data[MESSAGE])
+            .setContentText(data[SUBJECT] ?: data[MESSAGE])
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText(data[MESSAGE])
+                    .bigText(
+                        HtmlCompat.fromHtml(
+                            data[MESSAGE] ?: "Unspecified",
+                            HtmlCompat.FROM_HTML_MODE_LEGACY
+                        )
+                    )
             )
+    }
+
+    private suspend fun handleLargeIcon(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        data[ICON]?.let {
+            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
+            val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
+            if (bitmap != null) {
+                builder.setLargeIcon(bitmap)
+            }
+        }
     }
 
     private suspend fun handleImage(
@@ -235,7 +357,8 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private suspend fun getImageBitmap(url: URL?, requiresAuth: Boolean = false): Bitmap? = withContext(Dispatchers.IO) {
+    private suspend fun getImageBitmap(url: URL?, requiresAuth: Boolean = false): Bitmap? = withContext(
+        Dispatchers.IO) {
         if (url == null)
             return@withContext null
 
@@ -294,7 +417,7 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun handleChannel(
-        notificationManager: NotificationManager,
+        notificationManager: NotificationManagerCompat,
         data: Map<String, String>
     ): String {
         // Define some values for a default channel
@@ -311,7 +434,7 @@ class MessagingService : FirebaseMessagingService() {
             val channel = NotificationChannel(
                 channelID,
                 channelName,
-                NotificationManager.IMPORTANCE_DEFAULT
+                handleImportance(data)
             )
             notificationManager.createNotificationChannel(channel)
         }
