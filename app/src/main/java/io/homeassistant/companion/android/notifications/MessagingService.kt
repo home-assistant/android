@@ -174,7 +174,7 @@ class MessagingService : FirebaseMessagingService() {
 
             db.open()
             db.addMessage(tag, title, message, image, time, read, "incoming")
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
 
             e.printStackTrace()
         } finally {
@@ -193,7 +193,7 @@ class MessagingService : FirebaseMessagingService() {
 
             db.open()
             db.clearMessage(tag)
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
 
             e.printStackTrace()
         } finally {
