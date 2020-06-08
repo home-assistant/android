@@ -45,6 +45,7 @@ class MessagingService : FirebaseMessagingService() {
         const val IMAGE_URL = "image"
         const val ICON = "icon"
         const val LED_COLOR = "ledColor"
+        const val VIBRATION_PATTERN = "vibrationPattern";
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -166,6 +167,7 @@ class MessagingService : FirebaseMessagingService() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             handleLegacyPriority(notificationBuilder, data)
             handleLegacyLedColor(notificationBuilder, data)
+            handleLegacyVibrationPattern(notificationBuilder, data)
         }
 
         notificationManagerCompat.apply {
@@ -241,6 +243,19 @@ class MessagingService : FirebaseMessagingService() {
         val ledColor = data[LED_COLOR]
         if (!ledColor.isNullOrBlank()) {
             builder.setLights(parseColor(ledColor, R.color.colorPrimary), 3000, 3000)
+        }
+    }
+
+    private fun handleLegacyVibrationPattern(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        val vibrationPattern = data[VIBRATION_PATTERN]
+        if (!vibrationPattern.isNullOrBlank()) {
+            val arrVibrationPattern = parseVibrationPattern(vibrationPattern)
+            if(arrVibrationPattern.isNotEmpty()) {
+                builder.setVibrate(arrVibrationPattern)
+            }
         }
     }
 
@@ -451,14 +466,57 @@ class MessagingService : FirebaseMessagingService() {
                 channelName,
                 handleImportance(data)
             )
+
+            setChannelLedColor(data, channel)
+            setChannelVibrationPattern(data, channel)
+            notificationManager.createNotificationChannel(channel)
+        }
+        return channelID
+    }
+
+    private fun setChannelLedColor(
+        data: Map<String, String>,
+        channel: NotificationChannel
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val ledColor = data[LED_COLOR]
             if (!ledColor.isNullOrBlank()) {
                 channel.enableLights(true)
                 channel.lightColor = parseColor(ledColor, R.color.colorPrimary)
             }
-            notificationManager.createNotificationChannel(channel)
         }
-        return channelID
+    }
+
+    private fun setChannelVibrationPattern(
+        data: Map<String, String>,
+        channel: NotificationChannel
+    ) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val vibrationPattern = data[VIBRATION_PATTERN]
+            val arrVibrationPattern = parseVibrationPattern(vibrationPattern)
+            if (arrVibrationPattern.isNotEmpty()) {
+                channel.vibrationPattern = arrVibrationPattern
+            }
+        }
+    }
+
+    private fun parseVibrationPattern(
+        vibrationPattern: String?
+    ): LongArray {
+        if (!vibrationPattern.isNullOrBlank()) {
+            val pattern = vibrationPattern.split(",").toTypedArray()
+            val list = mutableListOf<Long>()
+            pattern.forEach { it ->
+                val ms = it.trim().toLongOrNull()
+                if (ms != null) {
+                    list.add(ms)
+                }
+            }
+            if (list.count() > 0) {
+                return list.toLongArray()
+            }
+        }
+        return LongArray(0)
     }
 
     private fun createChannelID(
