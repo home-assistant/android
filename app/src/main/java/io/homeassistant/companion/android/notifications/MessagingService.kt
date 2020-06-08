@@ -44,6 +44,7 @@ class MessagingService : FirebaseMessagingService() {
         const val TIMEOUT = "timeout"
         const val IMAGE_URL = "image"
         const val ICON = "icon"
+        const val LED_COLOR = "ledColor"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -164,6 +165,7 @@ class MessagingService : FirebaseMessagingService() {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             handleLegacyPriority(notificationBuilder, data)
+            handleLegacyLedColor(notificationBuilder, data)
         }
 
         notificationManagerCompat.apply {
@@ -217,17 +219,29 @@ class MessagingService : FirebaseMessagingService() {
     ) {
 
         val colorString = data["color"]
-        var color = ContextCompat.getColor(this, R.color.colorPrimary)
+        val color = parseColor(colorString, R.color.colorPrimary)
+        builder.color = color
+    }
 
+    private fun parseColor(colorString: String?, default: Int): Int {
         if (!colorString.isNullOrBlank()) {
             try {
-                color = Color.parseColor(colorString)
+                return Color.parseColor(colorString)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to parse color", e)
             }
         }
+        return ContextCompat.getColor(this, default)
+    }
 
-        builder.color = color
+    private fun handleLegacyLedColor(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        val ledColor = data[LED_COLOR]
+        if (!ledColor.isNullOrBlank()) {
+            builder.setLights(parseColor(ledColor, R.color.colorPrimary), 3000, 3000)
+        }
     }
 
     private fun handleLegacyPriority(
@@ -437,6 +451,11 @@ class MessagingService : FirebaseMessagingService() {
                 channelName,
                 handleImportance(data)
             )
+            val ledColor = data[LED_COLOR]
+            if (!ledColor.isNullOrBlank()) {
+                channel.enableLights(true)
+                channel.lightColor = parseColor(ledColor, R.color.colorPrimary)
+            }
             notificationManager.createNotificationChannel(channel)
         }
         return channelID
