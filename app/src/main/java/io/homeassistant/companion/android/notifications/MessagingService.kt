@@ -40,9 +40,9 @@ class MessagingService : FirebaseMessagingService() {
         const val TITLE = "title"
         const val MESSAGE = "message"
         const val SUBJECT = "subject"
-        const val PRIORITY = "priority"
+        const val IMPORTANCE = "importance"
+        const val TIMEOUT = "timeout"
         const val IMAGE_URL = "image"
-        const val TTL = "ttl"
         const val ICON = "icon"
 
         // special action constants
@@ -150,7 +150,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleGroup(notificationBuilder, data)
 
-        handleTtl(notificationBuilder, data)
+        handleTimeout(notificationBuilder, data)
 
         handleColor(notificationBuilder, data)
 
@@ -235,23 +235,24 @@ class MessagingService : FirebaseMessagingService() {
         data: Map<String, String>
     ) {
 
-        val priority = data[PRIORITY]
+        //Use importance property for legacy priority support
+        val priority = data[IMPORTANCE]
 
         when (priority) {
             "high" -> {
-                builder.setPriority(NotificationCompat.PRIORITY_HIGH)
+                builder.priority = NotificationCompat.PRIORITY_HIGH
             }
             "low" -> {
-                builder.setPriority(NotificationCompat.PRIORITY_LOW)
+                builder.priority = NotificationCompat.PRIORITY_LOW
             }
             "max" -> {
-                builder.setPriority(NotificationCompat.PRIORITY_MAX)
+                builder.priority = NotificationCompat.PRIORITY_MAX
             }
             "min" -> {
-                builder.setPriority(NotificationCompat.PRIORITY_MIN)
+                builder.priority = NotificationCompat.PRIORITY_MIN
             }
             else -> {
-                builder.setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                builder.priority = NotificationCompat.PRIORITY_DEFAULT
             }
         }
     }
@@ -260,9 +261,9 @@ class MessagingService : FirebaseMessagingService() {
         data: Map<String, String>
     ): Int {
 
-        val priority = data[PRIORITY]
+        val importance = data[IMPORTANCE]
 
-        when (priority) {
+        when (importance) {
             "high" -> {
                 return NotificationManager.IMPORTANCE_HIGH
             }
@@ -281,12 +282,12 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun handleTtl(
+    private fun handleTimeout(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        val ttl = data[TTL]?.toLong() ?: -1
-        if (ttl >= 0) builder.setTimeoutAfter(ttl)
+        val timeout = data[TIMEOUT]?.toLong()?.times(1000) ?: -1
+        if (timeout >= 0) builder.setTimeoutAfter(timeout)
     }
 
     private fun handleGroup(
