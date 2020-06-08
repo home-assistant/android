@@ -190,9 +190,9 @@ class NotificationsActivity : AppCompatActivity() {
 
         var messageToDelete: String
 
-        for (aGuidelineToDelete in messageID) {
+        for (msgToDelete in messageID) {
 
-            messageToDelete = aGuidelineToDelete
+            messageToDelete = msgToDelete
 
             try {
 
