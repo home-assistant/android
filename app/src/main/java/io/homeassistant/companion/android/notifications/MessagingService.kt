@@ -45,7 +45,8 @@ class MessagingService : FirebaseMessagingService() {
         const val IMAGE_URL = "image"
         const val ICON = "icon"
         const val LED_COLOR = "ledColor"
-        const val VIBRATION_PATTERN = "vibrationPattern";
+        const val VIBRATION_PATTERN = "vibrationPattern"
+        const val PERSISTENT = "persistent"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -148,6 +149,8 @@ class MessagingService : FirebaseMessagingService() {
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
 
+        handlePersistent(notificationBuilder, data, tag)
+
         handleLargeIcon(notificationBuilder, data)
 
         handleGroup(notificationBuilder, data)
@@ -175,6 +178,19 @@ class MessagingService : FirebaseMessagingService() {
             if (group != null) {
                 notify(group, groupId, getGroupNotificationBuilder(channelId, group, data).build())
             }
+        }
+    }
+
+    private fun handlePersistent(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>,
+        tag: String?
+    ) {
+        // Only set ongoing (persistent) property if tag was supplied.
+        // Without a tag the user could not clear the notification
+        if (!tag.isNullOrBlank()) {
+            val persistent = data[PERSISTENT]?.toBoolean() ?: false
+            builder.setOngoing(persistent)
         }
     }
 
@@ -253,7 +269,7 @@ class MessagingService : FirebaseMessagingService() {
         val vibrationPattern = data[VIBRATION_PATTERN]
         if (!vibrationPattern.isNullOrBlank()) {
             val arrVibrationPattern = parseVibrationPattern(vibrationPattern)
-            if(arrVibrationPattern.isNotEmpty()) {
+            if (arrVibrationPattern.isNotEmpty()) {
                 builder.setVibrate(arrVibrationPattern)
             }
         }
@@ -264,7 +280,7 @@ class MessagingService : FirebaseMessagingService() {
         data: Map<String, String>
     ) {
 
-        //Use importance property for legacy priority support
+        // Use importance property for legacy priority support
         val priority = data[IMPORTANCE]
 
         when (priority) {
