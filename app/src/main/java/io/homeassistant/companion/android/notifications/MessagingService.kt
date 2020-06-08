@@ -422,8 +422,8 @@ class MessagingService : FirebaseMessagingService() {
         data: Map<String, String>
     ): String {
         // Define some values for a default channel
-        var channelID = "default"
-        var channelName = "Default Channel"
+        var channelID = "general"
+        var channelName = "General"
 
         if (data.containsKey("channel")) {
             channelID = createChannelID(data["channel"].toString())
