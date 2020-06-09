@@ -138,7 +138,7 @@ class MessagingService : FirebaseMessagingService() {
         val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
         val groupId = group?.hashCode() ?: 0
 
-        val pendingIntent = handleIntent(data)
+        val pendingIntent = handleIntent(data, messageId)
 
         val notificationManagerCompat = NotificationManagerCompat.from(this)
 
@@ -212,7 +212,8 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun handleIntent(
-        data: Map<String, String>
+        data: Map<String, String>,
+        messageId: Int
     ): PendingIntent {
         val url = data["clickAction"]
 
@@ -227,7 +228,7 @@ class MessagingService : FirebaseMessagingService() {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
         return PendingIntent.getActivity(
-            this, 0, intent, 0
+            this, messageId, intent, 0
         )
     }
 
