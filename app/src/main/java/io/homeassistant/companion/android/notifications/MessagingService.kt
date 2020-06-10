@@ -43,7 +43,7 @@ class MessagingService : FirebaseMessagingService() {
         const val IMPORTANCE = "importance"
         const val TIMEOUT = "timeout"
         const val IMAGE_URL = "image"
-        const val ICON = "icon"
+        const val ICON_URL = "icon_url"
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
@@ -376,7 +376,7 @@ class MessagingService : FirebaseMessagingService() {
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        data[ICON]?.let {
+        data[ICON_URL]?.let {
             val url = UrlHandler.handle(urlUseCase.getUrl(), it)
             val bitmap = getImageBitmap(url, !UrlHandler.isAbsoluteUrl(it))
             if (bitmap != null) {
