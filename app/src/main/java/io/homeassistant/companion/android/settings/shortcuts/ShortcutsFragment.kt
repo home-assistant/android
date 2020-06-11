@@ -55,23 +55,23 @@ class ShortcutsFragment : Fragment(), ShortcutsView {
             !panel.title.isNullOrEmpty() && panel.title !== "lovelace" && panel.title !== "profile"
         }.sortedBy { panel -> panel.title }.map { panel ->
             panel.title_localized = when (panel.title) {
-                "calendar" -> context!!.getString(R.string.calendar)
-                "config" -> context!!.getString(R.string.config)
-                "developer_tools" -> context!!.getString(R.string.developer_tools)
-                "history" -> context!!.getString(R.string.history)
-                "logbook" -> context!!.getString(R.string.logbook)
-                "mailbox" -> context!!.getString(R.string.mailbox)
-                "map" -> context!!.getString(R.string.map)
-                "profile" -> context!!.getString(R.string.profile)
-                "shopping_list" -> context!!.getString(R.string.shopping_list)
-                "states" -> context!!.getString(R.string.states)
+                "calendar" -> requireContext().getString(R.string.calendar)
+                "config" -> requireContext().getString(R.string.config)
+                "developer_tools" -> requireContext().getString(R.string.developer_tools)
+                "history" -> requireContext().getString(R.string.history)
+                "logbook" -> requireContext().getString(R.string.logbook)
+                "mailbox" -> requireContext().getString(R.string.mailbox)
+                "map" -> requireContext().getString(R.string.map)
+                "profile" -> requireContext().getString(R.string.profile)
+                "shopping_list" -> requireContext().getString(R.string.shopping_list)
+                "states" -> requireContext().getString(R.string.states)
                 else -> panel.title
             }
             panel
         }
 
         recyclerViewAdapter =
-            ShortcutsRecyclerViewAdapter(panels.toList(), context!!) { onCreateShortcut(it) }
+            ShortcutsRecyclerViewAdapter(panels.toList(), requireContext()) { onCreateShortcut(it) }
 
         return inflater.inflate(R.layout.fragment_shortcuts, container, false).apply {
             findViewById<RecyclerView>(R.id.recycler_view_shortcuts)?.apply {
@@ -82,7 +82,7 @@ class ShortcutsFragment : Fragment(), ShortcutsView {
 
     private fun onCreateShortcut(panel: Panel) {
         val shortcutManager =
-            context!!.getSystemService(ShortcutManager::class.java)
+            requireContext().getSystemService(ShortcutManager::class.java)
         if (shortcutManager!!.isRequestPinShortcutSupported) {
             val pinShortcutInfo =
                 ShortcutInfo.Builder(
@@ -99,7 +99,7 @@ class ShortcutsFragment : Fragment(), ShortcutsView {
                     )
                     .setIntent(
                         WebViewActivity.newInstance(
-                            context!!,
+                            requireContext(),
                             panel.url_path
                         ).apply {
                             this.action = Intent.ACTION_VIEW

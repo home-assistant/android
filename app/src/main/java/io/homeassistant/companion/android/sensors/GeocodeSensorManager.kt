@@ -8,6 +8,7 @@ import com.google.android.gms.tasks.Tasks
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
+import io.homeassistant.companion.android.util.PermissionManager
 
 class GeocodeSensorManager : SensorManager {
 
@@ -39,6 +40,10 @@ class GeocodeSensorManager : SensorManager {
     }
 
     private fun getGeocodedLocation(context: Context): Sensor<Any>? {
+        if (!PermissionManager.checkLocationPermission(context)) {
+            Log.w(TAG, "Tried getting gecoded location without permission.")
+            return null
+        }
         Tasks.await(LocationServices.getFusedLocationProviderClient(context).lastLocation)?.let {
             if (it.accuracy > LocationBroadcastReceiver.MINIMUM_ACCURACY)
                 return null

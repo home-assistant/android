@@ -20,7 +20,7 @@ dependencies {
     implementation(Config.Dependency.Kotlin.coroutines)
 
     implementation(Config.Dependency.Google.dagger)
-    kapt (Config.Dependency.Google.daggerCompiler)
+    kapt(Config.Dependency.Google.daggerCompiler)
 
     implementation(Config.Dependency.Square.retrofit)
 }
