@@ -28,6 +28,8 @@ allprojects {
         maven(url = Config.Repository.lokalize)
     }
 
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+
     tasks.withType<KotlinCompile>().configureEach {
         println("Configuring $name in project ${project.name}...")
         kotlinOptions {

@@ -18,8 +18,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
-import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.appComponent
+import io.homeassistant.companion.android.util.extensions.PermissionManager
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -76,10 +76,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         val onClickShortcuts = Preference.OnPreferenceClickListener {
-            requireActivity().supportFragmentManager.commit {
-                replace(R.id.content, ShortcutsFragment.newInstance())
-                addToBackStack(getString(R.string.shortcuts))
-            }
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, ShortcutsFragment.newInstance())
+                .addToBackStack(getString(R.string.shortcuts))
+                .commit()
             true
         }
 
@@ -108,7 +109,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     }
 
     override fun onLocationSettingChanged() {
-        if (!PermissionManager.hasLocationPermissions(requireContext())) {
+        if (!PermissionManager.checkLocationPermissions(requireContext())) {
             PermissionManager.requestLocationPermissions(this)
         }
         PermissionManager.restartLocationTracking(requireContext())
@@ -129,7 +130,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     override fun onDisplayPreferenceDialog(preference: Preference) {
         if (preference is SsidPreference) {
             // check if dialog is already showing
-            val fm = childFragmentManager
+            val fm = parentFragmentManager
             if (fm.findFragmentByTag(SSID_DIALOG_TAG) != null) {
                 return
             }
@@ -148,7 +149,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (PermissionManager.validateLocationPermissions(requestCode, permissions, grantResults)) {
+        if (PermissionManager.validateLocationPermissions(requestCode, grantResults)) {
             PermissionManager.restartLocationTracking(requireContext())
         } else {
             // If we don't have permissions, don't let them in!

@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import io.homeassistant.companion.android.sensor.SensorWorker
-import io.homeassistant.companion.android.util.PermissionManager
+import io.homeassistant.companion.android.util.extensions.PermissionManager
 
 /**
  * This class will receive a broadcast intent when the device boots up. This allows us to start the sensor worker

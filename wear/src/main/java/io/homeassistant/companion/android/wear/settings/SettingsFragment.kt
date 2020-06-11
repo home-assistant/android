@@ -82,7 +82,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     }
 
     override fun onLocationSettingChanged() {
-        if (!PermissionManager.hasLocationPermissions(requireContext())) {
+        if (!PermissionManager.checkLocationPermissions(requireContext())) {
             PermissionManager.requestLocationPermissions(this)
         }
         PermissionManager.restartLocationTracking(requireContext())
@@ -98,7 +98,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     override fun onRequestPermissionsResult(code: Int, permissions: Array<out String>, results: IntArray) {
         super.onRequestPermissionsResult(code, permissions, results)
-        if (PermissionManager.validateLocationPermissions(code, permissions, results)) {
+        if (PermissionManager.validateLocationPermissions(code, results)) {
             PermissionManager.restartLocationTracking(requireContext())
         } else {
             requirePreference<SwitchPreference>("location_zone").isChecked = false

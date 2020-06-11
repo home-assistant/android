@@ -35,8 +35,8 @@ android {
         versionName = "${Config.version}-$vCode"
     }
 
-    viewBinding {
-        isEnabled = true
+    buildFeatures {
+        viewBinding = true
     }
 
     compileOptions {
@@ -85,7 +85,6 @@ android {
 
     lintOptions {
         disable("MissingTranslation")
-        isAbortOnError = false
     }
 }
 

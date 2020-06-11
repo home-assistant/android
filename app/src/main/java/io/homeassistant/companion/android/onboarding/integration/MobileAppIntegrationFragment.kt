@@ -19,8 +19,8 @@ import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.appComponent
+import io.homeassistant.companion.android.util.extensions.PermissionManager
 import javax.inject.Inject
 
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
@@ -71,7 +71,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 }
             }
 
-            val hasLocationPermission = PermissionManager.hasLocationPermissions(context)
+            val hasLocationPermission = PermissionManager.checkLocationPermissions(context)
 
             zoneTracking = findViewById<SwitchCompat>(R.id.location_zone).apply {
                 setOnCheckedChangeListener { _, isChecked ->
@@ -126,7 +126,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (PermissionManager.validateLocationPermissions(requestCode, permissions, grantResults)) {
+        if (PermissionManager.validateLocationPermissions(requestCode, grantResults)) {
             zoneTracking.isEnabled = true
             zoneTrackingSummary.isEnabled = true
             zoneTracking.isChecked = true

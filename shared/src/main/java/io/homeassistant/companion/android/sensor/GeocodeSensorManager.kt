@@ -2,14 +2,20 @@ package io.homeassistant.companion.android.sensor
 
 import android.content.Context
 import android.location.Geocoder
+import android.util.Log
 import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver.Companion.MINIMUM_ACCURACY
 import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
+import io.homeassistant.companion.android.util.extensions.PermissionManager
 import io.homeassistant.companion.android.util.extensions.await
 import io.homeassistant.companion.android.util.extensions.catch
 
 class GeocodeSensorManager(private val context: Context) : SensorManager {
+
+    companion object {
+        private const val TAG = "GeocodeSM"
+    }
 
     override suspend fun getSensorRegistrations(): List<SensorRegistration<Any>> {
         val sensor = getGeocodedLocation() ?: return emptyList()
@@ -21,6 +27,10 @@ class GeocodeSensorManager(private val context: Context) : SensorManager {
     }
 
     private suspend fun getGeocodedLocation(): Sensor<Any>? {
+        if (!PermissionManager.checkLocationPermissions(context)) {
+            Log.w(TAG, "Tried getting gecoded location without permission.")
+            return null
+        }
         val fusedClient = LocationServices.getFusedLocationProviderClient(context)
         val lastLocation = catch { fusedClient.lastLocation.await() }
         if (lastLocation == null || lastLocation.accuracy > MINIMUM_ACCURACY) {

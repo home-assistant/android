@@ -110,6 +110,6 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
             .setMessage(message)
             .setPositiveButton(android.R.string.ok) { _, _ -> }
             .show()
-        childFragmentManager.popBackStack()
+        parentFragmentManager.popBackStack()
     }
 }
