@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.wear.navigation
 import android.graphics.drawable.Drawable
 import androidx.wear.widget.drawer.WearableNavigationDrawerView
 
-class NavigationAdapter: WearableNavigationDrawerView.WearableNavigationDrawerAdapter() {
+class NavigationAdapter : WearableNavigationDrawerView.WearableNavigationDrawerAdapter() {
 
     private val pages = arrayListOf<NavigationItem>()
 
@@ -20,5 +20,4 @@ class NavigationAdapter: WearableNavigationDrawerView.WearableNavigationDrawerAd
     fun getPage(index: Int): NavigationItem {
         return pages[index]
     }
-
 }

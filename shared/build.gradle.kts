@@ -31,10 +31,8 @@ dependencies {
 
     implementation(Config.Dependency.Google.material)
     implementation(Config.Dependency.Google.dagger)
-    kapt (Config.Dependency.Google.daggerCompiler)
-    
+    kapt(Config.Dependency.Google.daggerCompiler)
     implementation(Config.Dependency.Play.location)
-    
     implementation(Config.Dependency.Firebase.core)
     implementation(Config.Dependency.Firebase.iid)
     api(Config.Dependency.Firebase.messaging)

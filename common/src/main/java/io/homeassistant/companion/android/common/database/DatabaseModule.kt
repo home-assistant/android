@@ -6,10 +6,7 @@ import androidx.room.Room
 import androidx.room.migration.Migration
 import dagger.Module
 import dagger.Provides
-import io.homeassistant.companion.android.common.dagger.DataComponent
 import io.homeassistant.companion.android.common.dagger.DataScope
-import io.homeassistant.companion.android.common.dagger.DomainComponent
-import javax.inject.Singleton
 
 @Module
 class DatabaseModule {
@@ -34,5 +31,4 @@ class DatabaseModule {
 
     @Provides
     fun provideWearActionDao(db: HomeAssistantDatabase) = db.wearActionsDao()
-
 }

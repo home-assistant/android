@@ -105,5 +105,4 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             requirePreference<SwitchPreference>("location_background").isChecked = false
         }
     }
-
 }

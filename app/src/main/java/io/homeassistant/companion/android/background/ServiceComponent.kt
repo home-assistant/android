@@ -14,5 +14,4 @@ interface ServiceComponent {
     }
 
     fun inject(service: WearDataListenerService)
-
 }

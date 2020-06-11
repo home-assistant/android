@@ -47,7 +47,7 @@ class ActionsAdapter(
         override fun onLongClick(v: View?): Boolean = onLongClick(adapterPosition).run { true }
     }
 
-    private class WearActionListDiffer :  DiffUtil.ItemCallback<WearAction>() {
+    private class WearActionListDiffer : DiffUtil.ItemCallback<WearAction>() {
         override fun areItemsTheSame(oldItem: WearAction, newItem: WearAction): Boolean {
             return oldItem.id == newItem.id
         }
@@ -56,5 +56,4 @@ class ActionsAdapter(
             return oldItem == newItem
         }
     }
-
 }

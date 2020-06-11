@@ -18,7 +18,9 @@ class MessagingService : AbstractMessagingService() {
     override fun actionHandler(): Class<*> = NotificationActionReceiver::class.java
 
     override fun handleIntent(
-        notificationTag: String?, messageId: Int, actionUrl: String?
+        notificationTag: String?,
+        messageId: Int,
+        actionUrl: String?
     ): PendingIntent {
         val dummyWithActionUrl = NotificationAction(EXTRA_ACTION_URL, EXTRA_ACTION_URL, actionUrl, HashMap())
 
@@ -30,5 +32,4 @@ class MessagingService : AbstractMessagingService() {
 
         return PendingIntent.getBroadcast(this, messageId, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
-
 }

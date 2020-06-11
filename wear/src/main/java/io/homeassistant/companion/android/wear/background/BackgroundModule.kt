@@ -19,5 +19,4 @@ class BackgroundModule {
     fun provideMessageClient(context: Context): MessageClient {
         return Wearable.getMessageClient(context)
     }
-
 }

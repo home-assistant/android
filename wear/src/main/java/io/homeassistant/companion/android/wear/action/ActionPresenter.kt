@@ -8,5 +8,4 @@ interface ActionPresenter {
     fun saveAction(action: WearAction)
     fun deleteAction(action: WearAction)
     fun finish()
-
 }

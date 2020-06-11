@@ -40,5 +40,4 @@ class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
     override val appComponent: AppComponent get() = graph.appComponent
     override val domainComponent: DomainComponent get() = graph.domainComponent
-
 }

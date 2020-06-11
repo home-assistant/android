@@ -33,5 +33,4 @@ class IconAdapter(
     class ViewHolder(view: View, clickListener: (Int) -> Unit) : RecyclerView.ViewHolder(view) {
         init { itemView.setOnClickListener { clickListener(adapterPosition) } }
     }
-
 }

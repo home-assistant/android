@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.common.actions.WearAction
 import kotlinx.coroutines.flow.Flow
 
 @Dao
-interface WearActionsDao  {
+interface WearActionsDao {
 
     @Query("SELECT * FROM wear_actions")
     fun allActions(): Flow<List<WearAction>>
@@ -26,5 +26,4 @@ interface WearActionsDao  {
 
     @Query("DELETE FROM wear_actions WHERE wear_action_id = :actionId")
     suspend fun deleteAction(actionId: Long): Int
-
 }

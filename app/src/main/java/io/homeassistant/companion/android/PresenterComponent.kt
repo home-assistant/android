@@ -2,7 +2,6 @@ package io.homeassistant.companion.android
 
 import dagger.Component
 import io.homeassistant.companion.android.common.dagger.AppComponent
-import io.homeassistant.companion.android.common.dagger.DomainComponent
 import io.homeassistant.companion.android.common.dagger.PresenterScope
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.lock.LockActivity

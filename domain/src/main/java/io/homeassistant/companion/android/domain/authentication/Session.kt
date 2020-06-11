@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.domain.authentication
 
-import org.threeten.bp.Instant
 import java.io.Serializable
+import org.threeten.bp.Instant
 
 data class Session(
     val accessToken: String,

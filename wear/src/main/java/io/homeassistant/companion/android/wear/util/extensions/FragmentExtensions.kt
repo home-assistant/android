@@ -5,7 +5,6 @@ import androidx.annotation.DrawableRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import io.homeassistant.companion.android.common.dagger.AppComponent
-import io.homeassistant.companion.android.common.dagger.DomainComponent
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 
 /**

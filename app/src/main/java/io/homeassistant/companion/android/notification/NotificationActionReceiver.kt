@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.notification
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import io.homeassistant.companion.android.util.extensions.catch
 import io.homeassistant.companion.android.util.extensions.isAbsoluteUrl
 import io.homeassistant.companion.android.webview.WebViewActivity
 
@@ -25,5 +24,4 @@ class NotificationActionReceiver : AbstractNotificationActionReceiver() {
         context.startActivity(intent)
         onComplete()
     }
-
 }

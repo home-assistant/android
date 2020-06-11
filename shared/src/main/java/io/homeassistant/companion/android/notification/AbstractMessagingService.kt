@@ -29,13 +29,13 @@ import io.homeassistant.companion.android.util.extensions.isAbsoluteUrl
 import io.homeassistant.companion.android.util.extensions.notificationManager
 import io.homeassistant.companion.android.util.extensions.parseVibrationPattern
 import io.homeassistant.companion.android.util.extensions.saveChannel
+import java.net.URL
+import java.util.Locale
+import javax.inject.Inject
+import kotlin.collections.HashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import java.net.URL
-import java.util.*
-import javax.inject.Inject
-import kotlin.collections.HashMap
 
 abstract class AbstractMessagingService : FirebaseMessagingService() {
 
@@ -198,7 +198,9 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
     }
 
     protected abstract fun handleIntent(
-        notificationTag: String?, messageId: Int, actionUrl: String?
+        notificationTag: String?,
+        messageId: Int,
+        actionUrl: String?
     ): PendingIntent
 
     private fun handleColor(builder: NotificationCompat.Builder, colorString: String?) {

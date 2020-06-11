@@ -13,7 +13,6 @@ interface ActivityArgs {
 
     fun saveInstance(bundle: Bundle)
     fun startActivity(activity: Activity)
-
 }
 
 fun <T> ActivityArgs.Factory<T>.buildArgs(intent: Intent, bundle: Bundle?): T {

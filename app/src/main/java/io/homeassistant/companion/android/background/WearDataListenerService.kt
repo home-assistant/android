@@ -15,8 +15,8 @@ import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.extensions.catch
 import io.homeassistant.companion.android.util.extensions.isAbsoluteUrl
 import io.homeassistant.companion.android.webview.WebViewActivity
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import kotlinx.coroutines.runBlocking
 
 class WearDataListenerService : WearableListenerService() {
 
@@ -85,5 +85,4 @@ class WearDataListenerService : WearableListenerService() {
         val dataByteArray = dataMap.toByteArray()
         messageClient.sendMessage(nodeId, path, dataByteArray)
     }
-
 }

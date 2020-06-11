@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.util
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import io.homeassistant.companion.android.common.dagger.AppComponent
-import io.homeassistant.companion.android.common.dagger.DomainComponent
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 
 val Fragment.appComponent: AppComponent

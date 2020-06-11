@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common.actions
 
-import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 
 class WearActionUseCaseImpl @Inject constructor(
     private val repository: WearActionRepository

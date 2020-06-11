@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.util.extensions.await
+import io.homeassistant.companion.android.util.extensions.catch
 import io.homeassistant.companion.android.wear.BuildConfig
 import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.background.FailedSyncResult
@@ -18,18 +20,16 @@ import io.homeassistant.companion.android.wear.background.InActiveSessionSyncRes
 import io.homeassistant.companion.android.wear.background.Result
 import io.homeassistant.companion.android.wear.background.SettingsSyncCallback
 import io.homeassistant.companion.android.wear.background.SettingsSyncManager
-import io.homeassistant.companion.android.wear.background.SettingsUrl.*
+import io.homeassistant.companion.android.wear.background.SettingsUrl
 import io.homeassistant.companion.android.wear.background.SuccessSyncResult
 import io.homeassistant.companion.android.wear.background.SyncResult
-import io.homeassistant.companion.android.util.extensions.await
-import io.homeassistant.companion.android.util.extensions.catch
 import io.homeassistant.companion.android.wear.background.capability.CapabilityManager
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 class LaunchPresenterImpl @Inject constructor(
     private val view: LaunchView,
@@ -121,8 +121,13 @@ class LaunchPresenterImpl @Inject constructor(
 
     private suspend fun saveSettings(result: SuccessSyncResult): Boolean {
         val urlMap = result.urls
-        val webhookUrl = urlMap[WEBHOOK] ?: return false
-        urlUseCase.saveRegistrationUrls(urlMap[CLOUDHOOK], urlMap[REMOTE], webhookUrl, urlMap[LOCAL])
+        val webhookUrl = urlMap[SettingsUrl.WEBHOOK] ?: return false
+        urlUseCase.saveRegistrationUrls(
+            urlMap[SettingsUrl.CLOUDHOOK],
+            urlMap[SettingsUrl.REMOTE],
+            webhookUrl,
+            urlMap[SettingsUrl.LOCAL]
+        )
         authenticationUseCase.saveSession(result.session)
         urlUseCase.saveHomeWifiSsids(result.ssids.toSet())
         return true
@@ -143,5 +148,4 @@ class LaunchPresenterImpl @Inject constructor(
         handler.removeCallbacks(delayedShow)
         mainScope.cancel()
     }
-    
 }

@@ -59,5 +59,4 @@ class ProgressTimeLatch(
         handler.removeCallbacks(delayedHide)
         handler.removeCallbacks(delayedShow)
     }
-
 }

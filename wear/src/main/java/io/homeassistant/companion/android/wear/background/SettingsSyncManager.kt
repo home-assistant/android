@@ -5,10 +5,13 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.MessageClient
 import com.google.android.gms.wearable.MessageEvent
 import io.homeassistant.companion.android.domain.authentication.Session
-import io.homeassistant.companion.android.wear.BuildConfig
-import io.homeassistant.companion.android.wear.background.SettingsUrl.*
 import io.homeassistant.companion.android.util.extensions.await
 import io.homeassistant.companion.android.util.extensions.catch
+import io.homeassistant.companion.android.wear.BuildConfig
+import io.homeassistant.companion.android.wear.background.SettingsUrl.CLOUDHOOK
+import io.homeassistant.companion.android.wear.background.SettingsUrl.LOCAL
+import io.homeassistant.companion.android.wear.background.SettingsUrl.REMOTE
+import io.homeassistant.companion.android.wear.background.SettingsUrl.WEBHOOK
 import javax.inject.Inject
 
 class SettingsSyncManager @Inject constructor(
@@ -88,5 +91,4 @@ class SettingsSyncManager @Inject constructor(
         messageClient.removeListener(this)
         syncCallback = null
     }
-
 }

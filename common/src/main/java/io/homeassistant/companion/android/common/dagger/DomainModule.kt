@@ -30,5 +30,4 @@ interface DomainModule {
 
     @Binds
     fun bindWearActionsUseCase(useCase: WearActionUseCaseImpl): WearActionUseCase
-
 }

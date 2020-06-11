@@ -5,7 +5,7 @@ import android.net.wifi.WifiManager
 import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
-class NetworkSensorManager (private val context: Context): SensorManager {
+class NetworkSensorManager(private val context: Context) : SensorManager {
 
     override suspend fun getSensorRegistrations(): List<SensorRegistration<*>> {
         return listOf(SensorRegistration(getWifiConnectionSensor(), "Wifi Connection"))

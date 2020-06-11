@@ -36,5 +36,4 @@ class CapabilityManager @Inject constructor(
 
         return CapabilityResult(Result.SUCCESS, foundDevice)
     }
-
 }

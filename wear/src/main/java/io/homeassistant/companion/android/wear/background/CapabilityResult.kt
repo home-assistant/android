@@ -13,7 +13,6 @@ class CapabilityResult(
             Result.NOT_NEARBY -> throw IllegalStateException("No device found that is close enough to connect with!")
             Result.FAILURE -> throw IllegalStateException("No device found with Home Assistant installed!")
         }
-
 }
 
 enum class Result {

@@ -5,13 +5,13 @@ import androidx.wear.activity.ConfirmationActivity.SUCCESS_ANIMATION
 import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.common.actions.WearActionUseCase
 import io.homeassistant.companion.android.wear.R
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 class ActionPresenterImpl @Inject constructor(
     private val view: ActionView,
@@ -49,5 +49,4 @@ class ActionPresenterImpl @Inject constructor(
     override fun finish() {
         mainScope.cancel()
     }
-
 }

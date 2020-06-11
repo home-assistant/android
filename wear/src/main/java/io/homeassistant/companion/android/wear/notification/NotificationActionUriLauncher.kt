@@ -54,5 +54,4 @@ class NotificationActionUriLauncher @Inject constructor(
             Log.i(TAG, message)
         }
     }
-
 }

@@ -90,5 +90,4 @@ class LaunchActivity : WearableActivity(), LaunchView {
         launchPresenter.onFinish()
         super.onDestroy()
     }
-
 }

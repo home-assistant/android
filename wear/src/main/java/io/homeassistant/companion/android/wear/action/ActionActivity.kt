@@ -17,8 +17,8 @@ import io.homeassistant.companion.android.wear.databinding.ViewRecyclerviewBindi
 import io.homeassistant.companion.android.wear.ui.buildArgs
 import io.homeassistant.companion.android.wear.util.extensions.appComponent
 import io.homeassistant.companion.android.wear.util.extensions.viewBinding
-import net.steamcrafted.materialiconlib.MaterialDrawableBuilder.IconValue
 import javax.inject.Inject
+import net.steamcrafted.materialiconlib.MaterialDrawableBuilder.IconValue
 
 class ActionActivity : AppCompatActivity(), ActionView {
 
@@ -145,5 +145,4 @@ class ActionActivity : AppCompatActivity(), ActionView {
         presenter.finish()
         super.onDestroy()
     }
-
 }

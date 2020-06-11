@@ -4,5 +4,4 @@ interface GraphComponentAccessor {
 
     val appComponent: AppComponent
     val domainComponent: DomainComponent
-
 }

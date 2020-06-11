@@ -11,11 +11,11 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.resources.R
 import io.homeassistant.companion.android.util.extensions.notificationManager
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 abstract class AbstractNotificationActionReceiver : BroadcastReceiver() {
 
@@ -90,5 +90,4 @@ abstract class AbstractNotificationActionReceiver : BroadcastReceiver() {
         onComplete: () -> Unit,
         onFailure: (Int) -> Unit
     )
-
 }

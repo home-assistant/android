@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.domain.widgets.WidgetUseCase
-import javax.inject.Singleton
 
 @AppScope
 @Component(dependencies = [DomainComponent::class])
@@ -29,5 +28,4 @@ interface AppComponent {
     fun widgetUseCase(): WidgetUseCase
 
     fun wearActionsUseCase(): WearActionUseCase
-
 }

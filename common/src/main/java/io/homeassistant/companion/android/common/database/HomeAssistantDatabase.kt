@@ -14,5 +14,4 @@ import io.homeassistant.companion.android.common.actions.WearAction
 abstract class HomeAssistantDatabase : RoomDatabase() {
 
     abstract fun wearActionsDao(): WearActionsDao
-
 }

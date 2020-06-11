@@ -7,9 +7,9 @@ import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import io.homeassistant.companion.android.common.actions.WearActionRepository
+import io.homeassistant.companion.android.common.actions.WearActionRepositoryImpl
 import io.homeassistant.companion.android.data.HomeAssistantRetrofit
 import io.homeassistant.companion.android.data.LocalStorage
-import io.homeassistant.companion.android.common.actions.WearActionRepositoryImpl
 import io.homeassistant.companion.android.data.authentication.AuthenticationRepositoryImpl
 import io.homeassistant.companion.android.data.authentication.AuthenticationService
 import io.homeassistant.companion.android.data.integration.IntegrationRepositoryImpl

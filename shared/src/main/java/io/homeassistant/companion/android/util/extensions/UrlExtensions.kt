@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.util.extensions
 
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URL
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 fun URL?.handle(input: String): URL? {
     return if (input.isAbsoluteUrl()) {

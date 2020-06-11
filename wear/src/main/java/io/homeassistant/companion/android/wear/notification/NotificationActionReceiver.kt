@@ -4,12 +4,10 @@ import android.content.Context
 import android.content.Intent
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.notification.AbstractNotificationActionReceiver
-import io.homeassistant.companion.android.notification.DaggerNotificationComponent
 import io.homeassistant.companion.android.notification.NotificationAction
 import io.homeassistant.companion.android.wear.R
-import io.homeassistant.companion.android.wear.background.BackgroundModule
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 class NotificationActionReceiver : AbstractNotificationActionReceiver() {
 
@@ -35,5 +33,4 @@ class NotificationActionReceiver : AbstractNotificationActionReceiver() {
             }
         }
     }
-
 }

@@ -28,5 +28,4 @@ interface DomainComponent {
     fun widgetUseCase(): WidgetUseCase
 
     fun wearActionsUseCase(): WearActionUseCase
-
 }

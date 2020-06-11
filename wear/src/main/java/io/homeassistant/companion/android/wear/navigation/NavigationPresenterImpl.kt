@@ -11,12 +11,12 @@ import io.homeassistant.companion.android.util.extensions.catch
 import io.homeassistant.companion.android.wear.BuildConfig
 import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.util.extensions.requireDrawable
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 class NavigationPresenterImpl @Inject constructor(
     private val context: Context,
@@ -51,7 +51,7 @@ class NavigationPresenterImpl @Inject constructor(
             model = Build.MODEL ?: "UNKNOWN",
             osVersion = Build.VERSION.SDK_INT.toString(),
             pushToken = token.token
-        )}
+        ) }
         return result != null
     }
 

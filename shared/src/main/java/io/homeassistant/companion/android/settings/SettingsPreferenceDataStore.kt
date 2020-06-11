@@ -5,12 +5,12 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.extensions.catch
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
 
 class SettingsPreferenceDataStore @Inject constructor(
     private val integrationUseCase: IntegrationUseCase,
@@ -94,5 +94,4 @@ class SettingsPreferenceDataStore @Inject constructor(
         changeCallback = null
         ioScope.cancel()
     }
-
 }

@@ -14,5 +14,4 @@ object IconValueConverter {
     fun toIconValue(iconValue: String): MaterialDrawableBuilder.IconValue? {
         return MaterialDrawableBuilder.IconValue.values().firstOrNull { value -> value.name == iconValue }
     }
-
 }

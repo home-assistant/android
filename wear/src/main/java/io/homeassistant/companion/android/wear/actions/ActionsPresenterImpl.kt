@@ -6,8 +6,10 @@ import io.homeassistant.companion.android.common.actions.WearAction
 import io.homeassistant.companion.android.common.actions.WearActionUseCase
 import io.homeassistant.companion.android.common.util.ProgressTimeLatch
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.util.extensions.catch
+import io.homeassistant.companion.android.wear.R
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,8 +17,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
-import javax.inject.Inject
 
 class ActionsPresenterImpl @Inject constructor(
     private val view: ActionsView,

@@ -1,11 +1,11 @@
 package io.homeassistant.companion.android.common.actions
 
 import io.homeassistant.companion.android.common.database.WearActionsDao
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
-import javax.inject.Inject
 
 class WearActionRepositoryImpl @Inject constructor(
     private val actionsDao: WearActionsDao

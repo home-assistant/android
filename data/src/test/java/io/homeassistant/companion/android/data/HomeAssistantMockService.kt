@@ -24,7 +24,6 @@ class HomeAssistantMockService<T>(private val c: Class<T>) {
             webhookId: String,
             localUrl: String?
         ) {
-
         }
 
         override suspend fun getUrl(isInternal: Boolean?): URL? {

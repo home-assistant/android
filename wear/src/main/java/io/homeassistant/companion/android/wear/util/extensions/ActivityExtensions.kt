@@ -9,7 +9,6 @@ import androidx.annotation.DrawableRes
 import androidx.lifecycle.Lifecycle
 import androidx.viewbinding.ViewBinding
 import io.homeassistant.companion.android.common.dagger.AppComponent
-import io.homeassistant.companion.android.common.dagger.DomainComponent
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import java.lang.NullPointerException
 

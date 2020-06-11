@@ -34,5 +34,4 @@ interface DataComponent {
     fun widgetRepository(): WidgetRepository
 
     fun wearActionsRepository(): WearActionRepository
-
 }

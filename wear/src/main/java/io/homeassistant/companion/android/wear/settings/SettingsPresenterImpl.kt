@@ -14,6 +14,8 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.settings.PreferenceChangeCallback
 import io.homeassistant.companion.android.settings.SettingsPreferenceDataStore
+import io.homeassistant.companion.android.util.extensions.await
+import io.homeassistant.companion.android.util.extensions.catch
 import io.homeassistant.companion.android.wear.BuildConfig
 import io.homeassistant.companion.android.wear.R
 import io.homeassistant.companion.android.wear.background.FailedSyncResult
@@ -24,17 +26,15 @@ import io.homeassistant.companion.android.wear.background.SettingsSyncManager
 import io.homeassistant.companion.android.wear.background.SettingsUrl
 import io.homeassistant.companion.android.wear.background.SuccessSyncResult
 import io.homeassistant.companion.android.wear.background.SyncResult
-import io.homeassistant.companion.android.util.extensions.await
-import io.homeassistant.companion.android.util.extensions.catch
 import io.homeassistant.companion.android.wear.background.capability.CapabilityManager
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
-import javax.inject.Inject
 
 class SettingsPresenterImpl @Inject constructor(
     private val view: SettingsView,
@@ -156,5 +156,4 @@ class SettingsPresenterImpl @Inject constructor(
         dataStore.cancel()
         syncManager.cancel()
     }
-
 }

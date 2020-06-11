@@ -107,5 +107,4 @@ class ActionsFragment : Fragment(), ActionsView {
         presenter.finish()
         super.onDestroy()
     }
-
 }
