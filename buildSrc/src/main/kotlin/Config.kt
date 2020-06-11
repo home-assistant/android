@@ -2,7 +2,7 @@ object Config {
     const val version = "1.9.0"
 
     object Plugin {
-        const val android = "com.android.tools.build:gradle:3.6.3"
+        const val android = "com.android.tools.build:gradle:4.0.0"
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
         const val google = "com.google.gms:google-services:4.3.3"
         const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:1.4.0"
