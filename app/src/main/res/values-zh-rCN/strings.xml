@@ -66,9 +66,23 @@ Home Assistant实例</string>
   <string name="auth_request">请求的验证：</string>
   <string name="auth_cancel">验证已取消</string>
   <string name="add_service_data_field">添加字段</string>
-  <string name="widget_config_service_error">一个自定义组件阻止加载服务数据。</string>
+  <string name="widget_config_service_error">未能加载自定义组件的服务数据。</string>
   <string name="error_ssl">由于SSL错误，无法与Home Assistant通信。请确保您的证书有效。</string>
-  <string name="event_error">Failed to notify HA of picked option.</string>
-  <string name="wait">Wait</string>
-  <string name="refresh">Refresh</string>
+  <string name="event_error">选中的选项无法通知到HA</string>
+  <string name="wait">等待</string>
+  <string name="refresh">刷新</string>
+  <string name="pref_connection_ssids_empty">配置您的WiFi SSID</string>
+  <string name="lockscreen_title">应用已锁定！</string>
+  <string name="lockscreen_message">点击解锁 ：</string>
+  <string name="biometric_title">Home Assistant 需要解锁</string>
+  <string name="biometric_message">使用生物识别或屏幕锁凭据来解锁应用</string>
+  <string name="set_lock_title">应用锁定错误</string>
+  <string name="set_lock_message">没有可用的生物识别传感器或屏幕锁凭据</string>
+  <string name="lock_title">锁定应用</string>
+  <string name="lock_summary">使用生物识别或屏幕锁凭据来解锁应用</string>
+  <string name="manage_ssids">管理SSID</string>
+  <string name="manage_ssids_input">新的WiFi SSID</string>
+  <string name="manage_ssids_input_exists">该SSID已经存在。</string>
+  <string name="save">保存</string>
+  <string name="cancel">取消</string>
 </resources>
