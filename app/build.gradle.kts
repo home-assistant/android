@@ -5,10 +5,8 @@ plugins {
     id("kotlin-android-extensions")
     id("com.google.firebase.appdistribution")
     id("com.github.triplet.play") version "2.7.5"
-    id("io.fabric")
+    id("com.google.firebase.crashlytics")
 }
-
-apply(plugin = "com.google.firebase.appdistribution")
 
 buildscript {
     repositories {
@@ -116,13 +114,13 @@ dependencies {
         exclude(group = "org.threeten")
     }
 
-    implementation(Config.Dependency.Misc.crashlytics)
     implementation(Config.Dependency.Misc.lokalize)
 
     implementation(Config.Dependency.Play.location)
     implementation(Config.Dependency.Firebase.core)
     implementation(Config.Dependency.Firebase.iid)
     implementation(Config.Dependency.Firebase.messaging)
+    implementation(Config.Dependency.Firebase.crashlytics)
 
     implementation(Config.Dependency.AndroidX.workManager)
     implementation(Config.Dependency.AndroidX.biometric)
