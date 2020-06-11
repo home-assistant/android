@@ -27,7 +27,7 @@
   <string name="device_name">Gerätename</string>
   <string name="error_onboarding_connection_failed">Verbindung zu Home Assistant nicht möglich.</string>
   <string name="error_connection_failed">Verbindung zu Home Assistant nicht möglich.</string>
-  <string name="webview_error">Es ist ein Fehler bei der Verbindung zu Home Assistant aufgetreten. Bitte überprüfe die Einstellungen, um erneut zu verbinden.</string>
+  <string name="webview_error">Es ist ein Fehler bei der Verbindung zu Home Assistant aufgetreten. Bitte überprüfe die Einstellungen und versuche es dann erneut.</string>
   <string name="pref_connection_title">Verbindungsinformationen</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Heimnetzwerk WiFi SSID</string>
@@ -64,8 +64,22 @@
   <string name="auth_cancel">Authentifizierung abgebrochen</string>
   <string name="add_service_data_field">Feld hinzufügen</string>
   <string name="widget_config_service_error">Eine benutzerdefinierte Komponente verhindert, dass Servicedaten geladen werden.</string>
-  <string name="error_ssl">Aufgrund eines SSL-Fehlers kann nicht mit Home Assistant kommuniziert werden. Stellen Sie sicher, dass Ihr Zertifikat gültig ist.</string>
-  <string name="event_error">Failed to notify HA of picked option.</string>
-  <string name="wait">Wait</string>
-  <string name="refresh">Refresh</string>
+  <string name="error_ssl">Aufgrund eines SSL-Fehlers kann nicht mit Home Assistant kommuniziert werden. Stelle sicher, dass dein Zertifikat gültig ist.</string>
+  <string name="event_error">HA konnte nicht über die ausgewählte Option informiert werden.</string>
+  <string name="wait">Warten</string>
+  <string name="refresh">Aktualisieren</string>
+  <string name="pref_connection_ssids_empty">Konfiguriere deine WiFi-SSID(s).</string>
+  <string name="lockscreen_title">App gesperrt!</string>
+  <string name="lockscreen_message">Tippe zum Entsperren auf:</string>
+  <string name="biometric_title">Home Assistant muss entsperrt werden</string>
+  <string name="biometric_message">Verwende biometrische oder eine andere Displaysperre, um die App zu öffnen</string>
+  <string name="set_lock_title">App-Sperrfehler</string>
+  <string name="set_lock_message">Kein biometrischer Sensor oder andere Displaysperren verfügbar</string>
+  <string name="lock_title">App sperren</string>
+  <string name="lock_summary">Verwende biometrische oder eine andere Displaysperre, um die App zu öffnen</string>
+  <string name="manage_ssids">SSID(s) verwalten</string>
+  <string name="manage_ssids_input">Neue WiFi SSID</string>
+  <string name="manage_ssids_input_exists">Diese SSID ist bereits vorhanden.</string>
+  <string name="save">Speichern</string>
+  <string name="cancel">Abbrechen</string>
 </resources>
