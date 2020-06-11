@@ -12,6 +12,7 @@ import android.graphics.drawable.Icon
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.Handler
 import android.util.Log
 import android.util.Rational
@@ -75,6 +76,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
+    private var pauseCountDownTimer: CountDownTimer? = null
     private var pausedUrl: String? = null
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -365,10 +367,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         videoHeight = decor.height
-        var bounds = Rect(0, 0, 1920, 1080)
+        val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                var mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
+                val mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(
                     Rational(
                         bounds.width(),
@@ -492,14 +494,25 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onPause() {
         super.onPause()
-        pausedUrl = webView.url
-        webView.loadUrl("about:blank")
+        pauseCountDownTimer = object : CountDownTimer(5 * 60 * 1000, 60 * 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                Log.d(TAG, "${millisUntilFinished}ms until killing javascript")
+            }
+
+            override fun onFinish() {
+                pausedUrl = webView.url
+                webView.loadUrl("about:blank")
+            }
+        }.start()
     }
 
     override fun onResume() {
         super.onResume()
-        if (pausedUrl != null)
+        pauseCountDownTimer?.cancel()
+        if (pausedUrl != null) {
             webView.loadUrl(pausedUrl)
+            pausedUrl = null
+        }
     }
 
     private fun isCutout(): Boolean {
