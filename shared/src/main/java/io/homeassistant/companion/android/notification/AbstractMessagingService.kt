@@ -10,6 +10,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.core.text.HtmlCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
@@ -26,6 +27,7 @@ import io.homeassistant.companion.android.resources.R
 import io.homeassistant.companion.android.util.extensions.handle
 import io.homeassistant.companion.android.util.extensions.isAbsoluteUrl
 import io.homeassistant.companion.android.util.extensions.notificationManager
+import io.homeassistant.companion.android.util.extensions.parseVibrationPattern
 import io.homeassistant.companion.android.util.extensions.saveChannel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -41,7 +43,16 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         const val TAG = "MessagingService"
         const val TITLE = "title"
         const val MESSAGE = "message"
+        const val SUBJECT = "subject"
+        const val IMPORTANCE = "importance"
+        const val TIMEOUT = "timeout"
         const val IMAGE_URL = "image"
+        const val ICON_URL = "icon_url"
+        const val COLOR = "color"
+        const val LED_COLOR = "ledColor"
+        const val VIBRATION_PATTERN = "vibrationPattern"
+        const val PERSISTENT = "persistent"
+        const val LOCAL_ONLY = "localOnly"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -104,11 +115,15 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
     private suspend fun sendNotification(notificationTag: String?, data: Map<String, String>) {
         Log.d(TAG, "Creating notification with following data: $data")
 
+        val group = data["group"]
         val messageId = notificationTag?.hashCode() ?: System.currentTimeMillis().toInt()
+        val groupId = group?.hashCode() ?: 0
 
         val pendingIntent = handleIntent(notificationTag, messageId, data["clickAction"])
 
-        val channelId = handleChannel(data["channel"])
+        val channelId = handleChannel(
+            data["channel"], data[IMPORTANCE], data[LED_COLOR], data[VIBRATION_PATTERN]
+        )
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setContentIntent(pendingIntent)
@@ -118,10 +133,14 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
 
         val stickyNotification = data["sticky"]?.toBoolean() ?: false
 
-        handleColor(notificationBuilder, data["color"])
+        handleColor(notificationBuilder, data[COLOR])
         handleSticky(notificationBuilder, stickyNotification)
-        handleText(notificationBuilder, data[TITLE], data[MESSAGE])
-        handleLocalOnly(notificationBuilder, data["localOnly"]?.toBoolean() ?: false)
+        handleText(notificationBuilder, data[TITLE], data[SUBJECT] ?: data[MESSAGE], data[MESSAGE])
+        handleLocalOnly(notificationBuilder, data[LOCAL_ONLY]?.toBoolean() ?: false)
+        handlePersistent(notificationBuilder, notificationTag, data[PERSISTENT]?.toBoolean() ?: false)
+        handleLargeIcon(notificationBuilder, data[ICON_URL] ?: "")
+        handleGroup(notificationBuilder, group)
+        handleTimeout(notificationBuilder, data[TIMEOUT]?.toLong()?.times(1000))
 
         val imageUrl = data[IMAGE_URL]
         if (imageUrl != null) {
@@ -136,11 +155,46 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
 
         handleActions(notificationBuilder, notificationTag, messageId, stickyNotification, actions)
 
-        if (notificationTag != null) {
-            notificationManager.notify(notificationTag, messageId, notificationBuilder.build())
-        } else {
-            notificationManager.notify(messageId, notificationBuilder.build())
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            handleLegacyPriority(notificationBuilder, data[IMPORTANCE])
+            handleLegacyLedColor(notificationBuilder, data[LED_COLOR])
+            handleLegacyVibrationPattern(notificationBuilder, data[VIBRATION_PATTERN])
         }
+
+        notificationManager.apply {
+            notify(notificationTag, messageId, notificationBuilder.build())
+            if (group != null) {
+                notify(group, groupId, getGroupNotificationBuilder(channelId, group, data[COLOR])
+                    .build())
+            }
+        }
+    }
+
+    private fun handlePersistent(
+        builder: NotificationCompat.Builder,
+        tag: String?,
+        persistent: Boolean
+    ) {
+        // Only set ongoing (persistent) property if tag was supplied.
+        // Without a tag the user could not clear the notification
+        if (!tag.isNullOrBlank()) {
+            builder.setOngoing(persistent)
+        }
+    }
+
+    private fun getGroupNotificationBuilder(
+        channelId: String,
+        group: String?,
+        colorString: String?
+    ): NotificationCompat.Builder {
+        val groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_stat_ic_notification)
+            .setStyle(NotificationCompat.InboxStyle().setSummaryText(group))
+            .setGroup(group)
+            .setGroupSummary(true)
+
+        handleColor(groupNotificationBuilder, colorString)
+        return groupNotificationBuilder
     }
 
     protected abstract fun handleIntent(
@@ -148,17 +202,45 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
     ): PendingIntent
 
     private fun handleColor(builder: NotificationCompat.Builder, colorString: String?) {
-        var color = ContextCompat.getColor(this, R.color.colorPrimary)
+        builder.color = parseColor(colorString, R.color.colorPrimary)
+    }
 
+    private fun parseColor(colorString: String?, default: Int): Int {
         if (!colorString.isNullOrBlank()) {
             try {
-                color = Color.parseColor(colorString)
+                return Color.parseColor(colorString)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to parse color", e)
             }
         }
+        return ContextCompat.getColor(this, default)
+    }
 
-        builder.color = color
+    private fun handleLegacyLedColor(builder: NotificationCompat.Builder, ledColor: String?) {
+        if (!ledColor.isNullOrBlank()) {
+            builder.setLights(parseColor(ledColor, R.color.colorPrimary), 3000, 3000)
+        }
+    }
+
+    private fun handleLegacyVibrationPattern(
+        builder: NotificationCompat.Builder,
+        vibrationPattern: String?
+    ) {
+        val arrVibrationPattern = vibrationPattern.parseVibrationPattern()
+        if (arrVibrationPattern.isNotEmpty()) {
+            builder.setVibrate(arrVibrationPattern)
+        }
+    }
+
+    private fun handleLegacyPriority(builder: NotificationCompat.Builder, importance: String?) {
+        // Use importance property for legacy priority support
+        builder.priority = when (importance) {
+            "high" -> NotificationCompat.PRIORITY_HIGH
+            "low" -> NotificationCompat.PRIORITY_LOW
+            "max" -> NotificationCompat.PRIORITY_MAX
+            "min" -> NotificationCompat.PRIORITY_MIN
+            else -> NotificationCompat.PRIORITY_DEFAULT
+        }
     }
 
     private fun handleSticky(builder: NotificationCompat.Builder, sticky: Boolean) {
@@ -169,11 +251,31 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         builder.setLocalOnly(localOnly)
     }
 
-    private fun handleText(builder: NotificationCompat.Builder, title: String?, message: String?) {
+    private fun handleText(
+        builder: NotificationCompat.Builder,
+        title: String?,
+        subject: String?,
+        message: String?
+    ) {
         builder
             .setContentTitle(title)
-            .setContentText(message)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setContentText(subject ?: message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(
+                HtmlCompat.fromHtml(message ?: "Unspecified",
+                HtmlCompat.FROM_HTML_MODE_LEGACY
+            )))
+    }
+
+    private fun handleTimeout(builder: NotificationCompat.Builder, timeout: Long?) {
+        if (timeout != null && timeout >= 0) {
+            builder.setTimeoutAfter(timeout)
+        }
+    }
+
+    private fun handleGroup(builder: NotificationCompat.Builder, group: String?) {
+        if (!group.isNullOrBlank()) {
+            builder.setGroup(group)
+        }
     }
 
     private suspend fun handleImage(builder: NotificationCompat.Builder, imageUrl: String) {
@@ -201,6 +303,12 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
             Log.e(TAG, "Couldn't download image for notification", e)
             null
         }
+    }
+
+    private suspend fun handleLargeIcon(builder: NotificationCompat.Builder, iconUrl: String) {
+        val url = urlUseCase.getUrl().handle(iconUrl) ?: return
+        val bitmap = getImageBitmap(url, !iconUrl.isAbsoluteUrl()) ?: return
+        builder.setLargeIcon(bitmap)
     }
 
     protected abstract fun actionHandler(): Class<*>
@@ -231,11 +339,22 @@ abstract class AbstractMessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun handleChannel(channel: String?): String {
+    private fun handleChannel(
+        channel: String?,
+        importance: String?,
+        ledColor: String?,
+        vibrationPattern: String?
+    ): String {
         // Define some values for a default channel
-        val channelID = createChannelID(channel ?: "default")
-        val channelName = channel?.trim() ?: "Default Channel"
-        saveChannel(channelID, channelName)
+        val channelID = createChannelID(channel ?: "general")
+        val channelName = channel?.trim() ?: "General"
+        saveChannel(
+            channelID,
+            channelName,
+            parseColor(ledColor, R.color.colorPrimary),
+            importance,
+            vibrationPattern = vibrationPattern
+        )
         return channelID
     }
 

@@ -25,7 +25,7 @@ android {
     compileSdkVersion(Config.Android.compileSdk)
 
     defaultConfig {
-        applicationId = Config.applicationId
+        applicationId = "io.homeassistant.companion.android"
         minSdkVersion(Config.Android.minSdk)
         targetSdkVersion(Config.Android.targetSdk)
 
@@ -52,7 +52,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("../release_keystore.jks")
+            storeFile = file("release_keystore.keystore")
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
             keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
             keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
@@ -85,6 +85,7 @@ android {
 
     lintOptions {
         disable("MissingTranslation")
+        isAbortOnError = false
     }
 }
 
