@@ -65,7 +65,21 @@
   <string name="add_service_data_field">Ajouter un champ</string>
   <string name="widget_config_service_error">Un composant personnalisé empêche le chargement des données de service.</string>
   <string name="error_ssl">Impossible de communiquer avec Home Assistant en raison d\'une erreur SSL. Veuillez vous assurer que votre certificat est valide.</string>
-  <string name="event_error">Failed to notify HA of picked option.</string>
-  <string name="wait">Wait</string>
-  <string name="refresh">Refresh</string>
+  <string name="event_error">Échec de notification à HA de l\'option choisie.</string>
+  <string name="wait">Attendre</string>
+  <string name="refresh">Rafraîchir</string>
+  <string name="pref_connection_ssids_empty">Configurez votre/vos SSID(s) WiFi</string>
+  <string name="lockscreen_title">L\'application est verrouillée !</string>
+  <string name="lockscreen_message">Appuyez pour déverrouiller :</string>
+  <string name="biometric_title">Home Assistant doit être déverrouillé</string>
+  <string name="biometric_message">Déverrouillez à l\'aide de vos informations d\'identification biométriques ou de verrouillage d\'écran</string>
+  <string name="set_lock_title">Erreur de verrouillage de l\'application</string>
+  <string name="set_lock_message">Aucun capteur biométrique ou informations d\'identification de verrouillage d\'écran disponibles</string>
+  <string name="lock_title">Verrouiller l\'application</string>
+  <string name="lock_summary">Utilisez des données biométriques ou des codes de verrouillage pour déverrouiller l\'application</string>
+  <string name="manage_ssids">Gérer les SSID(s)</string>
+  <string name="manage_ssids_input">Ajouter un nouveau SSID</string>
+  <string name="manage_ssids_input_exists">Ce SSID existe déjà.</string>
+  <string name="save">Enregistrer</string>
+  <string name="cancel">Annuler</string>
 </resources>

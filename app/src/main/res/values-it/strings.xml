@@ -21,7 +21,7 @@ a Internet di casa tua.</string>
 sulla tua istanza di Home Assistant.</string>
   <string name="url_parse_error">Impossibile analizzare l\'URL di Home Assistant. Dovrebbe somigliare a https://esempio.com</string>
   <string name="pref_location_zone_title">Tracciamento basato sulla zona</string>
-  <string name="pref_location_zone_summary">Importa le zone di Home Assistant esistenti come geofence per il monitoraggio basato sulle zone.</string>
+  <string name="pref_location_zone_summary">Importa le zone di Home Assistant esistenti come recinti geografici per il monitoraggio basato sulle zone.</string>
   <string name="pref_location_background_title">Tracciamento della posizione in background</string>
   <string name="pref_location_background_summary">Aggiorna la tua posizione dietro le quinte, periodicamente.</string>
   <string name="application_version">Versione dell\'applicazione</string>
@@ -68,8 +68,22 @@ sulla tua istanza di Home Assistant.</string>
   <string name="auth_cancel">Autenticazione Annullata</string>
   <string name="add_service_data_field">Aggiungi Campo</string>
   <string name="widget_config_service_error">Un componente personalizzato impedisce il caricamento dei dati del servizio.</string>
-  <string name="error_ssl">Impossibile comunicare con Home Assistant a causa di un errore SSL.  Assicurati che il tuo certificato sia valido.</string>
-  <string name="event_error">Failed to notify HA of picked option.</string>
-  <string name="wait">Wait</string>
-  <string name="refresh">Refresh</string>
+  <string name="error_ssl">Impossibile comunicare con Home Assistant a causa di un errore SSL. Assicurati che il tuo certificato sia valido.</string>
+  <string name="event_error">Impossibile notificare ad HA l\'opzione selezionata.</string>
+  <string name="wait">Attendere</string>
+  <string name="refresh">Aggiorna</string>
+  <string name="pref_connection_ssids_empty">Configura i tuoi SSID WiFi</string>
+  <string name="lockscreen_title">App bloccata!</string>
+  <string name="lockscreen_message">Tocca per sbloccare:</string>
+  <string name="biometric_title">Home Assistant deve essere sbloccato</string>
+  <string name="biometric_message">Sbloccate usando la vostra credenziale biometrica o il blocca schermo</string>
+  <string name="set_lock_title">Errore di blocco dell\'applicazione</string>
+  <string name="set_lock_message">Nessun sensore biometrico o credenziali del blocca schermo disponibili</string>
+  <string name="lock_title">Blocca l\'applicazione</string>
+  <string name="lock_summary">Usa le credenziali biometriche o dello blocca schermo per sbloccare l\'applicazione</string>
+  <string name="manage_ssids">Gestisci SSID</string>
+  <string name="manage_ssids_input">Nuovo SSID WiFi</string>
+  <string name="manage_ssids_input_exists">Questo SSID è già esistente.</string>
+  <string name="save">Salva</string>
+  <string name="cancel">Annulla</string>
 </resources>

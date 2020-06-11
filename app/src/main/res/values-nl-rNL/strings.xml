@@ -47,7 +47,7 @@
   <string name="widget_label_placeholder_text">Label</string>
   <string name="widget_spinner_icon">Icoon:</string>
   <string name="connected_to_home_assistant">Verbonden met Home Assistant</string>
-  <string name="permission_explanation">Om locatietracking-functies of verschillende verbindings-URL\'s op basis van WiFi SSID te gebruiken, hebben we toegang tot uw locatie nodig. Als u consistente achtergrondupdates wilt, moet u ook achtergrondverwerking toestaan</string>
+  <string name="permission_explanation">Om locatietracking-functies of verschillende verbindings-URL\'s op basis van WiFi SSID te gebruiken, hebben we toegang tot uw locatie nodig. Als u consistente updates wilt, moet u ook toestaan dat deze app op de achtergrond word uitgevoerd.</string>
   <string name="grant_permission">Toestemming verlenen</string>
   <string name="finish">Voltooien</string>
   <string name="other_settings">Overige instellingen</string>
@@ -64,8 +64,22 @@
   <string name="auth_cancel">Verificatie geannuleerd</string>
   <string name="add_service_data_field">Veld toevoegen</string>
   <string name="widget_config_service_error">Een aangepast onderdeel voorkomt dat servicegegevens worden geladen.</string>
-  <string name="error_ssl">Niet in staat om te communiceren met de Home Assistant vanwege een SSL-fout.  Zorg ervoor dat uw certificaat geldig is.</string>
-  <string name="event_error">Failed to notify HA of picked option.</string>
-  <string name="wait">Wait</string>
-  <string name="refresh">Refresh</string>
+  <string name="error_ssl">Niet in staat om te communiceren met Home Assistant vanwege een SSL-fout.  Zorg voor een geldig certificaat.</string>
+  <string name="event_error">Kan HA niet op de hoogte stellen van de gekozen optie.</string>
+  <string name="wait">Wachten</string>
+  <string name="refresh">Opnieuw laden</string>
+  <string name="pref_connection_ssids_empty">Configureer uw WiFi SSID\'s</string>
+  <string name="lockscreen_title">App vergrendeld!</string>
+  <string name="lockscreen_message">Tik om te ontgrendelen:</string>
+  <string name="biometric_title">Home Assistant moet worden ontgrendeld</string>
+  <string name="biometric_message">Ontgrendel met uw biometrische of schermvergrendeling-inloggegevens</string>
+  <string name="set_lock_title">Fout bij het vergrendelen van de app.</string>
+  <string name="set_lock_message">Geen biometrische of schermvergrendeling-inloggegevens beschikbaar.</string>
+  <string name="lock_title">App vergrendelen</string>
+  <string name="lock_summary">Gebruik biometrische of schermvergrendeling-inloggegevens om de app te ontgrendelen.</string>
+  <string name="manage_ssids">Beheer SSID\'s</string>
+  <string name="manage_ssids_input">Nieuwe WiFi SSID</string>
+  <string name="manage_ssids_input_exists">Deze SSID bestaat al.</string>
+  <string name="save">Opslaan</string>
+  <string name="cancel">Annuleren</string>
 </resources>

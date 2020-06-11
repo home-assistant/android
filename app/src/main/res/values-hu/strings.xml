@@ -24,9 +24,9 @@ engedélyezve van a Home Assistant példányodban.</string>
   <string name="pref_location_zone_summary">Meglévő Home Assistant zónák geokerítésként történő importálása a zóna alapú nyomkövetéshez.</string>
   <string name="pref_location_background_title">Pozíció nyomkövetés a háttérben</string>
   <string name="pref_location_background_summary">Frissíti a pozíciódat a háttérben, periódikusan.</string>
-  <string name="application_version">Alkalmazás verziója</string>
+  <string name="application_version">Alkalmazás verzió</string>
   <string name="location">Elhelyezkedés</string>
-  <string name="app_version_info">App verzióinfók</string>
+  <string name="app_version_info">App verzió információk</string>
   <string name="device_registration">Eszköz regisztráció</string>
   <string name="device_name">Eszköz neve</string>
   <string name="error_onboarding_connection_failed">Nem lehet csatlakozni a Home Assistant-hoz.</string>
@@ -70,7 +70,21 @@ amihez csatlakozni szeretnél:</string>
   <string name="add_service_data_field">Mező hozzáadása</string>
   <string name="widget_config_service_error">Egy egyéni összetevő (custom_component) megakadályozza a szolgáltatásadatok betöltését.</string>
   <string name="error_ssl">SSL-hiba miatt nem lehet kommunikálni a Home Assistant-tel.  Ellenőrizd, hogy a tanúsítvány érvényes-e.</string>
-  <string name="event_error">Failed to notify HA of picked option.</string>
-  <string name="wait">Wait</string>
-  <string name="refresh">Refresh</string>
+  <string name="event_error">Nem sikerült értesíteni a HA-t a kiválasztott opcióról.</string>
+  <string name="wait">Várakozás</string>
+  <string name="refresh">Frissítés</string>
+  <string name="pref_connection_ssids_empty">WiFi SSID-k konfigurálása</string>
+  <string name="lockscreen_title">Alkalmazás zárolva!</string>
+  <string name="lockscreen_message">Koppints a feloldáshoz:</string>
+  <string name="biometric_title">Home Assistant feloldása szükséges</string>
+  <string name="biometric_message">Feloldás biometrikus vagy képernyőzár hitelesítéssel</string>
+  <string name="set_lock_title">Alkalmazás zárolási hiba</string>
+  <string name="set_lock_message">Nincs beállítva biometrikus vagy képernyőzár hitelesítés</string>
+  <string name="lock_title">Alkalmazás zárolása</string>
+  <string name="lock_summary">Használj biometrikus vagy képernyőzár hitelesítést az alkalmazás zárolásának feloldásához</string>
+  <string name="manage_ssids">SSID-k kezelése</string>
+  <string name="manage_ssids_input">Új WiFi SSID</string>
+  <string name="manage_ssids_input_exists">Ez az SSID már létezik.</string>
+  <string name="save">Mentés</string>
+  <string name="cancel">Mégse</string>
 </resources>
