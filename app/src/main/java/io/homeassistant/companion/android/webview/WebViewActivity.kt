@@ -4,8 +4,11 @@ import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ShortcutInfo
+import android.content.pm.ShortcutManager
 import android.content.res.Configuration
 import android.graphics.Rect
+import android.graphics.drawable.Icon
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
@@ -216,7 +219,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
                 override fun onShowCustomView(view: View, callback: CustomViewCallback) {
                     myCustomView = view
-                    decor.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT))
+                    decor.addView(
+                        view,
+                        FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.WRAP_CONTENT,
+                            FrameLayout.LayoutParams.WRAP_CONTENT
+                        )
+                    )
                     hideSystemUI()
                     isVideoFullScreen = true
                 }
@@ -259,6 +268,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     .getString("event") == "connected"
                                 if (isConnected) {
                                     alertDialog?.cancel()
+                                    setupPanelShortcuts()
                                 }
                             }
                             "config/get" -> {
@@ -306,38 +316,43 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun hideSystemUI() {
-        decor.viewTreeObserver.addOnGlobalLayoutListener {
-            val r = Rect()
-            decor.getWindowVisibleDisplayFrame(r)
-            val height = r.bottom - decor.top
-
-            if ((decor.height - height) > (decor.height / 5))
-                decor.getChildAt(0).layoutParams.height = decor.height - (decor.height - height)
-            else
-                decor.getChildAt(0).layoutParams.height = decor.height
-
-            decor.requestLayout()
-        }
 
         if (isCutout())
             decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
-        else
+        else {
+            decor.viewTreeObserver.addOnGlobalLayoutListener {
+                val r = Rect()
+                decor.getWindowVisibleDisplayFrame(r)
+                val height = r.bottom - decor.top
+
+                if ((decor.height - height) > (decor.height / 5))
+                    decor.getChildAt(0).layoutParams.height = decor.height - (decor.height - height)
+                else
+                    decor.getChildAt(0).layoutParams.height = decor.height
+
+                decor.requestLayout()
+            }
             decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+        }
     }
 
     private fun showSystemUI() {
         decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
     }
 
-    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration
+    ) {
         if (isInPictureInPictureMode) {
-            (decor.getChildAt(3) as FrameLayout).layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
+            (decor.getChildAt(3) as FrameLayout).layoutParams.height =
+                FrameLayout.LayoutParams.MATCH_PARENT
             decor.requestLayout()
         } else {
             if (decor.getChildAt(3) != null) {
@@ -354,7 +369,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         if (isVideoFullScreen) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 var mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
-                mPictureInPictureParamsBuilder.setAspectRatio(Rational(bounds.width(), bounds.height()))
+                mPictureInPictureParamsBuilder.setAspectRatio(
+                    Rational(
+                        bounds.width(),
+                        bounds.height()
+                    )
+                )
                 mPictureInPictureParamsBuilder.setSourceRectHint(bounds)
                 enterPictureInPictureMode(mPictureInPictureParamsBuilder.build())
             }
@@ -495,5 +515,31 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 showError()
             }
         }, 5000)
+    }
+
+    private fun setupPanelShortcuts() {
+        if (Build.VERSION.SDK_INT >= 25) {
+            val panels = presenter.getPanels()
+
+            val shortcutManager = getSystemService(ShortcutManager::class.java)
+            shortcutManager!!.dynamicShortcuts = panels
+                .filter { panel -> !panel.title.isNullOrEmpty() && panel.component_name.contains("lovelace") }
+                .take(5)
+                .map { panel ->
+                    ShortcutInfo.Builder(
+                        this,
+                        panel.component_name
+                    )
+                        .setShortLabel(panel.title!!)
+                        .setLongLabel(panel.title!!)
+                        .setIcon(Icon.createWithResource(this, R.drawable.app_icon))
+                        .setIntent(
+                            newInstance(this, panel.url_path).apply {
+                                this.action = Intent.ACTION_VIEW
+                            }
+                        )
+                        .build()
+                }
+        }
     }
 }

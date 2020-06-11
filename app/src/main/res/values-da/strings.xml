@@ -71,6 +71,20 @@ vil forbinde til:</string>
   <string name="widget_config_service_error">En brugerdefineret komponent forhindrer tjenestedata i at indlæses.</string>
   <string name="error_ssl">Kan ikke kommunikere med Home Assistant på grund af en SSL-fejl. Sørg for, at dit certifikat er gyldigt.</string>
   <string name="event_error">Kunne ikke underrette HA om valgt valgmulighed.</string>
-  <string name="wait">Wait</string>
-  <string name="refresh">Refresh</string>
+  <string name="wait">Vent</string>
+  <string name="refresh">Opdater</string>
+  <string name="pref_connection_ssids_empty">Konfigurer dine WiFi SSID(er)</string>
+  <string name="lockscreen_title">App låst!</string>
+  <string name="lockscreen_message">Tryk for at låse op:</string>
+  <string name="biometric_title">Home Assistant skal låses op</string>
+  <string name="biometric_message">Lås op ved hjælp af biometrisk eller skærmlås-legitimation</string>
+  <string name="set_lock_title">App-låsefejl</string>
+  <string name="set_lock_message">Der er ingen biometrisk sensor eller skærmlås-legitimation tilgængelig</string>
+  <string name="lock_title">Lås app</string>
+  <string name="lock_summary">Brug biometrisk eller skærmlås-legitimation til at låse appen op</string>
+  <string name="manage_ssids">Administrer SSID(er)</string>
+  <string name="manage_ssids_input">Nyt WiFi-SSID</string>
+  <string name="manage_ssids_input_exists">Dette SSID findes allerede.</string>
+  <string name="save">Gem</string>
+  <string name="cancel">Annuller</string>
 </resources>

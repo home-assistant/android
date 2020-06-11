@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationRe
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
+import io.homeassistant.companion.android.domain.integration.Panel
 import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.Service
@@ -264,6 +265,11 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
+    // TODO: Use websocket to get panels.
+    override suspend fun getPanels(): Array<Panel> {
+        return arrayOf()
+    }
+
     override suspend fun getServices(): Array<Service> {
         val response = integrationService.getServices(authenticationRepository.buildBearerToken())
 
@@ -386,7 +392,6 @@ class IntegrationRepositoryImpl @Inject constructor(
                 updateLocation.locationName,
                 updateLocation.gps,
                 updateLocation.gpsAccuracy,
-                updateLocation.battery,
                 updateLocation.speed,
                 updateLocation.altitude,
                 updateLocation.course,

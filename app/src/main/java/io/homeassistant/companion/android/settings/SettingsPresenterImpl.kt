@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.domain.integration.Panel
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -121,6 +122,18 @@ class SettingsPresenterImpl @Inject constructor(
             urlUseCase.saveUrl("", true)
         } else {
             settingsView.enableInternalConnection()
+        }
+    }
+
+    override fun getPanels(): Array<Panel> {
+        return runBlocking {
+            var panels = arrayOf<Panel>()
+            try {
+                panels = integrationUseCase.getPanels()
+            } catch (e: Exception) {
+                Log.e(SettingsPresenterImpl.TAG, "Issue getting panels.", e)
+            }
+            panels
         }
     }
 }

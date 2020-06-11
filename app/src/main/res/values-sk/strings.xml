@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="app_name">Home Assistant</string>
+  <string name="scanning_network">Skenovanie siete
+pre Home Assistant</string>
+  <string name="home_assistant_not_discover">Nepodarilo sa nájsť váš
+Home Assistant</string>
+  <string name="connect_to_home_internet">Skontrolujte, či je telefón pripojený 
+na váš domáci Internet.</string>
+  <string name="scan_again">skenovať znova</string>
+  <string name="manual_setup">zadajte adresu manuálne</string>
+  <string name="input_url">Home Assistant adresa URL</string>
+  <string name="input_url_hint">https://example.duckdns.org:8123</string>
+  <string name="status_of_mobile_app_integration">Stav integrácie mobilnej aplikácie:</string>
+  <string name="checking_with_home_assistant">Overovanie cez Home Assistant</string>
+  <string name="skip">Preskočiť</string>
+  <string name="retry">Skúsiť znova</string>
+  <string name="attempting_registration">Registrácia aplikácie...</string>
+  <string name="unable_to_register">Nepodarilo sa registrovať aplikáciu</string>
+  <string name="error_with_registration">Skontrolujte, či máte zapnutú mobile_app 
+integráciu v Home Assistant.</string>
+  <string name="url_parse_error">Nepodarilo sa rozpoznať adresu URL Home Assistant. Mala by vyzerať ako https://example.com</string>
+  <string name="pref_location_zone_title">Sledovanie na základe zóny</string>
+  <string name="pref_location_zone_summary">Importujte existujúce Home Assistant zóny ako geofence pre účely sledovanie na základe zóny.</string>
+  <string name="pref_location_background_title">Sledovanie polohy na pozadí</string>
+  <string name="pref_location_background_summary">Pravidelne aktualizujte svoju polohu na pozadí.</string>
+  <string name="application_version">Verzia aplikácie</string>
+  <string name="location">Poloha</string>
+  <string name="app_version_info">Informácie o verzii aplikácie</string>
+  <string name="device_registration">Registrácia zariadenia</string>
+  <string name="device_name">Názov zariadenia</string>
+  <string name="error_onboarding_connection_failed">Nedá sa pripojiť k Home Assistant.</string>
+  <string name="error_connection_failed">Nedá sa pripojiť k Home Assistant.</string>
+  <string name="webview_error">Pri načítaní Home Assistant sa vyskytla chyba. Skontrolujte nastavenia pripojenia a skúste to znova.</string>
+  <string name="pref_connection_title">Informácie o pripojení</string>
+  <string name="pref_connection_url">Home Assistant adresa URL</string>
+  <string name="pref_connection_wifi">Domáca sieť WiFi SSID</string>
+  <string name="pref_connection_internal">Adresa URL interného pripojenia</string>
+  <string name="url_invalid">Adresa URL je neplatná</string>
+  <string name="error_auth_revoked">Zdá sa, že vaša autorizácia bola zrušená. Znovu sa pripojte k Home Assistant.</string>
+  <string name="select_instance">Vyberte inštanciu, ku ktorej
+sa chcete pripojiť:</string>
+  <string name="failed_scan">Skenovanie Home Assistant zlyhalo.</string>
+  <string name="widget_image_description">Home Assistant miniaplikácia</string>
+  <string name="configure_service_call">Konfigurovať volanie služby</string>
+  <string name="configure_widget_label">Štítok miniaplikácie</string>
+  <string name="add_widget">Pridať miniaplikáciu</string>
+  <string name="widget_text_hint_service_domain">Doména</string>
+  <string name="widget_text_hint_service_service">Služba</string>
+  <string name="widget_text_hint_service_data">Entity ID</string>
+  <string name="widget_text_hint_label">Štítok</string>
+  <string name="widget_label_placeholder_text">Štítok</string>
+  <string name="widget_spinner_icon">Ikona:</string>
+  <string name="connected_to_home_assistant">Pripojené k Home Assistant</string>
+  <string name="permission_explanation">Aby bolo možné používať funkcie sledovania polohy alebo rôzne adresy URL pripojenia založené na Wi-Fi SSID, potrebujeme prístup k vašej polohe. Ak chcete pravidelné aktualizácie na pozadí, budete tiež musieť povoliť spracovanie na pozadí</string>
+  <string name="grant_permission">Udeliť povolenie</string>
+  <string name="finish">Dokončiť</string>
+  <string name="other_settings">Ďalšie nastavenia</string>
+  <string name="fullscreen">Celá obrazovka</string>
+  <string name="fullscreen_def">Zobraziť aplikáciu na celú obrazovku</string>
+  <string name="label_service">Služba:</string>
+  <string name="label_entity_id">Entity ID</string>
+  <string name="label_label">Štítok:</string>
+  <string name="label_icon">Ikona:</string>
+  <string name="label_dynamic_data">Data:</string>
+  <string name="username">Užívateľské meno</string>
+  <string name="password">Heslo</string>
+  <string name="auth_request">Vyžaduje sa overenie:</string>
+  <string name="auth_cancel">Overenie bolo zrušené</string>
+  <string name="add_service_data_field">Pridať pole</string>
+  <string name="widget_config_service_error">Custom component zabraňuje načítaniu údajov služby.</string>
+  <string name="error_ssl">Nemožno komunikovať s Home Assistant kvôli SSL chybe. Skontrolujte, či je váš certifikát platný.</string>
+  <string name="event_error">Nepodarilo sa upozorniť HA na vybratú možnosť.</string>
+  <string name="wait">Čakať</string>
+  <string name="refresh">Obnoviť</string>
+  <string name="pref_connection_ssids_empty">Konfigurujte svoje WiFi SSID</string>
+  <string name="lockscreen_title">Aplikácia je zamknutá!</string>
+  <string name="lockscreen_message">Klepnutím odomknete :</string>
+  <string name="biometric_title">Home Assistant musí byť odomknutý</string>
+  <string name="biometric_message">Odomknite pomocou biometrického údaju alebo zámku obrazovky</string>
+  <string name="set_lock_title">Chyba uzamknutia aplikácie</string>
+  <string name="set_lock_message">Nie je k dispozícii žiadny biometrický senzor alebo uzamknutie obrazovky</string>
+  <string name="lock_title">Uzamknúť aplikáciu</string>
+  <string name="lock_summary">Na odomknutie aplikácie použite biometrický údaj alebo zámok obrazovky</string>
+  <string name="manage_ssids">Spravovať identifikátory SSID</string>
+  <string name="manage_ssids_input">Nové WiFi SSID</string>
+  <string name="manage_ssids_input_exists">Tento identifikátor SSID už existuje.</string>
+  <string name="save">Uložiť</string>
+  <string name="cancel">Zrušiť</string>
+</resources>

@@ -48,7 +48,7 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
             .inject(this)
 
         homeAssistantSearcher = HomeAssistantSearcher(
-            getSystemService(context!!, NsdManager::class.java)!!,
+            getSystemService(requireContext(), NsdManager::class.java)!!,
             this
         )
     }
@@ -59,7 +59,7 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
         savedInstanceState: Bundle?
     ): View? {
 
-        listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(context!!, R.layout.instance_item, instances) {
+        listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(requireContext(), R.layout.instance_item, instances) {
             @SuppressLint("InflateParams")
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val v = convertView ?: LayoutInflater.from(context).inflate(

@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.SensorUpdater
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.util.PermissionManager
 
 class AllSensorsUpdaterImpl(
     private val integrationUseCase: IntegrationUseCase,
@@ -19,15 +20,20 @@ class AllSensorsUpdaterImpl(
             NetworkSensorManager()
         )
 
-        if (integrationUseCase.isBackgroundTrackingEnabled()) {
+        if (integrationUseCase.isBackgroundTrackingEnabled() && PermissionManager.checkLocationPermission(appContext)) {
             sensorManagers.add(GeocodeSensorManager())
         }
 
         registerSensors(sensorManagers)
 
-        val success = integrationUseCase.updateSensors(
-            sensorManagers.flatMap { it.getSensors(appContext) }.toTypedArray()
-        )
+        var success = false
+        try {
+            success = integrationUseCase.updateSensors(
+                sensorManagers.flatMap { it.getSensors(appContext) }.toTypedArray()
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception while updating sensors.", e)
+        }
 
         // We failed to update a sensor, we should register all the sensors again.
         if (!success) {

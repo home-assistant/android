@@ -65,7 +65,21 @@
   <string name="add_service_data_field">Dodaj pole</string>
   <string name="widget_config_service_error">Niestandardowy komponent uniemożliwia załadowanie danych usługi.</string>
   <string name="error_ssl">Nie można nawiązać komunikacji z Home Assistant\'em z powodu błędu SSL. Upewnij się, że twój certyfikat jest ważny.</string>
-  <string name="event_error">Failed to notify HA of picked option.</string>
-  <string name="wait">Wait</string>
-  <string name="refresh">Refresh</string>
+  <string name="event_error">Nie udało się powiadomić Home Assistant\'a o wybranej opcji.</string>
+  <string name="wait">Czekaj</string>
+  <string name="refresh">Odśwież</string>
+  <string name="pref_connection_ssids_empty">Konfiguracja SSID sieci Wi-Fi</string>
+  <string name="lockscreen_title">Aplikacja zablokowana!</string>
+  <string name="lockscreen_message">Stuknij, aby odblokować:</string>
+  <string name="biometric_title">Home Assistant musi być odblokowany</string>
+  <string name="biometric_message">Odblokuj przy użyciu danych biometrycznych lub blokady ekranu</string>
+  <string name="set_lock_title">Błąd blokowania aplikacji</string>
+  <string name="set_lock_message">Brak danych biometrycznych lub poświadczenia blokady ekranu</string>
+  <string name="lock_title">Zablokuj aplikację</string>
+  <string name="lock_summary">Użyj danych biometrycznych lub blokady ekranu, aby odblokować aplikację</string>
+  <string name="manage_ssids">Zarządzanie SSID sieci Wi-Fi</string>
+  <string name="manage_ssids_input">Nowy SSID sieci Wi-Fi</string>
+  <string name="manage_ssids_input_exists">Ten SSID już istnieje.</string>
+  <string name="save">Zapisz</string>
+  <string name="cancel">Anuluj</string>
 </resources>

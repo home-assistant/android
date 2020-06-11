@@ -74,7 +74,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 }
             }
 
-            val hasLocationPermission = PermissionManager.hasLocationPermissions(context)
+            val hasLocationPermission = PermissionManager.checkLocationPermission(context)
 
             zoneTracking = findViewById<SwitchCompat>(R.id.location_zone).apply {
                 setOnCheckedChangeListener { _, isChecked ->
@@ -117,7 +117,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun onDestroy() {
-        PermissionManager.restartLocationTracking(context!!)
+        PermissionManager.restartLocationTracking(requireContext())
         presenter.onFinish()
         super.onDestroy()
     }
@@ -129,7 +129,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (PermissionManager.validateLocationPermissions(requestCode, permissions, grantResults)) {
+        if (PermissionManager.validateLocationPermissions(requestCode, grantResults)) {
             zoneTracking.isEnabled = true
             zoneTrackingSummary.isEnabled = true
             zoneTracking.isChecked = true

@@ -31,7 +31,7 @@ class PermissionManager {
         /**
          * Check if the required location permissions are granted
          */
-        fun hasLocationPermissions(context: Context): Boolean {
+        fun checkLocationPermission(context: Context): Boolean {
             for (permission in getLocationPermissionArray()) {
                 if (!hasPermission(context, permission)) {
                     return false
@@ -54,7 +54,6 @@ class PermissionManager {
 
         fun validateLocationPermissions(
             requestCode: Int,
-            permissions: Array<out String>,
             grantResults: IntArray
         ): Boolean {
             return requestCode == LOCATION_REQUEST_CODE && arePermissionsGranted(grantResults)
