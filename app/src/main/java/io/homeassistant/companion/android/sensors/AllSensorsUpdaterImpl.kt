@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.SensorUpdater
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.util.PermissionManager
 
 class AllSensorsUpdaterImpl(
     private val integrationUseCase: IntegrationUseCase,
@@ -19,7 +20,7 @@ class AllSensorsUpdaterImpl(
             NetworkSensorManager()
         )
 
-        if (integrationUseCase.isBackgroundTrackingEnabled()) {
+        if (integrationUseCase.isBackgroundTrackingEnabled() && PermissionManager.checkLocationPermission(appContext)) {
             sensorManagers.add(GeocodeSensorManager())
         }
 
