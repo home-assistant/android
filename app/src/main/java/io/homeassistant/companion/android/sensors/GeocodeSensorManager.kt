@@ -40,7 +40,7 @@ class GeocodeSensorManager : SensorManager {
     }
 
     private fun getGeocodedLocation(context: Context): Sensor<Any>? {
-        if(!PermissionManager.checkLocationPermission(context)){
+        if (!PermissionManager.checkLocationPermission(context)) {
             Log.w(TAG, "Tried getting gecoded location without permission.")
             return null
         }
