@@ -6,14 +6,13 @@ object Config {
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
         const val google = "com.google.gms:google-services:4.3.3"
         const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:1.4.0"
-        const val fabric = "io.fabric.tools:gradle:1.31.2"
         const val ktlint = "org.jlleitschuh.gradle:ktlint-gradle:9.2.1"
         const val playPublisher = "com.github.triplet.gradle:play-publisher:2.7.5"
         const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.0.0"
+        const val crashlytics = "com.google.firebase:firebase-crashlytics-gradle:2.1.1"
     }
 
     object Repository {
-        const val fabric = "https://maven.fabric.io/public"
         const val gradle = "https://plugins.gradle.org/m2/"
         const val lokalize = "https://maven.lokalise.co"
     }
@@ -62,6 +61,7 @@ object Config {
             const val core = "com.google.firebase:firebase-core:17.3.0"
             const val iid = "com.google.firebase:firebase-iid:20.1.5"
             const val messaging = "com.google.firebase:firebase-messaging:20.1.5"
+            const val crashlytics = "com.google.firebase:firebase-crashlytics:17.0.1"
         }
 
         object Square {
@@ -88,7 +88,6 @@ object Config {
         }
 
         object Misc {
-            const val crashlytics = "com.crashlytics.sdk.android:crashlytics:2.10.1"
             const val lokalize = "com.lokalise.android:sdk:2.0.0-beta-5"
             const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1"
             const val threeTenBp = "org.threeten:threetenbp:1.4.0"
