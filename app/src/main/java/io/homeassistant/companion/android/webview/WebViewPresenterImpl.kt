@@ -116,6 +116,18 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isLockEnabled(): Boolean {
+        return runBlocking {
+            authenticationUseCase.isLockEnabled()
+        }
+    }
+
+    override fun sessionTimeOut(): Int {
+        return runBlocking {
+            integrationUseCase.getSessionTimeOut()
+        }
+    }
+
     override fun onFinish() {
         mainScope.cancel()
     }

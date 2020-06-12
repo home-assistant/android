@@ -8,7 +8,6 @@ buildscript {
     repositories {
         google()
         jcenter()
-        maven(url = Config.Repository.fabric)
         maven(url = Config.Repository.gradle)
     }
     dependencies {
@@ -16,8 +15,8 @@ buildscript {
         classpath(Config.Plugin.kotlin)
         classpath(Config.Plugin.google)
         classpath(Config.Plugin.appDistribution)
-        classpath(Config.Plugin.fabric)
         classpath(Config.Plugin.ktlint)
+        classpath(Config.Plugin.crashlytics)
     }
 }
 
@@ -27,6 +26,8 @@ allprojects {
         jcenter()
         maven(url = Config.Repository.lokalize)
     }
+
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     tasks.withType<KotlinCompile>().configureEach {
         println("Configuring $name in project ${project.name}...")

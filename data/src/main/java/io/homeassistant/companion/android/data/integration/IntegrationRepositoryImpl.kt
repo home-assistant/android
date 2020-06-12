@@ -50,6 +50,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_ZONE_ENABLED = "zone_enabled"
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
+        private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
     }
 
@@ -242,6 +243,19 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isFullScreenEnabled(): Boolean {
         return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
+    }
+
+    override suspend fun sessionTimeOut(value: Int) {
+        localStorage.putLong(PREF_SESSION_TIMEOUT, value.toLong())
+    }
+
+    override suspend fun getSessionTimeOut(): Int {
+        val timeOut: Int
+        if (localStorage.getLong(PREF_SESSION_TIMEOUT) != null)
+            timeOut = localStorage.getLong(PREF_SESSION_TIMEOUT)?.toInt()!!
+        else
+            timeOut = 0
+        return timeOut
     }
 
     override suspend fun getThemeColor(): String {

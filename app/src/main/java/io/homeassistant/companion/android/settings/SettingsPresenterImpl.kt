@@ -102,6 +102,24 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
+    override fun getInt(key: String, defValue: Int): Int {
+        return runBlocking {
+            when (key) {
+                "session_timeout" -> integrationUseCase.getSessionTimeOut()
+                else -> throw IllegalArgumentException("No int found by this key: $key")
+            }
+        }
+    }
+
+    override fun putInt(key: String, value: Int) {
+        mainScope.launch {
+            when (key) {
+                "session_timeout" -> integrationUseCase.sessionTimeOut(value)
+                else -> throw IllegalArgumentException("No int found by this key: $key")
+            }
+        }
+    }
+
     override fun getPreferenceDataStore(): PreferenceDataStore {
         return this
     }

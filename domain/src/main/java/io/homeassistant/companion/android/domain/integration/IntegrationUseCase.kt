@@ -34,6 +34,9 @@ interface IntegrationUseCase {
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 
+    suspend fun sessionTimeOut(value: Int)
+    suspend fun getSessionTimeOut(): Int
+
     suspend fun getServices(): Array<Service>
 
     suspend fun getEntities(): Array<Entity<Any>>

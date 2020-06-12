@@ -21,6 +21,9 @@ interface IntegrationRepository {
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 
+    suspend fun sessionTimeOut(value: Int)
+    suspend fun getSessionTimeOut(): Int
+
     suspend fun getThemeColor(): String
 
     suspend fun getPanels(): Array<Panel>

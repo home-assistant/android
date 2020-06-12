@@ -76,6 +76,14 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.isFullScreenEnabled()
     }
 
+    override suspend fun sessionTimeOut(value: Int) {
+        return integrationRepository.sessionTimeOut(value)
+    }
+
+    override suspend fun getSessionTimeOut(): Int {
+        return integrationRepository.getSessionTimeOut()
+    }
+
     override suspend fun getServices(): Array<Service> {
         return integrationRepository.getServices()
     }

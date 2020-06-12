@@ -32,8 +32,11 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
+import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -45,6 +48,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.activity_webview.*
 import org.json.JSONObject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -75,6 +79,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
+    private var unlocked = false
+    private var mSessionExpireMillis: Long = 0
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,6 +101,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
         }
+
+        blurView.setupWith(root)
+            .setBlurAlgorithm(RenderScriptBlur(this))
+            .setBlurRadius(5f)
+            .setHasFixedTransformationMatrix(false)
+
+        if (!presenter.isLockEnabled())
+            blurView.setBlurEnabled(false)
 
         decor = window.decorView as FrameLayout
 
@@ -305,6 +319,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
+            if (mSessionExpireMillis > 0 && System.currentTimeMillis() > mSessionExpireMillis) {
+                unlocked = false
+            }
+            if (presenter.isLockEnabled())
+                if (!unlocked) {
+                    blurView.setBlurEnabled(true)
+                    promptForUnlock()
+                }
             presenter.onViewReady(intent.getStringExtra(EXTRA_PATH))
             intent.removeExtra(EXTRA_PATH)
             if (presenter.isFullScreen())
@@ -315,7 +337,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun hideSystemUI() {
-
         if (isCutout())
             decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
@@ -363,6 +384,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
+        mSessionExpireMillis = System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)
         videoHeight = decor.height
         var bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen) {
@@ -528,5 +550,34 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         .build()
                 }
         }
+    }
+
+    private fun promptForUnlock() {
+        val executor = ContextCompat.getMainExecutor(this)
+        val biometricPrompt = BiometricPrompt(this, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    Log.d(TAG, "onAuthenticationError -> $errorCode :: $errString")
+                    if (errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
+                        finishAffinity()
+                    }
+                }
+                override fun onAuthenticationSucceeded(
+                    result: BiometricPrompt.AuthenticationResult
+                ) {
+                    super.onAuthenticationSucceeded(result)
+                    unlocked = true
+                    mSessionExpireMillis = System.currentTimeMillis() + 10000
+                    blurView.setBlurEnabled(false)
+                }
+            })
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(this.resources.getString(R.string.biometric_title))
+            .setSubtitle(this.resources.getString(R.string.biometric_message))
+            .setDeviceCredentialAllowed(true)
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
     }
 }

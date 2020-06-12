@@ -32,10 +32,7 @@ class LaunchPresenterImpl @Inject constructor(
             val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
             if (sessionValid && integrationUseCase.isRegistered()) {
                 resyncRegistration()
-                if (authenticationUseCase.isLockEnabled())
-                    view.displayLockView()
-                else
-                    view.displayWebview()
+                view.displayWebview()
             } else {
                 view.displayOnBoarding(sessionValid)
             }
