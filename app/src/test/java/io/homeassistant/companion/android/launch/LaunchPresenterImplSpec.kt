@@ -89,24 +89,6 @@ object LaunchPresenterImplSpec : Spek({
             }
         }
 
-        describe("connected state") {
-            beforeEachTest {
-                coEvery { authenticationUseCase.getSessionState() } returns SessionState.CONNECTED
-                coEvery { integrationUseCase.isRegistered() } returns true
-                coEvery { authenticationUseCase.isLockEnabled() } returns true
-            }
-
-            describe("on view ready") {
-                beforeEachTest {
-                    presenter.onViewReady()
-                }
-
-                it("should display the lockview") {
-                    verify { view.displayLockView() }
-                }
-            }
-        }
-
         describe("connected state but not integrated") {
             beforeEachTest {
                 coEvery { authenticationUseCase.getSessionState() } returns SessionState.CONNECTED
