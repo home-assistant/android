@@ -72,7 +72,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun setupLocationTracking(context: Context) {
-        if (!PermissionManager.hasLocationPermissions(context)) {
+        if (!PermissionManager.checkLocationPermission(context)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
         }
@@ -104,6 +104,10 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun requestLocationUpdates(context: Context) {
+        if (!PermissionManager.checkLocationPermission(context)) {
+            Log.w(TAG, "Not registering for location updates because of permissions.")
+            return
+        }
         Log.d(TAG, "Registering for location updates.")
 
         val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
@@ -116,6 +120,11 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private suspend fun requestZoneUpdates(context: Context) {
+        if (!PermissionManager.checkLocationPermission(context)) {
+            Log.w(TAG, "Not registering for zone based updates because of permissions.")
+            return
+        }
+
         Log.d(TAG, "Registering for zone based location updates")
 
         try {
@@ -151,7 +160,10 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         }
 
         if (geofencingEvent.triggeringLocation.accuracy > MINIMUM_ACCURACY) {
-            Log.w(TAG, "Geofence location accuracy didn't meet requirements, requesting new location.")
+            Log.w(
+                TAG,
+                "Geofence location accuracy didn't meet requirements, requesting new location."
+            )
             requestSingleAccurateLocation(context)
         } else {
             sendLocationUpdate(geofencingEvent.triggeringLocation)
@@ -222,6 +234,10 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun requestSingleAccurateLocation(context: Context) {
+        if (!PermissionManager.checkLocationPermission(context)) {
+            Log.w(TAG, "Not getting single accurate location because of permissions.")
+            return
+        }
         val maxRetries = 5
         val request = createLocationRequest()
         request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
@@ -233,16 +249,26 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
                     var numberCalls = 0
                     override fun onLocationResult(locationResult: LocationResult?) {
                         numberCalls++
-                        Log.d(TAG, "Got single accurate location update: ${locationResult?.lastLocation}")
+                        Log.d(
+                            TAG,
+                            "Got single accurate location update: ${locationResult?.lastLocation}"
+                        )
                         if (locationResult != null && locationResult.lastLocation.accuracy <= 1) {
                             Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                             runBlocking { sendLocationUpdate(locationResult.lastLocation) }
-                            LocationServices.getFusedLocationProviderClient(context).removeLocationUpdates(this)
+                            LocationServices.getFusedLocationProviderClient(context)
+                                .removeLocationUpdates(this)
                         } else if (numberCalls >= maxRetries) {
-                            Log.d(TAG, "No location was accurate enough, sending our last location anyway")
+                            Log.d(
+                                TAG,
+                                "No location was accurate enough, sending our last location anyway"
+                            )
                             runBlocking { sendLocationUpdate(locationResult!!.lastLocation) }
                         } else {
-                            Log.w(TAG, "Location not accurate enough on retry $numberCalls of $maxRetries")
+                            Log.w(
+                                TAG,
+                                "Location not accurate enough on retry $numberCalls of $maxRetries"
+                            )
                         }
                     }
                 },
