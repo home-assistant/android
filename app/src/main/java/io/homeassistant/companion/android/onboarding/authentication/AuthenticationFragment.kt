@@ -108,11 +108,11 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
             // Fragment is at least paused, can't display alert
             return
         }
-        AlertDialog.Builder(context!!)
+        AlertDialog.Builder(requireContext())
             .setTitle(R.string.error_connection_failed)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok) { _, _ -> }
             .show()
-        fragmentManager?.popBackStack()
+        parentFragmentManager.popBackStack()
     }
 }

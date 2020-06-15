@@ -64,9 +64,23 @@
   <string name="auth_request">Требуется аутентификация:</string>
   <string name="auth_cancel">Аутентификация отменена</string>
   <string name="add_service_data_field">Добавить поле</string>
-  <string name="widget_config_service_error">Кастомный компонент предотвращает загрузку данных службы.</string>
+  <string name="widget_config_service_error">Пользовательский компонент предотвращает загрузку данных службы.</string>
   <string name="error_ssl">Не удалось подключиться к Home Assistant из-за ошибки SSL. Пожалуйста, убедитесь, что Ваш сертификат действителен.</string>
-  <string name="event_error">Failed to notify HA of picked option.</string>
-  <string name="wait">Wait</string>
-  <string name="refresh">Refresh</string>
+  <string name="event_error">Не удалось отправить информацию о выбранной опции.</string>
+  <string name="wait">Ожидать</string>
+  <string name="refresh">Обновить</string>
+  <string name="pref_connection_ssids_empty">Настройка ваших SSID(ов) сети Wi-Fi</string>
+  <string name="lockscreen_title">Приложение заблокировано!</string>
+  <string name="lockscreen_message">Нажмите, чтобы разблокировать:</string>
+  <string name="biometric_title">Home Assistant нуждается в разблокировке</string>
+  <string name="biometric_message">Используйте биометрические данные или учетные данные для блокировки экрана, чтобы разблокировать приложение</string>
+  <string name="set_lock_title">Ошибка блокировки приложения</string>
+  <string name="set_lock_message">Нет доступных биометрических сенсоров или способов блокировки экрана.</string>
+  <string name="lock_title">Блокировка приложения</string>
+  <string name="lock_summary">Используйте биометрические данные или учетные данные для блокировки экрана, чтобы разблокировать приложение</string>
+  <string name="manage_ssids">Управление SSID(ами)</string>
+  <string name="manage_ssids_input">Новый SSID сети Wi-Fi</string>
+  <string name="manage_ssids_input_exists">Этот SSID уже существует.</string>
+  <string name="save">Сохранить</string>
+  <string name="cancel">Отменить</string>
 </resources>
