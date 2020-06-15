@@ -20,5 +20,8 @@ interface WebViewPresenter {
 
     fun sessionTimeOut(): Int
 
+    fun setSessionExpireMillis(value: Long)
+    fun getSessionExpireMillis(): Long
+
     fun onFinish()
 }

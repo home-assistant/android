@@ -84,6 +84,14 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.getSessionTimeOut()
     }
 
+    override suspend fun setSessionExpireMillis(value: Long) {
+        return integrationRepository.setSessionExpireMillis(value)
+    }
+
+    override suspend fun getSessionExpireMillis(): Long {
+        return integrationRepository.getSessionExpireMillis()
+    }
+
     override suspend fun getServices(): Array<Service> {
         return integrationRepository.getServices()
     }

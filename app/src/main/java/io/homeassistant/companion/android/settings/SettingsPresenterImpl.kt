@@ -154,4 +154,28 @@ class SettingsPresenterImpl @Inject constructor(
             panels
         }
     }
+
+    override fun isLockEnabled(): Boolean {
+        return runBlocking {
+            authenticationUseCase.isLockEnabled()
+        }
+    }
+
+    override fun sessionTimeOut(): Int {
+        return runBlocking {
+            integrationUseCase.getSessionTimeOut()
+        }
+    }
+
+    override fun setSessionExpireMillis(value: Long) {
+        mainScope.launch {
+            integrationUseCase.setSessionExpireMillis(value)
+        }
+    }
+
+    override fun getSessionExpireMillis(): Long {
+        return runBlocking {
+            integrationUseCase.getSessionExpireMillis()
+        }
+    }
 }

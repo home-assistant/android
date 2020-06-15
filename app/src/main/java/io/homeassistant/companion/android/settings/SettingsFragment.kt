@@ -5,12 +5,14 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
+import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.core.content.ContextCompat
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SeekBarPreference
 import androidx.preference.SwitchPreference
+import eightbitlab.com.blurview.BlurView
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -33,6 +35,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     @Inject
     lateinit var presenter: SettingsPresenter
+    private lateinit var blurView: BlurView
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerPresenterComponent
@@ -41,6 +44,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
+
+        blurView = requireActivity().findViewById(R.id.blurView)
+
+        blurView.setupWith(requireActivity().findViewById(R.id.content))
+            .setOverlayColor(resources.getColor(R.color.colorOnPrimary))
+
+        if (!presenter.isLockEnabled())
+            blurView.setBlurEnabled(false)
 
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
@@ -65,7 +76,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             else {
                 isValid = true
                 if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-                    promptForUnlock()
+                    promptForUnlock(true)
                 else {
                     isValid = false
                     AlertDialog.Builder(requireActivity())
@@ -165,7 +176,21 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
-    private fun promptForUnlock() {
+    override fun onResume() {
+        super.onResume()
+        if (presenter.isLockEnabled())
+            if (System.currentTimeMillis() > presenter.getSessionExpireMillis()) {
+                blurView.setBlurEnabled(true)
+                promptForUnlock(false)
+            } else blurView.setBlurEnabled(false)
+    }
+
+    override fun onPause() {
+        presenter.setSessionExpireMillis((System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)))
+        super.onPause()
+    }
+
+    private fun promptForUnlock(set: Boolean) {
         val executor = ContextCompat.getMainExecutor(requireActivity())
         val switchLock = findPreference<SwitchPreference>("app_lock")
         val biometricPrompt = BiometricPrompt(requireActivity(), executor,
@@ -175,12 +200,28 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                     errString: CharSequence
                 ) {
                     super.onAuthenticationError(errorCode, errString)
-                    switchLock?.isChecked = false
+
+                    if (!set && errorCode == BiometricPrompt.ERROR_USER_CANCELED)
+                        finishAffinity(requireActivity())
+                    else if (!set && errorCode == BiometricPrompt.ERROR_TIMEOUT)
+                        promptForUnlock(false)
+                    else
+                        switchLock?.isChecked = false
                 }
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    switchLock?.isChecked = false
+                    if (set)
+                        switchLock?.isChecked = false
+                }
+
+                override fun onAuthenticationSucceeded(
+                    result: BiometricPrompt.AuthenticationResult
+                ) {
+                    super.onAuthenticationSucceeded(result)
+                    if (!set) {
+                        blurView.setBlurEnabled(false)
+                    }
                 }
             })
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
@@ -189,6 +230,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             .setDeviceCredentialAllowed(true)
             .build()
 
+        presenter.setSessionExpireMillis((System.currentTimeMillis() + 60000))
         biometricPrompt.authenticate(promptInfo)
     }
 }

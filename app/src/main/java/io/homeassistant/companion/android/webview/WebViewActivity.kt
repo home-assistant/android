@@ -80,7 +80,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var isVideoFullScreen = false
     private var videoHeight = 0
     private var unlocked = false
-    private var mSessionExpireMillis: Long = 0
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -319,16 +318,15 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            if (mSessionExpireMillis > 0 && System.currentTimeMillis() > mSessionExpireMillis) {
-                unlocked = false
-            }
-            if (presenter.isLockEnabled())
-                if (!unlocked) {
+            if (presenter.isLockEnabled() && !unlocked)
+                if ((System.currentTimeMillis() > presenter.getSessionExpireMillis())) {
                     blurView.setBlurEnabled(true)
                     promptForUnlock()
-                }
+                } else blurView.setBlurEnabled(false)
+
             presenter.onViewReady(intent.getStringExtra(EXTRA_PATH))
             intent.removeExtra(EXTRA_PATH)
+
             if (presenter.isFullScreen())
                 hideSystemUI()
             else
@@ -384,7 +382,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        mSessionExpireMillis = System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)
+        presenter.setSessionExpireMillis((System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)))
+        unlocked = false
         videoHeight = decor.height
         var bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen) {
@@ -559,16 +558,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
                     Log.d(TAG, "onAuthenticationError -> $errorCode :: $errString")
-                    if (errorCode == BiometricPrompt.ERROR_USER_CANCELED) {
+                    if (errorCode == BiometricPrompt.ERROR_USER_CANCELED)
                         finishAffinity()
-                    }
                 }
                 override fun onAuthenticationSucceeded(
                     result: BiometricPrompt.AuthenticationResult
                 ) {
                     super.onAuthenticationSucceeded(result)
                     unlocked = true
-                    mSessionExpireMillis = System.currentTimeMillis() + 10000
                     blurView.setBlurEnabled(false)
                 }
             })

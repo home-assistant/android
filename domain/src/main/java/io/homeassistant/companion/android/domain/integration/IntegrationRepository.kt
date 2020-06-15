@@ -24,6 +24,9 @@ interface IntegrationRepository {
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
 
+    suspend fun setSessionExpireMillis(value: Long)
+    suspend fun getSessionExpireMillis(): Long
+
     suspend fun getThemeColor(): String
 
     suspend fun getPanels(): Array<Panel>

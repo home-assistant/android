@@ -128,6 +128,18 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun setSessionExpireMillis(value: Long) {
+        mainScope.launch {
+            integrationUseCase.setSessionExpireMillis(value)
+        }
+    }
+
+    override fun getSessionExpireMillis(): Long {
+        return runBlocking {
+            integrationUseCase.getSessionExpireMillis()
+        }
+    }
+
     override fun onFinish() {
         mainScope.cancel()
     }

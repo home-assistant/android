@@ -37,6 +37,9 @@ interface IntegrationUseCase {
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
 
+    suspend fun setSessionExpireMillis(value: Long)
+    suspend fun getSessionExpireMillis(): Long
+
     suspend fun getServices(): Array<Service>
 
     suspend fun getEntities(): Array<Entity<Any>>

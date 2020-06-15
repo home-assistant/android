@@ -39,6 +39,12 @@ class LaunchPresenterImpl @Inject constructor(
         }
     }
 
+    override fun setSessionExpireMillis(value: Long) {
+        mainScope.launch {
+            integrationUseCase.setSessionExpireMillis(value)
+        }
+    }
+
     override fun onFinish() {
         mainScope.cancel()
     }
