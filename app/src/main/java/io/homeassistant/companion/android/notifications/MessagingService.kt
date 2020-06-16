@@ -47,6 +47,7 @@ class MessagingService : FirebaseMessagingService() {
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
+        const val GROUP_PREFIX = "group_"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -113,7 +114,34 @@ class MessagingService : FirebaseMessagingService() {
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val messageId = tag.hashCode()
 
+        // Get group key from current notification
+        // to handle possible group deletion
+        var groupKey: String? = null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            groupKey =
+                notificationManager.activeNotifications.singleOrNull { s -> s.tag == tag && s.isGroup }?.groupKey
+        }
+
+        // Clear notification
         notificationManager.cancel(tag, messageId)
+
+        // Check if in group is no notification left.
+        // If so, also clear the group
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if (!groupKey.isNullOrBlank()) {
+                // Get notifications of the group
+                val groupNotifications =
+                    notificationManager.activeNotifications.filter { s -> s.groupKey == groupKey }
+
+                // Only one left. That means. Just the group itself is left.
+                // Then clear the group
+                if (groupNotifications.size == 1) {
+                    val group = groupNotifications[0].notification.group
+                    val groupId = group.hashCode()
+                    notificationManager.cancel(group, groupId)
+                }
+            }
+        }
     }
 
     private fun removeNotificationChannel(channelName: String) {
@@ -132,9 +160,10 @@ class MessagingService : FirebaseMessagingService() {
      *
      */
     private suspend fun sendNotification(data: Map<String, String>) {
+        var group = data["group"]
+        if (!group.isNullOrBlank()) group = GROUP_PREFIX + group
 
         val tag = data["tag"]
-        val group = data["group"]
         val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
         val groupId = group?.hashCode() ?: 0
 
@@ -153,7 +182,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleLargeIcon(notificationBuilder, data)
 
-        handleGroup(notificationBuilder, data)
+        handleGroup(notificationBuilder, group)
 
         handleTimeout(notificationBuilder, data)
 
@@ -338,9 +367,8 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun handleGroup(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        group: String?
     ) {
-        val group = data["group"]
         if (!group.isNullOrBlank()) {
             builder.setGroup(group)
         }
