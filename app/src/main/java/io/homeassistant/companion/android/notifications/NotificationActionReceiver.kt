@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -52,8 +53,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val tag = intent.getStringExtra(EXTRA_NOTIFICATION_TAG)
         val messageId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1)
         val onComplete: () -> Unit = {
-            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-                .cancel(tag, messageId)
+            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(
+                tag,
+                messageId,
+                true
+            )
         }
         val onFailure: () -> Unit = {
             Handler(context.mainLooper).post {
