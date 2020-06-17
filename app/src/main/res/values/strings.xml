@@ -67,6 +67,8 @@ like to connect to:</string>
   <string name="password">Password</string>
   <string name="auth_request">Authentication Requested:</string>
   <string name="auth_cancel">Authentication Cancelled</string>
+  <string name="auth_error">Authentication Error</string>
+  <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
   <string name="add_service_data_field">Add Field</string>
   <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
   <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>

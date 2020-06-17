@@ -24,6 +24,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_TOKEN_TYPE = "token_type"
 
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
+        private const val PREF_HTTP_AUTH_LIST = "http_authentication_list"
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
@@ -147,5 +148,19 @@ class AuthenticationRepositoryImpl @Inject constructor(
 
     override suspend fun isLockEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BIOMETRIC_ENABLED)
+    }
+
+    override suspend fun getHttpAuthList(): Set<String> {
+        val httpAuthList: Set<String>
+        if (localStorage.getStringSet(PREF_HTTP_AUTH_LIST) != null)
+            httpAuthList = localStorage.getStringSet(PREF_HTTP_AUTH_LIST)!!
+        else
+            httpAuthList = emptySet<String>()
+        return httpAuthList
+    }
+
+    override suspend fun setHttpAuthList(httpAuthList: Set<String>) {
+        localStorage.remove(PREF_HTTP_AUTH_LIST)
+        localStorage.putStringSet(PREF_HTTP_AUTH_LIST, httpAuthList)
     }
 }

@@ -13,6 +13,8 @@ import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.text.method.HideReturnsTransformationMethod
+import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
 import android.view.MenuInflater
@@ -27,8 +29,10 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -45,6 +49,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
+import kotlin.collections.HashSet
 import org.json.JSONObject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -75,6 +80,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
+    private var firstAuthTime: Long = 0
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -132,7 +138,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     host: String,
                     realm: String
                 ) {
-                    authenticationDialog(handler)
+                    var authError = false
+                    if (System.currentTimeMillis() <= (firstAuthTime + 500))
+                        authError = true
+                    authenticationDialog(handler, (host + realm), authError)
                 }
 
                 override fun onReceivedSslError(
@@ -459,22 +468,71 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     @SuppressLint("InflateParams")
-    override fun authenticationDialog(handler: HttpAuthHandler) {
+    fun authenticationDialog(handler: HttpAuthHandler, host: String, authError: Boolean) {
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
         val username = dialogLayout.findViewById<EditText>(R.id.username)
         val password = dialogLayout.findViewById<EditText>(R.id.password)
+        val remember = dialogLayout.findViewById<CheckBox>(R.id.checkBox)
+        val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
+        var httpAuthList: HashSet<String> = hashSetOf()
+        var autoAuth = false
 
-        AlertDialog.Builder(this)
-            .setTitle(R.string.auth_request)
-            .setView(dialogLayout)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                handler.proceed(username.text.toString(), password.text.toString())
+        viewPassword.setOnClickListener() {
+            if (password.transformationMethod == PasswordTransformationMethod.getInstance()) {
+                password.transformationMethod = HideReturnsTransformationMethod.getInstance()
+                viewPassword.setImageResource(R.drawable.ic_visibility_off)
+                password.setSelection(password.text.length)
+            } else {
+                password.transformationMethod = PasswordTransformationMethod.getInstance()
+                viewPassword.setImageResource(R.drawable.ic_visibility)
+                password.setSelection(password.text.length)
             }
-            .setNeutralButton(android.R.string.cancel) { _, _ ->
-                Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT).show()
-            }
-            .show()
+        }
+
+        if (presenter.getHttpAuthList() != emptySet<String>()) {
+            httpAuthList = (presenter.getHttpAuthList() as HashSet<String>)
+            if (!authError)
+                for (i in 0 until httpAuthList.count()) {
+                    val httpAuth = httpAuthList.elementAt(i).toString().split("|")
+                    if (httpAuth.elementAt(0).toString().contentEquals(host)) {
+                        handler.proceed(httpAuth.elementAt(1).toString(), httpAuth.elementAt(2).toString())
+                        autoAuth = true
+                        firstAuthTime = System.currentTimeMillis()
+                    }
+                }
+        }
+
+        if (!autoAuth || authError) {
+            AlertDialog.Builder(this)
+                .setView(dialogLayout)
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    if (username.text.toString() != "" && password.text.toString() != "") {
+                        val httpAuth = host + "|" + username.text.toString() + "|" + password.text.toString()
+                        if (remember.isChecked) {
+                            if (authError)
+                                for (i in 0 until (httpAuthList.count() - 1))
+                                    if (httpAuthList.elementAt(i).toString().contains(host))
+                                        httpAuthList.remove(httpAuthList.elementAt(i)).toString()
+                            httpAuthList.add(httpAuth)
+                            presenter.setHttpAuthList(httpAuthList)
+                        }
+                        handler.proceed(username.text.toString(), password.text.toString())
+                    } else {
+                        AlertDialog.Builder(this)
+                            .setTitle(R.string.auth_error)
+                            .setMessage(R.string.auth_error_message)
+                            .setPositiveButton(android.R.string.ok) { _, _ ->
+                                authenticationDialog(handler, host, authError)
+                            }
+                            .show()
+                    }
+                }
+                .setNeutralButton(android.R.string.cancel) { _, _ ->
+                    Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT).show()
+                }
+                .show()
+        }
     }
 
     override fun onRequestPermissionsResult(
