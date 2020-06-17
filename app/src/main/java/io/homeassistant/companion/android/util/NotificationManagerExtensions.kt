@@ -34,5 +34,4 @@ fun NotificationManager.cancel(tag: String?, id: Int, cancelGroup: Boolean) {
 
     // Clear notification
     this.cancel(tag, id)
-
 }
