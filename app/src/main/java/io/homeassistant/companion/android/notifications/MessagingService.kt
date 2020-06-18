@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URL
 import javax.inject.Inject
@@ -114,34 +115,8 @@ class MessagingService : FirebaseMessagingService() {
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val messageId = tag.hashCode()
 
-        // Get group key from current notification
-        // to handle possible group deletion
-        var groupKey: String? = null
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            groupKey =
-                notificationManager.activeNotifications.singleOrNull { s -> s.tag == tag && s.isGroup }?.groupKey
-        }
-
         // Clear notification
-        notificationManager.cancel(tag, messageId)
-
-        // Check if in group is no notification left.
-        // If so, also clear the group
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            if (!groupKey.isNullOrBlank()) {
-                // Get notifications of the group
-                val groupNotifications =
-                    notificationManager.activeNotifications.filter { s -> s.groupKey == groupKey }
-
-                // Only one left. That means. Just the group itself is left.
-                // Then clear the group
-                if (groupNotifications.size == 1) {
-                    val group = groupNotifications[0].notification.group
-                    val groupId = group.hashCode()
-                    notificationManager.cancel(group, groupId)
-                }
-            }
-        }
+        notificationManager.cancel(tag, messageId, true)
     }
 
     private fun removeNotificationChannel(channelName: String) {
@@ -231,7 +206,7 @@ class MessagingService : FirebaseMessagingService() {
         var groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setStyle(
-                NotificationCompat.InboxStyle().setSummaryText(group)
+                NotificationCompat.InboxStyle().setSummaryText(group?.substring(GROUP_PREFIX.length))
             )
             .setGroup(group)
             .setGroupSummary(true)
