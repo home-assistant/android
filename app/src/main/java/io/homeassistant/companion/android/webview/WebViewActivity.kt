@@ -17,6 +17,7 @@ import android.util.Log
 import android.util.Rational
 import android.view.MenuInflater
 import android.view.View
+import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
@@ -294,6 +295,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 }
             }, "externalApp")
         }
+
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        cookieManager.setAcceptThirdPartyCookies(webView, true)
 
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
             if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0)
