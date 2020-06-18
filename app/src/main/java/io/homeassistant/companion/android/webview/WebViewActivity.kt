@@ -298,7 +298,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
-        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
+        cookieManager.setAcceptThirdPartyCookies(webView, true)
 
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
             if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0)
