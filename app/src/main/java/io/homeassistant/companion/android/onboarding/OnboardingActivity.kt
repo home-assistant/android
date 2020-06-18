@@ -37,14 +37,18 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
         val sessionConnected = intent.extras?.getBoolean(SESSION_CONNECTED) ?: false
 
         if (sessionConnected) {
+            val mobileAppIntegrationFragment = MobileAppIntegrationFragment.newInstance()
+            mobileAppIntegrationFragment.retainInstance = true
             supportFragmentManager
                 .beginTransaction()
-                .add(R.id.content, MobileAppIntegrationFragment.newInstance())
+                .add(R.id.content, mobileAppIntegrationFragment)
                 .commit()
         } else {
+            val discoveryFragment = DiscoveryFragment.newInstance()
+            discoveryFragment.retainInstance = true
             supportFragmentManager
                 .beginTransaction()
-                .add(R.id.content, DiscoveryFragment.newInstance())
+                .add(R.id.content, discoveryFragment)
                 .commit()
         }
     }
@@ -58,33 +62,41 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
     }
 
     override fun onSelectManualSetup() {
+        val manualSetupFragment = ManualSetupFragment.newInstance()
+        manualSetupFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, ManualSetupFragment.newInstance())
+            .replace(R.id.content, manualSetupFragment)
             .addToBackStack(null)
             .commit()
     }
 
     override fun onHomeAssistantDiscover() {
+        val authenticationFragment = AuthenticationFragment.newInstance()
+        authenticationFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, AuthenticationFragment.newInstance())
+            .replace(R.id.content, authenticationFragment)
             .addToBackStack(null)
             .commit()
     }
 
     override fun onSelectUrl() {
+        val authenticationFragment = AuthenticationFragment.newInstance()
+        authenticationFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, AuthenticationFragment.newInstance())
+            .replace(R.id.content, authenticationFragment)
             .addToBackStack(null)
             .commit()
     }
 
     override fun onAuthenticationSuccess() {
+        val mobileAppIntegrationFragment = MobileAppIntegrationFragment.newInstance()
+        mobileAppIntegrationFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, MobileAppIntegrationFragment.newInstance())
+            .replace(R.id.content, mobileAppIntegrationFragment)
             .commit()
     }
 
