@@ -24,7 +24,6 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_TOKEN_TYPE = "token_type"
 
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
-        private const val PREF_HTTP_AUTH_LIST = "http_authentication_list"
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
