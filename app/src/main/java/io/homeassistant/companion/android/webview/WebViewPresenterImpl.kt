@@ -116,18 +116,6 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getHttpAuthList(): Set<String> {
-        return runBlocking {
-            authenticationUseCase.getHttpAuthList()
-        }
-    }
-
-    override fun setHttpAuthList(httpAuthList: Set<String>) {
-        mainScope.launch {
-            authenticationUseCase.setHttpAuthList(httpAuthList)
-        }
-    }
-
     override fun onFinish() {
         mainScope.cancel()
     }

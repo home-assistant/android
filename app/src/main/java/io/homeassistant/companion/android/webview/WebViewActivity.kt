@@ -44,12 +44,13 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.database.Authentication
+import io.homeassistant.companion.android.database.DataBaseHandler
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
-import kotlin.collections.HashSet
 import org.json.JSONObject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -475,7 +476,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         val password = dialogLayout.findViewById<EditText>(R.id.password)
         val remember = dialogLayout.findViewById<CheckBox>(R.id.checkBox)
         val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
-        var httpAuthList: HashSet<String> = hashSetOf()
+        val db = DataBaseHandler(this, null)
+        val httpAuth: Authentication = db.getAuth(host, this)
         var autoAuth = false
 
         viewPassword.setOnClickListener() {
@@ -490,32 +492,24 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }
         }
 
-        if (presenter.getHttpAuthList() != emptySet<String>()) {
-            httpAuthList = (presenter.getHttpAuthList() as HashSet<String>)
-            if (!authError)
-                for (i in 0 until httpAuthList.count()) {
-                    val httpAuth = httpAuthList.elementAt(i).toString().split("|")
-                    if (httpAuth.elementAt(0).toString().contentEquals(host)) {
-                        handler.proceed(httpAuth.elementAt(1).toString(), httpAuth.elementAt(2).toString())
-                        autoAuth = true
-                        firstAuthTime = System.currentTimeMillis()
-                    }
-                }
+        if (httpAuth.isNotEmpty()) {
+            if (!authError) {
+                handler.proceed(httpAuth.username, httpAuth.password)
+                autoAuth = true
+                firstAuthTime = System.currentTimeMillis()
+            }
         }
 
         if (!autoAuth || authError) {
             AlertDialog.Builder(this)
+                .setTitle(R.string.auth_request)
                 .setView(dialogLayout)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
                     if (username.text.toString() != "" && password.text.toString() != "") {
-                        val httpAuth = host + "|" + username.text.toString() + "|" + password.text.toString()
                         if (remember.isChecked) {
                             if (authError)
-                                for (i in 0 until (httpAuthList.count() - 1))
-                                    if (httpAuthList.elementAt(i).toString().contains(host))
-                                        httpAuthList.remove(httpAuthList.elementAt(i)).toString()
-                            httpAuthList.add(httpAuth)
-                            presenter.setHttpAuthList(httpAuthList)
+                                db.removeAuth(host)
+                            db.addAuth(Authentication(host, username.text.toString(), password.text.toString()))
                         }
                         handler.proceed(username.text.toString(), password.text.toString())
                     } else {

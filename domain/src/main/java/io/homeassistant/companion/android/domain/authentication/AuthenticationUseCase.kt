@@ -18,7 +18,4 @@ interface AuthenticationUseCase {
 
     suspend fun setLockEnabled(enabled: Boolean)
     suspend fun isLockEnabled(): Boolean
-
-    suspend fun getHttpAuthList(): Set<String>
-    suspend fun setHttpAuthList(httpAuthList: Set<String>)
 }

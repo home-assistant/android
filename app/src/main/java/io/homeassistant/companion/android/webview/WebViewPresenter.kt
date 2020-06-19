@@ -16,8 +16,5 @@ interface WebViewPresenter {
 
     fun isFullScreen(): Boolean
 
-    fun getHttpAuthList(): Set<String>
-    fun setHttpAuthList(httpAuthList: Set<String>)
-
     fun onFinish()
 }

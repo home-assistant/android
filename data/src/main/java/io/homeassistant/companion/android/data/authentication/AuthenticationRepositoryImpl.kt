@@ -149,18 +149,4 @@ class AuthenticationRepositoryImpl @Inject constructor(
     override suspend fun isLockEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BIOMETRIC_ENABLED)
     }
-
-    override suspend fun getHttpAuthList(): Set<String> {
-        val httpAuthList: Set<String>
-        if (localStorage.getStringSet(PREF_HTTP_AUTH_LIST) != null)
-            httpAuthList = localStorage.getStringSet(PREF_HTTP_AUTH_LIST)!!
-        else
-            httpAuthList = emptySet<String>()
-        return httpAuthList
-    }
-
-    override suspend fun setHttpAuthList(httpAuthList: Set<String>) {
-        localStorage.remove(PREF_HTTP_AUTH_LIST)
-        localStorage.putStringSet(PREF_HTTP_AUTH_LIST, httpAuthList)
-    }
 }
