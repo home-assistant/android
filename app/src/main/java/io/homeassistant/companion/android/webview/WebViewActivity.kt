@@ -523,7 +523,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
         if (!autoAuth || authError) {
             AlertDialog.Builder(this)
-                .setTitle(R.string.authentication_request)
+                .setTitle(R.string.auth_request)
                 .setView(dialogLayout)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
                     if (username.text.toString() != "" && password.text.toString() != "") {
@@ -534,15 +534,15 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         }
                         handler.proceed(username.text.toString(), password.text.toString())
                     } else AlertDialog.Builder(this)
-                            .setTitle(R.string.authentication_cancel)
-                            .setMessage(R.string.authentication_error_message)
+                            .setTitle(R.string.auth_cancel)
+                            .setMessage(R.string.auth_error_message)
                             .setPositiveButton(android.R.string.ok) { _, _ ->
                                 authenticationDialog(handler, host, authError)
                             }
                             .show()
                 }
                 .setNeutralButton(android.R.string.cancel) { _, _ ->
-                    Toast.makeText(applicationContext, R.string.authentication_cancel, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT).show()
                 }
                 .show()
         }
