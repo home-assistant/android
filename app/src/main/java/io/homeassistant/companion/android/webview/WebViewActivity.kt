@@ -19,7 +19,6 @@ import android.util.Log
 import android.util.Rational
 import android.view.MenuInflater
 import android.view.View
-import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
@@ -119,7 +118,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 ) {
                     Log.e(TAG, "onReceivedHttpError: errorCode: $errorCode url:$failingUrl")
                     if (failingUrl == loadedUrl) {
-                        showError(description = description)
+                        showError()
                     }
                 }
 
@@ -152,7 +151,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     error: SslError?
                 ) {
                     Log.e(TAG, "onReceivedHttpError: $error")
-                    showError(error = error)
+                    showError()
                 }
 
                 override fun shouldOverrideUrlLoading(
@@ -306,10 +305,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }, "externalApp")
         }
 
-        val cookieManager = CookieManager.getInstance()
-        cookieManager.setAcceptCookie(true)
-        cookieManager.setAcceptThirdPartyCookies(webView, true)
-
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
             if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0)
                 if (presenter.isFullScreen())
@@ -437,7 +432,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onDestroy()
     }
 
-    override fun showError(isAuthenticationError: Boolean, error: SslError?, description: String?) {
+    override fun showError(isAuthenticationError: Boolean) {
         if (isShowingError || !isStarted)
             return
         isShowingError = true
@@ -456,30 +451,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 presenter.clearKnownUrls()
                 openOnBoarding()
             }
-        } else if (error != null || description != null) {
-            if (description != null)
-                alert.setMessage(getString(R.string.webview_error_description) + " " + description)
-            else if (error!!.primaryError == SslError.SSL_DATE_INVALID)
-                alert.setMessage(R.string.webview_error_SSL_DATE_INVALID)
-            else if (error.primaryError == SslError.SSL_EXPIRED)
-                alert.setMessage(R.string.webview_error_SSL_EXPIRED)
-            else if (error.primaryError == SslError.SSL_IDMISMATCH)
-                alert.setMessage(R.string.webview_error_SSL_IDMISMATCH)
-            else if (error.primaryError == SslError.SSL_INVALID)
-                alert.setMessage(R.string.webview_error_SSL_INVALID)
-            else if (error.primaryError == SslError.SSL_NOTYETVALID)
-                alert.setMessage(R.string.webview_error_SSL_NOTYETVALID)
-            else if (error.primaryError == SslError.SSL_UNTRUSTED)
-                alert.setMessage(R.string.webview_error_SSL_UNTRUSTED)
-            alert.setPositiveButton(R.string.settings) { _, _ ->
-                startActivity(SettingsActivity.newInstance(this))
-            }
-            alert.setNeutralButton(R.string.exit) { _, _ ->
-                finishAffinity()
-            }
         } else {
             alert.setMessage(R.string.webview_error)
-            alert.setPositiveButton(R.string.settings) { _, _ ->
+            alert.setPositiveButton(android.R.string.ok) { _, _ ->
                 startActivity(SettingsActivity.newInstance(this))
             }
             alert.setNegativeButton(R.string.refresh) { _, _ ->
@@ -528,7 +502,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
         if (!autoAuth || authError) {
             AlertDialog.Builder(this)
-                .setTitle(R.string.auth_request)
+                .setTitle(R.string.authentication_request)
                 .setView(dialogLayout)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
                     if (username.text.toString() != "" && password.text.toString() != "") {
@@ -538,18 +512,16 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                             db.addAuth(Authentication(host, username.text.toString(), password.text.toString()))
                         }
                         handler.proceed(username.text.toString(), password.text.toString())
-                    } else {
-                        AlertDialog.Builder(this)
-                            .setTitle(R.string.auth_error)
-                            .setMessage(R.string.auth_error_message)
+                    } else AlertDialog.Builder(this)
+                            .setTitle(R.string.authentication_cancel)
+                            .setMessage(R.string.authentication_error_message)
                             .setPositiveButton(android.R.string.ok) { _, _ ->
                                 authenticationDialog(handler, host, authError)
                             }
                             .show()
-                    }
                 }
                 .setNeutralButton(android.R.string.cancel) { _, _ ->
-                    Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, R.string.authentication_cancel, Toast.LENGTH_SHORT).show()
                 }
                 .show()
         }
