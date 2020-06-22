@@ -112,7 +112,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 ) {
                     Log.e(TAG, "onReceivedHttpError: errorCode: $errorCode url:$failingUrl")
                     if (failingUrl == loadedUrl) {
-                        showError()
+                        showError(description = description)
                     }
                 }
 
@@ -142,7 +142,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     error: SslError?
                 ) {
                     Log.e(TAG, "onReceivedHttpError: $error")
-                    showError()
+                    showError(error = error)
                 }
 
                 override fun shouldOverrideUrlLoading(
@@ -427,7 +427,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onDestroy()
     }
 
-    override fun showError(isAuthenticationError: Boolean) {
+    override fun showError(isAuthenticationError: Boolean, error: SslError?, description: String?) {
         if (isShowingError || !isStarted)
             return
         isShowingError = true
@@ -446,9 +446,30 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 presenter.clearKnownUrls()
                 openOnBoarding()
             }
+        } else if (error != null || description != null) {
+            if (description != null)
+                alert.setMessage(getString(R.string.webview_error_description) + " " + description)
+            else if (error!!.primaryError == SslError.SSL_DATE_INVALID)
+                alert.setMessage(R.string.webview_error_SSL_DATE_INVALID)
+            else if (error.primaryError == SslError.SSL_EXPIRED)
+                alert.setMessage(R.string.webview_error_SSL_EXPIRED)
+            else if (error.primaryError == SslError.SSL_IDMISMATCH)
+                alert.setMessage(R.string.webview_error_SSL_IDMISMATCH)
+            else if (error.primaryError == SslError.SSL_INVALID)
+                alert.setMessage(R.string.webview_error_SSL_INVALID)
+            else if (error.primaryError == SslError.SSL_NOTYETVALID)
+                alert.setMessage(R.string.webview_error_SSL_NOTYETVALID)
+            else if (error.primaryError == SslError.SSL_UNTRUSTED)
+                alert.setMessage(R.string.webview_error_SSL_UNTRUSTED)
+            alert.setPositiveButton(R.string.settings) { _, _ ->
+                startActivity(SettingsActivity.newInstance(this))
+            }
+            alert.setNeutralButton(R.string.exit) { _, _ ->
+                finishAffinity()
+            }
         } else {
             alert.setMessage(R.string.webview_error)
-            alert.setPositiveButton(android.R.string.ok) { _, _ ->
+            alert.setPositiveButton(R.string.settings) { _, _ ->
                 startActivity(SettingsActivity.newInstance(this))
             }
             alert.setNegativeButton(R.string.refresh) { _, _ ->
