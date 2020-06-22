@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URL
 import javax.inject.Inject
@@ -47,6 +48,7 @@ class MessagingService : FirebaseMessagingService() {
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
+        const val GROUP_PREFIX = "group_"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -113,7 +115,8 @@ class MessagingService : FirebaseMessagingService() {
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val messageId = tag.hashCode()
 
-        notificationManager.cancel(tag, messageId)
+        // Clear notification
+        notificationManager.cancel(tag, messageId, true)
     }
 
     private fun removeNotificationChannel(channelName: String) {
@@ -132,9 +135,10 @@ class MessagingService : FirebaseMessagingService() {
      *
      */
     private suspend fun sendNotification(data: Map<String, String>) {
+        var group = data["group"]
+        if (!group.isNullOrBlank()) group = GROUP_PREFIX + group
 
         val tag = data["tag"]
-        val group = data["group"]
         val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
         val groupId = group?.hashCode() ?: 0
 
@@ -153,7 +157,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleLargeIcon(notificationBuilder, data)
 
-        handleGroup(notificationBuilder, data)
+        handleGroup(notificationBuilder, group)
 
         handleTimeout(notificationBuilder, data)
 
@@ -202,7 +206,7 @@ class MessagingService : FirebaseMessagingService() {
         var groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setStyle(
-                NotificationCompat.InboxStyle().setSummaryText(group)
+                NotificationCompat.InboxStyle().setSummaryText(group?.substring(GROUP_PREFIX.length))
             )
             .setGroup(group)
             .setGroupSummary(true)
@@ -338,9 +342,8 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun handleGroup(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>
+        group: String?
     ) {
-        val group = data["group"]
         if (!group.isNullOrBlank()) {
             builder.setGroup(group)
         }
