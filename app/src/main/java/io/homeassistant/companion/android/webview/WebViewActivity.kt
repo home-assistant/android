@@ -82,6 +82,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var isVideoFullScreen = false
     private var videoHeight = 0
     private var firstAuthTime: Long = 0
+    private var resourceURL: String = ""
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -142,7 +143,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     var authError = false
                     if (System.currentTimeMillis() <= (firstAuthTime + 500))
                         authError = true
-                    authenticationDialog(handler, (host + realm), authError)
+                    authenticationDialog(handler, host, realm, authError)
                 }
 
                 override fun onReceivedSslError(
@@ -152,6 +153,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 ) {
                     Log.e(TAG, "onReceivedHttpError: $error")
                     showError()
+                }
+
+                override fun onLoadResource(
+                    view: WebView?,
+                    url: String?
+                ) {
+                    resourceURL = url!!
                 }
 
                 override fun shouldOverrideUrlLoading(
@@ -490,7 +498,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     @SuppressLint("InflateParams")
-    fun authenticationDialog(handler: HttpAuthHandler, host: String, authError: Boolean) {
+    fun authenticationDialog(handler: HttpAuthHandler, host: String, realm: String, authError: Boolean) {
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
         val username = dialogLayout.findViewById<EditText>(R.id.username)
@@ -498,7 +506,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         val remember = dialogLayout.findViewById<CheckBox>(R.id.checkBox)
         val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
         val db = DataBaseHandler(this, null)
-        val httpAuth: Authentication = db.getAuth(host, this)
+        val httpAuth: Authentication = db.getAuth((resourceURL + realm), this)
         var autoAuth = false
 
         viewPassword.setOnClickListener() {
@@ -521,23 +529,30 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }
         }
 
+        var message = host + " " + getString(R.string.required_fields)
+        if (resourceURL.subSequence(0, 5).toString() == "http:")
+            message = "http://" + message + " " + getString(R.string.not_private)
+        else
+            message = "https://" + message
+
         if (!autoAuth || authError) {
             AlertDialog.Builder(this)
                 .setTitle(R.string.auth_request)
+                .setMessage(message)
                 .setView(dialogLayout)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
                     if (username.text.toString() != "" && password.text.toString() != "") {
                         if (remember.isChecked) {
                             if (authError)
-                                db.removeAuth(host)
-                            db.addAuth(Authentication(host, username.text.toString(), password.text.toString()))
+                                db.removeAuth((resourceURL + realm))
+                            db.addAuth(Authentication((resourceURL + realm), username.text.toString(), password.text.toString()))
                         }
                         handler.proceed(username.text.toString(), password.text.toString())
                     } else AlertDialog.Builder(this)
                             .setTitle(R.string.auth_cancel)
                             .setMessage(R.string.auth_error_message)
                             .setPositiveButton(android.R.string.ok) { _, _ ->
-                                authenticationDialog(handler, host, authError)
+                                authenticationDialog(handler, host, realm, authError)
                             }
                             .show()
                 }
