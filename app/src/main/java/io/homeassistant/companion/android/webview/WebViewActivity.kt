@@ -326,7 +326,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         if (result == authenticator.SUCCESS) {
             unlocked = true
             blurView.setBlurEnabled(false)
-        } else authenticator.authenticate()
+        } else if (result == authenticator.CANCELED)
+            finishAffinity()
+        else authenticator.authenticate()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
