@@ -73,7 +73,7 @@ class WebViewPresenterImpl @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
                 view.setExternalAuth("$callback(false)")
-                view.showError(authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
+                view.showError(isAuthenticationError = authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
             }
         }
     }
