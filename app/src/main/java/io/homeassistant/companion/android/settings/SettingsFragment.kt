@@ -181,7 +181,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         if (presenter.isLockEnabled())
             if (System.currentTimeMillis() > presenter.getSessionExpireMillis()) {
                 blurView.setBlurEnabled(true)
-                setLock = true
+                setLock = false
                 Authenticator(requireContext(), requireActivity(), ::authenticationResult).authenticate()
             } else blurView.setBlurEnabled(false)
     }
