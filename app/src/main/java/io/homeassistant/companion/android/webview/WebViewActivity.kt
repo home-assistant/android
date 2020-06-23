@@ -32,8 +32,6 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.biometric.BiometricPrompt
-import androidx.core.content.ContextCompat
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
 import eightbitlab.com.blurview.RenderScriptBlur
@@ -41,6 +39,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
@@ -73,6 +72,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
     private lateinit var myCustomView: View
+    private lateinit var authenticator: Authenticator
 
     private var isConnected = false
     private var isShowingError = false
@@ -108,6 +108,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
         if (!presenter.isLockEnabled())
             blurView.setBlurEnabled(false)
+
+        authenticator = Authenticator(this, this, ::authenticationResult)
 
         decor = window.decorView as FrameLayout
 
@@ -315,13 +317,20 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
 
+    private fun authenticationResult(result: Int) {
+        if (result == authenticator.SUCCESS) {
+            unlocked = true
+            blurView.setBlurEnabled(false)
+        } else authenticator.authenticate()
+    }
+
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
             if (presenter.isLockEnabled() && !unlocked)
                 if ((System.currentTimeMillis() > presenter.getSessionExpireMillis())) {
                     blurView.setBlurEnabled(true)
-                    promptForUnlock()
+                    authenticator.authenticate()
                 } else blurView.setBlurEnabled(false)
 
             presenter.onViewReady(intent.getStringExtra(EXTRA_PATH))
@@ -443,7 +452,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         super.onDestroy()
     }
 
-    override fun showError(isAuthenticationError: Boolean) {
+    override fun showError(isAuthenticationError: Boolean, error: SslError?, description: String?) {
         if (isShowingError || !isStarted)
             return
         isShowingError = true
@@ -462,9 +471,30 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 presenter.clearKnownUrls()
                 openOnBoarding()
             }
+        } else if (error != null || description != null) {
+            if (description != null)
+                alert.setMessage(getString(R.string.webview_error_description) + " " + description)
+            else if (error!!.primaryError == SslError.SSL_DATE_INVALID)
+                alert.setMessage(R.string.webview_error_SSL_DATE_INVALID)
+            else if (error.primaryError == SslError.SSL_EXPIRED)
+                alert.setMessage(R.string.webview_error_SSL_EXPIRED)
+            else if (error.primaryError == SslError.SSL_IDMISMATCH)
+                alert.setMessage(R.string.webview_error_SSL_IDMISMATCH)
+            else if (error.primaryError == SslError.SSL_INVALID)
+                alert.setMessage(R.string.webview_error_SSL_INVALID)
+            else if (error.primaryError == SslError.SSL_NOTYETVALID)
+                alert.setMessage(R.string.webview_error_SSL_NOTYETVALID)
+            else if (error.primaryError == SslError.SSL_UNTRUSTED)
+                alert.setMessage(R.string.webview_error_SSL_UNTRUSTED)
+            alert.setPositiveButton(R.string.settings) { _, _ ->
+                startActivity(SettingsActivity.newInstance(this))
+            }
+            alert.setNeutralButton(R.string.exit) { _, _ ->
+                finishAffinity()
+            }
         } else {
             alert.setMessage(R.string.webview_error)
-            alert.setPositiveButton(android.R.string.ok) { _, _ ->
+            alert.setPositiveButton(R.string.settings) { _, _ ->
                 startActivity(SettingsActivity.newInstance(this))
             }
             alert.setNegativeButton(R.string.refresh) { _, _ ->
@@ -549,32 +579,5 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         .build()
                 }
         }
-    }
-
-    private fun promptForUnlock() {
-        val executor = ContextCompat.getMainExecutor(this)
-        val biometricPrompt = BiometricPrompt(this, executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    super.onAuthenticationError(errorCode, errString)
-                    Log.d(TAG, "onAuthenticationError -> $errorCode :: $errString")
-                    if (errorCode == BiometricPrompt.ERROR_USER_CANCELED)
-                        finishAffinity()
-                }
-                override fun onAuthenticationSucceeded(
-                    result: BiometricPrompt.AuthenticationResult
-                ) {
-                    super.onAuthenticationSucceeded(result)
-                    unlocked = true
-                    blurView.setBlurEnabled(false)
-                }
-            })
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(this.resources.getString(R.string.biometric_title))
-            .setSubtitle(this.resources.getString(R.string.biometric_message))
-            .setDeviceCredentialAllowed(true)
-            .build()
-
-        biometricPrompt.authenticate(promptInfo)
     }
 }

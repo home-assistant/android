@@ -96,7 +96,7 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":domain"))
 
-    implementation("com.eightbitlab:blurview:1.6.3")
+    implementation(Config.Dependency.Misc.blurView)
 
     implementation(Config.Dependency.Kotlin.core)
     implementation(Config.Dependency.Kotlin.coroutines)
