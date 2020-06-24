@@ -86,6 +86,7 @@ like to connect to:</string>
   <string name="lockscreen_title">App Locked !</string>
   <string name="lockscreen_message">Tap to unlock :</string>
   <string name="biometric_title">Home Assistant is locked</string>
+  <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
   <string name="biometric_set_title">Confirm to continue</string>
   <string name="set_lock_title">App Locking Error</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
