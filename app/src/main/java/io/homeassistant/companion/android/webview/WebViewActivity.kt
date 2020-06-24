@@ -19,6 +19,7 @@ import android.util.Log
 import android.util.Rational
 import android.view.MenuInflater
 import android.view.View
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
@@ -536,7 +537,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             message = "https://" + message
 
         if (!autoAuth || authError) {
-            AlertDialog.Builder(this)
+            AlertDialog.Builder(this, R.style.Authentication_Dialog)
                 .setTitle(R.string.auth_request)
                 .setMessage(message)
                 .setView(dialogLayout)
