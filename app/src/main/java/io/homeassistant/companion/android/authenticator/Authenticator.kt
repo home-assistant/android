@@ -12,8 +12,10 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
     val SUCCESS = 1
     val ERROR = 0
 
-    val executor = ContextCompat.getMainExecutor(context)
-    val biometricPrompt = BiometricPrompt(fragmentActivity, executor,
+    var title = fragmentActivity.resources.getString(R.string.biometric_title)
+
+    private val executor = ContextCompat.getMainExecutor(context)
+    private val biometricPrompt = BiometricPrompt(fragmentActivity, executor,
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errorCode, errString)
@@ -34,13 +36,13 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
                 callback(SUCCESS)
             }
         })
-    val promptDialog = BiometricPrompt.PromptInfo.Builder()
-        .setTitle(fragmentActivity.resources.getString(R.string.biometric_title))
-        .setSubtitle(fragmentActivity.resources.getString(R.string.biometric_message))
-        .setDeviceCredentialAllowed(true)
-        .build()
 
     fun authenticate() {
+        val promptDialog = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(title)
+            .setDeviceCredentialAllowed(true)
+            .build()
+
         biometricPrompt.authenticate(promptDialog)
     }
 }

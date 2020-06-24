@@ -80,7 +80,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 isValid = true
                 if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
                     setLock = true
-                    Authenticator(requireContext(), requireActivity(), ::authenticationResult).authenticate()
+                    authenticator.title = getString(R.string.biometric_set_title)
+                    authenticator.authenticate()
                 } else {
                     isValid = false
                     AlertDialog.Builder(requireActivity())
@@ -178,11 +179,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     override fun onResume() {
         super.onResume()
-        if (presenter.isLockEnabled())
+        if (presenter.isLockEnabled() && !unlocked)
             if (System.currentTimeMillis() > presenter.getSessionExpireMillis()) {
                 blurView.setBlurEnabled(true)
                 setLock = false
-                Authenticator(requireContext(), requireActivity(), ::authenticationResult).authenticate()
+                authenticator.title = getString(R.string.biometric_title)
+                authenticator.authenticate()
             } else blurView.setBlurEnabled(false)
     }
 
