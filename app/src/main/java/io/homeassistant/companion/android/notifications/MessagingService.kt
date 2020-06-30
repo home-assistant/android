@@ -13,7 +13,6 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -26,6 +25,8 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
+import io.homeassistant.companion.android.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.util.getActiveNotification
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URL
 import javax.inject.Inject
@@ -135,25 +136,37 @@ class MessagingService : FirebaseMessagingService() {
      *
      */
     private suspend fun sendNotification(data: Map<String, String>) {
-        var group = data["group"]
-        if (!group.isNullOrBlank()) group = GROUP_PREFIX + group
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         val tag = data["tag"]
         val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
-        val groupId = group?.hashCode() ?: 0
 
-        val pendingIntent = handleIntent(data, messageId)
+        var group = data["group"]
+        var groupId = 0
+        var previousGroup = ""
+        var previousGroupId = 0
+        if (!group.isNullOrBlank()) {
+            group = GROUP_PREFIX + group
+            groupId = group.hashCode()
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 
-        val notificationManagerCompat = NotificationManagerCompat.from(this)
+                val notification = notificationManager.getActiveNotification(tag, messageId)
+                if (notification != null && notification.isGroup) {
+                    previousGroup = GROUP_PREFIX + notification.tag
+                    previousGroupId = previousGroup.hashCode()
+                }
+            }
+        }
 
-        val channelId = handleChannel(notificationManagerCompat, data)
+        val channelId = handleChannel(notificationManager, data)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setContentIntent(pendingIntent)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
 
-        handlePersistent(notificationBuilder, data, tag)
+        handlePersistent(notificationBuilder, tag, data)
 
         handleLargeIcon(notificationBuilder, data)
 
@@ -169,7 +182,11 @@ class MessagingService : FirebaseMessagingService() {
 
         handleImage(notificationBuilder, data)
 
-        handleActions(notificationBuilder, data, tag, messageId)
+        handleActions(notificationBuilder, tag, messageId, data)
+
+        handleDeleteIntent(notificationBuilder, messageId, group, groupId)
+
+        handleContentIntent(notificationBuilder, messageId, group, groupId, data)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             handleLegacyPriority(notificationBuilder, data)
@@ -177,18 +194,63 @@ class MessagingService : FirebaseMessagingService() {
             handleLegacyVibrationPattern(notificationBuilder, data)
         }
 
-        notificationManagerCompat.apply {
+        notificationManager.apply {
             notify(tag, messageId, notificationBuilder.build())
             if (group != null) {
                 notify(group, groupId, getGroupNotificationBuilder(channelId, group, data).build())
+            } else {
+                if (!previousGroup.isNullOrBlank()) {
+                    notificationManager.cancelGroupIfNeeded(previousGroup, previousGroupId)
+                }
             }
         }
     }
 
+    private fun handleContentIntent(
+        builder: NotificationCompat.Builder,
+        messageId: Int,
+        group: String?,
+        groupId: Int,
+        data: Map<String, String>
+    ) {
+        val contentIntent = Intent(this, NotificationContentReceiver::class.java).apply {
+            putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP, group)
+            putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
+            putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_ACTION, data["clickAction"])
+        }
+        val contentPendingIntent = PendingIntent.getBroadcast(
+            this,
+            messageId,
+            contentIntent,
+            0
+        )
+        builder.setContentIntent(contentPendingIntent)
+    }
+
+    private fun handleDeleteIntent(
+        builder: NotificationCompat.Builder,
+        messageId: Int,
+        group: String?,
+        groupId: Int
+    ) {
+
+        val deleteIntent = Intent(this, NotificationDeleteReceiver::class.java).apply {
+            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
+            putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
+        }
+        val deletePendingIntent = PendingIntent.getBroadcast(
+            this,
+            messageId,
+            deleteIntent,
+            0
+        )
+        builder.setDeleteIntent(deletePendingIntent)
+    }
+
     private fun handlePersistent(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>,
-        tag: String?
+        tag: String?,
+        data: Map<String, String>
     ) {
         // Only set ongoing (persistent) property if tag was supplied.
         // Without a tag the user could not clear the notification
@@ -427,9 +489,9 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun handleActions(
         builder: NotificationCompat.Builder,
-        data: Map<String, String>,
         tag: String?,
-        messageId: Int
+        messageId: Int,
+        data: Map<String, String>
     ) {
         for (i in 1..3) {
             if (data.containsKey("action_${i}_key")) {
@@ -467,7 +529,7 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun handleChannel(
-        notificationManager: NotificationManagerCompat,
+        notificationManager: NotificationManager,
         data: Map<String, String>
     ): String {
         // Define some values for a default channel
