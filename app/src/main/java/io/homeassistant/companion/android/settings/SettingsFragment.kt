@@ -196,14 +196,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     private fun authenticationResult(result: Int) {
         val switchLock = findPreference<SwitchPreference>("app_lock")
-        if (result == authenticator.SUCCESS) {
+        if (result == Authenticator.SUCCESS) {
             if (!setLock) {
                 unlocked = true
                 blurView.setBlurEnabled(false)
             } else switchLock?.isChecked = true
         } else {
             switchLock?.isChecked = false
-            if (result == authenticator.CANCELED) {
+            if (result == Authenticator.CANCELED) {
                 if (!setLock)
                     finishAffinity(requireActivity())
             } else authenticator.authenticate()

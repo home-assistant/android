@@ -323,10 +323,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun authenticationResult(result: Int) {
-        if (result == authenticator.SUCCESS) {
+        if (result == Authenticator.SUCCESS) {
             unlocked = true
             blurView.setBlurEnabled(false)
-        } else if (result == authenticator.CANCELED)
+        } else if (result == Authenticator.CANCELED)
             finishAffinity()
         else authenticator.authenticate()
     }

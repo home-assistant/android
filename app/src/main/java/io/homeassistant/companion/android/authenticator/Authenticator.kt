@@ -8,9 +8,11 @@ import androidx.fragment.app.FragmentActivity
 import io.homeassistant.companion.android.R
 
 class Authenticator(context: Context, fragmentActivity: FragmentActivity, callback: (Int) -> Unit) {
-    val CANCELED = 2
-    val SUCCESS = 1
-    val ERROR = 0
+    companion object {
+        const val CANCELED = 2
+        const val SUCCESS = 1
+        const val ERROR = 0
+    }
 
     var title = fragmentActivity.resources.getString(R.string.biometric_title)
 
