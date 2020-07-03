@@ -19,7 +19,7 @@ import android.util.Log
 import android.util.Rational
 import android.view.MenuInflater
 import android.view.View
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
 import android.webkit.JsResult
@@ -37,6 +37,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.room.Room
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
 import io.homeassistant.companion.android.BuildConfig
@@ -45,8 +46,8 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.database.Authentication
-import io.homeassistant.companion.android.database.DataBaseHandler
+import io.homeassistant.companion.android.database.AppDataBase
+import io.homeassistant.companion.android.database.AuthenticationList
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
@@ -314,6 +315,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }, "externalApp")
         }
 
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        cookieManager.setAcceptThirdPartyCookies(webView, true)
+
         window.decorView.setOnSystemUiVisibilityChangeListener { visibility ->
             if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0)
                 if (presenter.isFullScreen())
@@ -500,14 +505,20 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     @SuppressLint("InflateParams")
     fun authenticationDialog(handler: HttpAuthHandler, host: String, realm: String, authError: Boolean) {
+        val db = Room.databaseBuilder(
+            applicationContext,
+            AppDataBase::class.java, "HomeAssistantDB")
+            .allowMainThreadQueries()
+            .build()
+        val authenticationDao = db.authenticationDatabaseDao()
+        val httpAuth = authenticationDao.get((resourceURL + realm))
+
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
         val username = dialogLayout.findViewById<EditText>(R.id.username)
         val password = dialogLayout.findViewById<EditText>(R.id.password)
         val remember = dialogLayout.findViewById<CheckBox>(R.id.checkBox)
         val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
-        val db = DataBaseHandler(this, null)
-        val httpAuth: Authentication = db.getAuth((resourceURL + realm), this)
         var autoAuth = false
 
         viewPassword.setOnClickListener() {
@@ -522,9 +533,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }
         }
 
-        if (httpAuth.isNotEmpty()) {
+        if (!httpAuth?.host.isNullOrBlank()) {
             if (!authError) {
-                handler.proceed(httpAuth.username, httpAuth.password)
+                handler.proceed(httpAuth?.username, httpAuth?.password)
                 autoAuth = true
                 firstAuthTime = System.currentTimeMillis()
             }
@@ -545,8 +556,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     if (username.text.toString() != "" && password.text.toString() != "") {
                         if (remember.isChecked) {
                             if (authError)
-                                db.removeAuth((resourceURL + realm))
-                            db.addAuth(Authentication((resourceURL + realm), username.text.toString(), password.text.toString()))
+                                authenticationDao.update(AuthenticationList((resourceURL + realm), username.text.toString(), password.text.toString()))
+                            else
+                                authenticationDao.insert(AuthenticationList((resourceURL + realm), username.text.toString(), password.text.toString()))
+                            db.close()
                         }
                         handler.proceed(username.text.toString(), password.text.toString())
                     } else AlertDialog.Builder(this)
