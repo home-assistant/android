@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.notifications
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -13,6 +12,7 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -112,22 +112,21 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun clearNotification(tag: String) {
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManagerCompat = NotificationManagerCompat.from(this)
+
         val messageId = tag.hashCode()
 
         // Clear notification
-        notificationManager.cancel(tag, messageId, true)
+        notificationManagerCompat.cancel(tag, messageId, true)
     }
 
     private fun removeNotificationChannel(channelName: String) {
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManagerCompat = NotificationManagerCompat.from(this)
 
         val channelID: String = createChannelID(channelName)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            notificationManager.deleteNotificationChannel(channelID)
+            notificationManagerCompat.deleteNotificationChannel(channelID)
         }
     }
 
@@ -136,8 +135,7 @@ class MessagingService : FirebaseMessagingService() {
      *
      */
     private suspend fun sendNotification(data: Map<String, String>) {
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManagerCompat = NotificationManagerCompat.from(this)
 
         val tag = data["tag"]
         val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
@@ -152,7 +150,7 @@ class MessagingService : FirebaseMessagingService() {
         } else {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 
-                val notification = notificationManager.getActiveNotification(tag, messageId)
+                val notification = notificationManagerCompat.getActiveNotification(tag, messageId)
                 if (notification != null && notification.isGroup) {
                     previousGroup = GROUP_PREFIX + notification.tag
                     previousGroupId = previousGroup.hashCode()
@@ -160,7 +158,7 @@ class MessagingService : FirebaseMessagingService() {
             }
         }
 
-        val channelId = handleChannel(notificationManager, data)
+        val channelId = handleChannel(notificationManagerCompat, data)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
@@ -194,13 +192,13 @@ class MessagingService : FirebaseMessagingService() {
             handleLegacyVibrationPattern(notificationBuilder, data)
         }
 
-        notificationManager.apply {
+        notificationManagerCompat.apply {
             notify(tag, messageId, notificationBuilder.build())
             if (group != null) {
                 notify(group, groupId, getGroupNotificationBuilder(channelId, group, data).build())
             } else {
                 if (!previousGroup.isNullOrBlank()) {
-                    notificationManager.cancelGroupIfNeeded(previousGroup, previousGroupId)
+                    notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)
                 }
             }
         }
@@ -529,7 +527,7 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun handleChannel(
-        notificationManager: NotificationManager,
+        notificationManagerCompat: NotificationManagerCompat,
         data: Map<String, String>
     ): String {
         // Define some values for a default channel
@@ -551,7 +549,7 @@ class MessagingService : FirebaseMessagingService() {
 
             setChannelLedColor(data, channel)
             setChannelVibrationPattern(data, channel)
-            notificationManager.createNotificationChannel(channel)
+            notificationManagerCompat.createNotificationChannel(channel)
         }
         return channelID
     }

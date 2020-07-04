@@ -1,9 +1,9 @@
 package io.homeassistant.companion.android.notifications
 
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import androidx.core.app.NotificationManagerCompat
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 
 class NotificationDeleteReceiver : BroadcastReceiver() {
@@ -17,12 +17,11 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
         val group = intent.getStringExtra(EXTRA_NOTIFICATION_GROUP)
         val groupId = intent.getIntExtra(EXTRA_NOTIFICATION_GROUP_ID, -1)
 
-        val notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         // Cancel any left empty group of the notification, if needed
         // This maybe the case if timeoutAfter has deleted the notification
         // Then only the empty group is left and needs to be cancelled
-        notificationManager.cancelGroupIfNeeded(group, groupId)
+        notificationManagerCompat.cancelGroupIfNeeded(group, groupId)
     }
 }

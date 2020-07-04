@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.notifications
 
-import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.app.NotificationManagerCompat
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -22,13 +22,12 @@ class NotificationContentReceiver : BroadcastReceiver() {
         val group = intent.getStringExtra(EXTRA_NOTIFICATION_GROUP)
         val groupId = intent.getIntExtra(EXTRA_NOTIFICATION_GROUP_ID, -1)
 
-        val notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         // Cancel any left empty group of the notification, if needed
         // This is the case if the user clicked on the notification
         // Then only the empty group is left and needs to be cancelled
-        notificationManager.cancelGroupIfNeeded(group, groupId)
+        notificationManagerCompat.cancelGroupIfNeeded(group, groupId)
 
         if (!action.isNullOrBlank()) {
             val intent = if (UrlHandler.isAbsoluteUrl(action)) {

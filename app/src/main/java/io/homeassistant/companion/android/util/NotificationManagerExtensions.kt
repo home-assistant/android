@@ -4,18 +4,27 @@ import android.app.Notification.FLAG_GROUP_SUMMARY
 import android.app.NotificationManager
 import android.os.Build
 import android.service.notification.StatusBarNotification
+import androidx.core.app.NotificationManagerCompat
 
-fun NotificationManager.getActiveNotification(tag: String?, id: Int): StatusBarNotification? {
+fun NotificationManagerCompat.getNotificationManager(): NotificationManager {
+    val field = this.javaClass.declaredFields
+        .toList().first { it.name == "mNotificationManager" }
+    field.isAccessible = true
+    val value = field.get(this)
+    return value as NotificationManager
+}
+
+fun NotificationManagerCompat.getActiveNotification(tag: String?, id: Int): StatusBarNotification? {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        this.activeNotifications.singleOrNull { s -> s.id == id && s.tag == tag }
+        this.getNotificationManager().activeNotifications.singleOrNull { s -> s.id == id && s.tag == tag }
     } else {
         return null
     }
 }
 
-fun NotificationManager.cancelGroupIfNeeded(tag: String?, id: Int): Boolean {
+fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolean {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        var currentActiveNotifications = this.activeNotifications
+        var currentActiveNotifications = this.getNotificationManager().activeNotifications
 
         // Get group key from the current notification
         // to handle possible group deletion
@@ -53,7 +62,7 @@ fun NotificationManager.cancelGroupIfNeeded(tag: String?, id: Int): Boolean {
     return false
 }
 
-fun NotificationManager.cancel(tag: String?, id: Int, cancelGroup: Boolean) {
+fun NotificationManagerCompat.cancel(tag: String?, id: Int, cancelGroup: Boolean) {
     if (cancelGroup && cancelGroupIfNeeded(tag, id)) return
 
     // Clear notification
