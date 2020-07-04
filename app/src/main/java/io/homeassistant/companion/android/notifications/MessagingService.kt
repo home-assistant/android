@@ -219,7 +219,7 @@ class MessagingService : FirebaseMessagingService() {
             this,
             messageId,
             contentIntent,
-            0
+            PendingIntent.FLAG_CANCEL_CURRENT
         )
         builder.setContentIntent(contentPendingIntent)
     }
@@ -239,7 +239,7 @@ class MessagingService : FirebaseMessagingService() {
             this,
             messageId,
             deleteIntent,
-            0
+            PendingIntent.FLAG_CANCEL_CURRENT
         )
         builder.setDeleteIntent(deletePendingIntent)
     }
