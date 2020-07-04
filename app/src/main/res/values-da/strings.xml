@@ -87,4 +87,20 @@ vil forbinde til:</string>
   <string name="manage_ssids_input_exists">Dette SSID findes allerede.</string>
   <string name="save">Gem</string>
   <string name="cancel">Annuller</string>
+  <string name="dialog_add_panel_shortcut_title">Tilføj genvej</string>
+  <string name="dialog_add_panel_shortcut_content">Opret en genvej til dette punkt?</string>
+  <string name="calendar">Kalender</string>
+  <string name="config">Indstillinger</string>
+  <string name="developer_tools">Udviklerværktøjer</string>
+  <string name="history">Historik</string>
+  <string name="logbook">Logbog</string>
+  <string name="mailbox">Postkasse</string>
+  <string name="map">Kort</string>
+  <string name="profile">Profil</string>
+  <string name="shopping_list">Indkøbsliste</string>
+  <string name="states">Oversigt</string>
+  <string name="shortcuts">Genveje</string>
+  <string name="shortcuts_summary">Føj genveje til launcher</string>
+  <string name="rate_limit_notification.title">Antal notifikationer begrænset</string>
+  <string name="rate_limit_notification.body">Du har nu sendt mere end %s meddelelser i dag. Du vil ikke modtage nye notifikationer før midnat UTC.</string>
 </resources>

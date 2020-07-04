@@ -8,8 +8,8 @@
  till ditt hemma-nätverk.</string>
   <string name="scan_again">sök igen</string>
   <string name="manual_setup">Ange adress manuellt</string>
-  <string name="input_url">Home Assistant URL</string>
-  <string name="input_url_hint">https://example.duckdns.org:8123</string>
+  <string name="input_url"></string>
+  <string name="input_url_hint"></string>
   <string name="status_of_mobile_app_integration">Status för mobilappsintegrering:</string>
   <string name="checking_with_home_assistant">Kontrollerar med Home Assistant</string>
   <string name="skip">Hoppa över</string>
@@ -32,14 +32,14 @@
   <string name="error_connection_failed">Kunde inte ansluta till Home Assistant</string>
   <string name="webview_error">Det uppstod ett fel vid anslutningen av Home Assistant, granska anslutningsinställningarna och försök igen.</string>
   <string name="pref_connection_title">Anslutningsinformation</string>
-  <string name="pref_connection_url">Home Assistant URL</string>
+  <string name="pref_connection_url"></string>
   <string name="pref_connection_wifi">WiFi SSID för hemma-nätverk.</string>
   <string name="pref_connection_internal">Intern URL</string>
   <string name="url_invalid">Ogiltig URL</string>
   <string name="error_auth_revoked">Det verkar som att din behörighet har upphört. Anslut igen till Home Assistant.</string>
   <string name="select_instance">Välj vilken instans du vill ansluta till:</string>
   <string name="failed_scan">Sökning efter Home Assistant misslyckades</string>
-  <string name="widget_image_description">Home Assistant Widget</string>
+  <string name="widget_image_description"></string>
   <string name="configure_service_call">Hantera anrop till tjänst</string>
   <string name="configure_widget_label">WIdget Etikett</string>
   <string name="add_widget">Lägg till widget</string>
@@ -85,4 +85,20 @@
   <string name="manage_ssids_input_exists">Detta SSID finns redan.</string>
   <string name="save">Spara</string>
   <string name="cancel">Avbryt</string>
+  <string name="dialog_add_panel_shortcut_title">Lägg till genväg</string>
+  <string name="dialog_add_panel_shortcut_content">Skapa en genväg till det här objektet?</string>
+  <string name="calendar">Kalender</string>
+  <string name="config">Konfiguration</string>
+  <string name="developer_tools">Utvecklarverktyg</string>
+  <string name="history">Historik</string>
+  <string name="logbook">Loggbok</string>
+  <string name="mailbox">Brevlåda</string>
+  <string name="map">Karta</string>
+  <string name="profile">Profil</string>
+  <string name="shopping_list">Inköpslista</string>
+  <string name="states">Översikt</string>
+  <string name="shortcuts">Genvägar</string>
+  <string name="shortcuts_summary">Lägg till genvägar till hemskärmen</string>
+  <string name="rate_limit_notification.title">Notisfrekvens begränsad</string>
+  <string name="rate_limit_notification.body">Du har nu skickat mer än %s notiser idag. Du får inga nya notiser förrän midnatt UTC.</string>
 </resources>
