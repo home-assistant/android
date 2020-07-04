@@ -82,4 +82,20 @@
   <string name="manage_ssids_input_exists">Diese SSID ist bereits vorhanden.</string>
   <string name="save">Speichern</string>
   <string name="cancel">Abbrechen</string>
+  <string name="dialog_add_panel_shortcut_title">Verknüpfung hinzufügen</string>
+  <string name="dialog_add_panel_shortcut_content">Eine Verknüpfung zu diesem Element erstellen?</string>
+  <string name="calendar">Kalender</string>
+  <string name="config">Konfiguration</string>
+  <string name="developer_tools">Entwicklerwerkzeuge</string>
+  <string name="history">Verlauf</string>
+  <string name="logbook">Logbuch</string>
+  <string name="mailbox">Postfach</string>
+  <string name="map">Karte</string>
+  <string name="profile">Profil</string>
+  <string name="shopping_list">Einkaufsliste</string>
+  <string name="states">Übersicht</string>
+  <string name="shortcuts">Verknüpfungen</string>
+  <string name="shortcuts_summary">Verknüpfungen zum Startbildschirm hinzufügen</string>
+  <string name="rate_limit_notification.title">Benachrichtigungsrate begrenzt</string>
+  <string name="rate_limit_notification.body">Du hast heute mehr als %s Benachrichtigungen gesendet. Du erhälst keine neuen Benachrichtigungen bis Mitternacht UTC.</string>
 </resources>
