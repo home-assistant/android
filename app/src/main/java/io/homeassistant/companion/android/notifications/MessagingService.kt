@@ -8,7 +8,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.RingtoneManager
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -27,7 +26,6 @@ import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.util.getActiveNotification
-import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -211,10 +209,11 @@ class MessagingService : FirebaseMessagingService() {
         groupId: Int,
         data: Map<String, String>
     ) {
+        var actionUri = data["clickAction"]
         val contentIntent = Intent(this, NotificationContentReceiver::class.java).apply {
             putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
-            putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_ACTION, data["clickAction"])
+            putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_ACTION_URI, actionUri)
         }
         val contentPendingIntent = PendingIntent.getBroadcast(
             this,
@@ -273,27 +272,6 @@ class MessagingService : FirebaseMessagingService() {
 
         handleColor(groupNotificationBuilder, data)
         return groupNotificationBuilder
-    }
-
-    private fun handleIntent(
-        data: Map<String, String>,
-        messageId: Int
-    ): PendingIntent {
-        val url = data["clickAction"]
-
-        val intent = if (UrlHandler.isAbsoluteUrl(url)) {
-            Intent(Intent.ACTION_VIEW).apply {
-                this.data = Uri.parse(url)
-            }
-        } else {
-            WebViewActivity.newInstance(this, url)
-        }
-
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-
-        return PendingIntent.getActivity(
-            this, messageId, intent, 0
-        )
     }
 
     private fun handleColor(
