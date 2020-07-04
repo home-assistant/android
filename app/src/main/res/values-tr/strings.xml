@@ -82,4 +82,5 @@
   <string name="manage_ssids_input_exists">Bu SSID zaten var.</string>
   <string name="save">Kaydet</string>
   <string name="cancel">İptal</string>
+  <string name="rate_limit_notification.title">Bildirim Oranı Sınırlı</string>
 </resources>

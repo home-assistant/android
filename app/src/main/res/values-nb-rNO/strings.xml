@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-  <string name="app_name"></string>
+  <string name="app_name">Home Assistant</string>
   <string name="scanning_network">Skanner nettverket
 for Home Assistant</string>
   <string name="home_assistant_not_discover">Kan ikke finne din 
@@ -33,7 +33,7 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="error_connection_failed">Kunne ikke koble til Home Assistant</string>
   <string name="webview_error">Det oppstod en feil under lasting av Home Assistant, vennligst se gjennom tilkoblingsinnstillingene og prøv på nytt.</string>
   <string name="pref_connection_title">Tilkoblingsinformasjon</string>
-  <string name="pref_connection_url"></string>
+  <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Hjemmenettverk WiFi SSID</string>
   <string name="pref_connection_internal">URL for intern tilkobling</string>
   <string name="url_invalid">Ugyldig URL</string>
@@ -62,7 +62,7 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="label_entity_id">Entitets ID:</string>
   <string name="label_label">Etikett:</string>
   <string name="label_icon">Ikon:</string>
-  <string name="label_dynamic_data"></string>
+  <string name="label_dynamic_data">Data:</string>
   <string name="username">Brukernavn</string>
   <string name="password">Passord</string>
   <string name="auth_request">Forespørsel om godkjenning:</string>
@@ -77,14 +77,28 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="lockscreen_title">App låst!</string>
   <string name="lockscreen_message">Trykk for å låse opp:</string>
   <string name="biometric_title">Home Assistant må låses opp</string>
-  <string name="biometric_message">Lås opp med din biometriske eller skjermlås legitimasjon</string>
+  <string name="biometric_message">Lås opp med din biometriske legitimasjon eller skjermlås</string>
   <string name="set_lock_title">Feil ved låsing av app</string>
-  <string name="set_lock_message">Ingen biometrisk sensor eller skjermlås legitimasjon tilgjengelig</string>
+  <string name="set_lock_message">Ingen biometrisk sensor eller skjermlås tilgjengelig</string>
   <string name="lock_title">Lås app</string>
-  <string name="lock_summary">Bruk biometrisk eller skjermlås legitimasjon for å låse opp appen</string>
+  <string name="lock_summary">Bruk biometrisk legitimasjon eller skjermlåsfor å låse opp appen</string>
   <string name="manage_ssids">Administrer SSID(er)</string>
   <string name="manage_ssids_input">Ny WiFi SSID</string>
   <string name="manage_ssids_input_exists">Denne SSID-en eksisterer allerede.</string>
   <string name="save">Lagre</string>
   <string name="cancel">Avbryt</string>
+  <string name="dialog_add_panel_shortcut_title">Legg til snarvei</string>
+  <string name="dialog_add_panel_shortcut_content">Vil du lage en snarvei til dette elementet?</string>
+  <string name="calendar">Kalender</string>
+  <string name="config">Konfigurasjon</string>
+  <string name="developer_tools">Utviklerverktøy</string>
+  <string name="history">Historie</string>
+  <string name="logbook">Loggbok</string>
+  <string name="mailbox">Postkasse</string>
+  <string name="map">Kart</string>
+  <string name="profile">Profil</string>
+  <string name="shopping_list">Handleliste</string>
+  <string name="states">Oversikt</string>
+  <string name="shortcuts">Snarveier</string>
+  <string name="shortcuts_summary">Legg til snarvei</string>
 </resources>
