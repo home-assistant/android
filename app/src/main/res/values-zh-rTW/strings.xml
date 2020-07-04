@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="rate_limit_notification.title">通知配额超限</string>
+  <string name="rate_limit_notification.body">您今天已发送超过%s条通知。您将不会收到新通知，直到世界标准时间的凌晨。</string>
+</resources>

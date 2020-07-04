@@ -32,13 +32,6 @@ integration enabled on your home assistant instance.</string>
   <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
   <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
   <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again.</string>
-  <string name="webview_error_description">Encountered error :</string>
-  <string name="webview_error_SSL_DATE_INVALID">The date of the Home Assistant certificate is invalid, please review the Home Assistant certificate or the connection settings and try again.</string>
-  <string name="webview_error_SSL_EXPIRED">The Home Assistant certificate has expired, please review the Home Assistant certificate or the connection settings and try again.</string>
-  <string name="webview_error_SSL_IDMISMATCH">The Home Assistant Hostname certificate mismatch, please review the Home Assistant certificate or the connection settings and try again.</string>
-  <string name="webview_error_SSL_INVALID">A generic SSL error occured when loading Home Assistant, please review the Home Assistant certificate or the connection settings and try again.</string>
-  <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
-  <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="pref_connection_title">Connection Information</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Home Network WiFi SSID</string>
@@ -80,8 +73,6 @@ like to connect to:</string>
   <string name="event_error">Failed to notify HA of picked option.</string>
   <string name="wait">Wait</string>
   <string name="refresh">Refresh</string>
-  <string name="exit">Exit</string>
-  <string name="settings">Settings</string>
   <string name="pref_connection_ssids_empty">Configure your WiFi SSID(s)</string>
   <string name="lockscreen_title">App Locked !</string>
   <string name="lockscreen_message">Tap to unlock :</string>
@@ -110,4 +101,15 @@ like to connect to:</string>
   <string name="states">Overview</string>
   <string name="shortcuts">Shortcuts</string>
   <string name="shortcuts_summary">Add shortcuts to launcher</string>
+  <string name="rate_limit_notification.title">Notifications Rate Limited</string>
+  <string name="rate_limit_notification.body">You have now sent more than %s notifications today. You will not receive new notifications until midnight UTC.</string>
+  <string name="webview_error_description">Encountered error :</string>
+  <string name="webview_error_SSL_DATE_INVALID">The date of the Home Assistant certificate is invalid, please review the Home Assistant certificate or the connection settings and try again.</string>
+  <string name="webview_error_SSL_EXPIRED">The Home Assistant certificate has expired, please review the Home Assistant certificate or the connection settings and try again.</string>
+  <string name="webview_error_SSL_IDMISMATCH">The Home Assistant Hostname certificate mismatch, please review the Home Assistant certificate or the connection settings and try again.</string>
+  <string name="webview_error_SSL_INVALID">A generic SSL error occured when loading Home Assistant, please review the Home Assistant certificate or the connection settings and try again.</string>
+  <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
+  <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
+  <string name="exit">Exit</string>
+  <string name="settings">Settings</string>
 </resources>

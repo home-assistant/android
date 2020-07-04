@@ -82,4 +82,20 @@
   <string name="manage_ssids_input_exists">Ten SSID już istnieje.</string>
   <string name="save">Zapisz</string>
   <string name="cancel">Anuluj</string>
+  <string name="dialog_add_panel_shortcut_title">Dodaj skrót</string>
+  <string name="dialog_add_panel_shortcut_content">Czy utworzyć skrót do tego elementu?</string>
+  <string name="calendar">Kalendarz</string>
+  <string name="config">Konfiguracja</string>
+  <string name="developer_tools">Narzędzia deweloperskie</string>
+  <string name="history">Historia</string>
+  <string name="logbook">Dziennik</string>
+  <string name="mailbox">Skrzynka pocztowa</string>
+  <string name="map">Mapa</string>
+  <string name="profile">Profil</string>
+  <string name="shopping_list">Lista zakupów</string>
+  <string name="states">Przegląd</string>
+  <string name="shortcuts">Skróty</string>
+  <string name="shortcuts_summary">Dodaj skróty do launchera</string>
+  <string name="rate_limit_notification.title">Notifications Rate Limited</string>
+  <string name="rate_limit_notification.body">Wysłałeś dziś więcej niż %s powiadomień. Nie będziesz otrzymywać nowych powiadomień przed północą czasu UTC.</string>
 </resources>
