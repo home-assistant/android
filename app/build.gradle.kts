@@ -22,6 +22,8 @@ buildscript {
 android {
     compileSdkVersion(Config.Android.compileSdk)
 
+    ndkVersion = Config.Android.ndk
+
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
         minSdkVersion(Config.Android.minSdk)
