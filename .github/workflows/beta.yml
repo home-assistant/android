@@ -3,7 +3,7 @@ name: Beta Deploy
 # Triggers the workflow on push events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches: [ master, feature/githubActions ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -25,7 +25,7 @@ jobs:
 
     # Copy over the mock google-services.json
     - name: Mock debug google-services.json
-      run: mv .travis/mock-google-services.json app/src/debug/google-services.json
+      run: mv .github/mock-google-services.json app/src/debug/google-services.json
 
     - name: Validate ktlint
       run: ./gradlew ktlintCheck

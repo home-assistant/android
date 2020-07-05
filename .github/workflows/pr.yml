@@ -25,7 +25,7 @@ jobs:
   
     # Copy over the mock google-services.json
     - name: Mock google-services.json
-      run: mv .travis/mock-google-services.json app/google-services.json
+      run: mv .github/mock-google-services.json app/google-services.json
 
     - name: Validate ktlint
       run: ./gradlew ktlintCheck
