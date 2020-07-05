@@ -115,6 +115,7 @@ dependencies {
     }
 
     implementation(Config.Dependency.Misc.lokalize)
+    implementation(Config.Dependency.Misc.jackson)
 
     implementation(Config.Dependency.Play.location)
     implementation(Config.Dependency.Firebase.core)
