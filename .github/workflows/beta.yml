@@ -36,6 +36,26 @@ jobs:
     - name: Validate Tests
       run: ./gradlew test
   
+    - name: Inflate release_keystore.keystore
+      env:
+        KEYSTORE: ${{ secrets.KEYSTORE_FILE }}
+      run: echo $KEYSTORE | base64 --decode > app/release_keystore.keystore
+
+    - name: Inflate google-services.json
+      env:
+        GOOGLE_SERVICES: ${{ secrets.GoogleServices }}
+      run: echo $GOOGLE_SERVICES > app/google-services.json
+   
+    - name: Inflate firebaseAppDistributionServiceCredentialsFile.json
+      env:
+        CREDS: ${{ secrets.FirebaseCreds }}
+      run: echo $CREDS > firebaseAppDistributionServiceCredentialsFile.json
+      
+    - name: Inflate playStorePublishServiceCredentialsFile.json
+      env:
+        CREDS: ${{ secrets.PlaystoreCreds }}
+      run: echo $CREDS > app/playStorePublishServiceCredentialsFile.json
+
     - name: Build Release
       env:
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -49,26 +69,6 @@ jobs:
         git log --format=%s | head -n 1 > app/src/main/play/release-notes/en-US/default.txt
         previous=`git tag -l --sort=-creatordate | head -n 1`
         echo "Diff from production: https://github.com/home-assistant/home-assistant-android/compare/${previous}...master" >> app/src/main/play/release-notes/en-US/default.txt 
-  
-    - name: Inflate google-services.json
-      env:
-        GOOGLE_SERVICES: ${{ secrets.GoogleServices }}
-      run: echo $GOOGLE_SERVICES > app/google-services.json
-   
-    - name: Inflate release_keystore.keystore
-      env:
-        KEYSTORE: ${{ secrets.UploadKeystore }}
-      run: echo $KEYSTORE > app/release_keystore.keystore
-   
-    - name: Inflate firebaseAppDistributionServiceCredentialsFile.json
-      env:
-        CREDS: ${{ secrets.FirebaseCreds }}
-      run: echo $CREDS > firebaseAppDistributionServiceCredentialsFile.json
-      
-    - name: Inflate playStorePublishServiceCredentialsFile.json
-      env:
-        CREDS: ${{ secrets.PlaystoreCreds }}
-      run: echo $CREDS > app/playStorePublishServiceCredentialsFile.json
       
     - name: Deploy to Firebase
       run: ./gradlew appDistributionUploadRelease
