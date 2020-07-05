@@ -76,8 +76,9 @@ like to connect to:</string>
   <string name="pref_connection_ssids_empty">Configure your WiFi SSID(s)</string>
   <string name="lockscreen_title">App Locked !</string>
   <string name="lockscreen_message">Tap to unlock :</string>
-  <string name="biometric_title">Home Assistant need to be unlock</string>
+  <string name="biometric_title">Home Assistant is locked</string>
   <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
+  <string name="biometric_set_title">Confirm to continue</string>
   <string name="set_lock_title">App Locking Error</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
   <string name="lock_title">Lock app</string>
@@ -101,6 +102,7 @@ like to connect to:</string>
   <string name="states">Overview</string>
   <string name="shortcuts">Shortcuts</string>
   <string name="shortcuts_summary">Add shortcuts to launcher</string>
+  <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="rate_limit_notification.title">Notifications Rate Limited</string>
   <string name="rate_limit_notification.body">You have now sent more than %s notifications today. You will not receive new notifications until midnight UTC.</string>
   <string name="webview_error_description">Encountered error :</string>

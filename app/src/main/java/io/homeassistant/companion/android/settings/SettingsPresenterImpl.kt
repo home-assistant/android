@@ -59,6 +59,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "connection_internal" -> (urlUseCase.getUrl(true) ?: "").toString()
                 "connection_external" -> (urlUseCase.getUrl(false) ?: "").toString()
                 "registration_name" -> integrationUseCase.getRegistration().deviceName
+                "session_timeout" -> integrationUseCase.getSessionTimeOut().toString()
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -69,6 +70,7 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "connection_internal" -> urlUseCase.saveUrl(value ?: "", true)
                 "connection_external" -> urlUseCase.saveUrl(value ?: "", false)
+                "session_timeout" -> integrationUseCase.sessionTimeOut(value.toString().toInt())
                 "registration_name" -> {
                     try {
                         integrationUseCase.updateRegistration(deviceName = value!!)
@@ -98,6 +100,24 @@ class SettingsPresenterImpl @Inject constructor(
                     urlUseCase.saveHomeWifiSsids(ssids)
                     handleInternalUrlStatus(ssids)
                 }
+            }
+        }
+    }
+
+    override fun getInt(key: String, defValue: Int): Int {
+        return runBlocking {
+            when (key) {
+                "session_timeout" -> integrationUseCase.getSessionTimeOut()
+                else -> throw IllegalArgumentException("No int found by this key: $key")
+            }
+        }
+    }
+
+    override fun putInt(key: String, value: Int) {
+        mainScope.launch {
+            when (key) {
+                "session_timeout" -> integrationUseCase.sessionTimeOut(value)
+                else -> throw IllegalArgumentException("No int found by this key: $key")
             }
         }
     }
@@ -134,6 +154,30 @@ class SettingsPresenterImpl @Inject constructor(
                 Log.e(SettingsPresenterImpl.TAG, "Issue getting panels.", e)
             }
             panels
+        }
+    }
+
+    override fun isLockEnabled(): Boolean {
+        return runBlocking {
+            authenticationUseCase.isLockEnabled()
+        }
+    }
+
+    override fun sessionTimeOut(): Int {
+        return runBlocking {
+            integrationUseCase.getSessionTimeOut()
+        }
+    }
+
+    override fun setSessionExpireMillis(value: Long) {
+        mainScope.launch {
+            integrationUseCase.setSessionExpireMillis(value)
+        }
+    }
+
+    override fun getSessionExpireMillis(): Long {
+        return runBlocking {
+            integrationUseCase.getSessionExpireMillis()
         }
     }
 }

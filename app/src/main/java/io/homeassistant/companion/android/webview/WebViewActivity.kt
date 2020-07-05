@@ -35,10 +35,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
+import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
@@ -46,6 +48,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.activity_webview.*
 import org.json.JSONObject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -70,12 +73,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
     private lateinit var myCustomView: View
+    private lateinit var authenticator: Authenticator
 
     private var isConnected = false
     private var isShowingError = false
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
+    private var unlocked = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,6 +101,16 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
         }
+
+        blurView.setupWith(root)
+            .setBlurAlgorithm(RenderScriptBlur(this))
+            .setBlurRadius(5f)
+            .setHasFixedTransformationMatrix(false)
+
+        if (!presenter.isLockEnabled())
+            blurView.setBlurEnabled(false)
+
+        authenticator = Authenticator(this, this, ::authenticationResult)
 
         decor = window.decorView as FrameLayout
 
@@ -307,11 +322,27 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
 
+    private fun authenticationResult(result: Int) {
+        if (result == Authenticator.SUCCESS) {
+            unlocked = true
+            blurView.setBlurEnabled(false)
+        } else if (result == Authenticator.CANCELED)
+            finishAffinity()
+        else authenticator.authenticate()
+    }
+
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
+            if (presenter.isLockEnabled() && !unlocked)
+                if ((System.currentTimeMillis() > presenter.getSessionExpireMillis())) {
+                    blurView.setBlurEnabled(true)
+                    authenticator.authenticate()
+                } else blurView.setBlurEnabled(false)
+
             presenter.onViewReady(intent.getStringExtra(EXTRA_PATH))
             intent.removeExtra(EXTRA_PATH)
+
             if (presenter.isFullScreen())
                 hideSystemUI()
             else
@@ -320,7 +351,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun hideSystemUI() {
-
         if (isCutout())
             decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
@@ -368,6 +398,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
+        presenter.setSessionExpireMillis((System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)))
+        unlocked = false
         videoHeight = decor.height
         var bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen) {

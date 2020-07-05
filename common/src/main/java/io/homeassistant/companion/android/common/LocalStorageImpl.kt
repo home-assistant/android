@@ -29,6 +29,22 @@ class LocalStorageImpl(private val sharedPreferences: SharedPreferences) : Local
         }
     }
 
+    override suspend fun putInt(key: String, value: Int?) {
+        if (value == null) {
+            sharedPreferences.edit().remove(key).apply()
+        } else {
+            sharedPreferences.edit().putInt(key, value).apply()
+        }
+    }
+
+    override suspend fun getInt(key: String): Int? {
+        return if (sharedPreferences.contains(key)) {
+            sharedPreferences.getInt(key, 0)
+        } else {
+            null
+        }
+    }
+
     override suspend fun putBoolean(key: String, value: Boolean) {
         sharedPreferences.edit().putBoolean(key, value).apply()
     }

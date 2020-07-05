@@ -4,5 +4,7 @@ interface LaunchPresenter {
 
     fun onViewReady()
 
+    fun setSessionExpireMillis(value: Long)
+
     fun onFinish()
 }
