@@ -16,6 +16,8 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     # Make sure we have the correct JDK setup
     - name: Set up JDK 1.8
