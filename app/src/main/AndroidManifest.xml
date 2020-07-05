@@ -76,6 +76,16 @@
             android:enabled="true"
             android:exported="true" />
 
+        <receiver
+            android:name=".notifications.NotificationDeleteReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
+        <receiver
+            android:name=".notifications.NotificationContentReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
         <activity android:name=".launch.LaunchActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

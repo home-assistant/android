@@ -83,4 +83,20 @@ instancia de Home Assistant</string>
   <string name="manage_ssids_input_exists">Este SSID ya existe.</string>
   <string name="save">Guardar</string>
   <string name="cancel">Cancelar</string>
+  <string name="dialog_add_panel_shortcut_title">Añadir Acceso Directo</string>
+  <string name="dialog_add_panel_shortcut_content">¿Crear un acceso directo a este elemento?</string>
+  <string name="calendar">Calendario</string>
+  <string name="config">Configuración</string>
+  <string name="developer_tools">Herramientas para desarrolladores</string>
+  <string name="history">Historial</string>
+  <string name="logbook">Registro</string>
+  <string name="mailbox">Buzón</string>
+  <string name="map">Mapa</string>
+  <string name="profile">Perfil</string>
+  <string name="shopping_list">Lista de la Compra</string>
+  <string name="states">Resumen</string>
+  <string name="shortcuts">Accesos directos</string>
+  <string name="shortcuts_summary">Agregar accesos directos al lanzador</string>
+  <string name="rate_limit_notification.title">Notifications Rate Limited</string>
+  <string name="rate_limit_notification.body">Has enviado más de %s notificaciones hoy. No recibirás nuevas notificaciones hasta la medianoche UTC.</string>
 </resources>

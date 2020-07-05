@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
   <string name="app_name">Home Assistant</string>
-  <string name="scanning_network">Ricerca Home Assistant in corso.
+  <string name="scanning_network">Ricerca di Home Assistant in corso.
 Scansione della rete</string>
-  <string name="home_assistant_not_discover">Impossibile trovate 
-il tuo Home Assistant</string>
-  <string name="connect_to_home_internet">Assicurati che il telefono sia collegato 
-a Internet di casa tua.</string>
+  <string name="home_assistant_not_discover">Impossibile trovare la tua 
+istanza di Home Assistant</string>
+  <string name="connect_to_home_internet">Assicurati che il tuo telefono sia collegato 
+alla rete Internet di casa tua.</string>
   <string name="scan_again">Cerca di nuovo</string>
-  <string name="manual_setup">inserisci l\'indirizzo manualmente</string>
+  <string name="manual_setup">Inserisci l\'indirizzo manualmente</string>
   <string name="input_url">URL Home Assistant</string>
   <string name="input_url_hint">https://esempio.duckdns.org:8123</string>
   <string name="status_of_mobile_app_integration">Stato integrazione della mobile app:</string>
-  <string name="checking_with_home_assistant">Verifica Home Assistant in corso</string>
+  <string name="checking_with_home_assistant">Verifica con Home Assistant</string>
   <string name="skip">Salta</string>
   <string name="retry">Riprova</string>
   <string name="attempting_registration">Registrazione dell\'applicazione in corso...</string>
@@ -73,17 +73,33 @@ sulla tua istanza di Home Assistant.</string>
   <string name="wait">Attendere</string>
   <string name="refresh">Aggiorna</string>
   <string name="pref_connection_ssids_empty">Configura i tuoi SSID WiFi</string>
-  <string name="lockscreen_title">App bloccata!</string>
+  <string name="lockscreen_title">App bloccata !</string>
   <string name="lockscreen_message">Tocca per sbloccare:</string>
   <string name="biometric_title">Home Assistant deve essere sbloccato</string>
-  <string name="biometric_message">Sbloccate usando la vostra credenziale biometrica o il blocca schermo</string>
-  <string name="set_lock_title">Errore di blocco dell\'applicazione</string>
+  <string name="biometric_message">Sbloccare usando le credenziali biometriche o del blocca schermo</string>
+  <string name="set_lock_title">Errore di blocco dell\'app</string>
   <string name="set_lock_message">Nessun sensore biometrico o credenziali del blocca schermo disponibili</string>
-  <string name="lock_title">Blocca l\'applicazione</string>
-  <string name="lock_summary">Usa le credenziali biometriche o dello blocca schermo per sbloccare l\'applicazione</string>
+  <string name="lock_title">Blocca l\'app</string>
+  <string name="lock_summary">Usa le credenziali biometriche o del blocca schermo per sbloccare l\'app</string>
   <string name="manage_ssids">Gestisci SSID</string>
   <string name="manage_ssids_input">Nuovo SSID WiFi</string>
   <string name="manage_ssids_input_exists">Questo SSID è già esistente.</string>
   <string name="save">Salva</string>
   <string name="cancel">Annulla</string>
+  <string name="dialog_add_panel_shortcut_title">Aggiungi collegamento</string>
+  <string name="dialog_add_panel_shortcut_content">Creare un collegamento a questo elemento?</string>
+  <string name="calendar">Calendario</string>
+  <string name="config">Configurazione</string>
+  <string name="developer_tools">Strumenti per sviluppatori</string>
+  <string name="history">Storico</string>
+  <string name="logbook">Registro</string>
+  <string name="mailbox">Messaggi</string>
+  <string name="map">Mappa</string>
+  <string name="profile">Profilo</string>
+  <string name="shopping_list">Lista della spesa</string>
+  <string name="states">Panoramica</string>
+  <string name="shortcuts">Collegamenti</string>
+  <string name="shortcuts_summary">Aggiungi collegamento al launcher</string>
+  <string name="rate_limit_notification.title">Tasso delle notifiche limitato</string>
+  <string name="rate_limit_notification.body">Oggi hai inviato più di %s notifiche. Non riceverai nuove notifiche fino a mezzanotte UTC.</string>
 </resources>

@@ -83,4 +83,19 @@
   <string name="manage_ssids_input_exists">Этот SSID уже существует.</string>
   <string name="save">Сохранить</string>
   <string name="cancel">Отменить</string>
+  <string name="dialog_add_panel_shortcut_title">Добавить Ярлык</string>
+  <string name="dialog_add_panel_shortcut_content">Создать ярлык для этого элемента?</string>
+  <string name="calendar">Календарь</string>
+  <string name="config">Настройки</string>
+  <string name="developer_tools">Инструменты разработчика</string>
+  <string name="history">История</string>
+  <string name="logbook">Журнал</string>
+  <string name="mailbox">Почтовый ящик</string>
+  <string name="map">Карта</string>
+  <string name="profile">Профиль</string>
+  <string name="shopping_list">Список покупок</string>
+  <string name="states">Обзор</string>
+  <string name="shortcuts">Ярлыки</string>
+  <string name="shortcuts_summary">Создание ярлыков на главном экране</string>
+  <string name="rate_limit_notification.title">Notifications Rate Limited</string>
 </resources>
