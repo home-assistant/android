@@ -71,7 +71,15 @@ jobs:
         echo "Diff from production: https://github.com/home-assistant/home-assistant-android/compare/${previous}...master" >> app/src/main/play/release-notes/en-US/default.txt 
       
     - name: Deploy to Firebase
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+        KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
       run: ./gradlew appDistributionUploadRelease
 
     - name: Deploy to Playstore Beta
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+        KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
       run: ./gradlew publishReleaseBundle
