@@ -35,3 +35,11 @@ jobs:
     
     - name: Validate Tests
       run: ./gradlew test
+    
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+    
+    - name: Archive Debug Build
+      uses: actions/upload-artifact@v2
+      with:
+        path: ./app/build/outputs/apk/debug/app-debug.apk
