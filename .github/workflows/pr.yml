@@ -1,0 +1,45 @@
+name: Pull Request
+
+# Triggers the workflow on pull request events but only for the master branch
+on:
+  pull_request:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  validate:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+
+    # Make sure we have the correct JDK setup
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+  
+    # Copy over the mock google-services.json
+    - name: Mock google-services.json
+      run: mv .github/mock-google-services.json app/google-services.json
+
+    - name: Validate ktlint
+      run: ./gradlew ktlintCheck
+    
+    - name: Validate Lint
+      run: ./gradlew lint 
+    
+    - name: Validate Tests
+      run: ./gradlew test
+    
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+    
+    - name: Archive Debug Build
+      uses: actions/upload-artifact@v2
+      with:
+        path: ./app/build/outputs/apk/debug/app-debug.apk
