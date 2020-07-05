@@ -52,6 +52,11 @@
             android:icon="@drawable/ic_lock"
             android:title="@string/lock_title"
             android:summary="@string/lock_summary"/>
+        <EditTextPreference
+            android:key="session_timeout"
+            android:icon="@drawable/ic_timeout"
+            android:title="@string/session_timeout_title"
+            app:useSimpleSummaryProvider="true"/>
         <Preference
             android:key="shortcuts"
             android:icon="@drawable/ic_plus"

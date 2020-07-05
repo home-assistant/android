@@ -96,6 +96,8 @@ dependencies {
     implementation(project(":common"))
     implementation(project(":domain"))
 
+    implementation(Config.Dependency.Misc.blurView)
+
     implementation(Config.Dependency.Kotlin.core)
     implementation(Config.Dependency.Kotlin.coroutines)
     implementation(Config.Dependency.Kotlin.coroutinesAndroid)

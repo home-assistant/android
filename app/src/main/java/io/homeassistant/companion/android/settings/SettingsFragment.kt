@@ -4,16 +4,17 @@ import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
-import androidx.core.content.ContextCompat
+import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
+import eightbitlab.com.blurview.BlurView
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
@@ -32,6 +33,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     @Inject
     lateinit var presenter: SettingsPresenter
+    private lateinit var authenticator: Authenticator
+    private lateinit var blurView: BlurView
+    private var unlocked = false
+    private var setLock = false
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerPresenterComponent
@@ -40,6 +45,16 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
+
+        blurView = requireActivity().findViewById(R.id.blurView)
+
+        blurView.setupWith(requireActivity().findViewById(R.id.content))
+            .setOverlayColor(resources.getColor(R.color.colorOnPrimary))
+
+        if (!presenter.isLockEnabled())
+            blurView.setBlurEnabled(false)
+
+        authenticator = Authenticator(requireContext(), requireActivity(), ::authenticationResult)
 
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
@@ -63,9 +78,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 isValid = true
             else {
                 isValid = true
-                if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-                    promptForUnlock()
-                else {
+                if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
+                    setLock = true
+                    authenticator.title = getString(R.string.biometric_set_title)
+                    authenticator.authenticate()
+                } else {
                     isValid = false
                     AlertDialog.Builder(requireActivity())
                         .setTitle(R.string.set_lock_title)
@@ -160,30 +177,36 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
-    private fun promptForUnlock() {
-        val executor = ContextCompat.getMainExecutor(requireActivity())
+    override fun onResume() {
+        super.onResume()
+        if (presenter.isLockEnabled() && !unlocked)
+            if (System.currentTimeMillis() > presenter.getSessionExpireMillis()) {
+                blurView.setBlurEnabled(true)
+                setLock = false
+                authenticator.title = getString(R.string.biometric_title)
+                authenticator.authenticate()
+            } else blurView.setBlurEnabled(false)
+    }
+
+    override fun onPause() {
+        presenter.setSessionExpireMillis((System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)))
+        unlocked = false
+        super.onPause()
+    }
+
+    private fun authenticationResult(result: Int) {
         val switchLock = findPreference<SwitchPreference>("app_lock")
-        val biometricPrompt = BiometricPrompt(requireActivity(), executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationError(
-                    errorCode: Int,
-                    errString: CharSequence
-                ) {
-                    super.onAuthenticationError(errorCode, errString)
-                    switchLock?.isChecked = false
-                }
-
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                    switchLock?.isChecked = false
-                }
-            })
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(requireActivity().resources.getString(R.string.biometric_title))
-            .setSubtitle(requireActivity().resources.getString(R.string.biometric_message))
-            .setDeviceCredentialAllowed(true)
-            .build()
-
-        biometricPrompt.authenticate(promptInfo)
+        if (result == Authenticator.SUCCESS) {
+            if (!setLock) {
+                unlocked = true
+                blurView.setBlurEnabled(false)
+            } else switchLock?.isChecked = true
+        } else {
+            switchLock?.isChecked = false
+            if (result == Authenticator.CANCELED) {
+                if (!setLock)
+                    finishAffinity(requireActivity())
+            } else authenticator.authenticate()
+        }
     }
 }

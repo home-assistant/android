@@ -96,16 +96,17 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
-        
+
         <activity
             android:name=".onboarding.OnboardingActivity"
             android:configChanges="orientation|screenSize|keyboardHidden" />
-        <activity android:name=".lock.LockActivity"/>
+        
         <activity
             android:name=".webview.WebViewActivity"
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout" />
+
         <activity
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity" />

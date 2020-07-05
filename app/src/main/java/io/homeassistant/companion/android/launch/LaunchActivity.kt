@@ -9,7 +9,6 @@ import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.lock.LockActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject
@@ -31,12 +30,8 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         presenter.onViewReady()
     }
 
-    override fun displayLockView() {
-        startActivity(LockActivity.newInstance(this))
-        finish()
-    }
-
     override fun displayWebview() {
+        presenter.setSessionExpireMillis(0)
         startActivity(WebViewActivity.newInstance(this))
         finish()
     }
