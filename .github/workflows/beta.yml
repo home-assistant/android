@@ -24,7 +24,7 @@ jobs:
         java-version: 1.8
     
     - name: Set Build Number
-      run: echo "::set-env name=VERSION_CODE::$(git rev-list --count HEAD)"
+      run: echo ::set-env name=VERSION_CODE::$(git rev-list --count HEAD)
 
     # Copy over the mock google-services.json
     - name: Mock debug google-services.json
@@ -68,6 +68,7 @@ jobs:
   
     - name: Create Release Notes
       run: |
+        echo 'Creating release notes for build ' $VERSION_CODE
         mkdir -p app/src/main/play/release-notes/en-US/
         git log --format=%s | head -n 1 > app/src/main/play/release-notes/en-US/default.txt
         previous=`git tag -l --sort=-creatordate | head -n 1`
