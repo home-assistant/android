@@ -15,7 +15,7 @@ If you are looking for documentation around the companion applications check out
 
 - Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder
 
-  [You can also use the mock services file instead of generating your own](/.travis/mock-google-services.json)
+  [You can also use the mock services file instead of generating your own](/.github/mock-google-services.json)
   The file should contain client IDs for `io.homeassistant.companion.android` and `io.homeassistant.companion.android.debug` for debugging to work properly.  **If you do not generate your own file push notification will never work**
 
 - Start Android Studio, open your source code folder and check if the Gradle build will be successful
@@ -54,11 +54,10 @@ The project currently uses [lokalise](https://lokalise.com/public/145814835dd655
 
 
 ## Generating a release to production
-Edit the build number in `/app/build.gradle` to your desired version.  Be sure to leave `${vCode}`!!
-
+Update Config.kt with new Version:
 ```kotlin
-def vName = "X.X.X-${vCode}"
+const val version = "X.X.X"
 ```
-Merge that into master and allow the build to complete and validate on the beta channel. (Deploy there automatic)
+Add release in Github, then log into play store and promote beta to production.
 
-Once ready to move to production tag the master branch and travis will start the promotion from beta -> production.
+Automation TBD after changes to Github Actions
