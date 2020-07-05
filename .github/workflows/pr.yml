@@ -1,4 +1,4 @@
-name: CI
+name: Pull Request
 
 #Triggers the workflow on push or pull request events but only for the master branch
 on:
@@ -29,5 +29,11 @@ jobs:
     - name: Mock google-services.json
       run: mv .travis/mock-google-services.json app/google-services.json
 
-    - name: Validate PR
-      run: ./gradlew test lint ktlintCheck
+    - name: Validate ktlint
+      run: ./gradlew ktlintCheck
+    
+    - name: Validate Lint
+      run: ./gradlew lint 
+    
+    - name: Validate Tests
+      run: ./gradlew test
