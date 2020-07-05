@@ -37,6 +37,10 @@ jobs:
       run: ./gradlew test
   
     - name: Build Release
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+        KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
       run: ./gradlew assembleRelease
   
     - name: Create Release Notes
