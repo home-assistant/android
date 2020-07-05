@@ -27,15 +27,6 @@ jobs:
     - name: Mock debug google-services.json
       run: mv .github/mock-google-services.json app/src/debug/google-services.json
 
-    - name: Validate ktlint
-      run: ./gradlew ktlintCheck
-
-    - name: Validate Lint
-      run: ./gradlew lint 
-
-    - name: Validate Tests
-      run: ./gradlew test
-  
     - name: Inflate release_keystore.keystore
       env:
         KEYSTORE: ${{ secrets.KEYSTORE_FILE }}
@@ -55,6 +46,15 @@ jobs:
       env:
         CREDS: ${{ secrets.PlaystoreCreds }}
       run: echo $CREDS > app/playStorePublishServiceCredentialsFile.json
+
+    - name: Validate ktlint
+      run: ./gradlew ktlintCheck
+
+    - name: Validate Lint
+      run: ./gradlew lint
+
+    - name: Validate Tests
+      run: ./gradlew test
 
     - name: Build Release
       env:
