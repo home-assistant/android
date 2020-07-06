@@ -8,4 +8,9 @@ interface SettingsPresenter {
     fun onCreate()
     fun onFinish()
     fun getPanels(): Array<Panel>
+    fun isLockEnabled(): Boolean
+    fun sessionTimeOut(): Int
+
+    fun setSessionExpireMillis(value: Long)
+    fun getSessionExpireMillis(): Long
 }

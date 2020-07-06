@@ -1,5 +1,4 @@
 object Config {
-    const val version = "1.9.0"
 
     object Plugin {
         const val android = "com.android.tools.build:gradle:4.0.0"
@@ -21,6 +20,7 @@ object Config {
         const val compileSdk = 29
         const val minSdk = 21
         const val targetSdk = 29
+        const val ndk = "21.3.6528147"
     }
 
     object Dependency {
@@ -99,6 +99,7 @@ object Config {
             const val threeTenBp = "org.threeten:threetenbp:1.4.0"
             const val threeTenAbp = "com.jakewharton.threetenabp:threetenabp:1.2.1"
             const val javaxInject = "javax.inject:javax.inject:1"
+            const val blurView = "com.eightbitlab:blurview:1.6.3"
         }
     }
 

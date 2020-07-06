@@ -4,8 +4,6 @@ import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
-import androidx.core.content.ContextCompat
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -14,6 +12,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
@@ -32,6 +31,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     @Inject
     lateinit var presenter: SettingsPresenter
+    private lateinit var authenticator: Authenticator
+    private var setLock = false
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerPresenterComponent
@@ -40,6 +41,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
+
+        authenticator = Authenticator(requireContext(), requireActivity(), ::authenticationResult)
 
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
@@ -63,9 +66,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 isValid = true
             else {
                 isValid = true
-                if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS)
-                    promptForUnlock()
-                else {
+                if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
+                    setLock = true
+                    authenticator.title = getString(R.string.biometric_set_title)
+                    authenticator.authenticate()
+                } else {
                     isValid = false
                     AlertDialog.Builder(requireActivity())
                         .setTitle(R.string.set_lock_title)
@@ -160,30 +165,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
-    private fun promptForUnlock() {
-        val executor = ContextCompat.getMainExecutor(requireActivity())
+    private fun authenticationResult(result: Int) {
         val switchLock = findPreference<SwitchPreference>("app_lock")
-        val biometricPrompt = BiometricPrompt(requireActivity(), executor,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationError(
-                    errorCode: Int,
-                    errString: CharSequence
-                ) {
-                    super.onAuthenticationError(errorCode, errString)
-                    switchLock?.isChecked = false
-                }
-
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                    switchLock?.isChecked = false
-                }
-            })
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(requireActivity().resources.getString(R.string.biometric_title))
-            .setSubtitle(requireActivity().resources.getString(R.string.biometric_message))
-            .setDeviceCredentialAllowed(true)
-            .build()
-
-        biometricPrompt.authenticate(promptInfo)
+        switchLock?.isChecked = result == Authenticator.SUCCESS
     }
 }

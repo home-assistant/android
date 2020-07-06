@@ -1,0 +1,102 @@
+name: Beta Deploy
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  beta_deploy:
+    name: Beta Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      - name: Set Build Number
+        run: |
+          VERSION=`git describe --tags`
+          echo ::set-env name=VERSION::$VERSION
+          COMMITS=`git rev-list --count HEAD`
+          TAGS=`git tag | wc -l`
+          VC=$((COMMITS+TAGS))
+          echo Number Commits $COMMITS
+          echo Number Tags $TAGS
+          echo Version $VERSION
+          echo Version Code $VC
+          echo ::set-env name=VERSION_CODE::$VC
+
+      - name: Mock debug google-services.json
+        run: mv .github/mock-google-services.json app/src/debug/google-services.json
+
+      - name: Inflate release_keystore.keystore
+        env:
+          KEYSTORE: ${{ secrets.KEYSTORE_FILE }}
+        run: echo $KEYSTORE | base64 --decode > app/release_keystore.keystore
+
+      - name: Inflate google-services.json
+        env:
+          GOOGLE_SERVICES: ${{ secrets.GoogleServices }}
+        run: echo $GOOGLE_SERVICES > app/google-services.json
+
+      - name: Inflate firebaseAppDistributionServiceCredentialsFile.json
+        env:
+          CREDS: ${{ secrets.FirebaseCreds }}
+        run: echo $CREDS > firebaseAppDistributionServiceCredentialsFile.json
+
+      - name: Inflate playStorePublishServiceCredentialsFile.json
+        env:
+          CREDS: ${{ secrets.PlaystoreCreds }}
+        run: echo $CREDS > app/playStorePublishServiceCredentialsFile.json
+
+      - name: Validate ktlint
+        run: ./gradlew ktlintCheck
+
+      - name: Validate Lint
+        run: ./gradlew lint
+
+      - name: Validate Tests
+        run: ./gradlew test
+
+      - name: Build Release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Create Release Notes
+        run: |
+          mkdir -p app/src/main/play/release-notes/en-US/
+          git log --format=%s | head -n 1 > app/src/main/play/release-notes/en-US/default.txt
+          previous=`git tag -l --sort=-creatordate | head -n 1`
+          echo "Diff from production: https://github.com/home-assistant/android/compare/${previous}...master" >> app/src/main/play/release-notes/en-US/default.txt
+
+      - name: Deploy to Firebase
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+        run: ./gradlew appDistributionUploadRelease
+
+      - name: Deploy to Playstore Beta
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+        run: ./gradlew publishReleaseBundle
+
+  release_draft:
+    name: Update Release Draft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release Drafter
+        uses: release-drafter/release-drafter@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

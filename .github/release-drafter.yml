@@ -1,0 +1,29 @@
+name-template: '$RESOLVED_VERSION'
+tag-template: '$RESOLVED_VERSION'
+categories:
+  - title: 'Features'
+    labels:
+      - 'enhancement'
+  - title: 'Bug Fixes'
+    labels:
+      - 'bug'
+  - title: 'Miscellaneous'
+    labels:
+      - 'misc'
+version-resolver:
+  major:
+    labels:
+      - 'major'
+  minor:
+    labels:
+      - 'minor'
+  patch:
+    labels:
+      - 'patch'
+  default: patch
+template: |
+  # What's New
+
+  $CHANGES
+
+  Diff since last release: https://github.com/home-assistant/android/compare/$PREVIOUS_TAG...$RESOLVED_VERSION

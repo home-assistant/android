@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="rate_limit_notification.title">Ilmoitusmäärän rajoitus</string>
+  <string name="rate_limit_notification.body">Olet nyt lähettänyt yli %s ilmoitusta tänään. Et tule saamaan uusia ilmoituksia ennen keskiyön jälkeen (UTC).</string>
+</resources>
