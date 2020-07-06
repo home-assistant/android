@@ -1,5 +1,4 @@
 object Config {
-    const val version = "1.10.0"
 
     object Plugin {
         const val android = "com.android.tools.build:gradle:4.0.0"

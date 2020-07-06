@@ -1,14 +1,13 @@
-name: Beta Deploy
+name: Production Deploy
 
 on:
-  push:
-    branches: [ master ]
+  release:
+    types: [ published ]
 
 jobs:
-  beta_deploy:
-    name: Beta Deploy
+  prod_deploy:
+    name: Production Deploy
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
         with:
@@ -73,10 +72,9 @@ jobs:
 
       - name: Create Release Notes
         run: |
-          mkdir -p app/src/main/play/release-notes/en-US/
-          git log --format=%s | head -n 1 > app/src/main/play/release-notes/en-US/default.txt
-          previous=`git tag -l --sort=-creatordate | head -n 1`
-          echo "Diff from production: https://github.com/home-assistant/android/compare/${previous}...master" >> app/src/main/play/release-notes/en-US/default.txt
+          previous=`git tag -l --sort=-creatordate | head -n 2 | tail -n 1`
+          current=`git tag -l --sort=-creatordate | head -n 1`
+          echo "Full release change log: https://github.com/home-assistant/android/releases/tag/${current}" > app/src/main/play/release-notes/en-US/default.txt
 
       - name: Deploy to Firebase
         env:
@@ -92,11 +90,9 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
         run: ./gradlew publishReleaseBundle
 
-  release_draft:
-    name: Update Release Draft
-    runs-on: ubuntu-latest
-    steps:
-      - name: Release Drafter
-        uses: release-drafter/release-drafter@v5
+      - name: Promote to Beta to Production
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+        run: ./gradlew promoteArtifact --from-track beta --promote-track production
