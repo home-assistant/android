@@ -7,7 +7,9 @@
   <string name="application_version">Application Version</string>
   <string name="attempting_registration">Registering application…</string>
   <string name="auth_cancel">Authentication Cancelled</string>
-  <string name="auth_request">Authentication Requested:</string>
+  <string name="auth_error">Authentication Error</string>
+  <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
+  <string name="auth_request">Authentication Requested</string>
   <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
   <string name="biometric_set_title">Confirm to continue</string>
   <string name="biometric_title">Home Assistant need to be unlock</string>
@@ -60,6 +62,7 @@ Home Assistant instance</string>
   <string name="manage_ssids_input_exists">This SSID already exists.</string>
   <string name="manual_setup">enter address manually</string>
   <string name="map">Map</string>
+  <string name="not_private">Your connection to this site is not private.</string>
   <string name="other_settings">Other Settings</string>
   <string name="password">Password</string>
   <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
@@ -76,6 +79,7 @@ Home Assistant instance</string>
   <string name="rate_limit_notification.body">You have now sent more than %s notifications today. You will not receive new notifications until midnight UTC.</string>
   <string name="rate_limit_notification.title">Notifications Rate Limited</string>
   <string name="refresh">Refresh</string>
+  <string name="required_fields">requires a username and password.</string>
   <string name="retry">Retry</string>
   <string name="save">Save</string>
   <string name="scan_again">scan again</string>

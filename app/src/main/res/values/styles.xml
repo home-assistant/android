@@ -38,4 +38,9 @@
 
     <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert" />
 
+    <style name="Authentication_Dialog" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="windowMinWidthMajor">300dp</item>
+        <item name="windowMinWidthMinor">0dp</item>
+    </style>
+
 </resources>

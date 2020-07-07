@@ -114,6 +114,10 @@ dependencies {
     implementation(Config.Dependency.AndroidX.preference)
     implementation(Config.Dependency.Google.material)
 
+    implementation(Config.Dependency.AndroidX.roomRuntime)
+    implementation(Config.Dependency.AndroidX.roomKtx)
+    kapt(Config.Dependency.AndroidX.roomCompiler)
+
     implementation(Config.Dependency.Misc.threeTenAbp) {
         exclude(group = "org.threeten")
     }

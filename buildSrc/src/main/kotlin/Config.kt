@@ -43,6 +43,7 @@ object Config {
         }
 
         object AndroidX {
+
             const val appcompat = "androidx.appcompat:appcompat:1.1.0"
             const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
             const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"
@@ -51,6 +52,11 @@ object Config {
 
             const val workManager = "androidx.work:work-runtime-ktx:2.3.4"
             const val biometric = "androidx.biometric:biometric:1.0.1"
+
+            private const val roomVersion = "2.2.5"
+            const val roomRuntime = "androidx.room:room-runtime:${roomVersion}"
+            const val roomKtx = "androidx.room:room-ktx:${roomVersion}"
+            const val roomCompiler = "androidx.room:room-compiler:${roomVersion}"
         }
 
         object Play {
