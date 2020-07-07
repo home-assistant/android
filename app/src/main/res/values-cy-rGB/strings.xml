@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-  <string name="rate_limit_notification.title">Cyfradd hysbysiadau wedi\'i chyfyngeu</string>
   <string name="rate_limit_notification.body">Rydych bellach wedi anfon mwy na %s hysbysiad heddiw. Ni fyddwch yn derbyn hysbysiadau newydd tan hanner nos UTC.</string>
+  <string name="rate_limit_notification.title">Cyfradd hysbysiadau wedi\'i chyfyngeu</string>
 </resources>
