@@ -10,7 +10,8 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
-import com.google.gson.Gson
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
@@ -168,9 +169,9 @@ class ButtonWidget : AppWidgetProvider() {
             } else {
                 // If everything loaded correctly, package the service data and attempt the call
                 try {
+
                     // Convert JSON to HashMap
-                    val serviceDataMap =
-                        Gson().fromJson(serviceDataJson, HashMap<String, Any>()::class.java)
+                    val serviceDataMap: HashMap<String, Any> = jacksonObjectMapper().readValue(serviceDataJson)
 
                     integrationUseCase.callService(domain, service, serviceDataMap)
 

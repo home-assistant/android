@@ -14,7 +14,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.gson.Gson
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Entity
@@ -86,7 +86,7 @@ class ButtonWidgetConfigureActivity : Activity() {
 
         intent.putExtra(
             ButtonWidget.EXTRA_SERVICE_DATA,
-            Gson().toJson(serviceDataMap)
+            jacksonObjectMapper().writeValueAsString(serviceDataMap)
         )
 
         context.sendBroadcast(intent)
