@@ -102,4 +102,15 @@ sulla tua istanza di Home Assistant.</string>
   <string name="shortcuts_summary">Aggiungi collegamento al launcher</string>
   <string name="rate_limit_notification.title">Tasso delle notifiche limitato</string>
   <string name="rate_limit_notification.body">Oggi hai inviato più di %s notifiche. Non riceverai nuove notifiche fino a mezzanotte UTC.</string>
+  <string name="webview_error_description">Errore riscontrato:</string>
+  <string name="webview_error_SSL_DATE_INVALID">La data del certificato di Home Assistant non è valida, rivedere il certificato di Home Assistant o le impostazioni di connessione e riprovare.</string>
+  <string name="webview_error_SSL_EXPIRED">Il certificato di Home Assistant è scaduto, rivedere il certificato di Home Assistant o le impostazioni di connessione e riprovare.</string>
+  <string name="webview_error_SSL_IDMISMATCH">Mancata corrispondenza del certificato del nome host di Home Assistant, rivedere il certificato di Home Assistant o le impostazioni di connessione e riprovare.</string>
+  <string name="webview_error_SSL_INVALID">Si è verificato un errore SSL generico durante il caricamento di Home Assistant, rivedere il certificato di Home Assistant o le impostazioni di connessione e riprovare.</string>
+  <string name="webview_error_SSL_NOTYETVALID">Il certificato di Home Assistant non è ancora valido, rivedere il certificato di Home Assistant o le impostazioni di connessione e riprovare.</string>
+  <string name="webview_error_SSL_UNTRUSTED">L\'autorità di certificazione Home Assistant non è attendibile, rivedere il certificato Home Assistant o le impostazioni di connessione e riprovare.</string>
+  <string name="exit">Uscita</string>
+  <string name="settings">Impostazioni</string>
+  <string name="biometric_set_title">Conferma per continuare</string>
+  <string name="session_timeout_title">TimeOut sessione (in secondi)</string>
 </resources>

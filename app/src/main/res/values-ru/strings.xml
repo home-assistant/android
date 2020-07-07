@@ -98,4 +98,6 @@
   <string name="shortcuts">Ярлыки</string>
   <string name="shortcuts_summary">Создание ярлыков на главном экране</string>
   <string name="rate_limit_notification.title">Notifications Rate Limited</string>
+  <string name="exit">Выход</string>
+  <string name="settings">Настройки</string>
 </resources>

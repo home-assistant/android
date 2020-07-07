@@ -99,4 +99,15 @@ instancia de Home Assistant</string>
   <string name="shortcuts_summary">Agregar accesos directos al lanzador</string>
   <string name="rate_limit_notification.title">Notifications Rate Limited</string>
   <string name="rate_limit_notification.body">Has enviado más de %s notificaciones hoy. No recibirás nuevas notificaciones hasta la medianoche UTC.</string>
+  <string name="webview_error_description">Error encontrado:</string>
+  <string name="webview_error_SSL_DATE_INVALID">La fecha del certificado de Home Assistant no es válida, revisa el certificado de Home Assistant o la configuración de conexión e inténtalo de nuevo.</string>
+  <string name="webview_error_SSL_EXPIRED">El certificado de Home Assistant ha expirado, revisa el certificado de Home Assistant o la configuración de conexión e inténtalo de nuevo.</string>
+  <string name="webview_error_SSL_IDMISMATCH">El nombre de Host del certificado de Home Assistant no coincide, revisa el certificado de Home Assistant o la configuración de conexión e inténtalo de nuevo.</string>
+  <string name="webview_error_SSL_INVALID">Se ha producido un error genérico SSL al cargar Home Assistant, revisa el certificado de Home Assistant o la configuración de conexión e inténtalo de nuevo.</string>
+  <string name="webview_error_SSL_NOTYETVALID">El certificado de Home Assistant no es válido todavía, revisa el certificado de Home Assistant o la configuración de conexión e inténtalo de nuevo.</string>
+  <string name="webview_error_SSL_UNTRUSTED">La autoridad de certificación de Home Assistant no es de confianza, revisa el certificado de Home Assistant o la configuración de conexión e inténtalo de nuevo.</string>
+  <string name="exit">Salir</string>
+  <string name="settings">Configuración</string>
+  <string name="biometric_set_title">Confirmar para continuar</string>
+  <string name="session_timeout_title">Tiempo límite de sesión (en segundos)</string>
 </resources>

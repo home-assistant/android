@@ -98,4 +98,15 @@
   <string name="shortcuts_summary">Dodaj skróty do launchera</string>
   <string name="rate_limit_notification.title">Notifications Rate Limited</string>
   <string name="rate_limit_notification.body">Wysłałeś dziś więcej niż %s powiadomień. Nie będziesz otrzymywać nowych powiadomień przed północą czasu UTC.</string>
+  <string name="webview_error_description">Wystąpił błąd:</string>
+  <string name="webview_error_SSL_DATE_INVALID">Data certyfikatu Home Assistanta jest nieprawidłowa, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
+  <string name="webview_error_SSL_EXPIRED">Certyfikat Home Assistanta wygasł, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
+  <string name="webview_error_SSL_IDMISMATCH">Niezgodność certyfikatu Home Assistanta z nazwą hosta, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
+  <string name="webview_error_SSL_INVALID">Wystąpił ogólny błąd SSL podczas ładowania Home Assistanta, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
+  <string name="webview_error_SSL_NOTYETVALID">Certyfikat Home Assistanta nie jest jeszcze ważny, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
+  <string name="webview_error_SSL_UNTRUSTED">Urząd certyfikacji Home Assistanta nie jest zaufany, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
+  <string name="exit">Wyjście</string>
+  <string name="settings">Ustawienia</string>
+  <string name="biometric_set_title">Potwierdź, aby kontynuować</string>
+  <string name="session_timeout_title">Limit czasu sesji (w sekundach)</string>
 </resources>

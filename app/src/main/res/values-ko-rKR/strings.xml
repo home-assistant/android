@@ -98,4 +98,15 @@
   <string name="shortcuts_summary">런처에 바로 가기 추가</string>
   <string name="rate_limit_notification.title">알림 비율 제한</string>
   <string name="rate_limit_notification.body">오늘 %s 개 이상의 알림을 보냈습니다. UTC 자정까지 새로운 알림을 받지 않습니다.</string>
+  <string name="webview_error_description">발생한 오류:</string>
+  <string name="webview_error_SSL_DATE_INVALID">Home Assistant 인증서의 날짜가 잘못되었습니다. Home Assistant 인증서 또는 연결 설정을 검토하고 다시 시도해주세요.</string>
+  <string name="webview_error_SSL_EXPIRED">Home Assistant 인증서가 만료되었습니다. Home Assistant 인증서 또는 연결 설정을 검토하고 다시 시도해주세요.</string>
+  <string name="webview_error_SSL_IDMISMATCH">Home Assistant 호스트 이름 인증서가 일치하지 않습니다. Home Assistant 인증서 또는 연결 설정을 검토하고 다시 시도해주세요.</string>
+  <string name="webview_error_SSL_INVALID">Home Assistant 를 읽어 들이는 동안 SSL 오류가 발생했습니다. Home Assistant 인증서 또는 연결 설정을 검토하고 다시 시도해주세요.</string>
+  <string name="webview_error_SSL_NOTYETVALID">Home Assistant 인증서가 아직 유효하지 않습니다. Home Assistant 인증서 또는 연결 설정을 검토하고 다시 시도해주세요.</string>
+  <string name="webview_error_SSL_UNTRUSTED">Home Assistant 인증서의 인증 기관을 신뢰할 수 없습니다. Home Assistant 인증서 또는 연결 설정을 검토하고 다시 시도해주세요.</string>
+  <string name="exit">나가기</string>
+  <string name="settings">설정</string>
+  <string name="biometric_set_title">계속하려면 확인해주세요</string>
+  <string name="session_timeout_title">세션 시간 초과 (초)</string>
 </resources>

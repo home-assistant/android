@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-  <string name="app_name">[%key_id:32141765%]</string>
+  <string name="app_name">Home Assistant</string>
   <string name="scanning_network">Söker nätverket efter Home Assistant</string>
   <string name="home_assistant_not_discover">Det gick inte att hitta din 
  Home Assistant-instans</string>
