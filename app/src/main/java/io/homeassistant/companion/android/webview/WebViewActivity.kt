@@ -13,6 +13,8 @@ import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.text.method.HideReturnsTransformationMethod
+import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
 import android.view.MenuInflater
@@ -28,11 +30,14 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.room.Room
 import com.lokalise.sdk.LokaliseContextWrapper
 import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
 import eightbitlab.com.blurview.RenderScriptBlur
@@ -43,6 +48,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.database.AppDataBase
+import io.homeassistant.companion.android.database.AuthenticationList
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
@@ -80,6 +87,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var alertDialog: AlertDialog? = null
     private var isVideoFullScreen = false
     private var videoHeight = 0
+    private var firstAuthTime: Long = 0
+    private var resourceURL: String = ""
     private var unlocked = false
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -127,7 +136,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 ) {
                     Log.e(TAG, "onReceivedHttpError: errorCode: $errorCode url:$failingUrl")
                     if (failingUrl == loadedUrl) {
-                        showError(description = description)
+                        showError()
                     }
                 }
 
@@ -148,7 +157,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     host: String,
                     realm: String
                 ) {
-                    authenticationDialog(handler)
+                    var authError = false
+                    if (System.currentTimeMillis() <= (firstAuthTime + 500))
+                        authError = true
+                    authenticationDialog(handler, host, realm, authError)
                 }
 
                 override fun onReceivedSslError(
@@ -157,7 +169,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     error: SslError?
                 ) {
                     Log.e(TAG, "onReceivedHttpError: $error")
-                    showError(error = error)
+                    showError()
+                }
+
+                override fun onLoadResource(
+                    view: WebView?,
+                    url: String?
+                ) {
+                    resourceURL = url!!
                 }
 
                 override fun shouldOverrideUrlLoading(
@@ -517,22 +536,77 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     @SuppressLint("InflateParams")
-    override fun authenticationDialog(handler: HttpAuthHandler) {
+    fun authenticationDialog(handler: HttpAuthHandler, host: String, realm: String, authError: Boolean) {
+        val db = Room.databaseBuilder(
+            applicationContext,
+            AppDataBase::class.java, "HomeAssistantDB")
+            .allowMainThreadQueries()
+            .build()
+        val authenticationDao = db.authenticationDatabaseDao()
+        val httpAuth = authenticationDao.get((resourceURL + realm))
+
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
         val username = dialogLayout.findViewById<EditText>(R.id.username)
         val password = dialogLayout.findViewById<EditText>(R.id.password)
+        val remember = dialogLayout.findViewById<CheckBox>(R.id.checkBox)
+        val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
+        var autoAuth = false
 
-        AlertDialog.Builder(this)
-            .setTitle(R.string.auth_request)
-            .setView(dialogLayout)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                handler.proceed(username.text.toString(), password.text.toString())
+        viewPassword.setOnClickListener() {
+            if (password.transformationMethod == PasswordTransformationMethod.getInstance()) {
+                password.transformationMethod = HideReturnsTransformationMethod.getInstance()
+                viewPassword.setImageResource(R.drawable.ic_visibility_off)
+                password.setSelection(password.text.length)
+            } else {
+                password.transformationMethod = PasswordTransformationMethod.getInstance()
+                viewPassword.setImageResource(R.drawable.ic_visibility)
+                password.setSelection(password.text.length)
             }
-            .setNeutralButton(android.R.string.cancel) { _, _ ->
-                Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT).show()
+        }
+
+        if (!httpAuth?.host.isNullOrBlank()) {
+            if (!authError) {
+                handler.proceed(httpAuth?.username, httpAuth?.password)
+                autoAuth = true
+                firstAuthTime = System.currentTimeMillis()
             }
-            .show()
+        }
+
+        var message = host + " " + getString(R.string.required_fields)
+        if (resourceURL.subSequence(0, 5).toString() == "http:")
+            message = "http://" + message + " " + getString(R.string.not_private)
+        else
+            message = "https://" + message
+
+        if (!autoAuth || authError) {
+            AlertDialog.Builder(this, R.style.Authentication_Dialog)
+                .setTitle(R.string.auth_request)
+                .setMessage(message)
+                .setView(dialogLayout)
+                .setPositiveButton(android.R.string.ok) { _, _ ->
+                    if (username.text.toString() != "" && password.text.toString() != "") {
+                        if (remember.isChecked) {
+                            if (authError)
+                                authenticationDao.update(AuthenticationList((resourceURL + realm), username.text.toString(), password.text.toString()))
+                            else
+                                authenticationDao.insert(AuthenticationList((resourceURL + realm), username.text.toString(), password.text.toString()))
+                            db.close()
+                        }
+                        handler.proceed(username.text.toString(), password.text.toString())
+                    } else AlertDialog.Builder(this)
+                            .setTitle(R.string.auth_cancel)
+                            .setMessage(R.string.auth_error_message)
+                            .setPositiveButton(android.R.string.ok) { _, _ ->
+                                authenticationDialog(handler, host, realm, authError)
+                            }
+                            .show()
+                }
+                .setNeutralButton(android.R.string.cancel) { _, _ ->
+                    Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT).show()
+                }
+                .show()
+        }
     }
 
     override fun onRequestPermissionsResult(
