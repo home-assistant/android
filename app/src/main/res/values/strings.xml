@@ -48,6 +48,9 @@ Home Assistant instance</string>
   <string name="label_dynamic_data">Data:</string>
   <string name="label_entity_id">Entity ID:</string>
   <string name="label_icon">Icon:</string>
+  <string name="label_label">Label:</string>
+  <string name="label_service">Service:</string>
+  <string name="location">Location</string>
   <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
   <string name="lock_title">Lock app</string>
   <string name="lockscreen_message">Tap to unlock :</string>
