@@ -12,7 +12,7 @@
   <string name="auth_request">Authentication Requested</string>
   <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
   <string name="biometric_set_title">Confirm to continue</string>
-  <string name="biometric_title">Home Assistant need to be unlock</string>
+  <string name="biometric_title">Home Assistant is locked</string>
   <string name="calendar">Calendar</string>
   <string name="cancel">Cancel</string>
   <string name="checking_with_home_assistant">Checking with Home Assistant</string>
