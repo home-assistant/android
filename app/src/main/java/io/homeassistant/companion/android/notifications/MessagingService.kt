@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.media.RingtoneManager
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -20,6 +21,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
+import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
@@ -27,6 +29,7 @@ import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.util.getActiveNotification
 import java.net.URL
+import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -195,7 +198,7 @@ class MessagingService : FirebaseMessagingService() {
             if (group != null) {
                 notify(group, groupId, getGroupNotificationBuilder(channelId, group, data).build())
             } else {
-                if (!previousGroup.isNullOrBlank()) {
+                if (!previousGroup.isBlank()) {
                     notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)
                 }
             }
@@ -209,7 +212,7 @@ class MessagingService : FirebaseMessagingService() {
         groupId: Int,
         data: Map<String, String>
     ) {
-        var actionUri = data["clickAction"]
+        val actionUri = data["clickAction"]
         val contentIntent = Intent(this, NotificationContentReceiver::class.java).apply {
             putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
@@ -262,7 +265,7 @@ class MessagingService : FirebaseMessagingService() {
         group: String?,
         data: Map<String, String>
     ): NotificationCompat.Builder {
-        var groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
+        val groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setStyle(
                 NotificationCompat.InboxStyle().setSummaryText(group?.substring(GROUP_PREFIX.length))
@@ -345,6 +348,7 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     private fun handleImportance(
         data: Map<String, String>
     ): Int {
@@ -582,7 +586,7 @@ class MessagingService : FirebaseMessagingService() {
     ): String {
         return channelName
             .trim()
-            .toLowerCase()
+            .toLowerCase(Locale.ROOT)
             .replace(" ", "_")
     }
 
@@ -594,6 +598,10 @@ class MessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         mainScope.launch {
             Log.d(TAG, "Refreshed token: $token")
+            if (authenticationUseCase.getSessionState() == SessionState.ANONYMOUS) {
+                Log.d(TAG, "Not trying to update registration since we aren't authenticated.")
+                return@launch
+            }
             try {
                 integrationUseCase.updateRegistration(
                     pushToken = token
