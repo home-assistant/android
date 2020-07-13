@@ -4,6 +4,7 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.util.Log
 import java.net.URL
+import java.util.concurrent.locks.ReentrantLock
 import okio.internal.commonToUtf8String
 
 class HomeAssistantSearcher constructor(
@@ -15,6 +16,8 @@ class HomeAssistantSearcher constructor(
         private const val SERVICE_TYPE = "_home-assistant._tcp"
 
         private const val TAG = "HomeAssistantSearcher"
+
+        private val lock = ReentrantLock()
     }
 
     private var isSearching = false
@@ -40,10 +43,12 @@ class HomeAssistantSearcher constructor(
 
     override fun onServiceFound(foundService: NsdServiceInfo) {
         Log.i(TAG, "Service discovery found HA: $foundService")
+        lock.lock()
         nsdManager.resolveService(foundService, object : NsdManager.ResolveListener {
             override fun onResolveFailed(failedService: NsdServiceInfo?, errorCode: Int) {
-                discoveryView.onScanError()
+                // discoveryView.onScanError()
                 Log.w(TAG, "Failed to resolve service: $failedService, error: $errorCode")
+                lock.unlock()
             }
 
             override fun onServiceResolved(resolvedService: NsdServiceInfo?) {
@@ -61,6 +66,7 @@ class HomeAssistantSearcher constructor(
                         )
                     }
                 }
+                lock.unlock()
             }
         })
     }
