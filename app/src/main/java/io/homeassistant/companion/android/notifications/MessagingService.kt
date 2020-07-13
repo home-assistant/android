@@ -29,13 +29,13 @@ import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.util.getActiveNotification
 import java.net.URL
+import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.*
 
 class MessagingService : FirebaseMessagingService() {
     companion object {
