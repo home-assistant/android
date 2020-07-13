@@ -51,6 +51,7 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDataBase
 import io.homeassistant.companion.android.database.AuthenticationList
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
+import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
@@ -102,6 +103,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
+
+        // Start the sensor worker if they start the app. The only other place we start this ia Boot BroadcastReceiver
+        SensorWorker.start(this)
 
         val intent = Intent(this, LocationBroadcastReceiver::class.java)
         intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
@@ -420,10 +424,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         presenter.setSessionExpireMillis((System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)))
         unlocked = false
         videoHeight = decor.height
-        var bounds = Rect(0, 0, 1920, 1080)
+        val bounds = Rect(0, 0, 1920, 1080)
         if (isVideoFullScreen) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                var mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
+                val mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(
                     Rational(
                         bounds.width(),
