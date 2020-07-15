@@ -2,19 +2,27 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.net.wifi.WifiManager
+import android.util.Log
 import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
+import io.homeassistant.companion.android.util.PermissionManager
 
 class NetworkSensorManager : SensorManager {
+    companion object {
+        private const val TAG = "NetworkSM"
+    }
+
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
         val sensorRegistrations = mutableListOf<SensorRegistration<Any>>()
 
-        sensorRegistrations.add(
-            SensorRegistration(
-                getWifiConnectionSensor(context),
-                "Wifi Connection"
+        getWifiConnectionSensor(context)?.let {
+            sensorRegistrations.add(
+                SensorRegistration(
+                    it,
+                    "Wifi Connection"
+                )
             )
-        )
+        }
 
         return sensorRegistrations
     }
@@ -22,12 +30,18 @@ class NetworkSensorManager : SensorManager {
     override fun getSensors(context: Context): List<Sensor<Any>> {
         val sensors = mutableListOf<Sensor<Any>>()
 
-        sensors.add(getWifiConnectionSensor(context))
+        getWifiConnectionSensor(context)?.let {
+            sensors.add(it)
+        }
 
         return sensors
     }
 
-    private fun getWifiConnectionSensor(context: Context): Sensor<Any> {
+    private fun getWifiConnectionSensor(context: Context): Sensor<Any>? {
+        if (!PermissionManager.checkLocationPermission(context)) {
+            Log.w(TAG, "Tried getting wifi info without permission.")
+            return null
+        }
         val wifiManager =
             (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
         val conInfo = wifiManager.connectionInfo
