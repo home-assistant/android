@@ -28,7 +28,8 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:padding="@dimen/activity_margin">
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/title"
@@ -65,6 +66,16 @@
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/subtitle" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/skip"
+            style="@style/Widget.HomeAssistant.Button.Outlined"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:text="@string/skip" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
