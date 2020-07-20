@@ -384,6 +384,15 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
+        val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
+        val appData = if (pushToken == null) {
+            null
+        } else {
+            hashMapOf(
+                "push_url" to PUSH_URL,
+                "push_token" to pushToken
+            )
+        }
         return RegisterDeviceRequest(
             null,
             null,
@@ -394,11 +403,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             null,
             osVersion,
             null,
-            hashMapOf(
-                "push_url" to PUSH_URL,
-                "push_token" to (deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
-                ?: "")
-            ),
+            appData,
             null
         )
     }

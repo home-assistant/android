@@ -107,7 +107,7 @@ like to connect to:</string>
   <string name="webview_error_SSL_DATE_INVALID">The date of the Home Assistant certificate is invalid, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="webview_error_SSL_EXPIRED">The Home Assistant certificate has expired, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="webview_error_SSL_IDMISMATCH">The Home Assistant Hostname certificate mismatch, please review the Home Assistant certificate or the connection settings and try again.</string>
-  <string name="webview_error_SSL_INVALID">A generic SSL error occured when loading Home Assistant, please review the Home Assistant certificate or the connection settings and try again.</string>
+  <string name="webview_error_SSL_INVALID">A generic SSL error occurred when loading Home Assistant, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
@@ -118,4 +118,6 @@ like to connect to:</string>
   <string name="widget_text_hint_service_data">Entity ID</string>
   <string name="widget_text_hint_service_domain">Domain</string>
   <string name="widget_text_hint_service_service">Service</string>
+  <string name="firebase_error_title">Firebase Error</string>
+  <string name="firebase_error_message">By skipping/ignoring this error you will be unable to receive any push notifications.</string>
 </resources>
