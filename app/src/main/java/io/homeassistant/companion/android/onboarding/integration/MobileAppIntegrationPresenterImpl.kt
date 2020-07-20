@@ -24,33 +24,39 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onRegistrationAttempt() {
-
+    override fun onRegistrationAttempt(includeFirebase: Boolean) {
         view.showLoading()
-        val instanceId = FirebaseInstanceId.getInstance().instanceId
-        instanceId.addOnSuccessListener {
-            mainScope.launch {
-                val token = it.token
 
-                val deviceRegistration = DeviceRegistration(
-                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                    Build.MODEL ?: "UNKNOWN",
-                    token
-                )
+        val deviceRegistration = DeviceRegistration(
+            "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+            Build.MODEL ?: "UNKNOWN"
+        )
 
-                try {
-                    integrationUseCase.registerDevice(deviceRegistration)
-                    // TODO: Get the name of the instance to display
-                    view.deviceRegistered()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error with registering application", e)
-                    view.showError()
-                }
+        if (includeFirebase) {
+            val instanceId = FirebaseInstanceId.getInstance().instanceId
+            instanceId.addOnSuccessListener {
+                deviceRegistration.pushToken = it.token
+                register(deviceRegistration)
             }
+            instanceId.addOnFailureListener {
+                Log.e(TAG, "Couldn't get FirebaseInstanceId", it)
+                view.showError(true)
+            }
+        } else {
+            register(deviceRegistration)
         }
-        instanceId.addOnFailureListener {
-            Log.e(TAG, "Couldn't get FirebaseInstanceId", it)
-            view.showError()
+    }
+
+    private fun register(deviceRegistration: DeviceRegistration) {
+        mainScope.launch {
+            try {
+                integrationUseCase.registerDevice(deviceRegistration)
+                // TODO: Get the name of the instance to display
+                view.deviceRegistered()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error with registering application", e)
+                view.showError()
+            }
         }
     }
 
