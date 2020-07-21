@@ -120,4 +120,5 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="firebase_error_title">Firebase Error</string>
   <string name="firebase_error_message">By skipping/ignoring this error you will be unable to receive any push notifications.</string>
+  <string name="widget_creation_error">Unable to create widget.</string>
 </resources>
