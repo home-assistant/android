@@ -6,6 +6,7 @@ import android.util.Log
 import java.net.URL
 import java.util.concurrent.locks.ReentrantLock
 import okio.internal.commonToUtf8String
+import java.lang.Exception
 
 class HomeAssistantSearcher constructor(
     private val nsdManager: NsdManager,
@@ -26,7 +27,13 @@ class HomeAssistantSearcher constructor(
         if (isSearching)
             return
         isSearching = true
-        nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this)
+        try {
+            nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this)
+        } catch (e: Exception){
+            Log.e(TAG, "Issue starting discover.", e)
+            isSearching = false
+            discoveryView.onScanError()
+        }
     }
 
     fun stopSearch() {
