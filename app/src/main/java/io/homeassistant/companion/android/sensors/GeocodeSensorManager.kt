@@ -20,7 +20,7 @@ class GeocodeSensorManager : SensorManager {
         val sensor = getGeocodedLocation(context)
         if (sensor != null) {
             return listOf(
-                SensorRegistration<Any>(
+                SensorRegistration(
                     sensor,
                     "Geocoded Location"
                 )
@@ -44,11 +44,12 @@ class GeocodeSensorManager : SensorManager {
             Log.w(TAG, "Tried getting gecoded location without permission.")
             return null
         }
-        Tasks.await(LocationServices.getFusedLocationProviderClient(context).lastLocation)?.let {
-            if (it.accuracy > LocationBroadcastReceiver.MINIMUM_ACCURACY)
-                return null
+        try {
+            val locApi = LocationServices.getFusedLocationProviderClient(context)
+            Tasks.await(locApi.lastLocation)?.let {
+                if (it.accuracy > LocationBroadcastReceiver.MINIMUM_ACCURACY)
+                    return null
 
-            try {
                 Geocoder(context)
                     .getFromLocation(it.latitude, it.longitude, 1)
                     .firstOrNull()?.let { address ->
@@ -71,10 +72,10 @@ class GeocodeSensorManager : SensorManager {
                             )
                         )
                     }
-            } catch (e: Exception) {
-                // We don't want to crash if the device cannot get a geocoded location
-                Log.e(TAG, "Issue getting geocoded location ", e)
             }
+        } catch (e: Exception) {
+            // We don't want to crash if the device cannot get a geocoded location
+            Log.e(TAG, "Issue getting geocoded location ", e)
         }
         return null
     }

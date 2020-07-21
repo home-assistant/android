@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -44,56 +45,65 @@ class ButtonWidgetConfigureActivity : Activity() {
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
     private var onClickListener = View.OnClickListener {
-        val context = this@ButtonWidgetConfigureActivity
+        try {
+            val context = this@ButtonWidgetConfigureActivity
 
-        // Set up a broadcast intent and pass the service call data as extras
-        val intent = Intent()
-        intent.action = ButtonWidget.RECEIVE_DATA
-        intent.component = ComponentName(context, ButtonWidget::class.java)
+            // Set up a broadcast intent and pass the service call data as extras
+            val intent = Intent()
+            intent.action = ButtonWidget.RECEIVE_DATA
+            intent.component = ComponentName(context, ButtonWidget::class.java)
 
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
-        // Analyze and send service and domain
-        val serviceText = context.widget_text_config_service.text.toString()
-        val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
-        val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
-        intent.putExtra(
-            ButtonWidget.EXTRA_DOMAIN,
-            domain
-        )
-        intent.putExtra(
-            ButtonWidget.EXTRA_SERVICE,
-            service
-        )
+            // Analyze and send service and domain
+            val serviceText = context.widget_text_config_service.text.toString()
+            val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
+            val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
+            intent.putExtra(
+                ButtonWidget.EXTRA_DOMAIN,
+                domain
+            )
+            intent.putExtra(
+                ButtonWidget.EXTRA_SERVICE,
+                service
+            )
 
-        // Fetch and send label and icon
-        intent.putExtra(
-            ButtonWidget.EXTRA_LABEL,
-            context.label.text.toString()
-        )
-        intent.putExtra(
-            ButtonWidget.EXTRA_ICON,
-            context.widget_config_spinner.selectedItemId.toInt()
-        )
+            // Fetch and send label and icon
+            intent.putExtra(
+                ButtonWidget.EXTRA_LABEL,
+                context.label.text.toString()
+            )
+            intent.putExtra(
+                ButtonWidget.EXTRA_ICON,
+                context.widget_config_spinner.selectedItemId.toInt()
+            )
 
-        // Analyze and send service data
-        val serviceDataMap = HashMap<String, Any>()
-        dynamicFields.forEach {
-            if (it.value != null) {
-                serviceDataMap[it.field] = it.value!!
+            // Analyze and send service data
+            val serviceDataMap = HashMap<String, Any>()
+            dynamicFields.forEach {
+                if (it.value != null) {
+                    serviceDataMap[it.field] = it.value!!
+                }
             }
+
+            intent.putExtra(
+                ButtonWidget.EXTRA_SERVICE_DATA,
+                jacksonObjectMapper().writeValueAsString(serviceDataMap)
+            )
+
+            context.sendBroadcast(intent)
+
+            // Make sure we pass back the original appWidgetId
+            setResult(
+                RESULT_OK,
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            )
+            finish()
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue configuring widget", e)
+            Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
+                .show()
         }
-
-        intent.putExtra(
-            ButtonWidget.EXTRA_SERVICE_DATA,
-            jacksonObjectMapper().writeValueAsString(serviceDataMap)
-        )
-
-        context.sendBroadcast(intent)
-
-        // Make sure we pass back the original appWidgetId
-        setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
-        finish()
     }
 
     private val onAddFieldListener = View.OnClickListener {
