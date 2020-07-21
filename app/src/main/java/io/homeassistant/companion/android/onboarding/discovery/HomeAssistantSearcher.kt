@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.onboarding.discovery
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.util.Log
+import java.lang.Exception
 import java.net.URL
 import java.util.concurrent.locks.ReentrantLock
 import okio.internal.commonToUtf8String
@@ -26,7 +27,13 @@ class HomeAssistantSearcher constructor(
         if (isSearching)
             return
         isSearching = true
-        nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this)
+        try {
+            nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue starting discover.", e)
+            isSearching = false
+            discoveryView.onScanError()
+        }
     }
 
     fun stopSearch() {
