@@ -21,13 +21,13 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Service
+import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_button_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class ButtonWidgetConfigureActivity : Activity() {
     private val TAG: String = "ButtonWidgetConfigAct"
