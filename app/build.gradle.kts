@@ -130,8 +130,9 @@ dependencies {
     kapt(Config.Dependency.AndroidX.roomCompiler)
 
     implementation(Config.Dependency.Misc.jackson)
+    implementation(Config.Dependency.Square.okhttp)
 
-    "fullImplementation"(Config.Dependency.Misc.lokalize)
+//    "fullImplementation"(Config.Dependency.Misc.lokalize)
 
     "fullImplementation"(Config.Dependency.Play.location)
     "fullImplementation"(Config.Dependency.Firebase.core)
