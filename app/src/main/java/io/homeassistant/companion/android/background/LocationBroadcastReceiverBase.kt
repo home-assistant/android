@@ -6,10 +6,10 @@ import android.content.Intent
 import android.util.Log
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import javax.inject.Inject
 
 abstract class LocationBroadcastReceiverBase : BroadcastReceiver() {
 
@@ -61,5 +61,4 @@ abstract class LocationBroadcastReceiverBase : BroadcastReceiver() {
     internal abstract fun handleLocationUpdate(intent: Intent)
     internal abstract fun handleGeoUpdate(context: Context, intent: Intent)
     internal abstract fun requestSingleAccurateLocation(context: Context)
-
 }

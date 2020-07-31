@@ -17,7 +17,6 @@ import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
-import android.view.MenuInflater
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler

@@ -3,21 +3,20 @@ package io.homeassistant.companion.android.background
 import android.content.Context
 import android.content.Intent
 
-class LocationBroadcastReceiver: LocationBroadcastReceiverBase() {
+class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
     override fun setupLocationTracking(context: Context) {
-        TODO("Not yet implemented")
+        // No op
     }
 
     override fun handleLocationUpdate(intent: Intent) {
-        TODO("Not yet implemented")
+        // No op
     }
 
     override fun handleGeoUpdate(context: Context, intent: Intent) {
-        TODO("Not yet implemented")
+        // No op
     }
 
     override fun requestSingleAccurateLocation(context: Context) {
-        TODO("Not yet implemented")
+        // No op
     }
-
 }

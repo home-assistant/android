@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.util.PermissionManager
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class LocationBroadcastReceiver: LocationBroadcastReceiverBase() {
+class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
 
     override fun setupLocationTracking(context: Context) {
         if (!PermissionManager.checkLocationPermission(context)) {

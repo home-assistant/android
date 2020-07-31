@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.onboarding
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.MenuInflater
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment

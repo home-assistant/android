@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 class AllSensorsUpdaterImpl(
     integrationUseCase: IntegrationUseCase,
     appContext: Context
-): AllSensorsUpdater(integrationUseCase, appContext) {
+) : AllSensorsUpdater(integrationUseCase, appContext) {
 
     override suspend fun getManagers(): List<SensorManager> {
         val sensorManagers = mutableListOf(
@@ -16,5 +16,4 @@ class AllSensorsUpdaterImpl(
 
         return sensorManagers
     }
-
 }

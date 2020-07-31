@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.SensorUpdater
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.util.PermissionManager
 
 abstract class AllSensorsUpdater(
     internal val integrationUseCase: IntegrationUseCase,

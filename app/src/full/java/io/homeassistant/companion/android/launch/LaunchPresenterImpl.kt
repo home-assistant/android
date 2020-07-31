@@ -6,9 +6,9 @@ import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import kotlinx.coroutines.launch
 import java.lang.Exception
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 class LaunchPresenterImpl @Inject constructor(
     view: LaunchView,

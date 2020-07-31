@@ -42,7 +42,7 @@ open class MobileAppIntegrationPresenterBase constructor(
             }
             try {
                 integrationUseCase.registerDevice(deviceRegistration)
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 Log.e(TAG, "Unable to register with Home Assistant", e)
                 view.showError(false)
                 return@launch
