@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import java.lang.Exception
 import javax.inject.Inject
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class LaunchPresenterImpl @Inject constructor(
     view: LaunchView,
@@ -16,7 +17,6 @@ class LaunchPresenterImpl @Inject constructor(
     integrationUseCase: IntegrationUseCase
 ) : LaunchPresenterBase(view, authenticationUseCase, integrationUseCase) {
     override fun resyncRegistration() {
-        FirebaseInstanceId.getInstance().instanceId.addOnSuccessListener {
             mainScope.launch {
                 try {
                     integrationUseCase.updateRegistration(
@@ -25,12 +25,11 @@ class LaunchPresenterImpl @Inject constructor(
                         Build.MANUFACTURER ?: "UNKNOWN",
                         Build.MODEL ?: "UNKNOWN",
                         Build.VERSION.SDK_INT.toString(),
-                        pushToken = it.token
+                        pushToken = FirebaseInstanceId.getInstance().instanceId.await().token
                     )
                 } catch (e: Exception) {
                     Log.e(TAG, "Issue updating Registration", e)
                 }
             }
-        }
     }
 }

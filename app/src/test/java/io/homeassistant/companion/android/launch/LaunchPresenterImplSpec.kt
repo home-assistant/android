@@ -1,8 +1,5 @@
 package io.homeassistant.companion.android.launch
 
-import com.google.android.gms.tasks.OnSuccessListener
-import com.google.firebase.iid.FirebaseInstanceId
-import com.google.firebase.iid.InstanceIdResult
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
@@ -22,27 +19,6 @@ object LaunchPresenterImplSpec : Spek({
 
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
-
-        val onSuccessListener = slot<OnSuccessListener<InstanceIdResult>>()
-        val mockResults = mockk<InstanceIdResult> {
-            every { token } returns "ABC123"
-        }
-
-        mockkStatic(FirebaseInstanceId::class)
-        every { FirebaseInstanceId.getInstance() } returns mockk {
-            every { instanceId } returns mockk {
-                every { addOnSuccessListener(capture(onSuccessListener)) } answers {
-                    onSuccessListener.captured.onSuccess(mockResults)
-
-                    mockk {
-                        every { result } returns mockResults
-                    }
-                }
-                every { addOnFailureListener(any()) } returns mockk {
-                    every { exception } returns Exception()
-                }
-            }
-        }
     }
 
     afterEachTest {
