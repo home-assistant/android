@@ -83,14 +83,19 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
-        run: ./gradlew appDistributionUploadRelease
+        run: ./gradlew appDistributionUploadFullRelease
 
       - name: Deploy to Playstore Beta
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
-        run: ./gradlew publishReleaseBundle
+        run: ./gradlew publishFullReleaseBundle
+
+      - name: Archive Release Build
+        uses: kittaakos/upload-artifact-as-is@v0
+        with:
+          path: ./app/build/outputs/apk/*/release/*-release.apk
 
   release_draft:
     name: Update Release Draft
