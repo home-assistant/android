@@ -71,21 +71,6 @@
             </intent-filter>
         </receiver>
 
-        <receiver
-            android:name=".notifications.NotificationActionReceiver"
-            android:enabled="true"
-            android:exported="true" />
-
-        <receiver
-            android:name=".notifications.NotificationDeleteReceiver"
-            android:enabled="true"
-            android:exported="true" />
-
-        <receiver
-            android:name=".notifications.NotificationContentReceiver"
-            android:enabled="true"
-            android:exported="true" />
-
         <activity android:name=".launch.LaunchActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -111,20 +96,6 @@
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity" />
 
-        <service
-            android:name=".notifications.MessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_stat_ic_notification" />
-        <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/colorPrimary" />
     </application>
 
 </manifest>

@@ -17,7 +17,6 @@ import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
-import android.view.MenuInflater
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
@@ -38,15 +37,13 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.room.Room
-import com.lokalise.sdk.LokaliseContextWrapper
-import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
+import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDataBase
 import io.homeassistant.companion.android.database.AuthenticationList
@@ -107,8 +104,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         // Start the sensor worker if they start the app. The only other place we start this ia Boot BroadcastReceiver
         SensorWorker.start(this)
 
-        val intent = Intent(this, LocationBroadcastReceiver::class.java)
-        intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
+        val intent = Intent(this, LocationBroadcastReceiverBase::class.java)
+        intent.action = LocationBroadcastReceiverBase.ACTION_REQUEST_LOCATION_UPDATES
         sendBroadcast(intent)
 
         if (BuildConfig.DEBUG) {
@@ -438,14 +435,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 enterPictureInPictureMode(mPictureInPictureParamsBuilder.build())
             }
         }
-    }
-
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LokaliseContextWrapper.wrap(newBase))
-    }
-
-    override fun getMenuInflater(): MenuInflater {
-        return LokaliseMenuInflater(this)
     }
 
     override fun openOnBoarding() {

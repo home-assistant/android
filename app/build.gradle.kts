@@ -72,6 +72,17 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
+    flavorDimensions("version")
+    productFlavors {
+        create("minimal") {
+            applicationIdSuffix = ".minimal"
+            versionNameSuffix = "-minimal"
+        }
+        create("full") {
+            applicationIdSuffix = ""
+            versionNameSuffix = "-full"
+        }
+    }
 
     testOptions {
         unitTests.apply { isReturnDefaultValues = true }
@@ -118,18 +129,17 @@ dependencies {
     implementation(Config.Dependency.AndroidX.roomKtx)
     kapt(Config.Dependency.AndroidX.roomCompiler)
 
-    implementation(Config.Dependency.Misc.threeTenAbp) {
-        exclude(group = "org.threeten")
-    }
-
-    implementation(Config.Dependency.Misc.lokalize)
     implementation(Config.Dependency.Misc.jackson)
+    implementation(Config.Dependency.Square.okhttp)
 
-    implementation(Config.Dependency.Play.location)
-    implementation(Config.Dependency.Firebase.core)
-    implementation(Config.Dependency.Firebase.iid)
-    implementation(Config.Dependency.Firebase.messaging)
-    implementation(Config.Dependency.Firebase.crashlytics)
+//    "fullImplementation"(Config.Dependency.Misc.lokalize)
+
+    "fullImplementation"(Config.Dependency.Play.location)
+    "fullImplementation"(Config.Dependency.Firebase.core)
+    "fullImplementation"(Config.Dependency.Firebase.iid)
+    "fullImplementation"(Config.Dependency.Firebase.messaging)
+    "fullImplementation"(Config.Dependency.Firebase.crashlytics)
+    "fullImplementation"(Config.Dependency.Kotlin.coroutinesPlayServices)
 
     implementation(Config.Dependency.AndroidX.workManager)
     implementation(Config.Dependency.AndroidX.biometric)

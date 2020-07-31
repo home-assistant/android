@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.background
 
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -14,64 +13,14 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import io.homeassistant.companion.android.util.PermissionManager
-import javax.inject.Inject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class LocationBroadcastReceiver : BroadcastReceiver() {
+class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
 
-    companion object {
-        const val MINIMUM_ACCURACY = 200
-
-        const val ACTION_REQUEST_LOCATION_UPDATES =
-            "io.homeassistant.companion.android.background.REQUEST_UPDATES"
-        const val ACTION_REQUEST_ACCURATE_LOCATION_UPDATE =
-            "io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE"
-        const val ACTION_PROCESS_LOCATION =
-            "io.homeassistant.companion.android.background.PROCESS_UPDATES"
-        const val ACTION_PROCESS_GEO =
-            "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
-
-        private const val TAG = "LocBroadcastReceiver"
-    }
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
-
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
-    override fun onReceive(context: Context, intent: Intent) {
-        ensureInjected(context)
-
-        when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED,
-            ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking(context)
-            ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
-            ACTION_PROCESS_GEO -> handleGeoUpdate(context, intent)
-            ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation(context)
-            else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
-        }
-    }
-
-    private fun ensureInjected(context: Context) {
-        if (context.applicationContext is GraphComponentAccessor) {
-            DaggerReceiverComponent.builder()
-                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
-        } else {
-            throw Exception("Application Context passed is not of our application!")
-        }
-    }
-
-    private fun setupLocationTracking(context: Context) {
+    override fun setupLocationTracking(context: Context) {
         if (!PermissionManager.checkLocationPermission(context)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
@@ -140,7 +89,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun handleLocationUpdate(intent: Intent) {
+    override fun handleLocationUpdate(intent: Intent) {
         Log.d(TAG, "Received location update.")
         LocationResult.extractResult(intent)?.lastLocation?.let {
             if (it.accuracy > MINIMUM_ACCURACY) {
@@ -151,7 +100,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun handleGeoUpdate(context: Context, intent: Intent) {
+    override fun handleGeoUpdate(context: Context, intent: Intent) {
         Log.d(TAG, "Received geofence update.")
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
@@ -197,7 +146,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun getLocationUpdateIntent(context: Context, isGeofence: Boolean): PendingIntent {
-        val intent = Intent(context, LocationBroadcastReceiver::class.java)
+        val intent = Intent(context, LocationBroadcastReceiverBase::class.java)
         intent.action = if (isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
@@ -233,7 +182,7 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
         return geofencingRequestBuilder.build()
     }
 
-    private fun requestSingleAccurateLocation(context: Context) {
+    override fun requestSingleAccurateLocation(context: Context) {
         if (!PermissionManager.checkLocationPermission(context)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return

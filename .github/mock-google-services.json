@@ -31,6 +31,32 @@
           "current_key": "current_key"
         }
       ]
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "mobilesdk_app_id",
+        "android_client_info": {
+          "package_name": "io.homeassistant.companion.android.minimal"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "current_key"
+        }
+      ]
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "mobilesdk_app_id",
+        "android_client_info": {
+          "package_name": "io.homeassistant.companion.android.minimal.debug"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "current_key"
+        }
+      ]
     }
   ],
   "configuration_version": "1"

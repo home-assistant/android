@@ -40,6 +40,6 @@ jobs:
       run: ./gradlew assembleDebug
     
     - name: Archive Debug Build
-      uses: actions/upload-artifact@v2
+      uses: kittaakos/upload-artifact-as-is@v0
       with:
-        path: ./app/build/outputs/apk/debug/app-debug.apk
+        path: ./app/build/outputs/apk/*/debug/*-debug.apk

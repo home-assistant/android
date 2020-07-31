@@ -4,25 +4,19 @@ import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.SensorUpdater
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.util.PermissionManager
 
-class AllSensorsUpdaterImpl(
-    private val integrationUseCase: IntegrationUseCase,
-    private val appContext: Context
+abstract class AllSensorsUpdater(
+    internal val integrationUseCase: IntegrationUseCase,
+    internal val appContext: Context
 ) : SensorUpdater {
     companion object {
-        private const val TAG = "AllSensorsUpdaterImpl"
+        internal const val TAG = "AllSensorsUpdaterImpl"
     }
 
-    override suspend fun updateSensors() {
-        val sensorManagers = mutableListOf(
-            BatterySensorManager(),
-            NetworkSensorManager()
-        )
+    abstract suspend fun getManagers(): List<SensorManager>
 
-        if (integrationUseCase.isBackgroundTrackingEnabled() && PermissionManager.checkLocationPermission(appContext)) {
-            sensorManagers.add(GeocodeSensorManager())
-        }
+    override suspend fun updateSensors() {
+        val sensorManagers = getManagers()
 
         registerSensors(sensorManagers)
 

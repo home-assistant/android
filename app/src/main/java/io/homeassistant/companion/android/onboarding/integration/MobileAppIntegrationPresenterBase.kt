@@ -2,61 +2,52 @@ package io.homeassistant.companion.android.onboarding.integration
 
 import android.os.Build
 import android.util.Log
-import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class MobileAppIntegrationPresenterImpl @Inject constructor(
+open class MobileAppIntegrationPresenterBase constructor(
     private val view: MobileAppIntegrationView,
     private val integrationUseCase: IntegrationUseCase
 ) : MobileAppIntegrationPresenter {
 
     companion object {
-        private const val TAG = "IntegrationPresenter"
+        internal const val TAG = "IntegrationPresenter"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onRegistrationAttempt(includeFirebase: Boolean) {
-        view.showLoading()
-
-        val deviceRegistration = DeviceRegistration(
+    internal open suspend fun createRegistration(simple: Boolean): DeviceRegistration {
+        return DeviceRegistration(
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
             Build.MODEL ?: "UNKNOWN"
         )
-
-        if (includeFirebase) {
-            val instanceId = FirebaseInstanceId.getInstance().instanceId
-            instanceId.addOnSuccessListener {
-                deviceRegistration.pushToken = it.token
-                register(deviceRegistration)
-            }
-            instanceId.addOnFailureListener {
-                Log.e(TAG, "Couldn't get FirebaseInstanceId", it)
-                view.showError(true)
-            }
-        } else {
-            register(deviceRegistration)
-        }
     }
 
-    private fun register(deviceRegistration: DeviceRegistration) {
+    override fun onRegistrationAttempt(simple: Boolean) {
+        view.showLoading()
         mainScope.launch {
+            val deviceRegistration: DeviceRegistration
+            try {
+                deviceRegistration = createRegistration(simple)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to create registration.", e)
+                view.showError(true)
+                return@launch
+            }
             try {
                 integrationUseCase.registerDevice(deviceRegistration)
-                // TODO: Get the name of the instance to display
-                view.deviceRegistered()
             } catch (e: Exception) {
-                Log.e(TAG, "Error with registering application", e)
-                view.showError()
+                Log.e(TAG, "Unable to register with Home Assistant", e)
+                view.showError(false)
+                return@launch
             }
+            view.deviceRegistered()
         }
     }
 

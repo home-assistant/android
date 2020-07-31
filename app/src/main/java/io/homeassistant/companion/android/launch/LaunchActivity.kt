@@ -1,11 +1,7 @@
 package io.homeassistant.companion.android.launch
 
-import android.content.Context
 import android.os.Bundle
-import android.view.MenuInflater
 import androidx.appcompat.app.AppCompatActivity
-import com.lokalise.sdk.LokaliseContextWrapper
-import com.lokalise.sdk.menu_inflater.LokaliseMenuInflater
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
@@ -15,7 +11,8 @@ import javax.inject.Inject
 
 class LaunchActivity : AppCompatActivity(), LaunchView {
 
-    @Inject lateinit var presenter: LaunchPresenter
+    @Inject
+    lateinit var presenter: LaunchPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,13 +44,5 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     override fun onDestroy() {
         presenter.onFinish()
         super.onDestroy()
-    }
-
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LokaliseContextWrapper.wrap(newBase))
-    }
-
-    override fun getMenuInflater(): MenuInflater {
-        return LokaliseMenuInflater(this)
     }
 }

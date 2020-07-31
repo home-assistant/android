@@ -5,7 +5,7 @@ import android.location.Geocoder
 import android.util.Log
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Tasks
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
+import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
 import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.util.PermissionManager
@@ -47,7 +47,7 @@ class GeocodeSensorManager : SensorManager {
         try {
             val locApi = LocationServices.getFusedLocationProviderClient(context)
             Tasks.await(locApi.lastLocation)?.let {
-                if (it.accuracy > LocationBroadcastReceiver.MINIMUM_ACCURACY)
+                if (it.accuracy > LocationBroadcastReceiverBase.MINIMUM_ACCURACY)
                     return null
 
                 Geocoder(context)

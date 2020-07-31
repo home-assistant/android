@@ -1,21 +1,15 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 import android.os.Build
-import com.google.android.gms.tasks.OnSuccessListener
-import com.google.firebase.iid.FirebaseInstanceId
-import com.google.firebase.iid.InstanceIdResult
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
-import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import io.mockk.runs
-import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -26,27 +20,6 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
 
     beforeEachTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
-
-        val onSuccessListener = slot<OnSuccessListener<InstanceIdResult>>()
-        val mockResults = mockk<InstanceIdResult> {
-            every { token } returns "ABC123"
-        }
-
-        mockkStatic(FirebaseInstanceId::class)
-        every { FirebaseInstanceId.getInstance() } returns mockk {
-            every { instanceId } returns mockk {
-                every { addOnSuccessListener(capture(onSuccessListener)) } answers {
-                    onSuccessListener.captured.onSuccess(mockResults)
-
-                    mockk {
-                        every { result } returns mockResults
-                    }
-                }
-                every { addOnFailureListener(any()) } returns mockk {
-                    every { exception } returns Exception()
-                }
-            }
-        }
     }
 
     afterEachTest {
@@ -56,20 +29,19 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
     describe("presenter") {
         val integrationUseCase by memoized { mockk<IntegrationUseCase>(relaxUnitFun = true) }
         val view by memoized { mockk<MobileAppIntegrationView>(relaxUnitFun = true) }
-        val presenter by memoized { MobileAppIntegrationPresenterImpl(view, integrationUseCase) }
+        val presenter by memoized { MobileAppIntegrationPresenterBase(view, integrationUseCase) }
 
         describe("on registration success") {
             val deviceRegistration = DeviceRegistration(
                 "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                Build.MODEL ?: "UNKNOWN",
-                "ABC123"
+                Build.MODEL ?: "UNKNOWN"
             )
             beforeEachTest {
                 coEvery { integrationUseCase.registerDevice(deviceRegistration) } just runs
             }
             describe("register") {
                 beforeEachTest {
-                    presenter.onRegistrationAttempt()
+                    presenter.onRegistrationAttempt(true)
                 }
                 it("should register successfully") {
                     coVerify {
@@ -87,7 +59,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             }
             describe("register") {
                 beforeEachTest {
-                    presenter.onRegistrationAttempt()
+                    presenter.onRegistrationAttempt(false)
                 }
                 it("should fail") {
                     coVerifyAll {
