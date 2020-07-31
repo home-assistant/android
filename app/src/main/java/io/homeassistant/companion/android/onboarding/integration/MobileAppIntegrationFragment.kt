@@ -67,7 +67,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         return inflater.inflate(R.layout.fragment_mobile_app_integration, container, false).apply {
             viewFlipper = this.findViewById(R.id.view_flipper)
             findViewById<Button>(R.id.retry).setOnClickListener {
-                presenter.onRegistrationAttempt()
+                presenter.onRegistrationAttempt(false)
             }
 
             findViewById<AppCompatButton>(R.id.location_perms).apply {
@@ -107,16 +107,16 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                     .setTitle(R.string.firebase_error_title)
                     .setMessage(R.string.firebase_error_message)
                     .setPositiveButton(R.string.skip) { _, _ ->
-                        presenter.onRegistrationAttempt(false)
+                        presenter.onRegistrationAttempt(true)
                     }
                     .setNegativeButton(R.string.retry) { _, _ ->
-                        presenter.onRegistrationAttempt(true)
+                        presenter.onRegistrationAttempt(false)
                     }
                     .create()
                     .show()
             }
 
-            presenter.onRegistrationAttempt()
+            presenter.onRegistrationAttempt(false)
         }
     }
 

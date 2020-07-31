@@ -8,7 +8,7 @@ import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.sensors.ChargingBroadcastReceiver
 
-open class MinimalHomeAssistantApplication : Application(), GraphComponentAccessor {
+open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
     lateinit var graph: Graph
 

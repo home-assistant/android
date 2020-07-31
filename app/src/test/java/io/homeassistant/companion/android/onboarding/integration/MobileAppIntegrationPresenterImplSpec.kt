@@ -56,7 +56,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
     describe("presenter") {
         val integrationUseCase by memoized { mockk<IntegrationUseCase>(relaxUnitFun = true) }
         val view by memoized { mockk<MobileAppIntegrationView>(relaxUnitFun = true) }
-        val presenter by memoized { MobileAppIntegrationPresenterImpl(view, integrationUseCase) }
+        val presenter by memoized { MobileAppIntegrationPresenterBase(view, integrationUseCase) }
 
         describe("on registration success") {
             val deviceRegistration = DeviceRegistration(

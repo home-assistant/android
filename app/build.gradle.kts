@@ -139,6 +139,7 @@ dependencies {
     "fullImplementation"(Config.Dependency.Firebase.iid)
     "fullImplementation"(Config.Dependency.Firebase.messaging)
     "fullImplementation"(Config.Dependency.Firebase.crashlytics)
+    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.3.8")
 
     implementation(Config.Dependency.AndroidX.workManager)
     implementation(Config.Dependency.AndroidX.biometric)
