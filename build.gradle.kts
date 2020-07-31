@@ -16,7 +16,6 @@ buildscript {
         classpath(Config.Plugin.google)
         classpath(Config.Plugin.appDistribution)
         classpath(Config.Plugin.ktlint)
-        classpath(Config.Plugin.crashlytics)
     }
 }
 

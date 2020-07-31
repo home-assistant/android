@@ -6,6 +6,7 @@
     <application
         android:name=".HomeAssistantApplication"
         >
+        <meta-data android:name="io.sentry.dsn" android:value="https://2d646f40f9574e0b9579e301a69bb030@o427061.ingest.sentry.io/5372876" />
 
         <receiver
             android:name=".notifications.NotificationActionReceiver"
