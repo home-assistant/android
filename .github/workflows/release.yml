@@ -33,8 +33,8 @@ jobs:
 
       - name: Mock debug google-services.json
         run: |
-          mv .github/mock-google-services.json app/src/debug/google-services.json
-          mv .github/mock-google-services.json app/src/minimal/google-services.json
+          cp .github/mock-google-services.json app/src/debug/google-services.json
+          cp .github/mock-google-services.json app/src/minimal/google-services.json
 
       - name: Inflate release_keystore.keystore
         env:
