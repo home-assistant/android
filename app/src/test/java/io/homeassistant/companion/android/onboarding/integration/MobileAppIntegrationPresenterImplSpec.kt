@@ -61,15 +61,14 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
         describe("on registration success") {
             val deviceRegistration = DeviceRegistration(
                 "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                Build.MODEL ?: "UNKNOWN",
-                "ABC123"
+                Build.MODEL ?: "UNKNOWN"
             )
             beforeEachTest {
                 coEvery { integrationUseCase.registerDevice(deviceRegistration) } just runs
             }
             describe("register") {
                 beforeEachTest {
-                    presenter.onRegistrationAttempt()
+                    presenter.onRegistrationAttempt(true)
                 }
                 it("should register successfully") {
                     coVerify {
@@ -87,7 +86,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             }
             describe("register") {
                 beforeEachTest {
-                    presenter.onRegistrationAttempt()
+                    presenter.onRegistrationAttempt(false)
                 }
                 it("should fail") {
                     coVerifyAll {
