@@ -8,7 +8,6 @@ object Config {
         const val ktlint = "org.jlleitschuh.gradle:ktlint-gradle:9.2.1"
         const val playPublisher = "com.github.triplet.gradle:play-publisher:2.7.5"
         const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.0.0"
-        const val crashlytics = "com.google.firebase:firebase-crashlytics-gradle:2.1.1"
     }
 
     object Repository {
@@ -68,7 +67,6 @@ object Config {
             const val core = "com.google.firebase:firebase-core:17.3.0"
             const val iid = "com.google.firebase:firebase-iid:20.1.5"
             const val messaging = "com.google.firebase:firebase-messaging:20.1.5"
-            const val crashlytics = "com.google.firebase:firebase-crashlytics:17.0.1"
         }
 
         object Square {
@@ -95,7 +93,7 @@ object Config {
         }
 
         object Misc {
-            const val lokalize = "com.lokalise.android:sdk:2.0.0-beta-5"
+            const val sentry = "io.sentry:sentry-android:2.2.2"
             const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1"
             const val threeTenBp = "org.threeten:threetenbp:1.4.0"
             const val threeTenAbp = "com.jakewharton.threetenabp:threetenabp:1.2.1"

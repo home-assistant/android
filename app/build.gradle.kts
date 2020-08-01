@@ -5,7 +5,6 @@ plugins {
     id("kotlin-android-extensions")
     id("com.google.firebase.appdistribution")
     id("com.github.triplet.play") version "2.7.5"
-    id("com.google.firebase.crashlytics")
 }
 
 buildscript {
@@ -132,13 +131,11 @@ dependencies {
     implementation(Config.Dependency.Misc.jackson)
     implementation(Config.Dependency.Square.okhttp)
 
-//    "fullImplementation"(Config.Dependency.Misc.lokalize)
-
     "fullImplementation"(Config.Dependency.Play.location)
     "fullImplementation"(Config.Dependency.Firebase.core)
     "fullImplementation"(Config.Dependency.Firebase.iid)
     "fullImplementation"(Config.Dependency.Firebase.messaging)
-    "fullImplementation"(Config.Dependency.Firebase.crashlytics)
+    "fullImplementation"(Config.Dependency.Misc.sentry)
     "fullImplementation"(Config.Dependency.Kotlin.coroutinesPlayServices)
 
     implementation(Config.Dependency.AndroidX.workManager)
