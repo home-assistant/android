@@ -13,8 +13,7 @@
   <string name="cancel">İptal</string>
   <string name="checking_with_home_assistant">Home Assistant ile kontrol ediliyor</string>
   <string name="configure_service_call">Çağır servisini yapılandır</string>
-  <string name="configure_widget_label">Widget etiketi</string>
-  <string name="connect_to_home_internet">Telefonunuzun ev ağınıza bağlı olduğundan emin olun.</string>
+    <string name="connect_to_home_internet">Telefonunuzun ev ağınıza bağlı olduğundan emin olun.</string>
   <string name="connected_to_home_assistant">Home Assistant\'a bağlandı</string>
   <string name="device_name">Cihaz adı</string>
   <string name="device_registration">Cihaz kaydı</string>
@@ -76,7 +75,7 @@
   <string name="wait">Bekle</string>
   <string name="webview_error">Home Assistan yüklenirken bir hata oluştu, lütfen bağlantı ayarlarını gözden geçirin ve tekrar deneyin.</string>
   <string name="widget_config_service_error">Özel bir bileşen, hizmet verilerinin yüklenmesini engelliyor.</string>
-  <string name="widget_image_description">Home Assistant widgeti</string>
+  <string name="widget_button_image_description">Home Assistant widgeti</string>
   <string name="widget_label_placeholder_text">Etiket:</string>
   <string name="widget_spinner_icon">Simge:</string>
   <string name="widget_text_hint_label">Etiket:</string>

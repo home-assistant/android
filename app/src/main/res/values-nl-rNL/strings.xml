@@ -13,8 +13,7 @@
   <string name="cancel">Annuleren</string>
   <string name="checking_with_home_assistant">Controleren met Home Assistant</string>
   <string name="configure_service_call">Service Call configureren</string>
-  <string name="configure_widget_label">Widget label</string>
-  <string name="connect_to_home_internet">Je telefoon dient verbonden te zijn met je thuis netwerk.</string>
+    <string name="connect_to_home_internet">Je telefoon dient verbonden te zijn met je thuis netwerk.</string>
   <string name="connected_to_home_assistant">Verbonden met Home Assistant</string>
   <string name="device_name">Apparaatnaam</string>
   <string name="device_registration">Apparaatregistratie</string>
@@ -75,7 +74,7 @@
   <string name="wait">Wachten</string>
   <string name="webview_error">Er is een fout opgetreden bij het laden van Home Assistant. Controleer de verbindingsinstellingen en probeer het opnieuw.</string>
   <string name="widget_config_service_error">Een aangepast onderdeel voorkomt dat servicegegevens worden geladen.</string>
-  <string name="widget_image_description">Home Assistant Widget</string>
+  <string name="widget_button_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Label</string>
   <string name="widget_spinner_icon">Icoon:</string>
   <string name="widget_text_hint_label">Label</string>

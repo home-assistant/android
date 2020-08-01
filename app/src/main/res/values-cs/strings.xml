@@ -13,7 +13,6 @@
   <string name="cancel">Zrušit</string>
   <string name="checking_with_home_assistant">Kontrola pomocí Home Assistant</string>
   <string name="configure_service_call">Konfigurovat službu volání</string>
-  <string name="configure_widget_label">Popisek widgetu</string>
   <string name="connect_to_home_internet">Ujistěte se, že je váš telefon připojený na domácí síť.</string>
   <string name="connected_to_home_assistant">Připojeno k Home Assistant</string>
   <string name="device_name">Název zařízení</string>
@@ -76,7 +75,7 @@ integraci povolenou v Home Assistant.</string>
   <string name="wait">Počkejte</string>
   <string name="webview_error">Při načítání Home Assistant došlo k chybě, zkontrolujte nastavení připojení a akci opakujte.</string>
   <string name="widget_config_service_error">Vlastní komponent brání v načítání.</string>
-  <string name="widget_image_description">Widget Home Assistant</string>
+  <string name="widget_button_image_description">Widget Home Assistant</string>
   <string name="widget_label_placeholder_text">Označení</string>
   <string name="widget_spinner_icon">Ikona:</string>
   <string name="widget_text_hint_label">Označení</string>

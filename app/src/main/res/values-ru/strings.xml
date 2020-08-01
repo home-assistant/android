@@ -15,8 +15,7 @@
   <string name="checking_with_home_assistant">Проверка с помощью Home Assistant</string>
   <string name="config">Настройки</string>
   <string name="configure_service_call">Настройка вызова службы</string>
-  <string name="configure_widget_label">Название виджета</string>
-  <string name="connect_to_home_internet">Убедитесь, что Ваш телефон подключен 
+  <string name="connect_to_home_internet">Убедитесь, что Ваш телефон подключен
 к домашней сети.</string>
   <string name="connected_to_home_assistant">Подключено к Home Assistant</string>
   <string name="developer_tools">Инструменты разработчика</string>
@@ -93,7 +92,7 @@
   <string name="wait">Ожидать</string>
   <string name="webview_error">Произошла ошибка при загрузке Home Assistant. Проверьте параметры подключения и повторите попытку.</string>
   <string name="widget_config_service_error">Пользовательский компонент предотвращает загрузку данных службы.</string>
-  <string name="widget_image_description">Виджет Home Assistant</string>
+  <string name="widget_button_image_description">Виджет Home Assistant</string>
   <string name="widget_label_placeholder_text">Название</string>
   <string name="widget_spinner_icon">Значок:</string>
   <string name="widget_text_hint_label">Название</string>

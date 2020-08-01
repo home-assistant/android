@@ -15,8 +15,7 @@
   <string name="checking_with_home_assistant">Tjekker med Home Assistant</string>
   <string name="config">Indstillinger</string>
   <string name="configure_service_call">Konfigurer tjenesteskald</string>
-  <string name="configure_widget_label">Widget-etiket</string>
-  <string name="connect_to_home_internet">Sørg for, at din telefon er tilsluttet 
+  <string name="connect_to_home_internet">Sørg for, at din telefon er tilsluttet
 dit hjemmeinternet.</string>
   <string name="connected_to_home_assistant">Tilsluttet til Home Assistant</string>
   <string name="developer_tools">Udviklerværktøjer</string>
@@ -96,7 +95,7 @@ vil forbinde til:</string>
   <string name="wait">Vent</string>
   <string name="webview_error">Der opstod en fejl under indlæsning af Home Assistant. Gennemgå forbindelsesindstillingerne og prøv igen.</string>
   <string name="widget_config_service_error">En brugerdefineret komponent forhindrer tjenestedata i at indlæses.</string>
-  <string name="widget_image_description">Home Assistant-widget</string>
+  <string name="widget_button_image_description">Home Assistant-widget</string>
   <string name="widget_label_placeholder_text">Etiket</string>
   <string name="widget_spinner_icon">Ikon:</string>
   <string name="widget_text_hint_label">Etiket</string>
