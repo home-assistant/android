@@ -7,8 +7,11 @@
   <string name="application_version">Applikasjonsversjon</string>
   <string name="attempting_registration">Registrerer applikasjon...</string>
   <string name="auth_cancel">Godkjenning avbrutt</string>
-  <string name="auth_request">Forespørsel om godkjenning:</string>
+  <string name="auth_error">Godkjenningsfeil</string>
+  <string name="auth_error_message">Feltene Brukernavn og Passord må fylles ut</string>
+  <string name="auth_request">Forespørsel om godkjenning</string>
   <string name="biometric_message">Lås opp med din biometriske legitimasjon eller skjermlås</string>
+  <string name="biometric_set_title">Bekreft for å fortsette</string>
   <string name="biometric_title">Home Assistant må låses opp</string>
   <string name="calendar">Kalender</string>
   <string name="cancel">Avbryt</string>
@@ -31,6 +34,7 @@ ditt hjemmenettverk.</string>
   <string name="error_with_registration">Vennligst kontroller at du har mobile_app 
 integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="event_error">Kunne ikke varsle HA om valgt alternativ.</string>
+  <string name="exit">Avslutt</string>
   <string name="failed_scan">Skanningen etter Home Assistant mislyktes.</string>
   <string name="finish">Fullfør</string>
   <string name="fullscreen">Fullskjerm</string>
@@ -58,6 +62,7 @@ Home Assistant forekomst</string>
   <string name="manage_ssids_input_exists">Denne SSID-en eksisterer allerede.</string>
   <string name="manual_setup">angi adresse manuelt</string>
   <string name="map">Kart</string>
+  <string name="not_private">Din tilkobling til dette nettstedet er ikke privat.</string>
   <string name="other_settings">Andre innstillinger</string>
   <string name="password">Passord</string>
   <string name="permission_explanation">For å kunne bruke funksjoner for posisjonssporing eller forskjellige tilkoblingsadresser basert på WiFi SSID, trenger vi tilgang til posisjonen din. Hvis du vil ha konsekvente bakgrunnsoppdateringer, må du også tillate bakgrunnsbehandling</string>
@@ -71,7 +76,10 @@ Home Assistant forekomst</string>
   <string name="pref_location_zone_summary">Importer eksisterende Home Assistant soner som geofences for sonebasert sporing.</string>
   <string name="pref_location_zone_title">Sonebasert sporing</string>
   <string name="profile">Profil</string>
+  <string name="rate_limit_notification.body">Du har nå sendt mer enn %s varsler i dag. Du vil ikke motta nye varsler før midnatt UTC.</string>
+  <string name="rate_limit_notification.title">Varslingsrate begrenset</string>
   <string name="refresh">Oppdater</string>
+  <string name="required_fields">krever brukernavn og passord.</string>
   <string name="retry">Prøv på nytt</string>
   <string name="save">Lagre</string>
   <string name="scan_again">Skann igjen</string>
@@ -79,8 +87,10 @@ Home Assistant forekomst</string>
 for Home Assistant</string>
   <string name="select_instance">Velg forekomsten du
 ønsker å koble til:</string>
+  <string name="session_timeout_title">Tidsavbrudd for økt (i sekunder)</string>
   <string name="set_lock_message">Ingen biometrisk sensor eller skjermlås tilgjengelig</string>
   <string name="set_lock_title">Feil ved låsing av app</string>
+  <string name="settings">Innstillinger</string>
   <string name="shopping_list">Handleliste</string>
   <string name="shortcuts">Snarveier</string>
   <string name="shortcuts_summary">Legg til snarvei</string>
@@ -93,6 +103,13 @@ for Home Assistant</string>
   <string name="username">Brukernavn</string>
   <string name="wait">Vent</string>
   <string name="webview_error">Det oppstod en feil under lasting av Home Assistant, vennligst se gjennom tilkoblingsinnstillingene og prøv på nytt.</string>
+  <string name="webview_error_description">Oppstått feil:</string>
+  <string name="webview_error_SSL_DATE_INVALID">Datoen for Home Assistant-sertifikatet er ugyldig. Vennligst les Hjem Assistant-sertifikatet eller tilkoblingsinnstillingene og prøv igjen.</string>
+  <string name="webview_error_SSL_EXPIRED">Home Assistant sertifikatet er utløpt. Vennligst sjekk Home Assistant sertifikatet eller tilkoblingsinnstillingene og prøv igjen.</string>
+  <string name="webview_error_SSL_IDMISMATCH">Home Assistant vertsnavn sertifikatet samsvarer ikke, vennlingst sjekk Home Assistant-sertifikatet eller tilkoblingsinnstillingene, og prøv igjen.</string>
+  <string name="webview_error_SSL_INVALID">En generisk SSL-feil oppstod ved innlasting av Home Assistant. Vennligst sjekk Home Assistant sertifikatet eller tilkoblingsinnstillingene og prøv igjen.</string>
+  <string name="webview_error_SSL_NOTYETVALID">Home Assistant-sertifikatet er ennå ikke gyldig, vennlingst sjekk Home Assistant-sertifikatet eller tilkoblingsinnstillingene, og prøv igjen.</string>
+  <string name="webview_error_SSL_UNTRUSTED">Home Assistant sertifikatinstans er ikke klarert, vennligst sjekk Home Assistasnt sertifikatet eller tilkoblingsinnstillingene og prøv igjen.</string>
   <string name="widget_config_service_error">En uoffisiell komponent forhindrer lasting av tjenestedata.</string>
   <string name="widget_image_description">Home Assistant widget</string>
   <string name="widget_label_placeholder_text">Etikett</string>

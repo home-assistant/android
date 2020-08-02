@@ -7,8 +7,11 @@
   <string name="application_version">Version de l\'application</string>
   <string name="attempting_registration">Enregistrement de l\'application…</string>
   <string name="auth_cancel">Authentification annulée</string>
+  <string name="auth_error">Erreur d\'authentification</string>
+  <string name="auth_error_message">Les champs «Nom d\'utilisateur» et «Mot de passe» doivent être remplis</string>
   <string name="auth_request">Authentification demandée :</string>
   <string name="biometric_message">Déverrouillez à l\'aide de vos informations d\'identification biométriques ou de verrouillage d\'écran</string>
+  <string name="biometric_set_title">Confirmer pour continuer</string>
   <string name="biometric_title">Home Assistant doit être déverrouillé</string>
   <string name="calendar">Calendrier</string>
   <string name="cancel">Annuler</string>
@@ -29,6 +32,7 @@
   <string name="error_ssl">Impossible de communiquer avec Home Assistant en raison d\'une erreur SSL. Veuillez vous assurer que votre certificat est valide.</string>
   <string name="error_with_registration">Veuillez vérifier que l\'intégration mobile_app est bien activée sur votre instance Home Assistant.</string>
   <string name="event_error">Échec de notification à HA de l\'option choisie.</string>
+  <string name="exit">Sortie</string>
   <string name="failed_scan">La recherche de Home Assistant a échoué.</string>
   <string name="finish">Terminer</string>
   <string name="fullscreen">Plein écran</string>
@@ -55,6 +59,7 @@
   <string name="manage_ssids_input_exists">Ce SSID existe déjà.</string>
   <string name="manual_setup">Entrer l\'adresse manuellement</string>
   <string name="map">Carte</string>
+  <string name="not_private">Votre connexion à ce site n\'est pas privée.</string>
   <string name="other_settings">Autres paramètres</string>
   <string name="password">Mot de passe</string>
   <string name="permission_explanation">Afin d\'utiliser les fonctions de suivi de localisation ou les différentes URLs de connexion basées sur les SSID WiFi, nous avons besoin d\'accéder à votre position. Si vous souhaitez des mises à jour cohérentes en arrière-plan, vous devrez également autoriser le traitement en arrière-plan</string>
@@ -71,6 +76,7 @@
   <string name="rate_limit_notification.body">Vous avez maintenant envoyé plus de %s notifications aujourd\'hui. Vous ne recevrez aucune nouvelle notification avant minuit UTC.</string>
   <string name="rate_limit_notification.title">Nombre de notifications limitée</string>
   <string name="refresh">Rafraîchir</string>
+  <string name="required_fields">nécessite un nom d\'utilisateur et un mot de passe.</string>
   <string name="retry">Réessayer</string>
   <string name="save">Enregistrer</string>
   <string name="scan_again">Rechercher à nouveau</string>
@@ -78,6 +84,7 @@
   <string name="select_instance">Sélectionnez l\'instance à laquelle vous souhaitez vous connecter :</string>
   <string name="set_lock_message">Aucun capteur biométrique ou informations d\'identification de verrouillage d\'écran disponibles</string>
   <string name="set_lock_title">Erreur de verrouillage de l\'application</string>
+  <string name="settings">Paramètres</string>
   <string name="shopping_list">Liste de courses</string>
   <string name="shortcuts">Raccourcis</string>
   <string name="shortcuts_summary">Ajouter des raccourcis au lanceur</string>

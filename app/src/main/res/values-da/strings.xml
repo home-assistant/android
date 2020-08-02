@@ -7,8 +7,11 @@
   <string name="application_version">Applikationsversion</string>
   <string name="attempting_registration">Registrerer applikationen...</string>
   <string name="auth_cancel">Godkendelse annulleret</string>
+  <string name="auth_error">Godkendelsesfejl</string>
+  <string name="auth_error_message">Felterne \'Brugernavn\' og \'Adgangskode\' skal udfyldes</string>
   <string name="auth_request">Godkendelse anmodet:</string>
   <string name="biometric_message">Lås op ved hjælp af biometrisk eller skærmlås-legitimation</string>
+  <string name="biometric_set_title">Bekræft for at fortsætte</string>
   <string name="biometric_title">Home Assistant skal låses op</string>
   <string name="calendar">Kalender</string>
   <string name="cancel">Annuller</string>
@@ -31,8 +34,11 @@ dit hjemmeinternet.</string>
   <string name="error_with_registration">Kontroller, at du har mobile_app-integration
 aktiveret på din Home Assistant-instans.</string>
   <string name="event_error">Kunne ikke underrette HA om valgt valgmulighed.</string>
+  <string name="exit">Afslut</string>
   <string name="failed_scan">Scanning efter Home Assistant mislykkedes.</string>
   <string name="finish">Afslut</string>
+  <string name="firebase_error_message">Ved at springe over/ignorere denne fejl kan du ikke modtage push-notifikationer.</string>
+  <string name="firebase_error_title">Firebase-fejl</string>
   <string name="fullscreen">Fuld skærm</string>
   <string name="fullscreen_def">Kør app i fuld skærm</string>
   <string name="grant_permission">Giv tilladelse</string>
@@ -58,6 +64,7 @@ Home Assistant-instans</string>
   <string name="manage_ssids_input_exists">Dette SSID findes allerede.</string>
   <string name="manual_setup">indtast adresse manuelt</string>
   <string name="map">Kort</string>
+  <string name="not_private">Din forbindelse til dette websted er ikke privat.</string>
   <string name="other_settings">Andre indstillinger</string>
   <string name="password">Adgangskode</string>
   <string name="permission_explanation">For at bruge lokalitetsssporingsfunktioner eller forskellige forbindelses-URLer baseret på WiFi-SSID, har vi brug for adgang til din lokalitet. Hvis du vil have pålidelige baggrundsopdateringer, skal du også tillade baggrundsbehandling</string>
@@ -74,6 +81,7 @@ Home Assistant-instans</string>
   <string name="rate_limit_notification.body">Du har nu sendt mere end %s meddelelser i dag. Du vil ikke modtage nye notifikationer før midnat UTC.</string>
   <string name="rate_limit_notification.title">Antal notifikationer begrænset</string>
   <string name="refresh">Opdater</string>
+  <string name="required_fields">kræver et brugernavn og en adgangskode.</string>
   <string name="retry">Prøv igen</string>
   <string name="save">Gem</string>
   <string name="scan_again">scan igen</string>
@@ -81,8 +89,10 @@ Home Assistant-instans</string>
 efter Home Assistant</string>
   <string name="select_instance">Vælg den instans, du gerne
 vil forbinde til:</string>
+  <string name="session_timeout_title">Sessions-timeout (i sekunder)</string>
   <string name="set_lock_message">Der er ingen biometrisk sensor eller skærmlås-legitimation tilgængelig</string>
   <string name="set_lock_title">App-låsefejl</string>
+  <string name="settings">Indstillinger</string>
   <string name="shopping_list">Indkøbsliste</string>
   <string name="shortcuts">Genveje</string>
   <string name="shortcuts_summary">Føj genveje til launcher</string>
@@ -95,7 +105,10 @@ vil forbinde til:</string>
   <string name="username">Brugernavn</string>
   <string name="wait">Vent</string>
   <string name="webview_error">Der opstod en fejl under indlæsning af Home Assistant. Gennemgå forbindelsesindstillingerne og prøv igen.</string>
+  <string name="webview_error_description">Der opstod en fejl :</string>
+  <string name="webview_error_SSL_UNTRUSTED">Home Assistant-certifikatmyndigheden er ikke betroet. Gennemgå Home Assistant-certifikatet eller forbindelsesindstillingerne og prøv igen.</string>
   <string name="widget_config_service_error">En brugerdefineret komponent forhindrer tjenestedata i at indlæses.</string>
+  <string name="widget_creation_error">Kunne ikke oprette widget.</string>
   <string name="widget_image_description">Home Assistant-widget</string>
   <string name="widget_label_placeholder_text">Etiket</string>
   <string name="widget_spinner_icon">Ikon:</string>
