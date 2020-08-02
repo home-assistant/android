@@ -112,7 +112,7 @@ class NfcActivity : AppCompatActivity() {
             // check if we have a nfc tag id
             val deviceName = integrationUseCase.getRegistration().deviceName!!
             integrationUseCase.fireEvent(
-                "mobile_app.nfc_tag_read",
+                "nfc.tag_read",
                 hashMapOf("tag" to nfcTagId, "device_name" to deviceName)
             )
             finish()
