@@ -102,9 +102,10 @@
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:scheme="https"
+                <data
+                    android:scheme="https"
                     android:host="www.home-assistant.io"
-                    android:pathPrefix="/android/nfc/" />
+                    android:pathPrefix="/nfc/" />
             </intent-filter>
         </activity>
     </application>

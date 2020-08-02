@@ -4,8 +4,11 @@
   <string name="nfc_write_tag_info">Place phone over nfc tag</string>
   <string name="nfc_write_tag_too_early">Please fill out the form first</string>
   <string name="nfc_write_tag_success">Successfully wrote nfc tag</string>
+  <string name="nfc_write_tag_error">Error while writing nfc tag</string>
   <string name="nfc_title">NFC Tags</string>
   <string name="nfc_summary">Setup NFC Tags</string>
+  <string name="nfc_button_add_tag_id">Add NFC Automation</string>
+  <string name="nfc_button_add_universal_app_link">Add Universal Link</string>
   <string name="add_service_data_field">Add Field</string>
   <string name="add_widget">Add widget</string>
   <string name="app_name">Home Assistant</string>

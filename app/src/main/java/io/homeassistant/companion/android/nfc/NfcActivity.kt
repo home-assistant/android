@@ -27,7 +27,10 @@ import io.homeassistant.companion.android.widgets.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.WidgetDynamicFieldAdapter
 import kotlinx.android.synthetic.main.activity_nfc.*
 import kotlinx.coroutines.*
+import java.util.*
 import javax.inject.Inject
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class NfcActivity : AppCompatActivity() {
     private val TAG: String = "NfcActivity"
@@ -68,7 +71,10 @@ class NfcActivity : AppCompatActivity() {
 
 
         if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
-            nfc_setup.visibility = View.GONE
+            nfc_tag_id_setup.visibility = View.GONE
+            nfc_universal_link_setup.visibility = View.GONE
+            mode_switch.visibility = View.GONE
+
             val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
             val ndefMessage = rawMessages[0] as NdefMessage?
             mainScope.launch {
@@ -76,26 +82,54 @@ class NfcActivity : AppCompatActivity() {
             }
         } else {
             nfc_loading.visibility = View.GONE
+            nfc_tag_id_setup.visibility = View.GONE
+            nfc_universal_link_setup.visibility = View.GONE
+
+
             initUi();
             mNfcAdapter = NfcAdapter.getDefaultAdapter(this)
+
+            add_nfc_tag_id.setOnClickListener {
+                mode_switch.visibility = View.GONE
+                nfc_tag_id_setup.visibility = View.VISIBLE
+            }
+
+            add_universal_link.setOnClickListener {
+                mode_switch.visibility = View.GONE
+                nfc_universal_link_setup.visibility = View.VISIBLE
+            }
         }
     }
 
     private suspend fun handleNFCTag(ndefMessage: NdefMessage?) {
         val url = ndefMessage?.records?.get(0)?.toUri().toString()
-        //val url = "https://www.home-assistant.io/android/nfc/?url=homeassistant://call_service/light.turn_on?entity_id=light.extended_color_light_2"
-        //val url = "https://www.home-assistant.io/android/nfc/?url=homeassistant://fire_event/custom_event?entity_id=MY_CUSTOM_EVENT"
-        val haLink = UrlHandler.getUniversalLink(url)
-        if (UrlHandler.isHomeAssistantUrl(haLink)) {
-            val (domain, service, cs_entity) = UrlHandler.splitCallServiceLink(haLink)
-            val (event, fe_entity) = UrlHandler.splitFireEventLink(haLink)
+        // https://www.home-assistant.io/nfc/?url=homeassistant://call_service/light.turn_on?entity_id=light.extended_color_light_2
+        // https://www.home-assistant.io/nfc/?url=homeassistant://fire_event/custom_event?entity_id=MY_CUSTOM_EVENT
+        // https://www.home-assistant.io/nfc/5f0ba733-172f-430d-a7f8-e4ad940c88d7
 
-            if (domain != null && service != null && cs_entity != null) {
-                integrationUseCase.callService(domain, service, hashMapOf("entity_id" to cs_entity))
-            } else if (event != null && fe_entity != null) {
-                integrationUseCase.fireEvent(event, hashMapOf("entity_id" to fe_entity))
-            }
+        val nfcTagId = UrlHandler.splitNfcTagId(url)
+        if (nfcTagId != null) {
+            // check if we have a nfc tag id
+            integrationUseCase.fireEvent("mobile_app.nfc_tag_read", hashMapOf("tag" to nfcTagId))
             finish()
+        } else {
+            // Check for universal link
+            val haLink = UrlHandler.getUniversalLink(url)
+            if (UrlHandler.isHomeAssistantUrl(haLink)) {
+                val (domain, service, cs_entity) = UrlHandler.splitCallServiceLink(haLink)
+                val (event, fe_entity) = UrlHandler.splitFireEventLink(haLink)
+
+                if (domain != null && service != null && cs_entity != null) {
+                    integrationUseCase.callService(
+                        domain,
+                        service,
+                        hashMapOf("entity_id" to cs_entity)
+                    )
+                } else if (event != null && fe_entity != null) {
+                    integrationUseCase.fireEvent(event, hashMapOf("entity_id" to fe_entity))
+                }
+                finish()
+            }
         }
     }
 
@@ -105,8 +139,6 @@ class NfcActivity : AppCompatActivity() {
         }
         widget_text_config_service.setAdapter(serviceAdapter)
         widget_text_config_service.onFocusChangeListener = dropDownOnFocus
-
-
 
         mainScope.launch {
             try {
@@ -126,8 +158,6 @@ class NfcActivity : AppCompatActivity() {
                 integrationUseCase.getEntities().forEach {
                     entities[it.entityId] = it
                 }
-
-                //Log.d("abc", services.toString())
             } catch (e: Exception) {
                 // Custom components can cause services to not load
                 // Display error text
@@ -143,6 +173,13 @@ class NfcActivity : AppCompatActivity() {
         dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
         widget_config_fields_layout.adapter = dynamicFieldAdapter
         widget_config_fields_layout.layoutManager = LinearLayoutManager(this)
+
+
+        write_tag_id.setOnClickListener {
+            nfcUrlToWrite = "https://www.home-assistant.io/nfc/${UUID.randomUUID()}"
+            Toast.makeText(applicationContext, R.string.nfc_write_tag_info, Toast.LENGTH_LONG)
+                .show()
+        }
     }
 
     override fun onResume() {
@@ -185,7 +222,8 @@ class NfcActivity : AppCompatActivity() {
 
             val params = serviceDataMap.map {(k, v) -> "${k.utf8()}=${v[0]}"}.joinToString("&")
 
-            nfcUrlToWrite = "https://www.home-assistant.io/android/nfc/?url=homeassistant://call_service/$domain.$service?$params"
+            nfcUrlToWrite =
+                "https://www.home-assistant.io/nfc/?url=homeassistant://call_service/$domain.$service?$params"
             Log.d(TAG, "Generated url: $nfcUrlToWrite")
             Toast.makeText(applicationContext, R.string.nfc_write_tag_info, Toast.LENGTH_LONG)
                 .show()
@@ -277,13 +315,15 @@ class NfcActivity : AppCompatActivity() {
             if(nfcUrlToWrite == null) {
                 Toast.makeText(applicationContext, R.string.nfc_write_tag_too_early, Toast.LENGTH_LONG).show()
             } else {
-                val success = NFCUtil.createNFCMessage(nfcUrlToWrite!!, intent)
-                Log.d(TAG, "Wrote nfc tag with url: $nfcUrlToWrite (Success: $success)")
-                val message = if (success) R.string.nfc_write_tag_success else R.string.nfc_write_tag_success
-                Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
-
-                if (success) {
+                try {
+                    NFCUtil.createNFCMessage(nfcUrlToWrite!!, intent)
+                    Log.d(TAG, "Wrote nfc tag with url: $nfcUrlToWrite")
+                    val message = R.string.nfc_write_tag_success
+                    Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
                     finish()
+                } catch (err: java.lang.Exception) {
+                    val message = R.string.nfc_write_tag_error
+                    Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
                 }
             }
         }

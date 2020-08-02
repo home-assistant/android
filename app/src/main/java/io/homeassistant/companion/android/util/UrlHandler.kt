@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.util
 
-import android.util.Log
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URL
 
@@ -26,8 +25,8 @@ object UrlHandler {
     }
 
     fun getUniversalLink(it: String?): String? {
-        val matches = Regex("^https?://www\\.home-assistant\\.io/android/nfc/\\?url=(.*)").find(it.toString())
-        Log.d("dsasda", matches.toString())
+        val matches =
+            Regex("^https?://www\\.home-assistant\\.io/nfc/\\?url=(.*)").find(it.toString())
         return matches?.groups?.get(1)?.value
     }
 
@@ -41,12 +40,19 @@ object UrlHandler {
     }
 
     data class FireEventLink(val event: String?, val entity: String?)
+
     fun splitFireEventLink(it: String?): FireEventLink {
         val matches = Regex("^homeassistant://fire_event/(.*?)?entity_id=(.*)").find(it.toString())
-        val event  = matches?.groups?.get(1)?.value
-        val entity  = matches?.groups?.get(2)?.value
+        val event = matches?.groups?.get(1)?.value
+        val entity = matches?.groups?.get(2)?.value
         return FireEventLink(event, entity)
     }
 
-
+    fun splitNfcTagId(it: String?): String? {
+        val matches =
+            Regex("^https?://www\\.home-assistant\\.io/nfc/([0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12})").find(
+                it.toString()
+            )
+        return matches?.groups?.get(1)?.value
+    }
 }
