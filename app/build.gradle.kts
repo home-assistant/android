@@ -63,12 +63,14 @@ android {
     buildTypes {
         named("debug").configure {
             applicationIdSuffix = ".debug"
+            manifestPlaceholders["sentryEnabled"] = "false"
         }
         named("release").configure {
             isDebuggable = false
             isJniDebuggable = false
             isZipAlignEnabled = true
             signingConfig = signingConfigs.getByName("release")
+            manifestPlaceholders["sentryEnabled"] = "true"
         }
     }
     flavorDimensions("version")
