@@ -110,7 +110,11 @@ class NfcActivity : AppCompatActivity() {
         val nfcTagId = UrlHandler.splitNfcTagId(url)
         if (nfcTagId != null) {
             // check if we have a nfc tag id
-            integrationUseCase.fireEvent("mobile_app.nfc_tag_read", hashMapOf("tag" to nfcTagId))
+            val deviceName = integrationUseCase.getRegistration().deviceName!!
+            integrationUseCase.fireEvent(
+                "mobile_app.nfc_tag_read",
+                hashMapOf("tag" to nfcTagId, "device_name" to deviceName)
+            )
             finish()
         } else {
             // Check for universal link
