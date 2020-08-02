@@ -177,7 +177,10 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
         var wasSuccess = false
 
-        val fireEventRequest = FireEventRequest(eventType, eventData)
+        val fireEventRequest = FireEventRequest(
+            eventType,
+            eventData.plus(Pair("device_id", deviceId))
+        )
 
         for (it in urlRepository.getApiUrls()) {
             try {
