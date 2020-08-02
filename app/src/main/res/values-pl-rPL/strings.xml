@@ -7,6 +7,8 @@
   <string name="application_version">Wersja aplikacji</string>
   <string name="attempting_registration">Rejestruję aplikację…</string>
   <string name="auth_cancel">Uwierzytelnianie anulowane</string>
+  <string name="auth_error">Błąd uwierzytelnienia</string>
+  <string name="auth_error_message">Pola \'Nazwa użytkownika\' i \'Hasło\' muszą zostać wypełnione</string>
   <string name="auth_request">Wymagane uwierzytelnienie:</string>
   <string name="biometric_message">Odblokuj przy użyciu danych biometrycznych lub blokady ekranu</string>
   <string name="biometric_set_title">Potwierdź, aby kontynuować</string>
@@ -33,6 +35,8 @@
   <string name="exit">Wyjście</string>
   <string name="failed_scan">Skanowanie w poszukiwaniu Home Assistant\'a nie powiodło się.</string>
   <string name="finish">Zakończ</string>
+  <string name="firebase_error_message">Pomijając/ignorując ten błąd, nie będziesz w stanie otrzymywać żadnych powiadomień push.</string>
+  <string name="firebase_error_title">Błąd Firebase</string>
   <string name="fullscreen">Pełny ekran</string>
   <string name="fullscreen_def">Umieść aplikację na pełnym ekranie</string>
   <string name="grant_permission">Przyznaj</string>
@@ -57,6 +61,7 @@
   <string name="manage_ssids_input_exists">Ten SSID już istnieje.</string>
   <string name="manual_setup">wprowadź adres ręcznie</string>
   <string name="map">Mapa</string>
+  <string name="not_private">Twoje połączenie z tą witryną nie jest prywatne.</string>
   <string name="other_settings">Inne ustawienia</string>
   <string name="password">Hasło</string>
   <string name="permission_explanation">Aby korzystać z funkcji śledzenia lokalizacji lub różnych adresów URL połączenia opartych na SSID sieci Wi-Fi, aplikacja potrzebuje uprawnień dostępu do Twojej lokalizacji. Jeśli chcesz uzyskać aktualizacje w tle, musisz także zezwolić na przetwarzanie w tle.</string>
@@ -73,6 +78,7 @@
   <string name="rate_limit_notification.body">Wysłałeś dziś więcej niż %s powiadomień. Nie będziesz otrzymywać nowych powiadomień przed północą czasu UTC.</string>
   <string name="rate_limit_notification.title">Notifications Rate Limited</string>
   <string name="refresh">Odśwież</string>
+  <string name="required_fields">wymaga nazwy użytkownika i hasła.</string>
   <string name="retry">Ponów próbę</string>
   <string name="save">Zapisz</string>
   <string name="scan_again">skanuj ponownie</string>
@@ -102,6 +108,7 @@
   <string name="webview_error_SSL_NOTYETVALID">Certyfikat Home Assistanta nie jest jeszcze ważny, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
   <string name="webview_error_SSL_UNTRUSTED">Urząd certyfikacji Home Assistanta nie jest zaufany, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
   <string name="widget_config_service_error">Niestandardowy komponent uniemożliwia załadowanie danych usługi.</string>
+  <string name="widget_creation_error">Nie można utworzyć widżetu.</string>
   <string name="widget_image_description">Widżet Home Assistant\'a</string>
   <string name="widget_label_placeholder_text">Etykieta</string>
   <string name="widget_spinner_icon">Ikona:</string>

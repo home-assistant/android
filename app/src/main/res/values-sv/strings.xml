@@ -7,8 +7,10 @@
   <string name="application_version">Applikation-version</string>
   <string name="attempting_registration">Registrerar app...</string>
   <string name="auth_cancel">Autentiseringen avbröts</string>
+  <string name="auth_error">Autentiseringsfel</string>
   <string name="auth_request">Autentisering krävs</string>
   <string name="biometric_message">Använd biometrisk eller skärmlåskod för att låsa upp appen</string>
+  <string name="biometric_set_title">Bekräfta för att fortsätta</string>
   <string name="biometric_title">[%key_id:32141765%] måste låsas upp</string>
   <string name="calendar">Kalender</string>
   <string name="cancel">Avbryt</string>
@@ -31,8 +33,11 @@
   <string name="error_with_registration">Kontrollera att du har mobile_app 
  integration aktiverad i din Home Assistant instans.</string>
   <string name="event_error">Det gick inte att meddela HA om valt alternativ.</string>
+  <string name="exit">Avsluta</string>
   <string name="failed_scan">Sökning efter Home Assistant misslyckades</string>
   <string name="finish">Slutför</string>
+  <string name="firebase_error_message">Genom att hoppa över / ignorera detta fel kan du inte få några push-aviseringar.</string>
+  <string name="firebase_error_title">Firebase Fel</string>
   <string name="fullscreen">Fullskärm</string>
   <string name="fullscreen_def">Sätt applikationen i helskärm</string>
   <string name="grant_permission">Bevilja behörighet</string>
@@ -74,6 +79,7 @@
   <string name="rate_limit_notification.body">Du har nu skickat mer än %s notiser idag. Du får inga nya notiser förrän midnatt UTC.</string>
   <string name="rate_limit_notification.title">Notisfrekvens begränsad</string>
   <string name="refresh">Uppdatera</string>
+  <string name="required_fields">kräver ett användarnamn och lösenord.</string>
   <string name="retry">Försök igen</string>
   <string name="save">Spara</string>
   <string name="scan_again">sök igen</string>
@@ -81,6 +87,7 @@
   <string name="select_instance">Välj vilken instans du vill ansluta till:</string>
   <string name="set_lock_message">Ingen biometrisk sensor eller skärmlåsuppgifter finns tillgänglig</string>
   <string name="set_lock_title">App-låsningsfel</string>
+  <string name="settings">Inställningar</string>
   <string name="shopping_list">Inköpslista</string>
   <string name="shortcuts">Genvägar</string>
   <string name="shortcuts_summary">Lägg till genvägar till hemskärmen</string>
@@ -94,6 +101,7 @@
   <string name="wait">Vänta</string>
   <string name="webview_error">Det uppstod ett fel vid anslutningen av Home Assistant, granska anslutningsinställningarna och försök igen.</string>
   <string name="widget_config_service_error">En egen komponent förhindrar tjänsten från att ladda.</string>
+  <string name="widget_creation_error">Kunde inte skapa widget.</string>
   <string name="widget_image_description"></string>
   <string name="widget_label_placeholder_text">Etikett</string>
   <string name="widget_spinner_icon">Ikon:</string>

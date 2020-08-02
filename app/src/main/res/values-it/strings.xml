@@ -7,10 +7,12 @@
   <string name="application_version">Versione dell\'applicazione</string>
   <string name="attempting_registration">Registrazione dell\'applicazione in corso...</string>
   <string name="auth_cancel">Autenticazione Annullata</string>
-  <string name="auth_request">Autenticazione Richiesta:</string>
+  <string name="auth_error">Errore di autenticazione</string>
+  <string name="auth_error_message">I campi \'Nome utente\' e \'Password\' devono essere compilati</string>
+  <string name="auth_request">Autenticazione Richiesta</string>
   <string name="biometric_message">Sbloccare usando le credenziali biometriche o del blocca schermo</string>
   <string name="biometric_set_title">Conferma per continuare</string>
-  <string name="biometric_title">Home Assistant deve essere sbloccato</string>
+  <string name="biometric_title">Home Assistant è bloccato</string>
   <string name="calendar">Calendario</string>
   <string name="cancel">Annulla</string>
   <string name="checking_with_home_assistant">Verifica con Home Assistant</string>
@@ -35,6 +37,8 @@ sulla tua istanza di Home Assistant.</string>
   <string name="exit">Uscita</string>
   <string name="failed_scan">Scansione per Home Assistant non riuscita.</string>
   <string name="finish">Fine</string>
+  <string name="firebase_error_message">Saltando/ignorando questo errore non sarà possibile ricevere alcuna notifica push.</string>
+  <string name="firebase_error_title">Errore Firebase</string>
   <string name="fullscreen">A schermo intero</string>
   <string name="fullscreen_def">Metti l\'applicazione a schermo intero</string>
   <string name="grant_permission">Concedere l\'Autorizzazione</string>
@@ -60,6 +64,7 @@ istanza di Home Assistant</string>
   <string name="manage_ssids_input_exists">Questo SSID è già esistente.</string>
   <string name="manual_setup">Inserisci l\'indirizzo manualmente</string>
   <string name="map">Mappa</string>
+  <string name="not_private">La tua connessione a questo sito non è privata.</string>
   <string name="other_settings">Altre impostazioni</string>
   <string name="password">Password</string>
   <string name="permission_explanation">Per poter utilizzare funzioni di localizzazione o diversi URL di connessione basati su SSID WiFi abbiamo bisogno di accedere alla tua posizione. Se si desiderano aggiornamenti in background coerenti, sarà necessario consentire anche l\'elaborazione in background</string>
@@ -76,6 +81,7 @@ istanza di Home Assistant</string>
   <string name="rate_limit_notification.body">Oggi hai inviato più di %s notifiche. Non riceverai nuove notifiche fino a mezzanotte UTC.</string>
   <string name="rate_limit_notification.title">Tasso delle notifiche limitato</string>
   <string name="refresh">Aggiorna</string>
+  <string name="required_fields">richiede un nome utente e una password.</string>
   <string name="retry">Riprova</string>
   <string name="save">Salva</string>
   <string name="scan_again">Cerca di nuovo</string>
@@ -106,6 +112,7 @@ Scansione della rete</string>
   <string name="webview_error_SSL_NOTYETVALID">Il certificato di Home Assistant non è ancora valido, rivedere il certificato di Home Assistant o le impostazioni di connessione e riprovare.</string>
   <string name="webview_error_SSL_UNTRUSTED">L\'autorità di certificazione Home Assistant non è attendibile, rivedere il certificato Home Assistant o le impostazioni di connessione e riprovare.</string>
   <string name="widget_config_service_error">Un componente personalizzato impedisce il caricamento dei dati del servizio.</string>
+  <string name="widget_creation_error">Impossibile creare il widget.</string>
   <string name="widget_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Etichetta</string>
   <string name="widget_spinner_icon">Icona:</string>
