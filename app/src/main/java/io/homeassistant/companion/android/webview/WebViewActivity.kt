@@ -43,6 +43,7 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.background.LocationBroadcastReceiver
 import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDataBase
@@ -104,7 +105,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         // Start the sensor worker if they start the app. The only other place we start this ia Boot BroadcastReceiver
         SensorWorker.start(this)
 
-        val intent = Intent(this, LocationBroadcastReceiverBase::class.java)
+        val intent = Intent(this, LocationBroadcastReceiver::class.java)
         intent.action = LocationBroadcastReceiverBase.ACTION_REQUEST_LOCATION_UPDATES
         sendBroadcast(intent)
 
