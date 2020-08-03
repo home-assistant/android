@@ -85,6 +85,12 @@ android {
         }
     }
 
+    playConfigs {
+        register("minimal") {
+            isEnabled = false
+        }
+    }
+
     testOptions {
         unitTests.apply { isReturnDefaultValues = true }
     }
