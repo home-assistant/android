@@ -86,7 +86,7 @@ android {
     }
 
     playConfigs {
-        register("minimal"){
+        register("minimal") {
             isEnabled = false
         }
     }
