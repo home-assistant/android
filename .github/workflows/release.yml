@@ -84,14 +84,14 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
-        run: ./gradlew appDistributionUploadRelease
+        run: ./gradlew appDistributionUploadFullRelease
 
       - name: Deploy to Playstore Beta
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
-        run: ./gradlew publishReleaseBundle
+        run: ./gradlew publishFullReleaseBundle
 
       - name: Promote to Beta to Production
         env:
