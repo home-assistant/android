@@ -6,7 +6,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.util.Log.i
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
@@ -56,7 +55,7 @@ class StaticWidgetConfigureActivity : Activity() {
 
         setContentView(R.layout.widget_static_configure)
 
-        add_button.setOnClickListener(onClickListener)
+        add_button.setOnClickListener(addWidgetButtonClickListener)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -101,7 +100,6 @@ class StaticWidgetConfigureActivity : Activity() {
                 fetchedEntities.forEach {
                     entities[it.entityId] = it
                 }
-                i(TAG, "Successfully queried entities [" + fetchedEntities + ".")
                 entityAdapter.addAll(entities.values)
                 entityAdapter.sort()
 
@@ -111,7 +109,7 @@ class StaticWidgetConfigureActivity : Activity() {
             } catch (e: Exception) {
                 // If entities fail to load, it's okay to pass
                 // an empty map to the dynamicFieldAdapter
-                Log.e(TAG, "", e)
+                Log.e(TAG, "Failed to query entities", e)
             }
         }
     }
@@ -143,7 +141,7 @@ class StaticWidgetConfigureActivity : Activity() {
         }
     }
 
-    private var onClickListener = View.OnClickListener {
+    private var addWidgetButtonClickListener = View.OnClickListener {
         try {
 
             val context = this@StaticWidgetConfigureActivity

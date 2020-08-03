@@ -46,14 +46,4 @@
                 />
         </LinearLayout>
     </LinearLayout>
-
-    <ProgressBar
-        android:id="@+id/widgetProgressBar"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="8dp"
-        android:visibility="invisible"
-        android:indeterminate="true"
-        android:indeterminateTint="@color/colorAccent"
-        />
 </FrameLayout>
