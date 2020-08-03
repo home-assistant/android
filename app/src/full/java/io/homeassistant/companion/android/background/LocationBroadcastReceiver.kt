@@ -146,7 +146,7 @@ class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
     }
 
     private fun getLocationUpdateIntent(context: Context, isGeofence: Boolean): PendingIntent {
-        val intent = Intent(context, LocationBroadcastReceiverBase::class.java)
+        val intent = Intent(context, LocationBroadcastReceiver::class.java)
         intent.action = if (isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
