@@ -18,8 +18,7 @@
   <string name="checking_with_home_assistant">正在检查Home Assistant</string>
   <string name="config">配置</string>
   <string name="configure_service_call">配置服务</string>
-  <string name="configure_widget_label">小部件标签</string>
-  <string name="connect_to_home_internet">确保手机已连接
+    <string name="connect_to_home_internet">确保手机已连接
 到您的家庭互联网。</string>
   <string name="connected_to_home_assistant">连接到 Home Assistant</string>
   <string name="developer_tools">开发者工具</string>
@@ -111,8 +110,8 @@ Home Assistant实例</string>
   <string name="webview_error_SSL_NOTYETVALID">Home Assistant证书尚未生效，请检查Home Assistant证书或连接设置，然后重试。</string>
   <string name="webview_error_SSL_UNTRUSTED">不信任Home Assistant证书颁发机构，请检查Home Assistant证书或连接设置，然后重试。</string>
   <string name="widget_config_service_error">未能加载自定义组件的服务数据。</string>
+  <string name="widget_button_image_description">Home Assistant小部件</string>
   <string name="widget_creation_error">无法创建小部件。</string>
-  <string name="widget_image_description">Home Assistant小部件</string>
   <string name="widget_label_placeholder_text">标签</string>
   <string name="widget_spinner_icon">图标：</string>
   <string name="widget_text_hint_label">标签</string>

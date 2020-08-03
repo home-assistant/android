@@ -18,7 +18,6 @@
   <string name="checking_with_home_assistant">Überprüfe mit Home Assistant</string>
   <string name="config">Konfiguration</string>
   <string name="configure_service_call">Konfiguriere Dienstaufruf</string>
-  <string name="configure_widget_label">Widget Bezeichnung</string>
   <string name="connect_to_home_internet">Stelle sicher, dass das Telefon mit dem Heimnetzwerk verbunden ist.</string>
   <string name="connected_to_home_assistant">Mit Home Assistant verbunden</string>
   <string name="developer_tools">Entwicklerwerkzeuge</string>
@@ -102,7 +101,7 @@
   <string name="webview_error_description">Aufgetretener Fehler:</string>
   <string name="webview_error_SSL_INVALID">Beim Laden von Home Assistant ist ein allgemeiner SSL-Fehler aufgetreten. Überprüfen Sie das Home Assistant-Zertifikat oder die Verbindungseinstellungen und versuchen Sie es erneut.</string>
   <string name="widget_config_service_error">Eine benutzerdefinierte Komponente verhindert, dass Servicedaten geladen werden.</string>
-  <string name="widget_image_description">Home Assistant Widget</string>
+  <string name="widget_button_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Bezeichnung</string>
   <string name="widget_spinner_icon">Icon:</string>
   <string name="widget_text_hint_label">Bezeichnung</string>

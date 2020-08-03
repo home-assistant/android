@@ -13,7 +13,6 @@
   <string name="cancel">Mégse</string>
   <string name="checking_with_home_assistant">Ellenőrzés a Home Assistant-tal</string>
   <string name="configure_service_call">Szolgáltatás meghívásának konfigurálása</string>
-  <string name="configure_widget_label">Widget címke</string>
   <string name="connect_to_home_internet">Győződj meg róla, hogy a telefonod az
 otthoni internetedre van csatlakoztatva.</string>
   <string name="connected_to_home_assistant">Csatlakoztatva a Home Assistant-hoz</string>
@@ -80,7 +79,7 @@ amihez csatlakozni szeretnél:</string>
   <string name="wait">Várakozás</string>
   <string name="webview_error">Hiba történt a Home Assistant betöltésekor. Kérlek, ellenőrizd a kapcsolat beállításait, majd próbáld újra.</string>
   <string name="widget_config_service_error">Egy egyéni összetevő (custom_component) megakadályozza a szolgáltatásadatok betöltését.</string>
-  <string name="widget_image_description">Home Assistant Widget</string>
+  <string name="widget_button_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Címke</string>
   <string name="widget_spinner_icon">Ikon:</string>
   <string name="widget_text_hint_label">Címke</string>

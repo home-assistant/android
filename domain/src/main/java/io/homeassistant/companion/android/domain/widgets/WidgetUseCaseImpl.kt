@@ -20,6 +20,18 @@ class WidgetUseCaseImpl @Inject constructor(
         )
     }
 
+    override suspend fun saveStaticEntityData(
+        appWidgetId: Int,
+        entityId: String,
+        attributeId: String?
+    ) {
+        widgetRepository.saveEntityData(
+            appWidgetId,
+            entityId,
+            attributeId
+        )
+    }
+
     override suspend fun loadDomain(appWidgetId: Int): String? {
         return widgetRepository.loadDomain(appWidgetId)
     }
@@ -30,6 +42,14 @@ class WidgetUseCaseImpl @Inject constructor(
 
     override suspend fun loadServiceData(appWidgetId: Int): String? {
         return widgetRepository.loadServiceData(appWidgetId)
+    }
+
+    override suspend fun loadEntityId(appWidgetId: Int): String? {
+        return widgetRepository.loadEntityId(appWidgetId)
+    }
+
+    override suspend fun loadAttributeId(appWidgetId: Int): String? {
+        return widgetRepository.loadAttributeId(appWidgetId)
     }
 
     override suspend fun loadIcon(appWidgetId: Int): String? {

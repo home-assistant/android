@@ -18,7 +18,6 @@
   <string name="checking_with_home_assistant">Comprobando con Home Assistant</string>
   <string name="config">Configuración</string>
   <string name="configure_service_call">Configurar llamada a servicio </string>
-  <string name="configure_widget_label">Etiqueta del widget</string>
   <string name="connect_to_home_internet">Asegúrate de que tu teléfono está conectado a la red de tu casa.</string>
   <string name="connected_to_home_assistant">Conectado a Home Assistant</string>
   <string name="developer_tools">Herramientas para desarrolladores</string>
@@ -109,8 +108,8 @@ instancia de Home Assistant</string>
   <string name="webview_error_SSL_NOTYETVALID">El certificado de Home Assistant no es válido todavía, revisa el certificado de Home Assistant o la configuración de conexión e inténtalo de nuevo.</string>
   <string name="webview_error_SSL_UNTRUSTED">La autoridad de certificación de Home Assistant no es de confianza, revisa el certificado de Home Assistant o la configuración de conexión e inténtalo de nuevo.</string>
   <string name="widget_config_service_error">Un componente personalizado impide que se carguen los datos de servicio.</string>
+  <string name="widget_button_image_description">Widget de Home Assistant</string>
   <string name="widget_creation_error">No se pudo crear el widget.</string>
-  <string name="widget_image_description">Widget de Home Assistant</string>
   <string name="widget_label_placeholder_text">Etiqueta</string>
   <string name="widget_spinner_icon">Icono:</string>
   <string name="widget_text_hint_label">Etiqueta</string>

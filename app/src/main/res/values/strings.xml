@@ -18,8 +18,7 @@
   <string name="checking_with_home_assistant">Checking with Home Assistant</string>
   <string name="config">Configuration</string>
   <string name="configure_service_call">Configure Service Call</string>
-  <string name="configure_widget_label">Widget Label</string>
-  <string name="connect_to_home_internet">Make sure your phone is connected 
+  <string name="connect_to_home_internet">Make sure your phone is connected
 to your home internet.</string>
   <string name="connected_to_home_assistant">Connected to Home Assistant</string>
   <string name="developer_tools">Developer Tools</string>
@@ -49,6 +48,7 @@ Home Assistant instance</string>
   <string name="input_url_hint">https://example.duckdns.org:8123</string>
   <string name="label_dynamic_data">Data:</string>
   <string name="label_entity_id">Entity ID:</string>
+  <string name="label_attribute">Attribute:</string>
   <string name="label_icon">Icon:</string>
   <string name="label_label">Label:</string>
   <string name="label_service">Service:</string>
@@ -112,13 +112,17 @@ like to connect to:</string>
   <string name="webview_error_SSL_INVALID">A generic SSL error occurred when loading Home Assistant, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
+  <string name="widget_button_image_description">Service Button</string>
   <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
   <string name="widget_creation_error">Unable to create widget.</string>
   <string name="widget_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Label</string>
   <string name="widget_spinner_icon">Icon:</string>
+  <string name="widget_static_image_description">Entity State</string>
   <string name="widget_text_hint_label">Label</string>
   <string name="widget_text_hint_service_data">Entity ID</string>
   <string name="widget_text_hint_service_domain">Domain</string>
   <string name="widget_text_hint_service_service">Service</string>
+  <string name="select_entity_to_display">Select Entity to display</string>
+  <string name="entity_attribute_checkbox">Append Attribute Value</string>
 </resources>

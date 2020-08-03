@@ -18,8 +18,7 @@
   <string name="checking_with_home_assistant">Home Assistant ile kontrol ediliyor</string>
   <string name="config">Yapılandırma</string>
   <string name="configure_service_call">Çağır servisini yapılandır</string>
-  <string name="configure_widget_label">Widget etiketi</string>
-  <string name="connect_to_home_internet">Telefonunuzun ev ağınıza bağlı olduğundan emin olun.</string>
+    <string name="connect_to_home_internet">Telefonunuzun ev ağınıza bağlı olduğundan emin olun.</string>
   <string name="connected_to_home_assistant">Home Assistant\'a bağlandı</string>
   <string name="developer_tools">Geliştirici Araçları</string>
   <string name="device_name">Cihaz adı</string>
@@ -108,8 +107,8 @@
   <string name="webview_error_SSL_NOTYETVALID">Home Assistant sertifikası henüz geçerli değil, lütfen Home Assistant sertifikasını veya bağlantı ayarlarını gözden geçirip tekrar deneyin.</string>
   <string name="webview_error_SSL_UNTRUSTED">Home Assistant sertifika yetkilisine güvenilmiyor, lütfen Home Assistant sertifikasını veya bağlantı ayarlarını gözden geçirip tekrar deneyin.</string>
   <string name="widget_config_service_error">Özel bir bileşen, hizmet verilerinin yüklenmesini engelliyor.</string>
+  <string name="widget_button_image_description">Home Assistant widgeti</string>
   <string name="widget_creation_error">Widget oluşturulamıyor.</string>
-  <string name="widget_image_description">Home Assistant widgeti</string>
   <string name="widget_label_placeholder_text">Etiket:</string>
   <string name="widget_spinner_icon">Simge:</string>
   <string name="widget_text_hint_label">Etiket:</string>

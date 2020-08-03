@@ -18,8 +18,7 @@
   <string name="checking_with_home_assistant">Sprawdzanie z Home Assistant\'em</string>
   <string name="config">Konfiguracja</string>
   <string name="configure_service_call">Skonfiguruj wywołanie usługi</string>
-  <string name="configure_widget_label">Etykieta widżetu</string>
-  <string name="connect_to_home_internet">Upewnij się, że telefon jest podłączony do sieci domowej.</string>
+    <string name="connect_to_home_internet">Upewnij się, że telefon jest podłączony do sieci domowej.</string>
   <string name="connected_to_home_assistant">Połączony z Home Assistant\'em</string>
   <string name="developer_tools">Narzędzia deweloperskie</string>
   <string name="device_name">Nazwa urządzenia</string>
@@ -108,8 +107,8 @@
   <string name="webview_error_SSL_NOTYETVALID">Certyfikat Home Assistanta nie jest jeszcze ważny, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
   <string name="webview_error_SSL_UNTRUSTED">Urząd certyfikacji Home Assistanta nie jest zaufany, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
   <string name="widget_config_service_error">Niestandardowy komponent uniemożliwia załadowanie danych usługi.</string>
+  <string name="widget_button_image_description">Widżet Home Assistant\'a</string>
   <string name="widget_creation_error">Nie można utworzyć widżetu.</string>
-  <string name="widget_image_description">Widżet Home Assistant\'a</string>
   <string name="widget_label_placeholder_text">Etykieta</string>
   <string name="widget_spinner_icon">Ikona:</string>
   <string name="widget_text_hint_label">Etykieta</string>
