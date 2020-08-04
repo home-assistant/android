@@ -9,4 +9,8 @@ interface ProviderComponent {
     fun inject(receiver: ButtonWidget)
 
     fun inject(activity: ButtonWidgetConfigureActivity)
+
+    fun inject(receiver: StaticWidget)
+
+    fun inject(activity: StaticWidgetConfigureActivity)
 }
