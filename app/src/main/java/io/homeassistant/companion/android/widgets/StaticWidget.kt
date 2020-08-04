@@ -104,10 +104,11 @@ class StaticWidget : AppWidgetProvider() {
     ): CharSequence? {
         val entity = integrationUseCase.getEntities().find { e -> e.entityId.equals(entityId) }
 
-        if (attributeId == null) return entity?.state ?: "N/A"
+        if (attributeId == null) return entity?.state
 
-        val fetchedAttributes = entity?.attributes as Map<String, String>
-        return entity.state.plus(fetchedAttributes.get(attributeId) ?: "")
+        val fetchedAttributes = entity?.attributes as Map<*, *>
+        val attributeValue = fetchedAttributes.get(attributeId)?.toString()
+        return entity.state.plus(if (attributeValue != null && attributeValue.isNotEmpty()) " " else "").plus(attributeValue ?: "")
     }
 
     override fun onReceive(context: Context, intent: Intent) {
