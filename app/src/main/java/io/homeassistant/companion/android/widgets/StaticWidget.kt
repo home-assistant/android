@@ -107,8 +107,8 @@ class StaticWidget : AppWidgetProvider() {
         if (attributeId == null) return entity?.state
 
         val fetchedAttributes = entity?.attributes as Map<*, *>
-        val attributeValue = fetchedAttributes.get(attributeId)
-        return entity.state.plus(if (attributeValue != null) " " else null).plus(attributeValue as String)
+        val attributeValue = fetchedAttributes.get(attributeId)?.toString()
+        return entity.state.plus(if (attributeValue != null && attributeValue.isNotEmpty()) " " else "").plus(attributeValue ?: "")
     }
 
     override fun onReceive(context: Context, intent: Intent) {
