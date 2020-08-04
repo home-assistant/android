@@ -13,8 +13,7 @@
   <string name="cancel">Zrušiť</string>
   <string name="checking_with_home_assistant">Overovanie cez Home Assistant</string>
   <string name="configure_service_call">Konfigurovať volanie služby</string>
-  <string name="configure_widget_label">Štítok miniaplikácie</string>
-  <string name="connect_to_home_internet">Skontrolujte, či je telefón pripojený 
+    <string name="connect_to_home_internet">Skontrolujte, či je telefón pripojený
 na váš domáci Internet.</string>
   <string name="connected_to_home_assistant">Pripojené k Home Assistant</string>
   <string name="device_name">Názov zariadenia</string>
@@ -80,7 +79,7 @@ sa chcete pripojiť:</string>
   <string name="wait">Čakať</string>
   <string name="webview_error">Pri načítaní Home Assistant sa vyskytla chyba. Skontrolujte nastavenia pripojenia a skúste to znova.</string>
   <string name="widget_config_service_error">Custom component zabraňuje načítaniu údajov služby.</string>
-  <string name="widget_image_description">Home Assistant miniaplikácia</string>
+  <string name="widget_button_image_description">Home Assistant miniaplikácia</string>
   <string name="widget_label_placeholder_text">Štítok</string>
   <string name="widget_spinner_icon">Ikona:</string>
   <string name="widget_text_hint_label">Štítok</string>
