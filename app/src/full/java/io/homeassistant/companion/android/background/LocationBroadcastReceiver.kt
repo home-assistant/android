@@ -187,7 +187,7 @@ class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
         }
-        val maxRetries = 5
+        val maxRetries = 1
         val request = createLocationRequest()
         request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         request.numUpdates = maxRetries
@@ -195,29 +195,14 @@ class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
             .requestLocationUpdates(
                 request,
                 object : LocationCallback() {
-                    var numberCalls = 0
                     override fun onLocationResult(locationResult: LocationResult?) {
-                        numberCalls++
                         Log.d(
                             TAG,
                             "Got single accurate location update: ${locationResult?.lastLocation}"
                         )
-                        if (locationResult != null && locationResult.lastLocation.accuracy <= 1) {
-                            Log.d(TAG, "Location accurate enough, all done with high accuracy.")
+                        if (locationResult != null) {
+                            Log.d(TAG, "Sending our last location.")
                             runBlocking { sendLocationUpdate(locationResult.lastLocation) }
-                            LocationServices.getFusedLocationProviderClient(context)
-                                .removeLocationUpdates(this)
-                        } else if (numberCalls >= maxRetries) {
-                            Log.d(
-                                TAG,
-                                "No location was accurate enough, sending our last location anyway"
-                            )
-                            runBlocking { sendLocationUpdate(locationResult!!.lastLocation) }
-                        } else {
-                            Log.w(
-                                TAG,
-                                "Location not accurate enough on retry $numberCalls of $maxRetries"
-                            )
                         }
                     }
                 },
