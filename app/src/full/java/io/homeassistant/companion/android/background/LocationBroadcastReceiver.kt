@@ -202,7 +202,7 @@ class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
                             TAG,
                             "Got single accurate location update: ${locationResult?.lastLocation}"
                         )
-                        if (locationResult != null && locationResult.lastLocation.accuracy <= 1) {
+                        if (locationResult != null && locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY) {
                             Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                             runBlocking { sendLocationUpdate(locationResult.lastLocation) }
                             LocationServices.getFusedLocationProviderClient(context)
