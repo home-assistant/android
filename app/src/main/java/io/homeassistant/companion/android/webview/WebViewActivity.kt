@@ -93,7 +93,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var resourceURL: String = ""
     private var unlocked = false
 
-    @SuppressLint("SetJavaScriptEnabled", "RestrictedApi")
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
@@ -336,10 +336,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }, "externalApp")
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
                 WebSettingsCompat.setForceDarkStrategy(webView.getSettings(), WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY)
-            }
         }
 
         val cookieManager = CookieManager.getInstance()
