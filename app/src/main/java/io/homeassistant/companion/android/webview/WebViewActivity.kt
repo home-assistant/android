@@ -337,11 +337,11 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            webView.isForceDarkAllowed = true
             if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
                 WebSettingsCompat.setForceDark(webView.settings, WebSettingsCompat.FORCE_DARK_AUTO)
             }
         }
+
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
         cookieManager.setAcceptThirdPartyCookies(webView, true)
