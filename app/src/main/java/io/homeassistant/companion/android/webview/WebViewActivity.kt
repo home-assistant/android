@@ -458,15 +458,16 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         waitForConnection()
     }
 
-    override fun setStatusBarColor(color: Int) {
+    override fun setStatusBarAndNavigationBarColor(color: Int) {
         var flags = window.decorView.systemUiVisibility
         flags = if (ColorUtils.calculateLuminance(color) < 0.5) { // If color is dark...
-            flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() // Remove LIGHT_STATUS_BAR flag
+            flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv() // Remove light flag
         } else {
-            flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR // Add LIGHT_STATUS_BAR flag
+            flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR // Add light flag
         }
         window.decorView.systemUiVisibility = flags
         window.statusBarColor = color
+        window.navigationBarColor = color
     }
 
     override fun setExternalAuth(script: String) {
