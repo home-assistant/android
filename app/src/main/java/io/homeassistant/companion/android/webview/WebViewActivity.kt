@@ -93,7 +93,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var resourceURL: String = ""
     private var unlocked = false
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint("SetJavaScriptEnabled", "RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_webview)
@@ -337,8 +337,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
-                WebSettingsCompat.setForceDark(webView.settings, WebSettingsCompat.FORCE_DARK_AUTO)
+            if(WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
+                WebSettingsCompat.setForceDarkStrategy(webView.getSettings(), WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY);
             }
         }
 
