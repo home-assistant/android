@@ -149,7 +149,7 @@ dependencies {
     implementation(Config.Dependency.AndroidX.workManager)
     implementation(Config.Dependency.AndroidX.biometric)
     implementation(Config.Dependency.AndroidX.webKit)
-    
+
     testImplementation(Config.Dependency.Testing.spek2Jvm)
     testImplementation(Config.Dependency.Testing.spek2JUnit)
     testImplementation(Config.Dependency.Testing.assertJ)
