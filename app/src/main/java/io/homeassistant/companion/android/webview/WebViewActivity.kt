@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webview
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -36,6 +37,8 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.webkit.WebViewFeature
+import androidx.webkit.WebSettingsCompat
 import androidx.room.Room
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BuildConfig
@@ -129,6 +132,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         webView.apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+
             webViewClient = object : WebViewClient() {
                 override fun onReceivedError(
                     view: WebView?,
@@ -222,26 +226,26 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                             if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
                                 if (PermissionManager.hasPermission(
                                         context,
-                                        android.Manifest.permission.CAMERA
+                                        Manifest.permission.CAMERA
                                     )
                                 ) {
                                     request.grant(arrayOf(it))
                                 } else {
                                     requestPermissions(
-                                        arrayOf(android.Manifest.permission.CAMERA),
+                                        arrayOf(Manifest.permission.CAMERA),
                                         CAMERA_REQUEST_CODE
                                     )
                                 }
                             } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
                                 if (PermissionManager.hasPermission(
                                         context,
-                                        android.Manifest.permission.RECORD_AUDIO
+                                        Manifest.permission.RECORD_AUDIO
                                     )
                                 ) {
                                     request.grant(arrayOf(it))
                                 } else {
                                     requestPermissions(
-                                        arrayOf(android.Manifest.permission.RECORD_AUDIO),
+                                        arrayOf(Manifest.permission.RECORD_AUDIO),
                                         AUDIO_REQUEST_CODE
                                     )
                                 }
@@ -332,6 +336,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }, "externalApp")
         }
 
+        if (Build.VERSION.SDK_INT >= 29) {
+            webView.isForceDarkAllowed = true
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
+                WebSettingsCompat.setForceDark(webView.settings, WebSettingsCompat.FORCE_DARK_AUTO)
+            }
+        }
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
         cookieManager.setAcceptThirdPartyCookies(webView, true)
@@ -547,7 +557,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
         var autoAuth = false
 
-        viewPassword.setOnClickListener() {
+        viewPassword.setOnClickListener {
             if (password.transformationMethod == PasswordTransformationMethod.getInstance()) {
                 password.transformationMethod = HideReturnsTransformationMethod.getInstance()
                 viewPassword.setImageResource(R.drawable.ic_visibility_off)
