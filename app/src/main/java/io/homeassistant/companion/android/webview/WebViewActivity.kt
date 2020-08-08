@@ -36,6 +36,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.ColorUtils
 import androidx.room.Room
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BuildConfig
@@ -458,6 +459,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     override fun setStatusBarColor(color: Int) {
+        var flags = window.decorView.systemUiVisibility
+        flags = if (ColorUtils.calculateLuminance(color) < 0.5) { // If color is dark...
+            flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() // Remove LIGHT_STATUS_BAR flag
+        } else {
+            flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR // Add LIGHT_STATUS_BAR flag
+        }
+        window.decorView.systemUiVisibility = flags
         window.statusBarColor = color
     }
 
