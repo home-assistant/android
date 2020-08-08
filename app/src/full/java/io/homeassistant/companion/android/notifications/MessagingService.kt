@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.RingtoneManager
 import android.os.Build
+import android.text.Spanned
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -180,6 +181,8 @@ class MessagingService : FirebaseMessagingService() {
 
         handleText(notificationBuilder, data)
 
+        handleSubject(notificationBuilder, data)
+
         handleImage(notificationBuilder, data)
 
         handleActions(notificationBuilder, tag, messageId, data)
@@ -263,13 +266,16 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun getGroupNotificationBuilder(
         channelId: String,
-        group: String?,
+        group: String,
         data: Map<String, String>
     ): NotificationCompat.Builder {
-        val groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
+
+        var groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setStyle(
-                NotificationCompat.InboxStyle().setSummaryText(group?.substring(GROUP_PREFIX.length))
+                NotificationCompat.BigTextStyle()
+                    .setSummaryText(getSpannedTextFromHtml(group.substring(GROUP_PREFIX.length))
+                )
             )
             .setGroup(group)
             .setGroupSummary(true)
@@ -400,22 +406,32 @@ class MessagingService : FirebaseMessagingService() {
         builder.setAutoCancel(!sticky)
     }
 
+    private fun handleSubject(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        if (!data[SUBJECT].isNullOrEmpty()) {
+            builder.setContentText(getSpannedTextFromHtml(data[SUBJECT]))
+        }
+    }
+
     private fun handleText(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
+
         builder
-            .setContentTitle(data[TITLE])
-            .setContentText(data[SUBJECT] ?: data[MESSAGE])
+            .setContentTitle(getSpannedTextFromHtml(data[TITLE]))
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .bigText(
-                        HtmlCompat.fromHtml(
-                            data[MESSAGE] ?: "Unspecified",
-                            HtmlCompat.FROM_HTML_MODE_LEGACY
-                        )
-                    )
+                .bigText(getSpannedTextFromHtml(data[MESSAGE]))
             )
+    }
+
+    private fun getSpannedTextFromHtml(
+        text: String?
+    ): Spanned {
+        return HtmlCompat.fromHtml(text ?: "Missing", HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
 
     private suspend fun handleLargeIcon(
