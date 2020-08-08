@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.webview
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -10,6 +9,7 @@ import android.content.pm.ShortcutManager
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.graphics.drawable.Icon
+import android.Manifest
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
