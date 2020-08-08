@@ -10,6 +10,8 @@ import io.homeassistant.companion.android.domain.integration.Panel
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
 import java.net.URL
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +61,7 @@ class WebViewPresenterImpl @Inject constructor(
             }
 
             try {
-                view.setStatusBarColor(Color.parseColor(integrationUseCase.getThemeColor()))
+                view.setStatusBarColor(parseColorWithRgb(integrationUseCase.getThemeColor()))
             } catch (e: Exception) {
                 Log.e(TAG, "Issue getting/setting theme", e)
             }
@@ -142,5 +144,17 @@ class WebViewPresenterImpl @Inject constructor(
 
     override fun onFinish() {
         mainScope.cancel()
+    }
+
+    private fun parseColorWithRgb(colorString: String): Int {
+        val c: Pattern = Pattern.compile("rgb *\\( *([0-9]+), *([0-9]+), *([0-9]+) *\\)")
+        val m: Matcher = c.matcher(colorString)
+        return if (m.matches()) {
+            Color.rgb(
+                m.group(1).toInt(),
+                m.group(2).toInt(),
+                m.group(3).toInt()
+            )
+        } else Color.parseColor(colorString)
     }
 }
