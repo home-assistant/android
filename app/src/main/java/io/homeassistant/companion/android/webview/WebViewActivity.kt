@@ -37,8 +37,8 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.webkit.WebViewFeature
 import androidx.webkit.WebSettingsCompat
+import androidx.webkit.WebViewFeature
 import androidx.room.Room
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BuildConfig
