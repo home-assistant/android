@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenter
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenterImpl
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupView
+import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.SettingsPresenter
 import io.homeassistant.companion.android.settings.SettingsPresenterImpl
 import io.homeassistant.companion.android.settings.SettingsView
@@ -38,6 +39,7 @@ class PresenterModule {
     private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
     private lateinit var settingsView: SettingsView
     private lateinit var shortcutsView: ShortcutsView
+    private lateinit var sensorsView: SensorsSettingsFragment
     private lateinit var webView: WebView
 
     constructor(launchView: LaunchView) {
@@ -68,6 +70,10 @@ class PresenterModule {
         this.shortcutsView = shortcutsView
     }
 
+    constructor(sensorsView: SensorsSettingsFragment) {
+        this.sensorsView = sensorsView
+    }
+
     constructor(webView: WebView) {
         this.webView = webView
     }
@@ -92,6 +98,9 @@ class PresenterModule {
 
     @Provides
     fun provideShortcutsView() = shortcutsView
+
+    @Provides
+    fun provideSensorsView() = sensorsView
 
     @Provides
     fun provideWebView() = webView

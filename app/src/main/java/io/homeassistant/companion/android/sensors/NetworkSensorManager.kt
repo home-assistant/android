@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.util.Log
 import io.homeassistant.companion.android.domain.integration.Sensor
@@ -37,24 +38,27 @@ class NetworkSensorManager : SensorManager {
         return sensors
     }
 
-    private fun getWifiConnectionSensor(context: Context): Sensor<Any>? {
-        if (!PermissionManager.checkLocationPermission(context)) {
-            Log.w(TAG, "Tried getting wifi info without permission.")
-            return null
-        }
-        val wifiManager =
-            (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
-        val conInfo = wifiManager.connectionInfo
+    private fun getWifiConnectionSensor(context: Context): Sensor<Any> {
+        var conInfo: WifiInfo? = null
+        var ssid = "Unknown"
+        var lastScanStrength = -1
 
-        val ssid = if (conInfo.networkId == -1) {
-            "<not connected>"
-        } else {
-            conInfo.ssid.removePrefix("\"").removeSuffix("\"")
-        }
+        if (PermissionManager.checkLocationPermission(context)) {
+            val wifiManager =
+                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+            conInfo = wifiManager.connectionInfo
 
-        val lastScanStrength = wifiManager.scanResults.firstOrNull {
-            it.BSSID == conInfo.bssid
-        }?.level ?: -1
+            ssid = if (conInfo.networkId == -1) {
+                "<not connected>"
+            } else {
+                conInfo.ssid.removePrefix("\"").removeSuffix("\"")
+            }
+
+            lastScanStrength = wifiManager.scanResults.firstOrNull {
+                it.BSSID == conInfo.bssid
+            }?.level ?: -1
+
+        }
 
         var signalStrength = -1
         if (lastScanStrength != -1) {
@@ -67,11 +71,7 @@ class NetworkSensorManager : SensorManager {
             else -> signalStrength
         }
 
-        return Sensor(
-            "wifi_connection",
-            ssid,
-            "sensor",
-            icon,
+        val attributes = conInfo?.let {
             mapOf(
                 "bssid" to conInfo.bssid,
                 "ip_address" to getIpAddress(conInfo.ipAddress),
@@ -80,6 +80,14 @@ class NetworkSensorManager : SensorManager {
                 "frequency" to conInfo.frequency,
                 "signal_level" to lastScanStrength
             )
+        }.orEmpty()
+
+        return Sensor(
+            "wifi_connection",
+            ssid,
+            "sensor",
+            icon,
+            attributes
         )
     }
 

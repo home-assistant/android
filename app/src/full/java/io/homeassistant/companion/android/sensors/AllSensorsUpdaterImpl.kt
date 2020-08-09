@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.util.PermissionManager
 
 class AllSensorsUpdaterImpl(
     integrationUseCase: IntegrationUseCase,
@@ -11,15 +10,10 @@ class AllSensorsUpdaterImpl(
     AllSensorsUpdater(integrationUseCase, appContext) {
 
     override suspend fun getManagers(): List<SensorManager> {
-        val sensorManagers = mutableListOf(
+        return mutableListOf(
             BatterySensorManager(),
-            NetworkSensorManager()
+            NetworkSensorManager(),
+            GeocodeSensorManager()
         )
-
-        if (integrationUseCase.isBackgroundTrackingEnabled() && PermissionManager.checkLocationPermission(appContext)) {
-            sensorManagers.add(GeocodeSensorManager())
-        }
-
-        return sensorManagers
     }
 }

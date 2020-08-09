@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.onboarding.authentication.Authenticati
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
+import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.SettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
@@ -35,4 +36,6 @@ interface PresenterComponent {
     fun inject(activity: WebViewActivity)
 
     fun inject(dialog: SsidDialogFragment)
+
+    fun inject(fragment: SensorsSettingsFragment)
 }

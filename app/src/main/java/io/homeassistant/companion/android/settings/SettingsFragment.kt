@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
@@ -106,6 +107,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 onClickShortcuts
         } else {
             shortcuts?.isVisible = false
+        }
+
+        findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, SensorsSettingsFragment.newInstance())
+                .addToBackStack("Sensors")
+                .commit()
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<Preference>("version")?.let {
