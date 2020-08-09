@@ -410,8 +410,8 @@ class MessagingService : FirebaseMessagingService() {
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        if (!data[SUBJECT].isNullOrEmpty()) {
-            builder.setContentText(getSpannedTextFromHtml(data[SUBJECT]))
+        data[SUBJECT]?.let {
+            builder.setContentText(getSpannedTextFromHtml(it))
         }
     }
 
@@ -419,19 +419,18 @@ class MessagingService : FirebaseMessagingService() {
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-
-        builder
-            .setContentTitle(getSpannedTextFromHtml(data[TITLE]))
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                .bigText(getSpannedTextFromHtml(data[MESSAGE]))
-            )
+        data[TITLE]?.let {
+            builder.setContentTitle(getSpannedTextFromHtml(it))
+        }
+        data[MESSAGE]?.let {
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(getSpannedTextFromHtml(it)))
+        }
     }
 
     private fun getSpannedTextFromHtml(
-        text: String?
+        text: String
     ): Spanned {
-        return HtmlCompat.fromHtml(text ?: "Missing", HtmlCompat.FROM_HTML_MODE_LEGACY)
+        return HtmlCompat.fromHtml(text, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
 
     private suspend fun handleLargeIcon(
