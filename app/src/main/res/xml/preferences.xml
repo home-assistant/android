@@ -65,7 +65,7 @@
         <Preference
             android:key="nfc_tags"
             android:icon="@drawable/ic_plus"
-            android:title="@string/nfc_title"
+            android:title="@string/nfc_title_settings"
             android:summary="@string/nfc_summary" />
 
     </PreferenceCategory>

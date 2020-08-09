@@ -1,0 +1,101 @@
+package io.homeassistant.companion.android.nfc
+
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import kotlinx.android.synthetic.main.fragment_nfc_edit.*
+import kotlinx.coroutines.*
+import javax.inject.Inject
+
+/**
+ * A simple [Fragment] subclass as the second destination in the navigation.
+ */
+class NfcEditFragment : Fragment() {
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private lateinit var viewModel: NfcViewModel
+
+    @Inject
+    lateinit var integrationUseCase: IntegrationUseCase
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        viewModel = ViewModelProvider(requireActivity()).get(NfcViewModel::class.java)
+
+        // Inject components
+        DaggerProviderComponent
+            .builder()
+            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
+            .build()
+            .inject(this)
+
+        // Inflate the layout for this fragment
+        return inflater.inflate(R.layout.fragment_nfc_edit, container, false)
+    }
+
+    @SuppressLint("SetTextI18n")
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val nfcReadObserver = Observer<String> { uuid ->
+            mainScope.launch {
+                et_tag_identifier_content.setText(uuid)
+                val deviceName = integrationUseCase.getRegistration().deviceName!!
+                et_tag_example_trigger_content.setText("- platform: event\n  event_type: nfc.tag_read\n  event_data:\n    device_name: $deviceName\n    tag: $uuid")
+            }
+        }
+        viewModel.nfcReadEvent.observe(viewLifecycleOwner, nfcReadObserver)
+
+
+        btn_tag_duplicate.setOnClickListener {
+            viewModel.nfcWriteTagEvent.postValue(et_tag_identifier_content.text.toString())
+            findNavController().navigate(R.id.action_NFC_WRITE)
+        }
+
+        btn_tag_fire_event.setOnClickListener {
+            mainScope.launch {
+                val uuid: String = viewModel.nfcReadEvent.value.toString()
+                val deviceName = integrationUseCase.getRegistration().deviceName!!
+                try {
+                    integrationUseCase.fireEvent(
+                        "nfc.tag_read",
+                        hashMapOf("tag" to uuid, "device_name" to deviceName)
+                    )
+                    Toast.makeText(activity, R.string.nfc_event_fired_success, Toast.LENGTH_SHORT)
+                        .show()
+                } catch (e: Exception) {
+                    Toast.makeText(activity, R.string.nfc_event_fired_fail, Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
+        }
+
+        btn_tag_share_example_trigger.setOnClickListener {
+            val sendIntent: Intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, et_tag_example_trigger_content.text)
+                type = "text/plain"
+            }
+            val shareIntent = Intent.createChooser(sendIntent, null)
+            startActivity(shareIntent)
+        }
+    }
+
+    override fun onDestroy() {
+        mainScope.cancel()
+        super.onDestroy()
+    }
+}

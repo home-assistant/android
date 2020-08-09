@@ -97,8 +97,9 @@
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".webview.WebViewActivity" />
 
-        <activity android:name=".nfc.NfcActivity"
-            android:parentActivityName=".webview.WebViewActivity">
+        <activity
+            android:name=".nfc.NfcActivity"
+            android:label="@string/nfc_title_nfc_processing">
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -108,6 +109,9 @@
                     android:pathPrefix="/nfc/" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".nfc.NfcEditSetupActivity"
+            android:label="@string/nfc_title_nfc_setup" />
     </application>
 
 </manifest>

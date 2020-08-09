@@ -14,13 +14,13 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.nfc.NfcActivity
+import io.homeassistant.companion.android.nfc.NfcEditSetupActivity
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.util.PermissionManager
-import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import javax.inject.Inject
 
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
@@ -93,7 +93,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         findPreference<Preference>("nfc_tags")?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-            startActivity(NfcActivity.newInstance(requireActivity()))
+            startActivity(NfcEditSetupActivity.newInstance(requireActivity()))
             true
         }
 
