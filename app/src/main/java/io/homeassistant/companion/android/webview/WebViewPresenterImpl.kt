@@ -61,7 +61,7 @@ class WebViewPresenterImpl @Inject constructor(
             }
 
             try {
-                view.setStatusBarColor(parseColorWithRgb(integrationUseCase.getThemeColor()))
+                view.setStatusBarAndNavigationBarColor(parseColorWithRgb(integrationUseCase.getThemeColor()))
             } catch (e: Exception) {
                 Log.e(TAG, "Issue getting/setting theme", e)
             }
