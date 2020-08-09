@@ -423,7 +423,9 @@ class MessagingService : FirebaseMessagingService() {
             builder.setContentTitle(getSpannedTextFromHtml(it))
         }
         data[MESSAGE]?.let {
-            builder.setStyle(NotificationCompat.BigTextStyle().bigText(getSpannedTextFromHtml(it)))
+            val text = getSpannedTextFromHtml(it)
+            builder.setContentText(text)
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
     }
 
