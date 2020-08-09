@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.nfc
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.R
@@ -13,6 +14,9 @@ import kotlinx.coroutines.*
 import javax.inject.Inject
 
 class NfcActivity : AppCompatActivity() {
+
+    val TAG = NfcActivity::class.simpleName
+
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     @Inject
@@ -41,6 +45,7 @@ class NfcActivity : AppCompatActivity() {
                 } catch (e: Exception) {
                     val message = R.string.nfc_processing_tag_error
                     Toast.makeText(this@NfcActivity, message, Toast.LENGTH_LONG).show()
+                    Log.e(TAG, e.message);
                     finish()
                 }
             }

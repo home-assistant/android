@@ -92,9 +92,10 @@ class NfcEditSetupActivity : AppCompatActivity() {
 
                     viewModel.nfcWriteTagDoneEvent.value = nfcTagToWriteUUID
                     //finish()
-                } catch (err: java.lang.Exception) {
+                } catch (e: Exception) {
                     val message = R.string.nfc_write_tag_error
                     Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                    Log.e(TAG, e.message);
                 }
             }
         }

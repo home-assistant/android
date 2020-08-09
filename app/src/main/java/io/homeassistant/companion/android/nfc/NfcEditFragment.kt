@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.nfc
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,6 +23,9 @@ import javax.inject.Inject
  * A simple [Fragment] subclass as the second destination in the navigation.
  */
 class NfcEditFragment : Fragment() {
+
+    val TAG = NfcEditFragment::class.simpleName
+
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private lateinit var viewModel: NfcViewModel
@@ -79,6 +83,7 @@ class NfcEditFragment : Fragment() {
                 } catch (e: Exception) {
                     Toast.makeText(activity, R.string.nfc_event_fired_fail, Toast.LENGTH_LONG)
                         .show()
+                    Log.e(TAG, e.message);
                 }
             }
         }
