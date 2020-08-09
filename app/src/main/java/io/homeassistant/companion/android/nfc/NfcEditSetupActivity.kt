@@ -13,12 +13,11 @@ import androidx.lifecycle.ViewModelProvider
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.UrlHandler
 
-
 class NfcEditSetupActivity : AppCompatActivity() {
 
     val TAG = NfcEditSetupActivity::class.simpleName
 
-    //private val viewModel: NfcViewModel by viewModels()
+    // private val viewModel: NfcViewModel by viewModels()
     private lateinit var viewModel: NfcViewModel
     private var mNfcAdapter: NfcAdapter? = null
 
@@ -38,7 +37,6 @@ class NfcEditSetupActivity : AppCompatActivity() {
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this)
         viewModel = ViewModelProvider(this).get(NfcViewModel::class.java)
     }
-
 
     override fun onResume() {
         super.onResume()
@@ -84,21 +82,20 @@ class NfcEditSetupActivity : AppCompatActivity() {
                 }
             } else {
                 try {
-                    val nfcTagUrl = "https://www.home-assistant.io/nfc/${nfcTagToWriteUUID}"
+                    val nfcTagUrl = "https://www.home-assistant.io/nfc/$nfcTagToWriteUUID"
                     NFCUtil.createNFCMessage(nfcTagUrl, intent)
                     Log.d(TAG, "Wrote nfc tag with url: $nfcTagUrl")
                     val message = R.string.nfc_write_tag_success
                     Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
 
                     viewModel.nfcWriteTagDoneEvent.value = nfcTagToWriteUUID
-                    //finish()
+                    // finish()
                 } catch (e: Exception) {
                     val message = R.string.nfc_write_tag_error
                     Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
-                    Log.e(TAG, e.message);
+                    Log.e(TAG, e.message)
                 }
             }
         }
     }
-
 }

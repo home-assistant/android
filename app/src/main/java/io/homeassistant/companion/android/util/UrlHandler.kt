@@ -33,9 +33,9 @@ object UrlHandler {
     data class CallServiceLink(val domain: String?, val service: String?, val entity: String?)
     fun splitCallServiceLink(it: String?): CallServiceLink {
         val matches = Regex("^homeassistant://call_service/(.*?)\\.(.*?)\\?entity_id=(.*)").find(it.toString())
-        val domain  = matches?.groups?.get(1)?.value
+        val domain = matches?.groups?.get(1)?.value
         val service = matches?.groups?.get(2)?.value
-        val entity  = matches?.groups?.get(3)?.value
+        val entity = matches?.groups?.get(3)?.value
         return CallServiceLink(domain, service, entity)
     }
 

@@ -34,7 +34,8 @@ class NfcEditFragment : Fragment() {
     lateinit var integrationUseCase: IntegrationUseCase
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         viewModel = ViewModelProvider(requireActivity()).get(NfcViewModel::class.java)
@@ -63,7 +64,6 @@ class NfcEditFragment : Fragment() {
         }
         viewModel.nfcReadEvent.observe(viewLifecycleOwner, nfcReadObserver)
 
-
         btn_tag_duplicate.setOnClickListener {
             viewModel.nfcWriteTagEvent.postValue(et_tag_identifier_content.text.toString())
             findNavController().navigate(R.id.action_NFC_WRITE)
@@ -83,7 +83,7 @@ class NfcEditFragment : Fragment() {
                 } catch (e: Exception) {
                     Toast.makeText(activity, R.string.nfc_event_fired_fail, Toast.LENGTH_LONG)
                         .show()
-                    Log.e(TAG, e.message);
+                    Log.e(TAG, e.message)
                 }
             }
         }

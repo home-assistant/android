@@ -35,7 +35,6 @@ class NfcActivity : AppCompatActivity() {
             .build()
             .inject(this)
 
-
         if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
             val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
             val ndefMessage = rawMessages[0] as NdefMessage?
@@ -45,7 +44,7 @@ class NfcActivity : AppCompatActivity() {
                 } catch (e: Exception) {
                     val message = R.string.nfc_processing_tag_error
                     Toast.makeText(this@NfcActivity, message, Toast.LENGTH_LONG).show()
-                    Log.e(TAG, e.message);
+                    Log.e(TAG, e.message)
                     finish()
                 }
             }
@@ -58,7 +57,6 @@ class NfcActivity : AppCompatActivity() {
         mainScope.cancel()
         super.onDestroy()
     }
-
 
     private suspend fun handleNFCTag(ndefMessage: NdefMessage?) {
         val url = ndefMessage?.records?.get(0)?.toUri().toString()

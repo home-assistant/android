@@ -19,7 +19,8 @@ class NfcWriteFragment : Fragment() {
     private lateinit var viewModel: NfcViewModel
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         viewModel = ViewModelProvider(requireActivity()).get(NfcViewModel::class.java)

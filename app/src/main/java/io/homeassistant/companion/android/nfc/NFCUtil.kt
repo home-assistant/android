@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.nfc;
+package io.homeassistant.companion.android.nfc
 
 import android.app.Activity
 import android.app.PendingIntent
@@ -24,7 +24,6 @@ object NFCUtil {
         return false
     }
 
-
     fun disableNFCInForeground(nfcAdapter: NfcAdapter, activity: Activity) {
         nfcAdapter.disableForegroundDispatch(activity)
     }
@@ -41,7 +40,6 @@ object NFCUtil {
             arrayOf(arrayOf(Ndef::class.java.name), arrayOf(NdefFormatable::class.java.name))
         nfcAdapter.enableForegroundDispatch(activity, pendingIntent, filters, techLists)
     }
-
 
     @Throws(Exception::class)
     private fun writeMessageToTag(nfcMessage: NdefMessage, tag: Tag?): Boolean {
@@ -70,13 +68,12 @@ object NFCUtil {
                     it.connect()
                     it.format(nfcMessage)
                     it.close()
-                    //The data is written to the tag
+                    // The data is written to the tag
                 } catch (e: IOException) {
-                    //Failed to format tag
+                    // Failed to format tag
                     throw Exception("Failed to format tag", e)
                 }
             }
         return true
     }
-
 }
