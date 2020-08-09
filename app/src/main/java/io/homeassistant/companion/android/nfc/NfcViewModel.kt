@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.nfc
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import java.util.*
+import java.util.UUID
 
 class NfcViewModel : ViewModel() {
 
