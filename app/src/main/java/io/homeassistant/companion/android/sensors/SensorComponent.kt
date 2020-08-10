@@ -8,4 +8,8 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 interface SensorComponent {
 
     fun inject(worker: SensorWorker)
+
+    fun inject(sensorsSettingsFragment: SensorsSettingsFragment)
+
+    fun inject(sensorDetailFragment: SensorDetailFragment)
 }

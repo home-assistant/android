@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <androidx.preference.SwitchPreference
+        android:key="enabled"
+        android:title="Enabled"
+        android:summary="When enabled values will be sent to Home Assistant"/>
+    <Preference
+        android:key="unique_id"
+        android:title="Unique Id"/>
+    <Preference
+        android:key="state"
+        android:title="State"/>
+    <Preference
+        android:key="device_class"
+        android:title="Device Class"/>
+    <Preference
+        android:key="icon"
+        android:title="Icon"/>
+
+    <androidx.preference.PreferenceCategory
+        android:key="attributes"
+        android:title="Attributes"/>
+</androidx.preference.PreferenceScreen>

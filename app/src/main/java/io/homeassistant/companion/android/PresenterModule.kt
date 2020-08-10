@@ -39,7 +39,6 @@ class PresenterModule {
     private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
     private lateinit var settingsView: SettingsView
     private lateinit var shortcutsView: ShortcutsView
-    private lateinit var sensorsView: SensorsSettingsFragment
     private lateinit var webView: WebView
 
     constructor(launchView: LaunchView) {
@@ -70,10 +69,6 @@ class PresenterModule {
         this.shortcutsView = shortcutsView
     }
 
-    constructor(sensorsView: SensorsSettingsFragment) {
-        this.sensorsView = sensorsView
-    }
-
     constructor(webView: WebView) {
         this.webView = webView
     }
@@ -98,9 +93,6 @@ class PresenterModule {
 
     @Provides
     fun provideShortcutsView() = shortcutsView
-
-    @Provides
-    fun provideSensorsView() = sensorsView
 
     @Provides
     fun provideWebView() = webView

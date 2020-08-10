@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.os.Bundle
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
@@ -30,10 +28,9 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        DaggerPresenterComponent
+        DaggerSensorComponent
             .builder()
             .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
 
@@ -48,6 +45,21 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
                 manager.getSensorRegistrations(requireContext()).forEach { sensor ->
                     val pref = Preference(context)
                     pref.title = sensor.name
+
+                    if(sensor.unitOfMeasurement.isNullOrBlank())
+                        pref.summary = sensor.state.toString()
+                    else
+                        pref.summary = sensor.state.toString() + " " + sensor.unitOfMeasurement
+
+                    pref.setOnPreferenceClickListener {
+                        parentFragmentManager
+                            .beginTransaction()
+                            .replace(R.id.content, SensorDetailFragment.newInstance(sensor))
+                            .addToBackStack("Sensor Detail")
+                            .commit()
+                        return@setOnPreferenceClickListener true
+                    }
+
                     preferenceScreen.addPreference(pref)
                 }
             }
