@@ -76,11 +76,9 @@ class NfcEditFragment : Fragment() {
         btn_tag_fire_event.setOnClickListener {
             mainScope.launch {
                 val uuid: String = viewModel.nfcReadEvent.value.toString()
-                val deviceName = integrationUseCase.getRegistration().deviceName!!
                 try {
-                    integrationUseCase.fireEvent(
-                        "nfc.tag_read",
-                        hashMapOf("tag" to uuid, "device_name" to deviceName)
+                    integrationUseCase.scanTag(
+                        hashMapOf("tag_id" to uuid)
                     )
                     Toast.makeText(activity, R.string.nfc_event_fired_success, Toast.LENGTH_SHORT)
                         .show()

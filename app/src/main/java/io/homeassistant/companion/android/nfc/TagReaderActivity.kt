@@ -85,7 +85,7 @@ class TagReaderActivity : AppCompatActivity() {
         val nfcTagId = UrlHandler.splitNfcTagId(url)
         if (nfcTagId != null) {
             // check if we have a nfc tag id
-            integrationUseCase.callScanTag(
+            integrationUseCase.scanTag(
                 hashMapOf("tag_id" to nfcTagId)
             )
             finish()

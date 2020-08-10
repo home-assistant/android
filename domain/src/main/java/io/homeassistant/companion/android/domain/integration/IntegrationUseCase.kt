@@ -23,6 +23,8 @@ interface IntegrationUseCase {
 
     suspend fun fireEvent(eventType: String, eventData: Map<String, Any>)
 
+    suspend fun scanTag(data: HashMap<String, Any>)
+
     suspend fun getZones(): Array<Entity<ZoneAttributes>>
 
     suspend fun setZoneTrackingEnabled(enabled: Boolean)
