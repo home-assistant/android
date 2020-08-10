@@ -77,35 +77,14 @@ class TagReaderActivity : AppCompatActivity() {
     }
 
     private suspend fun handleTag(url: String) {
-        // https://www.home-assistant.io/nfc/?url=homeassistant://call_service/light.turn_on?entity_id=light.extended_color_light_2
-        // https://www.home-assistant.io/nfc/?url=homeassistant://fire_event/custom_event?entity_id=MY_CUSTOM_EVENT
         // https://www.home-assistant.io/tag/5f0ba733-172f-430d-a7f8-e4ad940c88d7
 
         val nfcTagId = UrlHandler.splitNfcTagId(url)
         if (nfcTagId != null) {
-            // check if we have a nfc tag id
-            integrationUseCase.scanTag(
-                hashMapOf("tag_id" to nfcTagId)
-            )
-            finish()
+            integrationUseCase.scanTag(hashMapOf("tag_id" to nfcTagId))
         } else {
-            // Check for universal link
-            val haLink = UrlHandler.getUniversalLink(url)
-            if (UrlHandler.isHomeAssistantUrl(haLink)) {
-                val (domain, service, cs_entity) = UrlHandler.splitCallServiceLink(haLink)
-                val (event, fe_entity) = UrlHandler.splitFireEventLink(haLink)
-
-                if (domain != null && service != null && cs_entity != null) {
-                    integrationUseCase.callService(
-                        domain,
-                        service,
-                        hashMapOf("entity_id" to cs_entity)
-                    )
-                } else if (event != null && fe_entity != null) {
-                    integrationUseCase.fireEvent(event, hashMapOf("entity_id" to fe_entity))
-                }
-                finish()
-            }
+            Toast.makeText(this, R.string.nfc_processing_tag_error, Toast.LENGTH_LONG).show()
         }
+        finish()
     }
 }

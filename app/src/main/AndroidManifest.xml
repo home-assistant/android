@@ -110,10 +110,6 @@
                     android:scheme="https"
                     android:host="www.home-assistant.io"
                     android:pathPrefix="/tag/" />
-                <data
-                    android:scheme="https"
-                    android:host="www.home-assistant.io"
-                    android:pathPrefix="/nfc/" />
             </intent-filter>
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
@@ -124,10 +120,6 @@
                     android:scheme="https"
                     android:host="www.home-assistant.io"
                     android:pathPrefix="/tag/" />
-                <data
-                    android:scheme="https"
-                    android:host="www.home-assistant.io"
-                    android:pathPrefix="/nfc/" />
             </intent-filter>
         </activity>
         <activity
