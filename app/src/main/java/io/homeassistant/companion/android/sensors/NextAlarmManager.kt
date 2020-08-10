@@ -67,9 +67,8 @@ class NextAlarmManager : SensorManager {
             } else {
                 utc = "unavailable"
             }
-
         } catch (e: Exception) {
-            Log.e(TAG,"Error getting the next alarm info", e)
+            Log.e(TAG, "Error getting the next alarm info", e)
             return null
         }
 
