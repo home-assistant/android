@@ -20,6 +20,7 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
     lateinit var allSensorsUpdater: AllSensorsUpdater
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     companion object {
         fun newInstance(): SensorsSettingsFragment {
@@ -38,7 +39,7 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
 
         setPreferencesFromResource(R.xml.sensors, rootKey)
 
-        mainScope.launch {
+        ioScope.launch {
             val managers = allSensorsUpdater.getManagers()
 
             managers.forEach { manager ->
@@ -54,7 +55,7 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
                     pref.setOnPreferenceClickListener {
                         parentFragmentManager
                             .beginTransaction()
-                            .replace(R.id.content, SensorDetailFragment.newInstance(sensor))
+                            .replace(R.id.content, SensorDetailFragment.newInstance(sensor, manager.requiredPermissions()))
                             .addToBackStack("Sensor Detail")
                             .commit()
                         return@setOnPreferenceClickListener true

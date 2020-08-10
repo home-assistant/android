@@ -13,6 +13,10 @@ class NetworkSensorManager : SensorManager {
         private const val TAG = "NetworkSM"
     }
 
+    override fun requiredPermissions(): Array<String> {
+        return PermissionManager.getLocationPermissionArray()
+    }
+
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
         val sensorRegistrations = mutableListOf<SensorRegistration<Any>>()
 

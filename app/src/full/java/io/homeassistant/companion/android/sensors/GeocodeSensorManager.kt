@@ -4,6 +4,7 @@ import android.content.Context
 import android.location.Address
 import android.location.Geocoder
 import android.util.Log
+import androidx.fragment.app.Fragment
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Tasks
 import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
@@ -15,6 +16,10 @@ class GeocodeSensorManager : SensorManager {
 
     companion object {
         private const val TAG = "GeocodeSM"
+    }
+
+    override fun requiredPermissions(): Array<String> {
+        return PermissionManager.getLocationPermissionArray()
     }
 
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {

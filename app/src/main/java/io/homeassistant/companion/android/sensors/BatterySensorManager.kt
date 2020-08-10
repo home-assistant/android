@@ -14,6 +14,10 @@ class BatterySensorManager : SensorManager {
         const val TAG = "BatterySensor"
     }
 
+    override fun requiredPermissions(): Array<String> {
+        return emptyArray()
+    }
+
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
         return context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))?.let {
             val retVal = ArrayList<SensorRegistration<Any>>()
