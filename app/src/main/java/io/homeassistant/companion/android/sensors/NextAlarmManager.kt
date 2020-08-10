@@ -15,9 +15,6 @@ class NextAlarmManager : SensorManager {
     companion object {
 
         private const val TAG = "NextAlarm"
-        var triggerTime = 0L
-        var local = ""
-        var utc = ""
     }
 
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
@@ -48,6 +45,10 @@ class NextAlarmManager : SensorManager {
 
     private fun getNextAlarm(context: Context): Sensor<Any>? {
 
+        var triggerTime = 0L
+        var local = ""
+        var utc = "unavailable"
+
         try {
             val alarmManager: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
@@ -64,12 +65,9 @@ class NextAlarmManager : SensorManager {
                 val sdf = SimpleDateFormat(dateFormat)
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
-            } else {
-                utc = "unavailable"
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)
-            return null
         }
 
         val icon = "mdi:alarm"
