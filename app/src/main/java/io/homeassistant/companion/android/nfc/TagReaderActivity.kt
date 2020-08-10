@@ -55,7 +55,7 @@ class TagReaderActivity : AppCompatActivity() {
                     finish()
                 }
             }
-        } else if(Intent.ACTION_VIEW == intent.action) {
+        } else if (Intent.ACTION_VIEW == intent.action) {
             val data: Uri? = intent?.data
             val url = data.toString()
             mainScope.launch {
@@ -68,7 +68,6 @@ class TagReaderActivity : AppCompatActivity() {
                     finish()
                 }
             }
-            //finish()
         }
     }
 
