@@ -19,7 +19,6 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
 
     lateinit var allSensorsUpdater: AllSensorsUpdater
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     companion object {
@@ -41,6 +40,7 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
 
         ioScope.launch {
             val managers = allSensorsUpdater.getManagers()
+            val preferences = mutableListOf<Preference>()
 
             managers.forEach { manager ->
                 manager.getSensorRegistrations(requireContext()).forEach { sensor ->
@@ -52,6 +52,8 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
                     else
                         pref.summary = sensor.state.toString() + " " + sensor.unitOfMeasurement
 
+                    //TODO: Add the icon from mdi:icon?
+
                     pref.setOnPreferenceClickListener {
                         parentFragmentManager
                             .beginTransaction()
@@ -61,9 +63,12 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
                         return@setOnPreferenceClickListener true
                     }
 
-                    preferenceScreen.addPreference(pref)
+                    preferences.add(pref)
                 }
             }
+
+            preferences.sortBy { it.title.toString() }
+            preferences.forEach { preferenceScreen.addPreference(it) }
         }
     }
 }
