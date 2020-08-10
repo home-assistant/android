@@ -20,10 +20,11 @@ class NextAlarmReceiver() : BroadcastReceiver() {
     var updateJob: Job? = null
     override fun onReceive(context: Context, intent: Intent) {
         val isBootIntent = Intent.ACTION_BOOT_COMPLETED.equals(intent.action, ignoreCase = true)
-        val isNextAlarmIntent = AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED.equals(intent.action, ignoreCase = true)
-            if (!isBootIntent && !isNextAlarmIntent) {
-                return
-            }
+        val isNextAlarmIntent =
+            AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED.equals(intent.action, ignoreCase = true)
+        if (!isBootIntent && !isNextAlarmIntent) {
+            return
+        }
 
         DaggerSensorComponent
             .builder()
@@ -31,9 +32,9 @@ class NextAlarmReceiver() : BroadcastReceiver() {
             .build()
             .inject(this)
 
-            updateJob?.cancel()
-            updateJob = ioScope.launch {
-                AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
-            }
+        updateJob?.cancel()
+        updateJob = ioScope.launch {
+            AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
         }
+    }
 }
