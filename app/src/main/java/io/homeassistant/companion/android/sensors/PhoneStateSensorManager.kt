@@ -40,7 +40,7 @@ class PhoneStateSensorManager  : SensorManager {
 
     private fun getPhoneStateSensor(context: Context): Sensor<Any>? {
 
-        if (!PermissionManager.checkLocationPermission(context)) {
+        if (!PermissionManager.checkPhoneStatePermission(context)) {
             Log.w(TAG, "Tried getting phone state without permission.")
             return null
         }

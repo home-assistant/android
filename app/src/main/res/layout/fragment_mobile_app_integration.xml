@@ -160,7 +160,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/activity_margin"
-                android:text="@string/call_tracking_title" />
+                android:text="@string/pref_call_tracking_title" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/call_tracking_summary"

@@ -14,6 +14,7 @@ class PermissionManager {
 
     companion object {
         const val LOCATION_REQUEST_CODE = 1
+        const val PHONE_STATE_REQUEST_CODE = 2
 
         /**
          * Check if the a given permission is granted
@@ -69,6 +70,21 @@ class PermissionManager {
             intent.action = LocationBroadcastReceiverBase.ACTION_REQUEST_LOCATION_UPDATES
 
             context.sendBroadcast(intent)
+        }
+
+        fun requestPhoneStatePermissions(fragment: Fragment) {
+            fragment.requestPermissions(arrayOf(Manifest.permission.READ_PHONE_STATE), PHONE_STATE_REQUEST_CODE)
+        }
+
+        fun checkPhoneStatePermission(context: Context): Boolean {
+            return hasPermission(context, Manifest.permission.READ_PHONE_STATE)
+        }
+
+        fun validatePhoneStatePermissions(
+            requestCode: Int,
+            grantResults: IntArray
+        ): Boolean {
+            return requestCode == PHONE_STATE_REQUEST_CODE && arePermissionsGranted(grantResults)
         }
     }
 }

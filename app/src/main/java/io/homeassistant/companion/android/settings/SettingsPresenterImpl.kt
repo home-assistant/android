@@ -32,6 +32,7 @@ class SettingsPresenterImpl @Inject constructor(
             return@runBlocking when (key) {
                 "location_zone" -> integrationUseCase.isZoneTrackingEnabled()
                 "location_background" -> integrationUseCase.isBackgroundTrackingEnabled()
+                "call_state" -> integrationUseCase.isCallTrackingEnabled()
                 "fullscreen" -> integrationUseCase.isFullScreenEnabled()
                 "app_lock" -> authenticationUseCase.isLockEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -44,6 +45,7 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "location_zone" -> integrationUseCase.setZoneTrackingEnabled(value)
                 "location_background" -> integrationUseCase.setBackgroundTrackingEnabled(value)
+                "call_state" -> integrationUseCase.setCallTrackingEnabled(value)
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")

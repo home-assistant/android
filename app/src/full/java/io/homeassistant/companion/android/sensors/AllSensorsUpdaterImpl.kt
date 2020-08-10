@@ -13,13 +13,15 @@ class AllSensorsUpdaterImpl(
     override suspend fun getManagers(): List<SensorManager> {
         val sensorManagers = mutableListOf(
             BatterySensorManager(),
-            NetworkSensorManager(),
-            PhoneStateSensorManager()
-
+            NetworkSensorManager()
         )
 
         if (integrationUseCase.isBackgroundTrackingEnabled() && PermissionManager.checkLocationPermission(appContext)) {
             sensorManagers.add(GeocodeSensorManager())
+        }
+
+        if (integrationUseCase.isCallTrackingEnabled() && PermissionManager.checkPhoneStatePermission(appContext)) {
+            sensorManagers.add(PhoneStateSensorManager())
         }
 
         return sensorManagers

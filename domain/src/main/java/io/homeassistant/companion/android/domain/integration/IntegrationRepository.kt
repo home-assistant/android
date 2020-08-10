@@ -18,6 +18,9 @@ interface IntegrationRepository {
     suspend fun setBackgroundTrackingEnabled(enabled: Boolean)
     suspend fun isBackgroundTrackingEnabled(): Boolean
 
+    suspend fun setCallTrackingEnabled(enabled: Boolean)
+    suspend fun isCallTrackingEnabled(): Boolean
+
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 
