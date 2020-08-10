@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.nfc
 
+import android.content.Intent
+import android.net.Uri
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.os.Bundle
@@ -17,9 +19,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class NfcActivity : AppCompatActivity() {
+class TagReaderActivity : AppCompatActivity() {
 
-    val TAG = NfcActivity::class.simpleName
+    val TAG = TagReaderActivity::class.simpleName
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -28,7 +30,7 @@ class NfcActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_nfc)
+        setContentView(R.layout.activity_tag_reader)
 
         setSupportActionBar(findViewById(R.id.toolbar))
 
@@ -44,16 +46,29 @@ class NfcActivity : AppCompatActivity() {
             val ndefMessage = rawMessages[0] as NdefMessage?
             mainScope.launch {
                 try {
-                    handleNFCTag(ndefMessage)
+                    val url = ndefMessage?.records?.get(0)?.toUri().toString()
+                    handleTag(url)
                 } catch (e: Exception) {
                     val message = R.string.nfc_processing_tag_error
-                    Toast.makeText(this@NfcActivity, message, Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@TagReaderActivity, message, Toast.LENGTH_LONG).show()
                     Log.e(TAG, e.message)
                     finish()
                 }
             }
-        } else {
-            finish()
+        } else if(Intent.ACTION_VIEW == intent.action) {
+            val data: Uri? = intent?.data
+            val url = data.toString()
+            mainScope.launch {
+                try {
+                    handleTag(url)
+                } catch (e: Exception) {
+                    val message = R.string.qrcode_processing_tag_error
+                    Toast.makeText(this@TagReaderActivity, message, Toast.LENGTH_LONG).show()
+                    Log.e(TAG, e.message)
+                    finish()
+                }
+            }
+            //finish()
         }
     }
 
@@ -62,19 +77,16 @@ class NfcActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private suspend fun handleNFCTag(ndefMessage: NdefMessage?) {
-        val url = ndefMessage?.records?.get(0)?.toUri().toString()
+    private suspend fun handleTag(url: String) {
         // https://www.home-assistant.io/nfc/?url=homeassistant://call_service/light.turn_on?entity_id=light.extended_color_light_2
         // https://www.home-assistant.io/nfc/?url=homeassistant://fire_event/custom_event?entity_id=MY_CUSTOM_EVENT
-        // https://www.home-assistant.io/nfc/5f0ba733-172f-430d-a7f8-e4ad940c88d7
+        // https://www.home-assistant.io/tag/5f0ba733-172f-430d-a7f8-e4ad940c88d7
 
         val nfcTagId = UrlHandler.splitNfcTagId(url)
         if (nfcTagId != null) {
             // check if we have a nfc tag id
-            val deviceName = integrationUseCase.getRegistration().deviceName!!
-            integrationUseCase.fireEvent(
-                "nfc.tag_read",
-                hashMapOf("tag" to nfcTagId, "device_name" to deviceName)
+            integrationUseCase.callScanTag(
+                hashMapOf("tag_id" to nfcTagId)
             )
             finish()
         } else {

@@ -73,7 +73,6 @@ class NfcEditSetupActivity : AppCompatActivity() {
                 val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
                 val ndefMessage = rawMessages.first() as NdefMessage
                 val url = ndefMessage?.records?.get(0)?.toUri().toString()
-                // somehow the protocol gets stripper when scanning using foreground service
                 val nfcTagId = UrlHandler.splitNfcTagId(url)
                 if (nfcTagId == null) {
                     viewModel.postNewUUID()
@@ -82,7 +81,7 @@ class NfcEditSetupActivity : AppCompatActivity() {
                 }
             } else {
                 try {
-                    val nfcTagUrl = "https://www.home-assistant.io/nfc/$nfcTagToWriteUUID"
+                    val nfcTagUrl = "https://www.home-assistant.io/tag/$nfcTagToWriteUUID"
                     NFCUtil.createNFCMessage(nfcTagUrl, intent)
                     Log.d(TAG, "Wrote nfc tag with url: $nfcTagUrl")
                     val message = R.string.nfc_write_tag_success

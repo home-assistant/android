@@ -98,15 +98,31 @@
             android:parentActivityName=".webview.WebViewActivity" />
 
         <activity
-            android:name=".nfc.NfcActivity"
-            android:label="@string/nfc_title_nfc_processing">
+            android:name=".nfc.TagReaderActivity"
+            android:label="@string/tag_reader_title">
+            <tools:validation testUrl="https://www.home-assistant.io/tag/123e4567-e89b-12d3-a456-426614174000" />
+
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
-                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="www.home-assistant.io"
+                    android:pathPrefix="/tag/" />
                 <data
                     android:scheme="https"
                     android:host="www.home-assistant.io"
                     android:pathPrefix="/nfc/" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="www.home-assistant.io"
+                    android:pathPrefix="/tag/" />
             </intent-filter>
         </activity>
         <activity

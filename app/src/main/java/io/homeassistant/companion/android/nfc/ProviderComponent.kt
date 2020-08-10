@@ -6,6 +6,6 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 @Component(dependencies = [AppComponent::class])
 interface ProviderComponent {
 
-    fun inject(activity: NfcActivity)
+    fun inject(activity: TagReaderActivity)
     fun inject(nfcEditFragment: NfcEditFragment)
 }
