@@ -126,7 +126,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".nfc.NfcEditSetupActivity"
+            android:name=".nfc.NfcSetupActivity"
             android:label="@string/nfc_title_nfc_setup" />
     </application>
 

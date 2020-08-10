@@ -13,9 +13,9 @@ import androidx.lifecycle.ViewModelProvider
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.UrlHandler
 
-class NfcEditSetupActivity : AppCompatActivity() {
+class NfcSetupActivity : AppCompatActivity() {
 
-    val TAG = NfcEditSetupActivity::class.simpleName
+    val TAG = NfcSetupActivity::class.simpleName
 
     // private val viewModel: NfcViewModel by viewModels()
     private lateinit var viewModel: NfcViewModel
@@ -23,7 +23,7 @@ class NfcEditSetupActivity : AppCompatActivity() {
 
     companion object {
         fun newInstance(context: Context): Intent {
-            return Intent(context, NfcEditSetupActivity::class.java)
+            return Intent(context, NfcSetupActivity::class.java)
         }
     }
 
