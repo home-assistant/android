@@ -28,6 +28,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/nfc_btn_create_duplicate"
+        android:layout_marginEnd="8dp"
         app:layout_constraintEnd_toStartOf="@+id/guideline"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintStart_toStartOf="parent"
@@ -39,6 +40,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/nfc_btn_fire_event"
+        android:layout_marginStart="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline"
         app:layout_constraintTop_toBottomOf="@+id/et_tag_identifier_content" />
