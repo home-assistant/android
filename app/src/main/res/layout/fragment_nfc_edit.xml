@@ -22,7 +22,7 @@
         android:editable="false"
         app:layout_constraintTop_toBottomOf="@+id/tv_tag_identifier_headline" />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_tag_duplicate"
         style="@style/Widget.HomeAssistant.Button.Colored"
         android:layout_width="0dp"
@@ -33,7 +33,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/et_tag_identifier_content" />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_tag_fire_event"
         style="@style/Widget.HomeAssistant.Button.Colored"
         android:layout_width="0dp"

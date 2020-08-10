@@ -14,7 +14,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_editor_absoluteX="16dp" />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_nfc_read"
         style="@style/Widget.HomeAssistant.Button.Colored"
         android:layout_width="0dp"
@@ -25,7 +25,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_welcome_message" />
 
-    <androidx.appcompat.widget.AppCompatButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_nfc_write"
         style="@style/Widget.HomeAssistant.Button.Colored"
         android:layout_width="0dp"
