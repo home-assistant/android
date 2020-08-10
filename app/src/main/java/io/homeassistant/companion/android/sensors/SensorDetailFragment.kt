@@ -57,6 +57,7 @@ class SensorDetailFragment(private val sensorRegistration: SensorRegistration<An
                     val pref = Preference(requireContext())
                     pref.title = attribue.key
                     pref.summary = attribue.value.toString()
+                    pref.isIconSpaceReserved = false
 
                     it.addPreference(pref)
                 }
