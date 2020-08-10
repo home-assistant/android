@@ -87,8 +87,8 @@ class NfcSetupActivity : AppCompatActivity() {
                     val message = R.string.nfc_write_tag_success
                     Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
 
+                    viewModel.nfcReadEvent.value = nfcTagToWriteUUID
                     viewModel.nfcWriteTagDoneEvent.value = nfcTagToWriteUUID
-                    // finish()
                 } catch (e: Exception) {
                     val message = R.string.nfc_write_tag_error
                     Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()

@@ -63,7 +63,7 @@ class NfcEditFragment : Fragment() {
             mainScope.launch {
                 et_tag_identifier_content.setText(uuid)
                 val deviceName = integrationUseCase.getRegistration().deviceName!!
-                et_tag_example_trigger_content.setText("- platform: event\n  event_type: nfc.tag_read\n  event_data:\n    device_name: $deviceName\n    tag: $uuid")
+                et_tag_example_trigger_content.setText("- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceName\n    tag_id: $uuid")
             }
         }
         viewModel.nfcReadEvent.observe(viewLifecycleOwner, nfcReadObserver)
