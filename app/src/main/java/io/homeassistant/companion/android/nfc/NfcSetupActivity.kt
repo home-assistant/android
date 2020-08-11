@@ -92,7 +92,7 @@ class NfcSetupActivity : AppCompatActivity() {
                 } catch (e: Exception) {
                     val message = R.string.nfc_write_tag_error
                     Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
-                    Log.e(TAG, e.message)
+                    Log.e(TAG, "Unable to write tag.", e)
                 }
             }
         }

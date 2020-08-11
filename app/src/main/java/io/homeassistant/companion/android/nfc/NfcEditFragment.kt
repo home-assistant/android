@@ -85,7 +85,7 @@ class NfcEditFragment : Fragment() {
                 } catch (e: Exception) {
                     Toast.makeText(activity, R.string.nfc_event_fired_fail, Toast.LENGTH_LONG)
                         .show()
-                    Log.e(TAG, e.message)
+                    Log.e(TAG, "Unable to send tag to Home Assistant.", e)
                 }
             }
         }

@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.nfc
 
 import android.content.Intent
-import android.net.Uri
 import android.nfc.NdefMessage
 import android.nfc.NfcAdapter
 import android.os.Bundle
@@ -41,30 +40,27 @@ class TagReaderActivity : AppCompatActivity() {
             .build()
             .inject(this)
 
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
-            val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-            val ndefMessage = rawMessages[0] as NdefMessage?
-            mainScope.launch {
+        mainScope.launch {
+            if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
+                val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
+                val ndefMessage = rawMessages[0] as NdefMessage?
+                val url = ndefMessage?.records?.get(0)?.toUri().toString()
                 try {
-                    val url = ndefMessage?.records?.get(0)?.toUri().toString()
                     handleTag(url)
                 } catch (e: Exception) {
                     val message = R.string.nfc_processing_tag_error
                     Toast.makeText(this@TagReaderActivity, message, Toast.LENGTH_LONG).show()
-                    Log.e(TAG, e.message)
+                    Log.e(TAG, "Unable to handle url (nfc): $url", e)
                     finish()
                 }
-            }
-        } else if (Intent.ACTION_VIEW == intent.action) {
-            val data: Uri? = intent?.data
-            val url = data.toString()
-            mainScope.launch {
+            } else if (Intent.ACTION_VIEW == intent.action) {
+                val url: String = intent?.data.toString()
                 try {
                     handleTag(url)
                 } catch (e: Exception) {
                     val message = R.string.qrcode_processing_tag_error
                     Toast.makeText(this@TagReaderActivity, message, Toast.LENGTH_LONG).show()
-                    Log.e(TAG, e.message)
+                    Log.e(TAG, "Unable to handle url (qrcode): $url", e)
                     finish()
                 }
             }

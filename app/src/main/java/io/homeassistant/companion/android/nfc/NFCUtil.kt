@@ -59,21 +59,21 @@ object NFCUtil {
             } else {
                 throw Exception("NFC tag is read-only")
             }
-            }
+        }
 
-            val nDefFormatableTag = NdefFormatable.get(tag)
+        val nDefFormatableTag = NdefFormatable.get(tag)
 
-            nDefFormatableTag?.let {
-                try {
-                    it.connect()
-                    it.format(nfcMessage)
-                    it.close()
-                    // The data is written to the tag
-                } catch (e: IOException) {
-                    // Failed to format tag
-                    throw Exception("Failed to format tag", e)
-                }
+        nDefFormatableTag?.let {
+            try {
+                it.connect()
+                it.format(nfcMessage)
+                it.close()
+                // The data is written to the tag
+            } catch (e: IOException) {
+                // Failed to format tag
+                throw Exception("Failed to format tag", e)
             }
+        }
         return true
     }
 }
