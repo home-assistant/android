@@ -60,6 +60,12 @@ interface IntegrationService {
     ): Response<ResponseBody>
 
     @POST
+    suspend fun scanTag(
+        @Url url: HttpUrl,
+        @Body request: IntegrationRequest
+    ): Response<ResponseBody>
+
+    @POST
     suspend fun fireEvent(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest

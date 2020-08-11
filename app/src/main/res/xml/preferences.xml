@@ -62,6 +62,12 @@
             android:icon="@drawable/ic_plus"
             android:title="@string/shortcuts"
             android:summary="@string/shortcuts_summary" />
+        <Preference
+            android:key="nfc_tags"
+            android:icon="@drawable/ic_plus"
+            android:title="@string/nfc_title_settings"
+            android:summary="@string/nfc_summary" />
+
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">

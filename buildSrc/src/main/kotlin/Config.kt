@@ -51,6 +51,9 @@ object Config {
             const val constraintlayout = "androidx.constraintlayout:constraintlayout:1.1.3"
             const val preference = "androidx.preference:preference-ktx:1.1.1"
 
+            const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.0"
+            const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.0"
+
             const val workManager = "androidx.work:work-runtime-ktx:2.3.4"
             const val biometric = "androidx.biometric:biometric:1.0.1"
 

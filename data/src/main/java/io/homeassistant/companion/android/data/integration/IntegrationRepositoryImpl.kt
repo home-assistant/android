@@ -174,6 +174,30 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
+    override suspend fun scanTag(data: HashMap<String, Any>) {
+        var wasSuccess = false
+
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                wasSuccess =
+                    integrationService.scanTag(
+                        it.toHttpUrlOrNull()!!,
+                        IntegrationRequest(
+                            "scan_tag",
+                            data
+                        )
+                    ).isSuccessful
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+            // if we had a successful call we can return
+            if (wasSuccess)
+                return
+        }
+
+        throw IntegrationException()
+    }
+
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
         var wasSuccess = false
 
