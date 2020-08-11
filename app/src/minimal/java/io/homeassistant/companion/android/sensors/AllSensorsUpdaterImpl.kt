@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.util.PermissionManager
 
 class AllSensorsUpdaterImpl(
     integrationUseCase: IntegrationUseCase,
@@ -12,9 +13,12 @@ class AllSensorsUpdaterImpl(
         val sensorManagers = mutableListOf(
             BatterySensorManager(),
             NetworkSensorManager(),
-            PhoneStateSensorManager()
-        )
+            NextAlarmManager()
 
+        if (integrationUseCase.isCallTrackingEnabled() && PermissionManager.checkPhoneStatePermission(appContext)) {
+            sensorManagers.add(PhoneStateSensorManager())
+        }  
+          
         return sensorManagers
     }
 }

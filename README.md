@@ -29,11 +29,16 @@ If you are looking for documentation around the companion applications check out
 If you get stuck while setting up your own environment, you can ask questions in the **#devs_mobile_apps** channel on [Discord](https://discord.gg/c5DvZ4e).
 
 ### Push Notifications
+
 If you want to work on push notifications or use a development build with push notifications please go the server side code [HERE](https://github.com/home-assistant/mobile-apps-fcm-push) and deploy it to your firebase project.  Once you have your androidV1 URL to the deployed service, exchange that for your local builds [PUSH_URL](https://github.com/home-assistant/android/blob/master/data/src/main/java/io/homeassistant/companion/android/data/integration/IntegrationRepositoryImpl.kt#L42).
+
+## App Flavors
+
+The Android app has both a full flavor that uses Google Play Services to offer features like location tracking and notifications. There is also a minimal flavor that does not require Google Play Services and can be found in the releases section. The minimal flavor does not have location tracking or notifications.
 
 ## Testing Dev Releases
 
-We are using [Github Actions](https://github.com/home-assistant/android/actions) to perform continuous integration both by unit testing, deploying dev releases to [Play Store Beta](https://play.google.com/apps/testing/io.homeassistant.companion.android) and final releases to the [Play Store](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android) when we release.
+We are using [Github Actions](https://github.com/home-assistant/android/actions) to perform continuous integration both by unit testing, deploying dev releases to [Play Store Beta](https://play.google.com/apps/testing/io.homeassistant.companion.android) and final releases to the [Play Store](https://play.google.com/store/apps/details?id=io.homeassistant.companion.android) when we release. To help test out a specific feature/fixes users can find the APK on the Actions page for each pull request, this debug APK can be installed side-by-side the production or beta builds.
 
 ## Quality
 
