@@ -14,7 +14,8 @@ class AllSensorsUpdaterImpl(
             BatterySensorManager(),
             NetworkSensorManager(),
             NextAlarmManager()
-
+        )
+            
         if (integrationUseCase.isCallTrackingEnabled() && PermissionManager.checkPhoneStatePermission(appContext)) {
             sensorManagers.add(PhoneStateSensorManager())
         }  
