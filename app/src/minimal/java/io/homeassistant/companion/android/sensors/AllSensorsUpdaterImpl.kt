@@ -11,7 +11,8 @@ class AllSensorsUpdaterImpl(
     override suspend fun getManagers(): List<SensorManager> {
         val sensorManagers = mutableListOf(
             BatterySensorManager(),
-            NetworkSensorManager()
+            NetworkSensorManager(),
+            NextAlarmManager()
         )
 
         return sensorManagers
