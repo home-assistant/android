@@ -30,8 +30,7 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
         )
 
         // This will trigger an update any time the wifi state has changed
-        registerReceiver(WifiStateReceiver(),  IntentFilter( WifiManager.NETWORK_STATE_CHANGED_ACTION))
-
+        registerReceiver(WifiStateReceiver(), IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION))
     }
 
     override val appComponent: AppComponent

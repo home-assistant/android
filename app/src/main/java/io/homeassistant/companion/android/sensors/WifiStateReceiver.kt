@@ -6,12 +6,11 @@ import android.content.Intent
 import android.net.wifi.WifiManager
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-
 
 class WifiStateReceiver() : BroadcastReceiver() {
 
