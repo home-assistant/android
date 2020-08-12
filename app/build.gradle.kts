@@ -10,6 +10,7 @@ plugins {
 buildscript {
     repositories {
         google()
+        jcenter()
         maven(url = Config.Repository.gradle)
     }
     dependencies {
@@ -162,6 +163,10 @@ dependencies {
     testImplementation(Config.Dependency.Testing.assertJ)
     testImplementation(Config.Dependency.Testing.mockk)
     testImplementation(Config.Dependency.Kotlin.coroutinesTest)
+
+    implementation("com.google.android.exoplayer:exoplayer-core:2.11.7")
+    implementation("com.google.android.exoplayer:exoplayer-hls:2.11.7")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.11.7")
 }
 
 // This plugin must stay at the bottom
