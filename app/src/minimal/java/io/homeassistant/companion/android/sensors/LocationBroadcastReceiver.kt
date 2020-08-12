@@ -19,12 +19,18 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
 
+        const val ID_BACKGROUND_LOCATION = "location_background"
+        const val ID_ZONE_LOCATION = "location_zone"
+
         internal const val TAG = "LocBroadcastReceiver"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         // Noop
     }
+
+    override val name: String
+        get() = "Location Sensors"
 
     override fun requiredPermissions(): Array<String> {
         // Noop

@@ -4,6 +4,9 @@ import android.content.Context
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class GeocodeSensorManager : SensorManager {
+    override val name: String
+        get() = "Geocode Sensors"
+
     override fun requiredPermissions(): Array<String> {
         return emptyArray()
     }
