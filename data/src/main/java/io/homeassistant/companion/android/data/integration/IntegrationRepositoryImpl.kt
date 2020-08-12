@@ -224,22 +224,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
-    override suspend fun setZoneTrackingEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_ZONE_ENABLED, enabled)
-    }
-
-    override suspend fun isZoneTrackingEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_ZONE_ENABLED)
-    }
-
-    override suspend fun setBackgroundTrackingEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_BACKGROUND_ENABLED, enabled)
-    }
-
-    override suspend fun isBackgroundTrackingEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
-    }
-
     override suspend fun setFullScreenEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
     }

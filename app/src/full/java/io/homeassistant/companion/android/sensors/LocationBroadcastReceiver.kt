@@ -15,6 +15,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
@@ -39,9 +40,11 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
 
+        const val ID_BACKGROUND_LOCATION = "location_background"
+        const val ID_ZONE_LOCATION = "location_zone"
+
         internal const val TAG = "LocBroadcastReceiver"
     }
-
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
@@ -78,13 +81,15 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
             return
         }
 
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+
         ioScope.launch {
             try {
                 removeAllLocationUpdateRequests(context)
 
-                if (integrationUseCase.isBackgroundTrackingEnabled())
+                if (sensorDao.get(ID_BACKGROUND_LOCATION)?.enabled == true)
                     requestLocationUpdates(context)
-                if (integrationUseCase.isZoneTrackingEnabled())
+                if (sensorDao.get(ID_ZONE_LOCATION)?.enabled == true)
                     requestZoneUpdates(context)
             } catch (e: Exception) {
                 Log.e(TAG, "Issue setting up location tracking", e)
@@ -284,7 +289,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
         return listOf<SensorRegistration<Any>>(
             SensorRegistration(
-                "location_background",
+                ID_BACKGROUND_LOCATION,
                 "",
                 "",
                 "mdi:map",
@@ -292,7 +297,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
                 "Background Location"
             ),
             SensorRegistration(
-                "location_zone",
+                ID_ZONE_LOCATION,
                 "",
                 "",
                 "mdi:map",

@@ -28,19 +28,6 @@
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="@string/location">
-        <SwitchPreference
-            android:key="location_zone"
-            android:icon="@drawable/map_marker_radius"
-            android:title="@string/pref_location_zone_title"
-            android:summary="@string/pref_location_zone_summary"/>
-        <SwitchPreference
-            android:key="location_background"
-            android:icon="@drawable/map_marker"
-            android:title="@string/pref_location_background_title"
-            android:summary="@string/pref_location_background_summary"/>
-    </PreferenceCategory>
-    <PreferenceCategory
         android:title="@string/other_settings">
         <SwitchPreference
             android:key="fullscreen"
