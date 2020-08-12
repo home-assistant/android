@@ -41,7 +41,6 @@ class NetworkSensorManager : SensorManager {
             lastScanStrength = wifiManager.scanResults.firstOrNull {
                 it.BSSID == conInfo.bssid
             }?.level ?: -1
-
         }
 
         var signalStrength = -1

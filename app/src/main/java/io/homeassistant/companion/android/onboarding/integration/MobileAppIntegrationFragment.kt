@@ -25,8 +25,8 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 import io.homeassistant.companion.android.util.PermissionManager
-import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 

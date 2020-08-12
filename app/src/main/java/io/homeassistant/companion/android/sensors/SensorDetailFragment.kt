@@ -41,7 +41,6 @@ class SensorDetailFragment(
 
         addPreferencesFromResource(R.xml.sensor_detail)
 
-
         findPreference<SwitchPreference>("enabled")?.let {
             val dao = sensorDao.get(sensorRegistration.uniqueId)
             val perm = havePermission()

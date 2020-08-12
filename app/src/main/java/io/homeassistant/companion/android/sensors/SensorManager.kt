@@ -10,5 +10,4 @@ interface SensorManager {
     fun requiredPermissions(): Array<String>
 
     fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>>
-
 }

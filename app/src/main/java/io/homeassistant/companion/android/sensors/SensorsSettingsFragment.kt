@@ -4,14 +4,13 @@ import android.os.Bundle
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceGroup
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
@@ -52,7 +51,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     else
                         pref.summary = sensor.state.toString() + " " + sensor.unitOfMeasurement
 
-                    //TODO: Add the icon from mdi:icon?
+                    // TODO: Add the icon from mdi:icon?
 
                     pref.setOnPreferenceClickListener {
                         parentFragmentManager

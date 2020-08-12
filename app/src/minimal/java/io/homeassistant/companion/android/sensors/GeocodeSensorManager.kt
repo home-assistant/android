@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
-class GeocodeSensorManager: SensorManager {
+class GeocodeSensorManager : SensorManager {
     override fun requiredPermissions(): Array<String> {
         return emptyArray()
     }

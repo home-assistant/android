@@ -10,11 +10,11 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.util.PermissionManager
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class SensorReceiver : BroadcastReceiver() {
 
@@ -44,7 +44,7 @@ class SensorReceiver : BroadcastReceiver() {
         }
     }
 
-    public suspend fun updateSensors(
+    suspend fun updateSensors(
         context: Context,
         integrationUseCase: IntegrationUseCase
     ) {
@@ -55,7 +55,6 @@ class SensorReceiver : BroadcastReceiver() {
         context.sendBroadcast(intent)
 
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
-
 
         MANAGERS.forEach { manager ->
             manager.getSensorRegistrations(context).forEach { registration ->
@@ -94,7 +93,6 @@ class SensorReceiver : BroadcastReceiver() {
             }
         }
 
-
         var success = false
         try {
             success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
@@ -112,6 +110,5 @@ class SensorReceiver : BroadcastReceiver() {
                 }
             }
         }
-
     }
 }

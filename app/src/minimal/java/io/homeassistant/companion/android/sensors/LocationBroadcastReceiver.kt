@@ -23,7 +23,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        //Noop
+        // Noop
     }
 
     override fun requiredPermissions(): Array<String> {
@@ -35,6 +35,4 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         // Noop
         return emptyList()
     }
-
-
 }
