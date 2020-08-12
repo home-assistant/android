@@ -9,8 +9,8 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.sensors.ChargingBroadcastReceiver
-import io.homeassistant.companion.android.sensors.WifiStateReceiver
 import io.homeassistant.companion.android.sensors.PhoneStateReceiver
+import io.homeassistant.companion.android.sensors.WifiStateReceiver
 
 open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
