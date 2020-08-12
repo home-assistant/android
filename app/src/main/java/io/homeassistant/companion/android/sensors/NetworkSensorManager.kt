@@ -26,19 +26,20 @@ class NetworkSensorManager : SensorManager {
         var conInfo: WifiInfo? = null
         var ssid = "Unknown"
         var lastScanStrength = -1
+        var wifiEnabled = false
 
         if (PermissionManager.checkLocationPermission(context)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo
 
-        val wifiEnabled = wifiManager.isWifiEnabled
+            wifiEnabled = wifiManager.isWifiEnabled
 
-        val ssid = if (conInfo.networkId == -1) {
-            "<not connected>"
-        } else {
-            conInfo.ssid.removePrefix("\"").removeSuffix("\"")
-        }
+            ssid = if (conInfo.networkId == -1) {
+                "<not connected>"
+            } else {
+                conInfo.ssid.removePrefix("\"").removeSuffix("\"")
+            }
 
             lastScanStrength = wifiManager.scanResults.firstOrNull {
                 it.BSSID == conInfo.bssid

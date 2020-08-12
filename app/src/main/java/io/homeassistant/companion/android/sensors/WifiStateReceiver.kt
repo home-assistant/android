@@ -37,7 +37,7 @@ class WifiStateReceiver() : BroadcastReceiver() {
 
         updateJob?.cancel()
         updateJob = ioScope.launch {
-            AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
+            SensorReceiver().updateSensors(context, integrationUseCase)
         }
     }
 }

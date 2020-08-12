@@ -12,12 +12,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class NextAlarmReceiver() : BroadcastReceiver() {
+class NextAlarmReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
     private val ioScope = CoroutineScope(Dispatchers.IO)
-    var updateJob: Job? = null
+    private var updateJob: Job? = null
     override fun onReceive(context: Context, intent: Intent) {
         val isBootIntent = Intent.ACTION_BOOT_COMPLETED.equals(intent.action, ignoreCase = true)
         val isNextAlarmIntent =
@@ -34,7 +34,7 @@ class NextAlarmReceiver() : BroadcastReceiver() {
 
         updateJob?.cancel()
         updateJob = ioScope.launch {
-            AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
+            SensorReceiver().updateSensors(context, integrationUseCase)
         }
     }
 }

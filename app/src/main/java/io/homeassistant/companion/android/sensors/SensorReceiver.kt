@@ -23,7 +23,8 @@ class SensorReceiver : BroadcastReceiver() {
         val MANAGERS = listOf(
             BatterySensorManager(),
             NetworkSensorManager(),
-            GeocodeSensorManager()
+            GeocodeSensorManager(),
+            NextAlarmManager()
         )
     }
 
