@@ -103,6 +103,7 @@ object Config {
             const val threeTenAbp = "com.jakewharton.threetenabp:threetenabp:1.2.1"
             const val javaxInject = "javax.inject:javax.inject:1"
             const val blurView = "com.eightbitlab:blurview:1.6.3"
+            const val emoji = "com.vdurmont:emoji-java:5.1.1"
         }
     }
 
