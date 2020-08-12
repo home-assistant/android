@@ -11,6 +11,8 @@ interface SensorComponent {
 
     fun inject(worker: SensorWorker)
 
+    fun inject(sensorReceiver: SensorReceiver)
+
     fun inject(sensorsSettingsFragment: SensorsSettingsFragment)
 
     fun inject(sensorDetailFragment: SensorDetailFragment)

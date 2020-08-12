@@ -66,7 +66,6 @@ class SensorDetailFragment(
             }
         }
 
-
         refreshSensorData()
     }
 

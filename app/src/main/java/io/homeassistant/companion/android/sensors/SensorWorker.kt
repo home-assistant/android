@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.util.Log
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -16,7 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class SensorWorker(
-    appContext: Context,
+    private val appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
     companion object {
@@ -37,18 +38,16 @@ class SensorWorker(
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    val allSensorUpdater: SensorUpdater
-
     init {
         DaggerSensorComponent.builder()
             .appComponent((appContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
-        allSensorUpdater = AllSensorsUpdaterImpl(integrationUseCase, applicationContext)
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        allSensorUpdater.updateSensors()
+        Log.d(TAG, "Updating all Sensors.")
+        SensorReceiver().updateSensors(appContext, integrationUseCase)
         Result.success()
     }
 }

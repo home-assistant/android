@@ -16,8 +16,6 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    private lateinit var allSensorsUpdater: AllSensorsUpdater
-
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     companion object {
@@ -33,12 +31,10 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             .build()
             .inject(this)
 
-        allSensorsUpdater = AllSensorsUpdaterImpl(integrationUseCase, requireContext())
-
         setPreferencesFromResource(R.xml.sensors, rootKey)
 
         ioScope.launch {
-            val managers = allSensorsUpdater.getManagers().plus(LocationBroadcastReceiver())
+            val managers = SensorReceiver.MANAGERS.plus(LocationBroadcastReceiver())
             val preferences = mutableListOf<Preference>()
 
             managers.forEach { manager ->

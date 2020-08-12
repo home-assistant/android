@@ -17,7 +17,7 @@ class ChargingBroadcastReceiver(
     override fun onReceive(context: Context, intent: Intent?) {
         updateJob?.cancel()
         updateJob = ioScope.launch {
-            AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
+            SensorReceiver().updateSensors(context, integrationUseCase)
         }
     }
 }
