@@ -72,6 +72,14 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.isBackgroundTrackingEnabled()
     }
 
+    override suspend fun setCallTrackingEnabled(enabled: Boolean) {
+        return integrationRepository.setCallTrackingEnabled(enabled)
+    }
+
+    override suspend fun isCallTrackingEnabled(): Boolean {
+        return integrationRepository.isCallTrackingEnabled()
+    }
+
     override suspend fun setFullScreenEnabled(enabled: Boolean) {
         return integrationRepository.setFullScreenEnabled(enabled)
     }

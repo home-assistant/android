@@ -49,6 +49,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_ZONE_ENABLED = "zone_enabled"
         private const val PREF_BACKGROUND_ENABLED = "background_enabled"
+        private const val PREF_CALL_ENABLED = "call_enabled"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
@@ -263,6 +264,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isBackgroundTrackingEnabled(): Boolean {
         return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
+    }
+
+    override suspend fun setCallTrackingEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_CALL_ENABLED, enabled)
+    }
+
+    override suspend fun isCallTrackingEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_CALL_ENABLED)
     }
 
     override suspend fun setFullScreenEnabled(enabled: Boolean) {

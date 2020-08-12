@@ -47,6 +47,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     private lateinit var zoneTrackingSummary: AppCompatTextView
     private lateinit var backgroundTracking: SwitchCompat
     private lateinit var backgroundTrackingSummary: AppCompatTextView
+    private lateinit var callTracking: SwitchCompat
+    private lateinit var callTrackingSummary: AppCompatTextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,6 +100,26 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             backgroundTrackingSummary = findViewById(R.id.location_background_summary)
             backgroundTrackingSummary.isEnabled = hasLocationPermission
 
+            // Calls tracking
+            findViewById<AppCompatButton>(R.id.phone_state_perms).apply {
+                setOnClickListener {
+                    PermissionManager.requestPhoneStatePermissions(this@MobileAppIntegrationFragment)
+                }
+            }
+
+            val hasPhoneStatePermission = PermissionManager.checkPhoneStatePermission(context)
+
+            callTracking = findViewById<SwitchCompat>(R.id.call_tracking).apply {
+                setOnCheckedChangeListener { _, isChecked ->
+                    presenter.onToggleCallTracking(isChecked)
+                }
+                isEnabled = hasPhoneStatePermission
+                isChecked = hasPhoneStatePermission
+            }
+
+            callTrackingSummary = findViewById(R.id.call_tracking_summary)
+            callTrackingSummary.isEnabled = hasPhoneStatePermission
+
             findViewById<AppCompatButton>(R.id.finish).setOnClickListener {
                 (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
             }
@@ -148,22 +170,36 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (PermissionManager.validateLocationPermissions(requestCode, grantResults)) {
-            zoneTracking.isEnabled = true
-            zoneTrackingSummary.isEnabled = true
-            zoneTracking.isChecked = true
-            presenter.onToggleZoneTracking(true)
+        if (requestCode == PermissionManager.LOCATION_REQUEST_CODE) {
+            if (PermissionManager.validateLocationPermissions(requestCode, grantResults)) {
+                zoneTracking.isEnabled = true
+                zoneTrackingSummary.isEnabled = true
+                zoneTracking.isChecked = true
+                presenter.onToggleZoneTracking(true)
 
-            backgroundTracking.isEnabled = true
-            backgroundTrackingSummary.isEnabled = true
-        } else {
-            zoneTracking.isEnabled = false
-            zoneTrackingSummary.isEnabled = false
-            backgroundTracking.isEnabled = false
-            backgroundTrackingSummary.isEnabled = false
+                backgroundTracking.isEnabled = true
+                backgroundTrackingSummary.isEnabled = true
+            } else {
+                zoneTracking.isEnabled = false
+                zoneTrackingSummary.isEnabled = false
+                backgroundTracking.isEnabled = false
+                backgroundTrackingSummary.isEnabled = false
+            }
+
+            requestBackgroundAccess()
         }
 
-        requestBackgroundAccess()
+        if (requestCode == PermissionManager.PHONE_STATE_REQUEST_CODE) {
+            if (PermissionManager.validatePhoneStatePermissions(requestCode, grantResults)) {
+                callTracking.isEnabled = true
+                callTracking.isChecked = true
+                callTrackingSummary.isEnabled = true
+                presenter.onToggleCallTracking(true)
+            } else {
+                callTracking.isEnabled = false
+                callTrackingSummary.isEnabled = false
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

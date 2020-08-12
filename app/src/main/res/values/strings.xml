@@ -150,4 +150,7 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="select_entity_to_display">Select Entity to display</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
+  <string name="permission_explanation_calls">In order to track incoming and outgoing call\'s occurrence we need access to your phone state. No phone numbers or other call details will be stored.</string>
+  <string name="pref_call_tracking_title">Calls Tracking</string>
+  <string name="pref_call_tracking_summary">Allow application to detect call occurrence and notify server about it.</string>
 </resources>

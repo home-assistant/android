@@ -43,6 +43,11 @@
     <PreferenceCategory
         android:title="@string/other_settings">
         <SwitchPreference
+            android:key="call_state"
+            android:icon="@drawable/ic_phone"
+            android:title="@string/pref_call_tracking_title"
+            android:summary="@string/pref_call_tracking_summary"/>
+        <SwitchPreference
             android:key="fullscreen"
             android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"

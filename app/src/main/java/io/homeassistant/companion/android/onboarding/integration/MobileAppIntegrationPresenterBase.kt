@@ -63,6 +63,12 @@ open class MobileAppIntegrationPresenterBase constructor(
         }
     }
 
+    override fun onToggleCallTracking(enabled: Boolean) {
+        mainScope.launch {
+            integrationUseCase.setCallTrackingEnabled(enabled)
+        }
+    }
+
     override fun onFinish() {
         mainScope.cancel()
     }

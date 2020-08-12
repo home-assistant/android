@@ -21,6 +21,10 @@ class AllSensorsUpdaterImpl(
             sensorManagers.add(GeocodeSensorManager())
         }
 
+        if (integrationUseCase.isCallTrackingEnabled() && PermissionManager.checkPhoneStatePermission(appContext)) {
+            sensorManagers.add(PhoneStateSensorManager())
+        }
+
         return sensorManagers
     }
 }
