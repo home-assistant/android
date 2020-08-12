@@ -3,8 +3,9 @@ package io.homeassistant.companion.android.sensors
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
-class LocationBroadcastReceiver : BroadcastReceiver() {
+class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
 
     companion object {
         const val MINIMUM_ACCURACY = 200
@@ -23,6 +24,16 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         //Noop
+    }
+
+    override fun requiredPermissions(): Array<String> {
+        // Noop
+        return emptyArray()
+    }
+
+    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
+        // Noop
+        return emptyList()
     }
 
 
