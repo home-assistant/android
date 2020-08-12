@@ -12,9 +12,6 @@ interface IntegrationRepository {
 
     suspend fun getZones(): Array<Entity<ZoneAttributes>>
 
-    suspend fun setCallTrackingEnabled(enabled: Boolean)
-    suspend fun isCallTrackingEnabled(): Boolean
-
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 

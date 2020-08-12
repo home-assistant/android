@@ -71,8 +71,12 @@ class PermissionManager {
             context.sendBroadcast(intent)
         }
 
+        fun getPhonePermissionArray(): Array<String> {
+            return arrayOf(Manifest.permission.READ_PHONE_STATE)
+        }
+
         fun requestPhoneStatePermissions(fragment: Fragment) {
-            fragment.requestPermissions(arrayOf(Manifest.permission.READ_PHONE_STATE), PHONE_STATE_REQUEST_CODE)
+            fragment.requestPermissions(getPhonePermissionArray(), PHONE_STATE_REQUEST_CODE)
         }
 
         fun checkPhoneStatePermission(context: Context): Boolean {

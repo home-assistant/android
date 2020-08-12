@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
+import io.homeassistant.companion.android.sensors.PhoneStateSensorManager
 import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
@@ -114,7 +115,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             callTracking = findViewById<SwitchCompat>(R.id.call_tracking).apply {
                 setOnCheckedChangeListener { _, isChecked ->
-                    presenter.onToggleCallTracking(isChecked)
+                    updateSensorDao(PhoneStateSensorManager.ID_PHONE, isChecked)
                 }
                 isEnabled = hasPhoneStatePermission
                 isChecked = hasPhoneStatePermission
@@ -197,7 +198,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 callTracking.isEnabled = true
                 callTracking.isChecked = true
                 callTrackingSummary.isEnabled = true
-                presenter.onToggleCallTracking(true)
+                updateSensorDao(PhoneStateSensorManager.ID_PHONE, true)
             } else {
                 callTracking.isEnabled = false
                 callTrackingSummary.isEnabled = false
