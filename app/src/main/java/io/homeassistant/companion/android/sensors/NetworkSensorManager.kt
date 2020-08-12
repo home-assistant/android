@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
-import android.util.Log
-import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.util.PermissionManager
 
@@ -18,31 +16,10 @@ class NetworkSensorManager : SensorManager {
     }
 
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        val sensorRegistrations = mutableListOf<SensorRegistration<Any>>()
-
-        getWifiConnectionSensor(context)?.let {
-            sensorRegistrations.add(
-                SensorRegistration(
-                    it,
-                    "Wifi Connection"
-                )
-            )
-        }
-
-        return sensorRegistrations
+        return listOf(getWifiConnectionSensor(context))
     }
 
-    override fun getSensors(context: Context): List<Sensor<Any>> {
-        val sensors = mutableListOf<Sensor<Any>>()
-
-        getWifiConnectionSensor(context)?.let {
-            sensors.add(it)
-        }
-
-        return sensors
-    }
-
-    private fun getWifiConnectionSensor(context: Context): Sensor<Any> {
+    private fun getWifiConnectionSensor(context: Context): SensorRegistration<Any> {
         var conInfo: WifiInfo? = null
         var ssid = "Unknown"
         var lastScanStrength = -1
@@ -86,12 +63,13 @@ class NetworkSensorManager : SensorManager {
             )
         }.orEmpty()
 
-        return Sensor(
+        return SensorRegistration(
             "wifi_connection",
             ssid,
             "sensor",
             icon,
-            attributes
+            attributes,
+            "Wifi Connection"
         )
     }
 

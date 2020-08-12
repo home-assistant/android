@@ -3,7 +3,15 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.core.content.PermissionChecker
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.domain.integration.SensorRegistration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 abstract class AllSensorsUpdater(
     internal val integrationUseCase: IntegrationUseCase,
@@ -12,6 +20,9 @@ abstract class AllSensorsUpdater(
     companion object {
         internal const val TAG = "AllSensorsUpdaterImpl"
     }
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+    private val sensorDao = AppDatabase.getInstance(appContext).sensorDao()
 
     abstract suspend fun getManagers(): List<SensorManager>
 
@@ -22,36 +33,63 @@ abstract class AllSensorsUpdater(
         appContext.sendBroadcast(intent)
 
         val sensorManagers = getManagers()
+        val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
-        registerSensors(sensorManagers)
+        ioScope.launch {
+            sensorManagers.forEach { manager ->
+                manager.getSensorRegistrations(appContext).forEach { registration ->
+                    // Ensure dao is up to date
+                    var sensor = sensorDao.get(registration.uniqueId)
+                    var hasPermission = true
+                    manager.requiredPermissions().forEach {
+                        val permission = PermissionChecker.checkSelfPermission(appContext,it)
+                        hasPermission = hasPermission &&  permission == PermissionChecker.PERMISSION_GRANTED
+                    }
+                    if (sensor == null) {
+                        sensor = Sensor(registration.uniqueId, hasPermission, false,
+                            registration.state.toString()
+                        )
+                        sensorDao.add(sensor)
+                    } else {
+                        sensor.enabled = sensor.enabled && hasPermission
+                        sensor.state = registration.state.toString()
+                    }
+
+                    // Register Sensors
+                    if(!sensor.registered){
+                        try{
+                            integrationUseCase.registerSensor(registration)
+                            sensor.registered = true
+                        } catch (e: Exception){
+                            Log.e(TAG, "Issue registering sensor: ${registration.uniqueId}", e)
+                        }
+                    }
+                    sensorDao.update(sensor)
+
+                    if(sensor.enabled && sensor.registered){
+                        enabledRegistrations.add(registration)
+                    }
+                }
+            }
+        }
 
         var success = false
         try {
-            success = integrationUseCase.updateSensors(
-                sensorManagers.flatMap { it.getSensors(appContext) }.toTypedArray()
-            )
+            success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
         } catch (e: Exception) {
             Log.e(TAG, "Exception while updating sensors.", e)
         }
 
-        // We failed to update a sensor, we should register all the sensors again.
-        if (!success) {
-            registerSensors(sensorManagers)
-        }
-    }
-
-    private suspend fun registerSensors(sensorManagers: List<SensorManager>) {
-
-        sensorManagers.flatMap {
-            it.getSensorRegistrations(appContext)
-        }.forEach {
-            // I want to call this async but because of the way we need to store the
-            // fact we have registered it we can't
-            try {
-                integrationUseCase.registerSensor(it)
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue registering sensor: ${it.uniqueId}", e)
+        // We failed to update a sensor, we should re register next time
+        if(!success){
+            enabledRegistrations.forEach {
+                val sensor = sensorDao.get(it.uniqueId)
+                if(sensor != null){
+                    sensor.registered = false
+                    sensorDao.update(sensor)
+                }
             }
         }
+
     }
 }

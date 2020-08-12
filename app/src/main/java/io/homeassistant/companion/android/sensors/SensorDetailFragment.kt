@@ -21,7 +21,10 @@ class SensorDetailFragment(
     PreferenceFragmentCompat() {
 
     companion object {
-        fun newInstance(sensorRegistration: SensorRegistration<Any>, permissions: Array<String>): SensorDetailFragment {
+        fun newInstance(
+            sensorRegistration: SensorRegistration<Any>,
+            permissions: Array<String>
+        ): SensorDetailFragment {
             return SensorDetailFragment(sensorRegistration, permissions)
         }
     }
@@ -38,26 +41,36 @@ class SensorDetailFragment(
 
         addPreferencesFromResource(R.xml.sensor_detail)
 
-        findPreference<SwitchPreference>("enabled")?.setOnPreferenceChangeListener { preference, newState ->
-            val isEnabled = newState as Boolean
 
-            if (isEnabled && !permissions.isNullOrEmpty()) {
-                var havePermission = true
-                permissions.forEach {
-                    havePermission =
-                        havePermission && PermissionManager.hasPermission(requireContext(), it)
-                }
-                if (!havePermission) {
+        findPreference<SwitchPreference>("enabled")?.let {
+            val dao = sensorDao.get(sensorRegistration.uniqueId)
+            val perm = havePermission()
+            if (dao == null) {
+                updateSensorEntity(perm)
+                it.isChecked = perm
+            } else {
+                it.isChecked = dao.enabled
+            }
+
+            it.setOnPreferenceChangeListener { _, newState ->
+                val isEnabled = newState as Boolean
+
+                if (isEnabled && !havePermission()) {
                     requestPermissions(permissions, 0)
                     return@setOnPreferenceChangeListener false
                 }
+
+                updateSensorEntity(isEnabled)
+
+                return@setOnPreferenceChangeListener true
             }
-
-            updateSensorEntity(isEnabled)
-
-            return@setOnPreferenceChangeListener true
         }
 
+
+        refreshSensorData()
+    }
+
+    private fun refreshSensorData() {
         findPreference<Preference>("unique_id")?.let {
             it.summary = sensorRegistration.uniqueId
         }
@@ -82,7 +95,7 @@ class SensorDetailFragment(
                 sensorRegistration.attributes.keys.forEach { key ->
                     val pref = Preference(requireContext())
                     pref.title = key
-                    pref.summary = sensorRegistration.attributes[key]?.toString()?: ""
+                    pref.summary = sensorRegistration.attributes[key]?.toString() ?: ""
                     pref.isIconSpaceReserved = false
 
                     it.addPreference(pref)
@@ -103,10 +116,18 @@ class SensorDetailFragment(
             sensorEntity = Sensor(
                 sensorRegistration.uniqueId,
                 isEnabled,
+                false,
                 sensorRegistration.state.toString()
             )
             sensorDao.add(sensorEntity)
         }
+    }
+
+    private fun havePermission(): Boolean {
+        if (!permissions.isNullOrEmpty()) {
+            return permissions.all { PermissionManager.hasPermission(requireContext(), it) }
+        }
+        return true
     }
 
     override fun onRequestPermissionsResult(

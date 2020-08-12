@@ -112,7 +112,7 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.registerSensor(sensorRegistration)
     }
 
-    override suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean {
+    override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
         return integrationRepository.updateSensors(sensors)
     }
 }

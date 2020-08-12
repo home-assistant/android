@@ -6,7 +6,6 @@ import android.location.Geocoder
 import android.util.Log
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Tasks
-import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.util.PermissionManager
 
@@ -21,22 +20,12 @@ class GeocodeSensorManager : SensorManager {
     }
 
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf(
-            SensorRegistration(
-                getGeocodedLocation(context),
-                "Geocoded Location"
-            )
-        )
-
-    }
-
-    override fun getSensors(context: Context): List<Sensor<Any>> {
         return listOf(getGeocodedLocation(context))
     }
 
-    private fun getGeocodedLocation(context: Context): Sensor<Any> {
+    private fun getGeocodedLocation(context: Context): SensorRegistration<Any> {
         var address: Address? = null
-        if(PermissionManager.checkLocationPermission(context)) {
+        if (PermissionManager.checkLocationPermission(context)) {
             try {
                 val locApi = LocationServices.getFusedLocationProviderClient(context)
                 Tasks.await(locApi.lastLocation)?.let {
@@ -66,12 +55,13 @@ class GeocodeSensorManager : SensorManager {
             )
         }.orEmpty()
 
-        return Sensor(
+        return SensorRegistration(
             "geocoded_location",
-            address?.getAddressLine(0)?: "Unknown",
+            address?.getAddressLine(0) ?: "Unknown",
             "sensor",
             "mdi:map",
-            attributes
+            attributes,
+            "Geocoded Location"
         )
     }
 }

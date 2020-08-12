@@ -50,5 +50,5 @@ interface IntegrationUseCase {
 
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
 
-    suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean
+    suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
 }

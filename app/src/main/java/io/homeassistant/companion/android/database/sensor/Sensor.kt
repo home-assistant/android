@@ -10,6 +10,8 @@ data class Sensor (
     var unique_id: String,
     @ColumnInfo(name = "enabled")
     var enabled: Boolean,
+    @ColumnInfo(name = "registered")
+    var registered: Boolean,
     @ColumnInfo(name = "state")
     var state: String
 )

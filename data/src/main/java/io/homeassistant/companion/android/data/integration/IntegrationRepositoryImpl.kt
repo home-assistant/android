@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import io.homeassistant.companion.android.domain.integration.Panel
-import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.Service
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
@@ -354,7 +353,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
-    override suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean {
+    override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
         val integrationRequest = IntegrationRequest(
             "update_sensor_states",
             sensors.map {
