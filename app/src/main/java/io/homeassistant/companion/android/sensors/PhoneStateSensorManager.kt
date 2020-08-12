@@ -7,7 +7,7 @@ import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.util.PermissionManager
 
-class PhoneStateSensorManager  : SensorManager {
+class PhoneStateSensorManager : SensorManager {
 
     companion object {
         private const val TAG = "PhoneStateSM"
@@ -45,10 +45,9 @@ class PhoneStateSensorManager  : SensorManager {
             return null
         }
 
-        val telephonyManager =  (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
-        val state :Int = telephonyManager.callState
+        val telephonyManager = (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
 
-        val phoneState: String = when (state) {
+        val phoneState: String = when (telephonyManager.callState) {
             0 -> "idle"
             1 -> "ringing"
             2 -> "offhook"
@@ -57,7 +56,7 @@ class PhoneStateSensorManager  : SensorManager {
 
         var phoneIcon = "mdi:phone"
         if (phoneState == "ringing" || phoneState == "offhook")
-            phoneIcon +="-in-talk"
+            phoneIcon += "-in-talk"
 
         return Sensor(
             "phone_state",
@@ -67,5 +66,4 @@ class PhoneStateSensorManager  : SensorManager {
             mapOf()
         )
     }
-
 }

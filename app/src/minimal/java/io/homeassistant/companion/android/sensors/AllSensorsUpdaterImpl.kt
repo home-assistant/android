@@ -15,11 +15,11 @@ class AllSensorsUpdaterImpl(
             NetworkSensorManager(),
             NextAlarmManager()
         )
-            
+
         if (integrationUseCase.isCallTrackingEnabled() && PermissionManager.checkPhoneStatePermission(appContext)) {
             sensorManagers.add(PhoneStateSensorManager())
-        }  
-          
+        }
+
         return sensorManagers
     }
 }

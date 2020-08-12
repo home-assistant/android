@@ -16,9 +16,11 @@ class PhoneStateReceiver(
     private val ioScope = CoroutineScope(Dispatchers.IO)
     private var updateJob: Job? = null
     override fun onReceive(context: Context, intent: Intent?) {
-        updateJob?.cancel()
-        updateJob = ioScope.launch {
-            AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
+        if (PermissionManager.checkPhoneStatePermission(context)) {
+            updateJob?.cancel()
+            updateJob = ioScope.launch {
+                AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
+            }
         }
     }
 }

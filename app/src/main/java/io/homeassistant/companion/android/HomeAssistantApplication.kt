@@ -1,17 +1,14 @@
 package io.homeassistant.companion.android
 
 import android.app.Application
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.sensors.ChargingBroadcastReceiver
 import io.homeassistant.companion.android.sensors.PhoneStateReceiver
-import io.homeassistant.companion.android.util.PermissionManager
 
 open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
@@ -32,18 +29,14 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
             }
         )
 
-        if (PermissionManager.checkPhoneStatePermission(applicationContext)) {
-            registerReceiver(
-                PhoneStateReceiver(appComponent.integrationUseCase()), IntentFilter().apply {
-                    addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
-                }
-            )
-        }
-
+        // This will cause the phone state sensor to be updated every time the OS broadcasts that a call triggered.
+        registerReceiver(
+            PhoneStateReceiver(appComponent.integrationUseCase()), IntentFilter().apply {
+                addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
+            }
+        )
     }
 
     override val appComponent: AppComponent
         get() = graph.appComponent
-
-
 }

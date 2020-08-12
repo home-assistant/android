@@ -100,7 +100,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             backgroundTrackingSummary = findViewById(R.id.location_background_summary)
             backgroundTrackingSummary.isEnabled = hasLocationPermission
 
-            //Calls tracking
+            // Calls tracking
             findViewById<AppCompatButton>(R.id.phone_state_perms).apply {
                 setOnClickListener {
                     PermissionManager.requestPhoneStatePermissions(this@MobileAppIntegrationFragment)
@@ -170,31 +170,35 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (PermissionManager.validateLocationPermissions(requestCode, grantResults)) {
-            zoneTracking.isEnabled = true
-            zoneTrackingSummary.isEnabled = true
-            zoneTracking.isChecked = true
-            presenter.onToggleZoneTracking(true)
+        if (requestCode == PermissionManager.LOCATION_REQUEST_CODE) {
+            if (PermissionManager.validateLocationPermissions(requestCode, grantResults)) {
+                zoneTracking.isEnabled = true
+                zoneTrackingSummary.isEnabled = true
+                zoneTracking.isChecked = true
+                presenter.onToggleZoneTracking(true)
 
-            backgroundTracking.isEnabled = true
-            backgroundTrackingSummary.isEnabled = true
-        } else {
-            zoneTracking.isEnabled = false
-            zoneTrackingSummary.isEnabled = false
-            backgroundTracking.isEnabled = false
-            backgroundTrackingSummary.isEnabled = false
+                backgroundTracking.isEnabled = true
+                backgroundTrackingSummary.isEnabled = true
+            } else {
+                zoneTracking.isEnabled = false
+                zoneTrackingSummary.isEnabled = false
+                backgroundTracking.isEnabled = false
+                backgroundTrackingSummary.isEnabled = false
+            }
+
+            requestBackgroundAccess()
         }
 
-        requestBackgroundAccess()
-
-        if (PermissionManager.validatePhoneStatePermissions(requestCode, grantResults)) {
-            callTracking.isEnabled = true
-            callTracking.isChecked = true
-            callTrackingSummary.isEnabled = true
-            presenter.onToggleCallTracking(true)
-        } else {
-            callTracking.isEnabled = false
-            callTrackingSummary.isEnabled = false
+        if (requestCode == PermissionManager.PHONE_STATE_REQUEST_CODE) {
+            if (PermissionManager.validatePhoneStatePermissions(requestCode, grantResults)) {
+                callTracking.isEnabled = true
+                callTracking.isChecked = true
+                callTrackingSummary.isEnabled = true
+                presenter.onToggleCallTracking(true)
+            } else {
+                callTracking.isEnabled = false
+                callTrackingSummary.isEnabled = false
+            }
         }
     }
 
