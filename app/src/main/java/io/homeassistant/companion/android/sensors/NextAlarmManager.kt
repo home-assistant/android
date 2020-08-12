@@ -32,6 +32,7 @@ class NextAlarmManager : SensorManager {
         var triggerTime = 0L
         var local = ""
         var utc = "unavailable"
+        var pendingIntent = ""
 
         try {
             val alarmManager: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -40,6 +41,7 @@ class NextAlarmManager : SensorManager {
 
             if (alarmClockInfo != null) {
                 triggerTime = alarmClockInfo.triggerTime
+                pendingIntent = alarmClockInfo.showIntent.creatorPackage.toString()
 
                 val cal: Calendar = GregorianCalendar()
                 cal.timeInMillis = triggerTime
@@ -63,7 +65,8 @@ class NextAlarmManager : SensorManager {
             icon,
             mapOf(
                 "Local Time" to local,
-                "Time in Milliseconds" to triggerTime
+                "Time in Milliseconds" to triggerTime,
+                "Package" to pendingIntent
             ),
             "Next Alarm",
             "timestamp"

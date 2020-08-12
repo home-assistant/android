@@ -76,11 +76,15 @@ class BatterySensorManager : SensorManager {
 
         val percentage: Int = getBatteryPercentage(level, scale)
 
+        val isCharging = getIsCharging(intent)
+        val chargerType = getChargerType(intent)
+        val chargingStatus = getChargingStatus(intent)
+
         return SensorRegistration(
             "battery_level",
             percentage,
             "sensor",
-            getBatteryIcon(percentage),
+            getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
             mapOf(),
             "Battery Level",
             "battery",
@@ -98,23 +102,10 @@ class BatterySensorManager : SensorManager {
             return null
         }
 
-        val isCharging: Boolean = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL
-
-        val chargerType: String = when (intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)) {
-            BatteryManager.BATTERY_PLUGGED_AC -> "ac"
-            BatteryManager.BATTERY_PLUGGED_USB -> "usb"
-            BatteryManager.BATTERY_PLUGGED_WIRELESS -> "wireless"
-            else -> "unknown"
-        }
-
-        val chargingStatus: String = when (status) {
-            BatteryManager.BATTERY_STATUS_FULL -> "full"
-            BatteryManager.BATTERY_STATUS_CHARGING -> "charging"
-            BatteryManager.BATTERY_STATUS_DISCHARGING -> "discharging"
-            BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "not_charging"
-            else -> "unknown"
-        }
+        val isCharging = getIsCharging(intent)
+        val chargerType = getChargerType(intent)
+        val chargingStatus = getChargingStatus(intent)
+        val batteryHealth = getBatteryHealth(intent)
 
         val percentage: Int = getBatteryPercentage(level, scale)
 
@@ -125,10 +116,49 @@ class BatterySensorManager : SensorManager {
             getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
             mapOf(
                 "is_charging" to isCharging,
-                "charger_type" to chargerType
+                "charger_type" to chargerType,
+                "battery_health" to batteryHealth
             ),
             "Battery State",
             "battery"
         )
+    }
+
+    private fun getIsCharging(intent: Intent): Boolean {
+        val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+
+        return status == BatteryManager.BATTERY_STATUS_CHARGING ||
+            status == BatteryManager.BATTERY_STATUS_FULL
+    }
+
+    private fun getChargerType(intent: Intent): String {
+        return when (intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)) {
+            BatteryManager.BATTERY_PLUGGED_AC -> "ac"
+            BatteryManager.BATTERY_PLUGGED_USB -> "usb"
+            BatteryManager.BATTERY_PLUGGED_WIRELESS -> "wireless"
+            else -> "unknown"
+        }
+    }
+
+    private fun getChargingStatus(intent: Intent): String {
+        return when (intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)) {
+            BatteryManager.BATTERY_STATUS_FULL -> "full"
+            BatteryManager.BATTERY_STATUS_CHARGING -> "charging"
+            BatteryManager.BATTERY_STATUS_DISCHARGING -> "discharging"
+            BatteryManager.BATTERY_STATUS_NOT_CHARGING -> "not_charging"
+            else -> "unknown"
+        }
+    }
+
+    private fun getBatteryHealth(intent: Intent): String {
+        return when (intent.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)) {
+            BatteryManager.BATTERY_HEALTH_COLD -> "cold"
+            BatteryManager.BATTERY_HEALTH_DEAD -> "dead"
+            BatteryManager.BATTERY_HEALTH_GOOD -> "good"
+            BatteryManager.BATTERY_HEALTH_OVERHEAT -> "overheated"
+            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "over_voltage"
+            BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "failed"
+            else -> "unknown"
+        }
     }
 }
