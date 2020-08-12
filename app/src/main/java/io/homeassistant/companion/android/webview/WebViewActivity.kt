@@ -45,8 +45,7 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
-import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
+import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
@@ -108,7 +107,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         SensorWorker.start(this)
 
         val intent = Intent(this, LocationBroadcastReceiver::class.java)
-        intent.action = LocationBroadcastReceiverBase.ACTION_REQUEST_LOCATION_UPDATES
+        intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
         sendBroadcast(intent)
 
         if (BuildConfig.DEBUG) {

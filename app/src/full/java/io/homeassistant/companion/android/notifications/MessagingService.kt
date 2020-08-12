@@ -19,8 +19,7 @@ import androidx.core.text.HtmlCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
-import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
+import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
@@ -109,7 +108,7 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun requestAccurateLocationUpdate() {
         val intent = Intent(this, LocationBroadcastReceiver::class.java)
-        intent.action = LocationBroadcastReceiverBase.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+        intent.action = LocationBroadcastReceiver.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
 
         sendBroadcast(intent)
     }

@@ -4,8 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import io.homeassistant.companion.android.SensorUpdater
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
-import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 
 abstract class AllSensorsUpdater(
@@ -21,7 +19,7 @@ abstract class AllSensorsUpdater(
     override suspend fun updateSensors() {
         // When we update the sensors make sure to request an accurate location.
         val intent = Intent(appContext, LocationBroadcastReceiver::class.java)
-        intent.action = LocationBroadcastReceiverBase.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+        intent.action = LocationBroadcastReceiver.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
         appContext.sendBroadcast(intent)
 
         val sensorManagers = getManagers()
