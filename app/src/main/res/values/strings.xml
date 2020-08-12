@@ -1,5 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="nfc_tag_identifier">Tag Identifier</string>
+  <string name="nfc_btn_share">Share</string>
+  <string name="nfc_btn_create_duplicate">Create duplicate</string>
+  <string name="nfc_btn_fire_event">Fire event</string>
+  <string name="nfc_btn_read_tag">Read NFC Tag</string>
+  <string name="nfc_btn_write_tag">Write NFC Tag</string>
+  <string name="nfc_event_fired_success">Event fired</string>
+  <string name="nfc_event_fired_fail">Firing event failed. Please try again.</string>
+  <string name="nfc_title_nfc_setup">NFC Tags</string>
+  <string name="nfc_title_settings">NFC Tags</string>
+  <string name="nfc_welcome_fragment_label">NFC Welcome Fragment</string>
+  <string name="nfc_read_fragment_label">NFC Read Fragment</string>
+  <string name="nfc_write_fragment_label">NFC Write Fragment</string>
+  <string name="nfc_edit_fragment_label">NFC Edit Fragment</string>
+  <string name="nfc_example_trigger">Example Trigger</string>
+  <string name="nfc_read_tag_instructions">Place your phone over the nfc tag to read it.</string>
+  <string name="nfc_write_tag_instructions">Place phone over nfc tag to write the following identifier to it %1$s</string>
+  <string name="nfc_write_tag_too_early">Please fill out the form first</string>
+  <string name="nfc_write_tag_success">Successfully wrote nfc tag</string>
+  <string name="nfc_write_tag_error">Error while writing nfc tag</string>
+  <string name="nfc_processing_tag_error">Error while processing nfc tag</string>
+  <string name="nfc_summary">Setup NFC Tags</string>
+  <string name="nfc_welcome_message">NFC tags written by the app will fire an event once you bring your device near them.\n\nTags will work on any device with Home Assistant installed which has hardware support to read them.</string>
+  <string name="tag_reader_title">Processing Tag</string>
+  <string name="qrcode_processing_tag_error">Error while processing qrcode tag</string>
   <string name="add_service_data_field">Add Field</string>
   <string name="add_widget">Add widget</string>
   <string name="app_name">Home Assistant</string>

@@ -58,7 +58,6 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/retry"
-            style="@style/Widget.HomeAssistant.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
@@ -106,7 +105,6 @@
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/location_perms"
-                style="@style/Widget.HomeAssistant.Button.Colored"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
