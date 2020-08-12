@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ChargingBroadcastReceiver(
@@ -17,6 +18,10 @@ class ChargingBroadcastReceiver(
     override fun onReceive(context: Context, intent: Intent?) {
         updateJob?.cancel()
         updateJob = ioScope.launch {
+            AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
+            // Add a 5 second delay to perform another update so charging state updates completely.
+            // This is necessary as the system needs a few seconds to verify the charger.
+            delay(5000L)
             AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
         }
     }

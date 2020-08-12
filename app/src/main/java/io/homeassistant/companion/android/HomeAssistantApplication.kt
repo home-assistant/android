@@ -21,9 +21,11 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
         // This should be nearly instantaneous allowing automations to fire immediately when a phone is plugged
-        // in or unplugged.
+        // in or unplugged. Updates will also be triggered when the system reports low battery and when it recovers.
         registerReceiver(
             ChargingBroadcastReceiver(appComponent.integrationUseCase()), IntentFilter().apply {
+                addAction(Intent.ACTION_BATTERY_LOW)
+                addAction(Intent.ACTION_BATTERY_OKAY)
                 addAction(Intent.ACTION_POWER_CONNECTED)
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             }
