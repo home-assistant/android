@@ -8,16 +8,15 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class SensorsSettingsFragment: PreferenceFragmentCompat() {
+class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    lateinit var allSensorsUpdater: AllSensorsUpdater
+    private lateinit var allSensorsUpdater: AllSensorsUpdater
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -39,7 +38,7 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.sensors, rootKey)
 
         ioScope.launch {
-            val managers = allSensorsUpdater.getManagers()
+            val managers = allSensorsUpdater.getManagers().plus(LocationBroadcastReceiver())
             val preferences = mutableListOf<Preference>()
 
             managers.forEach { manager ->
@@ -47,7 +46,7 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
                     val pref = Preference(context)
                     pref.title = sensor.name
 
-                    if(sensor.unitOfMeasurement.isNullOrBlank())
+                    if (sensor.unitOfMeasurement.isNullOrBlank())
                         pref.summary = sensor.state.toString()
                     else
                         pref.summary = sensor.state.toString() + " " + sensor.unitOfMeasurement
@@ -57,7 +56,13 @@ class SensorsSettingsFragment: PreferenceFragmentCompat() {
                     pref.setOnPreferenceClickListener {
                         parentFragmentManager
                             .beginTransaction()
-                            .replace(R.id.content, SensorDetailFragment.newInstance(sensor, manager.requiredPermissions()))
+                            .replace(
+                                R.id.content,
+                                SensorDetailFragment.newInstance(
+                                    sensor,
+                                    manager.requiredPermissions()
+                                )
+                            )
                             .addToBackStack("Sensor Detail")
                             .commit()
                         return@setOnPreferenceClickListener true

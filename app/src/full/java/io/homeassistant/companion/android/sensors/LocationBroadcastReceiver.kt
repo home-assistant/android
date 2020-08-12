@@ -16,6 +16,7 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import io.homeassistant.companion.android.util.PermissionManager
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
-class LocationBroadcastReceiver : BroadcastReceiver() {
+class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
 
     companion object {
         const val MINIMUM_ACCURACY = 200
@@ -274,5 +275,30 @@ class LocationBroadcastReceiver : BroadcastReceiver() {
                 },
                 null
             )
+    }
+
+    override fun requiredPermissions(): Array<String> {
+        return PermissionManager.getLocationPermissionArray()
+    }
+
+    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
+        return listOf<SensorRegistration<Any>>(
+            SensorRegistration(
+                "location_background",
+                "",
+                "",
+                "mdi:map",
+                mapOf(),
+                "Background Location"
+            ),
+            SensorRegistration(
+                "location_zone",
+                "",
+                "",
+                "mdi:map",
+                mapOf(),
+                "Zone Based Location"
+            )
+        )
     }
 }
