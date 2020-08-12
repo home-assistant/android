@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.sensors
 
 import android.os.Bundle
 import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceGroup
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
@@ -16,7 +18,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 
     companion object {
         fun newInstance(): SensorsSettingsFragment {
@@ -35,11 +37,14 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         ioScope.launch {
             val managers = SensorReceiver.MANAGERS.plus(LocationBroadcastReceiver())
-            val preferences = mutableListOf<Preference>()
 
-            managers.forEach { manager ->
-                manager.getSensorRegistrations(requireContext()).forEach { sensor ->
-                    val pref = Preference(context)
+            managers.sortedBy { it.name }.forEach { manager ->
+                val prefCategory = PreferenceCategory(preferenceScreen.context)
+                prefCategory.title = manager.name
+                preferenceScreen.addPreference(prefCategory)
+                manager.getSensorRegistrations(requireContext()).sortedBy { it.name }
+                    .forEach { sensor ->
+                    val pref = Preference(preferenceScreen.context)
                     pref.title = sensor.name
 
                     if (sensor.unitOfMeasurement.isNullOrBlank())
@@ -64,12 +69,9 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                         return@setOnPreferenceClickListener true
                     }
 
-                    preferences.add(pref)
+                    prefCategory.addPreference(pref)
                 }
             }
-
-            preferences.sortBy { it.title.toString() }
-            preferences.forEach { preferenceScreen.addPreference(it) }
         }
     }
 }

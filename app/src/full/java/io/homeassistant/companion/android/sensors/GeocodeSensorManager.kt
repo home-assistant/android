@@ -15,6 +15,10 @@ class GeocodeSensorManager : SensorManager {
         private const val TAG = "GeocodeSM"
     }
 
+    override val name: String
+        get() = "Geolocation Sensors"
+
+
     override fun requiredPermissions(): Array<String> {
         return PermissionManager.getLocationPermissionArray()
     }

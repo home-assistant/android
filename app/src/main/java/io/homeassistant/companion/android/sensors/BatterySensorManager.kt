@@ -13,6 +13,9 @@ class BatterySensorManager : SensorManager {
         const val TAG = "BatterySensor"
     }
 
+    override val name: String
+        get() = "Battery Sensors"
+
     override fun requiredPermissions(): Array<String> {
         return emptyArray()
     }

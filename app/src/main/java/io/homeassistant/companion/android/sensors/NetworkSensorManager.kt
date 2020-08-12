@@ -11,6 +11,9 @@ class NetworkSensorManager : SensorManager {
         private const val TAG = "NetworkSM"
     }
 
+    override val name: String
+        get() = "Network Sensors"
+
     override fun requiredPermissions(): Array<String> {
         return PermissionManager.getLocationPermissionArray()
     }

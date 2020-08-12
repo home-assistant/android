@@ -113,7 +113,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             parentFragmentManager
                 .beginTransaction()
                 .replace(R.id.content, SensorsSettingsFragment.newInstance())
-                .addToBackStack("Sensors")
+                .addToBackStack(getString(R.string.sensors))
                 .commit()
             return@setOnPreferenceClickListener true
         }

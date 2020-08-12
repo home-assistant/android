@@ -125,4 +125,15 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="select_entity_to_display">Select Entity to display</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
+  <string name="sensors">Sensors</string>
+  <string name="security">Security</string>
+  <string name="sensor_title">Manage Sensors</string>
+  <string name="sensor_summary">Use this to mange what sensors are enabled/disabled.</string>
+  <string name="enabled_title">Enabled</string>
+  <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
+  <string name="unique_id">Unique Id</string>
+  <string name="state">State</string>
+  <string name="device_class">Device Class</string>
+  <string name="icon">Icon</string>
+  <string name="attributes">Attributes</string>
 </resources>

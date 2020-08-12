@@ -282,6 +282,9 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
             )
     }
 
+    override val name: String
+        get() = "Location Sensors"
+
     override fun requiredPermissions(): Array<String> {
         return PermissionManager.getLocationPermissionArray()
     }
