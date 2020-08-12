@@ -10,4 +10,6 @@ interface SensorComponent {
     fun inject(worker: SensorWorker)
 
     fun inject(receiver: NextAlarmReceiver)
+
+    fun inject(receiver: WifiStateReceiver)
 }

@@ -48,6 +48,10 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.fireEvent(eventType, eventData)
     }
 
+    override suspend fun scanTag(data: HashMap<String, Any>) {
+        return integrationRepository.scanTag(data)
+    }
+
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
         return integrationRepository.getZones()
     }

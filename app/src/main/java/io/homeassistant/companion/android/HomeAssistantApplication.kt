@@ -3,11 +3,13 @@ package io.homeassistant.companion.android
 import android.app.Application
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.wifi.WifiManager
 import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.sensors.ChargingBroadcastReceiver
+import io.homeassistant.companion.android.sensors.WifiStateReceiver
 import io.homeassistant.companion.android.sensors.PhoneStateReceiver
 
 open class HomeAssistantApplication : Application(), GraphComponentAccessor {
@@ -28,6 +30,9 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             }
         )
+
+        // This will trigger an update any time the wifi state has changed
+        registerReceiver(WifiStateReceiver(), IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION))
 
         // This will cause the phone state sensor to be updated every time the OS broadcasts that a call triggered.
         registerReceiver(
