@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.nfc
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -55,15 +56,15 @@ class NfcEditFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_nfc_edit, container, false)
     }
 
-    @SuppressLint("SetTextI18n")
+    @SuppressLint("SetTextI18n", "HardwareIds")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val nfcReadObserver = Observer<String> { uuid ->
             mainScope.launch {
                 et_tag_identifier_content.setText(uuid)
-                val deviceName = integrationUseCase.getRegistration().deviceName!!
-                et_tag_example_trigger_content.setText("- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceName\n    tag_id: $uuid")
+                val deviceId = Settings.Secure.getString(requireActivity().contentResolver, Settings.Secure.ANDROID_ID)
+                et_tag_example_trigger_content.setText("- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: $uuid")
             }
         }
         viewModel.nfcReadEvent.observe(viewLifecycleOwner, nfcReadObserver)
