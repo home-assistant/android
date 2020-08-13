@@ -71,7 +71,7 @@ class NfcSetupActivity : AppCompatActivity() {
             // Create new nfc tag
             if (nfcTagToWriteUUID == null) {
                 val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-                val ndefMessage = rawMessages.first() as NdefMessage
+                val ndefMessage = rawMessages?.firstOrNull() as NdefMessage?
                 val url = ndefMessage?.records?.get(0)?.toUri().toString()
                 val nfcTagId = UrlHandler.splitNfcTagId(url)
                 if (nfcTagId == null) {
