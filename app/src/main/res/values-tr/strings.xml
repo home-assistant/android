@@ -18,13 +18,15 @@
   <string name="checking_with_home_assistant">Home Assistant ile kontrol ediliyor</string>
   <string name="config">Yapılandırma</string>
   <string name="configure_service_call">Çağır servisini yapılandır</string>
-    <string name="connect_to_home_internet">Telefonunuzun ev ağınıza bağlı olduğundan emin olun.</string>
+  <string name="configure_widget_label">Widget etiketi</string>
+  <string name="connect_to_home_internet">Telefonunuzun ev ağınıza bağlı olduğundan emin olun.</string>
   <string name="connected_to_home_assistant">Home Assistant\'a bağlandı</string>
   <string name="developer_tools">Geliştirici Araçları</string>
   <string name="device_name">Cihaz adı</string>
   <string name="device_registration">Cihaz kaydı</string>
   <string name="dialog_add_panel_shortcut_content">Bu öğe için bir kısayol oluşturulsun mu?</string>
   <string name="dialog_add_panel_shortcut_title">Kısayol ekle</string>
+  <string name="entity_attribute_checkbox">Öznitelik Değeri Ekle</string>
   <string name="error_auth_revoked">İzninizin iptal edildiği anlaşılıyor, lütfen Home Assistant\'a yeniden bağlanın.</string>
   <string name="error_connection_failed">Home Assistan\'a bağlanılamıyor.</string>
   <string name="error_onboarding_connection_failed">Home Assistan\'a bağlanılamıyor.</string>
@@ -43,6 +45,7 @@
   <string name="home_assistant_not_discover">Home Assistant bulunamadı</string>
   <string name="input_url">Home Assistant URL\'si</string>
   <string name="input_url_hint">https://alanadiniz.duckdns.org:8123</string>
+  <string name="label_attribute">Özellik:</string>
   <string name="label_dynamic_data">Veri:</string>
   <string name="label_entity_id">Varlık Kimliği:</string>
   <string name="label_icon">Simge:</string>
@@ -82,6 +85,7 @@
   <string name="save">Kaydet</string>
   <string name="scan_again">tekrar tara</string>
   <string name="scanning_network">Home Assistant için ağınız taranıyor</string>
+  <string name="select_entity_to_display">Görüntülenecek Varlığı seçin</string>
   <string name="select_instance">Bağlanmak istediğiniz örneği seçin:</string>
   <string name="session_timeout_title">Oturum Zaman Aşımı (saniye cinsinden)</string>
   <string name="set_lock_message">Biyometrik sensör kimlik bilgisi veya ekran kilidi mevcut değil</string>
@@ -106,11 +110,13 @@
   <string name="webview_error_SSL_INVALID">Home Assistant yüklenirken genel bir SSL hatası oluştu, lütfen Home Assistant sertifikasını veya bağlantı ayarlarını gözden geçirip tekrar deneyin.</string>
   <string name="webview_error_SSL_NOTYETVALID">Home Assistant sertifikası henüz geçerli değil, lütfen Home Assistant sertifikasını veya bağlantı ayarlarını gözden geçirip tekrar deneyin.</string>
   <string name="webview_error_SSL_UNTRUSTED">Home Assistant sertifika yetkilisine güvenilmiyor, lütfen Home Assistant sertifikasını veya bağlantı ayarlarını gözden geçirip tekrar deneyin.</string>
+  <string name="widget_button_image_description">Servis Düğmesi</string>
   <string name="widget_config_service_error">Özel bir bileşen, hizmet verilerinin yüklenmesini engelliyor.</string>
-  <string name="widget_button_image_description">Home Assistant widgeti</string>
   <string name="widget_creation_error">Widget oluşturulamıyor.</string>
+  <string name="widget_image_description">Home Assistant widgeti</string>
   <string name="widget_label_placeholder_text">Etiket:</string>
   <string name="widget_spinner_icon">Simge:</string>
+  <string name="widget_static_image_description">Varlık Durumu</string>
   <string name="widget_text_hint_label">Etiket:</string>
   <string name="widget_text_hint_service_data">Varlık kimliği</string>
   <string name="widget_text_hint_service_domain">Alan adı</string>
