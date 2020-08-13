@@ -120,6 +120,10 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.getThemeColor()
     }
 
+    override suspend fun getHomeAssistantVersion(): String {
+        return integrationRepository.getHomeAssistantVersion()
+    }
+
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
         return integrationRepository.registerSensor(sensorRegistration)
     }

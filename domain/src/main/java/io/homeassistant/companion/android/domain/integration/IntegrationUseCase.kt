@@ -51,6 +51,8 @@ interface IntegrationUseCase {
 
     suspend fun getThemeColor(): String
 
+    suspend fun getHomeAssistantVersion(): String
+
     suspend fun getPanels(): Array<Panel>
 
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
