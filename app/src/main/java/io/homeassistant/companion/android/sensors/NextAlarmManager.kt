@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
-import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -17,33 +16,18 @@ class NextAlarmManager : SensorManager {
         private const val TAG = "NextAlarm"
     }
 
+    override val name: String
+        get() = "Alarm Sensors"
+
+    override fun requiredPermissions(): Array<String> {
+        return emptyArray()
+    }
+
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        val sensorRegistrations = mutableListOf<SensorRegistration<Any>>()
-
-        getNextAlarm(context)?.let {
-            sensorRegistrations.add(
-                SensorRegistration(
-                    it,
-                    "Next Alarm",
-                    "timestamp"
-                )
-            )
-        }
-
-        return sensorRegistrations
+        return listOf(getNextAlarm(context))
     }
 
-    override fun getSensors(context: Context): List<Sensor<Any>> {
-        val sensors = mutableListOf<Sensor<Any>>()
-
-        getNextAlarm(context)?.let {
-            sensors.add(it)
-        }
-
-        return sensors
-    }
-
-    private fun getNextAlarm(context: Context): Sensor<Any>? {
+    private fun getNextAlarm(context: Context): SensorRegistration<Any> {
 
         var triggerTime = 0L
         var local = ""
@@ -74,7 +58,7 @@ class NextAlarmManager : SensorManager {
 
         val icon = "mdi:alarm"
 
-        return Sensor(
+        return SensorRegistration(
             "next_alarm",
             utc,
             "sensor",
@@ -83,7 +67,9 @@ class NextAlarmManager : SensorManager {
                 "Local Time" to local,
                 "Time in Milliseconds" to triggerTime,
                 "Package" to pendingIntent
-            )
+            ),
+            "Next Alarm",
+            "timestamp"
         )
     }
 }

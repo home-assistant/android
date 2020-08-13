@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
@@ -112,6 +113,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 onClickShortcuts
         } else {
             shortcuts?.isVisible = false
+        }
+
+        findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, SensorsSettingsFragment.newInstance())
+                .addToBackStack(getString(R.string.sensors))
+                .commit()
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<Preference>("version")?.let {

@@ -7,8 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
-import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
+import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 
 class PermissionManager {
 
@@ -67,13 +66,17 @@ class PermissionManager {
 
         fun restartLocationTracking(context: Context) {
             val intent = Intent(context, LocationBroadcastReceiver::class.java)
-            intent.action = LocationBroadcastReceiverBase.ACTION_REQUEST_LOCATION_UPDATES
+            intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
 
             context.sendBroadcast(intent)
         }
 
+        fun getPhonePermissionArray(): Array<String> {
+            return arrayOf(Manifest.permission.READ_PHONE_STATE)
+        }
+
         fun requestPhoneStatePermissions(fragment: Fragment) {
-            fragment.requestPermissions(arrayOf(Manifest.permission.READ_PHONE_STATE), PHONE_STATE_REQUEST_CODE)
+            fragment.requestPermissions(getPhonePermissionArray(), PHONE_STATE_REQUEST_CODE)
         }
 
         fun checkPhoneStatePermission(context: Context): Boolean {

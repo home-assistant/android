@@ -2,68 +2,52 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.telephony.TelephonyManager
-import android.util.Log
-import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.util.PermissionManager
 
 class PhoneStateSensorManager : SensorManager {
 
     companion object {
+        const val ID_PHONE = "phone_state"
         private const val TAG = "PhoneStateSM"
     }
 
+    override val name: String
+        get() = "Phone Sensors"
+
+    override fun requiredPermissions(): Array<String> {
+        return PermissionManager.getPhonePermissionArray()
+    }
+
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        val sensorRegistrations = mutableListOf<SensorRegistration<Any>>()
-
-        getPhoneStateSensor(context)?.let {
-            sensorRegistrations.add(
-                SensorRegistration(
-                    it,
-                    "Phone State"
-                )
-            )
-        }
-
-        return sensorRegistrations
+        return listOf(getPhoneStateSensor(context))
     }
 
-    override fun getSensors(context: Context): List<Sensor<Any>> {
-        val sensors = mutableListOf<Sensor<Any>>()
+    private fun getPhoneStateSensor(context: Context): SensorRegistration<Any> {
+        var phoneState = "unavailable"
+        if (PermissionManager.checkPhoneStatePermission(context)) {
+            val telephonyManager =
+                (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
 
-        getPhoneStateSensor(context)?.let {
-            sensors.add(it)
-        }
-
-        return sensors
-    }
-
-    private fun getPhoneStateSensor(context: Context): Sensor<Any>? {
-
-        if (!PermissionManager.checkPhoneStatePermission(context)) {
-            Log.w(TAG, "Tried getting phone state without permission.")
-            return null
-        }
-
-        val telephonyManager = (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
-
-        val phoneState: String = when (telephonyManager.callState) {
-            0 -> "idle"
-            1 -> "ringing"
-            2 -> "offhook"
-            else -> "unknown"
+            phoneState = when (telephonyManager.callState) {
+                0 -> "idle"
+                1 -> "ringing"
+                2 -> "offhook"
+                else -> "unknown"
+            }
         }
 
         var phoneIcon = "mdi:phone"
         if (phoneState == "ringing" || phoneState == "offhook")
             phoneIcon += "-in-talk"
 
-        return Sensor(
-            "phone_state",
+        return SensorRegistration(
+            ID_PHONE,
             phoneState,
             "sensor",
             phoneIcon,
-            mapOf()
+            mapOf(),
+            "Phone State"
         )
     }
 }

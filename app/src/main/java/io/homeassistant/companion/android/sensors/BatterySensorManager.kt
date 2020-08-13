@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.Log
-import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class BatterySensorManager : SensorManager {
@@ -14,49 +13,27 @@ class BatterySensorManager : SensorManager {
         const val TAG = "BatterySensor"
     }
 
+    override val name: String
+        get() = "Battery Sensors"
+
+    override fun requiredPermissions(): Array<String> {
+        return emptyArray()
+    }
+
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
         return context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))?.let {
             val retVal = ArrayList<SensorRegistration<Any>>()
 
             getBatteryLevelSensor(it)?.let { sensor ->
-                retVal.add(
-                    SensorRegistration(
-                        sensor,
-                        "Battery Level",
-                        "battery",
-                        "%"
-                    )
-                )
+                retVal.add(sensor)
             }
 
             getBatteryStateSensor(it)?.let { sensor ->
-                retVal.add(
-                    SensorRegistration(
-                        sensor,
-                        "Battery State",
-                        "battery"
-                    )
-                )
+                retVal.add(sensor)
             }
 
             return@let retVal
         } ?: listOf()
-    }
-
-    override fun getSensors(context: Context): List<Sensor<Any>> {
-        val retVal = ArrayList<Sensor<Any>>()
-
-        context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))?.let {
-            getBatteryLevelSensor(it)?.let { sensor ->
-                retVal.add(sensor)
-            }
-
-            getBatteryStateSensor(it)?.let { sensor ->
-                retVal.add(sensor)
-            }
-        }
-
-        return retVal
     }
 
     private fun getBatteryPercentage(level: Int, scale: Int): Int {
@@ -88,7 +65,7 @@ class BatterySensorManager : SensorManager {
         return batteryIcon
     }
 
-    private fun getBatteryLevelSensor(intent: Intent): Sensor<Any>? {
+    private fun getBatteryLevelSensor(intent: Intent): SensorRegistration<Any>? {
         val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale: Int = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
 
@@ -103,16 +80,19 @@ class BatterySensorManager : SensorManager {
         val chargerType = getChargerType(intent)
         val chargingStatus = getChargingStatus(intent)
 
-        return Sensor(
+        return SensorRegistration(
             "battery_level",
             percentage,
             "sensor",
             getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
-            mapOf()
+            mapOf(),
+            "Battery Level",
+            "battery",
+            "%"
         )
     }
 
-    private fun getBatteryStateSensor(intent: Intent): Sensor<Any>? {
+    private fun getBatteryStateSensor(intent: Intent): SensorRegistration<Any>? {
         val level: Int = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
         val scale: Int = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
         val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
@@ -129,7 +109,7 @@ class BatterySensorManager : SensorManager {
 
         val percentage: Int = getBatteryPercentage(level, scale)
 
-        return Sensor(
+        return SensorRegistration(
             "battery_state",
             chargingStatus,
             "sensor",
@@ -138,7 +118,9 @@ class BatterySensorManager : SensorManager {
                 "is_charging" to isCharging,
                 "charger_type" to chargerType,
                 "battery_health" to batteryHealth
-            )
+            ),
+            "Battery State",
+            "battery"
         )
     }
 

@@ -821,51 +821,5 @@ object IntegrationRepositoryImplSpec : Spek({
                 }
             }
         }
-
-        describe("location settings") {
-            describe("isZoneTrackingEnabled") {
-                var isZoneTrackingEnabled by Delegates.notNull<Boolean>()
-                beforeEachTest {
-                    coEvery { localStorage.getBoolean("zone_enabled") } returns true
-                    runBlocking { isZoneTrackingEnabled = repository.isZoneTrackingEnabled() }
-                }
-                it("should return what is stored") {
-                    assertThat(isZoneTrackingEnabled).isTrue()
-                }
-            }
-
-            describe("setZoneTrackingEnabled") {
-                beforeEachTest {
-                    runBlocking { repository.setZoneTrackingEnabled(true) }
-                }
-                it("should return what is stored") {
-                    coVerify {
-                        localStorage.putBoolean("zone_enabled", true)
-                    }
-                }
-            }
-
-            describe("isBackgroundTrackingEnabled") {
-                var isBackgroundTrackingEnabled by Delegates.notNull<Boolean>()
-                beforeEachTest {
-                    coEvery { localStorage.getBoolean("background_enabled") } returns true
-                    runBlocking { isBackgroundTrackingEnabled = repository.isBackgroundTrackingEnabled() }
-                }
-                it("should return what is stored") {
-                    assertThat(isBackgroundTrackingEnabled).isTrue()
-                }
-            }
-
-            describe("setBackgroundTrackingEnabled") {
-                beforeEachTest {
-                    runBlocking { repository.setBackgroundTrackingEnabled(true) }
-                }
-                it("should return what is stored") {
-                    coVerify {
-                        localStorage.putBoolean("background_enabled", true)
-                    }
-                }
-            }
-        }
     }
 })

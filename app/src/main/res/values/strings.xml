@@ -153,4 +153,15 @@ like to connect to:</string>
   <string name="permission_explanation_calls">In order to track incoming and outgoing call\'s occurrence we need access to your phone state. No phone numbers or other call details will be stored.</string>
   <string name="pref_call_tracking_title">Calls Tracking</string>
   <string name="pref_call_tracking_summary">Allow application to detect call occurrence and notify server about it.</string>
+  <string name="sensors">Sensors</string>
+  <string name="security">Security</string>
+  <string name="sensor_title">Manage Sensors</string>
+  <string name="sensor_summary">Use this to mange what sensors are enabled/disabled.</string>
+  <string name="enabled_title">Enabled</string>
+  <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
+  <string name="unique_id">Unique Id</string>
+  <string name="state">State</string>
+  <string name="device_class">Device Class</string>
+  <string name="icon">Icon</string>
+  <string name="attributes">Attributes</string>
 </resources>

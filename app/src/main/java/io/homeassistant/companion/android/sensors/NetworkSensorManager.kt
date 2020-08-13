@@ -1,9 +1,8 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
-import android.util.Log
-import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.util.PermissionManager
 
@@ -12,51 +11,40 @@ class NetworkSensorManager : SensorManager {
         private const val TAG = "NetworkSM"
     }
 
+    override val name: String
+        get() = "Network Sensors"
+
+    override fun requiredPermissions(): Array<String> {
+        return PermissionManager.getLocationPermissionArray()
+    }
+
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        val sensorRegistrations = mutableListOf<SensorRegistration<Any>>()
-
-        getWifiConnectionSensor(context)?.let {
-            sensorRegistrations.add(
-                SensorRegistration(
-                    it,
-                    "Wifi Connection"
-                )
-            )
-        }
-
-        return sensorRegistrations
+        return listOf(getWifiConnectionSensor(context))
     }
 
-    override fun getSensors(context: Context): List<Sensor<Any>> {
-        val sensors = mutableListOf<Sensor<Any>>()
+    private fun getWifiConnectionSensor(context: Context): SensorRegistration<Any> {
+        var conInfo: WifiInfo? = null
+        var ssid = "Unknown"
+        var lastScanStrength = -1
+        var wifiEnabled = false
 
-        getWifiConnectionSensor(context)?.let {
-            sensors.add(it)
+        if (PermissionManager.checkLocationPermission(context)) {
+            val wifiManager =
+                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+            conInfo = wifiManager.connectionInfo
+
+            wifiEnabled = wifiManager.isWifiEnabled
+
+            ssid = if (conInfo.networkId == -1) {
+                "<not connected>"
+            } else {
+                conInfo.ssid.removePrefix("\"").removeSuffix("\"")
+            }
+
+            lastScanStrength = wifiManager.scanResults.firstOrNull {
+                it.BSSID == conInfo.bssid
+            }?.level ?: -1
         }
-
-        return sensors
-    }
-
-    private fun getWifiConnectionSensor(context: Context): Sensor<Any>? {
-        if (!PermissionManager.checkLocationPermission(context)) {
-            Log.w(TAG, "Tried getting wifi info without permission.")
-            return null
-        }
-        val wifiManager =
-            (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
-        val conInfo = wifiManager.connectionInfo
-
-        val wifiEnabled = wifiManager.isWifiEnabled
-
-        val ssid = if (conInfo.networkId == -1) {
-            "<not connected>"
-        } else {
-            conInfo.ssid.removePrefix("\"").removeSuffix("\"")
-        }
-
-        val lastScanStrength = wifiManager.scanResults.firstOrNull {
-            it.BSSID == conInfo.bssid
-        }?.level ?: -1
 
         var signalStrength = -1
         if (lastScanStrength != -1) {
@@ -69,11 +57,7 @@ class NetworkSensorManager : SensorManager {
             else -> signalStrength
         }
 
-        return Sensor(
-            "wifi_connection",
-            ssid,
-            "sensor",
-            icon,
+        val attributes = conInfo?.let {
             mapOf(
                 "bssid" to conInfo.bssid,
                 "ip_address" to getIpAddress(conInfo.ipAddress),
@@ -83,6 +67,15 @@ class NetworkSensorManager : SensorManager {
                 "frequency" to conInfo.frequency,
                 "signal_level" to lastScanStrength
             )
+        }.orEmpty()
+
+        return SensorRegistration(
+            "wifi_connection",
+            ssid,
+            "sensor",
+            icon,
+            attributes,
+            "Wifi Connection"
         )
     }
 

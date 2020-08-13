@@ -30,9 +30,6 @@ class SettingsPresenterImpl @Inject constructor(
     override fun getBoolean(key: String, defValue: Boolean): Boolean {
         return runBlocking {
             return@runBlocking when (key) {
-                "location_zone" -> integrationUseCase.isZoneTrackingEnabled()
-                "location_background" -> integrationUseCase.isBackgroundTrackingEnabled()
-                "call_state" -> integrationUseCase.isCallTrackingEnabled()
                 "fullscreen" -> integrationUseCase.isFullScreenEnabled()
                 "app_lock" -> authenticationUseCase.isLockEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -43,9 +40,6 @@ class SettingsPresenterImpl @Inject constructor(
     override fun putBoolean(key: String, value: Boolean) {
         mainScope.launch {
             when (key) {
-                "location_zone" -> integrationUseCase.setZoneTrackingEnabled(value)
-                "location_background" -> integrationUseCase.setBackgroundTrackingEnabled(value)
-                "call_state" -> integrationUseCase.setCallTrackingEnabled(value)
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -153,7 +147,7 @@ class SettingsPresenterImpl @Inject constructor(
             try {
                 panels = integrationUseCase.getPanels()
             } catch (e: Exception) {
-                Log.e(SettingsPresenterImpl.TAG, "Issue getting panels.", e)
+                Log.e(TAG, "Issue getting panels.", e)
             }
             panels
         }

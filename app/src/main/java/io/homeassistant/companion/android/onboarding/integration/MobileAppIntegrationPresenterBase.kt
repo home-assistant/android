@@ -51,24 +51,6 @@ open class MobileAppIntegrationPresenterBase constructor(
         }
     }
 
-    override fun onToggleZoneTracking(enabled: Boolean) {
-        mainScope.launch {
-            integrationUseCase.setZoneTrackingEnabled(enabled)
-        }
-    }
-
-    override fun onToggleBackgroundTracking(enabled: Boolean) {
-        mainScope.launch {
-            integrationUseCase.setBackgroundTrackingEnabled(enabled)
-        }
-    }
-
-    override fun onToggleCallTracking(enabled: Boolean) {
-        mainScope.launch {
-            integrationUseCase.setCallTrackingEnabled(enabled)
-        }
-    }
-
     override fun onFinish() {
         mainScope.cancel()
     }

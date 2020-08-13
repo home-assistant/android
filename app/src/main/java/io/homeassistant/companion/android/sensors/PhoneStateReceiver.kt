@@ -19,7 +19,7 @@ class PhoneStateReceiver(
         if (PermissionManager.checkPhoneStatePermission(context)) {
             updateJob?.cancel()
             updateJob = ioScope.launch {
-                AllSensorsUpdaterImpl(integrationUseCase, context).updateSensors()
+                SensorReceiver().updateSensors(context, integrationUseCase)
             }
         }
     }

@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.domain.integration.DeviceRegistration
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
 import io.homeassistant.companion.android.domain.integration.Panel
-import io.homeassistant.companion.android.domain.integration.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.Service
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
@@ -250,30 +249,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
-    override suspend fun setZoneTrackingEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_ZONE_ENABLED, enabled)
-    }
-
-    override suspend fun isZoneTrackingEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_ZONE_ENABLED)
-    }
-
-    override suspend fun setBackgroundTrackingEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_BACKGROUND_ENABLED, enabled)
-    }
-
-    override suspend fun isBackgroundTrackingEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_BACKGROUND_ENABLED)
-    }
-
-    override suspend fun setCallTrackingEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_CALL_ENABLED, enabled)
-    }
-
-    override suspend fun isCallTrackingEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_CALL_ENABLED)
-    }
-
     override suspend fun setFullScreenEnabled(enabled: Boolean) {
         localStorage.putBoolean(PREF_FULLSCREEN_ENABLED, enabled)
     }
@@ -387,7 +362,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
-    override suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean {
+    override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
         val integrationRequest = IntegrationRequest(
             "update_sensor_states",
             sensors.map {

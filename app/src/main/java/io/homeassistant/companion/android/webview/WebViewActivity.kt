@@ -37,7 +37,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.ColorUtils
-import androidx.room.Room
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import eightbitlab.com.blurview.RenderScriptBlur
@@ -46,12 +45,11 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
-import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.database.AppDataBase
-import io.homeassistant.companion.android.database.AuthenticationList
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
+import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.PermissionManager
@@ -109,7 +107,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         SensorWorker.start(this)
 
         val intent = Intent(this, LocationBroadcastReceiver::class.java)
-        intent.action = LocationBroadcastReceiverBase.ACTION_REQUEST_LOCATION_UPDATES
+        intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
         sendBroadcast(intent)
 
         if (BuildConfig.DEBUG) {
@@ -544,12 +542,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     @SuppressLint("InflateParams")
     fun authenticationDialog(handler: HttpAuthHandler, host: String, realm: String, authError: Boolean) {
-        val db = Room.databaseBuilder(
-            applicationContext,
-            AppDataBase::class.java, "HomeAssistantDB")
-            .allowMainThreadQueries()
-            .build()
-        val authenticationDao = db.authenticationDatabaseDao()
+        val authenticationDao = AppDatabase.getInstance(applicationContext).authenticationDao()
         val httpAuth = authenticationDao.get((resourceURL + realm))
 
         val inflater = layoutInflater
@@ -595,10 +588,21 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     if (username.text.toString() != "" && password.text.toString() != "") {
                         if (remember.isChecked) {
                             if (authError)
-                                authenticationDao.update(AuthenticationList((resourceURL + realm), username.text.toString(), password.text.toString()))
+                                authenticationDao.update(
+                                    Authentication(
+                                        (resourceURL + realm),
+                                        username.text.toString(),
+                                        password.text.toString()
+                                    )
+                                )
                             else
-                                authenticationDao.insert(AuthenticationList((resourceURL + realm), username.text.toString(), password.text.toString()))
-                            db.close()
+                                authenticationDao.insert(
+                                    Authentication(
+                                        (resourceURL + realm),
+                                        username.text.toString(),
+                                        password.text.toString()
+                                    )
+                                )
                         }
                         handler.proceed(username.text.toString(), password.text.toString())
                     } else AlertDialog.Builder(this)

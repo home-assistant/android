@@ -56,30 +56,6 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.getZones()
     }
 
-    override suspend fun setZoneTrackingEnabled(enabled: Boolean) {
-        return integrationRepository.setZoneTrackingEnabled(enabled)
-    }
-
-    override suspend fun isZoneTrackingEnabled(): Boolean {
-        return integrationRepository.isZoneTrackingEnabled()
-    }
-
-    override suspend fun setBackgroundTrackingEnabled(enabled: Boolean) {
-        return integrationRepository.setBackgroundTrackingEnabled(enabled)
-    }
-
-    override suspend fun isBackgroundTrackingEnabled(): Boolean {
-        return integrationRepository.isBackgroundTrackingEnabled()
-    }
-
-    override suspend fun setCallTrackingEnabled(enabled: Boolean) {
-        return integrationRepository.setCallTrackingEnabled(enabled)
-    }
-
-    override suspend fun isCallTrackingEnabled(): Boolean {
-        return integrationRepository.isCallTrackingEnabled()
-    }
-
     override suspend fun setFullScreenEnabled(enabled: Boolean) {
         return integrationRepository.setFullScreenEnabled(enabled)
     }
@@ -124,7 +100,7 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.registerSensor(sensorRegistration)
     }
 
-    override suspend fun updateSensors(sensors: Array<Sensor<Any>>): Boolean {
+    override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
         return integrationRepository.updateSensors(sensors)
     }
 }

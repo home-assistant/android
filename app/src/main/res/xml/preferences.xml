@@ -28,30 +28,15 @@
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="@string/location">
-        <SwitchPreference
-            android:key="location_zone"
-            android:icon="@drawable/map_marker_radius"
-            android:title="@string/pref_location_zone_title"
-            android:summary="@string/pref_location_zone_summary"/>
-        <SwitchPreference
-            android:key="location_background"
-            android:icon="@drawable/map_marker"
-            android:title="@string/pref_location_background_title"
-            android:summary="@string/pref_location_background_summary"/>
+        android:title="@string/sensors">
+        <Preference
+            android:key="sensors"
+            android:icon="@drawable/leak"
+            android:title="@string/sensor_title"
+            android:summary="@string/sensor_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="@string/other_settings">
-        <SwitchPreference
-            android:key="call_state"
-            android:icon="@drawable/ic_phone"
-            android:title="@string/pref_call_tracking_title"
-            android:summary="@string/pref_call_tracking_summary"/>
-        <SwitchPreference
-            android:key="fullscreen"
-            android:icon="@drawable/ic_fullscreen"
-            android:title="@string/fullscreen"
-            android:summary="@string/fullscreen_def"/>
+        android:title="@string/security">
         <SwitchPreference
             android:key="app_lock"
             android:icon="@drawable/ic_lock"
@@ -62,6 +47,14 @@
             android:icon="@drawable/ic_timeout"
             android:title="@string/session_timeout_title"
             app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/other_settings">
+        <SwitchPreference
+            android:key="fullscreen"
+            android:icon="@drawable/ic_fullscreen"
+            android:title="@string/fullscreen"
+            android:summary="@string/fullscreen_def"/>
         <Preference
             android:key="shortcuts"
             android:icon="@drawable/ic_plus"

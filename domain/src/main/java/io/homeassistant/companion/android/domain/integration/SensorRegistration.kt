@@ -10,21 +10,4 @@ data class SensorRegistration<T>(
     val deviceClass: String? = null,
     val unitOfMeasurement: String? = null
 
-) {
-    constructor(
-        sensor: Sensor<T>,
-        name: String,
-        deviceClass: String? = null,
-        unitOfMeasurement: String? = null
-    ) : this(
-        sensor.uniqueId,
-        sensor.state,
-        sensor.type,
-        sensor.icon,
-        sensor.attributes,
-        name,
-        deviceClass,
-        unitOfMeasurement
-
-    )
-}
+)

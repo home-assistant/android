@@ -79,7 +79,7 @@
         </activity>
 
         <receiver
-            android:name=".background.LocationBroadcastReceiver"
+            android:name=".sensors.LocationBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

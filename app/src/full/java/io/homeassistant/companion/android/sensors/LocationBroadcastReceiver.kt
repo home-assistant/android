@@ -1,6 +1,7 @@
-package io.homeassistant.companion.android.background
+package io.homeassistant.companion.android.sensors
 
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.location.Location
@@ -13,26 +14,82 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import io.homeassistant.companion.android.util.PermissionManager
+import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
+class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
 
-    override fun setupLocationTracking(context: Context) {
+    companion object {
+        const val MINIMUM_ACCURACY = 200
+
+        const val ACTION_REQUEST_LOCATION_UPDATES =
+            "io.homeassistant.companion.android.background.REQUEST_UPDATES"
+        const val ACTION_REQUEST_ACCURATE_LOCATION_UPDATE =
+            "io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE"
+        const val ACTION_PROCESS_LOCATION =
+            "io.homeassistant.companion.android.background.PROCESS_UPDATES"
+        const val ACTION_PROCESS_GEO =
+            "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
+
+        const val ID_BACKGROUND_LOCATION = "location_background"
+        const val ID_ZONE_LOCATION = "location_zone"
+
+        internal const val TAG = "LocBroadcastReceiver"
+    }
+
+    @Inject
+    lateinit var integrationUseCase: IntegrationUseCase
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+
+    override fun onReceive(context: Context, intent: Intent) {
+        ensureInjected(context)
+
+        when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED,
+            ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking(context)
+            ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
+            ACTION_PROCESS_GEO -> handleGeoUpdate(context, intent)
+            ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation(context)
+            else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
+        }
+    }
+
+    private fun ensureInjected(context: Context) {
+        if (context.applicationContext is GraphComponentAccessor) {
+            DaggerSensorComponent.builder()
+                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
+                .build()
+                .inject(this)
+        } else {
+            throw Exception("Application Context passed is not of our application!")
+        }
+    }
+
+    private fun setupLocationTracking(context: Context) {
         if (!PermissionManager.checkLocationPermission(context)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
         }
 
-        mainScope.launch {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+
+        ioScope.launch {
             try {
                 removeAllLocationUpdateRequests(context)
 
-                if (integrationUseCase.isBackgroundTrackingEnabled())
+                if (sensorDao.get(ID_BACKGROUND_LOCATION)?.enabled == true)
                     requestLocationUpdates(context)
-                if (integrationUseCase.isZoneTrackingEnabled())
+                if (sensorDao.get(ID_ZONE_LOCATION)?.enabled == true)
                     requestZoneUpdates(context)
             } catch (e: Exception) {
                 Log.e(TAG, "Issue setting up location tracking", e)
@@ -89,7 +146,7 @@ class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
         }
     }
 
-    override fun handleLocationUpdate(intent: Intent) {
+    private fun handleLocationUpdate(intent: Intent) {
         Log.d(TAG, "Received location update.")
         LocationResult.extractResult(intent)?.lastLocation?.let {
             if (it.accuracy > MINIMUM_ACCURACY) {
@@ -100,7 +157,7 @@ class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
         }
     }
 
-    override fun handleGeoUpdate(context: Context, intent: Intent) {
+    private fun handleGeoUpdate(context: Context, intent: Intent) {
         Log.d(TAG, "Received geofence update.")
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
@@ -136,7 +193,7 @@ class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
             if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0
         )
 
-        mainScope.launch {
+        ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
             } catch (e: Exception) {
@@ -182,7 +239,7 @@ class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
         return geofencingRequestBuilder.build()
     }
 
-    override fun requestSingleAccurateLocation(context: Context) {
+    private fun requestSingleAccurateLocation(context: Context) {
         if (!PermissionManager.checkLocationPermission(context)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
@@ -223,5 +280,33 @@ class LocationBroadcastReceiver : LocationBroadcastReceiverBase() {
                 },
                 null
             )
+    }
+
+    override val name: String
+        get() = "Location Sensors"
+
+    override fun requiredPermissions(): Array<String> {
+        return PermissionManager.getLocationPermissionArray()
+    }
+
+    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
+        return listOf<SensorRegistration<Any>>(
+            SensorRegistration(
+                ID_BACKGROUND_LOCATION,
+                "",
+                "",
+                "mdi:map",
+                mapOf(),
+                "Background Location"
+            ),
+            SensorRegistration(
+                ID_ZONE_LOCATION,
+                "",
+                "",
+                "mdi:map",
+                mapOf(),
+                "Zone Based Location"
+            )
+        )
     }
 }
