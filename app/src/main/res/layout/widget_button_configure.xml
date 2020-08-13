@@ -66,7 +66,6 @@
             android:id="@+id/widget_config_icon_layout"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:gravity="center"
             android:orientation="horizontal">
 
             <TextView
@@ -75,12 +74,12 @@
                 android:layout_gravity="center_vertical"
                 android:padding="5dp"
                 android:text="@string/label_icon" />
-
-            <Spinner
-                android:id="@+id/widget_config_spinner"
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/widget_config_icon_selector"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                tools:listitem="@layout/widget_image_spinner" />
+                android:layout_height="match_parent"/>
+
+
         </LinearLayout>
 
         <LinearLayout

@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets
 
-import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -14,26 +13,40 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.drawable.toBitmap
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.maltaisn.icondialog.IconDialog
+import com.maltaisn.icondialog.IconDialogSettings
+import com.maltaisn.icondialog.data.Icon
+import com.maltaisn.icondialog.pack.IconPack
+import com.maltaisn.icondialog.pack.IconPackLoader
+import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Service
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_button_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ButtonWidgetConfigureActivity : Activity() {
-    private val TAG: String = "ButtonWidgetConfigAct"
+class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
+    companion object{
+        private const val TAG: String = "ButtonWidgetConfigAct"
+        private const val ICON_DIALOG_TAG = "icon-dialog"
+    }
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
+
+    @Inject
+    private lateinit var iconPack: IconPack
 
     private var services = HashMap<String, Service>()
     private var entities = HashMap<String, Entity<Any>>()
@@ -44,7 +57,7 @@ class ButtonWidgetConfigureActivity : Activity() {
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
 
-    private var onClickListener = View.OnClickListener {
+    private var onAddWidget = View.OnClickListener {
         try {
             val context = this@ButtonWidgetConfigureActivity
 
@@ -75,7 +88,7 @@ class ButtonWidgetConfigureActivity : Activity() {
             )
             intent.putExtra(
                 ButtonWidget.EXTRA_ICON,
-                context.widget_config_spinner.selectedItemId.toInt()
+                context.widget_config_icon_selector.tag as Int
             )
 
             // Analyze and send service data
@@ -214,6 +227,13 @@ class ButtonWidgetConfigureActivity : Activity() {
             .build()
             .inject(this)
 
+        // Create an icon pack loader with application context.
+        val loader = IconPackLoader(this)
+
+        // Create an icon pack and load all drawables.
+        iconPack = createMaterialDesignIconPack(loader)
+        iconPack.loadDrawables(loader.drawableLoader)
+
         val serviceAdapter = SingleItemArrayAdapter<Service>(this) {
             if (it != null) getServiceString(it) else ""
         }
@@ -253,25 +273,33 @@ class ButtonWidgetConfigureActivity : Activity() {
         widget_text_config_service.addTextChangedListener(serviceTextWatcher)
 
         add_field_button.setOnClickListener(onAddFieldListener)
-        add_button.setOnClickListener(onClickListener)
+        add_button.setOnClickListener(onAddWidget)
 
         dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
         widget_config_fields_layout.adapter = dynamicFieldAdapter
         widget_config_fields_layout.layoutManager = LinearLayoutManager(this)
 
-        // Set up icon spinner
-        val icons = intArrayOf(
-            R.drawable.ic_flash_on_black_24dp,
-            R.drawable.ic_lightbulb_outline_black_24dp,
-            R.drawable.ic_home_black_24dp,
-            R.drawable.ic_power_settings_new_black_24dp
-        )
-
-        widget_config_spinner.adapter = ButtonWidgetConfigSpinnerAdaptor(this, icons)
+        // If dialog is already added to fragment manager, get it. If not, create a new instance.
+        val iconDialog = IconDialog.newInstance(IconDialogSettings())
+        widget_config_icon_selector.setOnClickListener {
+            iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
+        }
     }
 
     override fun onDestroy() {
         mainScope.cancel()
         super.onDestroy()
+    }
+
+    override val iconDialogIconPack: IconPack?
+        get() = iconPack
+
+    override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<Icon>) {
+        Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
+        val icon = icons.firstOrNull()
+        if(icon != null) {
+            widget_config_icon_selector.tag = icon.id
+            widget_config_icon_selector.setImageBitmap(icon.drawable?.toBitmap())
+        }
     }
 }

@@ -8,17 +8,21 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.widget.Widget
+import io.homeassistant.companion.android.database.widget.WidgetDao
 
 @Database(
     entities = [
         Authentication::class,
-        Sensor::class
+        Sensor::class,
+        Widget::class
     ],
     version = 1
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
     abstract fun sensorDao(): SensorDao
+    abstract fun widgetDao(): WidgetDao
 
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"

@@ -10,17 +10,23 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.graphics.drawable.toBitmap
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.maltaisn.icondialog.pack.IconPackLoader
+import com.maltaisn.iconpack.defaultpack.createDefaultIconPack
+import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.Widget
+import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.widgets.WidgetUseCase
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class ButtonWidget : AppWidgetProvider() {
     companion object {
@@ -39,8 +45,8 @@ class ButtonWidget : AppWidgetProvider() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
-    @Inject
-    lateinit var widgetStorage: WidgetUseCase
+
+    lateinit var widgetDao: WidgetDao
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -61,9 +67,7 @@ class ButtonWidget : AppWidgetProvider() {
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         // When the user deletes the widget, delete the preference associated with it.
         for (appWidgetId in appWidgetIds) {
-            mainScope.launch {
-                widgetStorage.deleteWidgetData(appWidgetId)
-            }
+            widgetDao.delete(appWidgetId)
         }
     }
 
@@ -87,6 +91,8 @@ class ButtonWidget : AppWidgetProvider() {
 
         ensureInjected(context)
 
+        widgetDao = AppDatabase.getInstance(context).widgetDao()
+
         super.onReceive(context, intent)
         when (action) {
             CALL_SERVICE -> callConfiguredService(context, appWidgetId)
@@ -94,7 +100,7 @@ class ButtonWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    private fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
         // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
         // and label need to be re-assigned, or the next time the layout updates
         // (e.g home screen rotation) the widget will fall back on its default layout
@@ -105,14 +111,22 @@ class ButtonWidget : AppWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val views = RemoteViews(context.packageName, R.layout.widget_button).apply {
-            val iconName = widgetStorage.loadIcon(appWidgetId) ?: "ic_flash_on_black_24dp"
-            val icon = context.resources.getIdentifier(iconName, "drawable", `package`)
+        val widget = widgetDao.get(appWidgetId)
 
-            setImageViewResource(
-                R.id.widgetImageButton,
-                icon
-            )
+        val loader = IconPackLoader(context)
+
+        // Create an icon pack and load all drawables.
+        val iconPack = createMaterialDesignIconPack(loader)
+        iconPack.loadDrawables(loader.drawableLoader)
+
+        return RemoteViews(context.packageName, R.layout.widget_button).apply {
+            val iconId = widget?.iconId ?: 61505 //TODO Make me a better default
+
+            val icon = iconPack.icons[iconId]?.drawable?.toBitmap()
+            if (icon != null) {
+                setImageViewBitmap(R.id.widgetImageButton, icon)
+            }
+
             setOnClickPendingIntent(
                 R.id.widgetImageButtonLayout,
                 PendingIntent.getBroadcast(
@@ -124,11 +138,9 @@ class ButtonWidget : AppWidgetProvider() {
             )
             setTextViewText(
                 R.id.widgetLabel,
-                widgetStorage.loadLabel(appWidgetId)
+                widget?.label ?: ""
             )
         }
-
-        return views
     }
 
     private fun callConfiguredService(context: Context, appWidgetId: Int) {
@@ -136,13 +148,14 @@ class ButtonWidget : AppWidgetProvider() {
 
         // Set up progress bar as immediate feedback to show the click has been received
         // Success or failure feedback will come from the mainScope coroutine
-        val loadingViews: RemoteViews =
-            RemoteViews(context.packageName, R.layout.widget_button)
+        val loadingViews = RemoteViews(context.packageName, R.layout.widget_button)
         val appWidgetManager = AppWidgetManager.getInstance(context)
 
         loadingViews.setViewVisibility(R.id.widgetProgressBar, View.VISIBLE)
         loadingViews.setViewVisibility(R.id.widgetImageButtonLayout, View.GONE)
         appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
+
+        val widget = widgetDao.get(appWidgetId)
 
         mainScope.launch {
             // Change color of background image for feedback
@@ -153,9 +166,9 @@ class ButtonWidget : AppWidgetProvider() {
             var feedbackIcon = R.drawable.ic_clear_black
 
             // Load the service call data from Shared Preferences
-            val domain = widgetStorage.loadDomain(appWidgetId)
-            val service = widgetStorage.loadService(appWidgetId)
-            val serviceDataJson = widgetStorage.loadServiceData(appWidgetId)
+            val domain = widget?.domain
+            val service = widget?.service
+            val serviceDataJson = widget?.serviceData
 
             Log.d(
                 TAG, "Service Call Data loaded:" + System.lineSeparator() +
@@ -171,7 +184,8 @@ class ButtonWidget : AppWidgetProvider() {
                 try {
 
                     // Convert JSON to HashMap
-                    val serviceDataMap: HashMap<String, Any> = jacksonObjectMapper().readValue(serviceDataJson)
+                    val serviceDataMap: HashMap<String, Any> =
+                        jacksonObjectMapper().readValue(serviceDataJson)
 
                     integrationUseCase.callService(domain, service, serviceDataMap)
 
@@ -230,16 +244,8 @@ class ButtonWidget : AppWidgetProvider() {
                         "label: " + label
             )
 
-            widgetStorage.saveServiceCallData(
-                appWidgetId,
-                domain,
-                service,
-                serviceData
-            )
-            widgetStorage.saveLabel(appWidgetId, label)
-
-            val iconName = context.resources.getResourceEntryName(icon)
-            widgetStorage.saveIcon(appWidgetId, iconName)
+            val widget = Widget(appWidgetId, icon, domain, service, serviceData, label)
+            widgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget
             // This method is only called during the initial setup of the widget,
