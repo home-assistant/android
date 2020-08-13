@@ -19,9 +19,9 @@ class BluetoothSensorManager : SensorManager {
     override fun requiredPermissions(): Array<String> {
         return PermissionManager.getBluetoohPermissionArray()
     }
+
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
         return listOf(getBluetoothConnectionSensor(context))
-
     }
 
     private fun getBluetoothConnectionSensor(context: Context): SensorRegistration<Any> {
