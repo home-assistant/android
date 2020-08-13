@@ -9,11 +9,11 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SensorReceiver : BroadcastReceiver() {
@@ -35,6 +35,13 @@ class SensorReceiver : BroadcastReceiver() {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
+    private val chargingActions = listOf(
+        Intent.ACTION_BATTERY_LOW,
+        Intent.ACTION_BATTERY_OKAY,
+        Intent.ACTION_POWER_CONNECTED,
+        Intent.ACTION_POWER_DISCONNECTED
+    )
+
     override fun onReceive(context: Context, intent: Intent) {
 
         DaggerSensorComponent.builder()
@@ -42,8 +49,16 @@ class SensorReceiver : BroadcastReceiver() {
             .build()
             .inject(this)
 
+        LocationBroadcastReceiver.restartLocationTracking(context)
+
         ioScope.launch {
             updateSensors(context, integrationUseCase)
+            if (chargingActions.contains(intent.action)) {
+                // Add a 5 second delay to perform another update so charging state updates completely.
+                // This is necessary as the system needs a few seconds to verify the charger.
+                delay(5000L)
+                updateSensors(context, integrationUseCase)
+            }
         }
     }
 
@@ -63,11 +78,7 @@ class SensorReceiver : BroadcastReceiver() {
             manager.getSensorRegistrations(context).forEach { registration ->
                 // Ensure dao is up to date
                 var sensor = sensorDao.get(registration.uniqueId)
-                var hasPermission = true
-                manager.requiredPermissions().forEach {
-                    hasPermission =
-                        hasPermission && PermissionManager.hasPermission(context, it)
-                }
+                val hasPermission = manager.checkPermission(context)
                 if (sensor == null) {
                     sensor = Sensor(
                         registration.uniqueId, hasPermission, false,

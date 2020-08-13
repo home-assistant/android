@@ -44,8 +44,6 @@ class SettingsPresenterImpl @Inject constructor(
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
-            if (key == "location_zone" || key == "location_background")
-                settingsView.onLocationSettingChanged()
         }
     }
 

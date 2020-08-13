@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.content.res.Configuration
@@ -36,6 +37,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.graphics.ColorUtils
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
@@ -52,7 +54,6 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.util.PermissionManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
@@ -221,10 +222,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         request?.resources?.forEach {
                             if (it == PermissionRequest.RESOURCE_VIDEO_CAPTURE) {
-                                if (PermissionManager.hasPermission(
+                                if (ActivityCompat.checkSelfPermission(
                                         context,
                                         android.Manifest.permission.CAMERA
-                                    )
+                                    ) == PackageManager.PERMISSION_GRANTED
                                 ) {
                                     request.grant(arrayOf(it))
                                 } else {
@@ -234,10 +235,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     )
                                 }
                             } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
-                                if (PermissionManager.hasPermission(
+                                if (ActivityCompat.checkSelfPermission(
                                         context,
                                         android.Manifest.permission.RECORD_AUDIO
-                                    )
+                                    ) == PackageManager.PERMISSION_GRANTED
                                 ) {
                                     request.grant(arrayOf(it))
                                 } else {

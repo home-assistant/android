@@ -1,9 +1,9 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.content.Context
 import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.util.PermissionManager
 
 class PhoneStateSensorManager : SensorManager {
 
@@ -16,7 +16,7 @@ class PhoneStateSensorManager : SensorManager {
         get() = "Phone Sensors"
 
     override fun requiredPermissions(): Array<String> {
-        return PermissionManager.getPhonePermissionArray()
+        return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
@@ -25,7 +25,7 @@ class PhoneStateSensorManager : SensorManager {
 
     private fun getPhoneStateSensor(context: Context): SensorRegistration<Any> {
         var phoneState = "unavailable"
-        if (PermissionManager.checkPhoneStatePermission(context)) {
+        if (checkPermission(context)) {
             val telephonyManager =
                 (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
 

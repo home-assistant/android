@@ -1,10 +1,11 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.content.Context
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
+import android.os.Build
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.util.PermissionManager
 
 class NetworkSensorManager : SensorManager {
     companion object {
@@ -15,7 +16,11 @@ class NetworkSensorManager : SensorManager {
         get() = "Network Sensors"
 
     override fun requiredPermissions(): Array<String> {
-        return PermissionManager.getLocationPermissionArray()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
     }
 
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
@@ -28,7 +33,7 @@ class NetworkSensorManager : SensorManager {
         var lastScanStrength = -1
         var wifiEnabled = false
 
-        if (PermissionManager.checkLocationPermission(context)) {
+        if (checkPermission(context)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo
