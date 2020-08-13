@@ -20,7 +20,7 @@ class StorageSensorManager : SensorManager {
         var availableBlocksSD = 0L
         var totalBlocksSD = 0L
 
-        private fun externalMemoryAvailable() : Boolean {
+        private fun externalMemoryAvailable(): Boolean {
             return if (Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED) {
                 Environment.isExternalStorageRemovable()
             } else {
@@ -77,7 +77,7 @@ class StorageSensorManager : SensorManager {
         )
     }
 
-    private fun formatSize(size: Long) : String {
+    private fun formatSize(size: Long): String {
         var suffix = ""
 
         var sizeLong = size
@@ -89,7 +89,7 @@ class StorageSensorManager : SensorManager {
                 sizeLong /= 1024
                 if (size >= 1024) {
                     suffix = "GB"
-                    sizeLong /=1024
+                    sizeLong /= 1024
                 }
             }
         }
@@ -106,7 +106,7 @@ class StorageSensorManager : SensorManager {
         return resultBuffer.toString()
     }
 
-    private fun getTotalInternalMemorySize() : String {
+    private fun getTotalInternalMemorySize(): String {
         return formatSize(totalBlocks * blockSize)
     }
 
@@ -125,5 +125,4 @@ class StorageSensorManager : SensorManager {
     private fun getTotalExternalMemorySize(): String {
         return formatSize(totalBlocksSD * blockSizeSD)
     }
-
 }
