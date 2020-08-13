@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android
 
 import android.app.Application
+import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.wifi.WifiManager
@@ -8,6 +9,7 @@ import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.sensors.BluetoothReceiver
 import io.homeassistant.companion.android.sensors.ChargingBroadcastReceiver
 import io.homeassistant.companion.android.sensors.PhoneStateReceiver
 import io.homeassistant.companion.android.sensors.WifiStateReceiver
@@ -42,6 +44,8 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
                 addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
             }
         )
+
+        registerReceiver(BluetoothReceiver(), IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
     }
 
     override val appComponent: AppComponent

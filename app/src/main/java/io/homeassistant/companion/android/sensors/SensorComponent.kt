@@ -17,6 +17,8 @@ interface SensorComponent {
 
     fun inject(sensorDetailFragment: SensorDetailFragment)
 
+    fun inject(receiver: BluetoothReceiver)
+
     fun inject(receiver: NextAlarmReceiver)
 
     fun inject(receiver: WifiStateReceiver)

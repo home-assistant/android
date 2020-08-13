@@ -41,6 +41,15 @@ class PermissionManager {
             return true
         }
 
+        fun checkBluetoothPermission(context: Context): Boolean {
+            for (permission in getBluetoohPermissionArray()) {
+                if (!hasPermission(context, permission)) {
+                    return false
+                }
+            }
+            return true
+        }
+
         /**
          * Returns an Array with required location permissions.
          * ACCESS_FINE_LOCATION and, if API level >= 29, ACCESS_BACKGROUND_LOCATION.
@@ -51,6 +60,10 @@ class PermissionManager {
             } else {
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
             }
+        }
+
+        fun getBluetoohPermissionArray(): Array<String> {
+            return arrayOf(Manifest.permission.BLUETOOTH)
         }
 
         fun validateLocationPermissions(
