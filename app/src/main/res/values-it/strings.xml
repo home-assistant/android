@@ -18,7 +18,8 @@
   <string name="checking_with_home_assistant">Verifica con Home Assistant</string>
   <string name="config">Configurazione</string>
   <string name="configure_service_call">Configurare la Chiamata del Servizio</string>
-    <string name="connect_to_home_internet">Assicurati che il tuo telefono sia collegato
+  <string name="configure_widget_label">Etichetta Widget</string>
+  <string name="connect_to_home_internet">Assicurati che il tuo telefono sia collegato 
 alla rete Internet di casa tua.</string>
   <string name="connected_to_home_assistant">Connesso a Home Assistant</string>
   <string name="developer_tools">Strumenti per sviluppatori</string>
@@ -111,8 +112,8 @@ Scansione della rete</string>
   <string name="webview_error_SSL_NOTYETVALID">Il certificato di Home Assistant non è ancora valido, rivedere il certificato di Home Assistant o le impostazioni di connessione e riprovare.</string>
   <string name="webview_error_SSL_UNTRUSTED">L\'autorità di certificazione Home Assistant non è attendibile, rivedere il certificato Home Assistant o le impostazioni di connessione e riprovare.</string>
   <string name="widget_config_service_error">Un componente personalizzato impedisce il caricamento dei dati del servizio.</string>
-  <string name="widget_button_image_description">Home Assistant Widget</string>
   <string name="widget_creation_error">Impossibile creare il widget.</string>
+  <string name="widget_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Etichetta</string>
   <string name="widget_spinner_icon">Icona:</string>
   <string name="widget_text_hint_label">Etichetta</string>

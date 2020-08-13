@@ -17,7 +17,8 @@
   <string name="checking_with_home_assistant">Kontrollerar med Home Assistant</string>
   <string name="config">Konfiguration</string>
   <string name="configure_service_call">Hantera anrop till tjänst</string>
-    <string name="connect_to_home_internet">Se till att din telefon är ansluten
+  <string name="configure_widget_label">WIdget Etikett</string>
+  <string name="connect_to_home_internet">Se till att din telefon är ansluten 
  till ditt hemma-nätverk.</string>
   <string name="connected_to_home_assistant">Ansluten till Home Assistant</string>
   <string name="developer_tools">Utvecklarverktyg</string>
@@ -100,8 +101,8 @@
   <string name="wait">Vänta</string>
   <string name="webview_error">Det uppstod ett fel vid anslutningen av Home Assistant, granska anslutningsinställningarna och försök igen.</string>
   <string name="widget_config_service_error">En egen komponent förhindrar tjänsten från att ladda.</string>
-  <string name="widget_button_image_description"></string>
   <string name="widget_creation_error">Kunde inte skapa widget.</string>
+  <string name="widget_image_description"></string>
   <string name="widget_label_placeholder_text">Etikett</string>
   <string name="widget_spinner_icon">Ikon:</string>
   <string name="widget_text_hint_label">Etikett</string>

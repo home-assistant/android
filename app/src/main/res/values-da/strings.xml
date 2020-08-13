@@ -18,7 +18,8 @@
   <string name="checking_with_home_assistant">Tjekker med Home Assistant</string>
   <string name="config">Indstillinger</string>
   <string name="configure_service_call">Konfigurer tjenesteskald</string>
-  <string name="connect_to_home_internet">Sørg for, at din telefon er tilsluttet
+  <string name="configure_widget_label">Widget-etiket</string>
+  <string name="connect_to_home_internet">Sørg for, at din telefon er tilsluttet 
 dit hjemmeinternet.</string>
   <string name="connected_to_home_assistant">Tilsluttet til Home Assistant</string>
   <string name="developer_tools">Udviklerværktøjer</string>
@@ -26,6 +27,7 @@ dit hjemmeinternet.</string>
   <string name="device_registration">Enhedsregistrering</string>
   <string name="dialog_add_panel_shortcut_content">Opret en genvej til dette punkt?</string>
   <string name="dialog_add_panel_shortcut_title">Tilføj genvej</string>
+  <string name="entity_attribute_checkbox">Tilføj egenskabsværdi</string>
   <string name="error_auth_revoked">Det ser ud til, at din godkendelse blev tilbagekaldt. Forbind igen til Home Assistant.</string>
   <string name="error_connection_failed">Kan ikke oprette forbindelse til Home Assistant.</string>
   <string name="error_onboarding_connection_failed">Kan ikke oprette forbindelse til Home Assistant.</string>
@@ -46,6 +48,7 @@ aktiveret på din Home Assistant-instans.</string>
 Home Assistant-instans</string>
   <string name="input_url">Home Assistant-webadresse</string>
   <string name="input_url_hint">https://eksempel.duckdns.org:8123</string>
+  <string name="label_attribute">Egenskab:</string>
   <string name="label_dynamic_data">Data:</string>
   <string name="label_entity_id">Entitets-id:</string>
   <string name="label_icon">Ikon:</string>
@@ -86,6 +89,7 @@ Home Assistant-instans</string>
   <string name="scan_again">scan igen</string>
   <string name="scanning_network">Scanner netværket
 efter Home Assistant</string>
+  <string name="select_entity_to_display">Vælg den entitet, der skal vises</string>
   <string name="select_instance">Vælg den instans, du gerne
 vil forbinde til:</string>
   <string name="session_timeout_title">Sessions-timeout (i sekunder)</string>
@@ -106,11 +110,13 @@ vil forbinde til:</string>
   <string name="webview_error">Der opstod en fejl under indlæsning af Home Assistant. Gennemgå forbindelsesindstillingerne og prøv igen.</string>
   <string name="webview_error_description">Der opstod en fejl :</string>
   <string name="webview_error_SSL_UNTRUSTED">Home Assistant-certifikatmyndigheden er ikke betroet. Gennemgå Home Assistant-certifikatet eller forbindelsesindstillingerne og prøv igen.</string>
+  <string name="widget_button_image_description">Tjenesteknap</string>
   <string name="widget_config_service_error">En brugerdefineret komponent forhindrer tjenestedata i at indlæses.</string>
-  <string name="widget_button_image_description">Home Assistant-widget</string>
   <string name="widget_creation_error">Kunne ikke oprette widget.</string>
+  <string name="widget_image_description">Home Assistant-widget</string>
   <string name="widget_label_placeholder_text">Etiket</string>
   <string name="widget_spinner_icon">Ikon:</string>
+  <string name="widget_static_image_description">Entitetsstatus</string>
   <string name="widget_text_hint_label">Etiket</string>
   <string name="widget_text_hint_service_data">Entitets-id</string>
   <string name="widget_text_hint_service_domain">Domæne</string>

@@ -18,7 +18,8 @@
   <string name="checking_with_home_assistant">Sjekker med Home Assistant</string>
   <string name="config">Konfigurasjon</string>
   <string name="configure_service_call">Konfigurer tjeneste tilkalling</string>
-    <string name="connect_to_home_internet">Forsikre deg om at telefonen er tilkoblet
+  <string name="configure_widget_label">Widget etikett</string>
+  <string name="connect_to_home_internet">Forsikre deg om at telefonen er tilkoblet 
 ditt hjemmenettverk.</string>
   <string name="connected_to_home_assistant">Koblet til Home Assistant</string>
   <string name="developer_tools">Utviklerverktøy</string>
@@ -110,7 +111,7 @@ for Home Assistant</string>
   <string name="webview_error_SSL_NOTYETVALID">Home Assistant-sertifikatet er ennå ikke gyldig, vennlingst sjekk Home Assistant-sertifikatet eller tilkoblingsinnstillingene, og prøv igjen.</string>
   <string name="webview_error_SSL_UNTRUSTED">Home Assistant sertifikatinstans er ikke klarert, vennligst sjekk Home Assistasnt sertifikatet eller tilkoblingsinnstillingene og prøv igjen.</string>
   <string name="widget_config_service_error">En uoffisiell komponent forhindrer lasting av tjenestedata.</string>
-  <string name="widget_button_image_description">Home Assistant widget</string>
+  <string name="widget_image_description">Home Assistant widget</string>
   <string name="widget_label_placeholder_text">Etikett</string>
   <string name="widget_spinner_icon">Ikon:</string>
   <string name="widget_text_hint_label">Etikett</string>

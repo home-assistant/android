@@ -9,7 +9,8 @@
   <string name="auth_cancel">Autentifikācija atcelta</string>
   <string name="auth_request">Pieprasītā autentifikācija:</string>
   <string name="checking_with_home_assistant">Salīdzina datus ar Home Assistant</string>
-    <string name="connect_to_home_internet">Pārliecinieties, vai tālrunis ir pievienots mājas internetam.</string>
+  <string name="configure_widget_label">Logrīka nosaukums</string>
+  <string name="connect_to_home_internet">Pārliecinieties, vai tālrunis ir pievienots mājas internetam.</string>
   <string name="device_name">Ierīces nosaukums</string>
   <string name="device_registration">Ierīces reģistrācija</string>
   <string name="error_auth_revoked">Izskatās, ka jūsu autorizācija ir atsaukta, lūdzu atkārtoti izveidojiet savienojumu ar Home Assistant.</string>
@@ -48,7 +49,7 @@
   <string name="url_parse_error">Nevarēja apstrādāt Jūsu Home Assistant URL. URL būtu jāizskatās šādi: https://example.com</string>
   <string name="username">Lietotājvārds</string>
   <string name="webview_error">Ielādējot Home Assistant, radās kļūda. Lūdzu pārskatiet savienojuma iestatījumus un mēģiniet vēlreiz.</string>
-  <string name="widget_button_image_description">Home Assistant logrīks</string>
+  <string name="widget_image_description">Home Assistant logrīks</string>
   <string name="widget_spinner_icon">Ikona:</string>
   <string name="widget_text_hint_service_domain">Domēns</string>
 </resources>
