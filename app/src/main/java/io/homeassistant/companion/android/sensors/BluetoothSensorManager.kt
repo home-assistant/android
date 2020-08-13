@@ -44,8 +44,6 @@ class BluetoothSensorManager : SensorManager {
             var adapter = bluetoothManager.adapter
             isBtOn = adapter.isEnabled
 
-
-
             if (isBtOn) {
                 var bondedDevices = adapter.bondedDevices
                 bondedString = bondedDevices.toString()
@@ -64,7 +62,6 @@ class BluetoothSensorManager : SensorManager {
                     }
                 }
             }
-
         }
         return SensorRegistration(
             "bluetooth_connection",
