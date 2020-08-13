@@ -12,20 +12,19 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.util.PermissionManager
 
 class SensorDetailFragment(
-    private val sensorRegistration: SensorRegistration<Any>,
-    private val permissions: Array<String>
+    private val sensorManager: SensorManager,
+    private val sensorRegistration: SensorRegistration<Any>
 ) :
     PreferenceFragmentCompat() {
 
     companion object {
         fun newInstance(
-            sensorRegistration: SensorRegistration<Any>,
-            permissions: Array<String>
+            sensorManager: SensorManager,
+            sensorRegistration: SensorRegistration<Any>
         ): SensorDetailFragment {
-            return SensorDetailFragment(sensorRegistration, permissions)
+            return SensorDetailFragment(sensorManager, sensorRegistration)
         }
     }
 
@@ -43,19 +42,19 @@ class SensorDetailFragment(
 
         findPreference<SwitchPreference>("enabled")?.let {
             val dao = sensorDao.get(sensorRegistration.uniqueId)
-            val perm = havePermission()
+            val perm = sensorManager.checkPermission(requireContext())
             if (dao == null) {
-                updateSensorEntity(perm)
                 it.isChecked = perm
             } else {
-                it.isChecked = dao.enabled
+                it.isChecked = dao.enabled && perm
             }
+            updateSensorEntity(it.isChecked)
 
             it.setOnPreferenceChangeListener { _, newState ->
                 val isEnabled = newState as Boolean
 
-                if (isEnabled && !havePermission()) {
-                    requestPermissions(permissions, 0)
+                if (isEnabled && !sensorManager.checkPermission(requireContext())) {
+                    requestPermissions(sensorManager.requiredPermissions(), 0)
                     return@setOnPreferenceChangeListener false
                 }
 
@@ -119,13 +118,6 @@ class SensorDetailFragment(
             )
             sensorDao.add(sensorEntity)
         }
-    }
-
-    private fun havePermission(): Boolean {
-        if (!permissions.isNullOrEmpty()) {
-            return permissions.all { PermissionManager.hasPermission(requireContext(), it) }
-        }
-        return true
     }
 
     override fun onRequestPermissionsResult(

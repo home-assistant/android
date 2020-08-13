@@ -9,10 +9,7 @@ import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.sensors.BluetoothReceiver
-import io.homeassistant.companion.android.sensors.ChargingBroadcastReceiver
-import io.homeassistant.companion.android.sensors.PhoneStateReceiver
-import io.homeassistant.companion.android.sensors.WifiStateReceiver
+import io.homeassistant.companion.android.sensors.SensorReceiver
 
 open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
@@ -23,11 +20,12 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
         graph = Graph(this, 0)
 
+        val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
         // This should be nearly instantaneous allowing automations to fire immediately when a phone is plugged
         // in or unplugged. Updates will also be triggered when the system reports low battery and when it recovers.
         registerReceiver(
-            ChargingBroadcastReceiver(appComponent.integrationUseCase()), IntentFilter().apply {
+            sensorReceiver, IntentFilter().apply {
                 addAction(Intent.ACTION_BATTERY_LOW)
                 addAction(Intent.ACTION_BATTERY_OKAY)
                 addAction(Intent.ACTION_POWER_CONNECTED)
@@ -36,16 +34,22 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
         )
 
         // This will trigger an update any time the wifi state has changed
-        registerReceiver(WifiStateReceiver(), IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION))
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+        )
 
         // This will cause the phone state sensor to be updated every time the OS broadcasts that a call triggered.
         registerReceiver(
-            PhoneStateReceiver(appComponent.integrationUseCase()), IntentFilter().apply {
+            sensorReceiver,
+            IntentFilter().apply {
                 addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
             }
         )
 
-        registerReceiver(BluetoothReceiver(), IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+        registerReceiver(sensorReceiver,
+            IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        )
     }
 
     override val appComponent: AppComponent

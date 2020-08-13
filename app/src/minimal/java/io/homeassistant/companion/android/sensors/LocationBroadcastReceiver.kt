@@ -23,6 +23,10 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         const val ID_ZONE_LOCATION = "location_zone"
 
         internal const val TAG = "LocBroadcastReceiver"
+
+        fun restartLocationTracking(context: Context) {
+            // Noop
+        }
     }
 
     override fun onReceive(context: Context, intent: Intent) {

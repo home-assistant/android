@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -19,7 +20,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
-import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +44,13 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         const val ID_ZONE_LOCATION = "location_zone"
 
         internal const val TAG = "LocBroadcastReceiver"
+
+        fun restartLocationTracking(context: Context) {
+            val intent = Intent(context, LocationBroadcastReceiver::class.java)
+            intent.action = ACTION_REQUEST_LOCATION_UPDATES
+
+            context.sendBroadcast(intent)
+        }
     }
 
     @Inject
@@ -76,7 +83,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     private fun setupLocationTracking(context: Context) {
-        if (!PermissionManager.checkLocationPermission(context)) {
+        if (!checkPermission(context)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
         }
@@ -110,7 +117,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     private fun requestLocationUpdates(context: Context) {
-        if (!PermissionManager.checkLocationPermission(context)) {
+        if (!checkPermission(context)) {
             Log.w(TAG, "Not registering for location updates because of permissions.")
             return
         }
@@ -126,7 +133,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     private suspend fun requestZoneUpdates(context: Context) {
-        if (!PermissionManager.checkLocationPermission(context)) {
+        if (!checkPermission(context)) {
             Log.w(TAG, "Not registering for zone based updates because of permissions.")
             return
         }
@@ -240,7 +247,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     private fun requestSingleAccurateLocation(context: Context) {
-        if (!PermissionManager.checkLocationPermission(context)) {
+        if (!checkPermission(context)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
         }
@@ -286,7 +293,11 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         get() = "Location Sensors"
 
     override fun requiredPermissions(): Array<String> {
-        return PermissionManager.getLocationPermissionArray()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
     }
 
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {

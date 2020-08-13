@@ -59,8 +59,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                             .replace(
                                 R.id.content,
                                 SensorDetailFragment.newInstance(
-                                    sensor,
-                                    manager.requiredPermissions()
+                                    manager,
+                                    sensor
                                 )
                             )
                             .addToBackStack("Sensor Detail")

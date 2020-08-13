@@ -1,13 +1,14 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.content.Context
 import android.location.Address
 import android.location.Geocoder
+import android.os.Build
 import android.util.Log
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Tasks
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.util.PermissionManager
 
 class GeocodeSensorManager : SensorManager {
 
@@ -19,7 +20,11 @@ class GeocodeSensorManager : SensorManager {
         get() = "Geolocation Sensors"
 
     override fun requiredPermissions(): Array<String> {
-        return PermissionManager.getLocationPermissionArray()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
     }
 
     override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
@@ -28,7 +33,7 @@ class GeocodeSensorManager : SensorManager {
 
     private fun getGeocodedLocation(context: Context): SensorRegistration<Any> {
         var address: Address? = null
-        if (PermissionManager.checkLocationPermission(context)) {
+        if (checkPermission(context)) {
             try {
                 val locApi = LocationServices.getFusedLocationProviderClient(context)
                 Tasks.await(locApi.lastLocation)?.let {
