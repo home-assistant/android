@@ -7,4 +7,5 @@
     <color name="colorWarning">#D32F2F</color>
     <color name="colorHeadline1">@android:color/black</color>
     <color name="colorHeadline2">@android:color/black</color>
+    <color name="colorActionBar">#03A9F4</color>
 </resources>

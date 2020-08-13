@@ -31,7 +31,7 @@
     </style>
 
     <style name="ThemeOverlay.HomeAssistant.ActionBar" parent="@style/ThemeOverlay.MaterialComponents.ActionBar">
-        <item name="android:background">@color/colorPrimary</item>
+        <item name="android:background">@color/colorActionBar</item>
         <item name="android:textColorPrimary">@color/colorOnPrimary</item>
         <item name="colorControlNormal">@color/colorOnPrimary</item>
     </style>
