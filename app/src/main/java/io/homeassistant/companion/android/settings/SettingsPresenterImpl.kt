@@ -176,4 +176,20 @@ class SettingsPresenterImpl @Inject constructor(
             integrationUseCase.getSessionExpireMillis()
         }
     }
+
+    // Make sure Core is above 0.114.0 because that's the first time NFC is available.
+    override fun nfcEnabled(): Boolean {
+        return runBlocking {
+            var splitVersion = listOf<String>()
+
+            try {
+                splitVersion = integrationUseCase.getHomeAssistantVersion().split(".")
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to get core version.", e)
+            }
+
+            return@runBlocking splitVersion.size > 2 &&
+                    (Integer.parseInt(splitVersion[0]) > 0 || Integer.parseInt(splitVersion[1]) >= 114)
+        }
+    }
 }

@@ -294,6 +294,27 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
+    override suspend fun getHomeAssistantVersion(): String {
+        val getConfigRequest =
+            IntegrationRequest(
+                "get_config",
+                null
+            )
+        var response: GetConfigResponse? = null
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+
+            if (response != null)
+                return response.version
+        }
+
+        throw IntegrationException()
+    }
+
     // TODO: Use websocket to get panels.
     override suspend fun getPanels(): Array<Panel> {
         return arrayOf()

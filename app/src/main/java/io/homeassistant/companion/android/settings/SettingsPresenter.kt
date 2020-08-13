@@ -7,6 +7,7 @@ interface SettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onCreate()
     fun onFinish()
+    fun nfcEnabled(): Boolean
     fun getPanels(): Array<Panel>
     fun isLockEnabled(): Boolean
     fun sessionTimeOut(): Int

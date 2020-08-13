@@ -93,9 +93,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             true
         }
 
-        findPreference<Preference>("nfc_tags")?.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-            startActivity(NfcSetupActivity.newInstance(requireActivity()))
-            true
+        findPreference<Preference>("nfc_tags")?.let {
+            it.isVisible = presenter.nfcEnabled()
+            it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+                startActivity(NfcSetupActivity.newInstance(requireActivity()))
+                true
+            }
         }
 
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =

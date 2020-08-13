@@ -23,6 +23,8 @@ interface IntegrationRepository {
 
     suspend fun getThemeColor(): String
 
+    suspend fun getHomeAssistantVersion(): String
+
     suspend fun getPanels(): Array<Panel>
 
     suspend fun getServices(): Array<Service>
