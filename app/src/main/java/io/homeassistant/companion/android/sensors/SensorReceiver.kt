@@ -22,6 +22,7 @@ class SensorReceiver : BroadcastReceiver() {
         const val TAG = "SensorReceiver"
         val MANAGERS = listOf(
             BatterySensorManager(),
+            BluetoothSensorManager(),
             NetworkSensorManager(),
             GeocodeSensorManager(),
             NextAlarmManager(),
