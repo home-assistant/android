@@ -8,7 +8,6 @@ import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.util.PermissionManager
 import java.lang.reflect.Method
 
-
 class BluetoothSensorManager : SensorManager {
     companion object {
         private const val TAG = "BluetoothSM"
@@ -51,7 +50,6 @@ class BluetoothSensorManager : SensorManager {
                 var bondedDevices = adapter.bondedDevices
                 bondedString = bondedDevices.toString()
                 for (BluetoothDevice in bondedDevices) {
-
                     if (isConnected(BluetoothDevice)) {
                         connectedAddress = BluetoothDevice.address
                         connectedPairedDevices.add(connectedAddress)
