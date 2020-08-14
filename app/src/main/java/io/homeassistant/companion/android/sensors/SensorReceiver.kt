@@ -25,7 +25,8 @@ class SensorReceiver : BroadcastReceiver() {
             NetworkSensorManager(),
             GeocodeSensorManager(),
             NextAlarmManager(),
-            PhoneStateSensorManager()
+            PhoneStateSensorManager(),
+            StorageSensorManager()
         )
     }
 
@@ -84,10 +85,12 @@ class SensorReceiver : BroadcastReceiver() {
                     try {
                         integrationUseCase.registerSensor(sensorData)
                         sensor.registered = true
-                        enabledRegistrations.add(sensorData)
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue registering sensor: ${sensorData.uniqueId}", e)
                     }
+                }
+                if (sensorData != null) {
+                    enabledRegistrations.add(sensorData)
                 }
             }
         }

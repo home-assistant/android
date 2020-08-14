@@ -14,7 +14,8 @@ class BluetoothSensorManager : SensorManager {
         private val bluetoothConnection = SensorManager.BasicSensor(
             "bluetooth_connection",
             "sensor",
-            "Bluetooth Connection"
+            "Bluetooth Connection",
+            unitOfMeasurement = "connection(s)"
         )
     }
 
@@ -72,7 +73,9 @@ class BluetoothSensorManager : SensorManager {
                     if (isConnected(BluetoothDevice)) {
                         connectedNotPairedAddress = BluetoothDevice.address
                         connectedNotPairedDevices.add(connectedNotPairedAddress)
-                        totalConnectedDevices += 1
+                        if (connectedNotPairedAddress != connectedAddress) {
+                            totalConnectedDevices += 1
+                        }
                     }
                 }
             }
