@@ -9,22 +9,20 @@ import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class SensorDetailFragment(
     private val sensorManager: SensorManager,
-    private val sensorRegistration: SensorRegistration<Any>
+    private val basicSensor: SensorManager.BasicSensor
 ) :
     PreferenceFragmentCompat() {
 
     companion object {
         fun newInstance(
             sensorManager: SensorManager,
-            sensorRegistration: SensorRegistration<Any>
+            basicSensor: SensorManager.BasicSensor
         ): SensorDetailFragment {
-            return SensorDetailFragment(sensorManager, sensorRegistration)
+            return SensorDetailFragment(sensorManager, basicSensor)
         }
     }
 
@@ -41,7 +39,7 @@ class SensorDetailFragment(
         addPreferencesFromResource(R.xml.sensor_detail)
 
         findPreference<SwitchPreference>("enabled")?.let {
-            val dao = sensorDao.get(sensorRegistration.uniqueId)
+            val dao = sensorDao.get(basicSensor.id)
             val perm = sensorManager.checkPermission(requireContext())
             if (dao == null) {
                 it.isChecked = perm
@@ -59,6 +57,7 @@ class SensorDetailFragment(
                 }
 
                 updateSensorEntity(isEnabled)
+                this@SensorDetailFragment.refreshSensorData()
 
                 return@setOnPreferenceChangeListener true
             }
@@ -68,31 +67,36 @@ class SensorDetailFragment(
     }
 
     private fun refreshSensorData() {
+        val sensorData = sensorManager.getEnabledSensorData(requireContext(), basicSensor.id)
+
         findPreference<Preference>("unique_id")?.let {
-            it.summary = sensorRegistration.uniqueId
+            it.summary = basicSensor.id
         }
         findPreference<Preference>("state")?.let {
-            if (sensorRegistration.unitOfMeasurement.isNullOrBlank())
-                it.summary = sensorRegistration.state.toString()
-            else
-                it.summary =
-                    sensorRegistration.state.toString() + " " + sensorRegistration.unitOfMeasurement
+            when {
+                sensorData == null ->
+                    it.summary = "Disabled"
+                basicSensor.unitOfMeasurement.isNullOrBlank() ->
+                    it.summary = sensorData.state.toString()
+                else ->
+                    it.summary = sensorData.state.toString() + " " + basicSensor.unitOfMeasurement
+            }
         }
         findPreference<Preference>("device_class")?.let {
-            it.summary = sensorRegistration.deviceClass
+            it.summary = basicSensor.deviceClass
         }
         findPreference<Preference>("icon")?.let {
-            it.summary = sensorRegistration.icon
+            it.summary = sensorData?.icon ?: ""
         }
 
         findPreference<PreferenceCategory>("attributes")?.let {
-            if (sensorRegistration.attributes.isEmpty())
+            if (sensorData?.attributes.isNullOrEmpty())
                 it.isVisible = false
             else {
-                sensorRegistration.attributes.keys.forEach { key ->
+                sensorData?.attributes?.keys?.forEach { key ->
                     val pref = Preference(requireContext())
                     pref.title = key
-                    pref.summary = sensorRegistration.attributes[key]?.toString() ?: ""
+                    pref.summary = sensorData.attributes[key]?.toString() ?: ""
                     pref.isIconSpaceReserved = false
 
                     it.addPreference(pref)
@@ -104,20 +108,12 @@ class SensorDetailFragment(
     private fun updateSensorEntity(
         isEnabled: Boolean
     ) {
-        var sensorEntity = sensorDao.get(sensorRegistration.uniqueId)
+        val sensorEntity = sensorDao.get(basicSensor.id)
         if (sensorEntity != null) {
             sensorEntity.enabled = isEnabled
-            sensorEntity.state = sensorRegistration.state.toString()
             sensorDao.update(sensorEntity)
-        } else {
-            sensorEntity = Sensor(
-                sensorRegistration.uniqueId,
-                isEnabled,
-                false,
-                sensorRegistration.state.toString()
-            )
-            sensorDao.add(sensorEntity)
         }
+        refreshSensorData()
     }
 
     override fun onRequestPermissionsResult(

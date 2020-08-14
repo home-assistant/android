@@ -92,7 +92,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             zoneTracking = findViewById<SwitchCompat>(R.id.location_zone).apply {
                 setOnCheckedChangeListener { _, isChecked ->
-                    updateSensorDao(LocationBroadcastReceiver.ID_ZONE_LOCATION, isChecked)
+                    updateSensorDao(LocationBroadcastReceiver.zoneLocation.id, isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission
@@ -102,7 +102,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             backgroundTracking = findViewById<SwitchCompat>(R.id.location_background).apply {
                 setOnCheckedChangeListener { _, isChecked ->
-                    updateSensorDao(LocationBroadcastReceiver.ID_BACKGROUND_LOCATION, isChecked)
+                    updateSensorDao(LocationBroadcastReceiver.backgroundLocation.id, isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission && isIgnoringBatteryOptimizations()
@@ -121,7 +121,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             callTracking = findViewById<SwitchCompat>(R.id.call_tracking).apply {
                 setOnCheckedChangeListener { _, isChecked ->
-                    updateSensorDao(PhoneStateSensorManager.ID_PHONE, isChecked)
+                    updateSensorDao(PhoneStateSensorManager.phoneState.id, isChecked)
                 }
                 isEnabled = hasPhoneStatePermission
                 isChecked = hasPhoneStatePermission
@@ -185,7 +185,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 zoneTracking.isEnabled = true
                 zoneTrackingSummary.isEnabled = true
                 zoneTracking.isChecked = true
-                updateSensorDao(LocationBroadcastReceiver.ID_ZONE_LOCATION, true)
+                updateSensorDao(LocationBroadcastReceiver.zoneLocation.id, true)
 
                 backgroundTracking.isEnabled = true
                 backgroundTrackingSummary.isEnabled = true
@@ -204,7 +204,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 callTracking.isEnabled = true
                 callTracking.isChecked = true
                 callTrackingSummary.isEnabled = true
-                updateSensorDao(PhoneStateSensorManager.ID_PHONE, true)
+                updateSensorDao(PhoneStateSensorManager.phoneState.id, true)
             } else {
                 callTracking.isEnabled = false
                 callTrackingSummary.isEnabled = false
@@ -215,7 +215,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == BACKGROUND_REQUEST && isIgnoringBatteryOptimizations()) {
             zoneTracking.isChecked = true
-            updateSensorDao(LocationBroadcastReceiver.ID_BACKGROUND_LOCATION, true)
+            updateSensorDao(LocationBroadcastReceiver.backgroundLocation.id, true)
         }
     }
 

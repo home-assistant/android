@@ -10,21 +10,37 @@ import io.homeassistant.companion.android.domain.integration.SensorRegistration
 class NetworkSensorManager : SensorManager {
     companion object {
         private const val TAG = "NetworkSM"
+        private val wifiConnection = SensorManager.BasicSensor(
+            "wifi_connection",
+            "sensor",
+            "Wifi Connection"
+        )
     }
 
     override val name: String
         get() = "Network Sensors"
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(wifiConnection)
 
     override fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
         } else {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf(getWifiConnectionSensor(context))
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            wifiConnection.id -> getWifiConnectionSensor(context)
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 
     private fun getWifiConnectionSensor(context: Context): SensorRegistration<Any> {
@@ -74,13 +90,10 @@ class NetworkSensorManager : SensorManager {
             )
         }.orEmpty()
 
-        return SensorRegistration(
-            "wifi_connection",
+        return wifiConnection.toSensorRegistration(
             ssid,
-            "sensor",
             icon,
-            attributes,
-            "Wifi Connection"
+            attributes
         )
     }
 

@@ -40,9 +40,16 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
 
-        const val ID_BACKGROUND_LOCATION = "location_background"
-        const val ID_ZONE_LOCATION = "location_zone"
-
+        val backgroundLocation = SensorManager.BasicSensor(
+            "location_background",
+            "",
+            "Background Location"
+        )
+        val zoneLocation = SensorManager.BasicSensor(
+            "zone_background",
+            "",
+            "Zone Location"
+        )
         internal const val TAG = "LocBroadcastReceiver"
 
         fun restartLocationTracking(context: Context) {
@@ -94,9 +101,9 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
             try {
                 removeAllLocationUpdateRequests(context)
 
-                if (sensorDao.get(ID_BACKGROUND_LOCATION)?.enabled == true)
+                if (sensorDao.get(backgroundLocation.id)?.enabled == true)
                     requestLocationUpdates(context)
-                if (sensorDao.get(ID_ZONE_LOCATION)?.enabled == true)
+                if (sensorDao.get(zoneLocation.id)?.enabled == true)
                     requestZoneUpdates(context)
             } catch (e: Exception) {
                 Log.e(TAG, "Issue setting up location tracking", e)
@@ -292,32 +299,38 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     override val name: String
         get() = "Location Sensors"
 
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(backgroundLocation, zoneLocation)
+
     override fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
         } else {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf<SensorRegistration<Any>>(
-            SensorRegistration(
-                ID_BACKGROUND_LOCATION,
-                "",
-                "",
-                "mdi:map",
-                mapOf(),
-                "Background Location"
-            ),
-            SensorRegistration(
-                ID_ZONE_LOCATION,
-                "",
-                "",
-                "mdi:map",
-                mapOf(),
-                "Zone Based Location"
-            )
-        )
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            zoneLocation.id ->
+                zoneLocation.toSensorRegistration(
+                    "",
+                    "mdi:map",
+                    mapOf()
+                )
+            backgroundLocation.id ->
+                backgroundLocation.toSensorRegistration(
+                    "",
+                    "mdi:map",
+                    mapOf()
+                )
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 }

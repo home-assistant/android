@@ -6,18 +6,14 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
-
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 
     companion object {
         fun newInstance(): SensorsSettingsFragment {
@@ -34,41 +30,54 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         setPreferencesFromResource(R.xml.sensors, rootKey)
 
-        ioScope.launch {
-            val managers = SensorReceiver.MANAGERS.plus(LocationBroadcastReceiver())
+        val managers = SensorReceiver.MANAGERS.plus(LocationBroadcastReceiver())
 
-            managers.sortedBy { it.name }.forEach { manager ->
-                val prefCategory = PreferenceCategory(preferenceScreen.context)
-                prefCategory.title = manager.name
-                preferenceScreen.addPreference(prefCategory)
-                manager.getSensorRegistrations(requireContext()).sortedBy { it.name }
-                    .forEach { sensor ->
-                    val pref = Preference(preferenceScreen.context)
-                    pref.title = sensor.name
+        managers.sortedBy { it.name }.forEach { manager ->
+            val prefCategory = PreferenceCategory(preferenceScreen.context)
+            prefCategory.title = manager.name
+            preferenceScreen.addPreference(prefCategory)
+            manager.availableSensors.sortedBy { it.name }.forEach { basicSensor ->
 
-                    if (sensor.unitOfMeasurement.isNullOrBlank())
-                        pref.summary = sensor.state.toString()
-                    else
-                        pref.summary = sensor.state.toString() + " " + sensor.unitOfMeasurement
+                val pref = Preference(preferenceScreen.context)
+                pref.key = basicSensor.id
+                pref.title = basicSensor.name
 
-                    // TODO: Add the icon from mdi:icon?
-
-                    pref.setOnPreferenceClickListener {
-                        parentFragmentManager
-                            .beginTransaction()
-                            .replace(
-                                R.id.content,
-                                SensorDetailFragment.newInstance(
-                                    manager,
-                                    sensor
-                                )
+                pref.setOnPreferenceClickListener {
+                    parentFragmentManager
+                        .beginTransaction()
+                        .replace(
+                            R.id.content,
+                            SensorDetailFragment.newInstance(
+                                manager,
+                                basicSensor
                             )
-                            .addToBackStack("Sensor Detail")
-                            .commit()
-                        return@setOnPreferenceClickListener true
-                    }
+                        )
+                        .addToBackStack("Sensor Detail")
+                        .commit()
+                    return@setOnPreferenceClickListener true
+                }
 
-                    prefCategory.addPreference(pref)
+                prefCategory.addPreference(pref)
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
+        SensorReceiver.MANAGERS.plus(LocationBroadcastReceiver()).forEach { managers ->
+            managers.availableSensors.forEach { basicSensor ->
+                findPreference<Preference>(basicSensor.id)?.let {
+                    val sensorEntity = sensorDao.get(basicSensor.id)
+                    if (sensorEntity?.enabled == true) {
+                        if (basicSensor.unitOfMeasurement.isNullOrBlank())
+                            it.summary = sensorEntity.state
+                        else
+                            it.summary = sensorEntity.state + " " + basicSensor.unitOfMeasurement
+                        // TODO: Add the icon from mdi:icon?
+                    } else {
+                        it.summary = "Disabled"
+                    }
                 }
             }
         }

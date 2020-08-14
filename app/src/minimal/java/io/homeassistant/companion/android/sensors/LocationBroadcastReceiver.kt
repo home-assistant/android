@@ -19,9 +19,16 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
 
-        const val ID_BACKGROUND_LOCATION = "location_background"
-        const val ID_ZONE_LOCATION = "location_zone"
-
+        val backgroundLocation = SensorManager.BasicSensor(
+            "location_background",
+            "",
+            "Background Location"
+        )
+        val zoneLocation = SensorManager.BasicSensor(
+            "zone_background",
+            "",
+            "Zone Location"
+        )
         internal const val TAG = "LocBroadcastReceiver"
 
         fun restartLocationTracking(context: Context) {
@@ -35,14 +42,15 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
 
     override val name: String
         get() = "Location Sensors"
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf()
 
     override fun requiredPermissions(): Array<String> {
         // Noop
         return emptyArray()
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        // Noop
-        return emptyList()
+    override fun getSensorData(context: Context, sensorId: String): SensorRegistration<Any> {
+        TODO("Not yet implemented")
     }
 }

@@ -125,7 +125,7 @@ for Home Assistant</string>
   <string name="select_entity_to_display">Select Entity to display</string>
   <string name="select_instance">Select the instance you would 
 like to connect to:</string>
-  <string name="sensor_summary">Use this to mange what sensors are enabled/disabled.</string>
+  <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
   <string name="sensor_title">Manage Sensors</string>
   <string name="sensors">Sensors</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>

@@ -8,28 +8,41 @@ import io.homeassistant.companion.android.domain.integration.SensorRegistration
 class PhoneStateSensorManager : SensorManager {
 
     companion object {
-        const val ID_PHONE = "phone_state"
         private const val TAG = "PhoneStateSM"
+        val phoneState = SensorManager.BasicSensor(
+            "phone_state",
+            "sensor",
+            "Phone State"
+        )
     }
 
     override val name: String
         get() = "Phone Sensors"
 
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(phoneState)
+
     override fun requiredPermissions(): Array<String> {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf(getPhoneStateSensor(context))
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            phoneState.id -> getPhoneStateSensor(context)
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 
     private fun getPhoneStateSensor(context: Context): SensorRegistration<Any> {
-        var phoneState = "unavailable"
+        var currentPhoneState = "unavailable"
         if (checkPermission(context)) {
             val telephonyManager =
                 (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
 
-            phoneState = when (telephonyManager.callState) {
+            currentPhoneState = when (telephonyManager.callState) {
                 0 -> "idle"
                 1 -> "ringing"
                 2 -> "offhook"
@@ -38,16 +51,13 @@ class PhoneStateSensorManager : SensorManager {
         }
 
         var phoneIcon = "mdi:phone"
-        if (phoneState == "ringing" || phoneState == "offhook")
+        if (currentPhoneState == "ringing" || currentPhoneState == "offhook")
             phoneIcon += "-in-talk"
 
-        return SensorRegistration(
-            ID_PHONE,
-            phoneState,
-            "sensor",
+        return phoneState.toSensorRegistration(
+            currentPhoneState,
             phoneIcon,
-            mapOf(),
-            "Phone State"
+            mapOf()
         )
     }
 }

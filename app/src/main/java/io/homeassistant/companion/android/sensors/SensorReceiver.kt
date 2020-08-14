@@ -6,7 +6,6 @@ import android.content.Intent
 import android.util.Log
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import javax.inject.Inject
@@ -75,34 +74,20 @@ class SensorReceiver : BroadcastReceiver() {
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
         MANAGERS.forEach { manager ->
-            manager.getSensorRegistrations(context).forEach { registration ->
-                // Ensure dao is up to date
-                var sensor = sensorDao.get(registration.uniqueId)
-                val hasPermission = manager.checkPermission(context)
-                if (sensor == null) {
-                    sensor = Sensor(
-                        registration.uniqueId, hasPermission, false,
-                        registration.state.toString()
-                    )
-                    sensorDao.add(sensor)
-                } else {
-                    sensor.enabled = sensor.enabled && hasPermission
-                    sensor.state = registration.state.toString()
-                }
+            manager.availableSensors.forEach { basicSensor ->
+                // Only if we are enabled should we try to get values.
+                val sensorData = manager.getEnabledSensorData(context, basicSensor.id)
+                val sensor = sensorDao.get(basicSensor.id)
 
-                // Register Sensors
-                if (!sensor.registered) {
+                // Register Sensors if needed
+                if (sensorData != null && sensor?.registered == false) {
                     try {
-                        integrationUseCase.registerSensor(registration)
+                        integrationUseCase.registerSensor(sensorData)
                         sensor.registered = true
+                        enabledRegistrations.add(sensorData)
                     } catch (e: Exception) {
-                        Log.e(TAG, "Issue registering sensor: ${registration.uniqueId}", e)
+                        Log.e(TAG, "Issue registering sensor: ${sensorData.uniqueId}", e)
                     }
-                }
-                sensorDao.update(sensor)
-
-                if (sensor.enabled && sensor.registered) {
-                    enabledRegistrations.add(registration)
                 }
             }
         }
