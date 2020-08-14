@@ -49,11 +49,11 @@ class LightSensorManager : SensorManager, SensorEventListener, AppCompatActivity
         mySensorManager = context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val lightSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) as Sensor
-        if(lightSensors != null){
+        if (lightSensors != null) {
             mySensorManager.registerListener(
                 this,
                 lightSensors,
-                SENSOR_DELAY_NORMAL);
+                SENSOR_DELAY_NORMAL)
         }
 
         val icon = "mdi:brightness-5"
@@ -71,7 +71,7 @@ class LightSensorManager : SensorManager, SensorEventListener, AppCompatActivity
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
-            if(event.sensor.type == Sensor.TYPE_LIGHT){
+            if (event.sensor.type == Sensor.TYPE_LIGHT) {
                 lightReading = event.values[0].roundToInt().toString()
             }
         }
