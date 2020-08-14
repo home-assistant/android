@@ -11,6 +11,12 @@ class StorageSensorManager : SensorManager {
     companion object {
 
         private const val TAG = "StorageSensor"
+        private val storageSensor = SensorManager.BasicSensor(
+            "storage_sensor",
+            "sensor",
+            "Storage Sensor",
+            unitOfMeasurement = "%"
+        )
         val path: File = Environment.getDataDirectory()
         private val stat = StatFs(path.path)
         var availableBlocks = stat.availableBlocksLong
@@ -31,13 +37,21 @@ class StorageSensorManager : SensorManager {
 
     override val name: String
         get() = "Storage Sensors"
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(StorageSensorManager.storageSensor)
 
     override fun requiredPermissions(): Array<String> {
         return emptyArray()
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf(getStorageSensor(context))
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            StorageSensorManager.storageSensor.id -> getStorageSensor(context)
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 
     private fun getStorageSensor(context: Context): SensorRegistration<Any> {
@@ -61,19 +75,15 @@ class StorageSensorManager : SensorManager {
 
         val icon = "mdi:harddisk"
 
-        return SensorRegistration(
-            "storage_sensor",
+        return storageSensor.toSensorRegistration(
             percentageFreeInternalStorage,
-            "sensor",
             icon,
             mapOf(
                 "Free internal storage" to freeInternalStorage,
                 "Total internal storage" to totalInternalStorage,
                 "Free external storage" to freeExternalStorage,
                 "Total external storage" to totalExternalStorage
-            ),
-            "Storage Sensor",
-            unitOfMeasurement = "%"
+            )
         )
     }
 
