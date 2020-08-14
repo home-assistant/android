@@ -24,6 +24,7 @@ class SensorReceiver : BroadcastReceiver() {
             BluetoothSensorManager(),
             NetworkSensorManager(),
             GeocodeSensorManager(),
+            LightSensorManager(),
             NextAlarmManager(),
             PhoneStateSensorManager(),
             StorageSensorManager()
