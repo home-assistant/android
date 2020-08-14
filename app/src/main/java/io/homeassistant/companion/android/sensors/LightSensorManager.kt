@@ -1,69 +1,72 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import android.content.Context.SENSOR_SERVICE
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
-import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import kotlin.math.roundToInt
 
-class LightSensorManager : SensorManager, SensorEventListener {
+class LightSensorManager : SensorManager, SensorEventListener, AppCompatActivity() {
     companion object {
 
         private const val TAG = "LightSensor"
-        private var lightReading: String = 0f.roundToInt().toString()
+        private val lightSensor = SensorManager.BasicSensor(
+            "light_sensor",
+            "sensor",
+            "Light Sensor",
+            "illuminance",
+            "lx"
+        )
+        private var lightReading: String = "unavailable"
         lateinit var mySensorManager: android.hardware.SensorManager
     }
 
     override val name: String
         get() = "Light Sensors"
 
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(lightSensor)
+
     override fun requiredPermissions(): Array<String> {
         return emptyArray()
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf(getLightSensor(context))
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            lightSensor.id -> getLightSensor(context)
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 
     private fun getLightSensor(context: Context): SensorRegistration<Any> {
 
         mySensorManager = context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
-        val lightSensor = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) as Sensor
-        if(lightSensor != null){
+        val lightSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) as Sensor
+        if(lightSensors != null){
             mySensorManager.registerListener(
                 this,
-                lightSensor,
+                lightSensors,
                 SENSOR_DELAY_NORMAL);
-
-        } else {
-            Log.e(TAG, "Light sensor not found for the device, sending unavailable")
-            lightReading = "unavailable"
         }
-
-
 
         val icon = "mdi:brightness-5"
 
-        return SensorRegistration(
-            "light_sensor",
+        return lightSensor.toSensorRegistration(
             lightReading,
-            "sensor",
             icon,
-            mapOf(),
-            "Light Sensor",
-            "illuminance",
-            "lx"
+            mapOf()
         )
     }
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
-        // TODO Auto-generated method stub
-
+        // Nothing happening here but we are required to call onAccuracyChanged for sensor events
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
@@ -74,11 +77,8 @@ class LightSensorManager : SensorManager, SensorEventListener {
         }
     }
 
-    fun onPause() {
-
+    override fun onPause() {
+        super.onPause()
         mySensorManager.unregisterListener(this)
-
-       // super.onPause()
     }
-
 }
