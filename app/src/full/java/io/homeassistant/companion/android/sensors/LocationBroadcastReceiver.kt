@@ -266,17 +266,22 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
                             TAG,
                             "Got single accurate location update: ${locationResult?.lastLocation}"
                         )
-                        if (locationResult != null && locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY) {
+                        if (locationResult == null) {
+                            Log.w(TAG, "No location provided.")
+                            return
+                        }
+
+                        if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY) {
                             Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                             runBlocking { sendLocationUpdate(locationResult.lastLocation) }
                             LocationServices.getFusedLocationProviderClient(context)
                                 .removeLocationUpdates(this)
-                        } else if (numberCalls >= maxRetries) {
+                        } else if (numberCalls >= maxRetries && locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY * 2) {
                             Log.d(
                                 TAG,
                                 "No location was accurate enough, sending our last location anyway"
                             )
-                            runBlocking { sendLocationUpdate(locationResult!!.lastLocation) }
+                            runBlocking { sendLocationUpdate(locationResult.lastLocation) }
                         } else {
                             Log.w(
                                 TAG,
@@ -294,7 +299,10 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
 
     override fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
         } else {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
