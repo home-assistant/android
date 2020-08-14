@@ -7,7 +7,9 @@ import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.Build
+import android.os.PowerManager
 import android.util.Log
+import androidx.core.content.ContextCompat.getSystemService
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.GeofencingRequest
@@ -266,6 +268,12 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
             .requestLocationUpdates(
                 request,
                 object : LocationCallback() {
+                    val wakeLock: PowerManager.WakeLock? =
+                        getSystemService(context, PowerManager::class.java)
+                        ?.newWakeLock(
+                            PowerManager.PARTIAL_WAKE_LOCK,
+                            "HomeAssistant::AccurateLocation"
+                        )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
                     var numberCalls = 0
                     override fun onLocationResult(locationResult: LocationResult?) {
                         numberCalls++
@@ -273,17 +281,25 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
                             TAG,
                             "Got single accurate location update: ${locationResult?.lastLocation}"
                         )
-                        if (locationResult != null && locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY) {
+                        if (locationResult == null) {
+                            Log.w(TAG, "No location provided.")
+                            return
+                        }
+
+                        if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY) {
                             Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                             runBlocking { sendLocationUpdate(locationResult.lastLocation) }
                             LocationServices.getFusedLocationProviderClient(context)
                                 .removeLocationUpdates(this)
+                            wakeLock?.release()
                         } else if (numberCalls >= maxRetries) {
                             Log.d(
                                 TAG,
                                 "No location was accurate enough, sending our last location anyway"
                             )
-                            runBlocking { sendLocationUpdate(locationResult!!.lastLocation) }
+                            if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY * 2)
+                                runBlocking { sendLocationUpdate(locationResult.lastLocation) }
+                            wakeLock?.release()
                         } else {
                             Log.w(
                                 TAG,
