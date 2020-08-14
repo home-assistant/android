@@ -12,19 +12,34 @@ import java.util.TimeZone
 
 class NextAlarmManager : SensorManager {
     companion object {
-
         private const val TAG = "NextAlarm"
+
+        private val nextAlarm = SensorManager.BasicSensor(
+            "next_alarm",
+            "sensor",
+            "Next Alarm",
+            "timestamp"
+        )
     }
 
     override val name: String
         get() = "Alarm Sensors"
 
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(nextAlarm)
+
     override fun requiredPermissions(): Array<String> {
         return emptyArray()
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf(getNextAlarm(context))
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            nextAlarm.id -> getNextAlarm(context)
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 
     private fun getNextAlarm(context: Context): SensorRegistration<Any> {
@@ -35,7 +50,8 @@ class NextAlarmManager : SensorManager {
         var pendingIntent = ""
 
         try {
-            val alarmManager: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val alarmManager: AlarmManager =
+                context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
             val alarmClockInfo = alarmManager.nextAlarmClock
 
@@ -58,18 +74,14 @@ class NextAlarmManager : SensorManager {
 
         val icon = "mdi:alarm"
 
-        return SensorRegistration(
-            "next_alarm",
+        return nextAlarm.toSensorRegistration(
             utc,
-            "sensor",
             icon,
             mapOf(
                 "Local Time" to local,
                 "Time in Milliseconds" to triggerTime,
                 "Package" to pendingIntent
-            ),
-            "Next Alarm",
-            "timestamp"
+            )
         )
     }
 }

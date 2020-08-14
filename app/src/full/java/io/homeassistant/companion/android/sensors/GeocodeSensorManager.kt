@@ -14,21 +14,37 @@ class GeocodeSensorManager : SensorManager {
 
     companion object {
         private const val TAG = "GeocodeSM"
+        private val geocodedLocation = SensorManager.BasicSensor(
+            "geocoded_location",
+            "sensor",
+            "Geocoded Location"
+        )
     }
 
     override val name: String
         get() = "Geolocation Sensors"
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(geocodedLocation)
 
     override fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
         } else {
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf(getGeocodedLocation(context))
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            geocodedLocation.id -> getGeocodedLocation(context)
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 
     private fun getGeocodedLocation(context: Context): SensorRegistration<Any> {
@@ -63,13 +79,10 @@ class GeocodeSensorManager : SensorManager {
             )
         }.orEmpty()
 
-        return SensorRegistration(
-            "geocoded_location",
+        return geocodedLocation.toSensorRegistration(
             address?.getAddressLine(0) ?: "Unknown",
-            "sensor",
             "mdi:map",
-            attributes,
-            "Geocoded Location"
+            attributes
         )
     }
 }

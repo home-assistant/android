@@ -11,17 +11,30 @@ import java.lang.reflect.Method
 class BluetoothSensorManager : SensorManager {
     companion object {
         private const val TAG = "BluetoothSM"
+        private val bluetoothConnection = SensorManager.BasicSensor(
+            "bluetooth_connection",
+            "sensor",
+            "Bluetooth Connection"
+        )
     }
 
     override val name: String
         get() = "Bluetooth Sensors"
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(bluetoothConnection)
 
     override fun requiredPermissions(): Array<String> {
         return arrayOf(Manifest.permission.BLUETOOTH)
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf(getBluetoothConnectionSensor(context))
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            bluetoothConnection.id -> getBluetoothConnectionSensor(context)
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 
     private fun getBluetoothConnectionSensor(context: Context): SensorRegistration<Any> {
@@ -64,18 +77,15 @@ class BluetoothSensorManager : SensorManager {
                 }
             }
         }
-        return SensorRegistration(
-            "bluetooth_connection",
+        return bluetoothConnection.toSensorRegistration(
             totalConnectedDevices,
-            "sensor",
             icon,
             mapOf(
                 "connected_paired_devices" to connectedPairedDevices,
                 "connected_not_paired_devices" to connectedNotPairedDevices,
                 "is_bt_on" to isBtOn,
                 "paired_devices" to bondedString
-            ),
-            "Bluetooth Connection"
+            )
         )
     }
 
