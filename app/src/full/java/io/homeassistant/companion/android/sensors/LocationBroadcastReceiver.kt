@@ -22,11 +22,11 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
 
 class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
 
@@ -290,7 +290,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
                                 TAG,
                                 "No location was accurate enough, sending our last location anyway"
                             )
-                            if(locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY * 2)
+                            if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY * 2)
                                 runBlocking { sendLocationUpdate(locationResult.lastLocation) }
                             wakeLock?.release()
                         } else {
