@@ -106,7 +106,7 @@ class ButtonWidget : AppWidgetProvider() {
         }
 
         val views = RemoteViews(context.packageName, R.layout.widget_button).apply {
-            val iconName = widgetStorage.loadIcon(appWidgetId) ?: "ic_flash_on_black_24dp"
+            val iconName = widgetStorage.loadIcon(appWidgetId) ?: "ic_flash_on_24dp"
             val icon = context.resources.getIdentifier(iconName, "drawable", `package`)
 
             setImageViewResource(
@@ -200,7 +200,7 @@ class ButtonWidget : AppWidgetProvider() {
                 views.setInt(
                     R.id.widgetLayout,
                     "setBackgroundResource",
-                    R.drawable.widget_button_background_white
+                    R.drawable.widget_button_background
                 )
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }, 1000)

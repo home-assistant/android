@@ -261,10 +261,10 @@ class ButtonWidgetConfigureActivity : Activity() {
 
         // Set up icon spinner
         val icons = intArrayOf(
-            R.drawable.ic_flash_on_black_24dp,
-            R.drawable.ic_lightbulb_outline_black_24dp,
-            R.drawable.ic_home_black_24dp,
-            R.drawable.ic_power_settings_new_black_24dp
+            R.drawable.ic_flash_on_24dp,
+            R.drawable.ic_lightbulb_outline_24dp,
+            R.drawable.ic_home_24dp,
+            R.drawable.ic_power_settings_new_24dp
         )
 
         widget_config_spinner.adapter = ButtonWidgetConfigSpinnerAdaptor(this, icons)

@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="colorDialogBackground">#171717</color>
+    <color name="colorDialogMessage">@android:color/white</color>
+    <color name="colorDialogTitle">@android:color/white</color>
     <color name="colorPrimary">#03A9F4</color>
     <color name="colorPrimaryDark">#171717</color>
     <color name="colorAccent">#03A9F4</color>
@@ -8,4 +11,7 @@
     <color name="colorHeadline1">@android:color/white</color>
     <color name="colorHeadline2">@android:color/white</color>
     <color name="colorActionBar">#171717</color>
+    <color name="colorIcon">@android:color/white</color>
+    <color name="colorWidgetButtonBackground">#171717</color>
+    <color name="colorWidgetButtonLabel">#E6E6E6</color>
 </resources>
