@@ -81,8 +81,7 @@ class StorageSensorManager : SensorManager {
         var freeExternalStorage = "No SD Card"
 
         if (externalPath != null) {
-            val pathSD = context.getExternalFilesDir(externalPath.toString())
-            val statSD = StatFs(pathSD?.path)
+            val statSD = StatFs(externalPath.toString())
             blockSizeSD = statSD.blockSizeLong
             availableBlocksSD = statSD.availableBlocksLong
             totalBlocksSD = statSD.blockCountLong
