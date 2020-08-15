@@ -73,7 +73,7 @@ class MessagingService : FirebaseMessagingService() {
     override fun onCreate() {
         super.onCreate()
         DaggerServiceComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
+            .appComponent((applicationContext.applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
     }
