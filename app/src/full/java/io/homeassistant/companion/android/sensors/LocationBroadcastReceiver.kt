@@ -1,12 +1,15 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.Build
+import android.os.PowerManager
 import android.util.Log
+import androidx.core.content.ContextCompat.getSystemService
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
 import com.google.android.gms.location.GeofencingRequest
@@ -19,7 +22,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
-import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,10 +42,24 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
 
-        const val ID_BACKGROUND_LOCATION = "location_background"
-        const val ID_ZONE_LOCATION = "location_zone"
-
+        val backgroundLocation = SensorManager.BasicSensor(
+            "location_background",
+            "",
+            "Background Location"
+        )
+        val zoneLocation = SensorManager.BasicSensor(
+            "zone_background",
+            "",
+            "Zone Location"
+        )
         internal const val TAG = "LocBroadcastReceiver"
+
+        fun restartLocationTracking(context: Context) {
+            val intent = Intent(context, LocationBroadcastReceiver::class.java)
+            intent.action = ACTION_REQUEST_LOCATION_UPDATES
+
+            context.sendBroadcast(intent)
+        }
     }
 
     @Inject
@@ -76,7 +92,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     private fun setupLocationTracking(context: Context) {
-        if (!PermissionManager.checkLocationPermission(context)) {
+        if (!checkPermission(context)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
         }
@@ -87,9 +103,9 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
             try {
                 removeAllLocationUpdateRequests(context)
 
-                if (sensorDao.get(ID_BACKGROUND_LOCATION)?.enabled == true)
+                if (sensorDao.get(backgroundLocation.id)?.enabled == true)
                     requestLocationUpdates(context)
-                if (sensorDao.get(ID_ZONE_LOCATION)?.enabled == true)
+                if (sensorDao.get(zoneLocation.id)?.enabled == true)
                     requestZoneUpdates(context)
             } catch (e: Exception) {
                 Log.e(TAG, "Issue setting up location tracking", e)
@@ -110,7 +126,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     private fun requestLocationUpdates(context: Context) {
-        if (!PermissionManager.checkLocationPermission(context)) {
+        if (!checkPermission(context)) {
             Log.w(TAG, "Not registering for location updates because of permissions.")
             return
         }
@@ -126,7 +142,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     private suspend fun requestZoneUpdates(context: Context) {
-        if (!PermissionManager.checkLocationPermission(context)) {
+        if (!checkPermission(context)) {
             Log.w(TAG, "Not registering for zone based updates because of permissions.")
             return
         }
@@ -240,7 +256,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     private fun requestSingleAccurateLocation(context: Context) {
-        if (!PermissionManager.checkLocationPermission(context)) {
+        if (!checkPermission(context)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
         }
@@ -252,6 +268,12 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
             .requestLocationUpdates(
                 request,
                 object : LocationCallback() {
+                    val wakeLock: PowerManager.WakeLock? =
+                        getSystemService(context, PowerManager::class.java)
+                        ?.newWakeLock(
+                            PowerManager.PARTIAL_WAKE_LOCK,
+                            "HomeAssistant::AccurateLocation"
+                        )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
                     var numberCalls = 0
                     override fun onLocationResult(locationResult: LocationResult?) {
                         numberCalls++
@@ -259,17 +281,25 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
                             TAG,
                             "Got single accurate location update: ${locationResult?.lastLocation}"
                         )
-                        if (locationResult != null && locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY) {
+                        if (locationResult == null) {
+                            Log.w(TAG, "No location provided.")
+                            return
+                        }
+
+                        if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY) {
                             Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                             runBlocking { sendLocationUpdate(locationResult.lastLocation) }
                             LocationServices.getFusedLocationProviderClient(context)
                                 .removeLocationUpdates(this)
+                            wakeLock?.release()
                         } else if (numberCalls >= maxRetries) {
                             Log.d(
                                 TAG,
                                 "No location was accurate enough, sending our last location anyway"
                             )
-                            runBlocking { sendLocationUpdate(locationResult!!.lastLocation) }
+                            if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY * 2)
+                                runBlocking { sendLocationUpdate(locationResult.lastLocation) }
+                            wakeLock?.release()
                         } else {
                             Log.w(
                                 TAG,
@@ -285,28 +315,38 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     override val name: String
         get() = "Location Sensors"
 
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(backgroundLocation, zoneLocation)
+
     override fun requiredPermissions(): Array<String> {
-        return PermissionManager.getLocationPermissionArray()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf<SensorRegistration<Any>>(
-            SensorRegistration(
-                ID_BACKGROUND_LOCATION,
-                "",
-                "",
-                "mdi:map",
-                mapOf(),
-                "Background Location"
-            ),
-            SensorRegistration(
-                ID_ZONE_LOCATION,
-                "",
-                "",
-                "mdi:map",
-                mapOf(),
-                "Zone Based Location"
-            )
-        )
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            zoneLocation.id ->
+                zoneLocation.toSensorRegistration(
+                    "",
+                    "mdi:map",
+                    mapOf()
+                )
+            backgroundLocation.id ->
+                backgroundLocation.toSensorRegistration(
+                    "",
+                    "mdi:map",
+                    mapOf()
+                )
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 }

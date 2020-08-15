@@ -214,7 +214,7 @@ class ButtonWidget : AppWidgetProvider() {
                 views.setInt(
                     R.id.widgetLayout,
                     "setBackgroundResource",
-                    R.drawable.widget_button_background_white
+                    R.drawable.widget_button_background
                 )
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             }, 1000)

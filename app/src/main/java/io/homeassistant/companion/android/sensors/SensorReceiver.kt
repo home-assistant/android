@@ -6,14 +6,13 @@ import android.content.Intent
 import android.util.Log
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SensorReceiver : BroadcastReceiver() {
@@ -26,7 +25,8 @@ class SensorReceiver : BroadcastReceiver() {
             NetworkSensorManager(),
             GeocodeSensorManager(),
             NextAlarmManager(),
-            PhoneStateSensorManager()
+            PhoneStateSensorManager(),
+            StorageSensorManager()
         )
     }
 
@@ -35,15 +35,30 @@ class SensorReceiver : BroadcastReceiver() {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
+    private val chargingActions = listOf(
+        Intent.ACTION_BATTERY_LOW,
+        Intent.ACTION_BATTERY_OKAY,
+        Intent.ACTION_POWER_CONNECTED,
+        Intent.ACTION_POWER_DISCONNECTED
+    )
+
     override fun onReceive(context: Context, intent: Intent) {
 
         DaggerSensorComponent.builder()
-            .appComponent((context as GraphComponentAccessor).appComponent)
+            .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
 
+        LocationBroadcastReceiver.restartLocationTracking(context)
+
         ioScope.launch {
             updateSensors(context, integrationUseCase)
+            if (chargingActions.contains(intent.action)) {
+                // Add a 5 second delay to perform another update so charging state updates completely.
+                // This is necessary as the system needs a few seconds to verify the charger.
+                delay(5000L)
+                updateSensors(context, integrationUseCase)
+            }
         }
     }
 
@@ -60,38 +75,22 @@ class SensorReceiver : BroadcastReceiver() {
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
         MANAGERS.forEach { manager ->
-            manager.getSensorRegistrations(context).forEach { registration ->
-                // Ensure dao is up to date
-                var sensor = sensorDao.get(registration.uniqueId)
-                var hasPermission = true
-                manager.requiredPermissions().forEach {
-                    hasPermission =
-                        hasPermission && PermissionManager.hasPermission(context, it)
-                }
-                if (sensor == null) {
-                    sensor = Sensor(
-                        registration.uniqueId, hasPermission, false,
-                        registration.state.toString()
-                    )
-                    sensorDao.add(sensor)
-                } else {
-                    sensor.enabled = sensor.enabled && hasPermission
-                    sensor.state = registration.state.toString()
-                }
+            manager.availableSensors.forEach { basicSensor ->
+                // Only if we are enabled should we try to get values.
+                val sensorData = manager.getEnabledSensorData(context, basicSensor.id)
+                val sensor = sensorDao.get(basicSensor.id)
 
-                // Register Sensors
-                if (!sensor.registered) {
+                // Register Sensors if needed
+                if (sensorData != null && sensor?.registered == false) {
                     try {
-                        integrationUseCase.registerSensor(registration)
+                        integrationUseCase.registerSensor(sensorData)
                         sensor.registered = true
                     } catch (e: Exception) {
-                        Log.e(TAG, "Issue registering sensor: ${registration.uniqueId}", e)
+                        Log.e(TAG, "Issue registering sensor: ${sensorData.uniqueId}", e)
                     }
                 }
-                sensorDao.update(sensor)
-
-                if (sensor.enabled && sensor.registered) {
-                    enabledRegistrations.add(registration)
+                if (sensorData != null) {
+                    enabledRegistrations.add(sensorData)
                 }
             }
         }

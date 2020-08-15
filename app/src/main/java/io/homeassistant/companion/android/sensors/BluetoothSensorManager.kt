@@ -1,26 +1,41 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile.GATT
 import android.content.Context
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.util.PermissionManager
 import java.lang.reflect.Method
 
 class BluetoothSensorManager : SensorManager {
     companion object {
         private const val TAG = "BluetoothSM"
+        private val bluetoothConnection = SensorManager.BasicSensor(
+            "bluetooth_connection",
+            "sensor",
+            "Bluetooth Connection",
+            unitOfMeasurement = "connection(s)"
+        )
     }
+
     override val name: String
         get() = "Bluetooth Sensors"
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(bluetoothConnection)
 
     override fun requiredPermissions(): Array<String> {
-        return PermissionManager.getBluetoohPermissionArray()
+        return arrayOf(Manifest.permission.BLUETOOTH)
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        return listOf(getBluetoothConnectionSensor(context))
+    override fun getSensorData(
+        context: Context,
+        sensorId: String
+    ): SensorRegistration<Any> {
+        return when (sensorId) {
+            bluetoothConnection.id -> getBluetoothConnectionSensor(context)
+            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
+        }
     }
 
     private fun getBluetoothConnectionSensor(context: Context): SensorRegistration<Any> {
@@ -33,7 +48,7 @@ class BluetoothSensorManager : SensorManager {
         var bondedString = ""
         var isBtOn = false
 
-        if (PermissionManager.checkBluetoothPermission(context)) {
+        if (checkPermission(context)) {
 
             val bluetoothManager =
                 (context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
@@ -58,25 +73,23 @@ class BluetoothSensorManager : SensorManager {
                     if (isConnected(BluetoothDevice)) {
                         connectedNotPairedAddress = BluetoothDevice.address
                         connectedNotPairedDevices.add(connectedNotPairedAddress)
-                        totalConnectedDevices += 1
+                        if (connectedNotPairedAddress != connectedAddress) {
+                            totalConnectedDevices += 1
+                        }
                     }
                 }
             }
         }
-        return SensorRegistration(
-            "bluetooth_connection",
+        return bluetoothConnection.toSensorRegistration(
             totalConnectedDevices,
-            "sensor",
             icon,
             mapOf(
                 "connected_paired_devices" to connectedPairedDevices,
                 "connected_not_paired_devices" to connectedNotPairedDevices,
                 "is_bt_on" to isBtOn,
                 "paired_devices" to bondedString
-                ),
-            "Bluetooth Connection"
             )
-        }
+        )
     }
 
     private fun isConnected(device: BluetoothDevice): Boolean {
@@ -87,3 +100,4 @@ class BluetoothSensorManager : SensorManager {
             throw IllegalStateException(e)
         }
     }
+}

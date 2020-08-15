@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:minHeight="40dp"
     android:minWidth="40dp"
-    android:background="@drawable/widget_button_background_white"
+    android:background="@drawable/widget_button_background"
     android:padding="4dp">
 
     <LinearLayout
@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:src="@drawable/ic_flash_on_black_24dp"
+            android:src="@drawable/ic_flash_on_24dp"
             android:contentDescription="@string/widget_button_image_description"
             android:gravity="center"
             />
@@ -40,6 +40,7 @@
                 android:textSize="12sp"
                 android:textAlignment="center"
                 android:gravity="center"
+                android:textColor="@color/colorWidgetButtonLabel"
                 android:minLines="1"
                 android:maxLines="2"
                 />

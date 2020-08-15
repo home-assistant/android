@@ -40,7 +40,7 @@ class SensorWorker(
 
     init {
         DaggerSensorComponent.builder()
-            .appComponent((appContext as GraphComponentAccessor).appComponent)
+            .appComponent((appContext.applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
     }
