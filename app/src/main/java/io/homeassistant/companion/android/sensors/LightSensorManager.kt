@@ -48,7 +48,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
 
         mySensorManager = context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
-        val lightSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT) as Sensor
+        val lightSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
         if (lightSensors != null) {
             mySensorManager.registerListener(
                 this,
