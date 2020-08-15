@@ -569,14 +569,16 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         isInPictureInPictureMode: Boolean,
         newConfig: Configuration
     ) {
-        if (isInPictureInPictureMode) {
-            (decor.getChildAt(3) as FrameLayout).layoutParams.height =
-                FrameLayout.LayoutParams.MATCH_PARENT
-            decor.requestLayout()
-        } else {
-            if (decor.getChildAt(3) != null) {
-                (decor.getChildAt(3) as FrameLayout).layoutParams.height = videoHeight
+        if (exoPlayerView.visibility != View.VISIBLE) {
+            if (isInPictureInPictureMode) {
+                (decor.getChildAt(3) as FrameLayout).layoutParams.height =
+                    FrameLayout.LayoutParams.MATCH_PARENT
                 decor.requestLayout()
+            } else {
+                if (decor.getChildAt(3) != null) {
+                    (decor.getChildAt(3) as FrameLayout).layoutParams.height = videoHeight
+                    decor.requestLayout()
+                }
             }
         }
     }
@@ -587,7 +589,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         unlocked = false
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
-        if (isVideoFullScreen) {
+        if (isVideoFullScreen or isExoFullScreen) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(
