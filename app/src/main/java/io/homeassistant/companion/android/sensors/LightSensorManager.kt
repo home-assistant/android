@@ -1,15 +1,15 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.content.Context.SENSOR_SERVICE
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
-import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import kotlin.math.roundToInt
 
-class LightSensorManager : SensorManager, SensorEventListener, AppCompatActivity() {
+class LightSensorManager : SensorManager, SensorEventListener {
     companion object {
 
         private const val TAG = "LightSensor"
@@ -75,10 +75,6 @@ class LightSensorManager : SensorManager, SensorEventListener, AppCompatActivity
                 lightReading = event.values[0].roundToInt().toString()
             }
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
         mySensorManager.unregisterListener(this)
     }
 }
