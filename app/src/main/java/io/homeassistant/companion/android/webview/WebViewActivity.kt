@@ -334,8 +334,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }, "externalApp")
         }
 
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK_STRATEGY)) {
-            WebSettingsCompat.setForceDarkStrategy(webView.getSettings(), WebSettingsCompat.DARK_STRATEGY_WEB_THEME_DARKENING_ONLY)
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
+            val nightModeFlags = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+            if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
+                WebSettingsCompat.setForceDark(webView.settings, WebSettingsCompat.FORCE_DARK_ON)
+            } else {
+                WebSettingsCompat.setForceDark(webView.settings, WebSettingsCompat.FORCE_DARK_OFF)
+            }
         }
 
         val cookieManager = CookieManager.getInstance()

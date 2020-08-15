@@ -11,6 +11,6 @@
         android:layout_height="40dp"
         android:padding="8dp"
         android:scaleType="fitCenter"
-        tools:src="@drawable/ic_flash_on_black_24dp"/>
+        tools:src="@drawable/ic_flash_on_24dp"/>
 
 </LinearLayout>

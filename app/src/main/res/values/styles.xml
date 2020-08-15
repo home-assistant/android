@@ -1,21 +1,23 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="Theme.HomeAssistant" parent="Theme.MaterialComponents.Light.NoActionBar">
+    <style name="Theme.HomeAssistant" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="colorButtonNormal">@color/colorPrimary</item>
+        <item name="android:colorBackground">@color/colorActivityBackground</item>
+        <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
     </style>
 
     <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.MaterialComponents.Headline1">
         <item name="android:textSize">20sp</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColor">@color/colorHeadline1</item>
     </style>
 
     <style name="TextAppearance.HomeAssistant.Title" parent="TextAppearance.MaterialComponents.Headline2">
         <item name="android:textSize">18sp</item>
-        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColor">@color/colorHeadline2</item>
     </style>
 
     <style name="TextAppearance.HomeAssistant.Medium" parent="TextAppearance.MaterialComponents.Headline3">
@@ -31,16 +33,35 @@
     </style>
 
     <style name="ThemeOverlay.HomeAssistant.ActionBar" parent="@style/ThemeOverlay.MaterialComponents.ActionBar">
-        <item name="android:background">@color/colorPrimary</item>
+        <item name="android:background">@color/colorActionBar</item>
         <item name="android:textColorPrimary">@color/colorOnPrimary</item>
         <item name="colorControlNormal">@color/colorOnPrimary</item>
     </style>
 
-    <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert" />
-
-    <style name="Authentication_Dialog" parent="Theme.MaterialComponents.Light.Dialog">
-        <item name="windowMinWidthMajor">300dp</item>
-        <item name="windowMinWidthMinor">0dp</item>
+    <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert">
+        <item name="android:background">@color/colorDialogBackground</item>
+        <item name="android:textColor">@color/colorDialogTitle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Alert.Button.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Alert.Button.Negative</item>
+        <item name="android:textColorPrimary">@color/colorDialogMessage</item>
     </style>
 
+    <style name="Authentication_Dialog" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="android:background">@color/colorDialogBackground</item>
+        <item name="android:textColor">@color/colorDialogTitle</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Alert.Button.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Alert.Button.Negative</item>
+        <item name="windowMinWidthMajor">300dp</item>
+        <item name="windowMinWidthMinor">0dp</item>
+        <item name="android:textColorPrimary">@color/colorDialogMessage</item>
+
+    </style>
+
+    <style name="Alert.Button.Positive" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/colorAccent</item>
+    </style>
+
+    <style name="Alert.Button.Negative" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/colorAccent</item>
+    </style>
 </resources>
