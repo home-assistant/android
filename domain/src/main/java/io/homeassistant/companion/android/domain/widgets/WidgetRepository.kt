@@ -29,4 +29,10 @@ interface WidgetRepository {
 
     suspend fun saveLabel(appWidgetId: Int, data: String?)
     suspend fun deleteWidgetData(appWidgetId: Int)
+
+    suspend fun saveTextSize(appWidgetId: Int, data: Int?)
+    suspend fun loadTextSize(appWidgetId: Int): Int?
+
+    suspend fun saveSeparator(appWidgetId: Int, data: String?)
+    suspend fun loadSeparator(appWidgetId: Int): String?
 }

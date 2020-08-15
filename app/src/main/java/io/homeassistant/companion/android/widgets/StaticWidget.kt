@@ -7,16 +7,17 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.widgets.WidgetUseCase
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class StaticWidget : AppWidgetProvider() {
 
@@ -30,6 +31,8 @@ class StaticWidget : AppWidgetProvider() {
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         internal const val EXTRA_ATTRIBUTE_ID = "EXTRA_ATTRIBUTE_ID"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
+        internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
+        internal const val EXTRA_SEPARATOR = "EXTRA_SEPARATOR"
     }
 
     @Inject
@@ -76,9 +79,18 @@ class StaticWidget : AppWidgetProvider() {
             val entityId: String? = widgetStorage.loadEntityId(appWidgetId)
             val attributeId: String? = widgetStorage.loadAttributeId(appWidgetId)
             val label: String? = widgetStorage.loadLabel(appWidgetId)
+            val textSize: Int? = widgetStorage.loadTextSize(appWidgetId)
+            val separator: String? = widgetStorage.loadSeparator(appWidgetId)
+            if (textSize != null) {
+                setTextViewTextSize(
+                    R.id.widgetText,
+                    TypedValue.COMPLEX_UNIT_SP,
+                    textSize.toFloat()
+                )
+            }
             setTextViewText(
                 R.id.widgetText,
-                resolveTextToShow(entityId, attributeId)
+                resolveTextToShow(entityId, attributeId, separator)
             )
             setTextViewText(
                 R.id.widgetLabel,
@@ -100,7 +112,8 @@ class StaticWidget : AppWidgetProvider() {
 
     private suspend fun resolveTextToShow(
         entityId: String?,
-        attributeId: String?
+        attributeId: String?,
+        separator: String?
     ): CharSequence? {
         val entity = integrationUseCase.getEntities().find { e -> e.entityId.equals(entityId) }
 
@@ -108,7 +121,7 @@ class StaticWidget : AppWidgetProvider() {
 
         val fetchedAttributes = entity?.attributes as Map<*, *>
         val attributeValue = fetchedAttributes.get(attributeId)?.toString()
-        return entity.state.plus(if (attributeValue != null && attributeValue.isNotEmpty()) " " else "").plus(attributeValue ?: "")
+        return entity.state.plus(if (attributeValue != null && attributeValue.isNotEmpty()) separator else "").plus(attributeValue ?: "")
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -137,6 +150,8 @@ class StaticWidget : AppWidgetProvider() {
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
         val attributeSelection: String? = extras.getString(EXTRA_ATTRIBUTE_ID)
         val labelSelection: String? = extras.getString(EXTRA_LABEL)
+        val textSizeSelection: String? = extras.getString(EXTRA_TEXT_SIZE)
+        val separatorSelection: String? = extras.getString(EXTRA_SEPARATOR)
 
         if (entitySelection == null) {
             Log.e(TAG, "Did not receive complete service call data")
@@ -156,6 +171,17 @@ class StaticWidget : AppWidgetProvider() {
                 attributeSelection
             )
             widgetStorage.saveLabel(appWidgetId, labelSelection)
+            if (textSizeSelection != null) {
+                widgetStorage.saveTextSize(
+                    appWidgetId,
+                    textSizeSelection.toInt()
+                )
+            }
+            if (separatorSelection == "") {
+                widgetStorage.saveSeparator(appWidgetId, " ")
+            } else {
+                widgetStorage.saveSeparator(appWidgetId, separatorSelection)
+            }
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }

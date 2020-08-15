@@ -60,12 +60,28 @@ class WidgetUseCaseImpl @Inject constructor(
         return widgetRepository.loadLabel(appWidgetId)
     }
 
+    override suspend fun loadTextSize(appWidgetId: Int): Int? {
+        return widgetRepository.loadTextSize(appWidgetId)
+    }
+
+    override suspend fun loadSeparator(appWidgetId: Int): String? {
+        return widgetRepository.loadSeparator(appWidgetId)
+    }
+
     override suspend fun saveIcon(appWidgetId: Int, resName: String?) {
         widgetRepository.saveIcon(appWidgetId, resName)
     }
 
     override suspend fun saveLabel(appWidgetId: Int, data: String?) {
         widgetRepository.saveLabel(appWidgetId, data)
+    }
+
+    override suspend fun saveTextSize(appWidgetId: Int, data: Int?) {
+        widgetRepository.saveTextSize(appWidgetId, data)
+    }
+
+    override suspend fun saveSeparator(appWidgetId: Int, data: String?) {
+        widgetRepository.saveSeparator(appWidgetId, data)
     }
 
     override suspend fun deleteWidgetData(appWidgetId: Int) {

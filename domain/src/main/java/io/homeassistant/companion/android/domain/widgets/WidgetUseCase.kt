@@ -24,9 +24,13 @@ interface WidgetUseCase {
 
     suspend fun loadIcon(appWidgetId: Int): String?
     suspend fun loadLabel(appWidgetId: Int): String?
+    suspend fun loadTextSize(appWidgetId: Int): Int?
+    suspend fun loadSeparator(appWidgetId: Int): String?
 
     suspend fun saveIcon(appWidgetId: Int, resName: String?)
     suspend fun saveLabel(appWidgetId: Int, data: String?)
+    suspend fun saveTextSize(appWidgetId: Int, data: Int?)
+    suspend fun saveSeparator(appWidgetId: Int, data: String?)
 
     suspend fun deleteWidgetData(appWidgetId: Int)
 }

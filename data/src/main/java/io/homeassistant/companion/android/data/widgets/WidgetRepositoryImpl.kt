@@ -18,6 +18,8 @@ class WidgetRepositoryImpl @Inject constructor(
         internal const val PREF_KEY_SERVICE_DATA = "serviceData"
         internal const val PREF_KEY_ICON = "icon"
         internal const val PREF_KEY_LABEL = "label"
+        internal const val PREF_KEY_TEXT_SIZE = "text_size"
+        internal const val PREF_KEY_SEPARATOR = "separator"
     }
 
     override suspend fun saveServiceCallData(
@@ -84,12 +86,28 @@ class WidgetRepositoryImpl @Inject constructor(
         return loadStringPref(PREF_PREFIX_KEY + PREF_KEY_LABEL + appWidgetId)
     }
 
+    override suspend fun loadTextSize(appWidgetId: Int): Int? {
+        return loadStringPref(PREF_PREFIX_KEY + PREF_KEY_TEXT_SIZE + appWidgetId)?.toInt()
+    }
+
+    override suspend fun loadSeparator(appWidgetId: Int): String? {
+        return loadStringPref(PREF_PREFIX_KEY + PREF_KEY_SEPARATOR + appWidgetId)
+    }
+
     override suspend fun saveIcon(appWidgetId: Int, resName: String?) {
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_ICON + appWidgetId, resName)
     }
 
     override suspend fun saveLabel(appWidgetId: Int, data: String?) {
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_LABEL + appWidgetId, data)
+    }
+
+    override suspend fun saveTextSize(appWidgetId: Int, data: Int?) {
+        saveStringPref(PREF_PREFIX_KEY + PREF_KEY_TEXT_SIZE + appWidgetId, data.toString())
+    }
+
+    override suspend fun saveSeparator(appWidgetId: Int, data: String?) {
+        saveStringPref(PREF_PREFIX_KEY + PREF_KEY_SEPARATOR + appWidgetId, data)
     }
 
     override suspend fun deleteWidgetData(appWidgetId: Int) {
@@ -100,6 +118,8 @@ class WidgetRepositoryImpl @Inject constructor(
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_LABEL + appWidgetId, null)
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_ENTITY + appWidgetId, null)
         saveStringPref(PREF_PREFIX_KEY + PREF_KEY_ATTRIBUTE_ID + appWidgetId, null)
+        saveStringPref(PREF_PREFIX_KEY + PREF_KEY_TEXT_SIZE + appWidgetId, null)
+        saveStringPref(PREF_PREFIX_KEY + PREF_KEY_SEPARATOR + appWidgetId, null)
     }
 
     private suspend fun saveStringPref(key: String, data: String?) {
