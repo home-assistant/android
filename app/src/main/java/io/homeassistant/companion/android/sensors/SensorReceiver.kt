@@ -45,7 +45,7 @@ class SensorReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
 
         DaggerSensorComponent.builder()
-            .appComponent((context as GraphComponentAccessor).appComponent)
+            .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
 
