@@ -15,9 +15,9 @@
         android:paddingTop="4dp"
         android:orientation="horizontal">
         <ImageButton android:id="@+id/exo_play" android:layout_height="24dp" android:layout_width="24dp"
-            style="@+style/ExoMediaButton.Play"/>
+            style="@style/ExoMediaButton.Play"/>
         <ImageButton android:id="@+id/exo_pause" android:layout_height="24dp" android:layout_width="24dp"
-            style="@+style/ExoMediaButton.Pause"/>
+            style="@style/ExoMediaButton.Pause"/>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
