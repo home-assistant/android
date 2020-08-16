@@ -50,6 +50,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
+import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -316,7 +317,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                                 "id" to JSONObject(message).get("id"),
                                                 "type" to "result",
                                                 "success" to true,
-                                                "result" to JSONObject(mapOf("hasSettingsScreen" to true))
+                                                "result" to JSONObject(
+                                                    mapOf(
+                                                        "hasSettingsScreen" to true,
+                                                        "canWriteTag" to true
+                                                    )
+                                                )
                                             )
                                         )}" +
                                         ");"
@@ -327,6 +333,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                             }
                             "config_screen/show" -> startActivity(
                                 SettingsActivity.newInstance(this@WebViewActivity)
+                            )
+                            "tag/write" -> startActivity(
+                                NfcSetupActivity.newInstance(this@WebViewActivity)
                             )
                         }
                     }
@@ -547,7 +556,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     @SuppressLint("InflateParams")
-    fun authenticationDialog(handler: HttpAuthHandler, host: String, realm: String, authError: Boolean) {
+    fun authenticationDialog(
+        handler: HttpAuthHandler,
+        host: String,
+        realm: String,
+        authError: Boolean
+    ) {
         val authenticationDao = AppDatabase.getInstance(applicationContext).authenticationDao()
         val httpAuth = authenticationDao.get((resourceURL + realm))
 
@@ -612,15 +626,16 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                         }
                         handler.proceed(username.text.toString(), password.text.toString())
                     } else AlertDialog.Builder(this)
-                            .setTitle(R.string.auth_cancel)
-                            .setMessage(R.string.auth_error_message)
-                            .setPositiveButton(android.R.string.ok) { _, _ ->
-                                authenticationDialog(handler, host, realm, authError)
-                            }
-                            .show()
+                        .setTitle(R.string.auth_cancel)
+                        .setMessage(R.string.auth_error_message)
+                        .setPositiveButton(android.R.string.ok) { _, _ ->
+                            authenticationDialog(handler, host, realm, authError)
+                        }
+                        .show()
                 }
                 .setNeutralButton(android.R.string.cancel) { _, _ ->
-                    Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, R.string.auth_cancel, Toast.LENGTH_SHORT)
+                        .show()
                 }
                 .show()
         }
