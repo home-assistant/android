@@ -15,16 +15,21 @@ import io.homeassistant.companion.android.util.UrlHandler
 
 class NfcSetupActivity : AppCompatActivity() {
 
-    val TAG = NfcSetupActivity::class.simpleName
-
     // private val viewModel: NfcViewModel by viewModels()
     private lateinit var viewModel: NfcViewModel
     private var mNfcAdapter: NfcAdapter? = null
 
     companion object {
-        fun newInstance(context: Context): Intent {
-            return Intent(context, NfcSetupActivity::class.java)
+        val TAG = NfcSetupActivity::class.simpleName
+        const val EXTRA_TAG_VALUE = "tag_value"
+
+        fun newInstance(context: Context, tagId: String? = null): Intent {
+            return Intent(context, NfcSetupActivity::class.java).apply {
+                if(tagId != null)
+                    putExtra(EXTRA_TAG_VALUE, tagId)
+            }
         }
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +41,11 @@ class NfcSetupActivity : AppCompatActivity() {
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this)
         viewModel = ViewModelProvider(this).get(NfcViewModel::class.java)
+
+        intent.getStringExtra(EXTRA_TAG_VALUE)?.let {
+            viewModel.nfcWriteTagEvent.postValue(it)
+
+        }
     }
 
     override fun onResume() {

@@ -335,7 +335,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                 SettingsActivity.newInstance(this@WebViewActivity)
                             )
                             "tag/write" -> startActivity(
-                                NfcSetupActivity.newInstance(this@WebViewActivity)
+                                NfcSetupActivity.newInstance(
+                                    this@WebViewActivity,
+                                    json.getJSONObject("payload").getString("tag")
+                                )
                             )
                         }
                     }
