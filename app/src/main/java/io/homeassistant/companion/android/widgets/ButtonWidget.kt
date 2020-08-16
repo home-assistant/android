@@ -21,8 +21,8 @@ import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.widget.Widget
-import io.homeassistant.companion.android.database.widget.WidgetDao
+import io.homeassistant.companion.android.database.widget.ButtonWidget
+import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -48,7 +48,7 @@ class ButtonWidget : AppWidgetProvider() {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    lateinit var widgetDao: WidgetDao
+    lateinit var buttonWidgetDao: ButtonWidgetDao
 
     private var iconPack: IconPack? = null
 
@@ -59,6 +59,7 @@ class ButtonWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
         // There may be multiple widgets active, so update all of them
         for (appWidgetId in appWidgetIds) {
             mainScope.launch {
@@ -69,9 +70,10 @@ class ButtonWidget : AppWidgetProvider() {
     }
 
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
         for (appWidgetId in appWidgetIds) {
-            widgetDao.delete(appWidgetId)
+            buttonWidgetDao.delete(appWidgetId)
         }
     }
 
@@ -95,7 +97,7 @@ class ButtonWidget : AppWidgetProvider() {
 
         ensureInjected(context)
 
-        widgetDao = AppDatabase.getInstance(context).widgetDao()
+        buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
 
         super.onReceive(context, intent)
         when (action) {
@@ -115,7 +117,7 @@ class ButtonWidget : AppWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
-        val widget = widgetDao.get(appWidgetId)
+        val widget = buttonWidgetDao.get(appWidgetId)
 
         // Create an icon pack and load all drawables.
         if(iconPack == null) {
@@ -163,7 +165,7 @@ class ButtonWidget : AppWidgetProvider() {
         loadingViews.setViewVisibility(R.id.widgetImageButtonLayout, View.GONE)
         appWidgetManager.partiallyUpdateAppWidget(appWidgetId, loadingViews)
 
-        val widget = widgetDao.get(appWidgetId)
+        val widget = buttonWidgetDao.get(appWidgetId)
 
         mainScope.launch {
             // Change color of background image for feedback
@@ -252,8 +254,8 @@ class ButtonWidget : AppWidgetProvider() {
                         "label: " + label
             )
 
-            val widget = Widget(appWidgetId, icon, domain, service, serviceData, label)
-            widgetDao.add(widget)
+            val widget = ButtonWidget(appWidgetId, icon, domain, service, serviceData, label)
+            buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget
             // This method is only called during the initial setup of the widget,

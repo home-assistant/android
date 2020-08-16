@@ -4,8 +4,8 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "widgets")
-data class Widget(
+@Entity(tableName = "button_widgets")
+data class ButtonWidget(
     @PrimaryKey
     val id: Int,
     @ColumnInfo(name = "icon_id")

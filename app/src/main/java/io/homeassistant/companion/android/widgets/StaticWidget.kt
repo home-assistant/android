@@ -10,8 +10,10 @@ import android.util.Log
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.StaticWidget
+import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.widgets.WidgetUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,8 +37,7 @@ class StaticWidget : AppWidgetProvider() {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    @Inject
-    lateinit var widgetStorage: WidgetUseCase
+    lateinit var staticWidgetDao: StaticWidgetDao
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -45,6 +46,7 @@ class StaticWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(
@@ -73,9 +75,10 @@ class StaticWidget : AppWidgetProvider() {
         }
 
         val views = RemoteViews(context.packageName, R.layout.widget_static).apply {
-            val entityId: String? = widgetStorage.loadEntityId(appWidgetId)
-            val attributeId: String? = widgetStorage.loadAttributeId(appWidgetId)
-            val label: String? = widgetStorage.loadLabel(appWidgetId)
+            val widget = staticWidgetDao.get(appWidgetId)
+            val entityId: String? = widget?.entityId
+            val attributeId: String? = widget?.attributeId
+            val label: String? = widget?.label
             setTextViewText(
                 R.id.widgetText,
                 resolveTextToShow(entityId, attributeId)
@@ -123,6 +126,8 @@ class StaticWidget : AppWidgetProvider() {
 
         ensureInjected(context)
 
+        staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
+
         super.onReceive(context, intent)
 
         when (action) {
@@ -149,13 +154,12 @@ class StaticWidget : AppWidgetProvider() {
                 "entity id: " + entitySelection + System.lineSeparator() +
                 "attribute: " + attributeSelection ?: "N/A"
             )
-
-            widgetStorage.saveStaticEntityData(
+            staticWidgetDao.add(StaticWidget(
                 appWidgetId,
                 entitySelection,
-                attributeSelection
-            )
-            widgetStorage.saveLabel(appWidgetId, labelSelection)
+                attributeSelection,
+                labelSelection
+            ))
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }

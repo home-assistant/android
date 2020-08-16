@@ -7,17 +7,17 @@ import androidx.room.Query
 import androidx.room.Update
 
 @Dao
-interface WidgetDao {
+interface ButtonWidgetDao {
 
-    @Query("SELECT * FROM widgets WHERE id = :id")
-    fun get(id: Int): Widget?
+    @Query("SELECT * FROM button_widgets WHERE id = :id")
+    fun get(id: Int): ButtonWidget?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(widget: Widget)
+    fun add(buttonWidget: ButtonWidget)
 
     @Update
-    fun update(widget: Widget)
+    fun update(buttonWidget: ButtonWidget)
 
-    @Query("DELETE FROM widgets WHERE id = :id")
+    @Query("DELETE FROM button_widgets WHERE id = :id")
     fun delete(id: Int)
 }

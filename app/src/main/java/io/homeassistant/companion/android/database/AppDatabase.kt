@@ -8,21 +8,25 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.database.widget.Widget
-import io.homeassistant.companion.android.database.widget.WidgetDao
+import io.homeassistant.companion.android.database.widget.ButtonWidget
+import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
+import io.homeassistant.companion.android.database.widget.StaticWidget
+import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 
 @Database(
     entities = [
         Authentication::class,
         Sensor::class,
-        Widget::class
+        ButtonWidget::class,
+        StaticWidget::class
     ],
     version = 2
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
     abstract fun sensorDao(): SensorDao
-    abstract fun widgetDao(): WidgetDao
+    abstract fun buttonWidgetDao(): ButtonWidgetDao
+    abstract fun staticWidgetDao(): StaticWidgetDao
 
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
