@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -14,6 +15,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -45,7 +47,8 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    @Inject
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+
     private lateinit var iconPack: IconPack
 
     private var services = HashMap<String, Service>()
@@ -230,10 +233,6 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
 
-        // Create an icon pack and load all drawables.
-        iconPack = createMaterialDesignIconPack(loader)
-        iconPack.loadDrawables(loader.drawableLoader)
-
         val serviceAdapter = SingleItemArrayAdapter<Service>(this) {
             if (it != null) getServiceString(it) else ""
         }
@@ -279,10 +278,16 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         widget_config_fields_layout.adapter = dynamicFieldAdapter
         widget_config_fields_layout.layoutManager = LinearLayoutManager(this)
 
-        // If dialog is already added to fragment manager, get it. If not, create a new instance.
-        val iconDialog = IconDialog.newInstance(IconDialogSettings())
-        widget_config_icon_selector.setOnClickListener {
-            iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
+        // Do this off the main thread, takes a second or two...
+        ioScope.launch {
+            // Create an icon pack and load all drawables.
+            iconPack = createMaterialDesignIconPack(loader)
+            iconPack.loadDrawables(loader.drawableLoader)
+            val iconDialog = IconDialog.newInstance(IconDialogSettings())
+            onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[62017]!!))
+            widget_config_icon_selector.setOnClickListener {
+                iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
+            }
         }
     }
 
@@ -296,10 +301,17 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
 
     override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<Icon>) {
         Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
-        val icon = icons.firstOrNull()
-        if(icon != null) {
-            widget_config_icon_selector.tag = icon.id
-            widget_config_icon_selector.setImageBitmap(icon.drawable?.toBitmap())
+        val selectedIcon = icons.firstOrNull()
+        if(selectedIcon != null) {
+            widget_config_icon_selector.tag = selectedIcon.id
+            val iconDrawable = selectedIcon.drawable
+            if (iconDrawable != null) {
+                val icon = DrawableCompat.wrap(iconDrawable)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    DrawableCompat.setTint(icon, resources.getColor(R.color.colorIcon, theme))
+                }
+                widget_config_icon_selector.setImageBitmap(icon.toBitmap())
+            }
         }
     }
 }

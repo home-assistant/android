@@ -118,7 +118,6 @@ dependencies {
 
     implementation(Config.Dependency.Misc.blurView)
     implementation("com.maltaisn:icondialog:3.3.0")
-    implementation("com.maltaisn:iconpack-default:1.0.1")
     implementation("com.maltaisn:iconpack-community-material:5.3.45")
 
     implementation(Config.Dependency.Kotlin.core)

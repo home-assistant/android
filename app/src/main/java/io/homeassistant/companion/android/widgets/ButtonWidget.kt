@@ -5,16 +5,17 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.maltaisn.icondialog.pack.IconPackLoader
-import com.maltaisn.iconpack.defaultpack.createDefaultIconPack
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
@@ -120,11 +121,15 @@ class ButtonWidget : AppWidgetProvider() {
         iconPack.loadDrawables(loader.drawableLoader)
 
         return RemoteViews(context.packageName, R.layout.widget_button).apply {
-            val iconId = widget?.iconId ?: 61505 //TODO Make me a better default
+            val iconId = widget?.iconId ?: 988171 // Lightning bolt
 
-            val icon = iconPack.icons[iconId]?.drawable?.toBitmap()
-            if (icon != null) {
-                setImageViewBitmap(R.id.widgetImageButton, icon)
+            val iconDrawable = iconPack.icons[iconId]?.drawable
+            if (iconDrawable != null) {
+                val icon = DrawableCompat.wrap(iconDrawable)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    DrawableCompat.setTint(icon, context.resources.getColor(R.color.colorIcon, context.theme))
+                }
+                setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap())
             }
 
             setOnClickPendingIntent(
