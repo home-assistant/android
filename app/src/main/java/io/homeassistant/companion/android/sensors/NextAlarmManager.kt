@@ -57,7 +57,6 @@ class NextAlarmManager : SensorManager {
 
             if (alarmClockInfo != null) {
                 triggerTime = alarmClockInfo.triggerTime
-                pendingIntent = alarmClockInfo.showIntent.creatorPackage.toString()
 
                 val cal: Calendar = GregorianCalendar()
                 cal.timeInMillis = triggerTime
@@ -67,6 +66,8 @@ class NextAlarmManager : SensorManager {
                 val sdf = SimpleDateFormat(dateFormat)
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
+
+                pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: "Unknown"
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)
