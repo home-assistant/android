@@ -6,6 +6,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
+import androidx.preference.contains
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
@@ -94,12 +95,14 @@ class SensorDetailFragment(
                 it.isVisible = false
             else {
                 sensorData?.attributes?.keys?.forEach { key ->
-                    val pref = Preference(requireContext())
+                    val pref = findPreference("attribute_$key") ?: Preference(requireContext())
+                    pref.key = "attribute_$key"
                     pref.title = key
                     pref.summary = sensorData.attributes[key]?.toString() ?: ""
                     pref.isIconSpaceReserved = false
 
-                    it.addPreference(pref)
+                    if (!it.contains(pref))
+                        it.addPreference(pref)
                 }
             }
         }
