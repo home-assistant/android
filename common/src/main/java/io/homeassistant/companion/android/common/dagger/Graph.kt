@@ -6,7 +6,6 @@ import android.content.Context
 import android.net.wifi.WifiManager
 import android.provider.Settings
 import io.homeassistant.companion.android.common.LocalStorageImpl
-import io.homeassistant.companion.android.common.migrations.Migrations
 import io.homeassistant.companion.android.common.wifi.WifiHelperImpl
 
 class Graph(
@@ -19,9 +18,6 @@ class Graph(
     private lateinit var domainComponent: DomainComponent
 
     init {
-        Migrations(application)
-            .migrate()
-
         buildComponent()
     }
 
