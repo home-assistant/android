@@ -17,7 +17,7 @@ import io.homeassistant.companion.android.database.widget.WidgetDao
         Sensor::class,
         Widget::class
     ],
-    version = 1
+    version = 2
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
