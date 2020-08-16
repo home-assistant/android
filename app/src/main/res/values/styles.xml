@@ -44,6 +44,9 @@
         <item name="buttonBarPositiveButtonStyle">@style/Alert.Button.Positive</item>
         <item name="buttonBarNegativeButtonStyle">@style/Alert.Button.Negative</item>
         <item name="android:textColorPrimary">@color/colorDialogMessage</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="textColorAlertDialogListItem">@color/colorDialogMessage</item>
+        <item name="colorControlNormal">@color/colorDialogMessage</item>
     </style>
 
     <style name="Authentication_Dialog" parent="Theme.MaterialComponents.Light.Dialog">

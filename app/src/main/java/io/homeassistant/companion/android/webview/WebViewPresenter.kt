@@ -24,4 +24,7 @@ interface WebViewPresenter {
     fun getSessionExpireMillis(): Long
 
     fun onFinish()
+
+    fun isFollowSystemTheme(): Boolean
+    fun getCurrentTheme(): String?
 }

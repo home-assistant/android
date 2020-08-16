@@ -8,6 +8,7 @@ import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
+import androidx.preference.ListPreference
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -19,6 +20,7 @@ import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
+import io.homeassistant.companion.android.util.ThemeHandler
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -48,6 +50,13 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
         setPreferencesFromResource(R.xml.preferences, rootKey)
+
+        val onChooseTheme = Preference.OnPreferenceChangeListener { preference, newValue ->
+            val index = (preference as ListPreference).findIndexOfValue(newValue as String?)
+            preference.summary = preference.entries[index]
+            ThemeHandler.setNightModeBaseOnTheme(newValue as String)
+            true
+        }
 
         val onChangeUrlValidator = Preference.OnPreferenceChangeListener { _, newValue ->
             val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
@@ -99,6 +108,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 true
             }
         }
+
+        removeSystemFromThemesIfNeeded()
+
+        findPreference<Preference>("themes")?.let {
+            it.summary = (it as ListPreference).entry
+        }
+
+        findPreference<Preference>("themes")?.onPreferenceChangeListener =
+            onChooseTheme
 
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
@@ -163,5 +181,24 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     private fun authenticationResult(result: Int) {
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = result == Authenticator.SUCCESS
+    }
+
+    private fun removeSystemFromThemesIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            val pref = findPreference<ListPreference>("themes")
+            if (pref != null) {
+                val systemIndex = pref.findIndexOfValue("system")
+                if (systemIndex > 0) {
+                    var entries = pref.entries?.toMutableList()
+                    entries?.removeAt(systemIndex)
+                    var entryValues = pref.entryValues?.toMutableList()
+                    entryValues?.removeAt(systemIndex)
+                    if (entries != null && entryValues != null) {
+                        pref.entries = entries.toTypedArray()
+                        pref.entryValues = entryValues.toTypedArray()
+                    }
+                }
+            }
+        }
     }
 }
