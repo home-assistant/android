@@ -46,7 +46,6 @@ class NfcWelcomeFragment : Fragment() {
         }
 
         btn_nfc_write.setOnClickListener {
-//            findNavController().navigate(R.id.action_NFC_WRITE)
             viewModel.postNewUUID()
         }
     }
