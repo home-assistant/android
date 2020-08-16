@@ -15,6 +15,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
@@ -48,6 +49,8 @@ class ButtonWidget : AppWidgetProvider() {
     lateinit var integrationUseCase: IntegrationUseCase
 
     lateinit var widgetDao: WidgetDao
+
+    private var iconPack: IconPack? = null
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -114,16 +117,16 @@ class ButtonWidget : AppWidgetProvider() {
 
         val widget = widgetDao.get(appWidgetId)
 
-        val loader = IconPackLoader(context)
-
         // Create an icon pack and load all drawables.
-        val iconPack = createMaterialDesignIconPack(loader)
-        iconPack.loadDrawables(loader.drawableLoader)
-
+        if(iconPack == null) {
+            val loader = IconPackLoader(context)
+            iconPack = createMaterialDesignIconPack(loader)
+            iconPack!!.loadDrawables(loader.drawableLoader)
+        }
         return RemoteViews(context.packageName, R.layout.widget_button).apply {
             val iconId = widget?.iconId ?: 988171 // Lightning bolt
 
-            val iconDrawable = iconPack.icons[iconId]?.drawable
+            val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
             if (iconDrawable != null) {
                 val icon = DrawableCompat.wrap(iconDrawable)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
