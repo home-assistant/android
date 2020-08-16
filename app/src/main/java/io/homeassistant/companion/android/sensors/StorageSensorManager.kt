@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.os.Environment
 import android.os.StatFs
+import android.util.Log
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import java.io.File
 import kotlin.math.roundToInt
@@ -25,20 +26,36 @@ class StorageSensorManager : SensorManager {
         var blockSizeSD = 0L
         var availableBlocksSD = 0L
         var totalBlocksSD = 0L
+        private var externalPath: File? = null
 
-        private fun externalMemoryAvailable(): Boolean {
-            return if (Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED) {
-                Environment.isExternalStorageRemovable()
-            } else {
-                false
+        private fun externalMemoryAvailable(context: Context): File? {
+            val pathsSD = context.getExternalFilesDirs(null)
+            var removable: Boolean
+            Log.d(TAG, "PATHS SD ${pathsSD.size}")
+            for (item in pathsSD) {
+                if (item != null) {
+                    Log.d(
+                        TAG,
+                        "PATH $item is mounted ${Environment.getExternalStorageState(item) == Environment.MEDIA_MOUNTED} and removable is ${Environment.isExternalStorageRemovable(
+                            item
+                        )}"
+                    )
+                    if (Environment.getExternalStorageState(item) == Environment.MEDIA_MOUNTED) {
+                        removable = Environment.isExternalStorageRemovable(item)
+                        if (removable) {
+                            externalPath = item
+                        }
+                    }
+                }
             }
+            return externalPath
         }
     }
 
     override val name: String
         get() = "Storage Sensors"
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(StorageSensorManager.storageSensor)
+        get() = listOf(storageSensor)
 
     override fun requiredPermissions(): Array<String> {
         return emptyArray()
@@ -49,7 +66,7 @@ class StorageSensorManager : SensorManager {
         sensorId: String
     ): SensorRegistration<Any> {
         return when (sensorId) {
-            StorageSensorManager.storageSensor.id -> getStorageSensor(context)
+            storageSensor.id -> getStorageSensor(context)
             else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
         }
     }
@@ -59,13 +76,12 @@ class StorageSensorManager : SensorManager {
         var totalInternalStorage = getTotalInternalMemorySize()
         var freeInternalStorage = getAvailableInternalMemorySize()
         val percentageFreeInternalStorage = getPercentageInternal()
-        val hasExternalStorage = externalMemoryAvailable()
+        externalPath = externalMemoryAvailable(context)
         var totalExternalStorage = "No SD Card"
         var freeExternalStorage = "No SD Card"
 
-        if (hasExternalStorage) {
-            val pathSD = context.getExternalFilesDir(null)
-            val statSD = StatFs(pathSD?.path)
+        if (externalPath != null) {
+            val statSD = StatFs(externalPath.toString())
             blockSizeSD = statSD.blockSizeLong
             availableBlocksSD = statSD.availableBlocksLong
             totalBlocksSD = statSD.blockCountLong
