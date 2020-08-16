@@ -5,7 +5,7 @@ import io.homeassistant.companion.android.domain.themes.ThemesRepository
 import javax.inject.Inject
 import javax.inject.Named
 
-class ThemesRepositoryImpl  @Inject constructor(
+class ThemesRepositoryImpl @Inject constructor(
     @Named("themes") private val localStorage: LocalStorage
 ) : ThemesRepository {
 
@@ -19,6 +19,5 @@ class ThemesRepositoryImpl  @Inject constructor(
 
     override suspend fun saveTheme(theme: String) {
         localStorage.putString(PREF_THEME, theme)
-
     }
 }
