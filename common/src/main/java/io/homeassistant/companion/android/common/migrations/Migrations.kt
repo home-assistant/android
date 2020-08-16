@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.migrations
 
 import android.app.Application
 import android.content.Context
-import android.util.Log
 
 class Migrations constructor(
     private val application: Application
