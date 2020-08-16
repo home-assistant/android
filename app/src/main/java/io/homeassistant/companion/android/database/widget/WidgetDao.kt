@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.database.widget
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -11,7 +10,7 @@ import androidx.room.Update
 interface WidgetDao {
 
     @Query("SELECT * FROM widgets WHERE id = :id")
-    fun get(id:Int): Widget?
+    fun get(id: Int): Widget?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun add(widget: Widget)
@@ -21,5 +20,4 @@ interface WidgetDao {
 
     @Query("DELETE FROM widgets WHERE id = :id")
     fun delete(id: Int)
-
 }

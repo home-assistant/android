@@ -23,11 +23,11 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.Widget
 import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class ButtonWidget : AppWidgetProvider() {
     companion object {

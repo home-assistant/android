@@ -117,8 +117,8 @@ dependencies {
     implementation(project(":domain"))
 
     implementation(Config.Dependency.Misc.blurView)
-    implementation("com.maltaisn:icondialog:3.3.0")
-    implementation("com.maltaisn:iconpack-community-material:5.3.45")
+    implementation(Config.Dependency.Misc.iconDialog)
+    implementation(Config.Dependency.Misc.iconDialogMaterial)
 
     implementation(Config.Dependency.Kotlin.core)
     implementation(Config.Dependency.Kotlin.coroutines)

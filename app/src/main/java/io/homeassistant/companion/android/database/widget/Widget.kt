@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "widgets")
-data class Widget (
+data class Widget(
     @PrimaryKey
     val id: Int,
     @ColumnInfo(name = "icon_id")
@@ -19,4 +19,3 @@ data class Widget (
     @ColumnInfo(name = "label")
     val label: String?
 )
-

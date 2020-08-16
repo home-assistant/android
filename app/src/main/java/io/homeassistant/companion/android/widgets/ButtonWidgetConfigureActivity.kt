@@ -30,16 +30,16 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Service
+import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_button_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
-    companion object{
+    companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
         private const val ICON_DIALOG_TAG = "icon-dialog"
     }
@@ -302,7 +302,7 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
     override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<Icon>) {
         Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
         val selectedIcon = icons.firstOrNull()
-        if(selectedIcon != null) {
+        if (selectedIcon != null) {
             widget_config_icon_selector.tag = selectedIcon.id
             val iconDrawable = selectedIcon.drawable
             if (iconDrawable != null) {
