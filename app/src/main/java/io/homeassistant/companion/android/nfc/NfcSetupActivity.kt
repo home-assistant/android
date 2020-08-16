@@ -25,11 +25,10 @@ class NfcSetupActivity : AppCompatActivity() {
 
         fun newInstance(context: Context, tagId: String? = null): Intent {
             return Intent(context, NfcSetupActivity::class.java).apply {
-                if(tagId != null)
+                if (tagId != null)
                     putExtra(EXTRA_TAG_VALUE, tagId)
             }
         }
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +43,6 @@ class NfcSetupActivity : AppCompatActivity() {
 
         intent.getStringExtra(EXTRA_TAG_VALUE)?.let {
             viewModel.nfcWriteTagEvent.postValue(it)
-
         }
     }
 
