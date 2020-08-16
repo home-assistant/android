@@ -67,7 +67,8 @@ class NextAlarmManager : SensorManager {
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
 
-                pendingIntent = alarmClockInfo.showIntent.creatorPackage.toString()
+                pendingIntent = alarmClockInfo.showIntent?.creatorPackage?: "Unknown"
+
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)
