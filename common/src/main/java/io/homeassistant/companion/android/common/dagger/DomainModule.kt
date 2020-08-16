@@ -20,5 +20,4 @@ interface DomainModule {
 
     @Binds
     fun bindIntegrationUseCase(useCaseImpl: IntegrationUseCaseImpl): IntegrationUseCase
-
 }

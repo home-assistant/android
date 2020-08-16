@@ -75,6 +75,5 @@ class DataModule(
 
         @Binds
         fun bindIntegrationService(repository: IntegrationRepositoryImpl): IntegrationRepository
-
     }
 }

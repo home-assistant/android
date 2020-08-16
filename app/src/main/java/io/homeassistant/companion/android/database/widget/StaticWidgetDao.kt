@@ -20,5 +20,4 @@ interface StaticWidgetDao {
 
     @Query("DELETE FROM static_widget WHERE id = :id")
     fun delete(id: Int)
-
 }

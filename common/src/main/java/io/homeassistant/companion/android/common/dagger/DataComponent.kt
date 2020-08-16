@@ -13,5 +13,4 @@ interface DataComponent {
     fun authenticationRepository(): AuthenticationRepository
 
     fun integrationRepository(): IntegrationRepository
-
 }

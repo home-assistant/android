@@ -13,5 +13,4 @@ interface DomainComponent {
     fun authenticationUseCase(): AuthenticationUseCase
 
     fun integrationUseCase(): IntegrationUseCase
-
 }

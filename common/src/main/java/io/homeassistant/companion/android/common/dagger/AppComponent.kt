@@ -13,5 +13,4 @@ interface AppComponent {
     fun authenticationUseCase(): AuthenticationUseCase
 
     fun integrationUseCase(): IntegrationUseCase
-
 }

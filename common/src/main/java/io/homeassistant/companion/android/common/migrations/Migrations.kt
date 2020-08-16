@@ -18,7 +18,7 @@ class Migrations constructor(
         val preferences = application.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         var version = preferences.getInt(PREF_VERSION, LATEST_VERSION)
 
-        if(version < 3) {
+        if (version < 3) {
             migration3()
         }
 
@@ -47,7 +47,7 @@ class Migrations constructor(
      * "Migrate" to the new room db for saving settings.  Hopefully the new icons are enough to
      * look over the fact they had to setup widgets again...
      */
-    private fun migration3(){
+    private fun migration3() {
         val widgetLocalStorage = application.getSharedPreferences("widget", Context.MODE_PRIVATE)
         widgetLocalStorage.edit().clear().apply()
     }

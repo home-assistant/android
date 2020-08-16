@@ -120,7 +120,7 @@ class ButtonWidget : AppWidgetProvider() {
         val widget = buttonWidgetDao.get(appWidgetId)
 
         // Create an icon pack and load all drawables.
-        if(iconPack == null) {
+        if (iconPack == null) {
             val loader = IconPackLoader(context)
             iconPack = createMaterialDesignIconPack(loader)
             iconPack!!.loadDrawables(loader.drawableLoader)
