@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.settings
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
@@ -24,10 +26,12 @@ import io.homeassistant.companion.android.util.ThemeHandler
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
-class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
+class SettingsFragment : PreferenceFragmentCompat(), SettingsView, SharedPreferences.OnSharedPreferenceChangeListener {
 
     companion object {
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
+        private const val STORAGE_KEY_THEME = "theme"
+        private const val PREF_KEY_THEMES = "themes"
 
         fun newInstance() = SettingsFragment()
     }
@@ -36,6 +40,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     lateinit var presenter: SettingsPresenter
     private lateinit var authenticator: Authenticator
     private var setLock = false
+
+    override fun onDestroy() {
+        super.onDestroy()
+        context?.getSharedPreferences("themes", Context.MODE_PRIVATE)?.unregisterOnSharedPreferenceChangeListener(this)
+    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerPresenterComponent
@@ -51,12 +60,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
-        val onChooseTheme = Preference.OnPreferenceChangeListener { preference, newValue ->
-            val index = (preference as ListPreference).findIndexOfValue(newValue as String?)
-            preference.summary = preference.entries[index]
-            ThemeHandler.setNightModeBaseOnTheme(newValue as String)
-            true
-        }
+        context?.getSharedPreferences("themes", Context.MODE_PRIVATE)?.registerOnSharedPreferenceChangeListener(this)
 
         val onChangeUrlValidator = Preference.OnPreferenceChangeListener { _, newValue ->
             val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
@@ -110,13 +114,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         removeSystemFromThemesIfNeeded()
-
-        findPreference<Preference>("themes")?.let {
-            it.summary = (it as ListPreference).entry
-        }
-
-        findPreference<Preference>("themes")?.onPreferenceChangeListener =
-            onChooseTheme
 
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
@@ -198,6 +195,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                         pref.entryValues = entryValues.toTypedArray()
                     }
                 }
+            }
+        }
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        if (key == STORAGE_KEY_THEME) {
+            findPreference<ListPreference>(PREF_KEY_THEMES)?.let {
+                ThemeHandler.setNightModeBaseOnTheme(it.value.toString())
             }
         }
     }

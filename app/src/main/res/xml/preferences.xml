@@ -71,7 +71,8 @@
             android:entries="@array/pref_theme_option_labels"
             android:entryValues="@array/pref_theme_option_values"
             android:icon="@drawable/ic_color_lens_24dp"
-            android:title="@string/themes_title_settings"/>
+            android:title="@string/themes_title_settings"
+            app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">
