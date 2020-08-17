@@ -17,7 +17,7 @@ class ThemesRepositoryImpl @Inject constructor(
 
     override suspend fun getCurrentTheme(): String {
         val theme = localStorage.getString(PREF_THEME)
-        return if(theme.isNullOrEmpty()) {
+        return if (theme.isNullOrEmpty()) {
             if (osVersion.toInt() >= P) {
                 "system"
             } else "light"
