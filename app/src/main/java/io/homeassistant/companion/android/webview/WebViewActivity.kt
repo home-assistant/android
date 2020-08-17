@@ -387,53 +387,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     ),
                                     NFC_COMPLETE
                                 )
-                            "play_hls" -> {
-                                val uri = Uri.parse(json.getString("payload"))
-                                val dataSourceFactory = DefaultHttpDataSourceFactory(
-                                    Util.getUserAgent(
-                                        applicationContext,
-                                        getString(R.string.app_name)
-                                    )
-                                )
-                                val hlsMediaSource =
-                                    HlsMediaSource.Factory(dataSourceFactory).createMediaSource(uri)
-                                val loadControl = DefaultLoadControl.Builder().setBufferDurationsMs(
-                                    2500,
-                                    DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
-                                    2500,
-                                    2500
-                                ).createDefaultLoadControl()
-                                runOnUiThread {
-                                    exoPlayer =
-                                        SimpleExoPlayer.Builder(context).setLoadControl(loadControl)
-                                            .build()
-                                    exoPlayer?.prepare(hlsMediaSource)
-                                    exoPlayer?.playWhenReady = true
-                                    exoMute = !exoMute
-                                    exoToggleMute()
-                                    exoPlayerView.setPlayer(exoPlayer)
-                                    exoPlayerView.visibility = View.VISIBLE
-                                }
-                            }
-                            "stop_hls" -> {
-                                runOnUiThread {
-                                    exoPlayerView.visibility = View.GONE
-                                    exoPlayerView.setPlayer(null)
-                                    exoPlayer?.release()
-                                    exoPlayer = null
-                                }
-                            }
-                            "resize_hls" -> {
-                                val rect = json.getJSONObject("payload")
-                                val displayMetrics = context.resources.displayMetrics
-                                exoLeft = (rect.getInt("left") * displayMetrics.density).toInt()
-                                exoTop = (rect.getInt("top") * displayMetrics.density).toInt()
-                                exoRight = (rect.getInt("right") * displayMetrics.density).toInt()
-                                exoBottom = (rect.getInt("bottom") * displayMetrics.density).toInt()
-                                runOnUiThread {
-                                    exoResizeLayout()
-                                }
-                            }
+                            "play_hls" -> exoPlayHls(json)
+                            "stop_hls" -> exoStopHls()
+                            "resize_hls" -> exoResizeHls(json)
                         }
                     }
                 }
@@ -468,6 +424,56 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
     
+    fun exoPlayHls(json: JSONObject) {
+        val uri = Uri.parse(json.getString("payload"))
+        val dataSourceFactory = DefaultHttpDataSourceFactory(
+            Util.getUserAgent(
+                applicationContext,
+                getString(R.string.app_name)
+            )
+        )
+        val hlsMediaSource =
+            HlsMediaSource.Factory(dataSourceFactory).createMediaSource(uri)
+        val loadControl = DefaultLoadControl.Builder().setBufferDurationsMs(
+            2500,
+            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
+            2500,
+            2500
+        ).createDefaultLoadControl()
+        runOnUiThread {
+            exoPlayer =
+                SimpleExoPlayer.Builder(applicationContext).setLoadControl(loadControl)
+                    .build()
+            exoPlayer?.prepare(hlsMediaSource)
+            exoPlayer?.playWhenReady = true
+            exoMute = !exoMute
+            exoToggleMute()
+            exoPlayerView.setPlayer(exoPlayer)
+            exoPlayerView.visibility = View.VISIBLE
+        }
+    }
+
+    fun exoStopHls() {
+        runOnUiThread {
+            exoPlayerView.visibility = View.GONE
+            exoPlayerView.setPlayer(null)
+            exoPlayer?.release()
+            exoPlayer = null
+        }
+    }
+
+    fun exoResizeHls(json: JSONObject) {
+        val rect = json.getJSONObject("payload")
+        val displayMetrics = applicationContext.resources.displayMetrics
+        exoLeft = (rect.getInt("left") * displayMetrics.density).toInt()
+        exoTop = (rect.getInt("top") * displayMetrics.density).toInt()
+        exoRight = (rect.getInt("right") * displayMetrics.density).toInt()
+        exoBottom = (rect.getInt("bottom") * displayMetrics.density).toInt()
+        runOnUiThread {
+            exoResizeLayout()
+        }
+    }
+
     fun exoToggleMute() {
         exoMute = !exoMute
         if (exoMute) {
