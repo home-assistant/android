@@ -47,6 +47,9 @@
             android:paddingRight="4dp"
             android:includeFontPadding="false"
             android:textColor="#FFBEBEBE"/>
+        <Space
+            android:layout_width="16dp"
+            android:layout_height="1dp"/>
         <ImageView
             android:id="@+id/exo_mute_icon"
             android:layout_width="26dp"
@@ -54,6 +57,9 @@
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_baseline_volume_up_24"/>
+        <Space
+            android:layout_width="16dp"
+            android:layout_height="1dp"/>
         <ImageView
             android:id="@+id/exo_fullscreen_icon"
             android:layout_width="26dp"
