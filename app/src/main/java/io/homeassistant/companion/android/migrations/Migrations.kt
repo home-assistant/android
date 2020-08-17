@@ -70,9 +70,9 @@ class Migrations constructor(
 
         val staticWidgetDao = AppDatabase.getInstance(application).staticWidgetDao()
         staticWidgetIds.forEach { id ->
-            val entityId = widgetLocalStorage.getString("", "")!!
-            val attribute = widgetLocalStorage.getString("", null)
-            val label = widgetLocalStorage.getString("", null)
+            val entityId = widgetLocalStorage.getString("widget_entity$id", "")!!
+            val attribute = widgetLocalStorage.getString("widget_attribute$id", null)
+            val label = widgetLocalStorage.getString("widget_label$id", null)
 
             staticWidgetDao.add(StaticWidget(
                 id.toInt(),
@@ -82,7 +82,7 @@ class Migrations constructor(
             ))
         }
 
-        // widgetLocalStorage.edit().clear().apply()
+        widgetLocalStorage.edit().clear().apply()
 
         Log.d(TAG, "Finished migration #3")
     }
