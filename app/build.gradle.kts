@@ -164,9 +164,9 @@ dependencies {
     testImplementation(Config.Dependency.Testing.mockk)
     testImplementation(Config.Dependency.Kotlin.coroutinesTest)
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.11.7")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.11.7")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.11.7")
+    implementation(Config.Dependency.Misc.exoCore)
+    implementation(Config.Dependency.Misc.exoHls)
+    implementation(Config.Dependency.Misc.exoUi)
 }
 
 // This plugin must stay at the bottom
