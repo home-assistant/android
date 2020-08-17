@@ -104,6 +104,7 @@ object Config {
             const val blurView = "com.eightbitlab:blurview:1.6.3"
             const val iconDialog = "com.maltaisn:icondialog:3.3.0"
             const val iconDialogMaterial = "com.maltaisn:iconpack-community-material:5.3.45"
+            const val emoji = "com.vdurmont:emoji-java:5.1.1"
         }
     }
 
