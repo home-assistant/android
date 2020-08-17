@@ -11,8 +11,8 @@ import android.widget.RemoteViews
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.widget.StaticWidget
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
+import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -154,7 +154,7 @@ class StaticWidget : AppWidgetProvider() {
                 "entity id: " + entitySelection + System.lineSeparator() +
                 "attribute: " + attributeSelection ?: "N/A"
             )
-            staticWidgetDao.add(StaticWidget(
+            staticWidgetDao.add(StaticWidgetEntity(
                 appWidgetId,
                 entitySelection,
                 attributeSelection,

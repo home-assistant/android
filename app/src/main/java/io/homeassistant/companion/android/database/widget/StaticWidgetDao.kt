@@ -10,13 +10,13 @@ import androidx.room.Update
 interface StaticWidgetDao {
 
     @Query("SELECT * FROM static_widget WHERE id = :id")
-    fun get(id: Int): StaticWidget?
+    fun get(id: Int): StaticWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(staticWidget: StaticWidget)
+    fun add(staticWidgetEntity: StaticWidgetEntity)
 
     @Update
-    fun update(staticWidget: StaticWidget)
+    fun update(staticWidgetEntity: StaticWidgetEntity)
 
     @Query("DELETE FROM static_widget WHERE id = :id")
     fun delete(id: Int)

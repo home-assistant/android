@@ -9,7 +9,7 @@ import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.common.migrations.Migrations
+import io.homeassistant.companion.android.migrations.Migrations
 import io.homeassistant.companion.android.sensors.SensorReceiver
 
 open class HomeAssistantApplication : Application(), GraphComponentAccessor {

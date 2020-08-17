@@ -10,13 +10,13 @@ import androidx.room.Update
 interface ButtonWidgetDao {
 
     @Query("SELECT * FROM button_widgets WHERE id = :id")
-    fun get(id: Int): ButtonWidget?
+    fun get(id: Int): ButtonWidgetEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(buttonWidget: ButtonWidget)
+    fun add(buttonWidgetEntity: ButtonWidgetEntity)
 
     @Update
-    fun update(buttonWidget: ButtonWidget)
+    fun update(buttonWidgetEntity: ButtonWidgetEntity)
 
     @Query("DELETE FROM button_widgets WHERE id = :id")
     fun delete(id: Int)

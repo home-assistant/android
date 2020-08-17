@@ -1,11 +1,11 @@
-package io.homeassistant.companion.android.common.migrations
+package io.homeassistant.companion.android.migrations
 
 import android.app.Application
 import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.widget.ButtonWidget
-import io.homeassistant.companion.android.database.widget.StaticWidget
+import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
+import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 
 class Migrations constructor(
     private val application: Application
@@ -54,7 +54,7 @@ class Migrations constructor(
                 else -> 988171
             }
 
-            buttonWidgetDao.add(ButtonWidget(
+            buttonWidgetDao.add(ButtonWidgetEntity(
                 id.toInt(),
                 iconId,
                 domain,
@@ -74,7 +74,7 @@ class Migrations constructor(
             val attribute = widgetLocalStorage.getString("widget_attribute$id", null)
             val label = widgetLocalStorage.getString("widget_label$id", null)
 
-            staticWidgetDao.add(StaticWidget(
+            staticWidgetDao.add(StaticWidgetEntity(
                 id.toInt(),
                 entityId,
                 attribute,

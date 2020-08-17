@@ -21,8 +21,8 @@ import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.widget.ButtonWidget
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
+import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -254,7 +254,7 @@ class ButtonWidget : AppWidgetProvider() {
                         "label: " + label
             )
 
-            val widget = ButtonWidget(appWidgetId, icon, domain, service, serviceData, label)
+            val widget = ButtonWidgetEntity(appWidgetId, icon, domain, service, serviceData, label)
             buttonWidgetDao.add(widget)
 
             // It is the responsibility of the configuration activity to update the app widget

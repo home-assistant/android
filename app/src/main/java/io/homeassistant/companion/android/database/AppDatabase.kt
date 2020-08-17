@@ -10,17 +10,17 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.database.widget.ButtonWidget
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
-import io.homeassistant.companion.android.database.widget.StaticWidget
+import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
+import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 
 @Database(
     entities = [
         Authentication::class,
         Sensor::class,
-        ButtonWidget::class,
-        StaticWidget::class
+        ButtonWidgetEntity::class,
+        StaticWidgetEntity::class
     ],
     version = 3
 )
