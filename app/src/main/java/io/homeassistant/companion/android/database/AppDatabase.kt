@@ -10,20 +10,29 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.widget.ButtonWidget
+import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
+import io.homeassistant.companion.android.database.widget.StaticWidget
+import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 
 @Database(
     entities = [
         Authentication::class,
-        Sensor::class
+        Sensor::class,
+        ButtonWidget::class,
+        StaticWidget::class
     ],
-    version = 2
+    version = 3
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
     abstract fun sensorDao(): SensorDao
+    abstract fun buttonWidgetDao(): ButtonWidgetDao
+    abstract fun staticWidgetDao(): StaticWidgetDao
 
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
+
         @Volatile
         private var instance: AppDatabase? = null
 
@@ -37,17 +46,24 @@ abstract class AppDatabase : RoomDatabase() {
             return Room
                 .databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
                 .allowMainThreadQueries()
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(
+                    MIGRATION_1_2,
+                    MIGRATION_2_3
+                )
                 .build()
         }
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
-                    "CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, " +
-                            "`enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, " +
-                            "`state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))"
+                database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))"
                 )
+            }
+        }
+
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `icon_id` INTEGER NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, PRIMARY KEY(`id`))")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_id` TEXT, `label` TEXT, PRIMARY KEY(`id`))")
             }
         }
     }

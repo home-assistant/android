@@ -117,6 +117,8 @@ dependencies {
     implementation(project(":domain"))
 
     implementation(Config.Dependency.Misc.blurView)
+    implementation(Config.Dependency.Misc.iconDialog)
+    implementation(Config.Dependency.Misc.iconDialogMaterial)
     implementation(Config.Dependency.Misc.emoji) {
         exclude(group = "org.json", module = "json")
     }

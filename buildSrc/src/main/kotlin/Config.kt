@@ -100,9 +100,10 @@ object Config {
             const val sentry = "io.sentry:sentry-android:2.2.2"
             const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1"
             const val threeTenBp = "org.threeten:threetenbp:1.4.0"
-            const val threeTenAbp = "com.jakewharton.threetenabp:threetenabp:1.2.1"
             const val javaxInject = "javax.inject:javax.inject:1"
             const val blurView = "com.eightbitlab:blurview:1.6.3"
+            const val iconDialog = "com.maltaisn:icondialog:3.3.0"
+            const val iconDialogMaterial = "com.maltaisn:iconpack-community-material:5.3.45"
             const val emoji = "com.vdurmont:emoji-java:5.1.1"
         }
     }
