@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "static_widget")
-data class StaticWidget(
+data class StaticWidgetEntity(
     @PrimaryKey
     val id: Int,
     @ColumnInfo(name = "entity_id")
