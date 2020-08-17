@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
@@ -273,7 +274,7 @@ class MessagingService : FirebaseMessagingService() {
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .setSummaryText(getSpannedTextFromHtml(group.substring(GROUP_PREFIX.length))
+                    .setSummaryText(prepareText(group.substring(GROUP_PREFIX.length))
                 )
             )
             .setGroup(group)
@@ -410,7 +411,7 @@ class MessagingService : FirebaseMessagingService() {
         data: Map<String, String>
     ) {
         data[SUBJECT]?.let {
-            builder.setContentText(getSpannedTextFromHtml(it))
+            builder.setContentText(prepareText(it))
         }
     }
 
@@ -419,19 +420,20 @@ class MessagingService : FirebaseMessagingService() {
         data: Map<String, String>
     ) {
         data[TITLE]?.let {
-            builder.setContentTitle(getSpannedTextFromHtml(it))
+            builder.setContentTitle(prepareText(it))
         }
         data[MESSAGE]?.let {
-            val text = getSpannedTextFromHtml(it)
+            val text = prepareText(it)
             builder.setContentText(text)
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
     }
 
-    private fun getSpannedTextFromHtml(
+    private fun prepareText(
         text: String
     ): Spanned {
-        return HtmlCompat.fromHtml(text, HtmlCompat.FROM_HTML_MODE_LEGACY)
+        var emojiParsedText = EmojiParser.parseToUnicode(text)
+        return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
 
     private suspend fun handleLargeIcon(
