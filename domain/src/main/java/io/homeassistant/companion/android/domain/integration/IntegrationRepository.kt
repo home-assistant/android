@@ -8,6 +8,8 @@ interface IntegrationRepository {
 
     suspend fun isRegistered(): Boolean
 
+    suspend fun renderTemplate(template: String, variables: Map<String, String>): String
+
     suspend fun updateLocation(updateLocation: UpdateLocation)
 
     suspend fun getZones(): Array<Entity<ZoneAttributes>>
