@@ -43,7 +43,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "Detected Activity"
         )
 
-        private var last_activity: String = "unknown"
+        private var stored_activity: String = "unknown"
+        private var stored_attributes = mutableMapOf<String, Int>()
     }
 
     @Inject
@@ -107,26 +108,36 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         Log.d(TAG, "Received activity update.")
         if (ActivityRecognitionResult.hasResult(intent)) {
             val result = ActivityRecognitionResult.extractResult(intent)
+            var probActivity = typeToString(result.mostProbableActivity)
 
-            val probActivity = when (result.mostProbableActivity.type) {
-                DetectedActivity.IN_VEHICLE -> "in_vehicle"
-                DetectedActivity.ON_BICYCLE -> "on_bicycle"
-                DetectedActivity.ON_FOOT -> getSubActivity(result)
-                DetectedActivity.RUNNING -> "running"
-                DetectedActivity.STILL -> "still"
-                DetectedActivity.TILTING -> "tilting"
-                DetectedActivity.WALKING -> "walking"
-                DetectedActivity.UNKNOWN -> "unknown"
-                else -> "unknown"
-            }
+            if (probActivity == "on_foot")
+                probActivity = getSubActivity(result)
 
-            if (last_activity != probActivity) {
-                last_activity = probActivity
+            if (stored_activity != probActivity) {
+                stored_activity = probActivity
+
+                stored_attributes.clear()
+                for (act in result.probableActivities)
+                    stored_attributes[typeToString(act)] = act.confidence
 
                 val intent = Intent(context, SensorReceiver::class.java)
                 intent.action = SensorReceiver.ACTION_REQUEST_SENSORS_UPDATE
                 context.sendBroadcast(intent)
             }
+        }
+    }
+
+    private fun typeToString(activity: DetectedActivity): String {
+        return when (activity.type) {
+            DetectedActivity.IN_VEHICLE -> "in_vehicle"
+            DetectedActivity.ON_BICYCLE -> "on_bicycle"
+            DetectedActivity.ON_FOOT -> "on_foot"
+            DetectedActivity.RUNNING -> "running"
+            DetectedActivity.STILL -> "still"
+            DetectedActivity.TILTING -> "tilting"
+            DetectedActivity.WALKING -> "walking"
+            DetectedActivity.UNKNOWN -> "unknown"
+            else -> "unknown"
         }
     }
 
@@ -165,9 +176,9 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     private fun getActivitySensor(context: Context): SensorRegistration<Any> {
 
         return activity.toSensorRegistration(
-            last_activity,
-            getSensorIcon(last_activity),
-            mapOf()
+            stored_activity,
+            getSensorIcon(stored_activity),
+            stored_attributes
         )
     }
     private fun getSensorIcon(activity: String): String {
