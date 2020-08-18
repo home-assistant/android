@@ -71,9 +71,11 @@ class SensorDetailFragment(
         val sensorData = sensorManager.getEnabledSensorData(requireContext(), basicSensor.id)
 
         findPreference<Preference>("unique_id")?.let {
+            it.isCopyingEnabled = true
             it.summary = basicSensor.id
         }
         findPreference<Preference>("state")?.let {
+            it.isCopyingEnabled = true
             when {
                 sensorData == null ->
                     it.summary = "Disabled"
@@ -84,9 +86,11 @@ class SensorDetailFragment(
             }
         }
         findPreference<Preference>("device_class")?.let {
+            it.isCopyingEnabled = true
             it.summary = basicSensor.deviceClass
         }
         findPreference<Preference>("icon")?.let {
+            it.isCopyingEnabled = true
             it.summary = sensorData?.icon ?: ""
         }
 
@@ -96,6 +100,7 @@ class SensorDetailFragment(
             else {
                 sensorData?.attributes?.keys?.forEach { key ->
                     val pref = findPreference("attribute_$key") ?: Preference(requireContext())
+                    pref.isCopyingEnabled = true
                     pref.key = "attribute_$key"
                     pref.title = key
                     pref.summary = sensorData.attributes[key]?.toString() ?: ""

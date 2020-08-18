@@ -10,8 +10,6 @@ import io.homeassistant.companion.android.domain.themes.ThemesUseCase
 import io.homeassistant.companion.android.domain.themes.ThemesUseCaseImpl
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCaseImpl
-import io.homeassistant.companion.android.domain.widgets.WidgetUseCase
-import io.homeassistant.companion.android.domain.widgets.WidgetUseCaseImpl
 
 @Module
 interface DomainModule {
@@ -24,9 +22,6 @@ interface DomainModule {
 
     @Binds
     fun bindIntegrationUseCase(useCaseImpl: IntegrationUseCaseImpl): IntegrationUseCase
-
-    @Binds
-    fun bindWidgetUseCase(useCaseImpl: WidgetUseCaseImpl): WidgetUseCase
 
     @Binds
     fun bindThemesUseCase(useCaseImpl: ThemesUseCaseImpl): ThemesUseCase

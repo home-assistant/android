@@ -142,6 +142,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView, SharedPrefere
         }
 
         findPreference<Preference>("version")?.let {
+            it.isCopyingEnabled = true
             it.summary = BuildConfig.VERSION_NAME
         }
 

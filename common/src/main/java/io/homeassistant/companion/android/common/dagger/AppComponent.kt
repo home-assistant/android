@@ -5,7 +5,6 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.themes.ThemesUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
-import io.homeassistant.companion.android.domain.widgets.WidgetUseCase
 
 @Component(dependencies = [DomainComponent::class])
 interface AppComponent {
@@ -15,8 +14,6 @@ interface AppComponent {
     fun authenticationUseCase(): AuthenticationUseCase
 
     fun integrationUseCase(): IntegrationUseCase
-
-    fun widgetUseCase(): WidgetUseCase
 
     fun themesUseCase(): ThemesUseCase
 }
