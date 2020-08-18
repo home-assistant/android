@@ -5,7 +5,6 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -131,9 +130,6 @@ class ButtonWidget : AppWidgetProvider() {
             val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
             if (iconDrawable != null) {
                 val icon = DrawableCompat.wrap(iconDrawable)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    DrawableCompat.setTint(icon, context.resources.getColor(R.color.colorIcon, context.theme))
-                }
                 setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap())
             }
 

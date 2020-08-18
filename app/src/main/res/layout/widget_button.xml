@@ -22,6 +22,7 @@
             android:src="@drawable/ic_flash_on_24dp"
             android:contentDescription="@string/widget_button_image_description"
             android:gravity="center"
+            android:tint="@color/colorIcon"
             />
 
         <LinearLayout
