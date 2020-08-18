@@ -15,6 +15,8 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
     
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
     <uses-feature android:name="android.hardware.telephony" android:required="false"/>
@@ -70,6 +72,7 @@
                 <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
                 <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+                <action android:name="io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE" />
             </intent-filter>
         </receiver>
 
@@ -91,6 +94,15 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_ACCURATE_UPDATE" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".sensors.ActivitySensorManager"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="io.homeassistant.companion.android.background.REQUEST_ACTIVITY_UPDATES" />
             </intent-filter>
         </receiver>
 

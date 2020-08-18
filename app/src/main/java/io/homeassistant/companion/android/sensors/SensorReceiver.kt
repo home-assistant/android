@@ -27,8 +27,12 @@ class SensorReceiver : BroadcastReceiver() {
             LightSensorManager(),
             NextAlarmManager(),
             PhoneStateSensorManager(),
-            StorageSensorManager()
+            StorageSensorManager(),
+            ActivitySensorManager()
         )
+
+        const val ACTION_REQUEST_SENSORS_UPDATE =
+            "io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE"
     }
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
@@ -51,6 +55,7 @@ class SensorReceiver : BroadcastReceiver() {
             .inject(this)
 
         LocationBroadcastReceiver.restartLocationTracking(context)
+        ActivitySensorManager.restartActivityTracking(context)
 
         ioScope.launch {
             updateSensors(context, integrationUseCase)
