@@ -11,8 +11,10 @@ import android.util.TypedValue
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.StaticWidgetDao
+import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.widgets.WidgetUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,8 +40,7 @@ class StaticWidget : AppWidgetProvider() {
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    @Inject
-    lateinit var widgetStorage: WidgetUseCase
+    lateinit var staticWidgetDao: StaticWidgetDao
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -48,6 +49,7 @@ class StaticWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
             updateAppWidget(
@@ -76,11 +78,12 @@ class StaticWidget : AppWidgetProvider() {
         }
 
         val views = RemoteViews(context.packageName, R.layout.widget_static).apply {
-            val entityId: String? = widgetStorage.loadEntityId(appWidgetId)
-            val attributeId: String? = widgetStorage.loadAttributeId(appWidgetId)
-            val label: String? = widgetStorage.loadLabel(appWidgetId)
-            val textSize: Int? = widgetStorage.loadTextSize(appWidgetId)
-            val separator: String? = widgetStorage.loadSeparator(appWidgetId)
+            val widget = staticWidgetDao.get(appWidgetId)
+            val entityId: String? = widget?.entityId
+            val attributeId: String? = widget?.attributeId
+            val label: String? = widget?.label
+            val textSize: Int? = widget?.textSize
+            val separator: String? = widget?.separator
             if (textSize != null) {
                 setTextViewTextSize(
                     R.id.widgetText,
@@ -136,6 +139,8 @@ class StaticWidget : AppWidgetProvider() {
 
         ensureInjected(context)
 
+        staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
+
         super.onReceive(context, intent)
 
         when (action) {
@@ -164,24 +169,14 @@ class StaticWidget : AppWidgetProvider() {
                 "entity id: " + entitySelection + System.lineSeparator() +
                 "attribute: " + attributeSelection ?: "N/A"
             )
-
-            widgetStorage.saveStaticEntityData(
+            staticWidgetDao.add(StaticWidgetEntity(
                 appWidgetId,
                 entitySelection,
-                attributeSelection
-            )
-            widgetStorage.saveLabel(appWidgetId, labelSelection)
-            if (textSizeSelection != null) {
-                widgetStorage.saveTextSize(
-                    appWidgetId,
-                    textSizeSelection.toInt()
-                )
-            }
-            if (separatorSelection == "") {
-                widgetStorage.saveSeparator(appWidgetId, " ")
-            } else {
-                widgetStorage.saveSeparator(appWidgetId, separatorSelection)
-            }
+                attributeSelection,
+                labelSelection,
+                textSizeSelection?.toInt() ?: 30,
+                if (separatorSelection == "") " " else separatorSelection
+            ))
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
