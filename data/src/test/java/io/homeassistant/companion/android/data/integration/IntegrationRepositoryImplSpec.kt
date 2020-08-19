@@ -208,7 +208,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 )
             beforeEachTest {
                 coEvery {
-                    integrationService.updateRegistration(any(),
+                    integrationService.callWebhook(any(),
                         IntegrationRequest(
                             "update_registration",
                             registerDeviceRequest
@@ -233,7 +233,7 @@ object IntegrationRepositoryImplSpec : Spek({
 
             it("should call the service") {
                 coVerify {
-                    integrationService.updateRegistration(
+                    integrationService.callWebhook(
                         "http://best.com/hook/id".toHttpUrl(),
                         IntegrationRequest(
                             "update_registration",
@@ -318,7 +318,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com")
                     )
                     coEvery {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             any(), // "http://example.com/api/webhook/FGHIJ",
                             any() // integrationRequest
                         )
@@ -328,7 +328,7 @@ object IntegrationRepositoryImplSpec : Spek({
 
                 it("should call the service.") {
                     coVerify {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://best.com/hook/id".toHttpUrl(),
                             integrationRequest
                         )
@@ -365,7 +365,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com")
                     )
                     coEvery {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             any(), // "http://example.com/api/webhook/FGHIJ",
                             any() // integrationRequest
                         )
@@ -375,7 +375,7 @@ object IntegrationRepositoryImplSpec : Spek({
 
                 it("should call the service.") {
                     coVerify {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             integrationRequest
                         )
@@ -411,7 +411,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com/api/webhook/FGHIJ")
                     )
                     coEvery {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             any(), // "http://example.com/api/webhook/FGHIJ",
                             any() // integrationRequest
                         )
@@ -421,7 +421,7 @@ object IntegrationRepositoryImplSpec : Spek({
 
                 it("should call the service.") {
                     coVerify {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://example.com/api/webhook/FGHIJ".toHttpUrl(),
                             integrationRequest
                         )
@@ -460,7 +460,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com")
                     )
                     coEvery {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://best.com/hook/id".toHttpUrl(),
                             any() // integrationRequest
                         )
@@ -468,7 +468,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         every { isSuccessful } returns false
                     }
                     coEvery {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             any() // integrationRequest
                         )
@@ -479,11 +479,11 @@ object IntegrationRepositoryImplSpec : Spek({
 
                 it("should call service 2 times") {
                     coVerifyAll {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://best.com/hook/id".toHttpUrl(),
                             integrationRequest
                         )
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             integrationRequest
                         )
@@ -511,7 +511,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com")
                     )
                     coEvery {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://best.com/hook/id".toHttpUrl(),
                             any() // integrationRequest
                         )
@@ -519,7 +519,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         every { isSuccessful } returns false
                     }
                     coEvery {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             any() // integrationRequest
                         )
@@ -527,7 +527,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         every { isSuccessful } returns false
                     }
                     coEvery {
-                        integrationService.updateLocation(
+                        integrationService.callWebhook(
                             "http://example.com/api/webhook/FGHIJ".toHttpUrl(),
                             any() // integrationRequest
                         )
@@ -571,7 +571,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com")
                     )
                     coEvery {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             any(), // "http://example.com/api/webhook/FGHIJ",
                             any() // integrationRequest
                         )
@@ -581,7 +581,7 @@ object IntegrationRepositoryImplSpec : Spek({
 
                 it("should call the service.") {
                     coVerify {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://best.com/hook/id".toHttpUrl(),
                             integrationRequest
                         )
@@ -613,7 +613,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com")
                     )
                     coEvery {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             any(), // "http://example.com/api/webhook/FGHIJ",
                             any() // integrationRequest
                         )
@@ -623,7 +623,7 @@ object IntegrationRepositoryImplSpec : Spek({
 
                 it("should call the service.") {
                     coVerify {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             integrationRequest
                         )
@@ -654,7 +654,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com/api/webhook/FGHIJ")
                     )
                     coEvery {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             any(), // "http://example.com/api/webhook/FGHIJ",
                             any() // integrationRequest
                         )
@@ -664,7 +664,7 @@ object IntegrationRepositoryImplSpec : Spek({
 
                 it("should call the service.") {
                     coVerify {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://example.com/api/webhook/FGHIJ".toHttpUrl(),
                             integrationRequest
                         )
@@ -697,7 +697,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com")
                     )
                     coEvery {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://best.com/hook/id".toHttpUrl(),
                             any() // integrationRequest
                         )
@@ -705,7 +705,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         every { isSuccessful } returns false
                     }
                     coEvery {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             any() // integrationRequest
                         )
@@ -715,11 +715,11 @@ object IntegrationRepositoryImplSpec : Spek({
 
                 it("should call service 2 times") {
                     coVerifyAll {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://best.com/hook/id".toHttpUrl(),
                             integrationRequest
                         )
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             integrationRequest
                         )
@@ -741,7 +741,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         URL("http://example.com")
                     )
                     coEvery {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://best.com/hook/id".toHttpUrl(),
                             any() // integrationRequest
                         )
@@ -749,7 +749,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         every { isSuccessful } returns false
                     }
                     coEvery {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://better.com/api/webhook/FGHIJ".toHttpUrl(),
                             any() // integrationRequest
                         )
@@ -757,7 +757,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         every { isSuccessful } returns false
                     }
                     coEvery {
-                        integrationService.callService(
+                        integrationService.callWebhook(
                             "http://example.com/api/webhook/FGHIJ".toHttpUrl(),
                             any() // integrationRequest
                         )
