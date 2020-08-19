@@ -31,16 +31,17 @@ class StaticWidget : AppWidgetProvider() {
             "io.homeassistant.companion.android.widgets.StaticWidget.UPDATE_ENTITY"
 
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
-        internal const val EXTRA_ATTRIBUTE_ID = "EXTRA_ATTRIBUTE_ID"
+        internal const val EXTRA_ATTRIBUTE_IDS = "EXTRA_ATTRIBUTE_IDS"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
-        internal const val EXTRA_SEPARATOR = "EXTRA_SEPARATOR"
+        internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
+        internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
     }
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    lateinit var staticWidgetDao: StaticWidgetDao
+    private lateinit var staticWidgetDao: StaticWidgetDao
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -81,10 +82,11 @@ class StaticWidget : AppWidgetProvider() {
             val widget = staticWidgetDao.get(appWidgetId)
             if (widget != null) {
                 val entityId: String = widget.entityId
-                val attributeId: String? = widget.attributeId
+                val attributeIds: String? = widget.attributeIds
                 val label: String? = widget.label
                 val textSize: Float = widget.textSize
-                val separator: String = widget.separator
+                val stateSeparator: String = widget.stateSeparator
+                val attributeSeparator: String = widget.attributeSeparator
                 setTextViewTextSize(
                     R.id.widgetText,
                     TypedValue.COMPLEX_UNIT_SP,
@@ -92,7 +94,7 @@ class StaticWidget : AppWidgetProvider() {
                 )
                 setTextViewText(
                     R.id.widgetText,
-                    resolveTextToShow(entityId, attributeId, separator)
+                    resolveTextToShow(entityId, attributeIds, stateSeparator, attributeSeparator)
                 )
                 setTextViewText(
                     R.id.widgetLabel,
@@ -115,16 +117,17 @@ class StaticWidget : AppWidgetProvider() {
 
     private suspend fun resolveTextToShow(
         entityId: String?,
-        attributeId: String?,
-        separator: String
+        attributeIds: String?,
+        stateSeparator: String,
+        attributeSeparator: String
     ): CharSequence? {
         val entity = integrationUseCase.getEntities().find { e -> e.entityId.equals(entityId) }
 
-        if (attributeId == null) return entity?.state
+        if (attributeIds == null) return entity?.state
 
         val fetchedAttributes = entity?.attributes as Map<*, *>
-        val attributeValue = fetchedAttributes.get(attributeId)?.toString()
-        return entity.state.plus(if (attributeValue != null && attributeValue.isNotEmpty()) separator else "").plus(attributeValue ?: "")
+        val attributeValues = attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
+        return entity.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -153,10 +156,11 @@ class StaticWidget : AppWidgetProvider() {
         if (extras == null) return
 
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
-        val attributeSelection: String? = extras.getString(EXTRA_ATTRIBUTE_ID)
+        val attributeSelection: ArrayList<String>? = extras.getStringArrayList(EXTRA_ATTRIBUTE_IDS)
         val labelSelection: String? = extras.getString(EXTRA_LABEL)
         val textSizeSelection: String? = extras.getString(EXTRA_TEXT_SIZE)
-        val separatorSelection: String? = extras.getString(EXTRA_SEPARATOR)
+        val stateSeparatorSelection: String? = extras.getString(EXTRA_STATE_SEPARATOR)
+        val attributeSeparatorSelection: String? = extras.getString(EXTRA_ATTRIBUTE_SEPARATOR)
 
         if (entitySelection == null) {
             Log.e(TAG, "Did not receive complete service call data")
@@ -172,10 +176,11 @@ class StaticWidget : AppWidgetProvider() {
             staticWidgetDao.add(StaticWidgetEntity(
                 appWidgetId,
                 entitySelection,
-                attributeSelection,
+                attributeSelection?.joinToString(","),
                 labelSelection,
                 textSizeSelection?.toFloatOrNull() ?: 30F,
-                if (separatorSelection == "") " " else separatorSelection ?: " "
+                stateSeparatorSelection ?: "",
+                attributeSeparatorSelection ?: ""
             ))
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
