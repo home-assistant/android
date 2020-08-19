@@ -17,12 +17,7 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
-import kotlinx.android.synthetic.main.widget_static_configure.add_button
-import kotlinx.android.synthetic.main.widget_static_configure.append_attribute_value_checkbox
-import kotlinx.android.synthetic.main.widget_static_configure.attribute_value_linear_layout
-import kotlinx.android.synthetic.main.widget_static_configure.label
-import kotlinx.android.synthetic.main.widget_static_configure.widget_text_config_attribute
-import kotlinx.android.synthetic.main.widget_static_configure.widget_text_config_entity_id
+import kotlinx.android.synthetic.main.widget_static_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -161,6 +156,16 @@ class StaticWidgetConfigureActivity : Activity() {
             intent.putExtra(
                 StaticWidget.EXTRA_LABEL,
                 label.text.toString()
+            )
+
+            intent.putExtra(
+                StaticWidget.EXTRA_TEXT_SIZE,
+                textSize.text.toString()
+            )
+
+            intent.putExtra(
+                StaticWidget.EXTRA_SEPARATOR,
+                separator.text.toString()
             )
 
             if (appendAttribute) intent.putExtra(

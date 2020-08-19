@@ -13,5 +13,9 @@ data class StaticWidgetEntity(
     @ColumnInfo(name = "attribute_id")
     val attributeId: String?,
     @ColumnInfo(name = "label")
-    val label: String?
+    val label: String?,
+    @ColumnInfo(name = "text_size")
+    val textSize: Float = 30F,
+    @ColumnInfo(name = "separator")
+    val separator: String = " "
 )
