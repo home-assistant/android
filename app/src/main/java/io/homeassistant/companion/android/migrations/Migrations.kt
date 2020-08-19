@@ -14,7 +14,7 @@ class Migrations constructor(
         private const val TAG = "Migrations"
         private const val PREF_NAME = "migrations"
         private const val PREF_VERSION = "migration_version"
-        private const val LATEST_VERSION = 4
+        private const val LATEST_VERSION = 3
     }
 
     fun migrate() {
@@ -79,7 +79,7 @@ class Migrations constructor(
                 entityId,
                 attribute,
                 label,
-                30,
+                30F,
                 " "
             ))
         }

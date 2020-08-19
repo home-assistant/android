@@ -79,35 +79,35 @@ class StaticWidget : AppWidgetProvider() {
 
         val views = RemoteViews(context.packageName, R.layout.widget_static).apply {
             val widget = staticWidgetDao.get(appWidgetId)
-            val entityId: String? = widget?.entityId
-            val attributeId: String? = widget?.attributeId
-            val label: String? = widget?.label
-            val textSize: Int? = widget?.textSize
-            val separator: String? = widget?.separator
-            if (textSize != null) {
+            if (widget != null) {
+                val entityId: String = widget.entityId
+                val attributeId: String? = widget.attributeId
+                val label: String? = widget.label
+                val textSize: Float = widget.textSize
+                val separator: String = widget.separator
                 setTextViewTextSize(
                     R.id.widgetText,
                     TypedValue.COMPLEX_UNIT_SP,
-                    textSize.toFloat()
+                    textSize
+                )
+                setTextViewText(
+                    R.id.widgetText,
+                    resolveTextToShow(entityId, attributeId, separator)
+                )
+                setTextViewText(
+                    R.id.widgetLabel,
+                    label ?: entityId
+                )
+                setOnClickPendingIntent(
+                    R.id.widgetTextLayout,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
                 )
             }
-            setTextViewText(
-                R.id.widgetText,
-                resolveTextToShow(entityId, attributeId, separator)
-            )
-            setTextViewText(
-                R.id.widgetLabel,
-                label ?: entityId
-            )
-            setOnClickPendingIntent(
-                R.id.widgetTextLayout,
-                PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            )
         }
 
         return views
@@ -116,7 +116,7 @@ class StaticWidget : AppWidgetProvider() {
     private suspend fun resolveTextToShow(
         entityId: String?,
         attributeId: String?,
-        separator: String?
+        separator: String
     ): CharSequence? {
         val entity = integrationUseCase.getEntities().find { e -> e.entityId.equals(entityId) }
 
@@ -124,7 +124,7 @@ class StaticWidget : AppWidgetProvider() {
 
         val fetchedAttributes = entity?.attributes as Map<*, *>
         val attributeValue = fetchedAttributes.get(attributeId)?.toString()
-        return entity.state.plus(if (attributeValue != null && attributeValue.isNotEmpty()) separator ?: " " else "").plus(attributeValue ?: "")
+        return entity.state.plus(if (attributeValue != null && attributeValue.isNotEmpty()) separator else "").plus(attributeValue ?: "")
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -174,8 +174,8 @@ class StaticWidget : AppWidgetProvider() {
                 entitySelection,
                 attributeSelection,
                 labelSelection,
-                textSizeSelection?.toInt() ?: 30,
-                if (separatorSelection == "") " " else separatorSelection
+                textSizeSelection?.toFloatOrNull() ?: 30F,
+                if (separatorSelection == "") " " else separatorSelection ?: " "
             ))
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
