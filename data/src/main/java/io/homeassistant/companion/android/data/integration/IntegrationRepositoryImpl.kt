@@ -133,7 +133,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 return integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
                     IntegrationRequest(
-                        "call_service",
+                        "render_template",
                         mapOf("template" to Template(template, variables))
                     )
                 ).getValue("template")

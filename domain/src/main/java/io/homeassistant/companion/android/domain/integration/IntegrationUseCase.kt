@@ -17,7 +17,7 @@ interface IntegrationUseCase {
 
     suspend fun isRegistered(): Boolean
 
-    suspend fun renderTemplate(template: String, variables: Map<String, String>): String
+    suspend fun renderTemplate(template: String, variables: Map<String, String> = mapOf()): String
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
 
