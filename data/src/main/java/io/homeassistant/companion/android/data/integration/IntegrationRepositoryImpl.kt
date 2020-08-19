@@ -20,9 +20,9 @@ import io.homeassistant.companion.android.domain.integration.Service
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import io.homeassistant.companion.android.domain.integration.ZoneAttributes
 import io.homeassistant.companion.android.domain.url.UrlRepository
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 import javax.inject.Named
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,

@@ -10,13 +10,13 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
+import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_template_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class TemplateWidgetConfigureActivity : AppCompatActivity() {
     companion object {
@@ -72,7 +72,6 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
                 try {
                     templateText = integrationUseCase.renderTemplate(editableText.toString())
                     enabled = true
-
                 } catch (e: Exception) {
                     templateText = "Error in template"
                     enabled = false
@@ -105,5 +104,4 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
         mainScope.cancel()
         super.onDestroy()
     }
-
 }
