@@ -1,11 +1,13 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.content.Context
 import android.content.Context.SENSOR_SERVICE
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
+import android.os.Build
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import kotlin.math.roundToInt
 
@@ -30,7 +32,13 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         get() = listOf(stepsSensor)
 
     override fun requiredPermissions(): Array<String> {
-        return emptyArray()
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(
+                Manifest.permission.ACTIVITY_RECOGNITION
+            )
+        } else {
+            arrayOf()
+        }
     }
 
     override fun getSensorData(
@@ -45,17 +53,20 @@ class StepsSensorManager : SensorManager, SensorEventListener {
 
     private fun getStepsSensor(context: Context): SensorRegistration<Any> {
 
-        mySensorManager = context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+        if (checkPermission(context)) {
+            mySensorManager =
+                context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
-        val stepsSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-        if (stepsSensors != null) {
-            mySensorManager.registerListener(
-                this,
-                stepsSensors,
-                SENSOR_DELAY_NORMAL)
+            val stepsSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
+            if (stepsSensors != null) {
+                mySensorManager.registerListener(
+                    this,
+                    stepsSensors,
+                    SENSOR_DELAY_NORMAL
+                )
+            }
         }
-
-        val icon = "mdi:brightness-5"
+        val icon = "mdi:walk"
 
         return stepsSensor.toSensorRegistration(
             stepsReading,
