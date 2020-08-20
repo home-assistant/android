@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 
-
 @Database(
     entities = [
         Authentication::class,
