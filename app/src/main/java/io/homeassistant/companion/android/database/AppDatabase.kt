@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.database
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.sqlite.SQLiteException
 import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
@@ -39,6 +38,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
+        internal const val TAG = "AppDatabaseMigration"
 
         @Volatile
         private var instance: AppDatabase? = null
@@ -119,10 +119,8 @@ abstract class AppDatabase : RoomDatabase() {
                         }
                     }
                     widgets.close()
-                } catch (exception: SQLiteException) {
-                    Log.e(exception.toString(), "SQLiteException in migrate from database version 4 to version 5")
                 } catch (exception: Exception) {
-                    Log.e(exception.toString(), "Failed to migrate database version 4 to version 5")
+                    Log.e(TAG, "Failed to migrate database version 5 to version 6", exception)
                 }
             }
         }
