@@ -36,7 +36,7 @@ object WebViewPresenterImplSpec : Spek({
         val integrationUseCase by memoized { mockk<IntegrationUseCase>(relaxUnitFun = true) }
         val themesUseCase by memoized { mockk<ThemesUseCase>(relaxUnitFun = true) }
         val view by memoized { mockk<WebView>(relaxUnitFun = true) }
-        val presenter by memoized { WebViewPresenterImpl(view, urlUseCase, authenticationUseCase, integrationUseCase, themesUseCase) }
+        val presenter by memoized { WebViewPresenterImpl(view, urlUseCase, authenticationUseCase, integrationUseCase) }
 
         describe("on view ready empty query ") {
             beforeEachTest {
