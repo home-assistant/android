@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets.static_widget
+package io.homeassistant.companion.android.widgets
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -15,7 +15,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,9 +26,9 @@ class StaticWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "StaticWidget"
         internal const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.static_widget.StaticWidget.RECEIVE_DATA"
+            "io.homeassistant.companion.android.widgets.StaticWidget.RECEIVE_DATA"
         internal const val UPDATE_ENTITY =
-            "io.homeassistant.companion.android.widgets.static_widget.StaticWidget.UPDATE_ENTITY"
+            "io.homeassistant.companion.android.widgets.StaticWidget.UPDATE_ENTITY"
 
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         internal const val EXTRA_ATTRIBUTE_IDS = "EXTRA_ATTRIBUTE_IDS"
@@ -196,13 +195,6 @@ class StaticWidget : AppWidgetProvider() {
                 .inject(this)
         } else {
             throw Exception("Application Context passed is not of our application!")
-        }
-    }
-
-    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
-        staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
-        appWidgetIds.forEach { appWidgetId ->
-            staticWidgetDao.delete(appWidgetId)
         }
     }
 }

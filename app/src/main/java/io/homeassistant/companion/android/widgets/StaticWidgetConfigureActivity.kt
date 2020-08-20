@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets.static_widget
+package io.homeassistant.companion.android.widgets
 
 import android.app.Activity
 import android.appwidget.AppWidgetManager
@@ -18,8 +18,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import io.homeassistant.companion.android.widgets.SingleItemArrayAdapter
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_static_configure.*
 import kotlinx.coroutines.CoroutineScope
