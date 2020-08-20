@@ -72,6 +72,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 putExtra(EXTRA_PATH, path)
             }
         }
+
+        private const val CONNECTION_DELAY = 10000L
     }
 
     @Inject
@@ -646,7 +648,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             if (!isConnected) {
                 showError()
             }
-        }, 5000)
+        }, CONNECTION_DELAY)
     }
 
     private fun setupPanelShortcuts() {

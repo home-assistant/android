@@ -8,21 +8,18 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.LinearLayout.GONE
 import android.widget.LinearLayout.VISIBLE
+import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import android.widget.Toast
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Entity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
-import kotlinx.android.synthetic.main.widget_static_configure.add_button
-import kotlinx.android.synthetic.main.widget_static_configure.append_attribute_value_checkbox
-import kotlinx.android.synthetic.main.widget_static_configure.attribute_value_linear_layout
-import kotlinx.android.synthetic.main.widget_static_configure.label
-import kotlinx.android.synthetic.main.widget_static_configure.widget_text_config_attribute
-import kotlinx.android.synthetic.main.widget_static_configure.widget_text_config_entity_id
+import kotlinx.android.synthetic.main.widget_static_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,8 +36,8 @@ class StaticWidgetConfigureActivity : Activity() {
     private var entities = LinkedHashMap<String, Entity<Any>>()
 
     private var selectedEntity: Entity<Any>? = null
-    private var appendAttribute: Boolean = false
-    private var selectedAttributeId: String? = null
+    private var appendAttributes: Boolean = false
+    private var selectedAttributeIds: ArrayList<String> = ArrayList()
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -86,10 +83,13 @@ class StaticWidgetConfigureActivity : Activity() {
         widget_text_config_entity_id.onItemClickListener = entityDropDownOnItemClick
         widget_text_config_attribute.onFocusChangeListener = dropDownOnFocus
         widget_text_config_attribute.onItemClickListener = attributeDropDownOnItemClick
+        widget_text_config_attribute.setOnClickListener {
+            if (!widget_text_config_attribute.isPopupShowing) widget_text_config_attribute.showDropDown()
+        }
 
         append_attribute_value_checkbox.setOnCheckedChangeListener { _, isChecked ->
             attribute_value_linear_layout.visibility = if (isChecked) VISIBLE else GONE
-            appendAttribute = isChecked
+            appendAttributes = isChecked
         }
 
         mainScope.launch {
@@ -128,14 +128,15 @@ class StaticWidgetConfigureActivity : Activity() {
 
     private val attributeDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, view, position, id ->
-            selectedAttributeId = parent.getItemAtPosition(position) as String
+            selectedAttributeIds.add(parent.getItemAtPosition(position) as String)
         }
 
     private fun setupAttributes() {
         val fetchedAttributes = selectedEntity?.attributes as Map<String, String>
-        val attributesAdapter = SingleItemArrayAdapter<String>(this) { it ?: "" }
+        val attributesAdapter = ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line)
         widget_text_config_attribute.setAdapter(attributesAdapter)
         attributesAdapter.addAll(*fetchedAttributes.keys.toTypedArray())
+        widget_text_config_attribute.setTokenizer(CommaTokenizer())
         runOnUiThread {
             attributesAdapter.notifyDataSetChanged()
         }
@@ -163,10 +164,27 @@ class StaticWidgetConfigureActivity : Activity() {
                 label.text.toString()
             )
 
-            if (appendAttribute) intent.putExtra(
-                StaticWidget.EXTRA_ATTRIBUTE_ID,
-                selectedAttributeId
+            intent.putExtra(
+                StaticWidget.EXTRA_TEXT_SIZE,
+                textSize.text.toString()
             )
+
+            intent.putExtra(
+                StaticWidget.EXTRA_STATE_SEPARATOR,
+                state_separator.text.toString()
+            )
+
+            if (appendAttributes) {
+                intent.putExtra(
+                    StaticWidget.EXTRA_ATTRIBUTE_IDS,
+                    selectedAttributeIds
+                )
+
+                intent.putExtra(
+                    StaticWidget.EXTRA_ATTRIBUTE_SEPARATOR,
+                    attribute_separator.text.toString()
+                )
+            }
 
             context.sendBroadcast(intent)
 

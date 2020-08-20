@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.data.integration.entities.IntegrationR
 import io.homeassistant.companion.android.data.integration.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.data.integration.entities.SensorRequest
 import io.homeassistant.companion.android.data.integration.entities.ServiceCallRequest
+import io.homeassistant.companion.android.data.integration.entities.Template
 import io.homeassistant.companion.android.data.integration.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.DeviceRegistration
@@ -46,9 +47,6 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_SECRET = "secret"
 
-        private const val PREF_ZONE_ENABLED = "zone_enabled"
-        private const val PREF_BACKGROUND_ENABLED = "background_enabled"
-        private const val PREF_CALL_ENABLED = "call_enabled"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
@@ -80,7 +78,11 @@ class IntegrationRepositoryImpl @Inject constructor(
                 request
             )
         persistDeviceRegistration(deviceRegistration)
-        urlRepository.saveRegistrationUrls(response.cloudhookUrl, response.remoteUiUrl, response.webhookId)
+        urlRepository.saveRegistrationUrls(
+            response.cloudhookUrl,
+            response.remoteUiUrl,
+            response.webhookId
+        )
         localStorage.putString(PREF_SECRET, response.secret)
     }
 
@@ -92,7 +94,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             )
         for (it in urlRepository.getApiUrls()) {
             try {
-                if (integrationService.updateRegistration(it.toHttpUrlOrNull()!!, request).isSuccessful) {
+                if (integrationService.callWebhook(it.toHttpUrlOrNull()!!, request).isSuccessful) {
                     persistDeviceRegistration(deviceRegistration)
                     return
                 }
@@ -125,13 +127,34 @@ class IntegrationRepositoryImpl @Inject constructor(
         return urlRepository.getApiUrls().isNotEmpty()
     }
 
+    override suspend fun renderTemplate(template: String, variables: Map<String, String>): String {
+        for (it in urlRepository.getApiUrls()) {
+            try {
+                return integrationService.getTemplate(
+                    it.toHttpUrlOrNull()!!,
+                    IntegrationRequest(
+                        "render_template",
+                        mapOf("template" to Template(template, variables))
+                    )
+                ).getValue("template")
+            } catch (e: Exception) {
+                // Ignore failure until we are out of URLS to try!
+            }
+        }
+
+        throw IntegrationException()
+    }
+
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
         for (it in urlRepository.getApiUrls()) {
             var wasSuccess = false
             try {
                 wasSuccess =
-                    integrationService.updateLocation(it.toHttpUrlOrNull()!!, updateLocationRequest).isSuccessful
+                    integrationService.callWebhook(
+                        it.toHttpUrlOrNull()!!,
+                        updateLocationRequest
+                    ).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
             }
@@ -143,7 +166,11 @@ class IntegrationRepositoryImpl @Inject constructor(
         throw IntegrationException()
     }
 
-    override suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>) {
+    override suspend fun callService(
+        domain: String,
+        service: String,
+        serviceData: HashMap<String, Any>
+    ) {
         var wasSuccess = false
 
         val serviceCallRequest =
@@ -156,7 +183,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
-                    integrationService.callService(
+                    integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
                         IntegrationRequest(
                             "call_service",
@@ -180,7 +207,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
-                    integrationService.scanTag(
+                    integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
                         IntegrationRequest(
                             "scan_tag",
@@ -209,7 +236,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
-                    integrationService.fireEvent(
+                    integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
                         IntegrationRequest(
                             "fire_event",
@@ -366,7 +393,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
         for (it in urlRepository.getApiUrls()) {
             try {
-                integrationService.registerSensor(it.toHttpUrlOrNull()!!, integrationRequest).let {
+                integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     // If we created sensor or it already exists
                     if (it.isSuccessful || it.code() == 409) {
                         localStorage.putStringSet(

@@ -36,6 +36,10 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.isRegistered()
     }
 
+    override suspend fun renderTemplate(template: String, variables: Map<String, String>): String {
+        return integrationRepository.renderTemplate(template, variables)
+    }
+
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         return integrationRepository.updateLocation(updateLocation)
     }

@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
     <uses-feature android:name="android.hardware.telephony" android:required="false"/>
@@ -37,6 +38,18 @@
         android:theme="@style/Theme.HomeAssistant"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:ignore="GoogleAppIndexingWarning">
+
+        <!-- Start things like SensorWorker on device boot -->
+        <receiver android:name=".sensors.SensorReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+            </intent-filter>
+        </receiver>
 
         <receiver android:name=".widgets.ButtonWidget" android:label="@string/widget_button_image_description">
             <intent-filter>
@@ -61,16 +74,15 @@
                 android:resource="@xml/static_widget_info" />
         </receiver>
 
-        <!-- Start things like SensorWorker on device boot -->
-        <receiver android:name=".sensors.SensorReceiver">
+        <receiver android:name=".widgets.template.TemplateWidget" android:label="Template Widget">
             <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
-                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
-                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA" />
             </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/template_widget_info" />
         </receiver>
 
         <activity android:name=".widgets.ButtonWidgetConfigureActivity">
@@ -80,6 +92,12 @@
         </activity>
 
         <activity android:name=".widgets.StaticWidgetConfigureActivity">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".widgets.template.TemplateWidgetConfigureActivity">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>

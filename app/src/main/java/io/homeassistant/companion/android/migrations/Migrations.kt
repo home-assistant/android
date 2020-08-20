@@ -78,7 +78,10 @@ class Migrations constructor(
                 id.toInt(),
                 entityId,
                 attribute,
-                label
+                label,
+                30F,
+                " ",
+                " "
             ))
         }
 

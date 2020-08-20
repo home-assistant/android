@@ -22,11 +22,13 @@ class SensorReceiver : BroadcastReceiver() {
         val MANAGERS = listOf(
             BatterySensorManager(),
             BluetoothSensorManager(),
-            NetworkSensorManager(),
             GeocodeSensorManager(),
+            LastRebootSensorManager(),
             LightSensorManager(),
+            NetworkSensorManager(),
             NextAlarmManager(),
             PhoneStateSensorManager(),
+            StepsSensorManager(),
             StorageSensorManager()
         )
     }
