@@ -372,7 +372,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode == NFC_COMPLETE){
+        if (requestCode == NFC_COMPLETE) {
             webView.evaluateJavascript("externalBus({})") {
                 Log.d(TAG, "NFC Write Complete $it")
             }
