@@ -38,7 +38,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
-        internal const val TAG = "AppDatabaseMigration"
+        internal const val TAG = "AppDatabase"
 
         @Volatile
         private var instance: AppDatabase? = null
