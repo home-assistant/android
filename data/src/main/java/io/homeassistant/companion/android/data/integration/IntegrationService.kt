@@ -42,34 +42,16 @@ interface IntegrationService {
     ): Array<EntityResponse<Any>>
 
     @POST
-    suspend fun updateRegistration(
+    suspend fun callWebhook(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
     ): Response<ResponseBody>
 
     @POST
-    suspend fun updateLocation(
+    suspend fun getTemplate(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
-    ): Response<ResponseBody>
-
-    @POST
-    suspend fun callService(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest
-    ): Response<ResponseBody>
-
-    @POST
-    suspend fun scanTag(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest
-    ): Response<ResponseBody>
-
-    @POST
-    suspend fun fireEvent(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest
-    ): Response<ResponseBody>
+    ): Map<String, String>
 
     @POST
     suspend fun getZones(
@@ -88,12 +70,6 @@ interface IntegrationService {
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
     ): Array<Panel>
-
-    @POST
-    suspend fun registerSensor(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest
-    ): Response<ResponseBody>
 
     @POST
     suspend fun updateSensors(
