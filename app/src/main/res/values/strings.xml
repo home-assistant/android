@@ -169,4 +169,6 @@ like to connect to:</string>
   <string name="widget_text_size_default">30</string>
   <string name="widget_separator_label">State and attribute separator:</string>
   <string name="widget_separator_input_hint">No separator</string>
+  <string name="create_template">Create Template</string>
+  <string name="template_widget_default">Enter Template Here</string>
 </resources>
