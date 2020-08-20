@@ -5,7 +5,7 @@ import javax.inject.Inject
 class ThemesUseCaseImpl @Inject constructor(
     private val themesRepository: ThemesRepository
 ) : ThemesUseCase {
-    override suspend fun getCurrentTheme(): String {
+    override suspend fun getCurrentTheme(): String? {
         return themesRepository.getCurrentTheme()
     }
 

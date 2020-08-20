@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings
 
-import android.content.Context
-import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
@@ -22,16 +20,13 @@ import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
-import io.homeassistant.companion.android.util.ThemeHandler
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
-class SettingsFragment : PreferenceFragmentCompat(), SettingsView, SharedPreferences.OnSharedPreferenceChangeListener {
+class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
-        private const val STORAGE_KEY_THEME = "theme"
-        private const val PREF_KEY_THEMES = "themes"
 
         fun newInstance() = SettingsFragment()
     }
@@ -40,11 +35,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView, SharedPrefere
     lateinit var presenter: SettingsPresenter
     private lateinit var authenticator: Authenticator
     private var setLock = false
-
-    override fun onDestroy() {
-        super.onDestroy()
-        context?.getSharedPreferences("themes", Context.MODE_PRIVATE)?.unregisterOnSharedPreferenceChangeListener(this)
-    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerPresenterComponent
@@ -59,8 +49,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView, SharedPrefere
         preferenceManager.preferenceDataStore = presenter.getPreferenceDataStore()
 
         setPreferencesFromResource(R.xml.preferences, rootKey)
-
-        context?.getSharedPreferences("themes", Context.MODE_PRIVATE)?.registerOnSharedPreferenceChangeListener(this)
 
         val onChangeUrlValidator = Preference.OnPreferenceChangeListener { _, newValue ->
             val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
@@ -196,14 +184,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView, SharedPrefere
                         pref.entryValues = entryValues.toTypedArray()
                     }
                 }
-            }
-        }
-    }
-
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == STORAGE_KEY_THEME) {
-            findPreference<ListPreference>(PREF_KEY_THEMES)?.let {
-                ThemeHandler.setNightModeBaseOnTheme(it.value.toString())
             }
         }
     }

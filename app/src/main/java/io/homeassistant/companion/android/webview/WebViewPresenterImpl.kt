@@ -7,7 +7,6 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Panel
-import io.homeassistant.companion.android.domain.themes.ThemesUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.homeassistant.companion.android.util.UrlHandler
 import java.net.URL
@@ -25,8 +24,7 @@ class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
     private val urlUseCase: UrlUseCase,
     private val authenticationUseCase: AuthenticationUseCase,
-    private val integrationUseCase: IntegrationUseCase,
-    private val themesUseCase: ThemesUseCase
+    private val integrationUseCase: IntegrationUseCase
 ) : WebViewPresenter {
 
     companion object {
@@ -123,18 +121,6 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.launch {
             urlUseCase.saveUrl("", true)
             urlUseCase.saveUrl("", false)
-        }
-    }
-
-    override fun isFollowSystemTheme(): Boolean {
-        return runBlocking {
-            themesUseCase.getCurrentTheme() == "system"
-        }
-    }
-
-    override fun getCurrentTheme(): String? {
-        return runBlocking {
-            themesUseCase.getCurrentTheme()
         }
     }
 

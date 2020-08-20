@@ -52,7 +52,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
-import io.homeassistant.companion.android.util.ThemeHandler
+import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
@@ -76,6 +76,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     @Inject
     lateinit var presenter: WebViewPresenter
+
+    @Inject
+    lateinit var themesManager: ThemesManager
+
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
@@ -333,7 +337,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }, "externalApp")
         }
 
-        ThemeHandler.setTheme(applicationContext, webView, presenter.getCurrentTheme())
+        themesManager.setThemeForWebView(this, webView.settings)
 
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
