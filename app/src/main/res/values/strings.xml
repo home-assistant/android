@@ -167,8 +167,9 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_label">Widget text size:</string>
   <string name="widget_text_size_default">30</string>
-  <string name="widget_separator_label">State and attribute separator:</string>
+  <string name="widget_state_separator_label">State and attribute separator:</string>
   <string name="widget_separator_input_hint">No separator</string>
+  <string name="widget_attribute_separator_label">Separator between attributes:</string>
   <string name="create_template">Create Template</string>
   <string name="template_widget_default">Enter Template Here</string>
 </resources>
