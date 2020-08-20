@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 
+
 @Database(
     entities = [
         Authentication::class,
@@ -81,25 +82,32 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 try {
+                    val contentValues: ArrayList<ContentValues> = ArrayList()
                     val widgets = database.query("SELECT * FROM `static_widget`")
                     widgets.use {
-                        if (widgets.moveToFirst()) {
-                            val cv = ContentValues()
-                            cv.put("id", widgets.getInt(widgets.getColumnIndex("id")))
-                            cv.put("entity_id", widgets.getString(widgets.getColumnIndex("entity_id")))
-                            cv.put("attribute_ids", widgets.getString(widgets.getColumnIndex("attribute_id")))
-                            cv.put("label", widgets.getString(widgets.getColumnIndex("label")))
-                            cv.put("text_size", widgets.getFloat(widgets.getColumnIndex("text_size")))
-                            cv.put("state_separator", widgets.getString(widgets.getColumnIndex("separator")))
-                            cv.put("attribute_separator", " ")
+                        if (widgets.count > 0) {
+                            while (widgets.moveToNext()) {
+                                val cv = ContentValues()
+                                cv.put("id", widgets.getInt(widgets.getColumnIndex("id")))
+                                cv.put("entity_id", widgets.getString(widgets.getColumnIndex("entity_id")))
+                                cv.put("attribute_ids", widgets.getString(widgets.getColumnIndex("attribute_id")))
+                                cv.put("label", widgets.getString(widgets.getColumnIndex("label")))
+                                cv.put("text_size", widgets.getFloat(widgets.getColumnIndex("text_size")))
+                                cv.put("state_separator", widgets.getString(widgets.getColumnIndex("separator")))
+                                cv.put("attribute_separator", " ")
+                                contentValues.add(cv)
+                            }
                             database.execSQL("DROP TABLE IF EXISTS `static_widget`")
                             database.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))")
-                            database.insert("static_widget", 0, cv)
+                            for (cv in contentValues) {
+                                database.insert("static_widget", 0, cv)
+                            }
                         } else {
                             database.execSQL("DROP TABLE IF EXISTS `static_widget`")
                             database.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))")
                         }
                     }
+                    widgets.close()
                 } catch (exception: SQLiteException) {
                     Log.e(exception.toString(), "SQLiteException in migrate from database version 4 to version 5")
                 } catch (exception: Exception) {
