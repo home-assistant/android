@@ -158,11 +158,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             override fun onClick(view: View) {
                 isExoFullScreen = !isExoFullScreen
                 exoResizeLayout()
-            } })
+            }
+        })
         exo_mute_icon.setOnClickListener(object : View.OnClickListener {
             override fun onClick(view: View) {
                 exoToggleMute()
-            } })
+            }
+        })
         if (!presenter.isLockEnabled())
             blurView.setBlurEnabled(false)
 
@@ -387,9 +389,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     ),
                                     NFC_COMPLETE
                                 )
-                            "play_hls" -> exoPlayHls(json)
-                            "stop_hls" -> exoStopHls()
-                            "resize_hls" -> exoResizeHls(json)
+                            "exoplayer/play_hls" -> exoPlayHls(json)
+                            "exoplayer/stop" -> exoStopHls()
+                            "exoplayer/resize" -> exoResizeHls(json)
                         }
                     }
                 }
@@ -451,6 +453,18 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             exoPlayerView.setPlayer(exoPlayer)
             exoPlayerView.visibility = View.VISIBLE
         }
+        val script = "externalBus(" + "${
+            JSONObject(
+                mapOf(
+                    "id" to json.get("id"),
+                    "type" to "result",
+                    "success" to true,
+                    "result" to null
+                )
+            )
+        }" + ");"
+        Log.d(TAG, script)
+        webView.evaluateJavascript(script) { Log.d(TAG, "Callback $it") }
     }
 
     fun exoStopHls() {
@@ -478,10 +492,20 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         exoMute = !exoMute
         if (exoMute) {
             exoPlayer?.volume = 0f
-            exo_mute_icon.setImageDrawable(ContextCompat.getDrawable(applicationContext, R.drawable.ic_baseline_volume_off_24))
+            exo_mute_icon.setImageDrawable(
+                ContextCompat.getDrawable(
+                    applicationContext,
+                    R.drawable.ic_baseline_volume_off_24
+                )
+            )
         } else {
             exoPlayer?.volume = 1f
-            exo_mute_icon.setImageDrawable(ContextCompat.getDrawable(applicationContext, R.drawable.ic_baseline_volume_up_24))
+            exo_mute_icon.setImageDrawable(
+                ContextCompat.getDrawable(
+                    applicationContext,
+                    R.drawable.ic_baseline_volume_up_24
+                )
+            )
         }
     }
 
@@ -503,7 +527,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
             val screenWidth: Int = resources.displayMetrics.widthPixels
             val screenHeight: Int = resources.displayMetrics.heightPixels
-            exoLayoutParams.setMargins(exoLeft, exoTop, maxOf(screenWidth - exoRight, 0), maxOf(screenHeight - exoBottom, 0))
+            exoLayoutParams.setMargins(
+                exoLeft,
+                exoTop,
+                maxOf(screenWidth - exoRight, 0),
+                maxOf(screenHeight - exoBottom, 0)
+            )
             exo_fullscreen_icon.setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
