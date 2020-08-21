@@ -197,4 +197,11 @@ class StaticWidget : AppWidgetProvider() {
             throw Exception("Application Context passed is not of our application!")
         }
     }
+
+    override fun onDeleted(context: Context, appWidgetIds: IntArray) {
+        staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
+        appWidgetIds.forEach { appWidgetId ->
+            staticWidgetDao.delete(appWidgetId)
+        }
+    }
 }
