@@ -39,8 +39,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.graphics.ColorUtils
-import androidx.webkit.WebSettingsCompat
-import androidx.webkit.WebViewFeature
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
@@ -54,6 +52,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
@@ -79,6 +78,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     @Inject
     lateinit var presenter: WebViewPresenter
+
+    @Inject
+    lateinit var themesManager: ThemesManager
+
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
@@ -336,14 +339,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }, "externalApp")
         }
 
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
-            val nightModeFlags = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-            if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
-                WebSettingsCompat.setForceDark(webView.settings, WebSettingsCompat.FORCE_DARK_ON)
-            } else {
-                WebSettingsCompat.setForceDark(webView.settings, WebSettingsCompat.FORCE_DARK_OFF)
-            }
-        }
+        themesManager.setThemeForWebView(this, webView.settings)
 
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
@@ -475,9 +471,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         } else {
             flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR // Add light flag
         }
-        window.decorView.systemUiVisibility = flags
         window.statusBarColor = color
         window.navigationBarColor = color
+        window.decorView.systemUiVisibility = flags
     }
 
     override fun setExternalAuth(script: String) {
