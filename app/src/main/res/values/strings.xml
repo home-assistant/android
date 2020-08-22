@@ -167,8 +167,27 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_label">Widget text size:</string>
   <string name="widget_text_size_default">30</string>
-  <string name="widget_separator_label">State and attribute separator:</string>
+  <string name="widget_state_separator_label">State and attribute separator:</string>
   <string name="widget_separator_input_hint">No separator</string>
+  <string name="widget_attribute_separator_label">Separator between attributes:</string>
   <string name="create_template">Create Template</string>
   <string name="template_widget_default">Enter Template Here</string>
+  <string name="themes_title_settings">Theme</string>
+  <string name="themes_option_label_light">Light</string>
+  <string name="themes_option_label_dark">Dark</string>
+  <string name="themes_option_label_system">Follow System Settings</string>
+  <string name="themes_option_value_light">light</string>
+  <string name="themes_option_value_dark">dark</string>
+  <string name="themes_option_value_system">system</string>
+  <array name="pref_theme_option_labels">
+    <item>@string/themes_option_label_light</item>
+    <item>@string/themes_option_label_dark</item>
+    <item>@string/themes_option_label_system</item>
+  </array>
+
+  <array name="pref_theme_option_values">
+    <item>@string/themes_option_value_light</item>
+    <item>@string/themes_option_value_dark</item>
+    <item>@string/themes_option_value_system</item>
+  </array>
 </resources>

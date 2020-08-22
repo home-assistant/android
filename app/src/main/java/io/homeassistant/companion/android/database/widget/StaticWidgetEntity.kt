@@ -10,12 +10,14 @@ data class StaticWidgetEntity(
     val id: Int,
     @ColumnInfo(name = "entity_id")
     val entityId: String,
-    @ColumnInfo(name = "attribute_id")
-    val attributeId: String?,
+    @ColumnInfo(name = "attribute_ids")
+    val attributeIds: String?,
     @ColumnInfo(name = "label")
     val label: String?,
     @ColumnInfo(name = "text_size")
     val textSize: Float = 30F,
-    @ColumnInfo(name = "separator")
-    val separator: String = " "
+    @ColumnInfo(name = "state_separator")
+    val stateSeparator: String = "",
+    @ColumnInfo(name = "attribute_separator")
+    val attributeSeparator: String = ""
 )
