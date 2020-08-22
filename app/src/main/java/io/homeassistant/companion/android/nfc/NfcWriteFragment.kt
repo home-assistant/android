@@ -40,7 +40,5 @@ class NfcWriteFragment : Fragment() {
             findNavController().navigate(R.id.action_NFC_EDIT)
         }
         viewModel.nfcWriteTagDoneEvent.observe(viewLifecycleOwner, nfcWriteTagDoneObserver)
-
-        viewModel.postNewUUID()
     }
 }
