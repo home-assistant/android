@@ -345,7 +345,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                 startActivityForResult(
                                     NfcSetupActivity.newInstance(
                                         this@WebViewActivity,
-                                        json.getJSONObject("payload").getString("tag")
+                                        json.getJSONObject("payload").getString("tag"),
+                                        JSONObject(message).getInt("id")
                                     ),
                                     NFC_COMPLETE
                                 )
@@ -370,8 +371,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == NFC_COMPLETE) {
-            webView.evaluateJavascript("externalBus({})") {
+        if (requestCode == NFC_COMPLETE && resultCode != -1) {
+            val message = mapOf(
+                "id" to resultCode,
+                "type" to "result",
+                "success" to true,
+                "result" to mapOf<String, String>()
+            )
+            webView.evaluateJavascript("externalBus(${JSONObject(message)})") {
                 Log.d(TAG, "NFC Write Complete $it")
             }
         }

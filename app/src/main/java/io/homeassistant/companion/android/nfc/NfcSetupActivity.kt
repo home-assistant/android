@@ -18,13 +18,17 @@ class NfcSetupActivity : AppCompatActivity() {
     // private val viewModel: NfcViewModel by viewModels()
     private lateinit var viewModel: NfcViewModel
     private var mNfcAdapter: NfcAdapter? = null
+    private var simpleWrite = false
+    private var messageId: Int = -1
 
     companion object {
         val TAG = NfcSetupActivity::class.simpleName
         const val EXTRA_TAG_VALUE = "tag_value"
+        const val EXTRA_MESSAGE_ID = "message_id"
 
-        fun newInstance(context: Context, tagId: String? = null): Intent {
+        fun newInstance(context: Context, tagId: String? = null, messageId: Int = -1): Intent {
             return Intent(context, NfcSetupActivity::class.java).apply {
+                putExtra(EXTRA_MESSAGE_ID, messageId)
                 if (tagId != null)
                     putExtra(EXTRA_TAG_VALUE, tagId)
             }
@@ -42,8 +46,11 @@ class NfcSetupActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this).get(NfcViewModel::class.java)
 
         intent.getStringExtra(EXTRA_TAG_VALUE)?.let {
+            simpleWrite = true
             viewModel.nfcWriteTagEvent.postValue(it)
         }
+
+        messageId = intent.getIntExtra(EXTRA_MESSAGE_ID, -1)
     }
 
     override fun onResume() {
@@ -97,6 +104,13 @@ class NfcSetupActivity : AppCompatActivity() {
 
                     viewModel.nfcReadEvent.value = nfcTagToWriteUUID
                     viewModel.nfcWriteTagDoneEvent.value = nfcTagToWriteUUID
+                    // If we are a simple write it means the fontend asked us to write.  This means
+                    // we should return the user as fast as possible back to the UI to continue what
+                    // they were doing!
+                    if (simpleWrite) {
+                        setResult(messageId)
+                        finish()
+                    }
                 } catch (e: Exception) {
                     val message = R.string.nfc_write_tag_error
                     Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
