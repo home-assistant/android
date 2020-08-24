@@ -20,6 +20,7 @@ class SensorReceiver : BroadcastReceiver() {
     companion object {
         const val TAG = "SensorReceiver"
         val MANAGERS = listOf(
+            AudioSensorManager(),
             BatterySensorManager(),
             BluetoothSensorManager(),
             GeocodeSensorManager(),
