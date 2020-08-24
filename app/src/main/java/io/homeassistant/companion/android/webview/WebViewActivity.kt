@@ -42,8 +42,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
-import androidx.webkit.WebSettingsCompat
-import androidx.webkit.WebViewFeature
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
@@ -425,7 +423,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             }
         }
     }
-    
+
     fun exoPlayHls(json: JSONObject) {
         val uri = Uri.parse(json.getString("payload"))
         val dataSourceFactory = DefaultHttpDataSourceFactory(
