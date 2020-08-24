@@ -40,7 +40,7 @@ class AudioSensorManager : SensorManager {
     private fun getAudioSensor(context: Context): SensorRegistration<Any> {
 
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val audioMode = when(audioManager.mode) {
+        val audioMode = when (audioManager.mode) {
             AudioManager.MODE_NORMAL -> "normal"
             AudioManager.MODE_RINGTONE -> "ringing"
             AudioManager.MODE_IN_CALL -> "in_call"
@@ -48,7 +48,7 @@ class AudioSensorManager : SensorManager {
             else -> "unknown"
         }
 
-        val ringerMode = when(audioManager.ringerMode) {
+        val ringerMode = when (audioManager.ringerMode) {
             AudioManager.RINGER_MODE_NORMAL -> "normal"
             AudioManager.RINGER_MODE_SILENT -> "silent"
             AudioManager.RINGER_MODE_VIBRATE -> "vibrate"
@@ -63,7 +63,7 @@ class AudioSensorManager : SensorManager {
         var isHeadphones = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val audioDevices = audioManager.getDevices(AudioManager.GET_DEVICES_ALL)
-            for(deviceInfo in audioDevices) {
+            for (deviceInfo in audioDevices) {
                 if (deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES || deviceInfo.type == AudioDeviceInfo.TYPE_WIRED_HEADSET || deviceInfo.type == AudioDeviceInfo.TYPE_USB_HEADSET)
                     isHeadphones = true
             }
@@ -77,7 +77,7 @@ class AudioSensorManager : SensorManager {
         val volumeLevelMusic = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         val volumeLevelRing = audioManager.getStreamVolume(AudioManager.STREAM_RING)
 
-        val icon = when(audioManager.ringerMode) {
+        val icon = when (audioManager.ringerMode) {
             AudioManager.RINGER_MODE_NORMAL -> "mdi:volume-high"
             AudioManager.RINGER_MODE_SILENT -> "mdi:volume-off"
             AudioManager.RINGER_MODE_VIBRATE -> "mdi:vibrate"

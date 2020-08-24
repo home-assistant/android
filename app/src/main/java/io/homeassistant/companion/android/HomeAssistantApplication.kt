@@ -52,7 +52,7 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
             }
         )
 
-        //Listen for bluetooth state changes
+        // Listen for bluetooth state changes
         registerReceiver(sensorReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         )
