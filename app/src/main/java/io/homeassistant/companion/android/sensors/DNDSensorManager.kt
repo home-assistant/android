@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.provider.Settings.Global
 import android.util.Log
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class DNDSensorManager : SensorManager {
     companion object {
@@ -27,17 +26,14 @@ class DNDSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            dndSensor.id -> getDNDState(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(context: Context) {
+        updateDNDState(context)
     }
 
-    private fun getDNDState(context: Context): SensorRegistration<Any> {
+    private fun updateDNDState(context: Context) {
+
+        if (!isEnabled(context, dndSensor.id))
+            return
 
         try {
             dndState = when (Global.getInt(context.contentResolver, "zen_mode")) {
@@ -53,7 +49,8 @@ class DNDSensorManager : SensorManager {
 
         val icon = "mdi:do-not-disturb"
 
-        return dndSensor.toSensorRegistration(
+        onSensorUpdated(context,
+            dndSensor,
             dndState,
             icon,
             mapOf()
