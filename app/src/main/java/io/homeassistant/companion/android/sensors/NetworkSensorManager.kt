@@ -5,7 +5,6 @@ import android.content.Context
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class NetworkSensorManager : SensorManager {
     companion object {
@@ -33,17 +32,16 @@ class NetworkSensorManager : SensorManager {
         }
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            wifiConnection.id -> getWifiConnectionSensor(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        updateWifiConnectionSensor(context)
     }
 
-    private fun getWifiConnectionSensor(context: Context): SensorRegistration<Any> {
+    private fun updateWifiConnectionSensor(context: Context) {
+        if (!isEnabled(context, wifiConnection.id))
+            return
+
         var conInfo: WifiInfo? = null
         var ssid = "Unknown"
         var lastScanStrength = -1
@@ -90,7 +88,8 @@ class NetworkSensorManager : SensorManager {
             )
         }.orEmpty()
 
-        return wifiConnection.toSensorRegistration(
+        onSensorUpdated(context,
+            wifiConnection,
             ssid,
             icon,
             attributes

@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class BatterySensorManager : SensorManager {
 
@@ -34,19 +33,14 @@ class BatterySensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
         val intent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         if (intent != null) {
-            return when (sensorId) {
-                batteryLevel.id -> getBatteryLevelSensor(intent)
-                batteryState.id -> getBatteryStateSensor(intent)
-                else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-            }
+            updateBatteryLevel(context, intent)
+            updateBatteryState(context, intent)
         }
-        throw RuntimeException("Unable to get battery state.")
     }
 
     private fun getBatteryPercentage(intent: Intent): Int {
@@ -85,21 +79,26 @@ class BatterySensorManager : SensorManager {
         return batteryIcon
     }
 
-    private fun getBatteryLevelSensor(intent: Intent): SensorRegistration<Any> {
-
+    private fun updateBatteryLevel(context: Context, intent: Intent) {
+        if (!isEnabled(context, batteryLevel.id))
+            return
         val percentage: Int = getBatteryPercentage(intent)
         val isCharging = getIsCharging(intent)
         val chargerType = getChargerType(intent)
         val chargingStatus = getChargingStatus(intent)
 
-        return batteryLevel.toSensorRegistration(
+        onSensorUpdated(
+            context,
+            batteryLevel,
             percentage,
             getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
             mapOf()
         )
     }
 
-    private fun getBatteryStateSensor(intent: Intent): SensorRegistration<Any> {
+    private fun updateBatteryState(context: Context, intent: Intent) {
+        if (!isEnabled(context, batteryState.id))
+            return
 
         val percentage: Int = getBatteryPercentage(intent)
         val isCharging = getIsCharging(intent)
@@ -107,7 +106,9 @@ class BatterySensorManager : SensorManager {
         val chargingStatus = getChargingStatus(intent)
         val batteryHealth = getBatteryHealth(intent)
 
-        return batteryState.toSensorRegistration(
+        onSensorUpdated(
+            context,
+            batteryState,
             chargingStatus,
             getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
             mapOf(

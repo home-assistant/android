@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -32,17 +31,16 @@ class NextAlarmManager : SensorManager {
         return emptyArray()
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            nextAlarm.id -> getNextAlarm(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        updateNextAlarm(context)
     }
 
-    private fun getNextAlarm(context: Context): SensorRegistration<Any> {
+    private fun updateNextAlarm(context: Context) {
+
+        if (!isEnabled(context, nextAlarm.id))
+            return
 
         var triggerTime = 0L
         var local = ""
@@ -75,7 +73,8 @@ class NextAlarmManager : SensorManager {
 
         val icon = "mdi:alarm"
 
-        return nextAlarm.toSensorRegistration(
+        onSensorUpdated(context,
+            nextAlarm,
             utc,
             icon,
             mapOf(

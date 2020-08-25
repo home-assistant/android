@@ -31,7 +31,7 @@ class SensorDetailFragment(
 
     private lateinit var sensorDao: SensorDao
     private val handler = Handler()
-    private val refresh = object: Runnable{
+    private val refresh = object : Runnable {
         override fun run() {
             refreshSensorData()
             handler.postDelayed(this, 10000)

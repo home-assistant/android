@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Environment
 import android.os.StatFs
 import android.util.Log
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -61,20 +60,18 @@ class StorageSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            storageSensor.id -> getStorageSensor(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        updateStorageSensor(context)
     }
 
-    private fun getStorageSensor(context: Context): SensorRegistration<Any> {
+    private fun updateStorageSensor(context: Context) {
+        if (!isEnabled(context, storageSensor.id))
+            return
 
-        var totalInternalStorage = getTotalInternalMemorySize()
-        var freeInternalStorage = getAvailableInternalMemorySize()
+        val totalInternalStorage = getTotalInternalMemorySize()
+        val freeInternalStorage = getAvailableInternalMemorySize()
         val percentageFreeInternalStorage = getPercentageInternal()
         externalPath = externalMemoryAvailable(context)
         var totalExternalStorage = "No SD Card"
@@ -91,7 +88,8 @@ class StorageSensorManager : SensorManager {
 
         val icon = "mdi:harddisk"
 
-        return storageSensor.toSensorRegistration(
+        onSensorUpdated(context,
+            storageSensor,
             percentageFreeInternalStorage,
             icon,
             mapOf(
@@ -128,7 +126,7 @@ class StorageSensorManager : SensorManager {
             commaOffset -= 3
         }
 
-        if (suffix != null) resultBuffer.append(suffix)
+        resultBuffer.append(suffix)
         return resultBuffer.toString()
     }
 

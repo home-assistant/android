@@ -15,6 +15,12 @@ data class SensorWithAttributes(
 ) {
     fun toSensorRegistration(): SensorRegistration<Any> {
         val attributes = attributes.map { it.name to it.value }.toMap()
+        val state = when (sensor.stateType) {
+            "" -> ""
+            "string" -> sensor.state
+            "number" -> sensor.state.toFloat()
+            else -> throw IllegalArgumentException("State is of unknown type: ${sensor.stateType}")
+        }
         return SensorRegistration(
             sensor.id,
             sensor.state,

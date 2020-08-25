@@ -5,10 +5,7 @@ import android.content.Context
 import android.location.Address
 import android.location.Geocoder
 import android.os.Build
-import android.util.Log
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.tasks.Tasks
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class GeocodeSensorManager : SensorManager {
 
@@ -37,52 +34,45 @@ class GeocodeSensorManager : SensorManager {
         }
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            geocodedLocation.id -> getGeocodedLocation(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        updateGeocodedLocation(context)
     }
 
-    private fun getGeocodedLocation(context: Context): SensorRegistration<Any> {
-        var address: Address? = null
-        if (checkPermission(context)) {
-            try {
-                val locApi = LocationServices.getFusedLocationProviderClient(context)
-                Tasks.await(locApi.lastLocation)?.let {
-                    if (it.accuracy <= LocationBroadcastReceiver.MINIMUM_ACCURACY)
-                        address = Geocoder(context)
-                            .getFromLocation(it.latitude, it.longitude, 1)
-                            .firstOrNull()
-                }
-            } catch (e: Exception) {
-                // We don't want to crash if the device cannot get a geocoded location
-                Log.e(TAG, "Issue getting geocoded location ", e)
-            }
-        }
+    private fun updateGeocodedLocation(context: Context) {
+        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context))
+            return
+        val locApi = LocationServices.getFusedLocationProviderClient(context)
+        locApi.lastLocation.addOnSuccessListener { location ->
+            var address: Address? = null
+            if (location.accuracy <= LocationBroadcastReceiver.MINIMUM_ACCURACY)
+                address = Geocoder(context)
+                    .getFromLocation(location.latitude, location.longitude, 1)
+                    .firstOrNull()
 
-        val attributes = address?.let {
-            mapOf(
-                "Administrative Area" to it.adminArea,
-                "Country" to it.countryName,
-                "ISO Country Code" to it.countryCode,
-                "Locality" to it.locality,
-                "Location" to listOf(it.latitude, it.longitude),
-                "Postal Code" to it.postalCode,
-                "Sub Administrative Area" to it.subAdminArea,
-                "Sub Locality" to it.subLocality,
-                "Sub Thoroughfare" to it.subThoroughfare,
-                "Thoroughfare" to it.thoroughfare
+            val attributes = address?.let {
+                mapOf(
+                    "Administrative Area" to it.adminArea,
+                    "Country" to it.countryName,
+                    "ISO Country Code" to it.countryCode,
+                    "Locality" to it.locality,
+                    "Location" to listOf(it.latitude, it.longitude),
+                    "Postal Code" to it.postalCode,
+                    "Sub Administrative Area" to it.subAdminArea,
+                    "Sub Locality" to it.subLocality,
+                    "Sub Thoroughfare" to it.subThoroughfare,
+                    "Thoroughfare" to it.thoroughfare
+                )
+            }.orEmpty()
+
+            onSensorUpdated(
+                context,
+                geocodedLocation,
+                address?.getAddressLine(0) ?: "Unknown",
+                "mdi:map",
+                attributes
             )
-        }.orEmpty()
-
-        return geocodedLocation.toSensorRegistration(
-            address?.getAddressLine(0) ?: "Unknown",
-            "mdi:map",
-            attributes
-        )
+        }
     }
 }

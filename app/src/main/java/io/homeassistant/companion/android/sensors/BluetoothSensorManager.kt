@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile.GATT
 import android.content.Context
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import java.lang.reflect.Method
 
 class BluetoothSensorManager : SensorManager {
@@ -28,23 +27,21 @@ class BluetoothSensorManager : SensorManager {
         return arrayOf(Manifest.permission.BLUETOOTH)
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            bluetoothConnection.id -> getBluetoothConnectionSensor(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        updateBluetoothConnectionSensor(context)
     }
 
-    private fun getBluetoothConnectionSensor(context: Context): SensorRegistration<Any> {
+    private fun updateBluetoothConnectionSensor(context: Context) {
+        if (!isEnabled(context, bluetoothConnection.id))
+            return
 
         var connectedNotPairedAddress = ""
         var totalConnectedDevices = 0
         val icon = "mdi:bluetooth"
-        var connectedPairedDevices: MutableList<String> = ArrayList()
-        var connectedNotPairedDevices: MutableList<String> = ArrayList()
+        val connectedPairedDevices: MutableList<String> = ArrayList()
+        val connectedNotPairedDevices: MutableList<String> = ArrayList()
         var bondedString = ""
         var isBtOn = false
 
@@ -56,11 +53,11 @@ class BluetoothSensorManager : SensorManager {
             val btConnectedDevices = bluetoothManager.getConnectedDevices(GATT)
             var connectedAddress = ""
 
-            var adapter = bluetoothManager.adapter
+            val adapter = bluetoothManager.adapter
             isBtOn = adapter.isEnabled
 
             if (isBtOn) {
-                var bondedDevices = adapter.bondedDevices
+                val bondedDevices = adapter.bondedDevices
                 bondedString = bondedDevices.toString()
                 for (BluetoothDevice in bondedDevices) {
                     if (isConnected(BluetoothDevice)) {
@@ -80,7 +77,9 @@ class BluetoothSensorManager : SensorManager {
                 }
             }
         }
-        return bluetoothConnection.toSensorRegistration(
+        onSensorUpdated(
+            context,
+            bluetoothConnection,
             totalConnectedDevices,
             icon,
             mapOf(

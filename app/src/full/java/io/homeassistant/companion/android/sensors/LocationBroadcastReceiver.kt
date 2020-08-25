@@ -20,7 +20,6 @@ import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -270,10 +269,10 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
                 object : LocationCallback() {
                     val wakeLock: PowerManager.WakeLock? =
                         getSystemService(context, PowerManager::class.java)
-                        ?.newWakeLock(
-                            PowerManager.PARTIAL_WAKE_LOCK,
-                            "HomeAssistant::AccurateLocation"
-                        )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
+                            ?.newWakeLock(
+                                PowerManager.PARTIAL_WAKE_LOCK,
+                                "HomeAssistant::AccurateLocation"
+                            )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
                     var numberCalls = 0
                     override fun onLocationResult(locationResult: LocationResult?) {
                         numberCalls++
@@ -329,24 +328,9 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         }
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            zoneLocation.id ->
-                zoneLocation.toSensorRegistration(
-                    "",
-                    "mdi:map",
-                    mapOf()
-                )
-            backgroundLocation.id ->
-                backgroundLocation.toSensorRegistration(
-                    "",
-                    "mdi:map",
-                    mapOf()
-                )
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        // For now we don't need to do anything here, updates a handled elsewhere.
     }
 }
