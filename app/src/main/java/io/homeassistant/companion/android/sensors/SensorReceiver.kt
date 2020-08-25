@@ -91,7 +91,7 @@ class SensorReceiver : BroadcastReceiver() {
                 val sensor = fullSensor?.sensor
 
                 // Register Sensors if needed
-                if (sensor?.enabled == true && !sensor.registered) {
+                if (sensor?.enabled == true && !sensor.registered && !sensor.type.isNullOrBlank()) {
                     val reg = fullSensor.toSensorRegistration()
                     try {
                         integrationUseCase.registerSensor(reg)
@@ -101,7 +101,7 @@ class SensorReceiver : BroadcastReceiver() {
                         Log.e(TAG, "Issue registering sensor: ${reg.uniqueId}", e)
                     }
                 }
-                if (fullSensor != null) {
+                if (fullSensor != null && sensor?.registered == true) {
                     enabledRegistrations.add(fullSensor.toSensorRegistration())
                 }
             }
