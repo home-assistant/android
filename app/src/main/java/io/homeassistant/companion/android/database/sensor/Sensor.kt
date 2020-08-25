@@ -20,12 +20,12 @@ data class Sensor(
     @ColumnInfo(name = "type")
     var type: String = "",
     @ColumnInfo(name = "icon")
-    val icon: String = "",
+    var icon: String = "",
     @ColumnInfo(name = "name")
-    val name: String = "",
+    var name: String = "",
     @ColumnInfo(name = "device_class")
-    val deviceClass: String? = null,
+    var deviceClass: String? = null,
     @ColumnInfo(name = "unit_of_measurement")
-    val unitOfMeasurement: String? = null
+    var unitOfMeasurement: String? = null
 
 )

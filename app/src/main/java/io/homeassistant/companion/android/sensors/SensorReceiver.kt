@@ -96,6 +96,7 @@ class SensorReceiver : BroadcastReceiver() {
                     try {
                         integrationUseCase.registerSensor(sensorData)
                         sensor.registered = true
+                        sensorDao.update(sensor)
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue registering sensor: ${sensorData.uniqueId}", e)
                     }

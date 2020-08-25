@@ -78,6 +78,11 @@ interface SensorManager {
                 is Number -> "number"
                 else -> throw IllegalArgumentException("Unknown Sensor State Type")
             }
+            sensor.type = sensorData.type
+            sensor.icon = sensorData.icon
+            sensor.name = sensorData.name
+            sensor.deviceClass = sensorData.deviceClass
+            sensor.unitOfMeasurement = sensorData.unitOfMeasurement
             sensorDao.update(sensor)
 
             sensorDao.clearAttributes(sensorId)
