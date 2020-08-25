@@ -60,7 +60,6 @@ class SensorReceiver : BroadcastReceiver() {
             .inject(this)
 
         LocationBroadcastReceiver.restartLocationTracking(context)
-        ActivitySensorManager.restartActivityTracking(context)
 
         ioScope.launch {
             updateSensors(context, integrationUseCase)

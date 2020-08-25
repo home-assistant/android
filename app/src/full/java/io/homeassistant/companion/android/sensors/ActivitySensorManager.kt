@@ -11,13 +11,8 @@ import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityRecognitionResult
 import com.google.android.gms.location.DetectedActivity
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class ActivitySensorManager : BroadcastReceiver(), SensorManager {
 
@@ -25,39 +20,23 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
 
         internal const val TAG = "ActivitySM"
 
-        const val ACTION_REQUEST_ACTIVITY_UPDATES =
-            "io.homeassistant.companion.android.background.REQUEST_ACTIVITY_UPDATES"
         const val ACTION_UPDATE_ACTIVITY =
             "io.homeassistant.companion.android.background.UPDATE_ACTIVITY"
-
-        fun restartActivityTracking(context: Context) {
-            val intent = Intent(context, ActivitySensorManager::class.java)
-            intent.action = ACTION_REQUEST_ACTIVITY_UPDATES
-
-            context.sendBroadcast(intent)
-        }
 
         private val activity = SensorManager.BasicSensor(
             "detected_activity",
             "sensor",
             "Detected Activity"
         )
-
-        private var stored_activity: String = "unknown"
-        private var stored_attributes = mutableMapOf<String, Int>()
     }
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
-
     override fun onReceive(context: Context, intent: Intent) {
         ensureInjected(context)
 
         when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED,
-            ACTION_REQUEST_ACTIVITY_UPDATES -> setupActivityTracking(context)
             ACTION_UPDATE_ACTIVITY -> handleActivityUpdate(intent, context)
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
@@ -71,30 +50,6 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                 .inject(this)
         } else {
             throw Exception("Application Context passed is not of our application!")
-        }
-    }
-
-    private fun setupActivityTracking(context: Context) {
-        if (!checkPermission(context)) {
-            Log.w(TAG, "Not starting activity tracking because of permissions.")
-            return
-        }
-
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
-
-        ioScope.launch {
-            try {
-                Log.d(TAG, "Unregistering for activity updates.")
-                ActivityRecognition.getClient(context).removeActivityUpdates(getPendingIntent(context))
-
-                if (sensorDao.get(activity.id)?.enabled == true) {
-                    Log.d(TAG, "Registering for activity updates.")
-
-                    ActivityRecognition.getClient(context).requestActivityUpdates(120000, getPendingIntent(context))
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue setting up activity tracking", e)
-            }
         }
     }
 
@@ -113,17 +68,13 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             if (probActivity == "on_foot")
                 probActivity = getSubActivity(result)
 
-            if (stored_activity != probActivity) {
-                stored_activity = probActivity
-
-                stored_attributes.clear()
-                for (act in result.probableActivities)
-                    stored_attributes[typeToString(act)] = act.confidence
-
-                val intent = Intent(context, SensorReceiver::class.java)
-                intent.action = SensorReceiver.ACTION_REQUEST_SENSORS_UPDATE
-                context.sendBroadcast(intent)
-            }
+            onSensorUpdated(
+                context,
+                activity,
+                probActivity,
+                getSensorIcon(probActivity),
+                result.probableActivities.map { typeToString(it) to it.confidence }.toMap()
+            )
         }
     }
 
@@ -163,24 +114,19 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            activity.id -> getActivitySensor(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(context: Context) {
+        if (!isEnabled(context, activity.id))
+            return
+
+        val actReg = ActivityRecognition.getClient(context)
+        val pendingIntent = getPendingIntent(context)
+        Log.d(TAG, "Unregistering for activity updates.")
+        actReg.removeActivityUpdates(pendingIntent)
+
+        Log.d(TAG, "Registering for activity updates.")
+        actReg.requestActivityUpdates(120000, pendingIntent)
     }
 
-    private fun getActivitySensor(context: Context): SensorRegistration<Any> {
-
-        return activity.toSensorRegistration(
-            stored_activity,
-            getSensorIcon(stored_activity),
-            stored_attributes
-        )
-    }
     private fun getSensorIcon(activity: String): String {
 
         return when (activity) {

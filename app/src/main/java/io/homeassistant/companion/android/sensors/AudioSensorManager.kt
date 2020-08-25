@@ -4,7 +4,6 @@ import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class AudioSensorManager : SensorManager {
     companion object {
@@ -27,18 +26,13 @@ class AudioSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            audioSensor.id -> getAudioSensor(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(context: Context) {
+        updateAudioSensor(context)
     }
 
-    private fun getAudioSensor(context: Context): SensorRegistration<Any> {
-
+    private fun updateAudioSensor(context: Context) {
+        if (!isEnabled(context, audioSensor.id))
+            return
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val audioMode = when (audioManager.mode) {
             AudioManager.MODE_NORMAL -> "normal"
@@ -84,7 +78,8 @@ class AudioSensorManager : SensorManager {
             else -> "mdi:volume-low"
         }
 
-        return audioSensor.toSensorRegistration(
+        onSensorUpdated(context,
+            audioSensor,
             ringerMode,
             icon,
             mapOf(
