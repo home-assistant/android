@@ -137,10 +137,17 @@ abstract class AppDatabase : RoomDatabase() {
                     sensors.add(ContentValues().also {
                         it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
                         it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                        it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
+                        it.put("state", "")
+                        it.put("state_type", "")
+                        it.put("type", "")
+                        it.put("icon", "")
+                        it.put("name", "")
+                        it.put("device_class", "")
                     })
                 }
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
-                database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`unique_id`))")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`unique_id`))")
                 sensors.forEach {
                     database.insert("sensors", OnConflictStrategy.REPLACE, it)
                 }
