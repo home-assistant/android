@@ -13,7 +13,8 @@ class GeocodeSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun getSensorData(context: Context, sensorId: String): SensorRegistration<Any> {
-        TODO("Not yet implemented")
+    override fun requestSensorUpdate(context: Context) {
+        // No op
     }
+
 }
