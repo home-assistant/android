@@ -8,7 +8,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import kotlin.math.roundToInt
 
 class StepsSensorManager : SensorManager, SensorEventListener {
@@ -21,8 +20,6 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             "Steps Sensor",
             unitOfMeasurement = "steps"
         )
-        private var stepsReading: String = "unavailable"
-        lateinit var mySensorManager: android.hardware.SensorManager
     }
 
     override val name: String
@@ -30,6 +27,9 @@ class StepsSensorManager : SensorManager, SensorEventListener {
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(stepsSensor)
+
+    private lateinit var latestContext: Context
+    private lateinit var mySensorManager: android.hardware.SensorManager
 
     override fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -41,21 +41,20 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         }
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            stepsSensor.id -> getStepsSensor(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        latestContext = context
+        updateStepsSensor()
     }
 
-    private fun getStepsSensor(context: Context): SensorRegistration<Any> {
+    private fun updateStepsSensor() {
+        if (!isEnabled(latestContext, stepsSensor.id))
+            return
 
-        if (checkPermission(context)) {
+        if (checkPermission(latestContext)) {
             mySensorManager =
-                context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+                latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
             val stepsSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
             if (stepsSensors != null) {
@@ -66,13 +65,6 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 )
             }
         }
-        val icon = "mdi:walk"
-
-        return stepsSensor.toSensorRegistration(
-            stepsReading,
-            icon,
-            mapOf()
-        )
     }
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
@@ -82,7 +74,13 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_STEP_COUNTER) {
-                stepsReading = event.values[0].roundToInt().toString()
+                onSensorUpdated(
+                    latestContext,
+                    stepsSensor,
+                    event.values[0].roundToInt().toString(),
+                    "mdi:walk",
+                    mapOf()
+                )
             }
         }
         mySensorManager.unregisterListener(this)

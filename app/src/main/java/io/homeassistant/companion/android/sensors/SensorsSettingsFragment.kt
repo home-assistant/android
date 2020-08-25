@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.os.Bundle
+import android.os.Handler
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -14,6 +15,31 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationUseCase
+
+    private val handler = Handler()
+    private val refresh = object : Runnable {
+        override fun run() {
+            SensorWorker.start(requireContext())
+            val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
+            SensorReceiver.MANAGERS.plus(LocationBroadcastReceiver()).forEach { managers ->
+                managers.availableSensors.forEach { basicSensor ->
+                    findPreference<Preference>(basicSensor.id)?.let {
+                        val sensorEntity = sensorDao.get(basicSensor.id)
+                        if (sensorEntity?.enabled == true) {
+                            if (basicSensor.unitOfMeasurement.isNullOrBlank())
+                                it.summary = sensorEntity.state
+                            else
+                                it.summary = sensorEntity.state + " " + basicSensor.unitOfMeasurement
+                            // TODO: Add the icon from mdi:icon?
+                        } else {
+                            it.summary = "Disabled"
+                        }
+                    }
+                }
+            }
+            handler.postDelayed(this, 10000)
+        }
+    }
 
     companion object {
         fun newInstance(): SensorsSettingsFragment {
@@ -49,7 +75,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                             R.id.content,
                             SensorDetailFragment.newInstance(
                                 manager,
-                                basicSensor
+                                basicSensor.id
                             )
                         )
                         .addToBackStack("Sensor Detail")
@@ -64,22 +90,11 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
-        val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
-        SensorReceiver.MANAGERS.plus(LocationBroadcastReceiver()).forEach { managers ->
-            managers.availableSensors.forEach { basicSensor ->
-                findPreference<Preference>(basicSensor.id)?.let {
-                    val sensorEntity = sensorDao.get(basicSensor.id)
-                    if (sensorEntity?.enabled == true) {
-                        if (basicSensor.unitOfMeasurement.isNullOrBlank())
-                            it.summary = sensorEntity.state
-                        else
-                            it.summary = sensorEntity.state + " " + basicSensor.unitOfMeasurement
-                        // TODO: Add the icon from mdi:icon?
-                    } else {
-                        it.summary = "Disabled"
-                    }
-                }
-            }
-        }
+        handler.postDelayed(refresh, 0)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(refresh)
     }
 }

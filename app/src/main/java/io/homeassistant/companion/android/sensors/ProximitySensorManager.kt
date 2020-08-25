@@ -6,7 +6,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import kotlin.math.roundToInt
 
 class ProximitySensorManager : SensorManager, SensorEventListener {
@@ -18,9 +17,11 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             "sensor",
             "Proximity Sensor"
         )
-        private var proximityReading: String = "unavailable"
-        lateinit var mySensorManager: android.hardware.SensorManager
     }
+
+    private lateinit var latestContext: Context
+    private lateinit var mySensorManager: android.hardware.SensorManager
+    private var maxRange: Int = 0
 
     override val name: String
         get() = "Proximity Sensors"
@@ -32,17 +33,14 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         return emptyArray()
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            proximitySensor.id -> getProximitySensor(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(context: Context) {
+        latestContext = context
+        updateProximitySensor(context)
     }
 
-    private fun getProximitySensor(context: Context): SensorRegistration<Any> {
+    private fun updateProximitySensor(context: Context) {
+        if (!isEnabled(context, proximitySensor.id))
+            return
 
         mySensorManager = context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
@@ -51,25 +49,10 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 proximitySensors,
-                SENSOR_DELAY_NORMAL)
-
-            // Some devices only report 2 values, one of which is the max range so lets account for those devices
-            if (proximitySensors.maximumRange.roundToInt() == 5) {
-                proximityReading = if (proximityReading == "5") {
-                    "far"
-                } else {
-                    "near"
-                }
-            }
+                SENSOR_DELAY_NORMAL
+            )
+            maxRange = proximitySensors.maximumRange.roundToInt()
         }
-
-        val icon = "mdi:leak"
-
-        return proximitySensor.toSensorRegistration(
-            proximityReading,
-            icon,
-            mapOf()
-        )
     }
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
@@ -79,7 +62,21 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_PROXIMITY) {
-                proximityReading = event.values[0].roundToInt().toString()
+                val sensorValue = event.values[0].roundToInt()
+                val state =
+                    if (maxRange == 5 && sensorValue == 5)
+                        "far"
+                    else if (maxRange == 5)
+                        "near"
+                    else
+                        sensorValue
+                onSensorUpdated(
+                    latestContext,
+                    proximitySensor,
+                    state,
+                    "mdi:leak",
+                    mapOf()
+                )
             }
         }
         mySensorManager.unregisterListener(this)

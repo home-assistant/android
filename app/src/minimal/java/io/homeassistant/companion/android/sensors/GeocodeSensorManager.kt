@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class GeocodeSensorManager : SensorManager {
     override val name: String
@@ -13,7 +12,7 @@ class GeocodeSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun getSensorData(context: Context, sensorId: String): SensorRegistration<Any> {
-        TODO("Not yet implemented")
+    override fun requestSensorUpdate(context: Context) {
+        // No op
     }
 }

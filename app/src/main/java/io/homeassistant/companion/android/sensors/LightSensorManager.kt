@@ -6,7 +6,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import kotlin.math.roundToInt
 
 class LightSensorManager : SensorManager, SensorEventListener {
@@ -20,8 +19,6 @@ class LightSensorManager : SensorManager, SensorEventListener {
             "illuminance",
             "lx"
         )
-        private var lightReading: String = "unavailable"
-        lateinit var mySensorManager: android.hardware.SensorManager
     }
 
     override val name: String
@@ -34,19 +31,21 @@ class LightSensorManager : SensorManager, SensorEventListener {
         return emptyArray()
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            lightSensor.id -> getLightSensor(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    private lateinit var latestContext: Context
+    private lateinit var mySensorManager: android.hardware.SensorManager
+
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        latestContext = context
+        updateLightSensor()
     }
 
-    private fun getLightSensor(context: Context): SensorRegistration<Any> {
+    private fun updateLightSensor() {
+        if (!isEnabled(latestContext, lightSensor.id))
+            return
 
-        mySensorManager = context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+        mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val lightSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
         if (lightSensors != null) {
@@ -55,14 +54,6 @@ class LightSensorManager : SensorManager, SensorEventListener {
                 lightSensors,
                 SENSOR_DELAY_NORMAL)
         }
-
-        val icon = "mdi:brightness-5"
-
-        return lightSensor.toSensorRegistration(
-            lightReading,
-            icon,
-            mapOf()
-        )
     }
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
@@ -72,7 +63,13 @@ class LightSensorManager : SensorManager, SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_LIGHT) {
-                lightReading = event.values[0].roundToInt().toString()
+                onSensorUpdated(
+                    latestContext,
+                    lightSensor,
+                    event.values[0].roundToInt().toString(),
+                    "mdi:brightness-5",
+                    mapOf()
+                )
             }
         }
         mySensorManager.unregisterListener(this)

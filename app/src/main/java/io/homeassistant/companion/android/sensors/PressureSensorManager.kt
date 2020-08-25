@@ -6,7 +6,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import java.math.RoundingMode
 
 class PressureSensorManager : SensorManager, SensorEventListener {
@@ -20,9 +19,10 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             "pressure",
             "hPa"
         )
-        private var pressureReading: String = "unavailable"
-        lateinit var mySensorManager: android.hardware.SensorManager
     }
+
+    private lateinit var latestContext: Context
+    private lateinit var mySensorManager: android.hardware.SensorManager
 
     override val name: String
         get() = "Pressure Sensors"
@@ -34,18 +34,15 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         return emptyArray()
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            pressureSensor.id -> getPressureSensor(context)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(context: Context) {
+        updatePressureSensor(context)
     }
 
-    private fun getPressureSensor(context: Context): SensorRegistration<Any> {
+    private fun updatePressureSensor(context: Context) {
+        if (!isEnabled(context, pressureSensor.id))
+            return
 
+        latestContext = context
         mySensorManager = context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val pressureSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
@@ -55,14 +52,6 @@ class PressureSensorManager : SensorManager, SensorEventListener {
                 pressureSensors,
                 SENSOR_DELAY_NORMAL)
         }
-
-        val icon = "mdi:gauge"
-
-        return pressureSensor.toSensorRegistration(
-            pressureReading,
-            icon,
-            mapOf()
-        )
     }
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
@@ -72,7 +61,13 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_PRESSURE) {
-                pressureReading = event.values[0].toBigDecimal().setScale(1, RoundingMode.HALF_EVEN).toString()
+                onSensorUpdated(
+                    latestContext,
+                    pressureSensor,
+                    event.values[0].toBigDecimal().setScale(1, RoundingMode.HALF_EVEN).toString(),
+                    "mdi:gauge",
+                    mapOf()
+                )
             }
         }
         mySensorManager.unregisterListener(this)

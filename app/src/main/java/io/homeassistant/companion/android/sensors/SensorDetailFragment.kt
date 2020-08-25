@@ -2,6 +2,8 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
+import androidx.core.os.postDelayed
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -14,20 +16,27 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 
 class SensorDetailFragment(
     private val sensorManager: SensorManager,
-    private val basicSensor: SensorManager.BasicSensor
+    private val sensorId: String
 ) :
     PreferenceFragmentCompat() {
 
     companion object {
         fun newInstance(
             sensorManager: SensorManager,
-            basicSensor: SensorManager.BasicSensor
+            sensorId: String
         ): SensorDetailFragment {
-            return SensorDetailFragment(sensorManager, basicSensor)
+            return SensorDetailFragment(sensorManager, sensorId)
         }
     }
 
     private lateinit var sensorDao: SensorDao
+    private val handler = Handler()
+    private val refresh = object : Runnable {
+        override fun run() {
+            refreshSensorData()
+            handler.postDelayed(this, 10000)
+        }
+    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerSensorComponent
@@ -40,7 +49,7 @@ class SensorDetailFragment(
         addPreferencesFromResource(R.xml.sensor_detail)
 
         findPreference<SwitchPreference>("enabled")?.let {
-            val dao = sensorDao.get(basicSensor.id)
+            val dao = sensorDao.get(sensorId)
             val perm = sensorManager.checkPermission(requireContext())
             if (dao == null) {
                 it.isChecked = perm
@@ -63,47 +72,63 @@ class SensorDetailFragment(
                 return@setOnPreferenceChangeListener true
             }
         }
+    }
 
-        refreshSensorData()
+    override fun onResume() {
+        super.onResume()
+        handler.postDelayed(refresh, 0)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(refresh)
     }
 
     private fun refreshSensorData() {
-        val sensorData = sensorManager.getEnabledSensorData(requireContext(), basicSensor.id)
+        SensorWorker.start(requireContext())
+
+        val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
+        val fullData = sensorDao.getFull(sensorId)
+        if (fullData?.sensor == null)
+            return
+        val sensorData = fullData.sensor
+        val attributes = fullData.attributes
 
         findPreference<Preference>("unique_id")?.let {
             it.isCopyingEnabled = true
-            it.summary = basicSensor.id
+            it.summary = sensorId
         }
         findPreference<Preference>("state")?.let {
             it.isCopyingEnabled = true
             when {
-                sensorData == null ->
+                !sensorData.enabled ->
                     it.summary = "Disabled"
-                basicSensor.unitOfMeasurement.isNullOrBlank() ->
-                    it.summary = sensorData.state.toString()
+                sensorData.unitOfMeasurement.isNullOrBlank() ->
+                    it.summary = sensorData.state
                 else ->
-                    it.summary = sensorData.state.toString() + " " + basicSensor.unitOfMeasurement
+                    it.summary = sensorData.state + " " + sensorData.unitOfMeasurement
             }
         }
         findPreference<Preference>("device_class")?.let {
             it.isCopyingEnabled = true
-            it.summary = basicSensor.deviceClass
+            it.summary = sensorData.deviceClass
         }
         findPreference<Preference>("icon")?.let {
             it.isCopyingEnabled = true
-            it.summary = sensorData?.icon ?: ""
+            it.summary = sensorData.icon
         }
 
         findPreference<PreferenceCategory>("attributes")?.let {
-            if (sensorData?.attributes.isNullOrEmpty())
+            if (attributes.isNullOrEmpty())
                 it.isVisible = false
             else {
-                sensorData?.attributes?.keys?.forEach { key ->
-                    val pref = findPreference("attribute_$key") ?: Preference(requireContext())
+                attributes.forEach { attribute ->
+                    val key = "attribute_${attribute.name}"
+                    val pref = findPreference(key) ?: Preference(requireContext())
                     pref.isCopyingEnabled = true
-                    pref.key = "attribute_$key"
-                    pref.title = key
-                    pref.summary = sensorData.attributes[key]?.toString() ?: ""
+                    pref.key = key
+                    pref.title = attribute.name
+                    pref.summary = attribute.value
                     pref.isIconSpaceReserved = false
 
                     if (!it.contains(pref))
@@ -116,7 +141,7 @@ class SensorDetailFragment(
     private fun updateSensorEntity(
         isEnabled: Boolean
     ) {
-        val sensorEntity = sensorDao.get(basicSensor.id)
+        val sensorEntity = sensorDao.get(sensorId)
         if (sensorEntity != null) {
             sensorEntity.enabled = isEnabled
             sensorDao.update(sensorEntity)

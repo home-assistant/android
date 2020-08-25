@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -32,17 +31,15 @@ class LastRebootSensorManager : SensorManager {
         return emptyArray()
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            lastRebootSensor.id -> getLastReboot()
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        updateLastReboot(context)
     }
 
-    private fun getLastReboot(): SensorRegistration<Any> {
+    private fun updateLastReboot(context: Context) {
+        if (!isEnabled(context, lastRebootSensor.id))
+            return
 
         var timeInMillis = 0L
         var local = ""
@@ -64,7 +61,9 @@ class LastRebootSensorManager : SensorManager {
 
         val icon = "mdi:restart"
 
-        return lastRebootSensor.toSensorRegistration(
+        onSensorUpdated(
+            context,
+            lastRebootSensor,
             utc,
             icon,
             mapOf(

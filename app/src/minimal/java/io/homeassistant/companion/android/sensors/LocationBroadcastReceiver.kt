@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
 
@@ -50,7 +49,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
         return emptyArray()
     }
 
-    override fun getSensorData(context: Context, sensorId: String): SensorRegistration<Any> {
-        TODO("Not yet implemented")
+    override fun requestSensorUpdate(context: Context) {
+        // Noop
     }
 }

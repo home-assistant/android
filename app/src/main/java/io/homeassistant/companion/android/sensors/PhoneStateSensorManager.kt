@@ -6,7 +6,6 @@ import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 class PhoneStateSensorManager : SensorManager {
 
@@ -43,19 +42,17 @@ class PhoneStateSensorManager : SensorManager {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
-    override fun getSensorData(
-        context: Context,
-        sensorId: String
-    ): SensorRegistration<Any> {
-        return when (sensorId) {
-            phoneState.id -> getPhoneStateSensor(context)
-            sim_1.id -> getSimSensor(context, 0)
-            sim_2.id -> getSimSensor(context, 1)
-            else -> throw IllegalArgumentException("Unknown sensorId: $sensorId")
-        }
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        updatePhoneStateSensor(context)
+        updateSimSensor(context, 0)
+        updateSimSensor(context, 1)
     }
 
-    private fun getPhoneStateSensor(context: Context): SensorRegistration<Any> {
+    private fun updatePhoneStateSensor(context: Context) {
+        if (!isEnabled(context, phoneState.id))
+            return
         var currentPhoneState = "unavailable"
         if (checkPermission(context)) {
             val telephonyManager =
@@ -73,14 +70,22 @@ class PhoneStateSensorManager : SensorManager {
         if (currentPhoneState == "ringing" || currentPhoneState == "offhook")
             phoneIcon += "-in-talk"
 
-        return phoneState.toSensorRegistration(
+        onSensorUpdated(context,
+            phoneState,
             currentPhoneState,
             phoneIcon,
             mapOf()
         )
     }
 
-    private fun getSimSensor(context: Context, slotIndex: Int): SensorRegistration<Any> {
+    private fun updateSimSensor(context: Context, slotIndex: Int) {
+        val basicSimSensor = when (slotIndex) {
+            0 -> sim_1
+            1 -> sim_2
+            else -> throw IllegalArgumentException("Invalid sim slot: $slotIndex")
+        }
+        if (!isEnabled(context, basicSimSensor.id))
+            return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             var displayName = "Unavailable"
             val attrs = mutableMapOf<String, Any>()
@@ -105,18 +110,12 @@ class PhoneStateSensorManager : SensorManager {
                 }
             }
 
-            if (slotIndex == 1) {
-                return sim_2.toSensorRegistration(
-                    displayName,
-                    "mdi:sim",
-                    attrs
-                )
-            }
-            return sim_1.toSensorRegistration(
+            onSensorUpdated(context,
+                basicSimSensor,
                 displayName,
                 "mdi:sim",
                 attrs
             )
-        } else throw IllegalArgumentException("Sensor is not supported in current OS version. API 22 or above is required")
+        }
     }
 }

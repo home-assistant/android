@@ -5,8 +5,8 @@ import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
 interface SensorManager {
 
@@ -19,24 +19,7 @@ interface SensorManager {
         val name: String,
         val deviceClass: String? = null,
         val unitOfMeasurement: String? = null
-    ) {
-        fun toSensorRegistration(
-            state: Any,
-            mdiIcon: String,
-            attributes: Map<String, Any>
-        ): SensorRegistration<Any> {
-            return SensorRegistration(
-                id,
-                state,
-                type,
-                mdiIcon,
-                attributes,
-                name,
-                deviceClass,
-                unitOfMeasurement
-            )
-        }
-    }
+    )
 
     fun requiredPermissions(): Array<String>
 
@@ -46,31 +29,56 @@ interface SensorManager {
         }
     }
 
-    fun getSensorData(context: Context, sensorId: String): SensorRegistration<Any>
-
-    fun getEnabledSensorData(context: Context, sensorId: String): SensorRegistration<Any>? {
+    fun isEnabled(context: Context, sensorId: String): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        val hasPermission = checkPermission(context)
-
         var sensor = sensorDao.get(sensorId)
+        val permission = checkPermission(context)
 
+        // If we haven't created the entity yet do so and default to enabled
         if (sensor == null) {
-            sensor = Sensor(
-                sensorId,
-                hasPermission,
-                false,
-                ""
-            )
+            sensor = Sensor(sensorId, permission, false, "")
             sensorDao.add(sensor)
-        } else {
-            sensor.enabled = sensor.enabled && hasPermission
         }
 
-        var sensorData: SensorRegistration<Any>? = null
-        if (sensor.enabled)
-            sensorData = getSensorData(context, sensorId)
-        sensor.state = sensorData?.state?.toString() ?: ""
+        // If we don't have permission but we are still enabled then we aren't really enabled.
+        if (sensor.enabled && !permission) {
+            sensor.enabled = false
+            sensorDao.update(sensor)
+        }
+
+        return sensor.enabled
+    }
+
+    fun requestSensorUpdate(context: Context)
+
+    fun onSensorUpdated(
+        context: Context,
+        basicSensor: BasicSensor,
+        state: Any,
+        mdiIcon: String,
+        attributes: Map<String, Any?>
+    ) {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val sensor = sensorDao.get(basicSensor.id) ?: return
+
+        sensor.id = basicSensor.id
+        sensor.state = state.toString()
+        sensor.stateType = when (state) {
+            is String -> "string"
+            is Number -> "number"
+            else -> throw IllegalArgumentException("Unknown Sensor State Type")
+        }
+        sensor.type = basicSensor.type
+        sensor.icon = mdiIcon
+        sensor.name = basicSensor.name
+        sensor.deviceClass = basicSensor.deviceClass
+        sensor.unitOfMeasurement = basicSensor.unitOfMeasurement
+
         sensorDao.update(sensor)
-        return sensorData
+
+        sensorDao.clearAttributes(basicSensor.id)
+        attributes.entries.forEach { entry ->
+            sensorDao.add(Attribute(basicSensor.id, entry.key, entry.value.toString()))
+        }
     }
 }

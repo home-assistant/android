@@ -60,7 +60,6 @@ class SensorReceiver : BroadcastReceiver() {
             .inject(this)
 
         LocationBroadcastReceiver.restartLocationTracking(context)
-        ActivitySensorManager.restartActivityTracking(context)
 
         ioScope.launch {
             updateSensors(context, integrationUseCase)
@@ -86,22 +85,24 @@ class SensorReceiver : BroadcastReceiver() {
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
         MANAGERS.forEach { manager ->
+            manager.requestSensorUpdate(context)
             manager.availableSensors.forEach { basicSensor ->
-                // Only if we are enabled should we try to get values.
-                val sensorData = manager.getEnabledSensorData(context, basicSensor.id)
-                val sensor = sensorDao.get(basicSensor.id)
+                val fullSensor = sensorDao.getFull(basicSensor.id)
+                val sensor = fullSensor?.sensor
 
                 // Register Sensors if needed
-                if (sensorData != null && sensor?.registered == false) {
+                if (sensor?.enabled == true && !sensor.registered && !sensor.type.isNullOrBlank()) {
+                    val reg = fullSensor.toSensorRegistration()
                     try {
-                        integrationUseCase.registerSensor(sensorData)
+                        integrationUseCase.registerSensor(reg)
                         sensor.registered = true
+                        sensorDao.update(sensor)
                     } catch (e: Exception) {
-                        Log.e(TAG, "Issue registering sensor: ${sensorData.uniqueId}", e)
+                        Log.e(TAG, "Issue registering sensor: ${reg.uniqueId}", e)
                     }
                 }
-                if (sensorData != null) {
-                    enabledRegistrations.add(sensorData)
+                if (fullSensor != null && sensor?.registered == true) {
+                    enabledRegistrations.add(fullSensor.toSensorRegistration())
                 }
             }
         }

@@ -4,12 +4,14 @@ import android.content.ContentValues
 import android.content.Context
 import android.util.Log
 import androidx.room.Database
+import androidx.room.OnConflictStrategy
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
+import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -21,13 +23,14 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 
 @Database(
     entities = [
+        Attribute::class,
         Authentication::class,
         Sensor::class,
         ButtonWidgetEntity::class,
         StaticWidgetEntity::class,
         TemplateWidgetEntity::class
     ],
-    version = 6
+    version = 7
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
@@ -58,7 +61,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_2_3,
                     MIGRATION_3_4,
                     MIGRATION_4_5,
-                    MIGRATION_5_6
+                    MIGRATION_5_6,
+                    MIGRATION_6_7
                 )
                 .build()
         }
@@ -122,6 +126,34 @@ abstract class AppDatabase : RoomDatabase() {
                 } catch (exception: Exception) {
                     Log.e(TAG, "Failed to migrate database version 5 to version 6", exception)
                 }
+            }
+        }
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                val cursor = database.query("SELECT * FROM sensors")
+                val sensors = mutableListOf<ContentValues>()
+                while (cursor.moveToNext()) {
+                    sensors.add(ContentValues().also {
+                        it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
+                        it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                        it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
+                        it.put("state", "")
+                        it.put("state_type", "")
+                        it.put("type", "")
+                        it.put("icon", "")
+                        it.put("name", "")
+                        it.put("device_class", "")
+                    })
+                }
+                cursor.close()
+                database.execSQL("DROP TABLE IF EXISTS `sensors`")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
+                sensors.forEach {
+                    database.insert("sensors", OnConflictStrategy.REPLACE, it)
+                }
+
+                database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))")
             }
         }
     }
