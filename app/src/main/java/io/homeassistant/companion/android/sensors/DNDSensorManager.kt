@@ -12,7 +12,7 @@ class DNDSensorManager : SensorManager {
         private val dndSensor = SensorManager.BasicSensor(
             "dnd_sensor",
             "sensor",
-            "Do Not Disturb"
+            "Do Not Disturb Sensor"
         )
         var dndState = "unavailable"
     }
