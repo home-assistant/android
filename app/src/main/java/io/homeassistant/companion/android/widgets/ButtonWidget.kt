@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -192,6 +193,20 @@ class ButtonWidget : AppWidgetProvider() {
                     // Convert JSON to HashMap
                     val serviceDataMap: HashMap<String, Any> =
                         jacksonObjectMapper().readValue(serviceDataJson)
+
+                    if (serviceDataMap["entity_id"] != null) {
+                        val entityIdWithoutBrackets = Pattern.compile("\\[(.*?)\\]")
+                            .matcher(serviceDataMap["entity_id"].toString())
+                        if (entityIdWithoutBrackets.find()) {
+                            val value = entityIdWithoutBrackets.group(1)
+                            if (value != null) {
+                                if (value == "all" ||
+                                    value.split(",").contains("all")) {
+                                    serviceDataMap["entity_id"] = "all"
+                                }
+                            }
+                        }
+                    }
 
                     integrationUseCase.callService(domain, service, serviceDataMap)
 

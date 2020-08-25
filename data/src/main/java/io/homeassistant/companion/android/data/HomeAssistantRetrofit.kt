@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.homeassistant.companion.android.domain.url.UrlRepository
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -44,6 +45,7 @@ class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
                         it.proceed(it.request())
                     }
                 }
+                .readTimeout(30L, TimeUnit.SECONDS)
                 .build()
         )
         .baseUrl(LOCAL_HOST)
