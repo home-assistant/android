@@ -105,6 +105,9 @@ object Config {
             const val iconDialog = "com.maltaisn:icondialog:3.3.0"
             const val iconDialogMaterial = "com.maltaisn:iconpack-community-material:5.3.45"
             const val emoji = "com.vdurmont:emoji-java:5.1.1"
+            const val exoCore = "com.google.android.exoplayer:exoplayer-core:2.11.7"
+            const val exoHls = "com.google.android.exoplayer:exoplayer-hls:2.11.7"
+            const val exoUi = "com.google.android.exoplayer:exoplayer-ui:2.11.7"
         }
     }
 

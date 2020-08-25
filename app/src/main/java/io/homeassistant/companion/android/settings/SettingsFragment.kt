@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricManager
 import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
@@ -100,6 +101,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             }
         }
 
+        removeSystemFromThemesIfNeeded()
+
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
 
@@ -164,5 +167,24 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     private fun authenticationResult(result: Int) {
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = result == Authenticator.SUCCESS
+    }
+
+    private fun removeSystemFromThemesIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            val pref = findPreference<ListPreference>("themes")
+            if (pref != null) {
+                val systemIndex = pref.findIndexOfValue("system")
+                if (systemIndex > 0) {
+                    var entries = pref.entries?.toMutableList()
+                    entries?.removeAt(systemIndex)
+                    var entryValues = pref.entryValues?.toMutableList()
+                    entryValues?.removeAt(systemIndex)
+                    if (entries != null && entryValues != null) {
+                        pref.entries = entries.toTypedArray()
+                        pref.entryValues = entryValues.toTypedArray()
+                    }
+                }
+            }
+        }
     }
 }

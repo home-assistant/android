@@ -94,6 +94,7 @@ class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupLi
         supportFragmentManager
             .beginTransaction()
             .replace(R.id.content, mobileAppIntegrationFragment)
+            .addToBackStack(null)
             .commit()
     }
 

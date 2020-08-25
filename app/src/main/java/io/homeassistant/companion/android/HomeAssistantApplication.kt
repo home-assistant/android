@@ -4,7 +4,9 @@ import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.IntentFilter
+import android.media.AudioManager
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
@@ -50,9 +52,31 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
             }
         )
 
+        // Listen for bluetooth state changes
         registerReceiver(sensorReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         )
+
+        // Listen to changes to the audio input/output on the device
+        registerReceiver(
+            sensorReceiver,
+            IntentFilter().apply {
+                addAction(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
+                addAction(AudioManager.ACTION_HEADSET_PLUG)
+                addAction(AudioManager.RINGER_MODE_CHANGED_ACTION)
+            }
+        )
+
+        // Add extra audio receiver for devices that support it
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter().apply {
+                    addAction(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED)
+                    addAction(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED)
+                }
+            )
+        }
     }
 
     override val appComponent: AppComponent

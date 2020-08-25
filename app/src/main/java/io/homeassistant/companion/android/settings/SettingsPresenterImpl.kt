@@ -6,6 +6,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.Panel
 import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.themes.ThemesManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +19,8 @@ class SettingsPresenterImpl @Inject constructor(
     private val settingsView: SettingsView,
     private val urlUseCase: UrlUseCase,
     private val integrationUseCase: IntegrationUseCase,
-    private val authenticationUseCase: AuthenticationUseCase
+    private val authenticationUseCase: AuthenticationUseCase,
+    private val themesManager: ThemesManager
 ) : SettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -54,6 +56,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "connection_external" -> (urlUseCase.getUrl(false) ?: "").toString()
                 "registration_name" -> integrationUseCase.getRegistration().deviceName
                 "session_timeout" -> integrationUseCase.getSessionTimeOut().toString()
+                "themes" -> themesManager.getCurrentTheme()
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -72,6 +75,7 @@ class SettingsPresenterImpl @Inject constructor(
                         Log.e(TAG, "Issue updating registration with new device name", e)
                     }
                 }
+                "themes" -> themesManager.saveTheme(value)
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
