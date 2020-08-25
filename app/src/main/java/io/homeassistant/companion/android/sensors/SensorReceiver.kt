@@ -29,6 +29,7 @@ class SensorReceiver : BroadcastReceiver() {
             NetworkSensorManager(),
             NextAlarmManager(),
             PhoneStateSensorManager(),
+            PressureSensorManager(),
             StepsSensorManager(),
             StorageSensorManager()
         )
