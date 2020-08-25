@@ -85,8 +85,7 @@ class SensorDetailFragment(
     }
 
     private fun refreshSensorData() {
-        // Request the sensor manager we are viewing to update.
-        sensorManager.requestSensorUpdate(requireContext())
+        SensorWorker.start(requireContext())
 
         val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
         val fullData = sensorDao.getFull(sensorId)
