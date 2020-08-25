@@ -8,8 +8,10 @@ import android.content.pm.PackageManager
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.content.res.Configuration
+import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.Icon
+import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
@@ -38,7 +40,14 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import com.google.android.exoplayer2.DefaultLoadControl
+import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.source.hls.HlsMediaSource
+import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
+import com.google.android.exoplayer2.util.Util
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
@@ -57,6 +66,7 @@ import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
+import kotlinx.android.synthetic.main.exo_playback_control_view.*
 import org.json.JSONObject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -89,6 +99,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private lateinit var decor: FrameLayout
     private lateinit var myCustomView: View
     private lateinit var authenticator: Authenticator
+    private lateinit var exoPlayerView: PlayerView
 
     private var isConnected = false
     private var isShowingError = false
@@ -98,6 +109,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private var firstAuthTime: Long = 0
     private var resourceURL: String = ""
     private var unlocked = false
+    private var exoPlayer: SimpleExoPlayer? = null
+    private var isExoFullScreen = false
+    private var exoTop: Int = 0 // These margins are from the DOM and scaled to screen
+    private var exoLeft: Int = 0
+    private var exoRight: Int = 0
+    private var exoBottom: Int = 0
+    private var exoMute: Boolean = true
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -127,6 +145,24 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             .setBlurRadius(5f)
             .setHasFixedTransformationMatrix(false)
 
+        exoPlayerView = findViewById(R.id.exoplayerView)
+        exoPlayerView.visibility = View.GONE
+        exoPlayerView.setBackgroundColor(Color.BLACK)
+        exoPlayerView.alpha = 1f
+        exoPlayerView.setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
+        exoPlayerView.controllerHideOnTouch = true
+        exoPlayerView.controllerShowTimeoutMs = 2000
+        exo_fullscreen_icon.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(view: View) {
+                isExoFullScreen = !isExoFullScreen
+                exoResizeLayout()
+            }
+        })
+        exo_mute_icon.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(view: View) {
+                exoToggleMute()
+            }
+        })
         if (!presenter.isLockEnabled())
             blurView.setBlurEnabled(false)
 
@@ -326,7 +362,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                                 "result" to JSONObject(
                                                     mapOf(
                                                         "hasSettingsScreen" to true,
-                                                        "canWriteTag" to true
+                                                        "canWriteTag" to true,
+                                                        "hasExoPlayer" to true
                                                     )
                                                 )
                                             )
@@ -350,6 +387,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     ),
                                     NFC_COMPLETE
                                 )
+                            "exoplayer/play_hls" -> exoPlayHls(json)
+                            "exoplayer/stop" -> exoStopHls()
+                            "exoplayer/resize" -> exoResizeHls(json)
                         }
                     }
                 }
@@ -382,6 +422,124 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 Log.d(TAG, "NFC Write Complete $it")
             }
         }
+    }
+
+    fun exoPlayHls(json: JSONObject) {
+        val uri = Uri.parse(json.getString("payload"))
+        val dataSourceFactory = DefaultHttpDataSourceFactory(
+            Util.getUserAgent(
+                applicationContext,
+                getString(R.string.app_name)
+            )
+        )
+        val hlsMediaSource =
+            HlsMediaSource.Factory(dataSourceFactory).createMediaSource(uri)
+        val loadControl = DefaultLoadControl.Builder().setBufferDurationsMs(
+            2500,
+            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
+            2500,
+            2500
+        ).createDefaultLoadControl()
+        runOnUiThread {
+            exoPlayer =
+                SimpleExoPlayer.Builder(applicationContext).setLoadControl(loadControl)
+                    .build()
+            exoPlayer?.prepare(hlsMediaSource)
+            exoPlayer?.playWhenReady = true
+            exoMute = !exoMute
+            exoToggleMute()
+            exoPlayerView.setPlayer(exoPlayer)
+            exoPlayerView.visibility = View.VISIBLE
+        }
+        val script = "externalBus(" + "${
+            JSONObject(
+                mapOf(
+                    "id" to json.get("id"),
+                    "type" to "result",
+                    "success" to true,
+                    "result" to null
+                )
+            )
+        }" + ");"
+        Log.d(TAG, script)
+        webView.evaluateJavascript(script) { Log.d(TAG, "Callback $it") }
+    }
+
+    fun exoStopHls() {
+        runOnUiThread {
+            exoPlayerView.visibility = View.GONE
+            exoPlayerView.setPlayer(null)
+            exoPlayer?.release()
+            exoPlayer = null
+        }
+    }
+
+    fun exoResizeHls(json: JSONObject) {
+        val rect = json.getJSONObject("payload")
+        val displayMetrics = applicationContext.resources.displayMetrics
+        exoLeft = (rect.getInt("left") * displayMetrics.density).toInt()
+        exoTop = (rect.getInt("top") * displayMetrics.density).toInt()
+        exoRight = (rect.getInt("right") * displayMetrics.density).toInt()
+        exoBottom = (rect.getInt("bottom") * displayMetrics.density).toInt()
+        runOnUiThread {
+            exoResizeLayout()
+        }
+    }
+
+    fun exoToggleMute() {
+        exoMute = !exoMute
+        if (exoMute) {
+            exoPlayer?.volume = 0f
+            exo_mute_icon.setImageDrawable(
+                ContextCompat.getDrawable(
+                    applicationContext,
+                    R.drawable.ic_baseline_volume_off_24
+                )
+            )
+        } else {
+            exoPlayer?.volume = 1f
+            exo_mute_icon.setImageDrawable(
+                ContextCompat.getDrawable(
+                    applicationContext,
+                    R.drawable.ic_baseline_volume_up_24
+                )
+            )
+        }
+    }
+
+    fun exoResizeLayout() {
+        val exoLayoutParams = exoPlayerView.layoutParams as FrameLayout.LayoutParams
+        if (isExoFullScreen) {
+            exoLayoutParams.setMargins(0, 0, 0, 0)
+            exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
+            exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
+            exo_fullscreen_icon.setImageDrawable(
+                ContextCompat.getDrawable(
+                    applicationContext,
+                    R.drawable.ic_baseline_fullscreen_exit_24
+                )
+            )
+            hideSystemUI()
+        } else {
+            exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT
+            exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
+            val screenWidth: Int = resources.displayMetrics.widthPixels
+            val screenHeight: Int = resources.displayMetrics.heightPixels
+            exoLayoutParams.setMargins(
+                exoLeft,
+                exoTop,
+                maxOf(screenWidth - exoRight, 0),
+                maxOf(screenHeight - exoBottom, 0)
+            )
+            exo_fullscreen_icon.setImageDrawable(
+                ContextCompat.getDrawable(
+                    applicationContext,
+                    R.drawable.ic_baseline_fullscreen_24
+                )
+            )
+            showSystemUI()
+        }
+        exoPlayerView.requestLayout()
     }
 
     private fun authenticationResult(result: Int) {
@@ -444,14 +602,16 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         isInPictureInPictureMode: Boolean,
         newConfig: Configuration
     ) {
-        if (isInPictureInPictureMode) {
-            (decor.getChildAt(3) as FrameLayout).layoutParams.height =
-                FrameLayout.LayoutParams.MATCH_PARENT
-            decor.requestLayout()
-        } else {
-            if (decor.getChildAt(3) != null) {
-                (decor.getChildAt(3) as FrameLayout).layoutParams.height = videoHeight
+        if (exoPlayerView.visibility != View.VISIBLE) {
+            if (isInPictureInPictureMode) {
+                (decor.getChildAt(3) as FrameLayout).layoutParams.height =
+                    FrameLayout.LayoutParams.MATCH_PARENT
                 decor.requestLayout()
+            } else {
+                if (decor.getChildAt(3) != null) {
+                    (decor.getChildAt(3) as FrameLayout).layoutParams.height = videoHeight
+                    decor.requestLayout()
+                }
             }
         }
     }
@@ -462,7 +622,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         unlocked = false
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
-        if (isVideoFullScreen) {
+        if (isVideoFullScreen or isExoFullScreen) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val mPictureInPictureParamsBuilder = PictureInPictureParams.Builder()
                 mPictureInPictureParamsBuilder.setAspectRatio(

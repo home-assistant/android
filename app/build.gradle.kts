@@ -10,6 +10,7 @@ plugins {
 buildscript {
     repositories {
         google()
+        jcenter()
         maven(url = Config.Repository.gradle)
     }
     dependencies {
@@ -162,6 +163,10 @@ dependencies {
     testImplementation(Config.Dependency.Testing.assertJ)
     testImplementation(Config.Dependency.Testing.mockk)
     testImplementation(Config.Dependency.Kotlin.coroutinesTest)
+
+    implementation(Config.Dependency.Misc.exoCore)
+    implementation(Config.Dependency.Misc.exoHls)
+    implementation(Config.Dependency.Misc.exoUi)
 }
 
 // This plugin must stay at the bottom
