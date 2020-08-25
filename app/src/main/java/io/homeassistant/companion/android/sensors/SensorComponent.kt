@@ -16,4 +16,6 @@ interface SensorComponent {
     fun inject(sensorsSettingsFragment: SensorsSettingsFragment)
 
     fun inject(sensorDetailFragment: SensorDetailFragment)
+
+    fun inject(activitySensorManager: ActivitySensorManager)
 }
