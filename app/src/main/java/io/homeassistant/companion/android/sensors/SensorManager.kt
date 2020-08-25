@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.domain.integration.SensorRegistration
 
@@ -62,15 +63,28 @@ interface SensorManager {
                 ""
             )
             sensorDao.add(sensor)
-        } else {
-            sensor.enabled = sensor.enabled && hasPermission
+        } else if (sensor.enabled && !hasPermission) {
+            sensor.enabled = false
+            sensorDao.update(sensor)
         }
 
         var sensorData: SensorRegistration<Any>? = null
-        if (sensor.enabled)
+        if (sensor.enabled) {
             sensorData = getSensorData(context, sensorId)
-        sensor.state = sensorData?.state?.toString() ?: ""
-        sensorDao.update(sensor)
+
+            sensor.state = sensorData.state.toString()
+            sensor.stateType = when (sensorData.state) {
+                is String -> "string"
+                is Number -> "number"
+                else -> throw IllegalArgumentException("Unknown Sensor State Type")
+            }
+            sensorDao.update(sensor)
+
+            sensorDao.clearAttributes(sensorId)
+            sensorData.attributes.entries.forEach { entry ->
+                sensorDao.add(Attribute(sensorId, entry.key, entry.value.toString()))
+            }
+        }
         return sensorData
     }
 }
