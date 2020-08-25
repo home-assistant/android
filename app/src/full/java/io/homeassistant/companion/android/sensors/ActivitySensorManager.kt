@@ -90,7 +90,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                 if (sensorDao.get(activity.id)?.enabled == true) {
                     Log.d(TAG, "Registering for activity updates.")
 
-                    ActivityRecognition.getClient(context).requestActivityUpdates(12000, getPendingIntent(context))
+                    ActivityRecognition.getClient(context).requestActivityUpdates(120000, getPendingIntent(context))
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Issue setting up activity tracking", e)
