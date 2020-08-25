@@ -56,7 +56,7 @@ interface SensorManager {
         basicSensor: BasicSensor,
         state: Any,
         mdiIcon: String,
-        attributes: Map<String, Any>
+        attributes: Map<String, Any?>
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensor = sensorDao.get(basicSensor.id) ?: return
