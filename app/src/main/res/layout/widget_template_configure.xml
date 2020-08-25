@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            style="@style/TextAppearance.HomeAssistant.Headline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/create_template" />
+
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/templateText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/template_widget_default"
+            android:gravity="top"
+            android:minLines="4"
+            android:inputType="textMultiLine" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/renderedTemplate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/template_widget_default" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/add_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="8dp"
+            android:text="@string/add_widget" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
