@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android
 
 import android.app.Application
+import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
 import android.content.IntentFilter
@@ -75,6 +76,14 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
                     addAction(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED)
                     addAction(AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED)
                 }
+            )
+        }
+
+        // Add receiver for DND changes on devices that support it
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
             )
         }
     }
