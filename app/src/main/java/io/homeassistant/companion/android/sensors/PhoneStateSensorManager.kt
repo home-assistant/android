@@ -111,7 +111,7 @@ class PhoneStateSensorManager : SensorManager {
             }
 
             onSensorUpdated(context,
-                sim_1,
+                basicSimSensor,
                 displayName,
                 "mdi:sim",
                 attrs
