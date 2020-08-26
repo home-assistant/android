@@ -39,10 +39,10 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     }
 
     private fun updateProximitySensor(context: Context) {
-        if (!isEnabled(context, proximitySensor.id))
+        if (!isEnabled(latestContext, proximitySensor.id))
             return
 
-        mySensorManager = context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+        mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val proximitySensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
         if (proximitySensors != null) {
