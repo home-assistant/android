@@ -13,7 +13,6 @@ class DNDSensorManager : SensorManager {
             "sensor",
             "Do Not Disturb Sensor"
         )
-        var dndState = "unavailable"
     }
 
     override val name: String
@@ -35,6 +34,7 @@ class DNDSensorManager : SensorManager {
         if (!isEnabled(context, dndSensor.id))
             return
 
+        var dndState = "unavailable"
         try {
             dndState = when (Global.getInt(context.contentResolver, "zen_mode")) {
                 0 -> "off"
@@ -43,17 +43,16 @@ class DNDSensorManager : SensorManager {
                 3 -> "alarms_only"
                 else -> "unknown"
             }
+            val icon = "mdi:do-not-disturb"
+
+            onSensorUpdated(context,
+                dndSensor,
+                dndState,
+                icon,
+                mapOf()
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the devices DND mode", e)
         }
-
-        val icon = "mdi:do-not-disturb"
-
-        onSensorUpdated(context,
-            dndSensor,
-            dndState,
-            icon,
-            mapOf()
-        )
     }
 }
