@@ -35,15 +35,15 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun requestSensorUpdate(context: Context) {
+        latestContext = context
         updatePressureSensor(context)
     }
 
     private fun updatePressureSensor(context: Context) {
-        if (!isEnabled(context, pressureSensor.id))
+        if (!isEnabled(latestContext, pressureSensor.id))
             return
 
-        latestContext = context
-        mySensorManager = context.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+        mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val pressureSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
         if (pressureSensors != null) {
