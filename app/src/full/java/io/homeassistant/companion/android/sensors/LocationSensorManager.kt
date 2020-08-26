@@ -328,10 +328,15 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
+        ensureInjected(context)
         if (isEnabled(context, zoneLocation.id))
             setupLocationTracking(context)
         if (isEnabled(context, backgroundLocation.id)) {
-            requestSingleAccurateLocation(context)
+            context.sendBroadcast(
+                Intent(context, this.javaClass).apply {
+                    action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+                }
+            )
             setupLocationTracking(context)
         }
     }
