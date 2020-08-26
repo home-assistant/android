@@ -285,25 +285,29 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
                             return
                         }
 
-                        if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY) {
-                            Log.d(TAG, "Location accurate enough, all done with high accuracy.")
-                            runBlocking { sendLocationUpdate(locationResult.lastLocation) }
-                            LocationServices.getFusedLocationProviderClient(context)
-                                .removeLocationUpdates(this)
-                            wakeLock?.release()
-                        } else if (numberCalls >= maxRetries) {
-                            Log.d(
-                                TAG,
-                                "No location was accurate enough, sending our last location anyway"
-                            )
-                            if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY * 2)
+                        when {
+                            locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY -> {
+                                Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                                 runBlocking { sendLocationUpdate(locationResult.lastLocation) }
-                            wakeLock?.release()
-                        } else {
-                            Log.w(
-                                TAG,
-                                "Location not accurate enough on retry $numberCalls of $maxRetries"
-                            )
+                                LocationServices.getFusedLocationProviderClient(context)
+                                    .removeLocationUpdates(this)
+                                if (wakeLock?.isHeld == true) wakeLock.release()
+                            }
+                            numberCalls >= maxRetries -> {
+                                Log.d(
+                                    TAG,
+                                    "No location was accurate enough, sending our last location anyway"
+                                )
+                                if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY * 2)
+                                    runBlocking { sendLocationUpdate(locationResult.lastLocation) }
+                                if (wakeLock?.isHeld == true) wakeLock.release()
+                            }
+                            else -> {
+                                Log.w(
+                                    TAG,
+                                    "Location not accurate enough on retry $numberCalls of $maxRetries"
+                                )
+                            }
                         }
                     }
                 },
