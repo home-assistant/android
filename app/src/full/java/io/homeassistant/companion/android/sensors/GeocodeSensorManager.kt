@@ -5,6 +5,7 @@ import android.content.Context
 import android.location.Address
 import android.location.Geocoder
 import android.os.Build
+import android.util.Log
 import com.google.android.gms.location.LocationServices
 
 class GeocodeSensorManager : SensorManager {
@@ -45,6 +46,11 @@ class GeocodeSensorManager : SensorManager {
             return
         val locApi = LocationServices.getFusedLocationProviderClient(context)
         locApi.lastLocation.addOnSuccessListener { location ->
+            if (location == null) {
+                Log.e(TAG, "Somehow location is null even though it was successful")
+                return@addOnSuccessListener
+            }
+
             var address: Address? = null
             if (location.accuracy <= LocationBroadcastReceiver.MINIMUM_ACCURACY)
                 address = Geocoder(context)
