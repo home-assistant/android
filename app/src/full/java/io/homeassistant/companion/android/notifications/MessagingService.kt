@@ -25,7 +25,7 @@ import io.homeassistant.companion.android.domain.authentication.AuthenticationUs
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
-import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
+import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
@@ -108,8 +108,8 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun requestAccurateLocationUpdate() {
-        val intent = Intent(this, LocationBroadcastReceiver::class.java)
-        intent.action = LocationBroadcastReceiver.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+        val intent = Intent(this, LocationSensorManager::class.java)
+        intent.action = LocationSensorManager.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
 
         sendBroadcast(intent)
     }

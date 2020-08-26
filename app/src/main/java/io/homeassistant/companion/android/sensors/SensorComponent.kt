@@ -7,7 +7,7 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 @Component(dependencies = [AppComponent::class], modules = [PresenterModule::class])
 interface SensorComponent {
 
-    fun inject(locationBroadcastReceiver: LocationBroadcastReceiver)
+    fun inject(locationSensorManager: LocationSensorManager)
 
     fun inject(worker: SensorWorker)
 

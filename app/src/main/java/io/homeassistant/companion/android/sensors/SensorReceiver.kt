@@ -28,6 +28,7 @@ class SensorReceiver : BroadcastReceiver() {
             GeocodeSensorManager(),
             LastRebootSensorManager(),
             LightSensorManager(),
+            LocationSensorManager(),
             NetworkSensorManager(),
             NextAlarmManager(),
             PhoneStateSensorManager(),
@@ -60,8 +61,6 @@ class SensorReceiver : BroadcastReceiver() {
             .build()
             .inject(this)
 
-        LocationBroadcastReceiver.restartLocationTracking(context)
-
         ioScope.launch {
             updateSensors(context, integrationUseCase)
             if (chargingActions.contains(intent.action)) {
@@ -78,11 +77,6 @@ class SensorReceiver : BroadcastReceiver() {
         integrationUseCase: IntegrationUseCase
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
-        // When we update the sensors make sure to request an accurate location.
-        val intent = Intent(context, LocationBroadcastReceiver::class.java)
-        intent.action = LocationBroadcastReceiver.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
-        context.sendBroadcast(intent)
-
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
         MANAGERS.forEach { manager ->

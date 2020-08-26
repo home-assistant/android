@@ -7,7 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
-import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
+import io.homeassistant.companion.android.sensors.LocationSensorManager
 
 class PermissionManager {
 
@@ -78,8 +78,8 @@ class PermissionManager {
         }
 
         private fun restartLocationTracking(context: Context) {
-            val intent = Intent(context, LocationBroadcastReceiver::class.java)
-            intent.action = LocationBroadcastReceiver.ACTION_REQUEST_LOCATION_UPDATES
+            val intent = Intent(context, LocationSensorManager::class.java)
+            intent.action = LocationSensorManager.ACTION_REQUEST_LOCATION_UPDATES
 
             context.sendBroadcast(intent)
         }
