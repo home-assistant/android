@@ -291,7 +291,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
                                 runBlocking { sendLocationUpdate(locationResult.lastLocation) }
                                 LocationServices.getFusedLocationProviderClient(context)
                                     .removeLocationUpdates(this)
-                                if(wakeLock?.isHeld == true) wakeLock.release()
+                                if (wakeLock?.isHeld == true) wakeLock.release()
                             }
                             numberCalls >= maxRetries -> {
                                 Log.d(
@@ -300,7 +300,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
                                 )
                                 if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY * 2)
                                     runBlocking { sendLocationUpdate(locationResult.lastLocation) }
-                                if(wakeLock?.isHeld == true) wakeLock.release()
+                                if (wakeLock?.isHeld == true) wakeLock.release()
                             }
                             else -> {
                                 Log.w(
