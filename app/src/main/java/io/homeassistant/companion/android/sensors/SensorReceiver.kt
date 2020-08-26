@@ -86,13 +86,17 @@ class SensorReceiver : BroadcastReceiver() {
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
         MANAGERS.forEach { manager ->
-            manager.requestSensorUpdate(context)
+            try {
+                manager.requestSensorUpdate(context)
+            } catch (e: Exception) {
+                Log.e(TAG, "Issue requesting updates for ${manager.name}", e)
+            }
             manager.availableSensors.forEach { basicSensor ->
                 val fullSensor = sensorDao.getFull(basicSensor.id)
                 val sensor = fullSensor?.sensor
 
                 // Register Sensors if needed
-                if (sensor?.enabled == true && !sensor.registered && !sensor.type.isNullOrBlank()) {
+                if (sensor?.enabled == true && !sensor.registered && !sensor.type.isBlank()) {
                     val reg = fullSensor.toSensorRegistration()
                     try {
                         integrationUseCase.registerSensor(reg)
