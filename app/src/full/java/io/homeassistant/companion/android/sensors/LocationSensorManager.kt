@@ -27,7 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
+class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     companion object {
         const val MINIMUM_ACCURACY = 200
@@ -52,13 +52,6 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
             "Zone Location"
         )
         internal const val TAG = "LocBroadcastReceiver"
-
-        fun restartLocationTracking(context: Context) {
-            val intent = Intent(context, LocationBroadcastReceiver::class.java)
-            intent.action = ACTION_REQUEST_LOCATION_UPDATES
-
-            context.sendBroadcast(intent)
-        }
     }
 
     @Inject
@@ -218,7 +211,7 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     }
 
     private fun getLocationUpdateIntent(context: Context, isGeofence: Boolean): PendingIntent {
-        val intent = Intent(context, LocationBroadcastReceiver::class.java)
+        val intent = Intent(context, LocationSensorManager::class.java)
         intent.action = if (isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
@@ -335,6 +328,11 @@ class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        // For now we don't need to do anything here, updates a handled elsewhere.
+        if (isEnabled(context, zoneLocation.id))
+            setupLocationTracking(context)
+        if (isEnabled(context, backgroundLocation.id)) {
+            requestSingleAccurateLocation(context)
+            setupLocationTracking(context)
+        }
     }
 }

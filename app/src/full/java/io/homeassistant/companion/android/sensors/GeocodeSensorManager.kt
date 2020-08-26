@@ -52,7 +52,7 @@ class GeocodeSensorManager : SensorManager {
             }
 
             var address: Address? = null
-            if (location.accuracy <= LocationBroadcastReceiver.MINIMUM_ACCURACY)
+            if (location.accuracy <= LocationSensorManager.MINIMUM_ACCURACY)
                 address = Geocoder(context)
                     .getFromLocation(location.latitude, location.longitude, 1)
                     .firstOrNull()
