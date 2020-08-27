@@ -44,8 +44,6 @@
   <string name="history">Historik</string>
   <string name="home_assistant_not_discover">Det gick inte att hitta din 
  Home Assistant-instans</string>
-  <string name="input_url"></string>
-  <string name="input_url_hint"></string>
   <string name="label_dynamic_data">Data</string>
   <string name="label_entity_id">Entitets-ID</string>
   <string name="label_icon">Ikon</string>
@@ -69,7 +67,6 @@
   <string name="pref_connection_internal">Intern URL</string>
   <string name="pref_connection_ssids_empty">Konfigurera dina WiFi SSID (er)</string>
   <string name="pref_connection_title">Anslutningsinformation</string>
-  <string name="pref_connection_url"></string>
   <string name="pref_connection_wifi">WiFi SSID för hemma-nätverk.</string>
   <string name="pref_location_background_summary">Uppdatera din plats i bakgrunden med jämna mellanrum.</string>
   <string name="pref_location_background_title">Platsspårning i bakgrunden</string>
@@ -102,7 +99,6 @@
   <string name="webview_error">Det uppstod ett fel vid anslutningen av Home Assistant, granska anslutningsinställningarna och försök igen.</string>
   <string name="widget_config_service_error">En egen komponent förhindrar tjänsten från att ladda.</string>
   <string name="widget_creation_error">Kunde inte skapa widget.</string>
-  <string name="widget_image_description"></string>
   <string name="widget_label_placeholder_text">Etikett</string>
   <string name="widget_spinner_icon">Ikon:</string>
   <string name="widget_text_hint_label">Etikett</string>

@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="attributes">Atributos</string>
+  <string name="device_class">Clase de dispositivo</string>
+  <string name="enabled_title">Habilitado</string>
+  <string name="icon">Icono</string>
+  <string name="nfc_example_trigger">Desencadenante de ejemplo</string>
+  <string name="nfc_processing_tag_error">Error al procesar la etiqueta nfc</string>
+  <string name="nfc_read_tag_instructions">Coloca tu teléfono sobre la etiqueta de la nfc para leerla.</string>
+  <string name="nfc_summary">Configurar etiquetas NFC</string>
+  <string name="nfc_welcome_message">Las etiquetas NFC escritas por la aplicación activarán un evento cuando acerques tu dispositivo a ellas.\n\nLas etiquetas funcionarán en cualquier dispositivo con Home Assistant instalado que tenga soporte de hardware para leerlas.</string>
+  <string name="nfc_write_tag_error">Error al escribir la etiqueta nfc</string>
+  <string name="nfc_write_tag_instructions">Coloca el teléfono sobre la etiqueta de nfc para escribir el siguiente identificador en ella %1$s</string>
+  <string name="nfc_write_tag_success">Se escribió correctamente la etiqueta nfc</string>
+  <string name="nfc_write_tag_too_early">Por favor, primero rellena el formulario</string>
+  <string name="permission_explanation_calls">Para poder rastrear las llamadas entrantes y salientes necesitamos acceder al estado del teléfono. No se almacenarán números de teléfono ni otros detalles de las llamadas.</string>
+  <string name="pref_call_tracking_summary">Permitir que la aplicación detecte la llamada y notifique al servidor al respecto.</string>
+  <string name="pref_call_tracking_title">Rastreo de llamadas</string>
+  <string name="qrcode_processing_tag_error">Error al procesar la etiqueta qrcode</string>
   <string name="rate_limit_notification.title">Notifications Rate Limited</string>
+  <string name="security">Seguridad</string>
+  <string name="sensor_summary">Usa esto para controlar qué sensores están activados o desactivados.</string>
+  <string name="sensor_title">Controlar sensores</string>
+  <string name="sensors">Sensores</string>
+  <string name="state">Estado</string>
+  <string name="tag_reader_title">Procesando etiqueta</string>
+  <string name="unique_id">Identificador único</string>
 </resources>

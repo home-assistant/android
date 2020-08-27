@@ -23,6 +23,7 @@
   <string name="connect_to_home_internet">Skontrolujte, či je telefón pripojený 
 na váš domáci Internet.</string>
   <string name="connected_to_home_assistant">Pripojené k Home Assistant</string>
+  <string name="create_template">Vytvoriť šablónu</string>
   <string name="developer_tools">Vývojárske nástroje</string>
   <string name="device_class">Trieda zariadenia</string>
   <string name="device_name">Názov zariadenia</string>
@@ -88,7 +89,7 @@ Home Assistant</string>
   <string name="nfc_title_nfc_setup">NFC Tagy</string>
   <string name="nfc_title_settings">NFC Tagy</string>
   <string name="nfc_welcome_fragment_label">Uvítací NFC Fragment</string>
-  <string name="nfc_welcome_message">NFC Tagy zapísané aplikáciou spustia udalosť, keď k nim priblížite svoje zariadenie.\n\nTagy budú fungovať na všetkých zariadeniach s nainštalovaným Home Assistant, ktoré majú hardvérovú podporu na ich čítanie.</string>
+  <string name="nfc_welcome_message">NFC Tagy zapísané aplikáciou spustia udalosť, keď k nim priblížite svoje zariadenie.\n\nTagy budú fungovať na všetkých zariadeniach s nainštalovaným Home Assistant a majú hardvérovú podporu na ich čítanie.</string>
   <string name="nfc_write_fragment_label">Zapísať NFC Fragment</string>
   <string name="nfc_write_tag_error">Chyba pri zápise nfc tagu</string>
   <string name="nfc_write_tag_instructions">Umiestnite telefón na nfc tag, aby ste doň mohli napísať nasledujúci identifikátor %1$s</string>
@@ -111,7 +112,7 @@ Home Assistant</string>
   <string name="pref_location_zone_summary">Importujte existujúce Home Assistant zóny ako geofence pre účely sledovanie na základe zóny.</string>
   <string name="pref_location_zone_title">Sledovanie na základe zóny</string>
   <string name="profile">Profil</string>
-  <string name="qrcode_processing_tag_error">Chyba pri spracovaní nfc tagu</string>
+  <string name="qrcode_processing_tag_error">Chyba pri spracovaní qrcode tagu</string>
   <string name="rate_limit_notification.body">Dnes ste odoslali viac, ako %s upozornení. Nové upozornenia nebudete dostávať až do polnoci UTC.</string>
   <string name="refresh">Obnoviť</string>
   <string name="required_fields">vyžaduje používateľské meno a heslo.</string>
@@ -139,6 +140,14 @@ sa chcete pripojiť:</string>
   <string name="states">Prehľad</string>
   <string name="status_of_mobile_app_integration">Stav integrácie mobilnej aplikácie:</string>
   <string name="tag_reader_title">Spracováva sa tag</string>
+  <string name="template_widget_default">Sem zadajte šablónu</string>
+  <string name="themes_option_label_dark">Tmavá</string>
+  <string name="themes_option_label_light">Svetlá</string>
+  <string name="themes_option_label_system">Podľa nastavenia systému</string>
+  <string name="themes_option_value_dark">tmavá</string>
+  <string name="themes_option_value_light">svetlá</string>
+  <string name="themes_option_value_system">systém</string>
+  <string name="themes_title_settings">Téma</string>
   <string name="unable_to_register">Nepodarilo sa registrovať aplikáciu</string>
   <string name="unique_id">Unikátne ID</string>
   <string name="url_invalid">Adresa URL je neplatná</string>
@@ -153,15 +162,21 @@ sa chcete pripojiť:</string>
   <string name="webview_error_SSL_INVALID">Pri načítaní Home Assistant sa vyskytla všeobecná chyba SSL. Skontrolujte certifikát Home Assistant alebo nastavenia pripojenia a skúste to znova.</string>
   <string name="webview_error_SSL_NOTYETVALID">Certifikát Home Assistant ešte nie je platný. Skontrolujte certifikát Home Assistant alebo nastavenia pripojenia a skúste to znova.</string>
   <string name="webview_error_SSL_UNTRUSTED">Certifikačná autorita Home Assistant nie je dôveryhodná. Skontrolujte certifikát Home Assistant alebo nastavenia pripojenia a skúste to znova.</string>
+  <string name="widget_attribute_separator_label">Oddeľovač medzi atribútmi:</string>
   <string name="widget_button_image_description">Tlačidlo služby</string>
   <string name="widget_config_service_error">Custom component zabraňuje načítaniu údajov služby.</string>
   <string name="widget_creation_error">Nepodarilo sa vytvoriť widget.</string>
   <string name="widget_image_description">Home Assistant miniaplikácia</string>
   <string name="widget_label_placeholder_text">Štítok</string>
+  <string name="widget_separator_input_hint">Žiadny oddeľovač</string>
+  <string name="widget_separator_label">Oddeľovač stavu a atribútov:</string>
   <string name="widget_spinner_icon">Ikona:</string>
+  <string name="widget_state_separator_label">Oddeľovač stavu a atribútov:</string>
   <string name="widget_static_image_description">Stav Entity</string>
   <string name="widget_text_hint_label">Štítok</string>
-  <string name="widget_text_hint_service_data">Entity ID</string>
+  <string name="widget_text_hint_service_data">ID entity</string>
   <string name="widget_text_hint_service_domain">Doména</string>
   <string name="widget_text_hint_service_service">Služba</string>
+  <string name="widget_text_size_default">30</string>
+  <string name="widget_text_size_label">Veľkosť textu miniaplikácie:</string>
 </resources>
