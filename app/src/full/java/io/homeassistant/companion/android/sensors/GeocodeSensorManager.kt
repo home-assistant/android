@@ -54,7 +54,6 @@ class GeocodeSensorManager : SensorManager {
                     return@addOnSuccessListener
                 }
 
-
                 if (location.accuracy <= LocationSensorManager.MINIMUM_ACCURACY)
                     address = Geocoder(context)
                         .getFromLocation(location.latitude, location.longitude, 1)
