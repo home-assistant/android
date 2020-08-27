@@ -7,6 +7,7 @@ import android.location.Geocoder
 import android.os.Build
 import android.util.Log
 import com.google.android.gms.location.LocationServices
+import java.lang.Exception
 
 class GeocodeSensorManager : SensorManager {
 
@@ -46,17 +47,20 @@ class GeocodeSensorManager : SensorManager {
             return
         val locApi = LocationServices.getFusedLocationProviderClient(context)
         locApi.lastLocation.addOnSuccessListener { location ->
-            if (location == null) {
-                Log.e(TAG, "Somehow location is null even though it was successful")
-                return@addOnSuccessListener
-            }
-
             var address: Address? = null
-            if (location.accuracy <= LocationSensorManager.MINIMUM_ACCURACY)
-                address = Geocoder(context)
-                    .getFromLocation(location.latitude, location.longitude, 1)
-                    .firstOrNull()
+            try {
+                if (location == null) {
+                    Log.e(TAG, "Somehow location is null even though it was successful")
+                    return@addOnSuccessListener
+                }
 
+                if (location.accuracy <= LocationSensorManager.MINIMUM_ACCURACY)
+                    address = Geocoder(context)
+                        .getFromLocation(location.latitude, location.longitude, 1)
+                        .firstOrNull()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to get geocoded location", e)
+            }
             val attributes = address?.let {
                 mapOf(
                     "Administrative Area" to it.adminArea,
