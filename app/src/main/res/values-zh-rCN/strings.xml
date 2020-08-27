@@ -23,6 +23,7 @@
   <string name="connect_to_home_internet">确保手机已连接
 到您的家庭互联网。</string>
   <string name="connected_to_home_assistant">连接到 Home Assistant</string>
+  <string name="create_template">创建模板</string>
   <string name="developer_tools">开发者工具</string>
   <string name="device_class">设备类别</string>
   <string name="device_name">设备名称</string>
@@ -138,6 +139,14 @@ Home Assistant实例</string>
   <string name="states">概述</string>
   <string name="status_of_mobile_app_integration">mobile app集成的状态：</string>
   <string name="tag_reader_title">处理标签</string>
+  <string name="template_widget_default">在此处输入模板</string>
+  <string name="themes_option_label_dark">深色</string>
+  <string name="themes_option_label_light">亮色</string>
+  <string name="themes_option_label_system">跟随系统设置</string>
+  <string name="themes_option_value_dark">深色</string>
+  <string name="themes_option_value_light">亮色</string>
+  <string name="themes_option_value_system">系统</string>
+  <string name="themes_title_settings">主题</string>
   <string name="unable_to_register">无法注册应用程序</string>
   <string name="unique_id">唯一 ID</string>
   <string name="url_invalid">Url 无效</string>
@@ -152,15 +161,21 @@ Home Assistant实例</string>
   <string name="webview_error_SSL_INVALID">加载Home Assistant时发生一般性SSL错误，请检查Home Assistant证书或连接设置，然后重试。</string>
   <string name="webview_error_SSL_NOTYETVALID">Home Assistant证书尚未生效，请检查Home Assistant证书或连接设置，然后重试。</string>
   <string name="webview_error_SSL_UNTRUSTED">不信任Home Assistant证书颁发机构，请检查Home Assistant证书或连接设置，然后重试。</string>
+  <string name="widget_attribute_separator_label">属性之间的分隔符：</string>
   <string name="widget_button_image_description">服务按钮</string>
   <string name="widget_config_service_error">未能加载自定义组件的服务数据。</string>
   <string name="widget_creation_error">无法创建小部件。</string>
   <string name="widget_image_description">Home Assistant小部件</string>
   <string name="widget_label_placeholder_text">标签</string>
+  <string name="widget_separator_input_hint">没有分隔符</string>
+  <string name="widget_separator_label">状态和属性分隔符：</string>
   <string name="widget_spinner_icon">图标：</string>
+  <string name="widget_state_separator_label">状态和属性分隔符：</string>
   <string name="widget_static_image_description">实体状态</string>
   <string name="widget_text_hint_label">标签</string>
   <string name="widget_text_hint_service_data">实体ID</string>
   <string name="widget_text_hint_service_domain">域</string>
   <string name="widget_text_hint_service_service">服务</string>
+  <string name="widget_text_size_default">30</string>
+  <string name="widget_text_size_label">小部件文字大小：</string>
 </resources>

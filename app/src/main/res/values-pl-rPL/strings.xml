@@ -22,6 +22,7 @@
   <string name="configure_widget_label">Etykieta widżetu</string>
   <string name="connect_to_home_internet">Upewnij się, że telefon jest podłączony do sieci domowej.</string>
   <string name="connected_to_home_assistant">Połączony z Home Assistantem</string>
+  <string name="create_template">Utwórz szablon</string>
   <string name="developer_tools">Narzędzia deweloperskie</string>
   <string name="device_class">Klasa urządzenia</string>
   <string name="device_name">Nazwa urządzenia</string>
@@ -131,6 +132,14 @@
   <string name="states">Przegląd</string>
   <string name="status_of_mobile_app_integration">Status integracji mobile_app:</string>
   <string name="tag_reader_title">Przetwarzanie tagu</string>
+  <string name="template_widget_default">Wprowadź szablon</string>
+  <string name="themes_option_label_dark">Ciemny</string>
+  <string name="themes_option_label_light">Jasny</string>
+  <string name="themes_option_label_system">Podążaj za ustawieniami systemu</string>
+  <string name="themes_option_value_dark">ciemny</string>
+  <string name="themes_option_value_light">jasny</string>
+  <string name="themes_option_value_system">systemowy</string>
+  <string name="themes_title_settings">Motyw</string>
   <string name="unable_to_register">Nie można zarejestrować aplikacji</string>
   <string name="unique_id">Unikalny identyfikator</string>
   <string name="url_invalid">Nieprawidłowy adres URL</string>
@@ -145,15 +154,21 @@
   <string name="webview_error_SSL_INVALID">Wystąpił ogólny błąd SSL podczas ładowania Home Assistanta, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
   <string name="webview_error_SSL_NOTYETVALID">Certyfikat Home Assistanta nie jest jeszcze ważny, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
   <string name="webview_error_SSL_UNTRUSTED">Urząd certyfikacji Home Assistanta nie jest zaufany, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
+  <string name="widget_attribute_separator_label">Separator atrybutów:</string>
   <string name="widget_button_image_description">Przycisk usługi</string>
   <string name="widget_config_service_error">Niestandardowy komponent uniemożliwia załadowanie danych usługi.</string>
   <string name="widget_creation_error">Nie można utworzyć widżetu.</string>
   <string name="widget_image_description">Widżet Home Assistanta</string>
   <string name="widget_label_placeholder_text">Etykieta</string>
+  <string name="widget_separator_input_hint">Bez separatora</string>
+  <string name="widget_separator_label">Separator stanu i atrybutów:</string>
   <string name="widget_spinner_icon">Ikona:</string>
+  <string name="widget_state_separator_label">Separator stanu i atrybutów:</string>
   <string name="widget_static_image_description">Stan encji</string>
   <string name="widget_text_hint_label">Etykieta</string>
   <string name="widget_text_hint_service_data">Identyfikator encji</string>
   <string name="widget_text_hint_service_domain">Domena</string>
   <string name="widget_text_hint_service_service">Usługa</string>
+  <string name="widget_text_size_default">30</string>
+  <string name="widget_text_size_label">Rozmiar tekstu widżetu:</string>
 </resources>

@@ -43,7 +43,6 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="history">Historie</string>
   <string name="home_assistant_not_discover">Kan ikke finne din 
 Home Assistant forekomst</string>
-  <string name="input_url"></string>
   <string name="input_url_hint">https://eksempel.duckdns.org:8123</string>
   <string name="label_dynamic_data">Data:</string>
   <string name="label_entity_id">Entitets ID:</string>
