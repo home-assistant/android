@@ -51,26 +51,104 @@
         <LinearLayout
             android:id="@+id/attribute_value_linear_layout"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="20dp"
+            android:layout_height="wrap_content"
             android:gravity="center"
-            android:visibility="gone"
+            android:layout_marginBottom="10dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:labelFor="@id/widget_text_config_service"
+                    android:padding="5dp"
+                    android:text="@string/label_attribute" />
+
+                <MultiAutoCompleteTextView
+                    android:id="@+id/widget_text_config_attribute"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:completionThreshold="0"
+                    android:imeOptions="actionNext"
+                    android:inputType="text" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:padding="5dp"
+                    android:text="@string/widget_attribute_separator_label"/>
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/attribute_separator"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
+                    android:textAlignment="center"
+                    android:hint="@string/widget_separator_input_hint" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
             android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:labelFor="@id/widget_text_config_service"
+                android:layout_gravity="center_vertical"
                 android:padding="5dp"
-                android:text="@string/label_attribute" />
+                android:text="@string/widget_text_size_label"/>
 
-            <AutoCompleteTextView
-                android:id="@+id/widget_text_config_attribute"
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/textSize"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:completionThreshold="0"
-                android:imeOptions="actionNext"
-                android:inputType="text" />
+                android:imeOptions="actionDone"
+                android:textAlignment="center"
+                android:inputType="number"
+                android:text="@string/widget_text_size_default" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:padding="5dp"
+                android:text="@string/widget_state_separator_label"/>
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/state_separator"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionDone"
+                android:textAlignment="center"
+                android:hint="@string/widget_separator_input_hint" />
 
         </LinearLayout>
 
@@ -98,7 +176,6 @@
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/add_button"
-            style="@style/Widget.HomeAssistant.Button.Colored"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"

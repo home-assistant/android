@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.biometric.BiometricManager
 import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
@@ -14,10 +15,11 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
-import io.homeassistant.companion.android.util.PermissionManager
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -91,6 +93,16 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             true
         }
 
+        findPreference<Preference>("nfc_tags")?.let {
+            it.isVisible = presenter.nfcEnabled()
+            it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
+                startActivity(NfcSetupActivity.newInstance(requireActivity()))
+                true
+            }
+        }
+
+        removeSystemFromThemesIfNeeded()
+
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
 
@@ -108,18 +120,21 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             shortcuts?.isVisible = false
         }
 
+        findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, SensorsSettingsFragment.newInstance())
+                .addToBackStack(getString(R.string.sensors))
+                .commit()
+            return@setOnPreferenceClickListener true
+        }
+
         findPreference<Preference>("version")?.let {
+            it.isCopyingEnabled = true
             it.summary = BuildConfig.VERSION_NAME
         }
 
         presenter.onCreate()
-    }
-
-    override fun onLocationSettingChanged() {
-        if (!PermissionManager.checkLocationPermission(requireContext())) {
-            PermissionManager.requestLocationPermissions(this)
-        }
-        PermissionManager.restartLocationTracking(requireContext())
     }
 
     override fun disableInternalConnection() {
@@ -149,24 +164,27 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        if (PermissionManager.validateLocationPermissions(requestCode, grantResults)) {
-            PermissionManager.restartLocationTracking(requireContext())
-        } else {
-            // If we don't have permissions, don't let them in!
-            findPreference<SwitchPreference>("location_zone")!!.isChecked = false
-            findPreference<SwitchPreference>("location_background")!!.isChecked = false
-        }
-    }
-
     private fun authenticationResult(result: Int) {
         val switchLock = findPreference<SwitchPreference>("app_lock")
         switchLock?.isChecked = result == Authenticator.SUCCESS
+    }
+
+    private fun removeSystemFromThemesIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            val pref = findPreference<ListPreference>("themes")
+            if (pref != null) {
+                val systemIndex = pref.findIndexOfValue("system")
+                if (systemIndex > 0) {
+                    var entries = pref.entries?.toMutableList()
+                    entries?.removeAt(systemIndex)
+                    var entryValues = pref.entryValues?.toMutableList()
+                    entryValues?.removeAt(systemIndex)
+                    if (entries != null && entryValues != null) {
+                        pref.entries = entries.toTypedArray()
+                        pref.entryValues = entryValues.toTypedArray()
+                    }
+                }
+            }
+        }
     }
 }

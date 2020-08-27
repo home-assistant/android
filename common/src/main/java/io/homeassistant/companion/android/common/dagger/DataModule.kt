@@ -10,13 +10,13 @@ import io.homeassistant.companion.android.data.authentication.AuthenticationRepo
 import io.homeassistant.companion.android.data.authentication.AuthenticationService
 import io.homeassistant.companion.android.data.integration.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.data.integration.IntegrationService
+import io.homeassistant.companion.android.data.themes.ThemesRepositoryImpl
 import io.homeassistant.companion.android.data.url.UrlRepositoryImpl
-import io.homeassistant.companion.android.data.widgets.WidgetRepositoryImpl
 import io.homeassistant.companion.android.data.wifi.WifiHelper
 import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.domain.integration.IntegrationRepository
+import io.homeassistant.companion.android.domain.themes.ThemesRepository
 import io.homeassistant.companion.android.domain.url.UrlRepository
-import io.homeassistant.companion.android.domain.widgets.WidgetRepository
 import javax.inject.Named
 
 @Module(includes = [DataModule.Declaration::class])
@@ -24,7 +24,7 @@ class DataModule(
     private val urlStorage: LocalStorage,
     private val sessionLocalStorage: LocalStorage,
     private val integrationLocalStorage: LocalStorage,
-    private val widgetLocalStorage: LocalStorage,
+    private val themesLocalStorage: LocalStorage,
     private val wifiHelper: WifiHelper,
     private val deviceId: String
 ) {
@@ -53,8 +53,8 @@ class DataModule(
     fun provideIntegrationLocalStorage() = integrationLocalStorage
 
     @Provides
-    @Named("widget")
-    fun provideWidgetLocalStorage() = widgetLocalStorage
+    @Named("themes")
+    fun provideThemesLocalStorage() = themesLocalStorage
 
     @Provides
     @Named("manufacturer")
@@ -84,6 +84,6 @@ class DataModule(
         fun bindIntegrationService(repository: IntegrationRepositoryImpl): IntegrationRepository
 
         @Binds
-        fun bindWidgetRepositoryImpl(repository: WidgetRepositoryImpl): WidgetRepository
+        fun bindThemesRepositoryImpl(repository: ThemesRepositoryImpl): ThemesRepository
     }
 }

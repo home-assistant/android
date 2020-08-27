@@ -1,82 +1,84 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.content.Context
+import android.location.Address
 import android.location.Geocoder
+import android.os.Build
 import android.util.Log
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.tasks.Tasks
-import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
-import io.homeassistant.companion.android.domain.integration.Sensor
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.util.PermissionManager
 
 class GeocodeSensorManager : SensorManager {
 
     companion object {
         private const val TAG = "GeocodeSM"
+        private val geocodedLocation = SensorManager.BasicSensor(
+            "geocoded_location",
+            "sensor",
+            "Geocoded Location"
+        )
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        val sensor = getGeocodedLocation(context)
-        if (sensor != null) {
-            return listOf(
-                SensorRegistration(
-                    sensor,
-                    "Geocoded Location"
+    override val name: String
+        get() = "Geolocation Sensors"
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(geocodedLocation)
+
+    override fun requiredPermissions(): Array<String> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
+        } else {
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        updateGeocodedLocation(context)
+    }
+
+    private fun updateGeocodedLocation(context: Context) {
+        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context))
+            return
+        val locApi = LocationServices.getFusedLocationProviderClient(context)
+        locApi.lastLocation.addOnSuccessListener { location ->
+            if (location == null) {
+                Log.e(TAG, "Somehow location is null even though it was successful")
+                return@addOnSuccessListener
+            }
+
+            var address: Address? = null
+            if (location.accuracy <= LocationSensorManager.MINIMUM_ACCURACY)
+                address = Geocoder(context)
+                    .getFromLocation(location.latitude, location.longitude, 1)
+                    .firstOrNull()
+
+            val attributes = address?.let {
+                mapOf(
+                    "Administrative Area" to it.adminArea,
+                    "Country" to it.countryName,
+                    "ISO Country Code" to it.countryCode,
+                    "Locality" to it.locality,
+                    "Location" to listOf(it.latitude, it.longitude),
+                    "Postal Code" to it.postalCode,
+                    "Sub Administrative Area" to it.subAdminArea,
+                    "Sub Locality" to it.subLocality,
+                    "Sub Thoroughfare" to it.subThoroughfare,
+                    "Thoroughfare" to it.thoroughfare
                 )
+            }.orEmpty()
+
+            onSensorUpdated(
+                context,
+                geocodedLocation,
+                address?.getAddressLine(0) ?: "Unknown",
+                "mdi:map",
+                attributes
             )
         }
-        return emptyList()
-    }
-
-    override fun getSensors(context: Context): List<Sensor<Any>> {
-        val geocodedSensor = getGeocodedLocation(context)
-
-        if (geocodedSensor != null) {
-            return listOf(geocodedSensor)
-        }
-
-        return emptyList()
-    }
-
-    private fun getGeocodedLocation(context: Context): Sensor<Any>? {
-        if (!PermissionManager.checkLocationPermission(context)) {
-            Log.w(TAG, "Tried getting gecoded location without permission.")
-            return null
-        }
-        try {
-            val locApi = LocationServices.getFusedLocationProviderClient(context)
-            Tasks.await(locApi.lastLocation)?.let {
-                if (it.accuracy > LocationBroadcastReceiverBase.MINIMUM_ACCURACY)
-                    return null
-
-                Geocoder(context)
-                    .getFromLocation(it.latitude, it.longitude, 1)
-                    .firstOrNull()?.let { address ->
-                        return Sensor(
-                            "geocoded_location",
-                            if (address.maxAddressLineIndex >= 0) address.getAddressLine(0) else "Unknown",
-                            "sensor",
-                            "mdi:map",
-                            mapOf(
-                                "Administrative Area" to address.adminArea,
-                                "Country" to address.countryName,
-                                "ISO Country Code" to address.countryCode,
-                                "Locality" to address.locality,
-                                "Location" to listOf(address.latitude, address.longitude),
-                                "Postal Code" to address.postalCode,
-                                "Sub Administrative Area" to address.subAdminArea,
-                                "Sub Locality" to address.subLocality,
-                                "Sub Thoroughfare" to address.subThoroughfare,
-                                "Thoroughfare" to address.thoroughfare
-                            )
-                        )
-                    }
-            }
-        } catch (e: Exception) {
-            // We don't want to crash if the device cannot get a geocoded location
-            Log.e(TAG, "Issue getting geocoded location ", e)
-        }
-        return null
     }
 }

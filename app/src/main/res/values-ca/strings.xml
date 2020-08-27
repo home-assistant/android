@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="add_service_data_field">Afegeix un camp</string>
+  <string name="add_widget">Afegeix un estri</string>
+  <string name="app_name">Home Assistant</string>
+  <string name="app_version_info">Informació de la versió de l\'aplicació</string>
+  <string name="application_version">Versió de l\'aplicació</string>
+  <string name="attempting_registration">Registrant l\'aplicació...</string>
+  <string name="auth_error">Error d\'autenticació</string>
+  <string name="auth_error_message">Els camps \"nom d\'usuari\" i \"contrasenya\" s\'han de completar</string>
+  <string name="biometric_set_title">Confirmeu que voleu continuar</string>
+  <string name="configure_widget_label">Etiqueta de widget</string>
+  <string name="connect_to_home_internet">Assegureu-vos que el telèfon estigui connectat
+a la seva internet de casa.</string>
+  <string name="device_name">Nom del dispositiu</string>
+  <string name="device_registration">Registre del dispositiu</string>
+  <string name="entity_attribute_checkbox">Afegir valor de atribut</string>
+  <string name="error_onboarding_connection_failed">No es pot connectar a l\'assistent d\'inici.</string>
+  <string name="exit">Sortida</string>
+  <string name="finish">Finalitza</string>
+  <string name="firebase_error_message">Ometent/ignorant aquest error no bre notificacions push.</string>
+  <string name="firebase_error_title">Error de firebase</string>
+  <string name="fullscreen">Pantalla completa</string>
+  <string name="grant_permission">Concedir permís</string>
+  <string name="home_assistant_not_discover">No es pot trobar la vostra 
+ Instància de Home </string>
+  <string name="input_url">URL de Home Assistant</string>
+  <string name="input_url_hint">https://ex emple.duckdns.org:8123</string>
+  <string name="label_attribute">Atribut:</string>
+  <string name="label_dynamic_data">Data:</string>
+  <string name="label_entity_id">Identificador d\'entitat:</string>
+  <string name="label_icon">Icona:</string>
+  <string name="label_service">Servei:</string>
+  <string name="location">Ubicació</string>
+  <string name="lock_title">Bloquejar l\'aplicació</string>
+  <string name="lockscreen_title">Aplicació bloquejada!</string>
+  <string name="manual_setup">Introduïu l\'adreça manualment</string>
+  <string name="not_private">La vostra connexió amb aquest lloc no és privada.</string>
+  <string name="password">Contrasenya</string>
+  <string name="pref_connection_title">Informació de connexió</string>
+  <string name="pref_connection_url">URL de Home Assistant</string>
+  <string name="pref_location_background_title">Seguiment d\'ubicació en segon pla</string>
+  <string name="pref_location_zone_title">Seguiment basat en zones basat</string>
+  <string name="refresh">Actualitzar</string>
+  <string name="required_fields">requereix un nom d\'usuari i una contrasenya.</string>
+  <string name="retry">Reintentar</string>
+  <string name="scan_again">escanegeu de nou</string>
+  <string name="scanning_network">Escaneig de la xarxa 
+ per a Home </string>
+  <string name="select_entity_to_display">Seleccioneu Entitat a mostrar</string>
+  <string name="session_timeout_title">Temps d\'espera de la sessió (en segons)</string>
+  <string name="settings">Configuració</string>
+  <string name="skip">Omet</string>
+  <string name="unable_to_register">No es pot registrar l\'aplicació</string>
+  <string name="username">Nom d\'usuari</string>
+  <string name="wait">Esperar</string>
+  <string name="webview_error_SSL_NOTYETVALID">El certificat Home Assistant no és vàlid, si us plau, consulteu el certificat de Home  o la configuració de la connexió i torneu-ho a provar.</string>
+  <string name="webview_error_SSL_UNTRUSTED">L\'autoritat de certificació de Home Assistant no és de confiança, consulteu el certificat de Home Assistant o la configuració de la connexió i torneu-ho a provar.</string>
+  <string name="widget_button_image_description">Botó de servei</string>
+  <string name="widget_creation_error">No es pot crear el giny.</string>
+  <string name="widget_label_placeholder_text">Etiqueta</string>
+  <string name="widget_spinner_icon">Icona:</string>
+  <string name="widget_static_image_description">Estat de l\'entitat</string>
+  <string name="widget_text_hint_label">Etiqueta</string>
+  <string name="widget_text_hint_service_data">ID de l\'entitat</string>
+  <string name="widget_text_hint_service_domain">Domini</string>
+  <string name="widget_text_hint_service_service">Servei</string>
+</resources>

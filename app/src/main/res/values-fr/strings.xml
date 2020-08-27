@@ -18,6 +18,7 @@
   <string name="checking_with_home_assistant">Vérification avec Home Assistant</string>
   <string name="config">Configuration</string>
   <string name="configure_service_call">Configurer l\'appel du service</string>
+  <string name="configure_widget_label">Étiquette du widget</string>
   <string name="connect_to_home_internet">Assurez-vous que votre appareil est connecté à Internet à votre domicile (réseau local)</string>
   <string name="connected_to_home_assistant">Connecté à Home Assistant</string>
   <string name="developer_tools">Outils de développement</string>
@@ -97,7 +98,7 @@
   <string name="wait">Attendre</string>
   <string name="webview_error">Une erreur s\'est produite lors de la connexion à Home Assistant. Veuillez vérifier que les paramètres de connexion sont corrects, puis réessayer de vous connecter.</string>
   <string name="widget_config_service_error">Un composant personnalisé empêche le chargement des données de service.</string>
-  <string name="widget_button_image_description">Widget Home Assistant</string>
+  <string name="widget_image_description">Widget Home Assistant</string>
   <string name="widget_label_placeholder_text">Étiquette</string>
   <string name="widget_spinner_icon">Icône :</string>
   <string name="widget_text_hint_label">Étiquette</string>

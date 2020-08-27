@@ -1,60 +1,69 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.content.Context
+import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
-import android.util.Log
-import io.homeassistant.companion.android.domain.integration.Sensor
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
-import io.homeassistant.companion.android.util.PermissionManager
+import android.os.Build
 
 class NetworkSensorManager : SensorManager {
     companion object {
         private const val TAG = "NetworkSM"
+        private val wifiConnection = SensorManager.BasicSensor(
+            "wifi_connection",
+            "sensor",
+            "Wifi Connection"
+        )
     }
 
-    override fun getSensorRegistrations(context: Context): List<SensorRegistration<Any>> {
-        val sensorRegistrations = mutableListOf<SensorRegistration<Any>>()
+    override val name: String
+        get() = "Network Sensors"
+    override val availableSensors: List<SensorManager.BasicSensor>
+        get() = listOf(wifiConnection)
 
-        getWifiConnectionSensor(context)?.let {
-            sensorRegistrations.add(
-                SensorRegistration(
-                    it,
-                    "Wifi Connection"
-                )
+    override fun requiredPermissions(): Array<String> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
             )
-        }
-
-        return sensorRegistrations
-    }
-
-    override fun getSensors(context: Context): List<Sensor<Any>> {
-        val sensors = mutableListOf<Sensor<Any>>()
-
-        getWifiConnectionSensor(context)?.let {
-            sensors.add(it)
-        }
-
-        return sensors
-    }
-
-    private fun getWifiConnectionSensor(context: Context): Sensor<Any>? {
-        if (!PermissionManager.checkLocationPermission(context)) {
-            Log.w(TAG, "Tried getting wifi info without permission.")
-            return null
-        }
-        val wifiManager =
-            (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
-        val conInfo = wifiManager.connectionInfo
-
-        val ssid = if (conInfo.networkId == -1) {
-            "<not connected>"
         } else {
-            conInfo.ssid.removePrefix("\"").removeSuffix("\"")
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
         }
+    }
 
-        val lastScanStrength = wifiManager.scanResults.firstOrNull {
-            it.BSSID == conInfo.bssid
-        }?.level ?: -1
+    override fun requestSensorUpdate(
+        context: Context
+    ) {
+        updateWifiConnectionSensor(context)
+    }
+
+    private fun updateWifiConnectionSensor(context: Context) {
+        if (!isEnabled(context, wifiConnection.id))
+            return
+
+        var conInfo: WifiInfo? = null
+        var ssid = "Unknown"
+        var lastScanStrength = -1
+        var wifiEnabled = false
+
+        if (checkPermission(context)) {
+            val wifiManager =
+                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+            conInfo = wifiManager.connectionInfo
+
+            wifiEnabled = wifiManager.isWifiEnabled
+
+            ssid = if (conInfo.networkId == -1) {
+                "<not connected>"
+            } else {
+                conInfo.ssid.removePrefix("\"").removeSuffix("\"")
+            }
+
+            lastScanStrength = wifiManager.scanResults.firstOrNull {
+                it.BSSID == conInfo.bssid
+            }?.level ?: -1
+        }
 
         var signalStrength = -1
         if (lastScanStrength != -1) {
@@ -67,19 +76,23 @@ class NetworkSensorManager : SensorManager {
             else -> signalStrength
         }
 
-        return Sensor(
-            "wifi_connection",
-            ssid,
-            "sensor",
-            icon,
+        val attributes = conInfo?.let {
             mapOf(
                 "bssid" to conInfo.bssid,
                 "ip_address" to getIpAddress(conInfo.ipAddress),
                 "link_speed" to conInfo.linkSpeed,
                 "is_hidden" to conInfo.hiddenSSID,
+                "is_wifi_on" to wifiEnabled,
                 "frequency" to conInfo.frequency,
                 "signal_level" to lastScanStrength
             )
+        }.orEmpty()
+
+        onSensorUpdated(context,
+            wifiConnection,
+            ssid,
+            icon,
+            attributes
         )
     }
 

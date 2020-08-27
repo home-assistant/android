@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:iconSpaceReserved="false">
+
+    <androidx.preference.SwitchPreference
+        app:key="enabled"
+        app:title="@string/enabled_title"
+        app:summary="@string/enabled_summary"
+        app:iconSpaceReserved="false"/>
+    <Preference
+        app:key="unique_id"
+        app:title="@string/unique_id"
+        app:iconSpaceReserved="false"/>
+    <Preference
+        app:key="state"
+        app:title="@string/state"
+        app:iconSpaceReserved="false"/>
+    <Preference
+        app:key="device_class"
+        app:title="@string/device_class"
+        app:iconSpaceReserved="false"/>
+    <Preference
+        app:key="icon"
+        app:title="@string/icon"
+        app:iconSpaceReserved="false"/>
+
+    <androidx.preference.PreferenceCategory
+        app:key="attributes"
+        app:title="@string/attributes"
+        app:iconSpaceReserved="false"/>
+</androidx.preference.PreferenceScreen>

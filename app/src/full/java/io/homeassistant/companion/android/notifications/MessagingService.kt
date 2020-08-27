@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.RingtoneManager
 import android.os.Build
+import android.text.Spanned
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -17,14 +18,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.background.LocationBroadcastReceiver
-import io.homeassistant.companion.android.background.LocationBroadcastReceiverBase
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
 import io.homeassistant.companion.android.domain.authentication.SessionState
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
@@ -73,7 +74,7 @@ class MessagingService : FirebaseMessagingService() {
     override fun onCreate() {
         super.onCreate()
         DaggerServiceComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
+            .appComponent((applicationContext.applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
     }
@@ -107,8 +108,8 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun requestAccurateLocationUpdate() {
-        val intent = Intent(this, LocationBroadcastReceiver::class.java)
-        intent.action = LocationBroadcastReceiverBase.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+        val intent = Intent(this, LocationSensorManager::class.java)
+        intent.action = LocationSensorManager.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
 
         sendBroadcast(intent)
     }
@@ -179,6 +180,8 @@ class MessagingService : FirebaseMessagingService() {
         handleSticky(notificationBuilder, data)
 
         handleText(notificationBuilder, data)
+
+        handleSubject(notificationBuilder, data)
 
         handleImage(notificationBuilder, data)
 
@@ -263,13 +266,16 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun getGroupNotificationBuilder(
         channelId: String,
-        group: String?,
+        group: String,
         data: Map<String, String>
     ): NotificationCompat.Builder {
+
         val groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setStyle(
-                NotificationCompat.InboxStyle().setSummaryText(group?.substring(GROUP_PREFIX.length))
+                NotificationCompat.BigTextStyle()
+                    .setSummaryText(prepareText(group.substring(GROUP_PREFIX.length))
+                )
             )
             .setGroup(group)
             .setGroupSummary(true)
@@ -400,22 +406,34 @@ class MessagingService : FirebaseMessagingService() {
         builder.setAutoCancel(!sticky)
     }
 
+    private fun handleSubject(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        data[SUBJECT]?.let {
+            builder.setContentText(prepareText(it))
+        }
+    }
+
     private fun handleText(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        builder
-            .setContentTitle(data[TITLE])
-            .setContentText(data[SUBJECT] ?: data[MESSAGE])
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(
-                        HtmlCompat.fromHtml(
-                            data[MESSAGE] ?: "Unspecified",
-                            HtmlCompat.FROM_HTML_MODE_LEGACY
-                        )
-                    )
-            )
+        data[TITLE]?.let {
+            builder.setContentTitle(prepareText(it))
+        }
+        data[MESSAGE]?.let {
+            val text = prepareText(it)
+            builder.setContentText(text)
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
+        }
+    }
+
+    private fun prepareText(
+        text: String
+    ): Spanned {
+        var emojiParsedText = EmojiParser.parseToUnicode(text)
+        return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
 
     private suspend fun handleLargeIcon(

@@ -6,7 +6,7 @@ interface WebView {
 
     fun loadUrl(url: String)
 
-    fun setStatusBarColor(color: Int)
+    fun setStatusBarAndNavigationBarColor(color: Int)
 
     fun setExternalAuth(script: String)
 

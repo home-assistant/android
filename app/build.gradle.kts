@@ -10,6 +10,7 @@ plugins {
 buildscript {
     repositories {
         google()
+        jcenter()
         maven(url = Config.Repository.gradle)
     }
     dependencies {
@@ -117,6 +118,11 @@ dependencies {
     implementation(project(":domain"))
 
     implementation(Config.Dependency.Misc.blurView)
+    implementation(Config.Dependency.Misc.iconDialog)
+    implementation(Config.Dependency.Misc.iconDialogMaterial)
+    implementation(Config.Dependency.Misc.emoji) {
+        exclude(group = "org.json", module = "json")
+    }
 
     implementation(Config.Dependency.Kotlin.core)
     implementation(Config.Dependency.Kotlin.coroutines)
@@ -130,6 +136,8 @@ dependencies {
     implementation(Config.Dependency.AndroidX.constraintlayout)
     implementation(Config.Dependency.AndroidX.recyclerview)
     implementation(Config.Dependency.AndroidX.preference)
+    implementation(Config.Dependency.AndroidX.navigationFragment)
+    implementation(Config.Dependency.AndroidX.navigationUi)
     implementation(Config.Dependency.Google.material)
 
     implementation(Config.Dependency.AndroidX.roomRuntime)
@@ -148,12 +156,17 @@ dependencies {
 
     implementation(Config.Dependency.AndroidX.workManager)
     implementation(Config.Dependency.AndroidX.biometric)
+    implementation(Config.Dependency.AndroidX.webKit)
 
     testImplementation(Config.Dependency.Testing.spek2Jvm)
     testImplementation(Config.Dependency.Testing.spek2JUnit)
     testImplementation(Config.Dependency.Testing.assertJ)
     testImplementation(Config.Dependency.Testing.mockk)
     testImplementation(Config.Dependency.Kotlin.coroutinesTest)
+
+    implementation(Config.Dependency.Misc.exoCore)
+    implementation(Config.Dependency.Misc.exoHls)
+    implementation(Config.Dependency.Misc.exoUi)
 }
 
 // This plugin must stay at the bottom

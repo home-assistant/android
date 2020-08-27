@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout android:id="@+id/container_nfc_tag_preview"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/tv_tag_identifier_headline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/nfc_tag_identifier"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/et_tag_identifier_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:gravity="start|top"
+        android:inputType="textMultiLine"
+        android:editable="false"
+        app:layout_constraintTop_toBottomOf="@+id/tv_tag_identifier_headline" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_tag_duplicate"
+        style="@style/Widget.HomeAssistant.Button.Colored"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/nfc_btn_create_duplicate"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toStartOf="@+id/guideline"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/et_tag_identifier_content" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_tag_fire_event"
+        style="@style/Widget.HomeAssistant.Button.Colored"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="@string/nfc_btn_fire_event"
+        android:layout_marginStart="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/guideline"
+        app:layout_constraintTop_toBottomOf="@+id/et_tag_identifier_content" />
+
+
+    <TextView
+        android:id="@+id/tv_tag_example_trigger_headline"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/nfc_example_trigger"
+        app:layout_constraintTop_toBottomOf="@+id/btn_tag_duplicate"
+        android:layout_marginTop="48dp" />
+
+    <EditText
+        android:id="@+id/et_tag_example_trigger_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:gravity="start|top"
+        android:inputType="textMultiLine"
+        android:editable="false"
+        app:layout_constraintTop_toBottomOf="@+id/tv_tag_example_trigger_headline" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btn_tag_share_example_trigger"
+        style="@style/Widget.HomeAssistant.Button.Colored"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/nfc_btn_share"
+        app:layout_constraintTop_toBottomOf="@+id/et_tag_example_trigger_content" />
+
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

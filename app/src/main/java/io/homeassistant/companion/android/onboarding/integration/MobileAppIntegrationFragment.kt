@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding.integration
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,7 +22,11 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.util.PermissionManager
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.PhoneStateSensorManager
+import io.homeassistant.companion.android.sensors.SensorWorker
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 
@@ -33,6 +38,9 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         private const val SETTINGS_VIEW = 2
 
         private const val BACKGROUND_REQUEST = 99
+
+        private const val LOCATION_REQUEST_CODE = 0
+        private const val PHONE_REQUEST_CODE = 1
 
         fun newInstance(): MobileAppIntegrationFragment {
             return MobileAppIntegrationFragment()
@@ -47,6 +55,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     private lateinit var zoneTrackingSummary: AppCompatTextView
     private lateinit var backgroundTracking: SwitchCompat
     private lateinit var backgroundTrackingSummary: AppCompatTextView
+    private lateinit var callTracking: SwitchCompat
+    private lateinit var callTrackingSummary: AppCompatTextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,15 +82,18 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             findViewById<AppCompatButton>(R.id.location_perms).apply {
                 setOnClickListener {
-                    PermissionManager.requestLocationPermissions(this@MobileAppIntegrationFragment)
+                    this@MobileAppIntegrationFragment.requestPermissions(
+                        LocationSensorManager().requiredPermissions(),
+                        LOCATION_REQUEST_CODE
+                    )
                 }
             }
 
-            val hasLocationPermission = PermissionManager.checkLocationPermission(context)
+            val hasLocationPermission = LocationSensorManager().checkPermission(context)
 
             zoneTracking = findViewById<SwitchCompat>(R.id.location_zone).apply {
                 setOnCheckedChangeListener { _, isChecked ->
-                    presenter.onToggleZoneTracking(isChecked)
+                    updateSensorDao(LocationSensorManager.zoneLocation.id, isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission
@@ -90,13 +103,33 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             backgroundTracking = findViewById<SwitchCompat>(R.id.location_background).apply {
                 setOnCheckedChangeListener { _, isChecked ->
-                    presenter.onToggleBackgroundTracking(isChecked)
+                    updateSensorDao(LocationSensorManager.backgroundLocation.id, isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission && isIgnoringBatteryOptimizations()
             }
             backgroundTrackingSummary = findViewById(R.id.location_background_summary)
             backgroundTrackingSummary.isEnabled = hasLocationPermission
+
+            // Calls tracking
+            findViewById<AppCompatButton>(R.id.phone_state_perms).apply {
+                setOnClickListener {
+                    this@MobileAppIntegrationFragment.requestPermissions(PhoneStateSensorManager().requiredPermissions(), PHONE_REQUEST_CODE)
+                }
+            }
+
+            val hasPhoneStatePermission = PhoneStateSensorManager().checkPermission(requireContext())
+
+            callTracking = findViewById<SwitchCompat>(R.id.call_tracking).apply {
+                setOnCheckedChangeListener { _, isChecked ->
+                    updateSensorDao(PhoneStateSensorManager.phoneState.id, isChecked)
+                }
+                isEnabled = hasPhoneStatePermission
+                isChecked = hasPhoneStatePermission
+            }
+
+            callTrackingSummary = findViewById(R.id.call_tracking_summary)
+            callTrackingSummary.isEnabled = hasPhoneStatePermission
 
             findViewById<AppCompatButton>(R.id.finish).setOnClickListener {
                 (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
@@ -136,7 +169,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun onDestroy() {
-        PermissionManager.restartLocationTracking(requireContext())
+        SensorWorker.start(requireContext())
         presenter.onFinish()
         super.onDestroy()
     }
@@ -148,28 +181,42 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (PermissionManager.validateLocationPermissions(requestCode, grantResults)) {
-            zoneTracking.isEnabled = true
-            zoneTrackingSummary.isEnabled = true
-            zoneTracking.isChecked = true
-            presenter.onToggleZoneTracking(true)
+        if (requestCode == LOCATION_REQUEST_CODE) {
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                zoneTracking.isEnabled = true
+                zoneTrackingSummary.isEnabled = true
+                zoneTracking.isChecked = true
+                updateSensorDao(LocationSensorManager.zoneLocation.id, true)
 
-            backgroundTracking.isEnabled = true
-            backgroundTrackingSummary.isEnabled = true
-        } else {
-            zoneTracking.isEnabled = false
-            zoneTrackingSummary.isEnabled = false
-            backgroundTracking.isEnabled = false
-            backgroundTrackingSummary.isEnabled = false
+                backgroundTracking.isEnabled = true
+                backgroundTrackingSummary.isEnabled = true
+            } else {
+                zoneTracking.isEnabled = false
+                zoneTrackingSummary.isEnabled = false
+                backgroundTracking.isEnabled = false
+                backgroundTrackingSummary.isEnabled = false
+            }
+
+            requestBackgroundAccess()
         }
 
-        requestBackgroundAccess()
+        if (requestCode == PHONE_REQUEST_CODE) {
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                callTracking.isEnabled = true
+                callTracking.isChecked = true
+                callTrackingSummary.isEnabled = true
+                updateSensorDao(PhoneStateSensorManager.phoneState.id, true)
+            } else {
+                callTracking.isEnabled = false
+                callTrackingSummary.isEnabled = false
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == BACKGROUND_REQUEST && isIgnoringBatteryOptimizations()) {
             zoneTracking.isChecked = true
-            presenter.onToggleBackgroundTracking(true)
+            updateSensorDao(LocationSensorManager.backgroundLocation.id, true)
         }
     }
 
@@ -190,5 +237,22 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 context?.getSystemService(PowerManager::class.java)
                     ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
                 ?: false
+    }
+
+    private fun updateSensorDao(uniqueId: String, isChecked: Boolean) {
+        val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
+        var sensor = sensorDao.get(uniqueId)
+        if (sensor == null) {
+            sensor = Sensor(
+                uniqueId,
+                isChecked,
+                false,
+                ""
+            )
+            sensorDao.add(sensor)
+        } else {
+            sensor.enabled = isChecked
+            sensorDao.update(sensor)
+        }
     }
 }

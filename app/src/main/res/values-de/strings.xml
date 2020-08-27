@@ -18,6 +18,7 @@
   <string name="checking_with_home_assistant">Überprüfe mit Home Assistant</string>
   <string name="config">Konfiguration</string>
   <string name="configure_service_call">Konfiguriere Dienstaufruf</string>
+  <string name="configure_widget_label">Widget Bezeichnung</string>
   <string name="connect_to_home_internet">Stelle sicher, dass das Telefon mit dem Heimnetzwerk verbunden ist.</string>
   <string name="connected_to_home_assistant">Mit Home Assistant verbunden</string>
   <string name="developer_tools">Entwicklerwerkzeuge</string>
@@ -92,6 +93,10 @@
   <string name="skip">Überspringen</string>
   <string name="states">Übersicht</string>
   <string name="status_of_mobile_app_integration">Status der mobile_app Integration:</string>
+  <string name="themes_option_label_dark">Dunkel</string>
+  <string name="themes_option_label_light">Hell</string>
+  <string name="themes_option_label_system">System-Einstellungen verwenden</string>
+  <string name="themes_title_settings">Theme</string>
   <string name="unable_to_register">Die Applikation konnte nicht registriert werden</string>
   <string name="url_invalid">URL ungültig</string>
   <string name="url_parse_error">Die Home Assistant-URL konnte nicht gelesen werden. Sie sollte folgendermaßen aussehen https://example.com</string>
@@ -101,7 +106,7 @@
   <string name="webview_error_description">Aufgetretener Fehler:</string>
   <string name="webview_error_SSL_INVALID">Beim Laden von Home Assistant ist ein allgemeiner SSL-Fehler aufgetreten. Überprüfen Sie das Home Assistant-Zertifikat oder die Verbindungseinstellungen und versuchen Sie es erneut.</string>
   <string name="widget_config_service_error">Eine benutzerdefinierte Komponente verhindert, dass Servicedaten geladen werden.</string>
-  <string name="widget_button_image_description">Home Assistant Widget</string>
+  <string name="widget_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Bezeichnung</string>
   <string name="widget_spinner_icon">Icon:</string>
   <string name="widget_text_hint_label">Bezeichnung</string>

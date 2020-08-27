@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/WelcomeFragment">
+
+    <fragment
+        android:id="@+id/WelcomeFragment"
+        android:name="io.homeassistant.companion.android.nfc.NfcWelcomeFragment"
+        android:label="@string/nfc_welcome_fragment_label"
+        tools:layout="@layout/fragment_nfc_welcome">
+
+        <action
+            android:id="@+id/action_NFC_READ"
+            app:destination="@id/ReadFragment" />
+
+        <action
+            android:id="@+id/action_NFC_WRITE"
+            app:destination="@id/WriteFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/WriteFragment"
+        android:name="io.homeassistant.companion.android.nfc.NfcWriteFragment"
+        android:label="@string/nfc_write_fragment_label"
+        tools:layout="@layout/fragment_nfc_write">
+
+        <action
+            android:id="@+id/action_NFC_EDIT"
+            app:destination="@id/EditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/ReadFragment"
+        android:name="io.homeassistant.companion.android.nfc.NfcReadFragment"
+        android:label="@string/nfc_read_fragment_label"
+        tools:layout="@layout/fragment_nfc_read">
+
+        <action
+            android:id="@+id/action_NFC_EDIT"
+            app:destination="@id/EditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/EditFragment"
+        android:name="io.homeassistant.companion.android.nfc.NfcEditFragment"
+        android:label="@string/nfc_edit_fragment_label"
+        tools:layout="@layout/fragment_nfc_edit">
+
+        <action
+            android:id="@+id/action_NFC_WRITE"
+            app:destination="@id/WriteFragment" />
+    </fragment>
+</navigation>
