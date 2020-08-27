@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string-array name="pref_theme_option_labels">
+    <item>@string/themes_option_label_light</item>
+    <item>@string/themes_option_label_dark</item>
+    <item>@string/themes_option_label_system</item>
+  </string-array>
+  <string-array name="pref_theme_option_values">
+    <item>@string/themes_option_value_light</item>
+    <item>@string/themes_option_value_dark</item>
+    <item>@string/themes_option_value_system</item>
+  </string-array>
   <string name="add_service_data_field">Add Field</string>
   <string name="add_widget">Add widget</string>
   <string name="app_name">Home Assistant</string>
@@ -23,6 +33,7 @@
   <string name="connect_to_home_internet">Make sure your phone is connected
 to your home internet.</string>
   <string name="connected_to_home_assistant">Connected to Home Assistant</string>
+  <string name="create_template">Create Template</string>
   <string name="developer_tools">Developer Tools</string>
   <string name="device_class">Device Class</string>
   <string name="device_name">Device Name</string>
@@ -140,6 +151,14 @@ like to connect to:</string>
   <string name="states">Overview</string>
   <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
   <string name="tag_reader_title">Processing Tag</string>
+  <string name="template_widget_default">Enter Template Here</string>
+  <string name="themes_option_label_dark">Dark</string>
+  <string name="themes_option_label_light">Light</string>
+  <string name="themes_option_label_system">Follow System Settings</string>
+  <string name="themes_option_value_dark">dark</string>
+  <string name="themes_option_value_light">light</string>
+  <string name="themes_option_value_system">system</string>
+  <string name="themes_title_settings">Theme</string>
   <string name="unable_to_register">Unable to Register Application</string>
   <string name="unique_id">Unique Id</string>
   <string name="url_invalid">Url Invalid</string>
@@ -154,40 +173,21 @@ like to connect to:</string>
   <string name="webview_error_SSL_INVALID">A generic SSL error occurred when loading Home Assistant, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="webview_error_SSL_NOTYETVALID">The Home Assistant certificate is not yet valid, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="webview_error_SSL_UNTRUSTED">The Home Assistant certificate authority is not trusted, please review the Home Assistant certificate or the connection settings and try again.</string>
+  <string name="widget_attribute_separator_label">Separator between attributes:</string>
   <string name="widget_button_image_description">Service Button</string>
   <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
   <string name="widget_creation_error">Unable to create widget.</string>
   <string name="widget_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Label</string>
+  <string name="widget_separator_input_hint">No separator</string>
+  <string name="widget_separator_label">State and attribute separator:</string>
   <string name="widget_spinner_icon">Icon:</string>
+  <string name="widget_state_separator_label">State and attribute separator:</string>
   <string name="widget_static_image_description">Entity State</string>
   <string name="widget_text_hint_label">Label</string>
   <string name="widget_text_hint_service_data">Entity ID</string>
   <string name="widget_text_hint_service_domain">Domain</string>
   <string name="widget_text_hint_service_service">Service</string>
-  <string name="widget_text_size_label">Widget text size:</string>
   <string name="widget_text_size_default">30</string>
-  <string name="widget_state_separator_label">State and attribute separator:</string>
-  <string name="widget_separator_input_hint">No separator</string>
-  <string name="widget_attribute_separator_label">Separator between attributes:</string>
-  <string name="create_template">Create Template</string>
-  <string name="template_widget_default">Enter Template Here</string>
-  <string name="themes_title_settings">Theme</string>
-  <string name="themes_option_label_light">Light</string>
-  <string name="themes_option_label_dark">Dark</string>
-  <string name="themes_option_label_system">Follow System Settings</string>
-  <string name="themes_option_value_light">light</string>
-  <string name="themes_option_value_dark">dark</string>
-  <string name="themes_option_value_system">system</string>
-  <array name="pref_theme_option_labels">
-    <item>@string/themes_option_label_light</item>
-    <item>@string/themes_option_label_dark</item>
-    <item>@string/themes_option_label_system</item>
-  </array>
-
-  <array name="pref_theme_option_values">
-    <item>@string/themes_option_value_light</item>
-    <item>@string/themes_option_value_dark</item>
-    <item>@string/themes_option_value_system</item>
-  </array>
+  <string name="widget_text_size_label">Widget text size:</string>
 </resources>

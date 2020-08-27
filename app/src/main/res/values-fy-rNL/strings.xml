@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="add_service_data_field">Fjild tafoegje</string>
+  <string name="add_widget">Widget tafoegje</string>
+  <string name="app_name">Home Assistant</string>
+  <string name="calendar">Kalinder</string>
+  <string name="cancel">Annulearje</string>
+  <string name="config">Konfiguraasje</string>
+  <string name="configure_widget_label">Widget label</string>
+  <string name="connected_to_home_assistant">Ferbûn mei Home Assistant</string>
+  <string name="enabled_title">Ynskeakele</string>
+  <string name="exit">Ferlit</string>
+  <string name="history">Skiednis</string>
+  <string name="label_label">Label:</string>
+  <string name="location">Lokaasje</string>
+  <string name="lock_title">App beskoattele</string>
+  <string name="mailbox">Postfak</string>
+  <string name="manage_ssids_input">Nije WiFi SSID</string>
+  <string name="manage_ssids_input_exists">Dizze SSID bestiet al.</string>
+  <string name="map">Kaart</string>
+  <string name="password">Wachtwurd</string>
+  <string name="pref_connection_url">Home Assistant URL</string>
+  <string name="profile">Profyl</string>
+  <string name="rate_limit_notification.body">Do hast mear as %s meldingen ferstjoerd. Do ontfangst gjin nije meldingen mear tot middernacht UTC.</string>
+  <string name="save">Bewarje</string>
+  <string name="settings">Ynstellingen</string>
+  <string name="shopping_list">Boadskiplist</string>
+  <string name="state">Steat</string>
+  <string name="states">Oersjoch</string>
+  <string name="unique_id">Unike ID</string>
+  <string name="widget_image_description">Home Assistant Widget</string>
+  <string name="widget_label_placeholder_text">Label</string>
+  <string name="widget_text_hint_label">Label</string>
+</resources>
