@@ -59,7 +59,7 @@ class GeocodeSensorManager : SensorManager {
                         .getFromLocation(location.latitude, location.longitude, 1)
                         .firstOrNull()
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to get geocoded location")
+                Log.e(TAG, "Failed to get geocoded location", e)
             }
             val attributes = address?.let {
                 mapOf(
