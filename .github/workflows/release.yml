@@ -72,20 +72,36 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
         run: ./gradlew assembleRelease
 
-      - name: Upload files to a GitHub release page
-        uses: svenstaro/upload-release-action@2.0.0
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./app/build/outputs/apk/*/release/*-release.apk
-          file_glob: true
-          tag: ${{ github.ref }}
-
       - name: Create Release Notes
         run: |
           mkdir -p app/src/main/play/release-notes/en-US/
-          previous=`git tag -l --sort=-creatordate | head -n 2 | tail -n 1`
+          previous=`git tag -l --sort=-creatordate | grep -v beta- | head -n 2 | tail -n 1`
           current=`git tag -l --sort=-creatordate | head -n 1`
           echo "Full release change log: https://github.com/home-assistant/android/releases/tag/${current}" > app/src/main/play/release-notes/en-US/default.txt
+          git log --format=%s ${previous}..${current} >> app/src/main/play/release-notes/en-US/default.txt
+          cut -c 1-500 app/src/main/play/release-notes/en-US/default.txt
+
+      - name: Upload Full APK
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./app/build/outputs/apk/full/release/app-full-release.apk
+          asset_name: home-assistant-full-${{env.VERSION}}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Minimal APK
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+          asset_name: home-assistant-minimal-${{env.VERSION}}.apk
+          asset_content_type: application/zip
 
       - name: Deploy to Firebase
         env:
