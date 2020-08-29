@@ -95,7 +95,6 @@ jobs:
           prerelease: true
 
       - name: Upload Full APK
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -106,7 +105,6 @@ jobs:
           asset_content_type: application/zip
 
       - name: Upload Minimal APK
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -82,7 +82,6 @@ jobs:
           cut -c 1-500 app/src/main/play/release-notes/en-US/default-long.txt > app/src/main/play/release-notes/en-US/default.txt
 
       - name: Upload Full APK
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -93,7 +92,6 @@ jobs:
           asset_content_type: application/zip
 
       - name: Upload Minimal APK
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
