@@ -331,7 +331,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         context: Context
     ) {
         ensureInjected(context)
-        if (isEnabled(context, zoneLocation.id))
+        if (isEnabled(context, zoneLocation.id) || isEnabled(context, backgroundLocation.id))
             setupLocationTracking(context)
         if (isEnabled(context, backgroundLocation.id)) {
             context.sendBroadcast(
@@ -339,7 +339,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
                 }
             )
-            setupLocationTracking(context)
         }
     }
 }

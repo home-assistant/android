@@ -132,10 +132,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         // Start the sensor worker if they start the app. The only other place we start this ia Boot BroadcastReceiver
         SensorWorker.start(this)
 
-        val intent = Intent(this, LocationSensorManager::class.java)
-        intent.action = LocationSensorManager.ACTION_REQUEST_LOCATION_UPDATES
-        sendBroadcast(intent)
-
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
         }
