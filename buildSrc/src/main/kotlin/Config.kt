@@ -48,7 +48,7 @@ object Config {
             const val appcompat = "androidx.appcompat:appcompat:1.1.0"
             const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
             const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"
-            const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.0.0"
+            const val constraintlayout = "androidx.constraintlayout:constraintlayout:1.1.3"
             const val preference = "androidx.preference:preference-ktx:1.1.1"
 
             const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.0"
