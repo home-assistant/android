@@ -29,10 +29,8 @@ android {
         minSdkVersion(Config.Android.minSdk)
         targetSdkVersion(Config.Android.targetSdk)
 
-        val ver = System.getenv("VERSION") ?: "LOCAL"
-        val vCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
-        versionCode = vCode
-        versionName = "$ver-$vCode"
+        versionName = System.getenv("VERSION") ?: "LOCAL"
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
     }
 
     buildFeatures {
