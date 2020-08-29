@@ -1,40 +1,66 @@
 name: Pull Request
 
-# Triggers the workflow on pull request events but only for the master branch
 on:
   pull_request:
     branches: [ master ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  validate:
-    # The type of runner that the job will run on
+  ktlint:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
 
-    # Make sure we have the correct JDK setup
+      - name: Mock google-services.json
+        run: mv .github/mock-google-services.json app/google-services.json
+
+      - name: Validate ktlint
+        run: ./gradlew ktlintCheck
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      - name: Mock google-services.json
+        run: mv .github/mock-google-services.json app/google-services.json
+
+      - name: Validate Lint
+        run: ./gradlew lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+
+      - name: Mock google-services.json
+        run: mv .github/mock-google-services.json app/google-services.json
+
+      - name: Validate Tests
+        run: ./gradlew test
+
+  pr_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
     - name: Set up JDK 1.8
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
   
-    # Copy over the mock google-services.json
     - name: Mock google-services.json
       run: mv .github/mock-google-services.json app/google-services.json
-
-    - name: Validate ktlint
-      run: ./gradlew ktlintCheck
-    
-    - name: Validate Lint
-      run: ./gradlew lint 
-    
-    - name: Validate Tests
-      run: ./gradlew test
     
     - name: Build Debug APK
       run: ./gradlew assembleDebug
@@ -43,3 +69,10 @@ jobs:
       uses: kittaakos/upload-artifact-as-is@v0
       with:
         path: ./app/build/outputs/apk/*/debug/*-debug.apk
+
+  validate:
+    runs-on: ubuntu-latest
+    needs: [ ktlint, lint, test, pr_build ]
+    steps:
+      - name: Success!
+        run: echo "PR is ready!"

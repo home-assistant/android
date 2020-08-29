@@ -191,10 +191,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     "\nAccuracy: ${location.accuracy}" +
                     "\nBearing: ${location.bearing}"
         )
+        var accuracy = 0
+        if (location.accuracy.toInt() >= 0) {
+            accuracy = location.accuracy.toInt()
+        }
         val updateLocation = UpdateLocation(
             "",
             arrayOf(location.latitude, location.longitude),
-            location.accuracy.toInt(),
+            accuracy,
             location.speed.toInt(),
             location.altitude.toInt(),
             location.bearing.toInt(),
@@ -282,8 +286,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                             locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY -> {
                                 Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                                 runBlocking { sendLocationUpdate(locationResult.lastLocation) }
-                                LocationServices.getFusedLocationProviderClient(context)
-                                    .removeLocationUpdates(this)
                                 if (wakeLock?.isHeld == true) wakeLock.release()
                             }
                             numberCalls >= maxRetries -> {
