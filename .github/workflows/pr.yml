@@ -52,7 +52,6 @@ jobs:
 
   pr_build:
     runs-on: ubuntu-latest
-    needs: [ ktlint, lint, test ]
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 1.8
