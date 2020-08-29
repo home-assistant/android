@@ -2,7 +2,7 @@ name: Production Deploy
 
 on:
   release:
-    types: [ published ]
+    types: [ released ]
 
 jobs:
   prod_deploy:
@@ -38,22 +38,22 @@ jobs:
 
       - name: Inflate release_keystore.keystore
         env:
-          KEYSTORE: ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
         run: echo $KEYSTORE | base64 --decode > app/release_keystore.keystore
 
       - name: Inflate google-services.json
         env:
-          GOOGLE_SERVICES: ${{ secrets.GoogleServices }}
+          GOOGLE_SERVICES: ${{ secrets.GOOGLESERVICES }}
         run: echo $GOOGLE_SERVICES > app/google-services.json
 
       - name: Inflate firebaseAppDistributionServiceCredentialsFile.json
         env:
-          CREDS: ${{ secrets.FirebaseCreds }}
+          CREDS: ${{ secrets.FIREBASECREDS }}
         run: echo $CREDS > firebaseAppDistributionServiceCredentialsFile.json
 
       - name: Inflate playStorePublishServiceCredentialsFile.json
         env:
-          CREDS: ${{ secrets.PlaystoreCreds }}
+          CREDS: ${{ secrets.PLAYSTORECREDS }}
         run: echo $CREDS > app/playStorePublishServiceCredentialsFile.json
 
       - name: Validate ktlint
@@ -67,43 +67,59 @@ jobs:
 
       - name: Build Release
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
         run: ./gradlew assembleRelease
 
       - name: Create Release Notes
         run: |
           mkdir -p app/src/main/play/release-notes/en-US/
-          previous=`git tag -l --sort=-creatordate | head -n 2 | tail -n 1`
+          previous=`git tag -l --sort=-creatordate | grep -v beta- | head -n 2 | tail -n 1`
           current=`git tag -l --sort=-creatordate | head -n 1`
-          echo "Full release change log: https://github.com/home-assistant/android/releases/tag/${current}" > app/src/main/play/release-notes/en-US/default.txt
+          echo "Full release change log: https://github.com/home-assistant/android/releases/tag/${current}" > app/src/main/play/release-notes/en-US/default-long.txt
+          git log --format=%s ${previous}..${current} >> app/src/main/play/release-notes/en-US/default-long.txt
+          cut -c 1-500 app/src/main/play/release-notes/en-US/default-long.txt > app/src/main/play/release-notes/en-US/default.txt
+
+      - name: Upload Full APK
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./app/build/outputs/apk/full/release/app-full-release.apk
+          asset_name: home-assistant-full-${{env.VERSION}}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Minimal APK
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
+          asset_name: home-assistant-minimal-${{env.VERSION}}.apk
+          asset_content_type: application/zip
 
       - name: Deploy to Firebase
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
         run: ./gradlew appDistributionUploadFullRelease
 
       - name: Deploy to Playstore Beta
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
         run: ./gradlew publishFullReleaseBundle
 
       - name: Promote to Beta to Production
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.KEYSTORE_ALIAS_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
         run: ./gradlew promoteArtifact --from-track beta --promote-track production
-
-      - name: Upload files to a GitHub release page
-        uses: svenstaro/upload-release-action@2.0.0
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./app/build/outputs/apk/*/release/*-release.apk
-          file_glob: true
-          tag: ${{ github.ref }}
