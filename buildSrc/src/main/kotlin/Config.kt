@@ -35,7 +35,7 @@ object Config {
         }
 
         object Google {
-            private const val daggerVersion = "2.27"
+            private const val daggerVersion = "2.28.3"
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
@@ -44,7 +44,7 @@ object Config {
 
         object AndroidX {
 
-            const val webKit = "androidx.webkit:webkit:1.3.0-rc02"
+            const val webKit = "androidx.webkit:webkit:1.3.0"
             const val appcompat = "androidx.appcompat:appcompat:1.1.0"
             const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
             const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"
@@ -54,7 +54,7 @@ object Config {
             const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.0"
             const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.0"
 
-            const val workManager = "androidx.work:work-runtime-ktx:2.3.4"
+            const val workManager = "androidx.work:work-runtime-ktx:2.4.0"
             const val biometric = "androidx.biometric:biometric:1.0.1"
 
             private const val roomVersion = "2.2.5"
