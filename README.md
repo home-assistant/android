@@ -59,6 +59,7 @@ The project currently uses [lokalise](https://lokalise.com/public/145814835dd655
 
 
 ## Generating a release to production
-* Check over the [draft release](https://github.com/home-assistant/android/releases)
-* Add any extra info needed and click `Publish Release`
+* Create a new release with the name and tag in the `{MAJOR}.{MINOR}.{PATCH}` format
+* Steal the release notes from the latest beta build
 * This will cause a tag to be added to the project and the `Production Deploy` Workflow will handle the rest
+* Note: Only the first 500 characters of the release notes get set in the Google Play release

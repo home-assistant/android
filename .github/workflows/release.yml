@@ -77,9 +77,9 @@ jobs:
           mkdir -p app/src/main/play/release-notes/en-US/
           previous=`git tag -l --sort=-creatordate | grep -v beta- | head -n 2 | tail -n 1`
           current=`git tag -l --sort=-creatordate | head -n 1`
-          echo "Full release change log: https://github.com/home-assistant/android/releases/tag/${current}" > app/src/main/play/release-notes/en-US/default.txt
-          git log --format=%s ${previous}..${current} >> app/src/main/play/release-notes/en-US/default.txt
-          cut -c 1-500 app/src/main/play/release-notes/en-US/default.txt
+          echo "Full release change log: https://github.com/home-assistant/android/releases/tag/${current}" > app/src/main/play/release-notes/en-US/default-long.txt
+          git log --format=%s ${previous}..${current} >> app/src/main/play/release-notes/en-US/default-long.txt
+          cut -c 1-500 app/src/main/play/release-notes/en-US/default-long.txt > app/src/main/play/release-notes/en-US/default.txt
 
       - name: Upload Full APK
         id: upload-release-asset
