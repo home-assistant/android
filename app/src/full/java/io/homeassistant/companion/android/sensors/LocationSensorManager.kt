@@ -286,8 +286,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                             locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY -> {
                                 Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                                 runBlocking { sendLocationUpdate(locationResult.lastLocation) }
-                                LocationServices.getFusedLocationProviderClient(context)
-                                    .removeLocationUpdates(this)
                                 if (wakeLock?.isHeld == true) wakeLock.release()
                             }
                             numberCalls >= maxRetries -> {
