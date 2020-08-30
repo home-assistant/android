@@ -136,16 +136,17 @@ class SensorDetailFragment(
             }
         }
         findPreference<Preference>("device_class")?.let {
-            it.isCopyingEnabled = true
             if (sensorData.deviceClass == null)
                 it.isVisible = false
-            it.summary = sensorData.deviceClass
+            else
+                it.summary = sensorData.deviceClass
+
         }
         findPreference<Preference>("icon")?.let {
-            it.isCopyingEnabled = true
             if (sensorData.icon == "")
                 it.isVisible = false
-            it.summary = sensorData.icon
+            else
+                it.summary = sensorData.icon
         }
 
         findPreference<PreferenceCategory>("attributes")?.let {

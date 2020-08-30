@@ -24,11 +24,13 @@
     <Preference
         app:key="device_class"
         app:title="@string/device_class"
-        app:iconSpaceReserved="false"/>
+        app:iconSpaceReserved="false"
+        app:enableCopying="true"/>
     <Preference
         app:key="icon"
         app:title="@string/icon"
-        app:iconSpaceReserved="false"/>
+        app:iconSpaceReserved="false"
+        app:enableCopying="true"/>
 
     <androidx.preference.PreferenceCategory
         app:key="attributes"
