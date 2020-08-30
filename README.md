@@ -31,7 +31,7 @@ If you are looking for documentation around the companion applications check out
  - `KEYSTORE_ALIAS`
  - `KEYSTORE_ALIAS_PASSWORD`
  
-- Run the build using `gradlew buld` from command line.
+- Run the build using `gradlew build` from command line.
 
 - If the build is successful, you can run the app by doing the following: click **Run** -> **Run 'app'**
 
