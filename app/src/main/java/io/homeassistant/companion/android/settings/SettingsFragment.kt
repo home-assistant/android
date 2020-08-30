@@ -129,10 +129,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             return@setOnPreferenceClickListener true
         }
 
-        findPreference<Preference>("docs")?.let {
-            it.isCopyingEnabled = true
-        }
-
         findPreference<Preference>("version")?.let {
             it.isCopyingEnabled = true
             it.summary = BuildConfig.VERSION_NAME
