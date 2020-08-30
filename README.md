@@ -11,14 +11,27 @@ If you are looking for documentation around the companion applications check out
 
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
 
-- Create two Android apps, one with `io.homeassistant.companion.android` and one with `io.homeassistant.companion.android.debug` as package name
+- Create four Android apps, with following package names 
+ - `io.homeassistant.companion.android`
+ - `io.homeassistant.companion.android.debug`
+ - `io.homeassistant.companion.android.minimal`
+ - `io.homeassistant.companion.android.minimal.debug`
 
-- Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder
+- Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder. This file contains the configuration of the whole project (all the four applications).
 
   [You can also use the mock services file instead of generating your own](/.github/mock-google-services.json)
-  The file should contain client IDs for `io.homeassistant.companion.android` and `io.homeassistant.companion.android.debug` for debugging to work properly.  **If you do not generate your own file push notification will never work**
+  The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file push notification will never work**
 
 - Start Android Studio, open your source code folder and check if the Gradle build will be successful
+
+- Create keystore containing keypair for debug application signing. In Android Studio: Menu/Build/Generate signed APK, then use a button to create new keystore. Remember the passwords and key alias
+
+- Set environmental variables used in `app/build.gradle.kts`:
+ - `KEYSTORE_PASSWORD`
+ - `KEYSTORE_ALIAS`
+ - `KEYSTORE_ALIAS_PASSWORD`
+ 
+- Run the build using `gradlew build` from command line.
 
 - If the build is successful, you can run the app by doing the following: click **Run** -> **Run 'app'**
 
