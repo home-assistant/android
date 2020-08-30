@@ -40,6 +40,7 @@ to your home internet.</string>
   <string name="device_registration">Device Registration</string>
   <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
   <string name="dialog_add_panel_shortcut_title">Add Shortcut</string>
+  <string name="documentation">Documentation</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
   <string name="enabled_title">Enabled</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
@@ -82,6 +83,7 @@ Home Assistant instance</string>
   <string name="manage_ssids_input_exists">This SSID already exists.</string>
   <string name="manual_setup">enter address manually</string>
   <string name="map">Map</string>
+  <string name="need_help">Need Help?</string>
   <string name="nfc_btn_create_duplicate">Create duplicate</string>
   <string name="nfc_btn_fire_event">Fire event</string>
   <string name="nfc_btn_read_tag">Read NFC Tag</string>
