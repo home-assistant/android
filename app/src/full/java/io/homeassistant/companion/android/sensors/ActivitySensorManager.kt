@@ -10,6 +10,7 @@ import android.util.Log
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityRecognitionResult
 import com.google.android.gms.location.DetectedActivity
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
@@ -26,7 +27,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         private val activity = SensorManager.BasicSensor(
             "detected_activity",
             "sensor",
-            "Detected Activity"
+            "Detected Activity",
+            R.string.sensor_description_detected_activity
         )
     }
 

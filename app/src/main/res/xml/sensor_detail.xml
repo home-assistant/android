@@ -10,7 +10,7 @@
         app:iconSpaceReserved="false"/>
     <Preference
         app:key="description"
-        app:title="@string/description"
+        app:title="@string/sensor_description"
         app:iconSpaceReserved="false"
         app:enableCopying="true"/>
     <Preference

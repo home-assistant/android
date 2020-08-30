@@ -122,7 +122,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="50dp"
-                android:text="@string/pref_location_zone_summary" />
+                android:text="@string/sensor_description_location_zone" />
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/location_background"
@@ -136,7 +136,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="50dp"
-                android:text="@string/pref_location_background_summary" />
+                android:text="@string/sensor_description_location_background" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 style="@style/TextAppearance.HomeAssistant.Title"

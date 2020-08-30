@@ -104,9 +104,9 @@
   <string name="pref_connection_title">연결 정보</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">홈 네트워크 WiFi SSID</string>
-  <string name="pref_location_background_summary">주기적으로 백그라운드에서 위치를 업데이트합니다.</string>
+  <string name="sensor_description_location_background">주기적으로 백그라운드에서 위치를 업데이트합니다.</string>
   <string name="pref_location_background_title">백그라운드 위치 추적</string>
-  <string name="pref_location_zone_summary">설정된 Home Assistant 지역을 지역 기반 추적을 위한 지오펜스로 가져옵니다.</string>
+  <string name="sensor_description_location_zone">설정된 Home Assistant 지역을 지역 기반 추적을 위한 지오펜스로 가져옵니다.</string>
   <string name="pref_location_zone_title">지역 기반 추적</string>
   <string name="profile">프로필</string>
   <string name="qrcode_processing_tag_error">qrcode 태그를 처리하는 동안 오류가 발생했습니다</string>

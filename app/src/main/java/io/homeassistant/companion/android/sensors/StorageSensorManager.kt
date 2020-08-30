@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Environment
 import android.os.StatFs
 import android.util.Log
+import io.homeassistant.companion.android.R
 import java.io.File
 import kotlin.math.roundToInt
 
@@ -15,6 +16,7 @@ class StorageSensorManager : SensorManager {
             "storage_sensor",
             "sensor",
             "Storage Sensor",
+            R.string.sensor_description_storage_sensor,
             unitOfMeasurement = "%"
         )
         val path: File = Environment.getDataDirectory()

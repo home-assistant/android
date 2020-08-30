@@ -33,9 +33,9 @@
   <string name="pref_connection_title">Informații despre conexiune</string>
   <string name="pref_connection_url">URL-ul Home Assistant-ului</string>
   <string name="pref_connection_wifi">SSID-ul Wi-Fi pentru rețeaua de acasă.</string>
-  <string name="pref_location_background_summary">Actualizați-vă periodic poziția în fundal.</string>
+  <string name="sensor_description_location_background">Actualizați-vă periodic poziția în fundal.</string>
   <string name="pref_location_background_title">Urmărirea poziție in fundal.</string>
-  <string name="pref_location_zone_summary">Importați zonele existente definite in Home Assistant ca perimetre geo pentru urmărirea poziție in funcție de zona.</string>
+  <string name="sensor_description_location_zone">Importați zonele existente definite in Home Assistant ca perimetre geo pentru urmărirea poziție in funcție de zona.</string>
   <string name="pref_location_zone_title">Urmărirea poziției in funcție de zonă</string>
   <string name="retry">Reîncercați</string>
   <string name="scan_again">scanează încă o dată</string>

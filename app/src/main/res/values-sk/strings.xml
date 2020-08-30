@@ -107,9 +107,9 @@ Home Assistant</string>
   <string name="pref_connection_title">Informácie o pripojení</string>
   <string name="pref_connection_url">Home Assistant adresa URL</string>
   <string name="pref_connection_wifi">Domáca sieť WiFi SSID</string>
-  <string name="pref_location_background_summary">Pravidelne aktualizovať polohu na pozadí.</string>
+  <string name="sensor_description_location_background">Pravidelne aktualizovať polohu na pozadí.</string>
   <string name="pref_location_background_title">Sledovanie polohy na pozadí</string>
-  <string name="pref_location_zone_summary">Importujte existujúce Home Assistant zóny ako geofence pre účely sledovanie na základe zóny.</string>
+  <string name="sensor_description_location_zone">Importujte existujúce Home Assistant zóny ako geofence pre účely sledovanie na základe zóny.</string>
   <string name="pref_location_zone_title">Sledovanie na základe zóny</string>
   <string name="profile">Profil</string>
   <string name="qrcode_processing_tag_error">Chyba pri spracovaní qrcode tagu</string>

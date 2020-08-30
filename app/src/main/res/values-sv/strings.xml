@@ -68,9 +68,9 @@
   <string name="pref_connection_ssids_empty">Konfigurera dina WiFi SSID (er)</string>
   <string name="pref_connection_title">Anslutningsinformation</string>
   <string name="pref_connection_wifi">WiFi SSID för hemma-nätverk.</string>
-  <string name="pref_location_background_summary">Uppdatera din plats i bakgrunden med jämna mellanrum.</string>
+  <string name="sensor_description_location_background">Uppdatera din plats i bakgrunden med jämna mellanrum.</string>
   <string name="pref_location_background_title">Platsspårning i bakgrunden</string>
-  <string name="pref_location_zone_summary">Importera befintliga Home Assistant zoner som geofences för zonbaserad spårning.</string>
+  <string name="sensor_description_location_zone">Importera befintliga Home Assistant zoner som geofences för zonbaserad spårning.</string>
   <string name="pref_location_zone_title">Zonbaserad spårning</string>
   <string name="profile">Profil</string>
   <string name="rate_limit_notification.body">Du har nu skickat mer än %s notiser idag. Du får inga nya notiser förrän midnatt UTC.</string>

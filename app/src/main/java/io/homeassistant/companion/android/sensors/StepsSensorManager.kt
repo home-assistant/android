@@ -8,6 +8,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
+import io.homeassistant.companion.android.R
 import kotlin.math.roundToInt
 
 class StepsSensorManager : SensorManager, SensorEventListener {
@@ -18,6 +19,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             "steps_sensor",
             "sensor",
             "Steps Sensor",
+            R.string.sensor_description_steps_sensor,
             unitOfMeasurement = "steps"
         )
     }

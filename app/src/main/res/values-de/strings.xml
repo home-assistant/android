@@ -69,9 +69,9 @@
   <string name="pref_connection_title">Verbindungsinformationen</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Heimnetzwerk WiFi SSID</string>
-  <string name="pref_location_background_summary">Aktualisiert deinen Standort im Hintergrund in regelmäßigen Abständen.</string>
+  <string name="sensor_description_location_background">Aktualisiert deinen Standort im Hintergrund in regelmäßigen Abständen.</string>
   <string name="pref_location_background_title">Standortbestimmung im Hintergrund</string>
-  <string name="pref_location_zone_summary">Importiert vorhandene Home Assistant Zonen als Geofences für die zonenbasierte Standortbestimmung.</string>
+  <string name="sensor_description_location_zone">Importiert vorhandene Home Assistant Zonen als Geofences für die zonenbasierte Standortbestimmung.</string>
   <string name="pref_location_zone_title">Zonenbasierte Standortbestimmung</string>
   <string name="profile">Profil</string>
   <string name="rate_limit_notification.body">Du hast heute mehr als %s Benachrichtigungen gesendet. Du erhältst keine neuen Benachrichtigungen bis Mitternacht UTC.</string>
