@@ -140,7 +140,6 @@ class SensorDetailFragment(
                 it.isVisible = false
             else
                 it.summary = sensorData.deviceClass
-
         }
         findPreference<Preference>("icon")?.let {
             if (sensorData.icon == "")
