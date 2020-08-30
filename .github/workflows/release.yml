@@ -159,8 +159,6 @@ jobs:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         with:
-          # beta-320-83c4dbb
-          # io.homeassistant.companion.android@beta-320-83c4dbb-full+320
           tagName: io.homeassistant.companion.android@${{ env.VERSION }}
           environment: Production
 
