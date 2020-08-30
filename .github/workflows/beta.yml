@@ -159,7 +159,7 @@ jobs:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         with:
-          tagName: ${{ env.VERSION }}
+          tagName: io.homeassistant.companion.android@${{ env.VERSION }}
           environment: Beta
 
   play_publish:

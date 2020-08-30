@@ -151,6 +151,7 @@ jobs:
           KEYSTORE_ALIAS: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS }}
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_ALIAS_PASSWORD }}
         run: ./gradlew appDistributionUploadFullRelease
+
       - name: Create a Sentry.io release
         uses: tclindner/sentry-releases-action@v1.2.0
         env:
@@ -158,7 +159,7 @@ jobs:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
         with:
-          tagName: ${{ env.VERSION }}
+          tagName: io.homeassistant.companion.android@${{ env.VERSION }}
           environment: Production
 
   play_publish:
