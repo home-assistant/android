@@ -72,6 +72,32 @@ class SensorDetailFragment(
                 return@setOnPreferenceChangeListener true
             }
         }
+        findPreference<Preference>("description")?.let {
+            var sensorDescription: String = when (sensorId) {
+                "audio_sensor" -> resources.getString(R.string.audio_sensor)
+                "battery_level" -> resources.getString(R.string.battery_level)
+                "battery_state" -> resources.getString(R.string.battery_state)
+                "bluetooth_connection" -> resources.getString(R.string.bluetooth_connection)
+                "detected_activity" -> resources.getString(R.string.detected_activity)
+                "dnd_sensor" -> resources.getString(R.string.dnd_sensor)
+                "geocoded_location" -> resources.getString(R.string.geocoded_location)
+                "last_reboot" -> resources.getString(R.string.last_reboot)
+                "light_sensor" -> resources.getString(R.string.light_sensor)
+                "location_background" -> resources.getString(R.string.pref_location_background_summary)
+                "next_alarm" -> resources.getString(R.string.next_alarm)
+                "phone_state" -> resources.getString(R.string.phone_state)
+                "pressure_sensor" -> resources.getString(R.string.pressure_sensor)
+                "proximity_sensor" -> resources.getString(R.string.proximity_sensor)
+                "sim_1" -> resources.getString(R.string.sim_1)
+                "sim_2" -> resources.getString(R.string.sim_2)
+                "steps_sensor" -> resources.getString(R.string.steps_sensor)
+                "storage_sensor" -> resources.getString(R.string.storage_sensor)
+                "wifi_connection" -> resources.getString(R.string.wifi_connection)
+                "zone_background" -> resources.getString(R.string.pref_location_zone_summary)
+                else -> resources.getString(R.string.no_description)
+            }
+            it.summary = sensorDescription
+        }
     }
 
     override fun onResume() {
@@ -111,10 +137,14 @@ class SensorDetailFragment(
         }
         findPreference<Preference>("device_class")?.let {
             it.isCopyingEnabled = true
+            if (sensorData.deviceClass == null)
+                it.isVisible = false
             it.summary = sensorData.deviceClass
         }
         findPreference<Preference>("icon")?.let {
             it.isCopyingEnabled = true
+            if (sensorData.icon == "")
+                it.isVisible = false
             it.summary = sensorData.icon
         }
 

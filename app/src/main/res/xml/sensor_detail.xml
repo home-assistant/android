@@ -9,6 +9,11 @@
         app:summary="@string/enabled_summary"
         app:iconSpaceReserved="false"/>
     <Preference
+        app:key="description"
+        app:title="@string/description"
+        app:iconSpaceReserved="false"
+        app:enableCopying="true"/>
+    <Preference
         app:key="unique_id"
         app:title="@string/unique_id"
         app:iconSpaceReserved="false"/>
