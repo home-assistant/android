@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -17,6 +18,7 @@ interface SensorManager {
         val id: String,
         val type: String,
         val name: String,
+        val descriptionId: Int = R.string.sensor_description_none,
         val deviceClass: String? = null,
         val unitOfMeasurement: String? = null
     )

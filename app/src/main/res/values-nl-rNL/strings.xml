@@ -103,9 +103,9 @@
   <string name="pref_connection_title">Verbindingsinformatie</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Thuisnetwerk WiFi SSID</string>
-  <string name="pref_location_background_summary">Werk periodiek uw locatie achter de schermen bij.</string>
+  <string name="sensor_description_location_background">Werk periodiek uw locatie achter de schermen bij.</string>
   <string name="pref_location_background_title">Locatie bijhouden op de achtergrond</string>
-  <string name="pref_location_zone_summary">Bestaande Home Assistant-zones importeren als geofences voor zone-gebaseerd volgen.</string>
+  <string name="sensor_description_location_zone">Bestaande Home Assistant-zones importeren als geofences voor zone-gebaseerd volgen.</string>
   <string name="pref_location_zone_title">Zone-gebaseerd volgen</string>
   <string name="profile">Profiel</string>
   <string name="qrcode_processing_tag_error">Fout bij het verwerken van de qrcode-tag</string>

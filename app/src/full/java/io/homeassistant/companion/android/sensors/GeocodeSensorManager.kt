@@ -7,6 +7,7 @@ import android.location.Geocoder
 import android.os.Build
 import android.util.Log
 import com.google.android.gms.location.LocationServices
+import io.homeassistant.companion.android.R
 import java.lang.Exception
 
 class GeocodeSensorManager : SensorManager {
@@ -16,7 +17,8 @@ class GeocodeSensorManager : SensorManager {
         private val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
-            "Geocoded Location"
+            "Geocoded Location",
+            R.string.sensor_description_geocoded_location
         )
     }
 

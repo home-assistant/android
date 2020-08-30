@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.provider.Settings.Global
 import android.util.Log
+import io.homeassistant.companion.android.R
 
 class DNDSensorManager : SensorManager {
     companion object {
@@ -11,7 +12,8 @@ class DNDSensorManager : SensorManager {
         private val dndSensor = SensorManager.BasicSensor(
             "dnd_sensor",
             "sensor",
-            "Do Not Disturb Sensor"
+            "Do Not Disturb Sensor",
+            R.string.sensor_description_dnd_sensor
         )
     }
 

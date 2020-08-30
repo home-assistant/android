@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile.GATT
 import android.content.Context
+import io.homeassistant.companion.android.R
 import java.lang.reflect.Method
 
 class BluetoothSensorManager : SensorManager {
@@ -14,6 +15,7 @@ class BluetoothSensorManager : SensorManager {
             "bluetooth_connection",
             "sensor",
             "Bluetooth Connection",
+            R.string.sensor_description_bluetooth_connection,
             unitOfMeasurement = "connection(s)"
         )
     }

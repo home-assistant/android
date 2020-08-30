@@ -105,9 +105,9 @@ instancia de Home Assistant</string>
   <string name="pref_connection_title">Información de la conexión</string>
   <string name="pref_connection_url">URL de Home Assistant</string>
   <string name="pref_connection_wifi">SSID de la red Wifi de casa</string>
-  <string name="pref_location_background_summary">Actualiza tu ubicación en segundo plano, periódicamente.</string>
+  <string name="sensor_description_location_background">Actualiza tu ubicación en segundo plano, periódicamente.</string>
   <string name="pref_location_background_title">Seguimiento de ubicación en segundo plano</string>
-  <string name="pref_location_zone_summary">Importar zonas de Home Assistant como geocercas para el seguimiento basado en zonas.</string>
+  <string name="sensor_description_location_zone">Importar zonas de Home Assistant como geocercas para el seguimiento basado en zonas.</string>
   <string name="pref_location_zone_title">Seguimiento basado en zonas</string>
   <string name="profile">Perfil</string>
   <string name="qrcode_processing_tag_error">Error al procesar etiqueta qrcode</string>

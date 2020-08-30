@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
+import io.homeassistant.companion.android.R
 import kotlin.math.roundToInt
 
 class LightSensorManager : SensorManager, SensorEventListener {
@@ -16,6 +17,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
             "light_sensor",
             "sensor",
             "Light Sensor",
+            R.string.sensor_description_light_sensor,
             "illuminance",
             "lx"
         )

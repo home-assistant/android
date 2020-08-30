@@ -107,9 +107,9 @@ istanza di Home Assistant</string>
   <string name="pref_connection_title">Informazioni sulla connessione</string>
   <string name="pref_connection_url">URL di Home Assistant</string>
   <string name="pref_connection_wifi">SSID WiFi della rete domestica</string>
-  <string name="pref_location_background_summary">Aggiorna la tua posizione dietro le quinte, periodicamente.</string>
+  <string name="sensor_description_location_background">Aggiorna la tua posizione dietro le quinte, periodicamente.</string>
   <string name="pref_location_background_title">Tracciamento della posizione in background</string>
-  <string name="pref_location_zone_summary">Importa le zone di Home Assistant esistenti come recinti geografici per il monitoraggio basato sulle zone.</string>
+  <string name="sensor_description_location_zone">Importa le zone di Home Assistant esistenti come recinti geografici per il monitoraggio basato sulle zone.</string>
   <string name="pref_location_zone_title">Tracciamento basato sulla zona</string>
   <string name="profile">Profilo</string>
   <string name="qrcode_processing_tag_error">Errore durante l\'elaborazione del Tag QR Code</string>

@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import io.homeassistant.companion.android.R
 
 class NetworkSensorManager : SensorManager {
     companion object {
@@ -12,7 +13,8 @@ class NetworkSensorManager : SensorManager {
         private val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
-            "Wifi Connection"
+            "Wifi Connection",
+            R.string.sensor_description_wifi_connection
         )
     }
 
