@@ -16,18 +16,16 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 
 class SensorDetailFragment(
     private val sensorManager: SensorManager,
-    private val basicSensor: SensorManager.BasicSensor,
-    private val sensorId: String
+    private val basicSensor: SensorManager.BasicSensor
 ) :
     PreferenceFragmentCompat() {
 
     companion object {
         fun newInstance(
             sensorManager: SensorManager,
-            basicSensor: SensorManager.BasicSensor,
-            sensorId: String
+            basicSensor: SensorManager.BasicSensor
         ): SensorDetailFragment {
-            return SensorDetailFragment(sensorManager, basicSensor, sensorId)
+            return SensorDetailFragment(sensorManager, basicSensor)
         }
     }
 
@@ -51,7 +49,7 @@ class SensorDetailFragment(
         addPreferencesFromResource(R.xml.sensor_detail)
 
         findPreference<SwitchPreference>("enabled")?.let {
-            val dao = sensorDao.get(sensorId)
+            val dao = sensorDao.get(basicSensor.id)
             val perm = sensorManager.checkPermission(requireContext())
             if (dao == null) {
                 it.isChecked = perm
@@ -93,7 +91,7 @@ class SensorDetailFragment(
         SensorWorker.start(requireContext())
 
         val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
-        val fullData = sensorDao.getFull(sensorId)
+        val fullData = sensorDao.getFull(basicSensor.id)
         if (fullData?.sensor == null)
             return
         val sensorData = fullData.sensor
@@ -101,7 +99,7 @@ class SensorDetailFragment(
 
         findPreference<Preference>("unique_id")?.let {
             it.isCopyingEnabled = true
-            it.summary = sensorId
+            it.summary = basicSensor.id
         }
         findPreference<Preference>("state")?.let {
             it.isCopyingEnabled = true
@@ -150,7 +148,7 @@ class SensorDetailFragment(
     private fun updateSensorEntity(
         isEnabled: Boolean
     ) {
-        val sensorEntity = sensorDao.get(sensorId)
+        val sensorEntity = sensorDao.get(basicSensor.id)
         if (sensorEntity != null) {
             sensorEntity.enabled = isEnabled
             sensorDao.update(sensorEntity)
