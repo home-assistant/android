@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
+import io.homeassistant.companion.android.R
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -17,6 +18,7 @@ class NextAlarmManager : SensorManager {
             "next_alarm",
             "sensor",
             "Next Alarm",
+            R.string.sensor_description_next_alarm,
             "timestamp"
         )
     }

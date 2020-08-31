@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
+import io.homeassistant.companion.android.R
 
 class AudioSensorManager : SensorManager {
     companion object {
@@ -12,7 +13,8 @@ class AudioSensorManager : SensorManager {
         private val audioSensor = SensorManager.BasicSensor(
             "audio_sensor",
             "sensor",
-            "Audio Sensor"
+            "Audio Sensor",
+            R.string.sensor_description_audio_sensor
         )
     }
 

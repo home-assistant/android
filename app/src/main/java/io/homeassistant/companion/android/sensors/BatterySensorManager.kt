@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import io.homeassistant.companion.android.R
 
 class BatterySensorManager : SensorManager {
 
@@ -13,6 +14,7 @@ class BatterySensorManager : SensorManager {
             "battery_level",
             "sensor",
             "Battery Level",
+            R.string.sensor_description_battery_level,
             "battery",
             "%"
         )
@@ -20,6 +22,7 @@ class BatterySensorManager : SensorManager {
             "battery_state",
             "sensor",
             "Battery State",
+            R.string.sensor_description_battery_state,
             "battery"
         )
     }

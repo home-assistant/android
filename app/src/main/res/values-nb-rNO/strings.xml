@@ -70,9 +70,9 @@ Home Assistant forekomst</string>
   <string name="pref_connection_title">Tilkoblingsinformasjon</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Hjemmenettverk WiFi SSID</string>
-  <string name="pref_location_background_summary">Oppdater plasseringen din i bakgrunnen, periodisk.</string>
+  <string name="sensor_description_location_background">Oppdater plasseringen din i bakgrunnen, periodisk.</string>
   <string name="pref_location_background_title">Sporing av plassering i bakgrunnen</string>
-  <string name="pref_location_zone_summary">Importer eksisterende Home Assistant soner som geofences for sonebasert sporing.</string>
+  <string name="sensor_description_location_zone">Importer eksisterende Home Assistant soner som geofences for sonebasert sporing.</string>
   <string name="pref_location_zone_title">Sonebasert sporing</string>
   <string name="profile">Profil</string>
   <string name="rate_limit_notification.body">Du har nå sendt mer enn %s varsler i dag. Du vil ikke motta nye varsler før midnatt UTC.</string>

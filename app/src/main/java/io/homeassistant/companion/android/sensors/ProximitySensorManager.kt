@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
+import io.homeassistant.companion.android.R
 import kotlin.math.roundToInt
 
 class ProximitySensorManager : SensorManager, SensorEventListener {
@@ -15,7 +16,8 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         private val proximitySensor = SensorManager.BasicSensor(
             "proximity_sensor",
             "sensor",
-            "Proximity Sensor"
+            "Proximity Sensor",
+            R.string.sensor_description_proximity_sensor
         )
     }
 

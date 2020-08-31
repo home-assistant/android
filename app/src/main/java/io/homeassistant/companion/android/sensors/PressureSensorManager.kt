@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
+import io.homeassistant.companion.android.R
 import java.math.RoundingMode
 
 class PressureSensorManager : SensorManager, SensorEventListener {
@@ -16,6 +17,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             "pressure_sensor",
             "sensor",
             "Pressure Sensor",
+            R.string.sensor_description_pressure_sensor,
             "pressure",
             "hPa"
         )

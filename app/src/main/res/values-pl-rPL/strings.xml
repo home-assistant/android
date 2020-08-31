@@ -100,9 +100,9 @@
   <string name="pref_connection_title">Informacje o połączeniu</string>
   <string name="pref_connection_url">Adres URL Home Assistanta</string>
   <string name="pref_connection_wifi">SSID domowej sieci Wi-Fi</string>
-  <string name="pref_location_background_summary">Okresowo aktualizuj lokalizację w tle.</string>
+  <string name="sensor_description_location_background">Okresowo aktualizuj lokalizację w tle.</string>
   <string name="pref_location_background_title">Śledzenie lokalizacji w tle</string>
-  <string name="pref_location_zone_summary">Importuj istniejące strefy Home Assistanta do śledzenia lokalizacji opartego na strefach.</string>
+  <string name="sensor_description_location_zone">Importuj istniejące strefy Home Assistanta do śledzenia lokalizacji opartego na strefach.</string>
   <string name="pref_location_zone_title">Śledzenie lokalizacji oparte na strefach</string>
   <string name="profile">Profil</string>
   <string name="qrcode_processing_tag_error">Błąd podczas przetwarzania tagu qrcode</string>

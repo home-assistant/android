@@ -17,6 +17,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
@@ -44,12 +45,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
             "",
-            "Background Location"
+            "Background Location",
+            R.string.sensor_description_location_background
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
-            "Zone Location"
+            "Zone Location",
+            R.string.sensor_description_location_zone
         )
         internal const val TAG = "LocBroadcastReceiver"
     }

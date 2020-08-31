@@ -6,6 +6,7 @@ import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
+import io.homeassistant.companion.android.R
 
 class PhoneStateSensorManager : SensorManager {
 
@@ -14,19 +15,22 @@ class PhoneStateSensorManager : SensorManager {
         val phoneState = SensorManager.BasicSensor(
             "phone_state",
             "sensor",
-            "Phone State"
+            "Phone State",
+            R.string.sensor_description_phone_state
         )
 
         val sim_1 = SensorManager.BasicSensor(
             "sim_1",
             "sensor",
-            "SIM_1"
+            "SIM_1",
+            R.string.sensor_description_sim_1
         )
 
         val sim_2 = SensorManager.BasicSensor(
             "sim_2",
             "sensor",
-            "SIM_2"
+            "SIM_2",
+            R.string.sensor_description_sim_2
         )
     }
 

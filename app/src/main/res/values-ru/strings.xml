@@ -105,9 +105,9 @@
   <string name="pref_connection_title">Информация о подключении</string>
   <string name="pref_connection_url">URL-адрес сервера Home Assistant</string>
   <string name="pref_connection_wifi">SSID домашней сети Wi-Fi</string>
-  <string name="pref_location_background_summary">Периодически обновлять местоположение, даже при закрытом приложении.</string>
+  <string name="sensor_description_location_background">Периодически обновлять местоположение, даже при закрытом приложении.</string>
   <string name="pref_location_background_title">Отслеживание в фоновом режиме</string>
-  <string name="pref_location_zone_summary">Импортировать существующие зоны из Home Assistant и использовать их для отслеживания.</string>
+  <string name="sensor_description_location_zone">Импортировать существующие зоны из Home Assistant и использовать их для отслеживания.</string>
   <string name="pref_location_zone_title">Отслеживание на основе зон</string>
   <string name="profile">Профиль</string>
   <string name="qrcode_processing_tag_error">Ошибка при обработке QR-кода</string>

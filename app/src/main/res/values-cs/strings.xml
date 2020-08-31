@@ -71,9 +71,9 @@ integraci povolenou v Home Assistant.</string>
   <string name="pref_connection_title">Informace o připojení</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Domácí síť WiFi SSID</string>
-  <string name="pref_location_background_summary">Pravidelně aktualizujte polohu na pozadí.</string>
+  <string name="sensor_description_location_background">Pravidelně aktualizujte polohu na pozadí.</string>
   <string name="pref_location_background_title">Sledování polohy na pozadí</string>
-  <string name="pref_location_zone_summary">Importovat existující zóny Home Assistant pro sledování  na základě zón.</string>
+  <string name="sensor_description_location_zone">Importovat existující zóny Home Assistant pro sledování  na základě zón.</string>
   <string name="pref_location_zone_title">Sledování na základě zóny</string>
   <string name="profile">Profil</string>
   <string name="rate_limit_notification.body">Dnes jste odeslali více než %s oznámení. Až do půlnoci UTC času nebudete dostávat nová oznámení.</string>

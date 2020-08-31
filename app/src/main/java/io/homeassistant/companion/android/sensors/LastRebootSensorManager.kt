@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
+import io.homeassistant.companion.android.R
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -17,6 +18,7 @@ class LastRebootSensorManager : SensorManager {
             "last_reboot",
             "sensor",
             "Last Reboot",
+            R.string.sensor_description_last_reboot,
             "timestamp"
         )
     }

@@ -106,9 +106,9 @@ Home Assistant实例</string>
   <string name="pref_connection_title">连接信息</string>
   <string name="pref_connection_url">外网 URL 地址</string>
   <string name="pref_connection_wifi">无线网络 SSID</string>
-  <string name="pref_location_background_summary">定期在后台更新您的位置。</string>
+  <string name="sensor_description_location_background">定期在后台更新您的位置。</string>
   <string name="pref_location_background_title">后台位置跟踪</string>
-  <string name="pref_location_zone_summary">导入现有的Home Assistant区域作为地理围栏，以进行基于区域的跟踪。</string>
+  <string name="sensor_description_location_zone">导入现有的Home Assistant区域作为地理围栏，以进行基于区域的跟踪。</string>
   <string name="pref_location_zone_title">基于区域的跟踪</string>
   <string name="profile">配置 文件</string>
   <string name="qrcode_processing_tag_error">处理二维码标签时出错</string>
