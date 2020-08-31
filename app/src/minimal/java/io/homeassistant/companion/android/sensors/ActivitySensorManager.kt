@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import io.homeassistant.companion.android.R
 
 class ActivitySensorManager : BroadcastReceiver(), SensorManager {
 
@@ -10,8 +11,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         // Noop
     }
 
-    override val name: String
-        get() = "Activity Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_activity
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf()

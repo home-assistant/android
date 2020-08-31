@@ -1,10 +1,11 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import io.homeassistant.companion.android.R
 
 class GeocodeSensorManager : SensorManager {
-    override val name: String
-        get() = "Geocode Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_geolocation
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf()
 
