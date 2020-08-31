@@ -18,8 +18,8 @@ class AudioSensorManager : SensorManager {
         )
     }
 
-    override val name: String
-        get() = "Audio Sensor"
+    override val name: Int
+        get() = R.string.sensor_name_audio
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(audioSensor)

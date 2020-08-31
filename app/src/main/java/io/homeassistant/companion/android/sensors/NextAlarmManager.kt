@@ -23,8 +23,8 @@ class NextAlarmManager : SensorManager {
         )
     }
 
-    override val name: String
-        get() = "Alarm Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_alarm
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(nextAlarm)

@@ -23,8 +23,8 @@ class LastRebootSensorManager : SensorManager {
         )
     }
 
-    override val name: String
-        get() = "Last Reboot Sensor"
+    override val name: Int
+        get() = R.string.sensor_name_last_reboot
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(lastRebootSensor)

@@ -53,8 +53,8 @@ class StorageSensorManager : SensorManager {
         }
     }
 
-    override val name: String
-        get() = "Storage Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_storage
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(storageSensor)
 

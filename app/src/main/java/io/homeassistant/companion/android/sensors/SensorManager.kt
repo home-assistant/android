@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 
 interface SensorManager {
 
-    val name: String
+    val name: Int
     val availableSensors: List<BasicSensor>
 
     data class BasicSensor(

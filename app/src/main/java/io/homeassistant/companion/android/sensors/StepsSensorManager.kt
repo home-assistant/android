@@ -24,8 +24,8 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         )
     }
 
-    override val name: String
-        get() = "Steps Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_steps
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(stepsSensor)

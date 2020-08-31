@@ -313,8 +313,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             )
     }
 
-    override val name: String
-        get() = "Location Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_location
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(backgroundLocation, zoneLocation)

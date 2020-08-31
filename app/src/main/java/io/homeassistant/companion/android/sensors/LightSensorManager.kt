@@ -23,8 +23,8 @@ class LightSensorManager : SensorManager, SensorEventListener {
         )
     }
 
-    override val name: String
-        get() = "Light Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_light
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(lightSensor)

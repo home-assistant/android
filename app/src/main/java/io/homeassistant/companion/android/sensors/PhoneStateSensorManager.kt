@@ -34,8 +34,8 @@ class PhoneStateSensorManager : SensorManager {
         )
     }
 
-    override val name: String
-        get() = "Phone Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_phone
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)

@@ -22,8 +22,8 @@ class GeocodeSensorManager : SensorManager {
         )
     }
 
-    override val name: String
-        get() = "Geolocation Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_geolocation
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(geocodedLocation)
 
