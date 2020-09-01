@@ -15,21 +15,21 @@ class PhoneStateSensorManager : SensorManager {
         val phoneState = SensorManager.BasicSensor(
             "phone_state",
             "sensor",
-            "Phone State",
+            R.string.basic_sensor_name_phone,
             R.string.sensor_description_phone_state
         )
 
         val sim_1 = SensorManager.BasicSensor(
             "sim_1",
             "sensor",
-            "SIM_1",
+            R.string.basic_sensor_name_sim1,
             R.string.sensor_description_sim_1
         )
 
         val sim_2 = SensorManager.BasicSensor(
             "sim_2",
             "sensor",
-            "SIM_2",
+            R.string.basic_sensor_name_sim2,
             R.string.sensor_description_sim_2
         )
     }

@@ -13,7 +13,7 @@ class AudioSensorManager : SensorManager {
         private val audioSensor = SensorManager.BasicSensor(
             "audio_sensor",
             "sensor",
-            "Audio Sensor",
+            R.string.sensor_name_audio,
             R.string.sensor_description_audio_sensor
         )
     }

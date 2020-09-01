@@ -17,7 +17,7 @@ class NextAlarmManager : SensorManager {
         private val nextAlarm = SensorManager.BasicSensor(
             "next_alarm",
             "sensor",
-            "Next Alarm",
+            R.string.basic_sensor_name_alarm,
             R.string.sensor_description_next_alarm,
             "timestamp"
         )

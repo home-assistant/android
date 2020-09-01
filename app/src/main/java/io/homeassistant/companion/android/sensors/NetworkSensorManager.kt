@@ -13,7 +13,7 @@ class NetworkSensorManager : SensorManager {
         private val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
-            "Wifi Connection",
+            R.string.basic_sensor_name_wifi,
             R.string.sensor_description_wifi_connection
         )
     }

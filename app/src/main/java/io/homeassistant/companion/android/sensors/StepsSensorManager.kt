@@ -18,7 +18,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         private val stepsSensor = SensorManager.BasicSensor(
             "steps_sensor",
             "sensor",
-            "Steps Sensor",
+            R.string.sensor_name_steps,
             R.string.sensor_description_steps_sensor,
             unitOfMeasurement = "steps"
         )

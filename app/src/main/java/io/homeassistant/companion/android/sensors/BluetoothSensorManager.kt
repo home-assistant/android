@@ -14,7 +14,7 @@ class BluetoothSensorManager : SensorManager {
         private val bluetoothConnection = SensorManager.BasicSensor(
             "bluetooth_connection",
             "sensor",
-            "Bluetooth Connection",
+            R.string.basic_sensor_name_bluetooth,
             R.string.sensor_description_bluetooth_connection,
             unitOfMeasurement = "connection(s)"
         )

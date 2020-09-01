@@ -16,7 +16,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         private val proximitySensor = SensorManager.BasicSensor(
             "proximity_sensor",
             "sensor",
-            "Proximity Sensor",
+            R.string.sensor_name_proximity,
             R.string.sensor_description_proximity_sensor
         )
     }

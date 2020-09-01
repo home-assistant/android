@@ -15,7 +15,7 @@ class StorageSensorManager : SensorManager {
         private val storageSensor = SensorManager.BasicSensor(
             "storage_sensor",
             "sensor",
-            "Storage Sensor",
+            R.string.sensor_name_storage,
             R.string.sensor_description_storage_sensor,
             unitOfMeasurement = "%"
         )

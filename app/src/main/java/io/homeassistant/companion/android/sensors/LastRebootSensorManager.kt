@@ -17,7 +17,7 @@ class LastRebootSensorManager : SensorManager {
         private val lastRebootSensor = SensorManager.BasicSensor(
             "last_reboot",
             "sensor",
-            "Last Reboot",
+            R.string.basic_sensor_name_last_reboot,
             R.string.sensor_description_last_reboot,
             "timestamp"
         )

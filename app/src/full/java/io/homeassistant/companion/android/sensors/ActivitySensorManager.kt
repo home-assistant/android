@@ -27,7 +27,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         private val activity = SensorManager.BasicSensor(
             "detected_activity",
             "sensor",
-            "Detected Activity",
+            R.string.basic_sensor_name_activity,
             R.string.sensor_description_detected_activity
         )
     }

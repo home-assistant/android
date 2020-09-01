@@ -153,6 +153,19 @@ like to connect to:</string>
   <string name="sensor_description_geocoded_location">Calculated address based on GPS data using Googles Location API</string>
   <string name="sensor_description_location_background">Update your location behind the scenes, periodically.</string>
   <string name="sensor_description_none">No description</string>
+  <string name="basic_sensor_name_activity">Detected Activity</string>
+  <string name="basic_sensor_name_geolocation">Geocoded Location</string>
+  <string name="basic_sensor_name_location_background">Background Location</string>
+  <string name="basic_sensor_name_location_zone">Location Zone</string>
+  <string name="basic_sensor_name_battery_level">Battery Level</string>
+  <string name="basic_sensor_name_battery_state">Battery State</string>
+  <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
+  <string name="basic_sensor_name_last_reboot">Last Reboot</string>
+  <string name="basic_sensor_name_wifi">Wifi Connection</string>
+  <string name="basic_sensor_name_alarm">Next Alarm</string>
+  <string name="basic_sensor_name_phone">Phone State</string>
+  <string name="basic_sensor_name_sim1">SIM 1</string>
+  <string name="basic_sensor_name_sim2">SIM 2</string>
   <string name="sensor_name_light">Light Sensor</string>
   <string name="sensor_name_activity">Activity Sensors</string>
   <string name="sensor_name_geolocation">Geolocation Sensors</string>
@@ -171,6 +184,7 @@ like to connect to:</string>
   <string name="sensor_name_storage">Storage Sensor</string>
   <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
   <string name="sensor_title">Manage Sensors</string>
+  <string name="sensor">Sensor</string>
   <string name="sensors">Sensors</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>

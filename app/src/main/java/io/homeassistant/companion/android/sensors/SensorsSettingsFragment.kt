@@ -64,7 +64,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
                 val pref = Preference(preferenceScreen.context)
                 pref.key = basicSensor.id
-                pref.title = basicSensor.name
+                pref.title = getString(basicSensor.name)
 
                 pref.setOnPreferenceClickListener {
                     parentFragmentManager
