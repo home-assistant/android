@@ -110,12 +110,12 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     isZoneLocationSetup = false
                 }
                 if (backgroundEnabled && !isBackgroundLocationSetup) {
-                    requestLocationUpdates()
                     isBackgroundLocationSetup = true
+                    requestLocationUpdates()
                 }
                 if (zoneEnabled && !isZoneLocationSetup) {
-                    requestZoneUpdates()
                     isZoneLocationSetup = true
+                    requestZoneUpdates()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Issue setting up location tracking", e)
