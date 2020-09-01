@@ -116,6 +116,8 @@ jobs:
       - name: Get the upload URL for the release
         uses: bruceadams/get-release@v1.2.1
         id: get_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Full APK
         uses: actions/upload-release-asset@v1
