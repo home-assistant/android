@@ -224,20 +224,32 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         )
 
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-        val locationEntity = sensorDao.get(backgroundLocation.id)
+        val fullSensor = sensorDao.getFull(backgroundLocation.id)
+        val locationEntity = fullSensor?.sensor
+        val lastLocationSend = fullSensor?.attributes?.firstOrNull { it.name == "lastLocationSent" }?.value?.toLongOrNull() ?: 0L
+        val now = System.currentTimeMillis()
 
         if (locationEntity?.state == updateLocation.gps.contentToString()) {
-            Log.d(TAG, "Same location as last update, not sending to HA")
-            return
+            if (now >= lastLocationSend + 900000) {
+                Log.d(TAG, "Sending location since it's been more than 15 minutes")
+            } else {
+                Log.d(TAG, "Same location as last update, not sending to HA")
+                return
+            }
         }
 
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
-                if (locationEntity != null) {
-                    locationEntity.state = updateLocation.gps.contentToString()
-                    sensorDao.update(locationEntity)
-                }
+                onSensorUpdated(
+                    latestContext,
+                    backgroundLocation,
+                    updateLocation.gps.contentToString(),
+                    "",
+                    mapOf(
+                        "lastLocationSent" to now.toString()
+                    )
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
             }
