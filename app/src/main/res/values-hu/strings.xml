@@ -57,9 +57,9 @@ a Home Assistant példányod</string>
   <string name="pref_connection_title">Csatlakozási Adatok</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Otthoni WiFi hálózat SSID-ja</string>
-  <string name="sensor_description_location_background">Frissíti a pozíciódat a háttérben, periódikusan.</string>
+  <string name="pref_location_background_summary">Frissíti a pozíciódat a háttérben, periódikusan.</string>
   <string name="pref_location_background_title">Pozíció nyomkövetés a háttérben</string>
-  <string name="sensor_description_location_zone">Meglévő Home Assistant zónák geokerítésként történő importálása a zóna alapú nyomkövetéshez.</string>
+  <string name="pref_location_zone_summary">Meglévő Home Assistant zónák geokerítésként történő importálása a zóna alapú nyomkövetéshez.</string>
   <string name="pref_location_zone_title">Zóna alapú nyomkövetés</string>
   <string name="refresh">Frissítés</string>
   <string name="retry">Újra</string>

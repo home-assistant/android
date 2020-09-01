@@ -29,6 +29,7 @@
   <string name="device_registration">기기 등록</string>
   <string name="dialog_add_panel_shortcut_content">이 항목에 대한 바로 가기를 만드시겠습니까?</string>
   <string name="dialog_add_panel_shortcut_title">바로 가기 추가</string>
+  <string name="documentation">문서</string>
   <string name="enabled_summary">활성화되면 값을 Home Assistant 로 전송합니다</string>
   <string name="enabled_title">활성화</string>
   <string name="entity_attribute_checkbox">속성 값 추가</string>
@@ -69,6 +70,7 @@
   <string name="manage_ssids_input_exists">이 SSID 는 이미 존재합니다.</string>
   <string name="manual_setup">주소 직접 입력</string>
   <string name="map">지도</string>
+  <string name="need_help">도움이 필요하신가요?</string>
   <string name="nfc_btn_create_duplicate">복사본 생성</string>
   <string name="nfc_btn_fire_event">이벤트 발행</string>
   <string name="nfc_btn_read_tag">NFC 태그 읽기</string>
@@ -104,9 +106,9 @@
   <string name="pref_connection_title">연결 정보</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">홈 네트워크 WiFi SSID</string>
-  <string name="sensor_description_location_background">주기적으로 백그라운드에서 위치를 업데이트합니다.</string>
+  <string name="pref_location_background_summary">주기적으로 백그라운드에서 위치를 업데이트합니다.</string>
   <string name="pref_location_background_title">백그라운드 위치 추적</string>
-  <string name="sensor_description_location_zone">설정된 Home Assistant 지역을 지역 기반 추적을 위한 지오펜스로 가져옵니다.</string>
+  <string name="pref_location_zone_summary">설정된 Home Assistant 지역을 지역 기반 추적을 위한 지오펜스로 가져옵니다.</string>
   <string name="pref_location_zone_title">지역 기반 추적</string>
   <string name="profile">프로필</string>
   <string name="qrcode_processing_tag_error">qrcode 태그를 처리하는 동안 오류가 발생했습니다</string>
