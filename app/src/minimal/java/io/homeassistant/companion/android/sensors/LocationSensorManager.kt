@@ -22,12 +22,12 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
             "",
-            R.string.basic_sensor_location_background
+            R.string.basic_sensor_name_location_background
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
-            R.string.basic_sensor_location_zone
+            R.string.basic_sensor_name_location_zone
         )
         internal const val TAG = "LocBroadcastReceiver"
     }
