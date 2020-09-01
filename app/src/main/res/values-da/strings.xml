@@ -75,9 +75,9 @@ Home Assistant-instans</string>
   <string name="pref_connection_title">Forbindelsesoplysninger</string>
   <string name="pref_connection_url">Home Assistant-webadresse</string>
   <string name="pref_connection_wifi">WiFi-hjemmenetværks-SSID</string>
-  <string name="sensor_description_location_background">Opdater din lokalitet bag kulisserne med jævne mellemrum.</string>
+  <string name="pref_location_background_summary">Opdater din lokalitet bag kulisserne med jævne mellemrum.</string>
   <string name="pref_location_background_title">Sporing af lokalitet i baggrunden</string>
-  <string name="sensor_description_location_zone">Importer eksisterende Home Assistant-zoner som geofences for zone-baseret sporing.</string>
+  <string name="pref_location_zone_summary">Importer eksisterende Home Assistant-zoner som geofences for zone-baseret sporing.</string>
   <string name="pref_location_zone_title">Zone-baseret sporing</string>
   <string name="profile">Profil</string>
   <string name="rate_limit_notification.body">Du har nu sendt mere end %s meddelelser i dag. Du vil ikke modtage nye notifikationer før midnat UTC.</string>

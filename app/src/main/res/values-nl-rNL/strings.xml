@@ -22,6 +22,7 @@
   <string name="configure_widget_label">Widget label</string>
   <string name="connect_to_home_internet">Je telefoon dient verbonden te zijn met je thuisnetwerk.</string>
   <string name="connected_to_home_assistant">Verbonden met Home Assistant</string>
+  <string name="create_template">Maak een sjabloon</string>
   <string name="developer_tools">Ontwikkelhulpmiddelen</string>
   <string name="device_class">Apparaatklasse</string>
   <string name="device_name">Apparaatnaam</string>
@@ -103,9 +104,9 @@
   <string name="pref_connection_title">Verbindingsinformatie</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Thuisnetwerk WiFi SSID</string>
-  <string name="sensor_description_location_background">Werk periodiek uw locatie achter de schermen bij.</string>
+  <string name="pref_location_background_summary">Werk periodiek uw locatie achter de schermen bij.</string>
   <string name="pref_location_background_title">Locatie bijhouden op de achtergrond</string>
-  <string name="sensor_description_location_zone">Bestaande Home Assistant-zones importeren als geofences voor zone-gebaseerd volgen.</string>
+  <string name="pref_location_zone_summary">Bestaande Home Assistant-zones importeren als geofences voor zone-gebaseerd volgen.</string>
   <string name="pref_location_zone_title">Zone-gebaseerd volgen</string>
   <string name="profile">Profiel</string>
   <string name="qrcode_processing_tag_error">Fout bij het verwerken van de qrcode-tag</string>
@@ -135,6 +136,14 @@
   <string name="states">Overzicht</string>
   <string name="status_of_mobile_app_integration">Status van mobiele app integratie:</string>
   <string name="tag_reader_title">Tag verwerken</string>
+  <string name="template_widget_default">Voer hier sjabloon in</string>
+  <string name="themes_option_label_dark">Donker</string>
+  <string name="themes_option_label_light">Licht</string>
+  <string name="themes_option_label_system">Systeeminstellingen volgen</string>
+  <string name="themes_option_value_dark">donker</string>
+  <string name="themes_option_value_light">licht</string>
+  <string name="themes_option_value_system">systeem</string>
+  <string name="themes_title_settings">Thema</string>
   <string name="unable_to_register">Niet mogelijk om de applicatie te registeren.</string>
   <string name="unique_id">Unieke ID</string>
   <string name="url_invalid">URL ongeldig</string>
@@ -149,15 +158,21 @@
   <string name="webview_error_SSL_INVALID">Er is een algemene SSL fout opgetreden bij het laden van Home Assistant, kijk eens naar het Home Assistant certificaat en verbindingsinstellingen en probeer het opnieuw.</string>
   <string name="webview_error_SSL_NOTYETVALID">Het Home Assistant certificaat is nog niet geldig, kijk eens naar het certificaat of de verbindingsinstellingen en probeer het opnieuw.</string>
   <string name="webview_error_SSL_UNTRUSTED">Het Home Assistant certificaat is niet veilig, kijk naar het certificaat of de verbindingsinstellingen en probeer het opnieuw.</string>
+  <string name="widget_attribute_separator_label">Scheidingsteken tussen attributen:</string>
   <string name="widget_button_image_description">Service-knop</string>
   <string name="widget_config_service_error">Een aangepast onderdeel voorkomt dat servicegegevens worden geladen.</string>
   <string name="widget_creation_error">Kon widget niet aanmaken.</string>
   <string name="widget_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Label</string>
+  <string name="widget_separator_input_hint">Geen scheidingsteken</string>
+  <string name="widget_separator_label">Staat- en attribuutscheidingsteken:</string>
   <string name="widget_spinner_icon">Icoon:</string>
+  <string name="widget_state_separator_label">Staat- en attribuutscheidingsteken:</string>
   <string name="widget_static_image_description">Entiteitsstaat</string>
   <string name="widget_text_hint_label">Label</string>
   <string name="widget_text_hint_service_data">Entity ID</string>
   <string name="widget_text_hint_service_domain">Domein</string>
   <string name="widget_text_hint_service_service">Service</string>
+  <string name="widget_text_size_default">30</string>
+  <string name="widget_text_size_label">Tekstgrootte widget:</string>
 </resources>

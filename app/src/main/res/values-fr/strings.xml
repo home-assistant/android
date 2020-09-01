@@ -68,9 +68,9 @@
   <string name="pref_connection_title">Informations de connexion</string>
   <string name="pref_connection_url">URL de Home Assistant</string>
   <string name="pref_connection_wifi">SSID du wifi du réseau local</string>
-  <string name="sensor_description_location_background">Mettre à jour votre localisation périodiquement en arrière-plan.</string>
+  <string name="pref_location_background_summary">Mettre à jour votre localisation périodiquement en arrière-plan.</string>
   <string name="pref_location_background_title">Suivi de la localisation en arrière-plan</string>
-  <string name="sensor_description_location_zone">Importez des zones existantes dans Home Assistant en tant que géorepérage pour un suivi basé sur une zone.</string>
+  <string name="pref_location_zone_summary">Importez des zones existantes dans Home Assistant en tant que géorepérage pour un suivi basé sur une zone.</string>
   <string name="pref_location_zone_title">Suivi par zone</string>
   <string name="profile">Profil</string>
   <string name="rate_limit_notification.body">Vous avez maintenant envoyé plus de %s notifications aujourd\'hui. Vous ne recevrez aucune nouvelle notification avant minuit UTC.</string>

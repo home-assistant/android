@@ -72,9 +72,9 @@
   <string name="pref_connection_title">Bağlantı bilgileri</string>
   <string name="pref_connection_url">Home Assistant URL\'si</string>
   <string name="pref_connection_wifi">Ev ağınızın WiFi SSID\'si</string>
-  <string name="sensor_description_location_background">Arka planda konumunuzu düzenli olarak güncelleyin.</string>
+  <string name="pref_location_background_summary">Arka planda konumunuzu düzenli olarak güncelleyin.</string>
   <string name="pref_location_background_title">Arka plan konum takibi</string>
-  <string name="sensor_description_location_zone">Varolan Ev Yardımcısı bölgelerini bölge tabanlı izleme için geofences olarak içe aktarın.</string>
+  <string name="pref_location_zone_summary">Varolan Ev Yardımcısı bölgelerini bölge tabanlı izleme için geofences olarak içe aktarın.</string>
   <string name="pref_location_zone_title">Bölge tabanlı izleme</string>
   <string name="profile">Profil</string>
   <string name="rate_limit_notification.body">Bugün %s den fazla bildirim gönderdiniz. UTC gece yarısına kadar yeni bildirim almayacaksınız.</string>

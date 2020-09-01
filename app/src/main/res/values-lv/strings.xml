@@ -33,9 +33,9 @@
   <string name="pref_connection_title">Informācija par savienojumu</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Mājas tīkla WiFi SSID</string>
-  <string name="sensor_description_location_background">Periodiska atrašanās vietas atjaunošana fonā</string>
+  <string name="pref_location_background_summary">Periodiska atrašanās vietas atjaunošana fonā</string>
   <string name="pref_location_background_title">Fona atrašanās vietas noteikšana</string>
-  <string name="sensor_description_location_zone">Lietojiet esošās Home Assistant zonas kā ģeogrāfiskos apgabalus ierīces izsekošanai.</string>
+  <string name="pref_location_zone_summary">Lietojiet esošās Home Assistant zonas kā ģeogrāfiskos apgabalus ierīces izsekošanai.</string>
   <string name="pref_location_zone_title">Uz zonām balstīta izsekošana</string>
   <string name="refresh">Atsvaidzināt</string>
   <string name="retry">Mēģināt vēlreiz</string>
