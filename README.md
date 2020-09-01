@@ -22,7 +22,7 @@ If you are looking for documentation around the companion applications check out
   [You can also use the mock services file instead of generating your own](/.github/mock-google-services.json)
   The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file push notification will never work**
 
-- Start Android Studio, open your source code folder and check if the Gradle build will be successful
+- Start Android Studio, open your source code folder and check if the Gradle build will be successful using Build/Make Module "App". You might have to install the right Android SDK via Tools/SDK Manager first.
 
 - Create keystore containing keypair for debug application signing. In Android Studio: Menu/Build/Generate signed APK, then use a button to create new keystore. Remember the passwords and key alias
 
