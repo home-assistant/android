@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 
-class LocationSensorManager : BroadcastReceiver(), SensorManager {
+class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
 
     companion object {
         const val MINIMUM_ACCURACY = 200
@@ -29,6 +29,10 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             "Zone Location"
         )
         internal const val TAG = "LocBroadcastReceiver"
+
+        fun restartLocationTracking(context: Context) {
+            // Noop
+        }
     }
 
     override fun onReceive(context: Context, intent: Intent) {

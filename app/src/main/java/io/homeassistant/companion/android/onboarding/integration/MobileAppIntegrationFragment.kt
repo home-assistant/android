@@ -24,9 +24,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.LocationBroadcastReceiver
 import io.homeassistant.companion.android.sensors.PhoneStateSensorManager
-import io.homeassistant.companion.android.sensors.SensorWorker
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 
@@ -83,17 +82,17 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             findViewById<AppCompatButton>(R.id.location_perms).apply {
                 setOnClickListener {
                     this@MobileAppIntegrationFragment.requestPermissions(
-                        LocationSensorManager().requiredPermissions(),
+                        LocationBroadcastReceiver().requiredPermissions(),
                         LOCATION_REQUEST_CODE
                     )
                 }
             }
 
-            val hasLocationPermission = LocationSensorManager().checkPermission(context)
+            val hasLocationPermission = LocationBroadcastReceiver().checkPermission(context)
 
             zoneTracking = findViewById<SwitchCompat>(R.id.location_zone).apply {
                 setOnCheckedChangeListener { _, isChecked ->
-                    updateSensorDao(LocationSensorManager.zoneLocation.id, isChecked)
+                    updateSensorDao(LocationBroadcastReceiver.zoneLocation.id, isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission
@@ -103,7 +102,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             backgroundTracking = findViewById<SwitchCompat>(R.id.location_background).apply {
                 setOnCheckedChangeListener { _, isChecked ->
-                    updateSensorDao(LocationSensorManager.backgroundLocation.id, isChecked)
+                    updateSensorDao(LocationBroadcastReceiver.backgroundLocation.id, isChecked)
                 }
                 isEnabled = hasLocationPermission
                 isChecked = hasLocationPermission && isIgnoringBatteryOptimizations()
@@ -169,7 +168,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     override fun onDestroy() {
-        SensorWorker.start(requireContext())
+        LocationBroadcastReceiver.restartLocationTracking(requireContext())
         presenter.onFinish()
         super.onDestroy()
     }
@@ -186,7 +185,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 zoneTracking.isEnabled = true
                 zoneTrackingSummary.isEnabled = true
                 zoneTracking.isChecked = true
-                updateSensorDao(LocationSensorManager.zoneLocation.id, true)
+                updateSensorDao(LocationBroadcastReceiver.zoneLocation.id, true)
 
                 backgroundTracking.isEnabled = true
                 backgroundTrackingSummary.isEnabled = true
@@ -216,7 +215,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == BACKGROUND_REQUEST && isIgnoringBatteryOptimizations()) {
             zoneTracking.isChecked = true
-            updateSensorDao(LocationSensorManager.backgroundLocation.id, true)
+            updateSensorDao(LocationBroadcastReceiver.backgroundLocation.id, true)
         }
     }
 

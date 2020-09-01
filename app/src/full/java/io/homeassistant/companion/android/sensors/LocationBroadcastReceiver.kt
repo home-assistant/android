@@ -28,7 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class LocationSensorManager : BroadcastReceiver(), SensorManager {
+class LocationBroadcastReceiver : BroadcastReceiver(), SensorManager {
 
     companion object {
         const val MINIMUM_ACCURACY = 200
@@ -55,6 +55,13 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             R.string.sensor_description_location_zone
         )
         internal const val TAG = "LocBroadcastReceiver"
+
+        fun restartLocationTracking(context: Context) {
+            val intent = Intent(context, LocationBroadcastReceiver::class.java)
+            intent.action = ACTION_REQUEST_LOCATION_UPDATES
+
+            context.sendBroadcast(intent)
+        }
     }
 
     @Inject
@@ -218,7 +225,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun getLocationUpdateIntent(context: Context, isGeofence: Boolean): PendingIntent {
-        val intent = Intent(context, LocationSensorManager::class.java)
+        val intent = Intent(context, LocationBroadcastReceiver::class.java)
         intent.action = if (isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
@@ -333,16 +340,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        ensureInjected(context)
-        if (isEnabled(context, zoneLocation.id))
-            setupLocationTracking(context)
-        if (isEnabled(context, backgroundLocation.id)) {
-            context.sendBroadcast(
-                Intent(context, this.javaClass).apply {
-                    action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
-                }
-            )
-            setupLocationTracking(context)
-        }
+        // For now we don't need to do anything here, updates a handled elsewhere.
     }
 }
