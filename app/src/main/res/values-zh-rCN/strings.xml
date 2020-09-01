@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string-array name="pref_theme_option_labels">
+    <item>@string/themes_option_label_light</item>
+    <item>@string/themes_option_label_dark</item>
+    <item>@string/themes_option_label_system</item>
+  </string-array>
+  <string-array name="pref_theme_option_values">
+    <item>@string/themes_option_value_light</item>
+    <item>@string/themes_option_value_dark</item>
+    <item>@string/themes_option_value_system</item>
+  </string-array>
   <string name="add_service_data_field">添加字段</string>
   <string name="add_widget">添加小部件</string>
   <string name="app_name">Home Assistant</string>
@@ -30,6 +40,7 @@
   <string name="device_registration">设备注册</string>
   <string name="dialog_add_panel_shortcut_content">创建此项目的快捷方式？</string>
   <string name="dialog_add_panel_shortcut_title">添加快捷方式</string>
+  <string name="documentation">文档</string>
   <string name="enabled_summary">启用后将发送到Home Assistant</string>
   <string name="enabled_title">启用</string>
   <string name="entity_attribute_checkbox">附加属性值</string>
@@ -71,6 +82,7 @@ Home Assistant实例</string>
   <string name="manage_ssids_input_exists">该SSID已经存在。</string>
   <string name="manual_setup">手动输入地址</string>
   <string name="map">地图</string>
+  <string name="need_help">需要帮助？</string>
   <string name="nfc_btn_create_duplicate">创建重复项</string>
   <string name="nfc_btn_fire_event">Fire event</string>
   <string name="nfc_btn_read_tag">读取NFC标签</string>
@@ -106,9 +118,9 @@ Home Assistant实例</string>
   <string name="pref_connection_title">连接信息</string>
   <string name="pref_connection_url">外网 URL 地址</string>
   <string name="pref_connection_wifi">无线网络 SSID</string>
-  <string name="sensor_description_location_background">定期在后台更新您的位置。</string>
+  <string name="pref_location_background_summary">定期在后台更新您的位置。</string>
   <string name="pref_location_background_title">后台位置跟踪</string>
-  <string name="sensor_description_location_zone">导入现有的Home Assistant区域作为地理围栏，以进行基于区域的跟踪。</string>
+  <string name="pref_location_zone_summary">导入现有的Home Assistant区域作为地理围栏，以进行基于区域的跟踪。</string>
   <string name="pref_location_zone_title">基于区域的跟踪</string>
   <string name="profile">配置 文件</string>
   <string name="qrcode_processing_tag_error">处理二维码标签时出错</string>
@@ -124,6 +136,28 @@ Home Assistant实例</string>
   <string name="security">安全</string>
   <string name="select_entity_to_display">选择要显示的实体</string>
   <string name="select_instance">选择你想要连接的实例:</string>
+  <string name="sensor_description">描述</string>
+  <string name="sensor_description_audio_sensor">设备振铃模式的状态以及其他音频相关属性</string>
+  <string name="sensor_description_battery_level">设备的当前电池电量</string>
+  <string name="sensor_description_battery_state">电池当前的充电状态</string>
+  <string name="sensor_description_bluetooth_connection">有关当前连接的蓝牙设备的信息</string>
+  <string name="sensor_description_detected_activity">由Google的Activity Recognition API计算出的当前活动类型</string>
+  <string name="sensor_description_dnd_sensor">\"请勿打扰\"的当前状态</string>
+  <string name="sensor_description_geocoded_location">使用Googles Location API根据GPS数据计算出的地址</string>
+  <string name="sensor_description_last_reboot">上次重新启动设备的日期和时间</string>
+  <string name="sensor_description_light_sensor">当前照度级别</string>
+  <string name="sensor_description_location_background">定期在后台更新您的位置。</string>
+  <string name="sensor_description_location_zone">导入现有的Home Assistant区域作为地理围栏，以进行基于区域的跟踪。</string>
+  <string name="sensor_description_next_alarm">下一个计划警报的日期和时间，任何应用或制造商都可以覆盖默认行为。包属性将告诉您哪个应用设置了下一个计划警报。</string>
+  <string name="sensor_description_none">无描述</string>
+  <string name="sensor_description_phone_state">无论电话是响铃还是正在通话中，都不会存储其他来电者信息</string>
+  <string name="sensor_description_pressure_sensor">当前环境气压读数</string>
+  <string name="sensor_description_proximity_sensor">当前的接近度读数，某些设备仅报告近或远</string>
+  <string name="sensor_description_sim_1">SIM插槽1中有关当前蜂窝电话提供商的信息</string>
+  <string name="sensor_description_sim_2">SIM插槽2中有关当前蜂窝电话提供商的信息</string>
+  <string name="sensor_description_steps_sensor">自上次重新启动设备以来的总步数</string>
+  <string name="sensor_description_storage_sensor">有关内部和外部总可用存储空间的信息</string>
+  <string name="sensor_description_wifi_connection">有关当前连接的WiFi网络的信息</string>
   <string name="sensor_summary">使用它来管理启用/禁用的传感器。</string>
   <string name="sensor_title">管理传感器</string>
   <string name="sensors">传感器</string>

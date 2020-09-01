@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string-array name="pref_theme_option_labels">
+    <item>@string/themes_option_label_light</item>
+    <item>@string/themes_option_label_dark</item>
+    <item>@string/themes_option_label_system</item>
+  </string-array>
+  <string-array name="pref_theme_option_values">
+    <item>@string/themes_option_value_light</item>
+    <item>@string/themes_option_value_dark</item>
+    <item>@string/themes_option_value_system</item>
+  </string-array>
   <string name="add_service_data_field">Aggiungi Campo</string>
   <string name="add_widget">Aggiungi Widget</string>
   <string name="app_name">Home Assistant</string>
@@ -30,6 +40,7 @@ alla rete Internet di casa tua.</string>
   <string name="device_registration">Registrazione del dispositivo</string>
   <string name="dialog_add_panel_shortcut_content">Creare un collegamento a questo elemento?</string>
   <string name="dialog_add_panel_shortcut_title">Aggiungi collegamento</string>
+  <string name="documentation">Documentazione</string>
   <string name="enabled_summary">Quando abilitato, i valori verranno inviati a Home Assistant</string>
   <string name="enabled_title">Abilitato</string>
   <string name="entity_attribute_checkbox">Aggiungi Valore Attributo</string>
@@ -72,6 +83,7 @@ istanza di Home Assistant</string>
   <string name="manage_ssids_input_exists">Questo SSID è già esistente.</string>
   <string name="manual_setup">Inserisci l\'indirizzo manualmente</string>
   <string name="map">Mappa</string>
+  <string name="need_help">Hai bisogno di aiuto?</string>
   <string name="nfc_btn_create_duplicate">Crea duplicato</string>
   <string name="nfc_btn_fire_event">Attiva evento</string>
   <string name="nfc_btn_read_tag">Leggi Tag NFC</string>
@@ -107,9 +119,9 @@ istanza di Home Assistant</string>
   <string name="pref_connection_title">Informazioni sulla connessione</string>
   <string name="pref_connection_url">URL di Home Assistant</string>
   <string name="pref_connection_wifi">SSID WiFi della rete domestica</string>
-  <string name="sensor_description_location_background">Aggiorna la tua posizione dietro le quinte, periodicamente.</string>
+  <string name="pref_location_background_summary">Aggiorna la tua posizione dietro le quinte, periodicamente.</string>
   <string name="pref_location_background_title">Tracciamento della posizione in background</string>
-  <string name="sensor_description_location_zone">Importa le zone di Home Assistant esistenti come recinti geografici per il monitoraggio basato sulle zone.</string>
+  <string name="pref_location_zone_summary">Importa le zone di Home Assistant esistenti come recinti geografici per il monitoraggio basato sulle zone.</string>
   <string name="pref_location_zone_title">Tracciamento basato sulla zona</string>
   <string name="profile">Profilo</string>
   <string name="qrcode_processing_tag_error">Errore durante l\'elaborazione del Tag QR Code</string>
@@ -125,6 +137,28 @@ Scansione della rete</string>
   <string name="security">Sicurezza</string>
   <string name="select_entity_to_display">Seleziona Entità da visualizzare</string>
   <string name="select_instance">Seleziona l\'istanza alla quale vorresti connetterti:</string>
+  <string name="sensor_description">Descrizione</string>
+  <string name="sensor_description_audio_sensor">Lo stato della modalità suoneria del dispositivo e altri attributi relativi all\'audio</string>
+  <string name="sensor_description_battery_level">Il livello attuale della batteria del dispositivo</string>
+  <string name="sensor_description_battery_state">Lo stato di carica attuale della batteria</string>
+  <string name="sensor_description_bluetooth_connection">Informazioni sui dispositivi Bluetooth attualmente collegati</string>
+  <string name="sensor_description_detected_activity">Il tipo di attività corrente calcolato dall\'API di riconoscimento delle attività di Google</string>
+  <string name="sensor_description_dnd_sensor">Lo stato attuale di Non disturbare</string>
+  <string name="sensor_description_geocoded_location">Indirizzo calcolato in base ai dati GPS utilizzando l\'API di localizzazione di Google</string>
+  <string name="sensor_description_last_reboot">La data e l\'ora dell\'ultimo riavvio dei dispositivi</string>
+  <string name="sensor_description_light_sensor">L\'attuale livello di illuminazione</string>
+  <string name="sensor_description_location_background">Aggiorna periodicamente la tua posizione dietro le quinte.</string>
+  <string name="sensor_description_location_zone">Importa le zone di Home Assistant esistenti come recinti geografici per il monitoraggio basato su zona.</string>
+  <string name="sensor_description_next_alarm">La data e l\'ora del successivo allarme pianificato, qualsiasi app o produttore può ignorare il comportamento predefinito. L\'attributo del pacchetto ti dirà quale app ha impostato il prossimo allarme pianificato.</string>
+  <string name="sensor_description_none">Nessuna descrizione</string>
+  <string name="sensor_description_phone_state">Indipendentemente dal fatto che il telefono squilli o sia impegnato in una chiamata, non vengono memorizzate altre informazioni sul chiamante</string>
+  <string name="sensor_description_pressure_sensor">L\'attuale lettura della pressione atmosferica</string>
+  <string name="sensor_description_proximity_sensor">L\'attuale lettura di prossimità, alcuni dispositivi segnalano solo vicino o lontano</string>
+  <string name="sensor_description_sim_1">Informazioni sul provider di telefonia mobile corrente nello slot SIM 1</string>
+  <string name="sensor_description_sim_2">Informazioni sul provider di telefonia mobile corrente nello slot SIM 2</string>
+  <string name="sensor_description_steps_sensor">Il numero totale di passi dall\'ultimo riavvio del dispositivo</string>
+  <string name="sensor_description_storage_sensor">Informazioni sullo spazio di archiviazione totale e disponibile internamente ed esternamente</string>
+  <string name="sensor_description_wifi_connection">Informazioni sulla rete WiFi attualmente connessa</string>
   <string name="sensor_summary">Consente di gestire i sensori abilitati/disabilitati.</string>
   <string name="sensor_title">Gestione dei sensori</string>
   <string name="sensors">Sensori</string>

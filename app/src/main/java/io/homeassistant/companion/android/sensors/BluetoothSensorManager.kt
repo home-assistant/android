@@ -52,28 +52,30 @@ class BluetoothSensorManager : SensorManager {
             val bluetoothManager =
                 (context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
 
-            val btConnectedDevices = bluetoothManager.getConnectedDevices(GATT)
-            var connectedAddress = ""
+            if (bluetoothManager.adapter != null) {
+                val btConnectedDevices = bluetoothManager.getConnectedDevices(GATT)
+                var connectedAddress = ""
 
-            val adapter = bluetoothManager.adapter
-            isBtOn = adapter.isEnabled
+                val adapter = bluetoothManager.adapter
+                isBtOn = adapter.isEnabled
 
-            if (isBtOn) {
-                val bondedDevices = adapter.bondedDevices
-                bondedString = bondedDevices.toString()
-                for (BluetoothDevice in bondedDevices) {
-                    if (isConnected(BluetoothDevice)) {
-                        connectedAddress = BluetoothDevice.address
-                        connectedPairedDevices.add(connectedAddress)
-                        totalConnectedDevices += 1
-                    }
-                }
-                for (BluetoothDevice in btConnectedDevices) {
-                    if (isConnected(BluetoothDevice)) {
-                        connectedNotPairedAddress = BluetoothDevice.address
-                        connectedNotPairedDevices.add(connectedNotPairedAddress)
-                        if (connectedNotPairedAddress != connectedAddress) {
+                if (isBtOn) {
+                    val bondedDevices = adapter.bondedDevices
+                    bondedString = bondedDevices.toString()
+                    for (BluetoothDevice in bondedDevices) {
+                        if (isConnected(BluetoothDevice)) {
+                            connectedAddress = BluetoothDevice.address
+                            connectedPairedDevices.add(connectedAddress)
                             totalConnectedDevices += 1
+                        }
+                    }
+                    for (BluetoothDevice in btConnectedDevices) {
+                        if (isConnected(BluetoothDevice)) {
+                            connectedNotPairedAddress = BluetoothDevice.address
+                            connectedNotPairedDevices.add(connectedNotPairedAddress)
+                            if (connectedNotPairedAddress != connectedAddress) {
+                                totalConnectedDevices += 1
+                            }
                         }
                     }
                 }
