@@ -29,7 +29,6 @@ class SensorReceiver : BroadcastReceiver() {
             GeocodeSensorManager(),
             LastRebootSensorManager(),
             LightSensorManager(),
-            LocationSensorManager(),
             NetworkSensorManager(),
             NextAlarmManager(),
             PhoneStateSensorManager(),
@@ -93,6 +92,11 @@ class SensorReceiver : BroadcastReceiver() {
 
         ioScope.launch {
             updateSensors(context, integrationUseCase)
+            if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
+                intent.action == "android.intent.action.QUICKBOOT_POWERON" ||
+                intent.action == "com.htc.intent.action.QUICKBOOT_POWERON") {
+                updateLocationSensor(context)
+            }
             if (chargingActions.contains(intent.action)) {
                 // Add a 5 second delay to perform another update so charging state updates completely.
                 // This is necessary as the system needs a few seconds to verify the charger.
@@ -160,5 +164,15 @@ class SensorReceiver : BroadcastReceiver() {
                 }
             }
         } else Log.d(TAG, "Nothing to update")
+    }
+
+    suspend fun updateLocationSensor(
+        context: Context
+    ) {
+        try {
+            LocationSensorManager().requestSensorUpdate(context)
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue requesting updates for ${context.getString(LocationSensorManager().name)}", e)
+        }
     }
 }

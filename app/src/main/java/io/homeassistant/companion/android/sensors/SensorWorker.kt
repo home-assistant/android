@@ -72,6 +72,7 @@ class SensorWorker(
         setForeground(foregroundInfo)
 
         SensorReceiver().updateSensors(appContext, integrationUseCase)
+        SensorReceiver().updateLocationSensor(appContext)
         Result.success()
     }
 

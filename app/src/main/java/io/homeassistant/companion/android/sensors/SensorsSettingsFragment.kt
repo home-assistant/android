@@ -21,7 +21,9 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         override fun run() {
             SensorWorker.start(requireContext())
             val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
-            SensorReceiver.MANAGERS.forEach { managers ->
+            val managersList = SensorReceiver.MANAGERS.toMutableList()
+            managersList.add(LocationSensorManager())
+            managersList.forEach { managers ->
                 managers.availableSensors.forEach { basicSensor ->
                     findPreference<Preference>(basicSensor.id)?.let {
                         val sensorEntity = sensorDao.get(basicSensor.id)
@@ -56,7 +58,9 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         setPreferencesFromResource(R.xml.sensors, rootKey)
 
-        SensorReceiver.MANAGERS.sortedBy { it.name }.filter { it.hasSensor(requireContext()) }.forEach { manager ->
+        val managersList = SensorReceiver.MANAGERS.toMutableList()
+        managersList.add(LocationSensorManager())
+        managersList.sortedBy { it.name }.filter { it.hasSensor(requireContext()) }.forEach { manager ->
             val prefCategory = PreferenceCategory(preferenceScreen.context)
             prefCategory.title = getString(manager.name)
 
