@@ -20,6 +20,7 @@ import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.domain.integration.UpdateLocation
 import javax.inject.Inject
@@ -62,23 +63,29 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
+    lateinit var latestContext: Context
+
+    private var isBackgroundLocationSetup = false
+    private var isZoneLocationSetup = false
+
     override fun onReceive(context: Context, intent: Intent) {
-        ensureInjected(context)
+        latestContext = context
+        ensureInjected()
 
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
-            ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking(context)
+            ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
             ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
-            ACTION_PROCESS_GEO -> handleGeoUpdate(context, intent)
-            ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation(context)
+            ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
+            ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
     }
 
-    private fun ensureInjected(context: Context) {
-        if (context.applicationContext is GraphComponentAccessor) {
+    private fun ensureInjected() {
+        if (latestContext.applicationContext is GraphComponentAccessor) {
             DaggerSensorComponent.builder()
-                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
+                .appComponent((latestContext.applicationContext as GraphComponentAccessor).appComponent)
                 .build()
                 .inject(this)
         } else {
@@ -86,49 +93,57 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun setupLocationTracking(context: Context) {
-        if (!checkPermission(context)) {
+    private fun setupLocationTracking() {
+        if (!checkPermission(latestContext)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
         }
 
-        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val backgroundEnabled = isEnabled(latestContext, backgroundLocation.id)
+        val zoneEnabled = isEnabled(latestContext, zoneLocation.id)
 
         ioScope.launch {
             try {
-                removeAllLocationUpdateRequests(context)
-
-                if (sensorDao.get(backgroundLocation.id)?.enabled == true)
-                    requestLocationUpdates(context)
-                if (sensorDao.get(zoneLocation.id)?.enabled == true)
-                    requestZoneUpdates(context)
+                if (!backgroundEnabled && !zoneEnabled) {
+                    removeAllLocationUpdateRequests()
+                    isBackgroundLocationSetup = false
+                    isZoneLocationSetup = false
+                }
+                if (backgroundEnabled && !isBackgroundLocationSetup) {
+                    isBackgroundLocationSetup = true
+                    requestLocationUpdates()
+                }
+                if (zoneEnabled && !isZoneLocationSetup) {
+                    isZoneLocationSetup = true
+                    requestZoneUpdates()
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Issue setting up location tracking", e)
             }
         }
     }
 
-    private fun removeAllLocationUpdateRequests(context: Context) {
+    private fun removeAllLocationUpdateRequests() {
         Log.d(TAG, "Removing all location requests.")
-        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
-        val backgroundIntent = getLocationUpdateIntent(context, false)
+        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
+        val backgroundIntent = getLocationUpdateIntent(false)
 
         fusedLocationProviderClient.removeLocationUpdates(backgroundIntent)
 
-        val geofencingClient = LocationServices.getGeofencingClient(context)
-        val zoneIntent = getLocationUpdateIntent(context, true)
+        val geofencingClient = LocationServices.getGeofencingClient(latestContext)
+        val zoneIntent = getLocationUpdateIntent(true)
         geofencingClient.removeGeofences(zoneIntent)
     }
 
-    private fun requestLocationUpdates(context: Context) {
-        if (!checkPermission(context)) {
+    private fun requestLocationUpdates() {
+        if (!checkPermission(latestContext)) {
             Log.w(TAG, "Not registering for location updates because of permissions.")
             return
         }
         Log.d(TAG, "Registering for location updates.")
 
-        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
-        val intent = getLocationUpdateIntent(context, false)
+        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
+        val intent = getLocationUpdateIntent(false)
 
         fusedLocationProviderClient.requestLocationUpdates(
             createLocationRequest(),
@@ -136,8 +151,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         )
     }
 
-    private suspend fun requestZoneUpdates(context: Context) {
-        if (!checkPermission(context)) {
+    private suspend fun requestZoneUpdates() {
+        if (!checkPermission(latestContext)) {
             Log.w(TAG, "Not registering for zone based updates because of permissions.")
             return
         }
@@ -145,8 +160,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         Log.d(TAG, "Registering for zone based location updates")
 
         try {
-            val geofencingClient = LocationServices.getGeofencingClient(context)
-            val intent = getLocationUpdateIntent(context, true)
+            val geofencingClient = LocationServices.getGeofencingClient(latestContext)
+            val intent = getLocationUpdateIntent(true)
             val geofencingRequest = createGeofencingRequest()
             geofencingClient.addGeofences(
                 geofencingRequest,
@@ -168,7 +183,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun handleGeoUpdate(context: Context, intent: Intent) {
+    private fun handleGeoUpdate(intent: Intent) {
         Log.d(TAG, "Received geofence update.")
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
@@ -181,7 +196,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 TAG,
                 "Geofence location accuracy didn't meet requirements, requesting new location."
             )
-            requestSingleAccurateLocation(context)
+            requestSingleAccurateLocation()
         } else {
             sendLocationUpdate(geofencingEvent.triggeringLocation)
         }
@@ -208,19 +223,43 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0
         )
 
+        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+        val fullSensor = sensorDao.getFull(backgroundLocation.id)
+        val locationEntity = fullSensor?.sensor
+        val lastLocationSend = fullSensor?.attributes?.firstOrNull { it.name == "lastLocationSent" }?.value?.toLongOrNull() ?: 0L
+        val now = System.currentTimeMillis()
+
+        if (locationEntity?.state == updateLocation.gps.contentToString()) {
+            if (now >= lastLocationSend + 900000) {
+                Log.d(TAG, "Sending location since it's been more than 15 minutes")
+            } else {
+                Log.d(TAG, "Same location as last update, not sending to HA")
+                return
+            }
+        }
+
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
+                onSensorUpdated(
+                    latestContext,
+                    backgroundLocation,
+                    updateLocation.gps.contentToString(),
+                    "",
+                    mapOf(
+                        "lastLocationSent" to now.toString()
+                    )
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
             }
         }
     }
 
-    private fun getLocationUpdateIntent(context: Context, isGeofence: Boolean): PendingIntent {
-        val intent = Intent(context, LocationSensorManager::class.java)
+    private fun getLocationUpdateIntent(isGeofence: Boolean): PendingIntent {
+        val intent = Intent(latestContext, LocationSensorManager::class.java)
         intent.action = if (isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getBroadcast(latestContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
     private fun createLocationRequest(): LocationRequest {
@@ -237,6 +276,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     private suspend fun createGeofencingRequest(): GeofencingRequest {
         val geofencingRequestBuilder = GeofencingRequest.Builder()
+        // TODO cache the zones on device so we don't need to reach out each time
         integrationUseCase.getZones().forEach {
             geofencingRequestBuilder.addGeofence(
                 Geofence.Builder()
@@ -254,21 +294,32 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         return geofencingRequestBuilder.build()
     }
 
-    private fun requestSingleAccurateLocation(context: Context) {
-        if (!checkPermission(context)) {
+    private fun requestSingleAccurateLocation() {
+        if (!checkPermission(latestContext)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
         }
+        val now = System.currentTimeMillis()
+        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+        val fullSensor = sensorDao.getFull(backgroundLocation.id)
+        val latestAccurateLocation = fullSensor?.attributes?.firstOrNull { it.name == "lastAccurateLocationRequest" }?.value?.toLongOrNull() ?: 0L
+        // Only update accurate location at most once a minute
+        if (now < latestAccurateLocation + 60000) {
+            Log.d(TAG, "Not requesting accurate location, last accurate location was too recent")
+            return
+        }
+        sensorDao.add(Attribute(backgroundLocation.id, "lastAccurateLocationRequest", now.toString()))
+
         val maxRetries = 5
         val request = createLocationRequest()
         request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         request.numUpdates = maxRetries
-        LocationServices.getFusedLocationProviderClient(context)
+        LocationServices.getFusedLocationProviderClient(latestContext)
             .requestLocationUpdates(
                 request,
                 object : LocationCallback() {
                     val wakeLock: PowerManager.WakeLock? =
-                        getSystemService(context, PowerManager::class.java)
+                        getSystemService(latestContext, PowerManager::class.java)
                             ?.newWakeLock(
                                 PowerManager.PARTIAL_WAKE_LOCK,
                                 "HomeAssistant::AccurateLocation"
@@ -333,9 +384,10 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        ensureInjected(context)
+        latestContext = context
+        ensureInjected()
         if (isEnabled(context, zoneLocation.id) || isEnabled(context, backgroundLocation.id))
-            setupLocationTracking(context)
+            setupLocationTracking()
         if (isEnabled(context, backgroundLocation.id)) {
             context.sendBroadcast(
                 Intent(context, this.javaClass).apply {
