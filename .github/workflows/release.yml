@@ -113,24 +113,16 @@ jobs:
           git log --format=%s ${previous}..${current} >> app/src/main/play/release-notes/en-US/default-long.txt
           head -n 2 app/src/main/play/release-notes/en-US/default-long.txt > app/src/main/play/release-notes/en-US/default.txt
 
-      - name: Create Github Pre-Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }}
-          body_path: ./app/src/main/play/release-notes/en-US/default-long.txt
-          draft: false
-          prerelease: true
+      - name: Get the upload URL for the release
+        uses: bruceadams/get-release@v1.2.1
+        id: get_release
 
       - name: Upload Full APK
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./app/build/outputs/apk/full/release/app-full-release.apk
           asset_name: home-assistant-full-${{env.VERSION}}.apk
           asset_content_type: application/zip
@@ -140,7 +132,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./app/build/outputs/apk/minimal/release/app-minimal-release.apk
           asset_name: home-assistant-minimal-${{env.VERSION}}.apk
           asset_content_type: application/zip
