@@ -8,6 +8,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
+import android.util.Log
 import io.homeassistant.companion.android.R
 import kotlin.math.roundToInt
 
@@ -32,6 +33,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
 
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
+    private var isListenerRegistered = false
 
     override fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -59,12 +61,13 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
             val stepsSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-            if (stepsSensors != null) {
+            if (stepsSensors != null && !isListenerRegistered) {
                 mySensorManager.registerListener(
                     this,
                     stepsSensors,
                     SENSOR_DELAY_NORMAL
                 )
+                isListenerRegistered = true
             }
         }
     }
@@ -74,6 +77,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
+        Log.d(TAG, "Step counter change detected")
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_STEP_COUNTER) {
                 onSensorUpdated(
@@ -86,5 +90,6 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        isListenerRegistered = false
     }
 }

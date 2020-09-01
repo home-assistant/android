@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
+import android.util.Log
 import io.homeassistant.companion.android.R
 import java.math.RoundingMode
 
@@ -25,6 +26,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
 
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
+    private var isListenerRegistered = false
 
     override val name: Int
         get() = R.string.sensor_name_pressure
@@ -48,11 +50,12 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val pressureSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
-        if (pressureSensors != null) {
+        if (pressureSensors != null && !isListenerRegistered) {
             mySensorManager.registerListener(
                 this,
                 pressureSensors,
                 SENSOR_DELAY_NORMAL)
+            isListenerRegistered = true
         }
     }
 
@@ -61,6 +64,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
+        Log.d(TAG, "Pressure sensor change detected")
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_PRESSURE) {
                 onSensorUpdated(
@@ -73,5 +77,6 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        isListenerRegistered = false
     }
 }

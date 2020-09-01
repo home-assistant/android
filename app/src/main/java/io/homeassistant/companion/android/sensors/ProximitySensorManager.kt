@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
+import android.util.Log
 import io.homeassistant.companion.android.R
 import kotlin.math.roundToInt
 
@@ -24,6 +25,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
     private var maxRange: Int = 0
+    private var isListenerRegistered = false
 
     override val name: Int
         get() = R.string.sensor_name_proximity
@@ -47,12 +49,13 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val proximitySensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
-        if (proximitySensors != null) {
+        if (proximitySensors != null && !isListenerRegistered) {
             mySensorManager.registerListener(
                 this,
                 proximitySensors,
                 SENSOR_DELAY_NORMAL
             )
+            isListenerRegistered = true
             maxRange = proximitySensors.maximumRange.roundToInt()
         }
     }
@@ -62,6 +65,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
+        Log.d(TAG, "Proximity sensor change detected")
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_PROXIMITY) {
                 val sensorValue = event.values[0].roundToInt()
@@ -82,5 +86,6 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        isListenerRegistered = false
     }
 }
