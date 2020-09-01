@@ -382,16 +382,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
                 }
             )
-            context.sendBroadcast(
-                Intent(context, this.javaClass).apply {
-                    action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
-                }
-            )
-            context.sendBroadcast(
-                Intent(context, this.javaClass).apply {
-                    action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
-                }
-            )
         }
     }
 }
