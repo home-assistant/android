@@ -10,7 +10,7 @@ class GeocodeSensorManager : SensorManager {
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
-            "Geocoded Location",
+            R.string.basic_sensor_name_geolocation,
             R.string.sensor_description_geocoded_location
         )
     }
