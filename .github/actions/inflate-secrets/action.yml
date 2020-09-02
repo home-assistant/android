@@ -24,20 +24,20 @@ runs:
 
     - name: Inflate release_keystore.keystore
       env:
-        KEYSTORE: ${{ secrets.ORIGINAL_KEYSTORE_FILE }}
+        KEYSTORE: ${{ inputs.keystore }}
       run: echo $KEYSTORE | base64 --decode > app/release_keystore.keystore
 
     - name: Inflate google-services.json
       env:
-        GOOGLE_SERVICES: ${{ secrets.GOOGLESERVICES }}
+        GOOGLE_SERVICES: ${{ inputs.google-services }}
       run: echo $GOOGLE_SERVICES > app/google-services.json
 
     - name: Inflate firebaseAppDistributionServiceCredentialsFile.json
       env:
-        CREDS: ${{ secrets.FIREBASECREDS }}
+        CREDS: ${{ inputs.firebase-creds }}
       run: echo $CREDS > firebaseAppDistributionServiceCredentialsFile.json
 
     - name: Inflate playStorePublishServiceCredentialsFile.json
       env:
-        CREDS: ${{ secrets.PLAYSTORECREDS }}
+        CREDS: ${{ inputs.playstore-creds }}
       run: echo $CREDS > app/playStorePublishServiceCredentialsFile.json
