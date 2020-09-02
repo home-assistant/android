@@ -106,9 +106,3 @@ jobs:
       with:
         path: ./app/build/outputs/apk/*/debug/*-debug.apk
 
-  validate:
-    runs-on: ubuntu-latest
-    needs: [ ktlint, lint, test, pr_build ]
-    steps:
-      - name: Success!
-        run: echo "PR is ready!"
