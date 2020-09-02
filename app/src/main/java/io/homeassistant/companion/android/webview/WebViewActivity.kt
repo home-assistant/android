@@ -13,11 +13,14 @@ import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.security.KeyChain
+import android.security.KeyChainAliasCallback
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
 import android.view.View
+import android.webkit.ClientCertRequest
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
@@ -91,6 +94,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     @Inject
     lateinit var themesManager: ThemesManager
+
+    private var activity: WebViewActivity = this
 
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
@@ -176,6 +181,25 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             webViewClient = object : WebViewClient() {
+                override fun onReceivedClientCertRequest(
+                    view: WebView?,
+                    request: ClientCertRequest?
+                ) {
+                    Log.d(TAG, "onReceivedClientCertRequest: view: $view request:$request")
+                    KeyChain.choosePrivateKeyAlias(
+                        activity, object : KeyChainAliasCallback {
+                            override fun alias(alias: String?) {
+                                if (alias == null) {
+                                    request!!.cancel()
+                                    return
+                                }
+                                KeyChainLookup(activity, request!!, alias).execute()
+                            }
+                        }, request!!.keyTypes, request.principals, request.host,
+                        request!!.port, null
+                    )
+                }
+
                 override fun onReceivedError(
                     view: WebView?,
                     errorCode: Int,
