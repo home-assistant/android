@@ -24,7 +24,9 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.sensors.GeocodeSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.sensors.PhoneStateSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import javax.inject.Inject
@@ -187,6 +189,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 zoneTrackingSummary.isEnabled = true
                 zoneTracking.isChecked = true
                 updateSensorDao(LocationSensorManager.zoneLocation.id, true)
+                updateSensorDao(NetworkSensorManager.wifiConnection.id, true)
+                updateSensorDao(GeocodeSensorManager.geocodedLocation.id, true)
 
                 backgroundTracking.isEnabled = true
                 backgroundTrackingSummary.isEnabled = true

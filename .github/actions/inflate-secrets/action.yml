@@ -1,0 +1,47 @@
+name: 'Inflate Secrets'
+description: 'Inflates the secret values into the appropriate files'
+inputs:
+  keystore:
+    description: 'The keystore to inflate'
+    required: true
+  google-services:
+    description: 'The google-services.json to inflate'
+    required: true
+  firebase-creds:
+    description: 'The firebase credentials to inflate'
+    required: true
+  playstore-creds:
+    description: 'The playstore credentials to inflate'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Mock debug google-services.json
+      shell: bash
+      run: |
+        cp .github/mock-google-services.json app/src/debug/google-services.json
+        cp .github/mock-google-services.json app/src/minimal/google-services.json
+
+    - name: Inflate release_keystore.keystore
+      shell: bash
+      env:
+        KEYSTORE: ${{ inputs.keystore }}
+      run: echo $KEYSTORE | base64 --decode > app/release_keystore.keystore
+
+    - name: Inflate google-services.json
+      shell: bash
+      env:
+        GOOGLE_SERVICES: ${{ inputs.google-services }}
+      run: echo $GOOGLE_SERVICES > app/google-services.json
+
+    - name: Inflate firebaseAppDistributionServiceCredentialsFile.json
+      shell: bash
+      env:
+        CREDS: ${{ inputs.firebase-creds }}
+      run: echo $CREDS > firebaseAppDistributionServiceCredentialsFile.json
+
+    - name: Inflate playStorePublishServiceCredentialsFile.json
+      shell: bash
+      env:
+        CREDS: ${{ inputs.playstore-creds }}
+      run: echo $CREDS > app/playStorePublishServiceCredentialsFile.json
