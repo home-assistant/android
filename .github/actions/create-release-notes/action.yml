@@ -1,7 +1,5 @@
 name: 'Create Release Notes'
 description: 'Creates the current releases release notes'
-inputs:
-outputs:
 runs:
   using: 'composite'
   steps:
