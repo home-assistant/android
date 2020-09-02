@@ -14,6 +14,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     companion object {
 
         private const val TAG = "ProximitySensor"
+        private var isListenerRegistered = false
         private val proximitySensor = SensorManager.BasicSensor(
             "proximity_sensor",
             "sensor",
@@ -25,7 +26,6 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
     private var maxRange: Int = 0
-    private var isListenerRegistered = false
 
     override val name: Int
         get() = R.string.sensor_name_proximity
@@ -39,10 +39,10 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
 
     override fun requestSensorUpdate(context: Context) {
         latestContext = context
-        updateProximitySensor(context)
+        updateProximitySensor()
     }
 
-    private fun updateProximitySensor(context: Context) {
+    private fun updateProximitySensor() {
         if (!isEnabled(latestContext, proximitySensor.id))
             return
 
@@ -55,6 +55,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
                 proximitySensors,
                 SENSOR_DELAY_NORMAL
             )
+            Log.d(TAG, "Proximity sensor listener registered")
             isListenerRegistered = true
             maxRange = proximitySensors.maximumRange.roundToInt()
         }
@@ -65,7 +66,6 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        Log.d(TAG, "Proximity sensor change detected")
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_PROXIMITY) {
                 val sensorValue = event.values[0].roundToInt()
@@ -86,6 +86,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        Log.d(TAG, "Proximity sensor listener unregistered")
         isListenerRegistered = false
     }
 }

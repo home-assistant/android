@@ -16,6 +16,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     companion object {
 
         private const val TAG = "StepsSensor"
+        private var isListenerRegistered = false
         private val stepsSensor = SensorManager.BasicSensor(
             "steps_sensor",
             "sensor",
@@ -33,7 +34,6 @@ class StepsSensorManager : SensorManager, SensorEventListener {
 
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
-    private var isListenerRegistered = false
 
     override fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -67,6 +67,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                     stepsSensors,
                     SENSOR_DELAY_NORMAL
                 )
+                Log.d(TAG, "Steps sensor listener registered")
                 isListenerRegistered = true
             }
         }
@@ -77,7 +78,6 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        Log.d(TAG, "Step counter change detected")
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_STEP_COUNTER) {
                 onSensorUpdated(
@@ -90,6 +90,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        Log.d(TAG, "Steps sensor listener unregistered")
         isListenerRegistered = false
     }
 }

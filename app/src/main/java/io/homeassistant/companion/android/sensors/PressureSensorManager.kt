@@ -14,6 +14,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     companion object {
 
         private const val TAG = "PressureSensor"
+        private var isListenerRegistered = false
         private val pressureSensor = SensorManager.BasicSensor(
             "pressure_sensor",
             "sensor",
@@ -26,7 +27,6 @@ class PressureSensorManager : SensorManager, SensorEventListener {
 
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
-    private var isListenerRegistered = false
 
     override val name: Int
         get() = R.string.sensor_name_pressure
@@ -40,10 +40,10 @@ class PressureSensorManager : SensorManager, SensorEventListener {
 
     override fun requestSensorUpdate(context: Context) {
         latestContext = context
-        updatePressureSensor(context)
+        updatePressureSensor()
     }
 
-    private fun updatePressureSensor(context: Context) {
+    private fun updatePressureSensor() {
         if (!isEnabled(latestContext, pressureSensor.id))
             return
 
@@ -55,6 +55,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
                 this,
                 pressureSensors,
                 SENSOR_DELAY_NORMAL)
+            Log.d(TAG, "Pressure sensor listener registered")
             isListenerRegistered = true
         }
     }
@@ -64,7 +65,6 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        Log.d(TAG, "Pressure sensor change detected")
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_PRESSURE) {
                 onSensorUpdated(
@@ -77,6 +77,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        Log.d(TAG, "Pressure sensor listener unregistered")
         isListenerRegistered = false
     }
 }

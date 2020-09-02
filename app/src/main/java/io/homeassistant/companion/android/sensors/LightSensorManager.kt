@@ -14,6 +14,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
     companion object {
 
         private const val TAG = "LightSensor"
+        private var isListenerRegistered = false
         private val lightSensor = SensorManager.BasicSensor(
             "light_sensor",
             "sensor",
@@ -36,7 +37,6 @@ class LightSensorManager : SensorManager, SensorEventListener {
 
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
-    private var isListenerRegistered = false
 
     override fun requestSensorUpdate(
         context: Context
@@ -57,6 +57,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
                 this,
                 lightSensors,
                 SENSOR_DELAY_NORMAL)
+            Log.d(TAG, "Light sensor listener registered")
             isListenerRegistered = true
         }
     }
@@ -66,7 +67,6 @@ class LightSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        Log.d(TAG, "Light sensor change detected")
         if (event != null) {
             if (event.sensor.type == Sensor.TYPE_LIGHT) {
                 onSensorUpdated(
@@ -79,6 +79,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        Log.d(TAG, "Light sensor listener unregistered")
         isListenerRegistered = false
     }
 }
