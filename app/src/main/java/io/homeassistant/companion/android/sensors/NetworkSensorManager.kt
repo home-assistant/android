@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.R
 class NetworkSensorManager : SensorManager {
     companion object {
         private const val TAG = "NetworkSM"
-        private val wifiConnection = SensorManager.BasicSensor(
+        val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
             "Wifi Connection",

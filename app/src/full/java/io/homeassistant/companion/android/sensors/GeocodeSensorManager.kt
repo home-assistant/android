@@ -14,7 +14,7 @@ class GeocodeSensorManager : SensorManager {
 
     companion object {
         private const val TAG = "GeocodeSM"
-        private val geocodedLocation = SensorManager.BasicSensor(
+        val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
             "Geocoded Location",
