@@ -185,6 +185,7 @@ like to connect to:</string>
   <string name="themes_title_settings">Theme</string>
   <string name="unable_to_register">Unable to Register Application</string>
   <string name="unique_id">Unique Id</string>
+  <string name="updating_sensors">Updating Sensors</string>
   <string name="url_invalid">Url Invalid</string>
   <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
   <string name="username">Username</string>
