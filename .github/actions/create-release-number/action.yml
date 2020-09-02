@@ -1,0 +1,38 @@
+name: 'Create Release Numbers'
+description: 'Creates the current release number based on checked out code'
+inputs:
+  beta:
+    description: 'If this is a beta build'
+    required: true
+    default: false
+outputs:
+  version:
+    description: 'The current app version'
+    value: ${{ steps.version-generator.outputs.version }}
+  version-code:
+    description: 'The numeric app version'
+    value: ${{ steps.version-generator.outputs.version-code }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Set Build Number
+      id: version-generator
+      shell: bash
+      run: |
+        COMMITS=`git rev-list --count HEAD`
+        TAGS=`git tag | grep -v beta | wc -l`
+        # Because for a while we were increasing by 2 rather than one we need an offset
+        OFFSET=15
+        VC=$((COMMITS+TAGS+OFFSET))
+        HASH=`git rev-parse --short HEAD`
+        if [ "${{inputs.beta}}" = "true" ]; then
+           VERSION=beta-$VC-$HASH
+        else
+           VERSION=`git describe --tags`
+        fi
+        echo Number Commits $COMMITS
+        echo Number Tags $TAGS
+        echo Version $VERSION
+        echo Version Code $VC
+        echo ::set-output name=version::$VERSION
+        echo ::set-output name=version-code::$VC

@@ -1,0 +1,20 @@
+name: 'Create Release Notes'
+description: 'Creates the current releases release notes'
+runs:
+  using: 'composite'
+  steps:
+    - name: Generate Release Notes
+      id: version-generator
+      shell: bash
+      run: |
+        mkdir -p ./app/build/outputs/
+        previous=`git tag -l --sort=-creatordate | grep -v beta- | head -n 1`
+        echo "# Changes:" > ./app/build/outputs/changelogGithub
+        git log --format="* %s" ${previous}..HEAD >> ./app/build/outputs/changelogGithub
+
+        git log --format="* %s" HEAD^..HEAD > ./app/build/outputs/changelogBeta
+
+        mkdir -p app/src/main/play/release-notes/en-US/
+        current=`git tag -l --sort=-creatordate | head -n 1`
+        echo "Full release change log: https://github.com/home-assistant/android/releases/tag/${current}" > app/src/main/play/release-notes/en-US/default.txt
+
