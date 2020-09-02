@@ -16,7 +16,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         private val pressureSensor = SensorManager.BasicSensor(
             "pressure_sensor",
             "sensor",
-            "Pressure Sensor",
+            R.string.sensor_name_pressure,
             R.string.sensor_description_pressure_sensor,
             "pressure",
             "hPa"
@@ -26,8 +26,8 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
-    override val name: String
-        get() = "Pressure Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_pressure
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(pressureSensor)

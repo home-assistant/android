@@ -12,13 +12,13 @@ class DNDSensorManager : SensorManager {
         private val dndSensor = SensorManager.BasicSensor(
             "dnd_sensor",
             "sensor",
-            "Do Not Disturb Sensor",
+            R.string.sensor_name_dnd,
             R.string.sensor_description_dnd_sensor
         )
     }
 
-    override val name: String
-        get() = "Do Not Disturb Sensor"
+    override val name: Int
+        get() = R.string.sensor_name_dnd
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(dndSensor)

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import io.homeassistant.companion.android.R
 
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
@@ -21,12 +22,12 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
             "",
-            "Background Location"
+            R.string.basic_sensor_name_location_background
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
-            "Zone Location"
+            R.string.basic_sensor_name_location_zone
         )
         internal const val TAG = "LocBroadcastReceiver"
     }
@@ -35,8 +36,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         // Noop
     }
 
-    override val name: String
-        get() = "Location Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_location
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf()
 

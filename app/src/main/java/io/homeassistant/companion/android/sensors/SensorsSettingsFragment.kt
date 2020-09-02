@@ -58,13 +58,13 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         SensorReceiver.MANAGERS.sortedBy { it.name }.forEach { manager ->
             val prefCategory = PreferenceCategory(preferenceScreen.context)
-            prefCategory.title = manager.name
+            prefCategory.title = getString(manager.name)
             preferenceScreen.addPreference(prefCategory)
             manager.availableSensors.sortedBy { it.name }.forEach { basicSensor ->
 
                 val pref = Preference(preferenceScreen.context)
                 pref.key = basicSensor.id
-                pref.title = basicSensor.name
+                pref.title = getString(basicSensor.name)
 
                 pref.setOnPreferenceClickListener {
                     parentFragmentManager

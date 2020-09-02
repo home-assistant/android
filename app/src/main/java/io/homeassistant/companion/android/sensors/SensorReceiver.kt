@@ -92,6 +92,7 @@ class SensorReceiver : BroadcastReceiver() {
                 // Register Sensors if needed
                 if (sensor?.enabled == true && !sensor.registered && !sensor.type.isBlank()) {
                     val reg = fullSensor.toSensorRegistration()
+                    reg.name = context.getString(basicSensor.name)
                     try {
                         integrationUseCase.registerSensor(reg)
                         sensor.registered = true

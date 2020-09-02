@@ -13,7 +13,7 @@ class BatterySensorManager : SensorManager {
         private val batteryLevel = SensorManager.BasicSensor(
             "battery_level",
             "sensor",
-            "Battery Level",
+            R.string.basic_sensor_name_battery_level,
             R.string.sensor_description_battery_level,
             "battery",
             "%"
@@ -21,14 +21,14 @@ class BatterySensorManager : SensorManager {
         private val batteryState = SensorManager.BasicSensor(
             "battery_state",
             "sensor",
-            "Battery State",
+            R.string.basic_sensor_name_battery_state,
             R.string.sensor_description_battery_state,
             "battery"
         )
     }
 
-    override val name: String
-        get() = "Battery Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_battery
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(batteryLevel, batteryState)
 

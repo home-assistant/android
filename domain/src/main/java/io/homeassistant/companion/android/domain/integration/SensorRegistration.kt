@@ -6,7 +6,7 @@ data class SensorRegistration<T>(
     val type: String,
     val icon: String,
     val attributes: Map<String, Any>,
-    val name: String,
+    var name: String,
     val deviceClass: String? = null,
     val unitOfMeasurement: String? = null
 

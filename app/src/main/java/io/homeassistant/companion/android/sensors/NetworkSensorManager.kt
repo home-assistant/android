@@ -13,13 +13,13 @@ class NetworkSensorManager : SensorManager {
         val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
-            "Wifi Connection",
+            R.string.basic_sensor_name_wifi,
             R.string.sensor_description_wifi_connection
         )
     }
 
-    override val name: String
-        get() = "Network Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_network
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(wifiConnection)
 

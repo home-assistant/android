@@ -11,13 +11,13 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 
 interface SensorManager {
 
-    val name: String
+    val name: Int
     val availableSensors: List<BasicSensor>
 
     data class BasicSensor(
         val id: String,
         val type: String,
-        val name: String,
+        val name: Int = R.string.sensor,
         val descriptionId: Int = R.string.sensor_description_none,
         val deviceClass: String? = null,
         val unitOfMeasurement: String? = null
@@ -72,7 +72,7 @@ interface SensorManager {
         }
         sensor.type = basicSensor.type
         sensor.icon = mdiIcon
-        sensor.name = basicSensor.name
+        sensor.name = basicSensor.name.toString()
         sensor.deviceClass = basicSensor.deviceClass
         sensor.unitOfMeasurement = basicSensor.unitOfMeasurement
 

@@ -16,15 +16,15 @@ class LightSensorManager : SensorManager, SensorEventListener {
         private val lightSensor = SensorManager.BasicSensor(
             "light_sensor",
             "sensor",
-            "Light Sensor",
+            R.string.sensor_name_light,
             R.string.sensor_description_light_sensor,
             "illuminance",
             "lx"
         )
     }
 
-    override val name: String
-        get() = "Light Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_light
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(lightSensor)

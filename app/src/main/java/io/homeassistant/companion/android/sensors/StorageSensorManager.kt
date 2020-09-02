@@ -15,7 +15,7 @@ class StorageSensorManager : SensorManager {
         private val storageSensor = SensorManager.BasicSensor(
             "storage_sensor",
             "sensor",
-            "Storage Sensor",
+            R.string.sensor_name_storage,
             R.string.sensor_description_storage_sensor,
             unitOfMeasurement = "%"
         )
@@ -53,8 +53,8 @@ class StorageSensorManager : SensorManager {
         }
     }
 
-    override val name: String
-        get() = "Storage Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_storage
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(storageSensor)
 

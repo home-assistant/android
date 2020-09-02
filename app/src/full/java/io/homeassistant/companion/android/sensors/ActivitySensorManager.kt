@@ -27,7 +27,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         private val activity = SensorManager.BasicSensor(
             "detected_activity",
             "sensor",
-            "Detected Activity",
+            R.string.basic_sensor_name_activity,
             R.string.sensor_description_detected_activity
         )
     }
@@ -100,8 +100,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         return "on_foot"
     }
 
-    override val name: String
-        get() = "Activity Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_activity
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(activity)

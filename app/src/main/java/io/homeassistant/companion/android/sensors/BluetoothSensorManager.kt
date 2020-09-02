@@ -14,14 +14,14 @@ class BluetoothSensorManager : SensorManager {
         private val bluetoothConnection = SensorManager.BasicSensor(
             "bluetooth_connection",
             "sensor",
-            "Bluetooth Connection",
+            R.string.basic_sensor_name_bluetooth,
             R.string.sensor_description_bluetooth_connection,
             unitOfMeasurement = "connection(s)"
         )
     }
 
-    override val name: String
-        get() = "Bluetooth Sensors"
+    override val name: Int
+        get() = R.string.sensor_name_bluetooth
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(bluetoothConnection)
 
