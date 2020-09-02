@@ -134,6 +134,9 @@ jobs:
           firebase-creds: ${{ secrets.FIREBASECREDS }}
           playstore-creds: ${{ secrets.PLAYSTORECREDS }}
 
+      - uses: ./.github/actions/create-release-notes
+        name: Create Release Notes
+
       - name: Build Release
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
