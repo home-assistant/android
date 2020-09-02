@@ -36,6 +36,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         // Noop
     }
 
+    override val enabledByDefault: Boolean
+        get() = false
     override val name: Int
         get() = R.string.sensor_name_location
     override val availableSensors: List<SensorManager.BasicSensor>

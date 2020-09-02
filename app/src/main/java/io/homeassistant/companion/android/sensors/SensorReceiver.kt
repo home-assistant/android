@@ -83,7 +83,7 @@ class SensorReceiver : BroadcastReceiver() {
             try {
                 manager.requestSensorUpdate(context)
             } catch (e: Exception) {
-                Log.e(TAG, "Issue requesting updates for ${manager.name}", e)
+                Log.e(TAG, "Issue requesting updates for ${context.getString(manager.name)}", e)
             }
             manager.availableSensors.forEach { basicSensor ->
                 val fullSensor = sensorDao.getFull(basicSensor.id)

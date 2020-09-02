@@ -27,6 +27,9 @@ class BatterySensorManager : SensorManager {
         )
     }
 
+    override val enabledByDefault: Boolean
+        get() = true
+
     override val name: Int
         get() = R.string.sensor_name_battery
     override val availableSensors: List<SensorManager.BasicSensor>
