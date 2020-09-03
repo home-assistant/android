@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import androidx.preference.Preference
@@ -59,29 +60,40 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         SensorReceiver.MANAGERS.sortedBy { it.name }.forEach { manager ->
             val prefCategory = PreferenceCategory(preferenceScreen.context)
             prefCategory.title = getString(manager.name)
-            preferenceScreen.addPreference(prefCategory)
-            manager.availableSensors.sortedBy { it.name }.forEach { basicSensor ->
+            var hasSensor: Boolean
+            val packageManager: PackageManager? = context?.packageManager
+            hasSensor = when (manager.name) {
+                R.string.sensor_name_light -> packageManager!!.hasSystemFeature(PackageManager.FEATURE_SENSOR_LIGHT)
+                R.string.sensor_name_pressure -> packageManager!!.hasSystemFeature(PackageManager.FEATURE_SENSOR_BAROMETER)
+                R.string.sensor_name_proximity -> packageManager!!.hasSystemFeature(PackageManager.FEATURE_SENSOR_PROXIMITY)
+                R.string.sensor_name_steps -> packageManager!!.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
+                else -> true
+            }
+            if (hasSensor) {
+                preferenceScreen.addPreference(prefCategory)
+                manager.availableSensors.sortedBy { it.name }.forEach { basicSensor ->
 
-                val pref = Preference(preferenceScreen.context)
-                pref.key = basicSensor.id
-                pref.title = getString(basicSensor.name)
+                    val pref = Preference(preferenceScreen.context)
+                    pref.key = basicSensor.id
+                    pref.title = getString(basicSensor.name)
 
-                pref.setOnPreferenceClickListener {
-                    parentFragmentManager
-                        .beginTransaction()
-                        .replace(
-                            R.id.content,
-                            SensorDetailFragment.newInstance(
-                                manager,
-                                basicSensor
+                    pref.setOnPreferenceClickListener {
+                        parentFragmentManager
+                            .beginTransaction()
+                            .replace(
+                                R.id.content,
+                                SensorDetailFragment.newInstance(
+                                    manager,
+                                    basicSensor
+                                )
                             )
-                        )
-                        .addToBackStack("Sensor Detail")
-                        .commit()
-                    return@setOnPreferenceClickListener true
-                }
+                            .addToBackStack("Sensor Detail")
+                            .commit()
+                        return@setOnPreferenceClickListener true
+                    }
 
-                prefCategory.addPreference(pref)
+                    prefCategory.addPreference(pref)
+                }
             }
         }
     }
