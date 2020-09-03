@@ -56,6 +56,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             R.string.sensor_description_location_zone
         )
         internal const val TAG = "LocBroadcastReceiver"
+
+        private var isBackgroundLocationSetup = false
+        private var isZoneLocationSetup = false
     }
 
     @Inject
@@ -64,9 +67,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     lateinit var latestContext: Context
-
-    private var isBackgroundLocationSetup = false
-    private var isZoneLocationSetup = false
 
     override fun onReceive(context: Context, intent: Intent) {
         latestContext = context
