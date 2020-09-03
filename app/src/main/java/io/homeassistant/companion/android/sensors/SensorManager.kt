@@ -13,6 +13,7 @@ interface SensorManager {
 
     val name: Int
     val availableSensors: List<BasicSensor>
+    val enabledByDefault: Boolean
 
     data class BasicSensor(
         val id: String,
@@ -36,17 +37,17 @@ interface SensorManager {
         var sensor = sensorDao.get(sensorId)
         val permission = checkPermission(context)
 
-        // If we haven't created the entity yet do so and default to enabled
+        // If we haven't created the entity yet do so and default to enabled if required
         if (sensor == null) {
-            sensor = Sensor(sensorId, permission, false, "")
+            sensor = Sensor(sensorId, permission && enabledByDefault, false, "")
             sensorDao.add(sensor)
         }
 
         // If we don't have permission but we are still enabled then we aren't really enabled.
-        if (sensor.enabled && !permission) {
-            sensor.enabled = false
-            sensorDao.update(sensor)
-        }
+            if (sensor.enabled && !permission) {
+                sensor.enabled = false
+                sensorDao.update(sensor)
+            }
 
         return sensor.enabled
     }

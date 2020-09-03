@@ -27,6 +27,9 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     private lateinit var mySensorManager: android.hardware.SensorManager
     private var maxRange: Int = 0
 
+    override val enabledByDefault: Boolean
+        get() = false
+
     override val name: Int
         get() = R.string.sensor_name_proximity
 

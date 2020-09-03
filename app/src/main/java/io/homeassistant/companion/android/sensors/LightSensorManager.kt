@@ -25,6 +25,9 @@ class LightSensorManager : SensorManager, SensorEventListener {
         )
     }
 
+    override val enabledByDefault: Boolean
+        get() = false
+
     override val name: Int
         get() = R.string.sensor_name_light
 

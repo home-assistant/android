@@ -12,6 +12,7 @@ import androidx.preference.contains
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 
 class SensorDetailFragment(
@@ -51,9 +52,10 @@ class SensorDetailFragment(
         findPreference<SwitchPreference>("enabled")?.let {
             val dao = sensorDao.get(basicSensor.id)
             val perm = sensorManager.checkPermission(requireContext())
-            if (dao == null) {
+            if (dao == null && sensorManager.enabledByDefault) {
                 it.isChecked = perm
-            } else {
+            }
+            if (dao != null) {
                 it.isChecked = dao.enabled && perm
             }
             updateSensorEntity(it.isChecked)
@@ -148,10 +150,13 @@ class SensorDetailFragment(
     private fun updateSensorEntity(
         isEnabled: Boolean
     ) {
-        val sensorEntity = sensorDao.get(basicSensor.id)
+        var sensorEntity = sensorDao.get(basicSensor.id)
         if (sensorEntity != null) {
             sensorEntity.enabled = isEnabled
             sensorDao.update(sensorEntity)
+        } else {
+            sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
+            sensorDao.add(sensorEntity)
         }
         refreshSensorData()
     }

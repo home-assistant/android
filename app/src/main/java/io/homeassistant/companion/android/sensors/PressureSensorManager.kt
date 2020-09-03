@@ -28,6 +28,9 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
+    override val enabledByDefault: Boolean
+        get() = false
+
     override val name: Int
         get() = R.string.sensor_name_pressure
 
