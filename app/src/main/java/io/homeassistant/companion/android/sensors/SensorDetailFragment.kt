@@ -155,7 +155,7 @@ class SensorDetailFragment(
             sensorEntity.enabled = isEnabled
             sensorDao.update(sensorEntity)
         } else {
-            sensorEntity = Sensor(basicSensor.id, false, false, "")
+            sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
             sensorDao.add(sensorEntity)
         }
         refreshSensorData()

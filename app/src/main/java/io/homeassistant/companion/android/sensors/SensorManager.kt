@@ -38,19 +38,18 @@ interface SensorManager {
         val permission = checkPermission(context)
 
         // If we haven't created the entity yet do so and default to enabled if required
-        if (sensor == null && enabledByDefault) {
-            sensor = Sensor(sensorId, permission, false, "")
+        if (sensor == null) {
+            sensor = Sensor(sensorId, permission && enabledByDefault, false, "")
             sensorDao.add(sensor)
         }
 
         // If we don't have permission but we are still enabled then we aren't really enabled.
-        if (sensor != null) {
             if (sensor.enabled && !permission) {
                 sensor.enabled = false
                 sensorDao.update(sensor)
             }
-        }
-        return sensor!!.enabled
+
+        return sensor.enabled
     }
 
     fun requestSensorUpdate(context: Context)
