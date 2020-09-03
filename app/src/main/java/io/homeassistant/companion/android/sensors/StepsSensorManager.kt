@@ -8,6 +8,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
+import android.util.Log
 import io.homeassistant.companion.android.R
 import kotlin.math.roundToInt
 
@@ -15,6 +16,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     companion object {
 
         private const val TAG = "StepsSensor"
+        private var isListenerRegistered = false
         private val stepsSensor = SensorManager.BasicSensor(
             "steps_sensor",
             "sensor",
@@ -59,12 +61,14 @@ class StepsSensorManager : SensorManager, SensorEventListener {
                 latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
             val stepsSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER)
-            if (stepsSensors != null) {
+            if (stepsSensors != null && !isListenerRegistered) {
                 mySensorManager.registerListener(
                     this,
                     stepsSensors,
                     SENSOR_DELAY_NORMAL
                 )
+                Log.d(TAG, "Steps sensor listener registered")
+                isListenerRegistered = true
             }
         }
     }
@@ -86,5 +90,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        Log.d(TAG, "Steps sensor listener unregistered")
+        isListenerRegistered = false
     }
 }

@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
+import android.util.Log
 import io.homeassistant.companion.android.R
 import kotlin.math.roundToInt
 
@@ -13,6 +14,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     companion object {
 
         private const val TAG = "ProximitySensor"
+        private var isListenerRegistered = false
         private val proximitySensor = SensorManager.BasicSensor(
             "proximity_sensor",
             "sensor",
@@ -37,22 +39,24 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
 
     override fun requestSensorUpdate(context: Context) {
         latestContext = context
-        updateProximitySensor(context)
+        updateProximitySensor()
     }
 
-    private fun updateProximitySensor(context: Context) {
+    private fun updateProximitySensor() {
         if (!isEnabled(latestContext, proximitySensor.id))
             return
 
         mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val proximitySensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
-        if (proximitySensors != null) {
+        if (proximitySensors != null && !isListenerRegistered) {
             mySensorManager.registerListener(
                 this,
                 proximitySensors,
                 SENSOR_DELAY_NORMAL
             )
+            Log.d(TAG, "Proximity sensor listener registered")
+            isListenerRegistered = true
             maxRange = proximitySensors.maximumRange.roundToInt()
         }
     }
@@ -82,5 +86,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        Log.d(TAG, "Proximity sensor listener unregistered")
+        isListenerRegistered = false
     }
 }

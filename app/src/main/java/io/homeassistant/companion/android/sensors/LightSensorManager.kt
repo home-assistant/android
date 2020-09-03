@@ -6,6 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
+import android.util.Log
 import io.homeassistant.companion.android.R
 import kotlin.math.roundToInt
 
@@ -13,6 +14,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
     companion object {
 
         private const val TAG = "LightSensor"
+        private var isListenerRegistered = false
         private val lightSensor = SensorManager.BasicSensor(
             "light_sensor",
             "sensor",
@@ -50,11 +52,13 @@ class LightSensorManager : SensorManager, SensorEventListener {
         mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val lightSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
-        if (lightSensors != null) {
+        if (lightSensors != null && !isListenerRegistered) {
             mySensorManager.registerListener(
                 this,
                 lightSensors,
                 SENSOR_DELAY_NORMAL)
+            Log.d(TAG, "Light sensor listener registered")
+            isListenerRegistered = true
         }
     }
 
@@ -75,5 +79,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
             }
         }
         mySensorManager.unregisterListener(this)
+        Log.d(TAG, "Light sensor listener unregistered")
+        isListenerRegistered = false
     }
 }
