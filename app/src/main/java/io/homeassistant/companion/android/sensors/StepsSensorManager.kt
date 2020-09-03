@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Context
 import android.content.Context.SENSOR_SERVICE
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -46,6 +47,11 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         } else {
             arrayOf()
         }
+    }
+
+    override fun hasSensor(context: Context): Boolean {
+        val packageManager: PackageManager = context.packageManager
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_STEP_COUNTER)
     }
 
     override fun requestSensorUpdate(
