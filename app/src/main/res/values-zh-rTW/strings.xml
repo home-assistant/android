@@ -84,9 +84,6 @@
   <string name="themes_option_label_dark">暗黑</string>
   <string name="themes_option_label_light">亮色</string>
   <string name="themes_option_label_system">跟隨系統模式</string>
-  <string name="themes_option_value_dark">暗黑</string>
-  <string name="themes_option_value_light">亮色</string>
-  <string name="themes_option_value_system">系統</string>
   <string name="themes_title_settings">主題</string>
   <string name="url_invalid">網址無效</string>
   <string name="url_parse_error">無法解析您的 Home Assistan URL，它看起來應該像https://example.com</string>
