@@ -56,35 +56,33 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         setPreferencesFromResource(R.xml.sensors, rootKey)
 
-        SensorReceiver.MANAGERS.sortedBy { it.name }.forEach { manager ->
+        SensorReceiver.MANAGERS.sortedBy { it.name }.filter { it.hasSensor(requireContext()) }.forEach { manager ->
             val prefCategory = PreferenceCategory(preferenceScreen.context)
             prefCategory.title = getString(manager.name)
 
-            if (manager.hasSensor(requireContext())) {
-                preferenceScreen.addPreference(prefCategory)
-                manager.availableSensors.sortedBy { it.name }.forEach { basicSensor ->
+            preferenceScreen.addPreference(prefCategory)
+            manager.availableSensors.sortedBy { it.name }.forEach { basicSensor ->
 
-                    val pref = Preference(preferenceScreen.context)
-                    pref.key = basicSensor.id
-                    pref.title = getString(basicSensor.name)
+                val pref = Preference(preferenceScreen.context)
+                pref.key = basicSensor.id
+                pref.title = getString(basicSensor.name)
 
-                    pref.setOnPreferenceClickListener {
-                        parentFragmentManager
-                            .beginTransaction()
-                            .replace(
-                                R.id.content,
-                                SensorDetailFragment.newInstance(
-                                    manager,
-                                    basicSensor
-                                )
+                pref.setOnPreferenceClickListener {
+                    parentFragmentManager
+                        .beginTransaction()
+                        .replace(
+                            R.id.content,
+                            SensorDetailFragment.newInstance(
+                                manager,
+                                basicSensor
                             )
-                            .addToBackStack("Sensor Detail")
-                            .commit()
-                        return@setOnPreferenceClickListener true
-                    }
-
-                    prefCategory.addPreference(pref)
+                        )
+                        .addToBackStack("Sensor Detail")
+                        .commit()
+                    return@setOnPreferenceClickListener true
                 }
+
+                prefCategory.addPreference(pref)
             }
         }
     }
