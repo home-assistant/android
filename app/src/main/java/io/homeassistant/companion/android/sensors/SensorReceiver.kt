@@ -101,7 +101,7 @@ class SensorReceiver : BroadcastReceiver() {
                         Log.e(TAG, "Issue registering sensor: ${reg.uniqueId}", e)
                     }
                 }
-                if (fullSensor != null && sensor?.registered == true) {
+                if (sensor?.enabled == true && fullSensor != null && sensor?.registered) {
                     enabledRegistrations.add(fullSensor.toSensorRegistration())
                 }
             }
@@ -109,7 +109,8 @@ class SensorReceiver : BroadcastReceiver() {
 
         var success = false
         try {
-            success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
+            if (enabledRegistrations.size > 0)
+                success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
         } catch (e: Exception) {
             Log.e(TAG, "Exception while updating sensors.", e)
         }
