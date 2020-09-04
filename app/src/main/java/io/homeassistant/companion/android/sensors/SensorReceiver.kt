@@ -107,23 +107,24 @@ class SensorReceiver : BroadcastReceiver() {
             }
         }
 
-        var success = false
-        try {
-            if (enabledRegistrations.size > 0)
+        if (enabledRegistrations.isNotEmpty()) {
+            var success = false
+            try {
                 success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception while updating sensors.", e)
-        }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception while updating sensors.", e)
+            }
 
-        // We failed to update a sensor, we should re register next time
-        if (!success) {
-            enabledRegistrations.forEach {
-                val sensor = sensorDao.get(it.uniqueId)
-                if (sensor != null) {
-                    sensor.registered = false
-                    sensorDao.update(sensor)
+            // We failed to update a sensor, we should re register next time
+            if (!success) {
+                enabledRegistrations.forEach {
+                    val sensor = sensorDao.get(it.uniqueId)
+                    if (sensor != null) {
+                        sensor.registered = false
+                        sensorDao.update(sensor)
+                    }
                 }
             }
-        }
+        } else Log.d(TAG, "Nothing to update")
     }
 }
