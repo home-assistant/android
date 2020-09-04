@@ -54,6 +54,10 @@ interface SensorManager {
 
     fun requestSensorUpdate(context: Context)
 
+    fun hasSensor(context: Context): Boolean {
+        return true
+    }
+
     fun onSensorUpdated(
         context: Context,
         basicSensor: BasicSensor,

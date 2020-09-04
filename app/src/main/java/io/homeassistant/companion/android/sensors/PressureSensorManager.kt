@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.content.Context.SENSOR_SERVICE
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -44,6 +45,11 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     override fun requestSensorUpdate(context: Context) {
         latestContext = context
         updatePressureSensor()
+    }
+
+    override fun hasSensor(context: Context): Boolean {
+        val packageManager: PackageManager = context.packageManager
+        return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_BAROMETER)
     }
 
     private fun updatePressureSensor() {
