@@ -11,7 +11,7 @@ import java.lang.reflect.Method
 class BluetoothSensorManager : SensorManager {
     companion object {
         private const val TAG = "BluetoothSM"
-        private val bluetoothConnection = SensorManager.BasicSensor(
+        val bluetoothConnection = SensorManager.BasicSensor(
             "bluetooth_connection",
             "sensor",
             R.string.basic_sensor_name_bluetooth,
