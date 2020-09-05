@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.domain.integration.Panel
 import io.homeassistant.companion.android.webview.WebViewActivity
 import javax.inject.Inject

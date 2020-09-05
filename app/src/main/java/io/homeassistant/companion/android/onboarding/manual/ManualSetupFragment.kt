@@ -13,7 +13,6 @@ import com.google.android.material.textfield.TextInputLayout
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import javax.inject.Inject
 
 class ManualSetupFragment : Fragment(), ManualSetupView {

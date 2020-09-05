@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.common
 
 import android.content.SharedPreferences
-import io.homeassistant.companion.android.data.LocalStorage
+import io.homeassistant.companion.android.common.data.LocalStorage
 
 class LocalStorageImpl(private val sharedPreferences: SharedPreferences) : LocalStorage {
 

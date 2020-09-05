@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android
 
 import dagger.Component
-import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment

@@ -1,60 +1,89 @@
 package io.homeassistant.companion.android.common.dagger
 
+import android.annotation.SuppressLint
+import android.app.Application
+import android.content.Context
+import android.net.wifi.WifiManager
 import android.os.Build
-import dagger.Binds
+import android.provider.Settings
 import dagger.Module
 import dagger.Provides
-import io.homeassistant.companion.android.data.HomeAssistantRetrofit
-import io.homeassistant.companion.android.data.LocalStorage
-import io.homeassistant.companion.android.data.authentication.AuthenticationRepositoryImpl
-import io.homeassistant.companion.android.data.authentication.AuthenticationService
-import io.homeassistant.companion.android.data.integration.IntegrationRepositoryImpl
-import io.homeassistant.companion.android.data.integration.IntegrationService
-import io.homeassistant.companion.android.data.themes.ThemesRepositoryImpl
-import io.homeassistant.companion.android.data.url.UrlRepositoryImpl
-import io.homeassistant.companion.android.data.wifi.WifiHelper
-import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.domain.integration.IntegrationRepository
-import io.homeassistant.companion.android.domain.themes.ThemesRepository
-import io.homeassistant.companion.android.domain.url.UrlRepository
+import dagger.hilt.InstallIn
+import dagger.hilt.android.components.ApplicationComponent
+import io.homeassistant.companion.android.common.LocalStorageImpl
+import io.homeassistant.companion.android.common.data.HomeAssistantRetrofit
+import io.homeassistant.companion.android.common.data.LocalStorage
+import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
+import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import io.homeassistant.companion.android.common.data.wifi.WifiHelperImpl
 import javax.inject.Named
+import javax.inject.Singleton
 
-@Module(includes = [DataModule.Declaration::class])
-class DataModule(
-    private val urlStorage: LocalStorage,
-    private val sessionLocalStorage: LocalStorage,
-    private val integrationLocalStorage: LocalStorage,
-    private val themesLocalStorage: LocalStorage,
-    private val wifiHelper: WifiHelper,
-    private val deviceId: String
-) {
+@Module
+@InstallIn(ApplicationComponent::class)
+object DataModule {
+
+    private const val instanceId = 0
 
     @Provides
+    @Singleton
     fun provideAuthenticationService(homeAssistantRetrofit: HomeAssistantRetrofit): AuthenticationService =
         homeAssistantRetrofit.retrofit.create(AuthenticationService::class.java)
 
     @Provides
+    @Singleton
     fun providesIntegrationService(homeAssistantRetrofit: HomeAssistantRetrofit): IntegrationService =
         homeAssistantRetrofit.retrofit.create(IntegrationService::class.java)
 
     @Provides
-    fun providesWifiHelper() = wifiHelper
+    fun providesWifiHelper(application: Application): WifiHelper {
+        return WifiHelperImpl(application.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+    }
 
     @Provides
     @Named("url")
-    fun provideUrlLocalStorage() = urlStorage
+    fun provideUrlLocalStorage(application: Application): LocalStorage {
+        return LocalStorageImpl(
+            application.getSharedPreferences(
+                "url_$instanceId",
+                Context.MODE_PRIVATE
+            )
+        )
+    }
 
     @Provides
     @Named("session")
-    fun provideSessionLocalStorage() = sessionLocalStorage
+    fun provideSessionLocalStorage(application: Application): LocalStorage {
+        return LocalStorageImpl(
+            application.getSharedPreferences(
+                "session_$instanceId",
+                Context.MODE_PRIVATE
+            )
+        )
+    }
 
     @Provides
     @Named("integration")
-    fun provideIntegrationLocalStorage() = integrationLocalStorage
+    fun provideIntegrationLocalStorage(application: Application): LocalStorage {
+        return LocalStorageImpl(
+            application.getSharedPreferences(
+                "integration_$instanceId",
+                Context.MODE_PRIVATE
+            )
+        )
+    }
 
     @Provides
     @Named("themes")
-    fun provideThemesLocalStorage() = themesLocalStorage
+    fun provideThemesLocalStorage(application: Application): LocalStorage {
+        return LocalStorageImpl(
+            application.getSharedPreferences(
+                "themes",
+                Context.MODE_PRIVATE
+            )
+        )
+    }
 
     @Provides
     @Named("manufacturer")
@@ -68,22 +97,10 @@ class DataModule(
     @Named("osVersion")
     fun provideDeviceOsVersion() = Build.VERSION.SDK_INT.toString()
 
+    @SuppressLint("HardwareIds")
     @Provides
     @Named("deviceId")
-    fun provideDeviceId() = deviceId
-
-    @Module
-    interface Declaration {
-        @Binds
-        fun bindUrlRepositoryImpl(repository: UrlRepositoryImpl): UrlRepository
-
-        @Binds
-        fun bindAuthenticationRepositoryImpl(repository: AuthenticationRepositoryImpl): AuthenticationRepository
-
-        @Binds
-        fun bindIntegrationService(repository: IntegrationRepositoryImpl): IntegrationRepository
-
-        @Binds
-        fun bindThemesRepositoryImpl(repository: ThemesRepositoryImpl): ThemesRepository
+    fun provideDeviceId(application: Application): String {
+        return Settings.Secure.getString(application.contentResolver, Settings.Secure.ANDROID_ID)
     }
 }

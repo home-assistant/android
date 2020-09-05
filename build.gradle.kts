@@ -16,6 +16,7 @@ buildscript {
         classpath(Config.Plugin.google)
         classpath(Config.Plugin.appDistribution)
         classpath(Config.Plugin.ktlint)
+        classpath(Config.Plugin.hilt)
     }
 }
 
@@ -23,7 +24,6 @@ allprojects {
     repositories {
         google()
         jcenter()
-        maven(url = Config.Repository.lokalize)
     }
 
     apply(plugin = "org.jlleitschuh.gradle.ktlint")

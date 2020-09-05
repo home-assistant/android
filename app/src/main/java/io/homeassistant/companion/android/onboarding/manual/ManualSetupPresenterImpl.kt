@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.manual
 
 import android.util.Log
-import io.homeassistant.companion.android.domain.MalformedHttpUrlException
+import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope

@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.onboarding.manual
 
-import io.homeassistant.companion.android.domain.MalformedHttpUrlException
+import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.domain.url.UrlUseCase
 import io.mockk.coEvery
 import io.mockk.coVerifyAll
