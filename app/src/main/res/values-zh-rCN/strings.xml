@@ -1,15 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-  <string-array name="pref_theme_option_labels">
-    <item>@string/themes_option_label_light</item>
-    <item>@string/themes_option_label_dark</item>
-    <item>@string/themes_option_label_system</item>
-  </string-array>
-  <string-array name="pref_theme_option_values">
-    <item>@string/themes_option_value_light</item>
-    <item>@string/themes_option_value_dark</item>
-    <item>@string/themes_option_value_system</item>
-  </string-array>
   <string name="add_service_data_field">添加字段</string>
   <string name="add_widget">添加小部件</string>
   <string name="app_name">Home Assistant</string>
@@ -177,9 +167,6 @@ Home Assistant实例</string>
   <string name="themes_option_label_dark">深色</string>
   <string name="themes_option_label_light">亮色</string>
   <string name="themes_option_label_system">跟随系统设置</string>
-  <string name="themes_option_value_dark">深色</string>
-  <string name="themes_option_value_light">亮色</string>
-  <string name="themes_option_value_system">系统</string>
   <string name="themes_title_settings">主题</string>
   <string name="unable_to_register">无法注册应用程序</string>
   <string name="unique_id">唯一 ID</string>
