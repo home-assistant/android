@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.media.AudioManager
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.PowerManager
 import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
@@ -38,6 +39,24 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             }
         )
+
+        // This will cause interactive and power save to update upon a state change
+        registerReceiver(
+            sensorReceiver, IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
+            }
+        )
+
+        // Update doze mode immediately on supported devices
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            registerReceiver(
+                sensorReceiver, IntentFilter().apply {
+                    addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
+                }
+            )
+        }
 
         // This will trigger an update any time the wifi state has changed
         registerReceiver(

@@ -154,6 +154,13 @@ like to connect to:</string>
   <string name="sensor_description_location_zone">Import existing Home Assistant zones as geofences for zone based tracking.</string>
   <string name="sensor_description_next_alarm">The date and time of the next scheduled alarm, any app or manufacturer can override the default behavior. The package attribute will tell you which app set the next scheduled alarm.</string>
   <string name="sensor_description_none">No description</string>
+  <string name="sensor_description_interactive">Whether or not the device is in an interactive state</string>
+  <string name="sensor_description_doze">Whether or not the device is in Doze mode</string>
+  <string name="sensor_description_power_save">Whether or not the device is in Power Save mode</string>
+  <string name="sensor_name_power">Power Sensors</string>
+  <string name="basic_sensor_name_power_save">Power Save</string>
+  <string name="basic_sensor_name_interactive">Interactive</string>
+  <string name="basic_sensor_name_doze">Doze Mode</string>
   <string name="basic_sensor_name_activity">Detected Activity</string>
   <string name="basic_sensor_name_geolocation">Geocoded Location</string>
   <string name="basic_sensor_name_location_background">Background Location</string>
