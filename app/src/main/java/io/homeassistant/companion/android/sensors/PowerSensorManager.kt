@@ -14,19 +14,19 @@ class PowerSensorManager : SensorManager {
 
         private val interactiveDevice = SensorManager.BasicSensor(
             "is_interactive",
-            "sensor",
+            "binary_sensor",
             R.string.basic_sensor_name_interactive,
             R.string.sensor_description_interactive
         )
         private val doze = SensorManager.BasicSensor(
             "is_idle",
-            "sensor",
+            "binary_sensor",
             R.string.basic_sensor_name_doze,
             R.string.sensor_description_doze
         )
         private val powerSave = SensorManager.BasicSensor(
             "power_save",
-            "sensor",
+            "binary_sensor",
             R.string.basic_sensor_name_power_save,
             R.string.sensor_description_power_save
         )
@@ -70,7 +70,7 @@ class PowerSensorManager : SensorManager {
         onSensorUpdated(
             context,
             interactiveDevice,
-            interactiveState.toString(),
+            interactiveState,
             icon,
             mapOf()
         )
@@ -88,7 +88,7 @@ class PowerSensorManager : SensorManager {
         onSensorUpdated(
             context,
             doze,
-            dozeState.toString(),
+            dozeState,
             icon,
             mapOf(
                 "ignoring_battery_optizimations" to powerManager.isIgnoringBatteryOptimizations(packageName)
@@ -107,7 +107,7 @@ class PowerSensorManager : SensorManager {
         onSensorUpdated(
             context,
             powerSave,
-            powerSaveState.toString(),
+            powerSaveState,
             icon,
             mapOf()
         )

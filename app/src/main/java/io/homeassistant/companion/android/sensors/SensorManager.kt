@@ -71,8 +71,10 @@ interface SensorManager {
         sensor.id = basicSensor.id
         sensor.state = state.toString()
         sensor.stateType = when (state) {
+            is Boolean -> "boolean"
+            is Int -> "int"
+            is Number -> "float"
             is String -> "string"
-            is Number -> "number"
             else -> throw IllegalArgumentException("Unknown Sensor State Type")
         }
         sensor.type = basicSensor.type
