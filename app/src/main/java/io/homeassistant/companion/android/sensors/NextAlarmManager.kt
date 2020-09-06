@@ -14,7 +14,7 @@ class NextAlarmManager : SensorManager {
     companion object {
         private const val TAG = "NextAlarm"
 
-        private val nextAlarm = SensorManager.BasicSensor(
+        val nextAlarm = SensorManager.BasicSensor(
             "next_alarm",
             "sensor",
             R.string.basic_sensor_name_alarm,

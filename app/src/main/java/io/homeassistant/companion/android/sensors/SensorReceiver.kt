@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
+import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -61,6 +62,27 @@ class SensorReceiver : BroadcastReceiver() {
             .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
+
+        when (intent.action) {
+            "android.app.action.NEXT_ALARM_CLOCK_CHANGED" -> {
+                val sensorDao = AppDatabase.getInstance(context).sensorDao()
+                val sensor = sensorDao.get(NextAlarmManager.nextAlarm.id)
+                if (sensor?.enabled != true) {
+                    Log.d(TAG, "Alarm Sensor disabled, skipping sensors update")
+                    return
+                }
+            }
+            "android.bluetooth.device.action.ACL_CONNECTED",
+                "android.bluetooth.device.action.ACL_DISCONNECTED",
+                BluetoothAdapter.ACTION_STATE_CHANGED -> {
+                val sensorDao = AppDatabase.getInstance(context).sensorDao()
+                val sensor = sensorDao.get(BluetoothSensorManager.bluetoothConnection.id)
+                if (sensor?.enabled != true) {
+                    Log.d(TAG, "Bluetooth Sensor disabled, skipping sensors update")
+                    return
+                }
+            }
+        }
 
         ioScope.launch {
             updateSensors(context, integrationUseCase)
