@@ -124,7 +124,7 @@ class SensorReceiver : BroadcastReceiver() {
                         Log.e(TAG, "Issue registering sensor: ${reg.uniqueId}", e)
                     }
                 }
-                if (sensor?.enabled == true && fullSensor != null && sensor?.registered) {
+                if (sensor?.enabled == true && fullSensor != null && sensor?.registered && sensor?.stateChanged) {
                     enabledRegistrations.add(fullSensor.toSensorRegistration())
                 }
             }
