@@ -67,7 +67,6 @@ interface SensorManager {
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensor = sensorDao.get(basicSensor.id) ?: return
-
         sensor.id = basicSensor.id
         sensor.state = state.toString()
         sensor.stateType = when (state) {
@@ -84,10 +83,24 @@ interface SensorManager {
         sensor.unitOfMeasurement = basicSensor.unitOfMeasurement
 
         sensorDao.update(sensor)
-
         sensorDao.clearAttributes(basicSensor.id)
-        attributes.entries.forEach { entry ->
-            sensorDao.add(Attribute(basicSensor.id, entry.key, entry.value.toString()))
+
+        for (item in attributes) {
+            val valueType = when (item.value) {
+                is Boolean -> "boolean"
+                is Int -> "int"
+                is Number -> "float"
+                else -> "string" // Always default to String for attributes
+            }
+
+            sensorDao.add(
+                Attribute(
+                    basicSensor.id,
+                    item.key,
+                    item.value.toString(),
+                    valueType
+                )
+            )
         }
     }
 }
