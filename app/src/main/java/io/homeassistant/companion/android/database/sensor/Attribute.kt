@@ -12,5 +12,5 @@ data class Attribute(
     @ColumnInfo(name = "value")
     var value: String,
     @ColumnInfo(name = "value_type")
-    var valueType: String = ""
+    var valueType: String
 )

@@ -92,17 +92,15 @@ interface SensorManager {
                 is Number -> "float"
                 else -> "string" // Always default to String for attributes
             }
-            attributes.entries.forEach { entry ->
-                if (item.key == entry.key)
-                    sensorDao.add(
-                        Attribute(
-                            basicSensor.id,
-                            entry.key,
-                            entry.value.toString(),
-                            valueType
-                        )
-                    )
-            }
+
+            sensorDao.add(
+                Attribute(
+                    basicSensor.id,
+                    item.key,
+                    item.value.toString(),
+                    valueType
+                )
+            )
         }
     }
 }

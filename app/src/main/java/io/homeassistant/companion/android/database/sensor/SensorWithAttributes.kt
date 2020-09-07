@@ -16,7 +16,6 @@ data class SensorWithAttributes(
     fun toSensorRegistration(): SensorRegistration<Any> {
         val attributes = attributes.map {
             val attributeValue = when (it.valueType) {
-                "" -> ""
                 "boolean" -> it.value.toBoolean()
                 "float" -> it.value.toFloat()
                 "int" -> it.value.toInt()
