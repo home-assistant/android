@@ -308,7 +308,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             Log.d(TAG, "Not requesting accurate location, last accurate location was too recent")
             return
         }
-        sensorDao.add(Attribute(backgroundLocation.id, "lastAccurateLocationRequest", now.toString()))
+        sensorDao.add(Attribute(backgroundLocation.id, "lastAccurateLocationRequest", now.toString(), "string"))
 
         val maxRetries = 5
         val request = createLocationRequest()
