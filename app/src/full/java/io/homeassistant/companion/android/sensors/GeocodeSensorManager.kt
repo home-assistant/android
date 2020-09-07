@@ -8,7 +8,11 @@ import android.os.Build
 import android.util.Log
 import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import java.lang.Exception
+import javax.inject.Inject
+import kotlinx.coroutines.runBlocking
 
 class GeocodeSensorManager : SensorManager {
 
@@ -20,6 +24,20 @@ class GeocodeSensorManager : SensorManager {
             R.string.basic_sensor_name_geolocation,
             R.string.sensor_description_geocoded_location
         )
+    }
+
+    @Inject
+    lateinit var integrationUseCase: IntegrationUseCase
+
+    private fun ensureInjected(context: Context) {
+        if (context.applicationContext is GraphComponentAccessor) {
+            DaggerSensorComponent.builder()
+                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
+                .build()
+                .inject(this)
+        } else {
+            throw Exception("Application Context passed is not of our application!")
+        }
     }
 
     override val enabledByDefault: Boolean
@@ -43,7 +61,14 @@ class GeocodeSensorManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
+        ensureInjected(context)
         updateGeocodedLocation(context)
+    }
+
+    private fun getMinimumAccuracy(): Int {
+        return runBlocking {
+            integrationUseCase.getMinimumAccuracy()
+        }
     }
 
     private fun updateGeocodedLocation(context: Context) {
@@ -58,7 +83,7 @@ class GeocodeSensorManager : SensorManager {
                     return@addOnSuccessListener
                 }
 
-                if (location.accuracy <= LocationSensorManager.MINIMUM_ACCURACY)
+                if (location.accuracy <= getMinimumAccuracy())
                     address = Geocoder(context)
                         .getFromLocation(location.latitude, location.longitude, 1)
                         .firstOrNull()

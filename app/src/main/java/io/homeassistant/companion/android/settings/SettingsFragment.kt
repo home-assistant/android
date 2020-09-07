@@ -1,8 +1,12 @@
 package io.homeassistant.companion.android.settings
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.os.Process.myPid
+import android.os.Process.myUid
 import android.text.InputType
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
@@ -102,6 +106,17 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 startActivity(NfcSetupActivity.newInstance(requireActivity()))
                 true
             }
+        }
+
+        val minimumAccuracy = findPreference<EditTextPreference>("minimum_accuracy")
+        if (requireContext().checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED &&
+            (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+            requireContext().checkPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED)) {
+                minimumAccuracy?.setOnBindEditTextListener {
+                    it.inputType = InputType.TYPE_CLASS_NUMBER
+                }
+        } else {
+            minimumAccuracy?.isVisible = false
         }
 
         findPreference<EditTextPreference>("session_timeout")?.setOnBindEditTextListener {

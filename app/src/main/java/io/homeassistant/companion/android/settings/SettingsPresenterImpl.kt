@@ -54,6 +54,7 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "connection_internal" -> (urlUseCase.getUrl(true) ?: "").toString()
                 "connection_external" -> (urlUseCase.getUrl(false) ?: "").toString()
+                "minimum_accuracy" -> integrationUseCase.getMinimumAccuracy().toString()
                 "registration_name" -> integrationUseCase.getRegistration().deviceName
                 "session_timeout" -> integrationUseCase.getSessionTimeOut().toString()
                 "themes" -> themesManager.getCurrentTheme()
@@ -67,6 +68,13 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "connection_internal" -> urlUseCase.saveUrl(value ?: "", true)
                 "connection_external" -> urlUseCase.saveUrl(value ?: "", false)
+                "minimum_accuracy" -> {
+                    try {
+                        integrationUseCase.minimumAccuracy(value.toString().toInt())
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Issue saving minimum accuracy value", e)
+                    }
+                }
                 "session_timeout" -> {
                     try {
                         integrationUseCase.sessionTimeOut(value.toString().toInt())
@@ -111,6 +119,7 @@ class SettingsPresenterImpl @Inject constructor(
     override fun getInt(key: String, defValue: Int): Int {
         return runBlocking {
             when (key) {
+                "minimum_accuracy" -> integrationUseCase.getMinimumAccuracy()
                 "session_timeout" -> integrationUseCase.getSessionTimeOut()
                 else -> throw IllegalArgumentException("No int found by this key: $key")
             }
@@ -120,6 +129,7 @@ class SettingsPresenterImpl @Inject constructor(
     override fun putInt(key: String, value: Int) {
         mainScope.launch {
             when (key) {
+                "minimum_accuracy" -> integrationUseCase.minimumAccuracy(value)
                 "session_timeout" -> integrationUseCase.sessionTimeOut(value)
                 else -> throw IllegalArgumentException("No int found by this key: $key")
             }

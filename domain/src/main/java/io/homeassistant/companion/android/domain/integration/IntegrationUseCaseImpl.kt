@@ -68,6 +68,14 @@ class IntegrationUseCaseImpl @Inject constructor(
         return integrationRepository.isFullScreenEnabled()
     }
 
+    override suspend fun minimumAccuracy(value: Int) {
+        return integrationRepository.minimumAccuracy(value)
+    }
+
+    override suspend fun getMinimumAccuracy(): Int {
+        return integrationRepository.getMinimumAccuracy()
+    }
+
     override suspend fun sessionTimeOut(value: Int) {
         return integrationRepository.sessionTimeOut(value)
     }

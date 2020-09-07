@@ -85,6 +85,7 @@ Home Assistant instance</string>
   <string name="manage_ssids_input_exists">This SSID already exists.</string>
   <string name="manual_setup">enter address manually</string>
   <string name="map">Map</string>
+  <string name="minimum_accuracy_title">Minimum accuracy</string>
   <string name="need_help">Need Help?</string>
   <string name="nfc_btn_create_duplicate">Create duplicate</string>
   <string name="nfc_btn_fire_event">Fire event</string>

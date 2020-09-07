@@ -18,4 +18,6 @@ interface SensorComponent {
     fun inject(sensorDetailFragment: SensorDetailFragment)
 
     fun inject(activitySensorManager: ActivitySensorManager)
+
+    fun inject(geocodeSensorManager: GeocodeSensorManager)
 }

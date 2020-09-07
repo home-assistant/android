@@ -17,6 +17,9 @@ interface IntegrationRepository {
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 
+    suspend fun minimumAccuracy(value: Int)
+    suspend fun getMinimumAccuracy(): Int
+
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
 

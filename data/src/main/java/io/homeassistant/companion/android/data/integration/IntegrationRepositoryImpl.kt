@@ -51,6 +51,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
+
+        private const val PREF_MINIMUM_ACCURACY = "minimum_accuracy"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -282,6 +284,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isFullScreenEnabled(): Boolean {
         return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
+    }
+
+    override suspend fun minimumAccuracy(value: Int) {
+        localStorage.putInt(PREF_MINIMUM_ACCURACY, value)
+    }
+
+    override suspend fun getMinimumAccuracy(): Int {
+        return localStorage.getInt(PREF_MINIMUM_ACCURACY) ?: 200
     }
 
     override suspend fun sessionTimeOut(value: Int) {

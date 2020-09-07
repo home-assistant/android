@@ -37,6 +37,11 @@
             android:icon="@drawable/leak"
             android:title="@string/sensor_title"
             android:summary="@string/sensor_summary"/>
+        <EditTextPreference
+            android:key="minimum_accuracy"
+            android:icon="@drawable/ic_gps_fixed"
+            android:title="@string/minimum_accuracy_title"
+            app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/security">

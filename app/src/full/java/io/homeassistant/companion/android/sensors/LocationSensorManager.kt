@@ -32,8 +32,6 @@ import kotlinx.coroutines.runBlocking
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     companion object {
-        const val MINIMUM_ACCURACY = 200
-
         const val ACTION_REQUEST_LOCATION_UPDATES =
             "io.homeassistant.companion.android.background.REQUEST_UPDATES"
         const val ACTION_REQUEST_ACCURATE_LOCATION_UPDATE =
@@ -70,6 +68,12 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     lateinit var latestContext: Context
+
+    private fun getMinimumAccuracy(): Int {
+        return runBlocking {
+            integrationUseCase.getMinimumAccuracy()
+        }
+    }
 
     override fun onReceive(context: Context, intent: Intent) {
         latestContext = context
@@ -178,7 +182,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private fun handleLocationUpdate(intent: Intent) {
         Log.d(TAG, "Received location update.")
         LocationResult.extractResult(intent)?.lastLocation?.let {
-            if (it.accuracy > MINIMUM_ACCURACY) {
+            if (it.accuracy > getMinimumAccuracy()) {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $it")
             } else {
                 sendLocationUpdate(it)
@@ -194,7 +198,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             return
         }
 
-        if (geofencingEvent.triggeringLocation.accuracy > MINIMUM_ACCURACY) {
+        if (geofencingEvent.triggeringLocation.accuracy > getMinimumAccuracy()) {
             Log.w(
                 TAG,
                 "Geofence location accuracy didn't meet requirements, requesting new location."
@@ -327,7 +331,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                         }
 
                         when {
-                            locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY -> {
+                            locationResult.lastLocation.accuracy <= getMinimumAccuracy() -> {
                                 Log.d(TAG, "Location accurate enough, all done with high accuracy.")
                                 runBlocking { sendLocationUpdate(locationResult.lastLocation) }
                                 if (wakeLock?.isHeld == true) wakeLock.release()
@@ -337,7 +341,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                                     TAG,
                                     "No location was accurate enough, sending our last location anyway"
                                 )
-                                if (locationResult.lastLocation.accuracy <= MINIMUM_ACCURACY * 2)
+                                if (locationResult.lastLocation.accuracy <= getMinimumAccuracy() * 2)
                                     runBlocking { sendLocationUpdate(locationResult.lastLocation) }
                                 if (wakeLock?.isHeld == true) wakeLock.release()
                             }

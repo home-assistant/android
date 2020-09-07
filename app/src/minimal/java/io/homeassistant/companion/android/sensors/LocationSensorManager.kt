@@ -8,8 +8,6 @@ import io.homeassistant.companion.android.R
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     companion object {
-        const val MINIMUM_ACCURACY = 200
-
         const val ACTION_REQUEST_LOCATION_UPDATES =
             "io.homeassistant.companion.android.background.REQUEST_UPDATES"
         const val ACTION_REQUEST_ACCURATE_LOCATION_UPDATE =

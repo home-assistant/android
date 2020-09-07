@@ -29,6 +29,9 @@ interface IntegrationUseCase {
 
     suspend fun getZones(): Array<Entity<ZoneAttributes>>
 
+    suspend fun minimumAccuracy(value: Int)
+    suspend fun getMinimumAccuracy(): Int
+
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
 
