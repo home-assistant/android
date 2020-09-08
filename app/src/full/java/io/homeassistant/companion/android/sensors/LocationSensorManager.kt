@@ -229,7 +229,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val now = System.currentTimeMillis()
 
         if (lastUpdateLocation == updateLocation.gps.contentToString()) {
-            if (now < lastLocationSend + 9000) {
+            if (now < lastLocationSend + 900000) {
                 Log.d(TAG, "Duplicate location received, not sending to HA")
                 return
             }
