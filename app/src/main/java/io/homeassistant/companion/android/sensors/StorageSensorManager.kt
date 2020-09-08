@@ -107,8 +107,8 @@ class StorageSensorManager : SensorManager {
             mapOf(
                 "Free internal storage" to freeInternalStorage,
                 "Total internal storage" to totalInternalStorage,
-                "Free external storage" to freeExternalStorage,
-                "Total external storage" to totalExternalStorage
+                "Free external storage" to freeExternalStorage, // Remove after next release
+                "Total external storage" to totalExternalStorage // Remove after next release
             )
         )
     }
