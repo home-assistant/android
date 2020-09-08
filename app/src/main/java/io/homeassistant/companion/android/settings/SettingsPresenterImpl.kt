@@ -67,7 +67,13 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "connection_internal" -> urlUseCase.saveUrl(value ?: "", true)
                 "connection_external" -> urlUseCase.saveUrl(value ?: "", false)
-                "session_timeout" -> integrationUseCase.sessionTimeOut(value.toString().toInt())
+                "session_timeout" -> {
+                    try {
+                        integrationUseCase.sessionTimeOut(value.toString().toInt())
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Issue saving session timeout value", e)
+                    }
+                }
                 "registration_name" -> {
                     try {
                         integrationUseCase.updateRegistration(deviceName = value!!)
