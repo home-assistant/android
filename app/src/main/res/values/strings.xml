@@ -157,6 +157,7 @@ like to connect to:</string>
   <string name="sensor_description_interactive">Whether or not the device is in an interactive state</string>
   <string name="sensor_description_doze">Whether or not the device is in Doze mode</string>
   <string name="sensor_description_power_save">Whether or not the device is in Power Save mode</string>
+  <string name="sensor_description_blueooth_state">Whether or not bluetooth is enabled on the device</string>
   <string name="sensor_name_power">Power Sensors</string>
   <string name="basic_sensor_name_power_save">Power Save</string>
   <string name="basic_sensor_name_interactive">Interactive</string>
@@ -174,6 +175,7 @@ like to connect to:</string>
   <string name="basic_sensor_name_phone">Phone State</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
   <string name="basic_sensor_name_sim2">SIM 2</string>
+  <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
   <string name="sensor_name_light">Light Sensor</string>
   <string name="sensor_name_activity">Activity Sensors</string>
   <string name="sensor_name_geolocation">Geolocation Sensors</string>
