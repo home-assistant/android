@@ -6,10 +6,12 @@
         android:title="@string/pref_connection_title">
         <EditTextPreference
             android:key="connection_external"
+            android:icon="@drawable/ic_globe"
             android:title="@string/pref_connection_url"
             app:useSimpleSummaryProvider="true"/>
         <io.homeassistant.companion.android.settings.ssid.SsidPreference
             android:key="connection_internal_ssids"
+            android:icon="@drawable/ic_wifi"
             android:title="@string/pref_connection_wifi"
             android:dialogTitle="@string/manage_ssids"
             android:positiveButtonText="@string/save"
@@ -24,6 +26,7 @@
         android:title="@string/device_registration">
         <EditTextPreference
             android:key="registration_name"
+            android:icon="@drawable/ic_edit"
             android:title="@string/device_name"
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>

@@ -1,8 +1,11 @@
 package io.homeassistant.companion.android.settings
 
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
@@ -101,6 +104,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             }
         }
 
+        findPreference<EditTextPreference>("session_timeout")?.setOnBindEditTextListener {
+            it.inputType = InputType.TYPE_CLASS_NUMBER
+        }
+
         removeSystemFromThemesIfNeeded()
 
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
@@ -140,12 +147,20 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     override fun disableInternalConnection() {
         findPreference<EditTextPreference>("connection_internal")?.let {
             it.isEnabled = false
+            val unwrappedDrawable =
+                AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
+            unwrappedDrawable?.setTint(Color.DKGRAY)
+            it.icon = unwrappedDrawable
         }
     }
 
     override fun enableInternalConnection() {
         findPreference<EditTextPreference>("connection_internal")?.let {
             it.isEnabled = true
+            val unwrappedDrawable =
+                AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
+            unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
+            it.icon = unwrappedDrawable
         }
     }
 
