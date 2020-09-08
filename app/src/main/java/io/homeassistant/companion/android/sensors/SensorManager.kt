@@ -69,7 +69,7 @@ interface SensorManager {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensor = sensorDao.get(basicSensor.id) ?: return
         Log.d("SensorManager", "Old sensor state ${sensor.state} compared to new state $state for ${sensor.name}")
-        sensor.stateChanged = (sensor.state != state.toString())
+        sensor.stateChanged = sensor.stateChanged || (sensor.state != state.toString())
         sensor.id = basicSensor.id
         sensor.state = state.toString()
         sensor.stateType = when (state) {
