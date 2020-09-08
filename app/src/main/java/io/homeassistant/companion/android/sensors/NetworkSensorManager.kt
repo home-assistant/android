@@ -16,6 +16,45 @@ class NetworkSensorManager : SensorManager {
             R.string.basic_sensor_name_wifi,
             R.string.sensor_description_wifi_connection
         )
+        val bssidState = SensorManager.BasicSensor(
+            "wifi_bssid",
+            "sensor",
+            R.string.basic_sensor_name_wifi_bssid,
+            R.string.sensor_description_wifi_bssid
+        )
+        val wifiIp = SensorManager.BasicSensor(
+            "wifi_ip_address",
+            "sensor",
+            R.string.basic_sensor_name_wifi_ip,
+            R.string.sensor_description_wifi_ip
+        )
+        val wifiLinkSpeed = SensorManager.BasicSensor(
+            "wifi_link_speed",
+            "sensor",
+            R.string.basic_sensor_name_wifi_link_speed,
+            R.string.sensor_description_wifi_link_speed,
+            unitOfMeasurement = "Mbps"
+        )
+        val wifiState = SensorManager.BasicSensor(
+            "wifi_state",
+            "binary_sensor",
+            R.string.basic_sensor_name_wifi_state,
+            R.string.sensor_description_wifi_state
+        )
+        val wifiFrequency = SensorManager.BasicSensor(
+            "wifi_frequency",
+            "sensor",
+            R.string.basic_sensor_name_wifi_frequency,
+            R.string.sensor_description_wifi_frequency,
+            unitOfMeasurement = "MHz"
+        )
+        val wifiSignalStrength = SensorManager.BasicSensor(
+            "wifi_signal_strength",
+            "sensor",
+            R.string.basic_sensor_name_wifi_signal,
+            R.string.sensor_description_wifi_signal,
+            unitOfMeasurement = "dBm"
+        )
     }
 
     override val enabledByDefault: Boolean
@@ -23,7 +62,7 @@ class NetworkSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_network
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(wifiConnection)
+        get() = listOf(wifiConnection, bssidState, wifiIp, wifiLinkSpeed, wifiState, wifiFrequency, wifiSignalStrength)
 
     override fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -40,6 +79,12 @@ class NetworkSensorManager : SensorManager {
         context: Context
     ) {
         updateWifiConnectionSensor(context)
+        updateBSSIDSensor(context)
+        updateWifiIPSensor(context)
+        updateWifiLinkSpeedSensor(context)
+        updateWifiSensor(context)
+        updateWifiFrequencySensor(context)
+        updateWifiSignalStrengthSensor(context)
     }
 
     private fun updateWifiConnectionSensor(context: Context) {
@@ -82,13 +127,13 @@ class NetworkSensorManager : SensorManager {
 
         val attributes = conInfo?.let {
             mapOf(
-                "bssid" to conInfo.bssid,
-                "ip_address" to getIpAddress(conInfo.ipAddress),
-                "link_speed" to conInfo.linkSpeed,
+                "bssid" to conInfo.bssid, // Remove after next release
+                "ip_address" to getIpAddress(conInfo.ipAddress), // Remove after next release
+                "link_speed" to conInfo.linkSpeed, // Remove after next release
                 "is_hidden" to conInfo.hiddenSSID,
-                "is_wifi_on" to wifiEnabled,
-                "frequency" to conInfo.frequency,
-                "signal_level" to lastScanStrength
+                "is_wifi_on" to wifiEnabled, // Remove after next release
+                "frequency" to conInfo.frequency, // Remove after next release
+                "signal_level" to lastScanStrength // Remove after next release
             )
         }.orEmpty()
 
@@ -97,6 +142,230 @@ class NetworkSensorManager : SensorManager {
             ssid,
             icon,
             attributes
+        )
+    }
+
+    private fun updateBSSIDSensor(context: Context) {
+        if (!isEnabled(context, bssidState.id))
+            return
+
+        var conInfo: WifiInfo? = null
+        var lastScanStrength = -1
+
+        if (checkPermission(context)) {
+            val wifiManager =
+                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+            conInfo = wifiManager.connectionInfo
+
+            lastScanStrength = wifiManager.scanResults.firstOrNull {
+                it.BSSID == conInfo.bssid
+            }?.level ?: -1
+        }
+
+        var signalStrength = -1
+        if (lastScanStrength != -1) {
+            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
+        }
+
+        val icon = "mdi:wifi-strength-" + when (signalStrength) {
+            -1 -> "off"
+            0 -> "outline"
+            else -> signalStrength
+        }
+
+        val bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
+        onSensorUpdated(context,
+            bssidState,
+            bssid,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateWifiIPSensor(context: Context) {
+        if (!isEnabled(context, wifiIp.id))
+            return
+
+        var conInfo: WifiInfo? = null
+        var deviceIp = "Unknown"
+        var lastScanStrength = -1
+
+        if (checkPermission(context)) {
+            val wifiManager =
+                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+            conInfo = wifiManager.connectionInfo
+
+            deviceIp = if (conInfo.networkId == -1) {
+                "<not connected>"
+            } else {
+                getIpAddress(conInfo.ipAddress)
+            }
+
+            lastScanStrength = wifiManager.scanResults.firstOrNull {
+                it.BSSID == conInfo.bssid
+            }?.level ?: -1
+        }
+
+        var signalStrength = -1
+        if (lastScanStrength != -1) {
+            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
+        }
+
+        val icon = "mdi:wifi-strength-" + when (signalStrength) {
+            -1 -> "off"
+            0 -> "outline"
+            else -> signalStrength
+        }
+
+        onSensorUpdated(context,
+            wifiIp,
+            deviceIp,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateWifiLinkSpeedSensor(context: Context) {
+        if (!isEnabled(context, wifiLinkSpeed.id))
+            return
+
+        var conInfo: WifiInfo? = null
+        var linkSpeed = 0
+        var lastScanStrength = -1
+
+        if (checkPermission(context)) {
+            val wifiManager =
+                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+            conInfo = wifiManager.connectionInfo
+
+            linkSpeed = if (conInfo.networkId == -1) {
+                0
+            } else {
+                conInfo.linkSpeed
+            }
+
+            lastScanStrength = wifiManager.scanResults.firstOrNull {
+                it.BSSID == conInfo.bssid
+            }?.level ?: -1
+        }
+
+        var signalStrength = -1
+        if (lastScanStrength != -1) {
+            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
+        }
+
+        val icon = "mdi:wifi-strength-" + when (signalStrength) {
+            -1 -> "off"
+            0 -> "outline"
+            else -> signalStrength
+        }
+
+        onSensorUpdated(context,
+            wifiLinkSpeed,
+            linkSpeed,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateWifiSensor(context: Context) {
+        if (!isEnabled(context, wifiState.id))
+            return
+
+        var wifiEnabled = false
+
+        if (checkPermission(context)) {
+            val wifiManager =
+                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+
+            wifiEnabled = wifiManager.isWifiEnabled
+        }
+        val icon = if (wifiEnabled) "mdi:wifi" else "mdi:wifi-off"
+
+        onSensorUpdated(context,
+            wifiState,
+            wifiEnabled,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateWifiFrequencySensor(context: Context) {
+        if (!isEnabled(context, wifiFrequency.id))
+            return
+
+        var conInfo: WifiInfo? = null
+        var frequency = 0
+        var lastScanStrength = -1
+
+        if (checkPermission(context)) {
+            val wifiManager =
+                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+            conInfo = wifiManager.connectionInfo
+
+            frequency = if (conInfo.networkId == -1) {
+                0
+            } else {
+                conInfo.frequency
+            }
+
+            lastScanStrength = wifiManager.scanResults.firstOrNull {
+                it.BSSID == conInfo.bssid
+            }?.level ?: -1
+        }
+
+        var signalStrength = -1
+        if (lastScanStrength != -1) {
+            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
+        }
+
+        val icon = "mdi:wifi-strength-" + when (signalStrength) {
+            -1 -> "off"
+            0 -> "outline"
+            else -> signalStrength
+        }
+
+        onSensorUpdated(context,
+            wifiFrequency,
+            frequency,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateWifiSignalStrengthSensor(context: Context) {
+        if (!isEnabled(context, wifiSignalStrength.id))
+            return
+
+        var conInfo: WifiInfo? = null
+        var lastScanStrength = -1
+
+        if (checkPermission(context)) {
+            val wifiManager =
+                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+            conInfo = wifiManager.connectionInfo
+
+            lastScanStrength = wifiManager.scanResults.firstOrNull {
+                it.BSSID == conInfo.bssid
+            }?.level ?: -1
+        }
+
+        var signalStrength = -1
+        if (lastScanStrength != -1) {
+            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
+        }
+
+        val icon = "mdi:wifi-strength-" + when (signalStrength) {
+            -1 -> "off"
+            0 -> "outline"
+            else -> signalStrength
+        }
+
+        onSensorUpdated(context,
+            wifiSignalStrength,
+            lastScanStrength,
+            icon,
+            mapOf()
         )
     }
 
