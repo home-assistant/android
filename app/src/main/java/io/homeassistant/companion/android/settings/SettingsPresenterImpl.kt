@@ -70,7 +70,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "session_timeout" -> {
                     try {
                         integrationUseCase.sessionTimeOut(value.toString().toInt())
-                    } catch (e: java.lang.Exception) {
+                    } catch (e: Exception) {
                         Log.e(TAG, "Issue saving session timeout value", e)
                     }
                 }
