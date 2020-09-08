@@ -158,7 +158,7 @@ like to connect to:</string>
   <string name="sensor_description_doze">Whether or not the device is in Doze mode</string>
   <string name="sensor_description_power_save">Whether or not the device is in Power Save mode</string>
   <string name="sensor_description_charging">Whether or not the device is actively charging</string>
-  <string name="sensor_description_charger_type">The type of charger plugged into the phone currently</string>
+  <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
   <string name="sensor_description_battery_health">The health of the battery</string>
   <string name="sensor_name_power">Power Sensors</string>
   <string name="basic_sensor_name_power_save">Power Save</string>
