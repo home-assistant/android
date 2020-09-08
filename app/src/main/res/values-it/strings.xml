@@ -147,7 +147,7 @@ Scansione della rete</string>
   <string name="sensor_description_sim_1">Informazioni sul provider di telefonia mobile corrente nello slot SIM 1</string>
   <string name="sensor_description_sim_2">Informazioni sul provider di telefonia mobile corrente nello slot SIM 2</string>
   <string name="sensor_description_steps_sensor">Il numero totale di passi dall\'ultimo riavvio del dispositivo</string>
-  <string name="sensor_description_storage_sensor">Informazioni sullo spazio di archiviazione totale e disponibile internamente ed esternamente</string>
+  <string name="sensor_description_internal_storage">Informazioni sullo spazio di archiviazione totale e disponibile internamente ed esternamente</string>
   <string name="sensor_description_wifi_connection">Informazioni sulla rete WiFi attualmente connessa</string>
   <string name="sensor_summary">Consente di gestire i sensori abilitati/disabilitati.</string>
   <string name="sensor_title">Gestione dei sensori</string>

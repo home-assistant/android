@@ -144,7 +144,7 @@
   <string name="sensor_description_sim_1">Информация об операторе сотовой связи в слоте SIM 1</string>
   <string name="sensor_description_sim_2">Информация об операторе сотовой связи в слоте SIM 2</string>
   <string name="sensor_description_steps_sensor">Общее количество шагов с момента последней перезагрузки устройства</string>
-  <string name="sensor_description_storage_sensor">Информация о внутреннем и внешнем пространстве для хранения</string>
+  <string name="sensor_description_internal_storage">Информация о внутреннем и внешнем пространстве для хранения</string>
   <string name="sensor_description_wifi_connection">Информация о сети Wi-Fi, к которой подключено устройство</string>
   <string name="sensor_summary">Включение или отключение сенсоров мобильного приложения</string>
   <string name="sensor_title">Управление сенсорами</string>

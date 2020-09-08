@@ -117,7 +117,7 @@
   <string name="security">Bezpieczeństwo</string>
   <string name="select_entity_to_display">Wybierz encję do wyświetlenia</string>
   <string name="select_instance">Wybierz instancję, z którą chcesz się połączyć:</string>
-  <string name="sensor_description_storage_sensor">Informacje o całkowitej i dostępnej przestrzeni dysku wewnętrznego i karty pamięci</string>
+  <string name="sensor_description_internal_storage">Informacje o całkowitej i dostępnej przestrzeni dysku wewnętrznego i karty pamięci</string>
   <string name="sensor_description_wifi_connection">Informacje o aktualnie podłączonej sieci WiFi</string>
   <string name="sensor_summary">Użyj tego, aby włączyć/wyłączyć sensory</string>
   <string name="sensor_title">Zarządzaj sensorami</string>

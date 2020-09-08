@@ -146,7 +146,7 @@ Home Assistant实例</string>
   <string name="sensor_description_sim_1">SIM插槽1中有关当前蜂窝电话提供商的信息</string>
   <string name="sensor_description_sim_2">SIM插槽2中有关当前蜂窝电话提供商的信息</string>
   <string name="sensor_description_steps_sensor">自上次重新启动设备以来的总步数</string>
-  <string name="sensor_description_storage_sensor">有关内部和外部总可用存储空间的信息</string>
+  <string name="sensor_description_internal_storage">有关内部和外部总可用存储空间的信息</string>
   <string name="sensor_description_wifi_connection">有关当前连接的WiFi网络的信息</string>
   <string name="sensor_summary">使用它来管理启用/禁用的传感器。</string>
   <string name="sensor_title">管理传感器</string>
