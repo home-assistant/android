@@ -140,9 +140,9 @@ class BatterySensorManager : SensorManager {
             chargingStatus,
             getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
             mapOf(
-                "is_charging" to isCharging,
-                "charger_type" to chargerType,
-                "battery_health" to batteryHealth
+                "is_charging" to isCharging, // Remove after next release
+                "charger_type" to chargerType, // Remove after next release
+                "battery_health" to batteryHealth // Remove after next release
             )
         )
     }
