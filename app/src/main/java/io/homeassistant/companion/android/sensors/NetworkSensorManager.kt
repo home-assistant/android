@@ -127,13 +127,13 @@ class NetworkSensorManager : SensorManager {
 
         val attributes = conInfo?.let {
             mapOf(
-                "bssid" to conInfo.bssid,
-                "ip_address" to getIpAddress(conInfo.ipAddress),
-                "link_speed" to conInfo.linkSpeed,
+                "bssid" to conInfo.bssid, // Remove after next release
+                "ip_address" to getIpAddress(conInfo.ipAddress), // Remove after next release
+                "link_speed" to conInfo.linkSpeed, // Remove after next release
                 "is_hidden" to conInfo.hiddenSSID,
-                "is_wifi_on" to wifiEnabled,
-                "frequency" to conInfo.frequency,
-                "signal_level" to lastScanStrength
+                "is_wifi_on" to wifiEnabled, // Remove after next release
+                "frequency" to conInfo.frequency, // Remove after next release
+                "signal_level" to lastScanStrength // Remove after next release
             )
         }.orEmpty()
 
