@@ -158,6 +158,8 @@ like to connect to:</string>
   <string name="sensor_description_doze">Whether or not the device is in Doze mode</string>
   <string name="sensor_description_power_save">Whether or not the device is in Power Save mode</string>
   <string name="sensor_name_power">Power Sensors</string>
+  <string name="basic_sensor_name_internal_storage">Internal Storage</string>
+  <string name="basic_sensor_name_external_storage">External Storage</string>
   <string name="basic_sensor_name_power_save">Power Save</string>
   <string name="basic_sensor_name_interactive">Interactive</string>
   <string name="basic_sensor_name_doze">Doze Mode</string>
@@ -189,14 +191,15 @@ like to connect to:</string>
   <string name="sensor_name_pressure">Pressure Sensor</string>
   <string name="sensor_name_proximity">Proximity Sensor</string>
   <string name="sensor_name_steps">Steps Sensor</string>
-  <string name="sensor_name_storage">Storage Sensor</string>
+  <string name="sensor_name_storage">Storage Sensors</string>
   <string name="sensor_description_phone_state">Whether or not the phone is ringing or in a call, no other caller information is stored</string>
   <string name="sensor_description_pressure_sensor">The current ambient air pressure reading</string>
   <string name="sensor_description_proximity_sensor">The current proximity reading, some devices only report near or far</string>
   <string name="sensor_description_sim_1">Information about the current cellular provider in SIM slot 1</string>
   <string name="sensor_description_sim_2">Information about the current cellular provider in SIM slot 2</string>
   <string name="sensor_description_steps_sensor">The total number of steps since the last reboot of the device</string>
-  <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
+  <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
+  <string name="sensor_description_external_storage">Information about the total and available storage space externally</string>
   <string name="sensor_description_wifi_connection">Information about the currently connected WiFi network</string>
   <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
   <string name="sensor_title">Manage Sensors</string>
