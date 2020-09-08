@@ -22,7 +22,7 @@ class BluetoothSensorManager : SensorManager {
             "bluetooth_state",
             "binary_sensor",
             R.string.basic_sensor_name_bluetooth_state,
-            R.string.sensor_description_blueooth_state
+            R.string.sensor_description_bluetooth_state
         )
     }
 
@@ -98,7 +98,7 @@ class BluetoothSensorManager : SensorManager {
             mapOf(
                 "connected_paired_devices" to connectedPairedDevices,
                 "connected_not_paired_devices" to connectedNotPairedDevices,
-                "is_bt_on" to isBtOn,
+                "is_bt_on" to isBtOn,  // Remove after next release
                 "paired_devices" to bondedString
             )
         )
