@@ -144,6 +144,7 @@ class SensorReceiver : BroadcastReceiver() {
                     val sensor = sensorDao.get(it.uniqueId)
                     if (sensor != null) {
                         sensor.registered = false
+                        sensor.stateChanged = false
                         sensorDao.update(sensor)
                     }
                 }
