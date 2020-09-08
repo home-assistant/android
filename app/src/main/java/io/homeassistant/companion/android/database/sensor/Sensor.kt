@@ -13,6 +13,8 @@ data class Sensor(
     var enabled: Boolean,
     @ColumnInfo(name = "registered")
     var registered: Boolean,
+    @ColumnInfo(name = "state_changed")
+    var stateChanged: Boolean,
     @ColumnInfo(name = "state")
     var state: String,
     @ColumnInfo(name = "state_type")

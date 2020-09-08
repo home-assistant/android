@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
+import android.util.Log
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
@@ -39,7 +40,7 @@ interface SensorManager {
 
         // If we haven't created the entity yet do so and default to enabled if required
         if (sensor == null) {
-            sensor = Sensor(sensorId, permission && enabledByDefault, false, "")
+            sensor = Sensor(sensorId, permission && enabledByDefault, false, true, "")
             sensorDao.add(sensor)
         }
 
@@ -67,6 +68,8 @@ interface SensorManager {
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensor = sensorDao.get(basicSensor.id) ?: return
+        Log.d("SensorManager", "Old sensor state ${sensor.state} compared to new state $state for ${sensor.name}")
+        sensor.stateChanged = (sensor.state != state.toString())
         sensor.id = basicSensor.id
         sensor.state = state.toString()
         sensor.stateType = when (state) {
