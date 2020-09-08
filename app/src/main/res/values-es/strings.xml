@@ -144,7 +144,7 @@ instancia de Home Assistant</string>
   <string name="sensor_description_sim_1">Información sobre el proveedor de telefonía móvil actual en la ranura SIM 1</string>
   <string name="sensor_description_sim_2">Información sobre el proveedor de telefonía móvil actual en la ranura SIM 2</string>
   <string name="sensor_description_steps_sensor">El número total de pasos desde el último reinicio del dispositivo</string>
-  <string name="sensor_description_storage_sensor">Información sobre el espacio de almacenamiento total y disponible interno y externo</string>
+  <string name="sensor_description_internal_storage">Información sobre el espacio de almacenamiento total y disponible interno y externo</string>
   <string name="sensor_description_wifi_connection">Información sobre la red WiFi conectada actualmente</string>
   <string name="sensor_summary">Usa esto para controlar qué sensores están activados/desactivados.</string>
   <string name="sensor_title">Administrar sensores</string>

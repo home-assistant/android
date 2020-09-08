@@ -15,8 +15,15 @@ class StorageSensorManager : SensorManager {
         private val storageSensor = SensorManager.BasicSensor(
             "storage_sensor",
             "sensor",
-            R.string.sensor_name_storage,
-            R.string.sensor_description_storage_sensor,
+            R.string.basic_sensor_name_internal_storage,
+            R.string.sensor_description_internal_storage,
+            unitOfMeasurement = "%"
+        )
+        private val externalStorage = SensorManager.BasicSensor(
+            "external_storage",
+            "sensor",
+            R.string.basic_sensor_name_external_storage,
+            R.string.sensor_description_external_storage,
             unitOfMeasurement = "%"
         )
         val path: File = Environment.getDataDirectory()
@@ -58,7 +65,7 @@ class StorageSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_storage
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(storageSensor)
+        get() = listOf(storageSensor, externalStorage)
 
     override fun requiredPermissions(): Array<String> {
         return emptyArray()
@@ -68,6 +75,7 @@ class StorageSensorManager : SensorManager {
         context: Context
     ) {
         updateStorageSensor(context)
+        updateExternalStorageSensor(context)
     }
 
     private fun updateStorageSensor(context: Context) {
@@ -99,8 +107,40 @@ class StorageSensorManager : SensorManager {
             mapOf(
                 "Free internal storage" to freeInternalStorage,
                 "Total internal storage" to totalInternalStorage,
-                "Free external storage" to freeExternalStorage,
-                "Total external storage" to totalExternalStorage
+                "Free external storage" to freeExternalStorage, // Remove after next release
+                "Total external storage" to totalExternalStorage // Remove after next release
+            )
+        )
+    }
+
+    private fun updateExternalStorageSensor(context: Context) {
+        if (!isEnabled(context, externalStorage.id))
+            return
+
+        externalPath = externalMemoryAvailable(context)
+        var totalExternalStorage = "No SD Card"
+        var freeExternalStorage = "No SD Card"
+        var percentFreeExternal = 0
+
+        if (externalPath != null) {
+            val statSD = StatFs(externalPath.toString())
+            blockSizeSD = statSD.blockSizeLong
+            availableBlocksSD = statSD.availableBlocksLong
+            totalBlocksSD = statSD.blockCountLong
+            totalExternalStorage = getTotalExternalMemorySize()
+            freeExternalStorage = getAvailableExternalMemorySize()
+            percentFreeExternal = ((availableBlocksSD.toDouble() / totalBlocksSD.toDouble()) * 100).roundToInt()
+        }
+
+        val icon = "mdi:micro-sd"
+
+        onSensorUpdated(context,
+            externalStorage,
+            percentFreeExternal,
+            icon,
+            mapOf(
+                "free_external_storage" to freeExternalStorage,
+                "total_external_storage" to totalExternalStorage
             )
         )
     }
