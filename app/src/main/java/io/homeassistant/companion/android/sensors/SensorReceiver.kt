@@ -73,12 +73,19 @@ class SensorReceiver : BroadcastReceiver() {
                 }
             }
             "android.bluetooth.device.action.ACL_CONNECTED",
-                "android.bluetooth.device.action.ACL_DISCONNECTED",
-                BluetoothAdapter.ACTION_STATE_CHANGED -> {
+                "android.bluetooth.device.action.ACL_DISCONNECTED" -> {
                 val sensorDao = AppDatabase.getInstance(context).sensorDao()
-                val sensor = sensorDao.get(BluetoothSensorManager.bluetoothConnection.id)
-                if (sensor?.enabled != true) {
-                    Log.d(TAG, "Bluetooth Sensor disabled, skipping sensors update")
+                val sensorBtConn = sensorDao.get(BluetoothSensorManager.bluetoothConnection.id)
+                if (sensorBtConn?.enabled != true) {
+                    Log.d(TAG, "Bluetooth Connection Sensor disabled, skipping sensors update")
+                    return
+                }
+            }
+            BluetoothAdapter.ACTION_STATE_CHANGED -> {
+                val sensorDao = AppDatabase.getInstance(context).sensorDao()
+                val sensorBtState = sensorDao.get(BluetoothSensorManager.bluetoothState.id)
+                if (sensorBtState?.enabled != true) {
+                    Log.d(TAG, "Bluetooth State Sensor disabled, skipping sensors update")
                     return
                 }
             }

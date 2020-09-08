@@ -18,6 +18,12 @@ class BluetoothSensorManager : SensorManager {
             R.string.sensor_description_bluetooth_connection,
             unitOfMeasurement = "connection(s)"
         )
+        val bluetoothState = SensorManager.BasicSensor(
+            "bluetooth_state",
+            "binary_sensor",
+            R.string.basic_sensor_name_bluetooth_state,
+            R.string.sensor_description_bluetooth_state
+        )
     }
 
     override val enabledByDefault: Boolean
@@ -25,7 +31,7 @@ class BluetoothSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_bluetooth
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(bluetoothConnection)
+        get() = listOf(bluetoothConnection, bluetoothState)
 
     override fun requiredPermissions(): Array<String> {
         return arrayOf(Manifest.permission.BLUETOOTH)
@@ -35,6 +41,7 @@ class BluetoothSensorManager : SensorManager {
         context: Context
     ) {
         updateBluetoothConnectionSensor(context)
+        updateBluetoothState(context)
     }
 
     private fun updateBluetoothConnectionSensor(context: Context) {
@@ -91,9 +98,36 @@ class BluetoothSensorManager : SensorManager {
             mapOf(
                 "connected_paired_devices" to connectedPairedDevices,
                 "connected_not_paired_devices" to connectedNotPairedDevices,
-                "is_bt_on" to isBtOn,
+                "is_bt_on" to isBtOn, // Remove after next release
                 "paired_devices" to bondedString
             )
+        )
+    }
+
+    private fun updateBluetoothState(context: Context) {
+        if (!isEnabled(context, bluetoothState.id))
+            return
+
+        var isBtOn = false
+
+        if (checkPermission(context)) {
+
+            val bluetoothManager =
+                (context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
+
+            if (bluetoothManager.adapter != null) {
+                val adapter = bluetoothManager.adapter
+                isBtOn = adapter.isEnabled
+            }
+        }
+        val icon = if (isBtOn) "mdi:bluetooth" else "mdi:bluetooth-off"
+
+        onSensorUpdated(
+            context,
+            bluetoothState,
+            isBtOn,
+            icon,
+            mapOf()
         )
     }
 
