@@ -59,6 +59,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         private var isBackgroundLocationSetup = false
         private var isZoneLocationSetup = false
+
+        private var lastLocationSend = 0L
+        private var lastUpdateLocation = ""
     }
 
     @Inject
@@ -223,33 +226,20 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             if (Build.VERSION.SDK_INT >= 26) location.verticalAccuracyMeters.toInt() else 0
         )
 
-        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-        val fullSensor = sensorDao.getFull(backgroundLocation.id)
-        val locationEntity = fullSensor?.sensor
-        val lastLocationSend = fullSensor?.attributes?.firstOrNull { it.name == "lastLocationSent" }?.value?.toLongOrNull() ?: 0L
         val now = System.currentTimeMillis()
 
-        if (locationEntity?.state == updateLocation.gps.contentToString()) {
-            if (now >= lastLocationSend + 900000) {
-                Log.d(TAG, "Sending location since it's been more than 15 minutes")
-            } else {
-                Log.d(TAG, "Same location as last update, not sending to HA")
+        if (lastUpdateLocation == updateLocation.gps.contentToString()) {
+            if (now < lastLocationSend + 900000) {
+                Log.d(TAG, "Duplicate location received, not sending to HA")
                 return
             }
         }
+        lastLocationSend = now
+        lastUpdateLocation = updateLocation.gps.contentToString()
 
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
-                onSensorUpdated(
-                    latestContext,
-                    backgroundLocation,
-                    updateLocation.gps.contentToString(),
-                    "",
-                    mapOf(
-                        "lastLocationSent" to now.toString()
-                    )
-                )
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
             }
