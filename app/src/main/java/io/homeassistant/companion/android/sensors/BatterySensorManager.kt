@@ -25,6 +25,25 @@ class BatterySensorManager : SensorManager {
             R.string.sensor_description_battery_state,
             "battery"
         )
+        private val isChargingState = SensorManager.BasicSensor(
+            "is_charging",
+            "binary_sensor",
+            R.string.basic_sensor_name_charging,
+            R.string.sensor_description_charging,
+            "plug"
+        )
+        private val chargerTypeState = SensorManager.BasicSensor(
+            "charger_type",
+            "sensor",
+            R.string.basic_sensor_name_charger_type,
+            R.string.sensor_description_charger_type
+        )
+        private val batteryHealthState = SensorManager.BasicSensor(
+            "battery_health",
+            "sensor",
+            R.string.basic_sensor_name_battery_health,
+            R.string.sensor_description_battery_health
+        )
     }
 
     override val enabledByDefault: Boolean
@@ -33,7 +52,7 @@ class BatterySensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_battery
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(batteryLevel, batteryState)
+        get() = listOf(batteryLevel, batteryState, isChargingState, chargerTypeState, batteryHealthState)
 
     override fun requiredPermissions(): Array<String> {
         return emptyArray()
@@ -46,6 +65,9 @@ class BatterySensorManager : SensorManager {
         if (intent != null) {
             updateBatteryLevel(context, intent)
             updateBatteryState(context, intent)
+            updateIsCharging(context, intent)
+            updateChargerType(context, intent)
+            updateBatteryHealth(context, intent)
         }
     }
 
@@ -118,10 +140,63 @@ class BatterySensorManager : SensorManager {
             chargingStatus,
             getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
             mapOf(
-                "is_charging" to isCharging,
-                "charger_type" to chargerType,
-                "battery_health" to batteryHealth
+                "is_charging" to isCharging, // Remove after next release
+                "charger_type" to chargerType, // Remove after next release
+                "battery_health" to batteryHealth // Remove after next release
             )
+        )
+    }
+
+    private fun updateIsCharging(context: Context, intent: Intent) {
+        if (!isEnabled(context, isChargingState.id))
+            return
+
+        val isCharging = getIsCharging(intent)
+
+        val icon = if (isCharging) "mdi:power-plug" else "mdi:power-plug-off"
+        onSensorUpdated(
+            context,
+            isChargingState,
+            isCharging,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateChargerType(context: Context, intent: Intent) {
+        if (!isEnabled(context, chargerTypeState.id))
+            return
+
+        val percentage: Int = getBatteryPercentage(intent)
+        val isCharging = getIsCharging(intent)
+        val chargerType = getChargerType(intent)
+        val chargingStatus = getChargingStatus(intent)
+
+        onSensorUpdated(
+            context,
+            chargerTypeState,
+            chargerType,
+            getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
+            mapOf()
+        )
+    }
+
+    private fun updateBatteryHealth(context: Context, intent: Intent) {
+        if (!isEnabled(context, batteryHealthState.id))
+            return
+
+        val percentage: Int = getBatteryPercentage(intent)
+        val isCharging = getIsCharging(intent)
+        val chargerType = getChargerType(intent)
+        val chargingStatus = getChargingStatus(intent)
+        val batteryHealth = getBatteryHealth(intent)
+
+        onSensorUpdated(
+            context,
+            batteryHealthState,
+            batteryHealth,
+            getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
+            mapOf()
         )
     }
 
