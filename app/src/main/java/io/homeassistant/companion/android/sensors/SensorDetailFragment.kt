@@ -69,7 +69,6 @@ class SensorDetailFragment(
                 }
 
                 updateSensorEntity(isEnabled)
-                this@SensorDetailFragment.refreshSensorData()
 
                 return@setOnPreferenceChangeListener true
             }
@@ -115,22 +114,24 @@ class SensorDetailFragment(
             }
         }
         findPreference<Preference>("device_class")?.let {
-            if (sensorData.deviceClass == null)
-                it.isVisible = false
-            else
+            if (sensorData.enabled && sensorData.deviceClass != null) {
                 it.summary = sensorData.deviceClass
+                it.isVisible = true
+            } else {
+                it.isVisible = false
+            }
         }
         findPreference<Preference>("icon")?.let {
-            if (sensorData.icon == "")
-                it.isVisible = false
-            else
+            if (sensorData.enabled && sensorData.icon != "") {
                 it.summary = sensorData.icon
+                it.isVisible = true
+            } else {
+                it.isVisible = false
+            }
         }
 
         findPreference<PreferenceCategory>("attributes")?.let {
-            if (attributes.isNullOrEmpty())
-                it.isVisible = false
-            else {
+            if (sensorData.enabled && !attributes.isNullOrEmpty()) {
                 attributes.forEach { attribute ->
                     val key = "attribute_${attribute.name}"
                     val pref = findPreference(key) ?: Preference(requireContext())
@@ -143,7 +144,9 @@ class SensorDetailFragment(
                     if (!it.contains(pref))
                         it.addPreference(pref)
                 }
-            }
+                it.isVisible = true
+            } else
+                it.isVisible = false
         }
     }
 
@@ -153,9 +156,10 @@ class SensorDetailFragment(
         var sensorEntity = sensorDao.get(basicSensor.id)
         if (sensorEntity != null) {
             sensorEntity.enabled = isEnabled
+            sensorEntity.lastSentState = ""
             sensorDao.update(sensorEntity)
         } else {
-            sensorEntity = Sensor(basicSensor.id, isEnabled, false, true, "")
+            sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
             sensorDao.add(sensorEntity)
         }
         refreshSensorData()
