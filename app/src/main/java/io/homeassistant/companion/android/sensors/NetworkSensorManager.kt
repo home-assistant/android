@@ -68,7 +68,7 @@ class NetworkSensorManager : SensorManager {
             "public_ip_address",
             "sensor",
             R.string.basic_sensor_name_public_ip,
-            R.string.sensor_description_piblic_ip
+            R.string.sensor_description_public_ip
         )
     }
 
@@ -409,6 +409,9 @@ class NetworkSensorManager : SensorManager {
     }
 
     private fun updatePublicIpSensor(context: Context) {
+        if (!isEnabled(context, publicIp.id))
+            return
+
         var ip = "unknown"
         val client = OkHttpClient()
         val request = Request.Builder().url("https://api.ipify.org?format=json").build()
