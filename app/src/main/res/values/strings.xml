@@ -141,7 +141,16 @@ for Home Assistant</string>
   <string name="select_instance">Select the instance you would 
 like to connect to:</string>
   <string name="sensor_description">Description</string>
-  <string name="sensor_description_audio_sensor">The state of the devices ringer mode as well as other audio related attributes</string>
+  <string name="sensor_description_audio_sensor">The state of the devices ringer mode</string>
+  <string name="sensor_description_audio_mode">The state of the devices audio mode</string>
+  <string name="sensor_description_headphone">Whether or not headphones are plugged into the device</string>
+  <string name="sensor_description_mic_muted">Whether or not the microphone is muted on the device</string>
+  <string name="sensor_description_music_active">Whether or not music is actively playing on the device</string>
+  <string name="sensor_description_speakerphone">Whether or not speakerphone is enabled on the device</string>
+  <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
+  <string name="sensor_description_volume_call">Volume level for calls on the device</string>
+  <string name="sensor_description_volume_music">Volume level for music on the device</string>
+  <string name="sensor_description_volume_ring">Volume level for the ringer on the device</string>
   <string name="sensor_description_battery_level">The current battery level of the device</string>
   <string name="sensor_description_battery_state">The current charging state of the battery</string>
   <string name="sensor_description_bluetooth_connection">Information about currently connected bluetooth devices</string>
@@ -164,6 +173,16 @@ like to connect to:</string>
   <string name="sensor_name_power">Power Sensors</string>
   <string name="basic_sensor_name_internal_storage">Internal Storage</string>
   <string name="basic_sensor_name_external_storage">External Storage</string>
+  <string name="sensor_name_ringer_mode">Ringer Mode</string>
+  <string name="sensor_name_audio_mode">Audio Mode</string>
+  <string name="sensor_name_headphone">Headphones</string>
+  <string name="sensor_name_mic_muted">Mic Muted</string>
+  <string name="sensor_name_music_active">Music Active</string>
+  <string name="sensor_name_speakerphone">Speakerphone</string>
+  <string name="sensor_name_volume_alarm">Volume Level Alarm</string>
+  <string name="sensor_name_volume_call">Volume Level Call</string>
+  <string name="sensor_name_volume_music">Volume Level Music</string>
+  <string name="sensor_name_volume_ring">Volume Level Ringer</string>
   <string name="basic_sensor_name_power_save">Power Save</string>
   <string name="basic_sensor_name_interactive">Interactive</string>
   <string name="basic_sensor_name_doze">Doze Mode</string>
@@ -194,7 +213,7 @@ like to connect to:</string>
   <string name="sensor_name_activity">Activity Sensors</string>
   <string name="sensor_name_geolocation">Geolocation Sensors</string>
   <string name="sensor_name_location">Location Sensors</string>
-  <string name="sensor_name_audio">Audio Sensor</string>
+  <string name="sensor_name_audio">Audio Sensors</string>
   <string name="sensor_name_battery">Battery Sensors</string>
   <string name="sensor_name_bluetooth">Bluetooth Sensors</string>
   <string name="sensor_name_dnd">Do Not Disturb Sensor</string>
