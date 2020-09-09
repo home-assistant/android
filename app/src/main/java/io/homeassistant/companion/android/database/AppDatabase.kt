@@ -30,7 +30,7 @@ import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
         StaticWidgetEntity::class,
         TemplateWidgetEntity::class
     ],
-    version = 9
+    version = 10
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
