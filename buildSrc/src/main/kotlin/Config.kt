@@ -8,7 +8,6 @@ object Config {
         const val ktlint = "org.jlleitschuh.gradle:ktlint-gradle:9.2.1"
         const val playPublisher = "com.github.triplet.gradle:play-publisher:2.7.5"
         const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.0.0"
-        const val hilt = "com.google.dagger:hilt-android-gradle-plugin:${Dependency.Google.hiltVersion}"
     }
 
     object Repository {
@@ -36,9 +35,9 @@ object Config {
         }
 
         object Google {
-            internal const val hiltVersion = "2.28-alpha"
-            const val hilt = "com.google.dagger:hilt-android:${hiltVersion}"
-            const val hiltCompiler = "com.google.dagger:hilt-android-compiler:${hiltVersion}"
+            private const val daggerVersion = "2.28.3"
+            const val dagger = "com.google.dagger:dagger:${daggerVersion}"
+            const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
             const val material = "com.google.android.material:material:1.2.0"
         }

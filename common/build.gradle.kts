@@ -2,7 +2,6 @@ plugins {
     id("com.android.library")
     id("kotlin-android")
     id("kotlin-kapt")
-    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -17,8 +16,8 @@ dependencies {
     implementation(Config.Dependency.Kotlin.core)
     implementation(Config.Dependency.Kotlin.coroutines)
 
-    implementation(Config.Dependency.Google.hilt)
-    kapt(Config.Dependency.Google.hiltCompiler)
+    implementation(Config.Dependency.Google.dagger)
+    kapt(Config.Dependency.Google.daggerCompiler)
 
     implementation(Config.Dependency.Square.retrofit)
     implementation(Config.Dependency.Square.retrofitJacksonConverter)

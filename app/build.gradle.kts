@@ -127,8 +127,8 @@ dependencies {
     implementation(Config.Dependency.Kotlin.coroutines)
     implementation(Config.Dependency.Kotlin.coroutinesAndroid)
 
-    implementation(Config.Dependency.Google.hilt)
-    kapt(Config.Dependency.Google.hiltCompiler)
+    implementation(Config.Dependency.Google.dagger)
+    kapt(Config.Dependency.Google.daggerCompiler)
 
     implementation(Config.Dependency.AndroidX.appcompat)
     implementation(Config.Dependency.AndroidX.lifecycle)

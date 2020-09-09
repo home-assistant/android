@@ -10,16 +10,20 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
-import dagger.hilt.android.HiltAndroidApp
+import io.homeassistant.companion.android.common.dagger.AppComponent
+import io.homeassistant.companion.android.common.dagger.Graph
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.migrations.Migrations
 import io.homeassistant.companion.android.sensors.SensorReceiver
 
-@HiltAndroidApp
-open class HomeAssistantApplication : Application() {
+open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
+    lateinit var graph: Graph
 
     override fun onCreate() {
         super.onCreate()
+
+        graph = Graph(this, 0)
 
         Migrations(this).migrate()
 
@@ -102,4 +106,7 @@ open class HomeAssistantApplication : Application() {
             )
         }
     }
+
+    override val appComponent: AppComponent
+        get() = graph.appComponent
 }
