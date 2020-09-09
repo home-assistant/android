@@ -251,7 +251,6 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 uniqueId,
                 isChecked,
                 false,
-                true,
                 ""
             )
             sensorDao.add(sensor)
