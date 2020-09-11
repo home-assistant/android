@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
@@ -147,20 +148,28 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     override fun disableInternalConnection() {
         findPreference<EditTextPreference>("connection_internal")?.let {
             it.isEnabled = false
-            val unwrappedDrawable =
-                AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
-            unwrappedDrawable?.setTint(Color.DKGRAY)
-            it.icon = unwrappedDrawable
+            try {
+                val unwrappedDrawable =
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
+                unwrappedDrawable?.setTint(Color.DKGRAY)
+                it.icon = unwrappedDrawable
+            } catch (e: Exception) {
+                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+            }
         }
     }
 
     override fun enableInternalConnection() {
         findPreference<EditTextPreference>("connection_internal")?.let {
             it.isEnabled = true
-            val unwrappedDrawable =
-                AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
-            unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
-            it.icon = unwrappedDrawable
+            try {
+                val unwrappedDrawable =
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
+                unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
+                it.icon = unwrappedDrawable
+            } catch (e: Exception) {
+                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+            }
         }
     }
 
