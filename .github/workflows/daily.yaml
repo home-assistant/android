@@ -52,7 +52,22 @@ jobs:
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew bundleFullRelease
 
+      - name: Create cache file
+        run: |
+          mkdir check-SHA
+          echo ${{ github.sha }} > github-sha.txt
+
+      - name: Check SHA
+        id: check_sha
+        uses: actions/cache@v1
+        with:
+          path: check-SHA
+          key: check-SHA-${{ github.sha }}
+
       - name: Deploy to Playstore Beta
+        # Only run if a new commit is present.  This should prevent a new beta being created
+        # incorrectly when the release is generated.
+        if: steps.check_sha.outputs.cache-hit != 'true'
         env:
           KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
