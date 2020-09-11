@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.onboarding.discovery
 
-import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import java.net.URL
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class DiscoveryPresenterImpl @Inject constructor(
     val view: DiscoveryView,
-    val urlUseCase: UrlUseCase
+    val urlUseCase: UrlRepository
 ) : DiscoveryPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())

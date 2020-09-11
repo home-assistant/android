@@ -8,8 +8,8 @@ import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import androidx.recyclerview.widget.RecyclerView
-import io.homeassistant.companion.android.domain.integration.Entity
-import io.homeassistant.companion.android.domain.integration.Service
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.Service
 import java.lang.Exception
 import kotlinx.android.synthetic.main.widget_button_configure_dynamic_field.view.*
 

@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.launch
 
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.homeassistant.companion.android.domain.authentication.SessionState
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -11,8 +11,8 @@ import kotlinx.coroutines.launch
 
 abstract class LaunchPresenterBase(
     private val view: LaunchView,
-    private val authenticationUseCase: AuthenticationUseCase,
-    internal val integrationUseCase: IntegrationUseCase
+    private val authenticationUseCase: AuthenticationRepository,
+    internal val integrationUseCase: IntegrationRepository
 ) : LaunchPresenter {
 
     companion object {

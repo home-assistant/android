@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.onboarding.integration
 import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.domain.integration.DeviceRegistration
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 open class MobileAppIntegrationPresenterBase constructor(
     private val view: MobileAppIntegrationView,
-    private val integrationUseCase: IntegrationUseCase
+    private val integrationUseCase: IntegrationRepository
 ) : MobileAppIntegrationPresenter {
 
     companion object {
