@@ -10,7 +10,6 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.SettingsFragment
-import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.webview.WebViewActivity
 
@@ -30,8 +29,6 @@ interface PresenterComponent {
     fun inject(activity: SettingsActivity)
 
     fun inject(fragment: SettingsFragment)
-
-    fun inject(fragment: ShortcutsFragment)
 
     fun inject(activity: WebViewActivity)
 

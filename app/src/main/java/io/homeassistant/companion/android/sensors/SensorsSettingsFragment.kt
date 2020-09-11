@@ -7,14 +7,14 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import javax.inject.Inject
 
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     private val handler = Handler()
     private val refresh = object : Runnable {

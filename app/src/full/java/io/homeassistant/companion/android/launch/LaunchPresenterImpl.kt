@@ -1,35 +1,33 @@
 package io.homeassistant.companion.android.launch
 
-import android.os.Build
 import android.util.Log
 import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import java.lang.Exception
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class LaunchPresenterImpl @Inject constructor(
     view: LaunchView,
-    authenticationUseCase: AuthenticationUseCase,
-    integrationUseCase: IntegrationUseCase
+    authenticationUseCase: AuthenticationRepository,
+    integrationUseCase: IntegrationRepository
 ) : LaunchPresenterBase(view, authenticationUseCase, integrationUseCase) {
     override fun resyncRegistration() {
-            mainScope.launch {
-                try {
-                    integrationUseCase.updateRegistration(
+        mainScope.launch {
+            try {
+                integrationUseCase.updateRegistration(
+                    DeviceRegistration(
                         "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                         null,
-                        Build.MANUFACTURER ?: "UNKNOWN",
-                        Build.MODEL ?: "UNKNOWN",
-                        Build.VERSION.SDK_INT.toString(),
-                        pushToken = FirebaseInstanceId.getInstance().instanceId.await().token
+                        FirebaseInstanceId.getInstance().instanceId.await().token
                     )
-                } catch (e: Exception) {
-                    Log.e(TAG, "Issue updating Registration", e)
-                }
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Issue updating Registration", e)
             }
+        }
     }
 }

@@ -2,10 +2,10 @@ package io.homeassistant.companion.android.settings
 
 import android.util.Log
 import androidx.preference.PreferenceDataStore
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.integration.Panel
-import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.themes.ThemesManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -17,9 +17,9 @@ import kotlinx.coroutines.runBlocking
 
 class SettingsPresenterImpl @Inject constructor(
     private val settingsView: SettingsView,
-    private val urlUseCase: UrlUseCase,
-    private val integrationUseCase: IntegrationUseCase,
-    private val authenticationUseCase: AuthenticationUseCase,
+    private val urlUseCase: UrlRepository,
+    private val integrationUseCase: IntegrationRepository,
+    private val authenticationUseCase: AuthenticationRepository,
     private val themesManager: ThemesManager
 ) : SettingsPresenter, PreferenceDataStore() {
 
@@ -76,7 +76,7 @@ class SettingsPresenterImpl @Inject constructor(
                 }
                 "registration_name" -> {
                     try {
-                        integrationUseCase.updateRegistration(deviceName = value!!)
+                        integrationUseCase.updateRegistration(DeviceRegistration(deviceName = value!!))
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue updating registration with new device name", e)
                     }
@@ -146,18 +146,6 @@ class SettingsPresenterImpl @Inject constructor(
             urlUseCase.saveUrl("", true)
         } else {
             settingsView.enableInternalConnection()
-        }
-    }
-
-    override fun getPanels(): Array<Panel> {
-        return runBlocking {
-            var panels = arrayOf<Panel>()
-            try {
-                panels = integrationUseCase.getPanels()
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue getting panels.", e)
-            }
-            panels
         }
     }
 

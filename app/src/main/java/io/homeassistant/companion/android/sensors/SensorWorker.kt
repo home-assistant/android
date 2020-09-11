@@ -17,7 +17,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -48,7 +48,7 @@ class SensorWorker(
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     private val notificationManager = appContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 

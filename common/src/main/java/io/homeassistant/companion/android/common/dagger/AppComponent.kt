@@ -1,19 +1,19 @@
 package io.homeassistant.companion.android.common.dagger
 
 import dagger.Component
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.themes.ThemesUseCase
-import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.themes.ThemesRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 
-@Component(dependencies = [DomainComponent::class])
+@Component(modules = [DataModule::class])
 interface AppComponent {
 
-    fun urlUseCase(): UrlUseCase
+    fun urlUseCase(): UrlRepository
 
-    fun authenticationUseCase(): AuthenticationUseCase
+    fun authenticationUseCase(): AuthenticationRepository
 
-    fun integrationUseCase(): IntegrationUseCase
+    fun integrationUseCase(): IntegrationRepository
 
-    fun themesUseCase(): ThemesUseCase
+    fun themesUseCase(): ThemesRepository
 }

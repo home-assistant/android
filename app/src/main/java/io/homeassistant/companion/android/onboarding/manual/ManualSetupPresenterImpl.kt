@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.onboarding.manual
 
 import android.util.Log
-import io.homeassistant.companion.android.domain.MalformedHttpUrlException
-import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class ManualSetupPresenterImpl @Inject constructor(
     private val view: ManualSetupView,
-    private val urlUseCase: UrlUseCase
+    private val urlUseCase: UrlRepository
 ) : ManualSetupPresenter {
 
     companion object {

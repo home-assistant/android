@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.util.NotificationActionContentHandler
 import io.homeassistant.companion.android.util.cancel
 import javax.inject.Inject
@@ -32,7 +32,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         DaggerServiceComponent.builder()

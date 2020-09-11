@@ -23,7 +23,6 @@ allprojects {
     repositories {
         google()
         jcenter()
-        maven(url = Config.Repository.lokalize)
     }
 
     apply(plugin = "org.jlleitschuh.gradle.ktlint")

@@ -6,9 +6,9 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.integration.SensorRegistration
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +47,7 @@ class SensorReceiver : BroadcastReceiver() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     private val chargingActions = listOf(
         Intent.ACTION_BATTERY_LOW,
@@ -104,7 +104,7 @@ class SensorReceiver : BroadcastReceiver() {
 
     suspend fun updateSensors(
         context: Context,
-        integrationUseCase: IntegrationUseCase
+        integrationUseCase: IntegrationRepository
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()

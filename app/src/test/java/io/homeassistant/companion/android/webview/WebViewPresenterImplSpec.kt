@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.webview
 
 import android.net.Uri
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.themes.ThemesUseCase
-import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.themes.ThemesRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.just
@@ -31,10 +31,10 @@ object WebViewPresenterImplSpec : Spek({
     }
 
     describe("presenter") {
-        val urlUseCase by memoized { mockk<UrlUseCase>(relaxUnitFun = true) }
-        val authenticationUseCase by memoized { mockk<AuthenticationUseCase>(relaxUnitFun = true) }
-        val integrationUseCase by memoized { mockk<IntegrationUseCase>(relaxUnitFun = true) }
-        val themesUseCase by memoized { mockk<ThemesUseCase>(relaxUnitFun = true) }
+        val urlUseCase by memoized { mockk<UrlRepository>(relaxUnitFun = true) }
+        val authenticationUseCase by memoized { mockk<AuthenticationRepository>(relaxUnitFun = true) }
+        val integrationUseCase by memoized { mockk<IntegrationRepository>(relaxUnitFun = true) }
+        val themesUseCase by memoized { mockk<ThemesRepository>(relaxUnitFun = true) }
         val view by memoized { mockk<WebView>(relaxUnitFun = true) }
         val presenter by memoized { WebViewPresenterImpl(view, urlUseCase, authenticationUseCase, integrationUseCase) }
 
@@ -58,7 +58,7 @@ object WebViewPresenterImplSpec : Spek({
 
         describe("on get external auth on success") {
             beforeEachTest {
-                coEvery { authenticationUseCase.retrieveExternalAuthentication() } returns "{\"access_token\":\"ABCDEFGH\",\"expires_in\":1800}"
+                coEvery { authenticationUseCase.retrieveExternalAuthentication(false) } returns "{\"access_token\":\"ABCDEFGH\",\"expires_in\":1800}"
                 presenter.onGetExternalAuth("externalAuthSetToken", false)
             }
 
@@ -69,7 +69,7 @@ object WebViewPresenterImplSpec : Spek({
 
         describe("on get external auth on error") {
             beforeEachTest {
-                coEvery { authenticationUseCase.retrieveExternalAuthentication() } throws Exception()
+                coEvery { authenticationUseCase.retrieveExternalAuthentication(false) } throws Exception()
                 presenter.onGetExternalAuth("externalAuthSetToken", false)
             }
 

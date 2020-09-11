@@ -8,7 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_template_configure.*
@@ -24,7 +24,7 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -70,7 +70,7 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
                 var templateText: String?
                 var enabled: Boolean
                 try {
-                    templateText = integrationUseCase.renderTemplate(editableText.toString())
+                    templateText = integrationUseCase.renderTemplate(editableText.toString(), mapOf())
                     enabled = true
                 } catch (e: Exception) {
                     templateText = "Error in template"

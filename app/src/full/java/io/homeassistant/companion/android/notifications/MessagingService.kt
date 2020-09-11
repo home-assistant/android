@@ -21,10 +21,11 @@ import com.google.firebase.messaging.RemoteMessage
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.homeassistant.companion.android.domain.authentication.SessionState
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
@@ -61,13 +62,13 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     @Inject
-    lateinit var urlUseCase: UrlUseCase
+    lateinit var urlUseCase: UrlRepository
 
     @Inject
-    lateinit var authenticationUseCase: AuthenticationUseCase
+    lateinit var authenticationUseCase: AuthenticationRepository
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -274,8 +275,9 @@ class MessagingService : FirebaseMessagingService() {
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setStyle(
                 NotificationCompat.BigTextStyle()
-                    .setSummaryText(prepareText(group.substring(GROUP_PREFIX.length))
-                )
+                    .setSummaryText(
+                        prepareText(group.substring(GROUP_PREFIX.length))
+                    )
             )
             .setGroup(group)
             .setGroupSummary(true)
@@ -468,23 +470,25 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private suspend fun getImageBitmap(url: URL?, requiresAuth: Boolean = false): Bitmap? = withContext(
-        Dispatchers.IO) {
-        if (url == null)
-            return@withContext null
+    private suspend fun getImageBitmap(url: URL?, requiresAuth: Boolean = false): Bitmap? =
+        withContext(
+            Dispatchers.IO
+        ) {
+            if (url == null)
+                return@withContext null
 
-        var image: Bitmap? = null
-        try {
-            val uc = url.openConnection()
-            if (requiresAuth) {
-                uc.setRequestProperty("Authorization", authenticationUseCase.buildBearerToken())
+            var image: Bitmap? = null
+            try {
+                val uc = url.openConnection()
+                if (requiresAuth) {
+                    uc.setRequestProperty("Authorization", authenticationUseCase.buildBearerToken())
+                }
+                image = BitmapFactory.decodeStream(uc.getInputStream())
+            } catch (e: Exception) {
+                Log.e(TAG, "Couldn't download image for notification", e)
             }
-            image = BitmapFactory.decodeStream(uc.getInputStream())
-        } catch (e: Exception) {
-            Log.e(TAG, "Couldn't download image for notification", e)
+            return@withContext image
         }
-        return@withContext image
-    }
 
     private fun handleActions(
         builder: NotificationCompat.Builder,
@@ -623,7 +627,9 @@ class MessagingService : FirebaseMessagingService() {
             }
             try {
                 integrationUseCase.updateRegistration(
-                    pushToken = token
+                    DeviceRegistration(
+                        pushToken = token
+                    )
                 )
             } catch (e: Exception) {
                 // TODO: Store for update later

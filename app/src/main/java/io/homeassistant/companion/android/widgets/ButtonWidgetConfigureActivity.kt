@@ -27,9 +27,9 @@ import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.Entity
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.integration.Service
+import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.Service
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_button_configure.*
 import kotlinx.coroutines.CoroutineScope
@@ -45,7 +45,7 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 

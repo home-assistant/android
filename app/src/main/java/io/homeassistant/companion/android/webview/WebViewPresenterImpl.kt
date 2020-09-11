@@ -3,11 +3,10 @@ package io.homeassistant.companion.android.webview
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
-import io.homeassistant.companion.android.domain.authentication.SessionState
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
-import io.homeassistant.companion.android.domain.integration.Panel
-import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.util.UrlHandler
 import java.net.URL
 import java.util.regex.Matcher
@@ -22,9 +21,9 @@ import kotlinx.coroutines.runBlocking
 
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
-    private val urlUseCase: UrlUseCase,
-    private val authenticationUseCase: AuthenticationUseCase,
-    private val integrationUseCase: IntegrationUseCase
+    private val urlUseCase: UrlRepository,
+    private val authenticationUseCase: AuthenticationRepository,
+    private val integrationUseCase: IntegrationRepository
 ) : WebViewPresenter {
 
     companion object {
@@ -102,18 +101,6 @@ class WebViewPresenterImpl @Inject constructor(
                 Log.e(TAG, "Unable to revoke session", e)
                 view.setExternalAuth("$callback(false)")
             }
-        }
-    }
-
-    override fun getPanels(): Array<Panel> {
-        return runBlocking {
-            var panels = arrayOf<Panel>()
-            try {
-                panels = integrationUseCase.getPanels()
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue getting panels.", e)
-            }
-            panels
         }
     }
 

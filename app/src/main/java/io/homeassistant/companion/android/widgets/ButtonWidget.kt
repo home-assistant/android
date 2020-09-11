@@ -19,10 +19,10 @@ import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -46,7 +46,7 @@ class ButtonWidget : AppWidgetProvider() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     lateinit var buttonWidgetDao: ButtonWidgetDao
 

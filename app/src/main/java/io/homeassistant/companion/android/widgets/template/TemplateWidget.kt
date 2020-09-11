@@ -10,10 +10,10 @@ import android.util.Log
 import android.widget.RemoteViews
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -33,7 +33,7 @@ class TemplateWidget : AppWidgetProvider() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     private lateinit var templateWidgetDao: TemplateWidgetDao
 
@@ -118,7 +118,7 @@ class TemplateWidget : AppWidgetProvider() {
             if (widget != null) {
                 var renderedTemplate = "Loading"
                 try {
-                    renderedTemplate = integrationUseCase.renderTemplate(widget.template)
+                    renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
                 }

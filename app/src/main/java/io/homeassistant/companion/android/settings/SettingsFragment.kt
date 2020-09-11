@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
-import io.homeassistant.companion.android.settings.shortcuts.ShortcutsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import javax.inject.Inject
@@ -88,15 +87,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             isValid
         }
 
-        val onClickShortcuts = Preference.OnPreferenceClickListener {
-            parentFragmentManager
-                .beginTransaction()
-                .replace(R.id.content, ShortcutsFragment.newInstance())
-                .addToBackStack(getString(R.string.shortcuts))
-                .commit()
-            true
-        }
-
         findPreference<Preference>("nfc_tags")?.let {
             it.isVisible = presenter.nfcEnabled()
             it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
@@ -119,14 +109,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         findPreference<SwitchPreference>("app_lock")?.onPreferenceChangeListener =
             onChangeBiometricValidator
-
-        val shortcuts = findPreference<Preference>("shortcuts")
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && presenter.getPanels().isNotEmpty()) {
-            shortcuts?.onPreferenceClickListener =
-                onClickShortcuts
-        } else {
-            shortcuts?.isVisible = false
-        }
 
         findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
             parentFragmentManager

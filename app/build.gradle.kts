@@ -115,7 +115,6 @@ play {
 
 dependencies {
     implementation(project(":common"))
-    implementation(project(":domain"))
 
     implementation(Config.Dependency.Misc.blurView)
     implementation(Config.Dependency.Misc.iconDialog)

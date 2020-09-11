@@ -12,7 +12,7 @@ import com.google.android.gms.location.ActivityRecognitionResult
 import com.google.android.gms.location.DetectedActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import javax.inject.Inject
 
 class ActivitySensorManager : BroadcastReceiver(), SensorManager {
@@ -33,7 +33,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         ensureInjected(context)

@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.authentication
 
 import android.net.Uri
-import io.homeassistant.companion.android.domain.authentication.AuthenticationUseCase
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.mockk.Called
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -28,7 +28,7 @@ object AuthenticationPresenterImplSpec : Spek({
     }
 
     describe("authentication presenter") {
-        val authenticationUseCase by memoized { mockk<AuthenticationUseCase>(relaxUnitFun = true) }
+        val authenticationUseCase by memoized { mockk<AuthenticationRepository>(relaxUnitFun = true) }
         val view by memoized { mockk<AuthenticationView>(relaxUnitFun = true) }
         val presenter by memoized { AuthenticationPresenterImpl(view, authenticationUseCase) }
 

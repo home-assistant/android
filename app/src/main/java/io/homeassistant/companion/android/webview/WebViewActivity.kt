@@ -5,12 +5,9 @@ import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.pm.ShortcutInfo
-import android.content.pm.ShortcutManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.Rect
-import android.graphics.drawable.Icon
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
@@ -344,7 +341,6 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                     .getString("event") == "connected"
                                 if (isConnected) {
                                     alertDialog?.cancel()
-                                    setupPanelShortcuts()
                                 }
                             }
                             "config/get" -> {
@@ -842,31 +838,5 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 showError()
             }
         }, CONNECTION_DELAY)
-    }
-
-    private fun setupPanelShortcuts() {
-        if (Build.VERSION.SDK_INT >= 25) {
-            val panels = presenter.getPanels()
-
-            val shortcutManager = getSystemService(ShortcutManager::class.java)
-            shortcutManager!!.dynamicShortcuts = panels
-                .filter { panel -> !panel.title.isNullOrEmpty() && panel.component_name.contains("lovelace") }
-                .take(5)
-                .map { panel ->
-                    ShortcutInfo.Builder(
-                        this,
-                        panel.component_name
-                    )
-                        .setShortLabel(panel.title!!)
-                        .setLongLabel(panel.title!!)
-                        .setIcon(Icon.createWithResource(this, R.drawable.app_icon))
-                        .setIntent(
-                            newInstance(this, panel.url_path).apply {
-                                this.action = Intent.ACTION_VIEW
-                            }
-                        )
-                        .build()
-                }
-        }
     }
 }

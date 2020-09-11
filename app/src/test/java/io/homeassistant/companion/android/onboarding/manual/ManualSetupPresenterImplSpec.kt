@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.onboarding.manual
 
-import io.homeassistant.companion.android.domain.MalformedHttpUrlException
-import io.homeassistant.companion.android.domain.url.UrlUseCase
+import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.mockk.coEvery
 import io.mockk.coVerifyAll
 import io.mockk.just
@@ -25,7 +25,7 @@ object ManualSetupPresenterImplSpec : Spek({
     }
 
     describe("presenter") {
-        val urlUseCase by memoized { mockk<UrlUseCase>(relaxUnitFun = true) }
+        val urlUseCase by memoized { mockk<UrlRepository>(relaxUnitFun = true) }
         val view by memoized { mockk<ManualSetupView>(relaxUnitFun = true) }
         val presenter by memoized { ManualSetupPresenterImpl(view, urlUseCase) }
 

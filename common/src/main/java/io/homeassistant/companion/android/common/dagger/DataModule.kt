@@ -4,19 +4,19 @@ import android.os.Build
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
-import io.homeassistant.companion.android.data.HomeAssistantRetrofit
-import io.homeassistant.companion.android.data.LocalStorage
-import io.homeassistant.companion.android.data.authentication.AuthenticationRepositoryImpl
-import io.homeassistant.companion.android.data.authentication.AuthenticationService
-import io.homeassistant.companion.android.data.integration.IntegrationRepositoryImpl
-import io.homeassistant.companion.android.data.integration.IntegrationService
-import io.homeassistant.companion.android.data.themes.ThemesRepositoryImpl
-import io.homeassistant.companion.android.data.url.UrlRepositoryImpl
-import io.homeassistant.companion.android.data.wifi.WifiHelper
-import io.homeassistant.companion.android.domain.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.domain.integration.IntegrationRepository
-import io.homeassistant.companion.android.domain.themes.ThemesRepository
-import io.homeassistant.companion.android.domain.url.UrlRepository
+import io.homeassistant.companion.android.common.data.HomeAssistantRetrofit
+import io.homeassistant.companion.android.common.data.LocalStorage
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationRepositoryImpl
+import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationService
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
+import io.homeassistant.companion.android.common.data.themes.ThemesRepository
+import io.homeassistant.companion.android.common.data.themes.ThemesRepositoryImpl
+import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepositoryImpl
+import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import javax.inject.Named
 
 @Module(includes = [DataModule.Declaration::class])

@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.onboarding.integration
 
 import android.os.Build
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.domain.integration.DeviceRegistration
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
@@ -27,7 +27,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
     }
 
     describe("presenter") {
-        val integrationUseCase by memoized { mockk<IntegrationUseCase>(relaxUnitFun = true) }
+        val integrationUseCase by memoized { mockk<IntegrationRepository>(relaxUnitFun = true) }
         val view by memoized { mockk<MobileAppIntegrationView>(relaxUnitFun = true) }
         val presenter by memoized { MobileAppIntegrationPresenterBase(view, integrationUseCase) }
 

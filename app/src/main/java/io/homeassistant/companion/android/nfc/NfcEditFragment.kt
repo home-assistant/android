@@ -15,7 +15,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.domain.integration.IntegrationUseCase
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.fragment_nfc_edit.*
 import kotlinx.coroutines.CoroutineScope
@@ -36,7 +36,7 @@ class NfcEditFragment : Fragment() {
     private lateinit var viewModel: NfcViewModel
 
     @Inject
-    lateinit var integrationUseCase: IntegrationUseCase
+    lateinit var integrationUseCase: IntegrationRepository
 
     override fun onCreateView(
         inflater: LayoutInflater,
