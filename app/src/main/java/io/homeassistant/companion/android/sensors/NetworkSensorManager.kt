@@ -5,7 +5,16 @@ import android.content.Context
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.util.Log
 import io.homeassistant.companion.android.R
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okio.IOException
+import org.json.JSONException
+import org.json.JSONObject
 
 class NetworkSensorManager : SensorManager {
     companion object {
@@ -55,6 +64,12 @@ class NetworkSensorManager : SensorManager {
             R.string.sensor_description_wifi_signal,
             unitOfMeasurement = "dBm"
         )
+        val publicIp = SensorManager.BasicSensor(
+            "public_ip_address",
+            "sensor",
+            R.string.basic_sensor_name_public_ip,
+            R.string.sensor_description_public_ip
+        )
     }
 
     override val enabledByDefault: Boolean
@@ -62,7 +77,16 @@ class NetworkSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_network
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(wifiConnection, bssidState, wifiIp, wifiLinkSpeed, wifiState, wifiFrequency, wifiSignalStrength)
+        get() = listOf(
+            wifiConnection,
+            bssidState,
+            wifiIp,
+            wifiLinkSpeed,
+            wifiState,
+            wifiFrequency,
+            wifiSignalStrength,
+            publicIp
+        )
 
     override fun requiredPermissions(): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -85,6 +109,7 @@ class NetworkSensorManager : SensorManager {
         updateWifiSensor(context)
         updateWifiFrequencySensor(context)
         updateWifiSignalStrengthSensor(context)
+        updatePublicIpSensor(context)
     }
 
     private fun updateWifiConnectionSensor(context: Context) {
@@ -137,7 +162,8 @@ class NetworkSensorManager : SensorManager {
             )
         }.orEmpty()
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             wifiConnection,
             ssid,
             icon,
@@ -174,7 +200,8 @@ class NetworkSensorManager : SensorManager {
         }
 
         val bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             bssidState,
             bssid,
             icon,
@@ -217,7 +244,8 @@ class NetworkSensorManager : SensorManager {
             else -> signalStrength
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             wifiIp,
             deviceIp,
             icon,
@@ -260,7 +288,8 @@ class NetworkSensorManager : SensorManager {
             else -> signalStrength
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             wifiLinkSpeed,
             linkSpeed,
             icon,
@@ -282,7 +311,8 @@ class NetworkSensorManager : SensorManager {
         }
         val icon = if (wifiEnabled) "mdi:wifi" else "mdi:wifi-off"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             wifiState,
             wifiEnabled,
             icon,
@@ -325,7 +355,8 @@ class NetworkSensorManager : SensorManager {
             else -> signalStrength
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             wifiFrequency,
             frequency,
             icon,
@@ -361,7 +392,8 @@ class NetworkSensorManager : SensorManager {
             else -> signalStrength
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             wifiSignalStrength,
             lastScanStrength,
             icon,
@@ -374,5 +406,38 @@ class NetworkSensorManager : SensorManager {
                 (ip shr 8 and 0xFF) + "." +
                 (ip shr 16 and 0xFF) + "." +
                 (ip shr 24 and 0xFF)
+    }
+
+    private fun updatePublicIpSensor(context: Context) {
+        if (!isEnabled(context, publicIp.id))
+            return
+
+        var ip = "unknown"
+        val client = OkHttpClient()
+        val request = Request.Builder().url("https://api.ipify.org?format=json").build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "Error getting response from external service", e)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (!response.isSuccessful) throw IOException("Unexpected response code $response")
+                try {
+                    val jsonObject = JSONObject(response.body!!.string())
+                    ip = jsonObject.getString("ip")
+                } catch (e: JSONException) {
+                    Log.e(TAG, "Unable to parse ip address from response", e)
+                }
+
+                onSensorUpdated(
+                    context,
+                    publicIp,
+                    ip,
+                    "mdi:ip",
+                    mapOf()
+                )
+            }
+        })
     }
 }

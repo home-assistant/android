@@ -201,6 +201,7 @@ like to connect to:</string>
   <string name="basic_sensor_name_wifi_state">WiFi State</string>
   <string name="basic_sensor_name_wifi_frequency">WiFi Frequency</string>
   <string name="basic_sensor_name_wifi_signal">WiFi Signal Strength</string>
+  <string name="basic_sensor_name_public_ip">Public IP Address</string>
   <string name="basic_sensor_name_alarm">Next Alarm</string>
   <string name="basic_sensor_name_phone">Phone State</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
@@ -241,6 +242,7 @@ like to connect to:</string>
   <string name="sensor_description_wifi_state">Whether or not WiFi is enabled on the device</string>
   <string name="sensor_description_wifi_frequency">The frequency band of the connected network</string>
   <string name="sensor_description_wifi_signal">The signal strength of the device to the WiFi network</string>
+  <string name="sensor_description_public_ip">The public IP address of the device. Enabling this you agree to use external service https://ipify.org to determine IP address.</string>
   <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
   <string name="sensor_title">Manage Sensors</string>
   <string name="sensor">Sensor</string>
