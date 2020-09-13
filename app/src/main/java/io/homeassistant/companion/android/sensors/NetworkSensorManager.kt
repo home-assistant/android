@@ -139,16 +139,7 @@ class NetworkSensorManager : SensorManager {
             }?.level ?: -1
         }
 
-        var signalStrength = -1
-        if (lastScanStrength != -1) {
-            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
-        }
-
-        val icon = "mdi:wifi-strength-" + when (signalStrength) {
-            -1 -> "off"
-            0 -> "outline"
-            else -> signalStrength
-        }
+        val icon = if (ssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
 
         val attributes = conInfo?.let {
             mapOf(
@@ -176,30 +167,15 @@ class NetworkSensorManager : SensorManager {
             return
 
         var conInfo: WifiInfo? = null
-        var lastScanStrength = -1
 
         if (checkPermission(context)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo
-
-            lastScanStrength = wifiManager.scanResults.firstOrNull {
-                it.BSSID == conInfo.bssid
-            }?.level ?: -1
-        }
-
-        var signalStrength = -1
-        if (lastScanStrength != -1) {
-            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
-        }
-
-        val icon = "mdi:wifi-strength-" + when (signalStrength) {
-            -1 -> "off"
-            0 -> "outline"
-            else -> signalStrength
         }
 
         val bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
+        val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
         onSensorUpdated(
             context,
             bssidState,
@@ -215,7 +191,6 @@ class NetworkSensorManager : SensorManager {
 
         var conInfo: WifiInfo? = null
         var deviceIp = "Unknown"
-        var lastScanStrength = -1
 
         if (checkPermission(context)) {
             val wifiManager =
@@ -227,22 +202,9 @@ class NetworkSensorManager : SensorManager {
             } else {
                 getIpAddress(conInfo.ipAddress)
             }
-
-            lastScanStrength = wifiManager.scanResults.firstOrNull {
-                it.BSSID == conInfo.bssid
-            }?.level ?: -1
         }
 
-        var signalStrength = -1
-        if (lastScanStrength != -1) {
-            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
-        }
-
-        val icon = "mdi:wifi-strength-" + when (signalStrength) {
-            -1 -> "off"
-            0 -> "outline"
-            else -> signalStrength
-        }
+        val icon = "mdi:ip"
 
         onSensorUpdated(
             context,
@@ -326,7 +288,6 @@ class NetworkSensorManager : SensorManager {
 
         var conInfo: WifiInfo? = null
         var frequency = 0
-        var lastScanStrength = -1
 
         if (checkPermission(context)) {
             val wifiManager =
@@ -338,22 +299,9 @@ class NetworkSensorManager : SensorManager {
             } else {
                 conInfo.frequency
             }
-
-            lastScanStrength = wifiManager.scanResults.firstOrNull {
-                it.BSSID == conInfo.bssid
-            }?.level ?: -1
         }
 
-        var signalStrength = -1
-        if (lastScanStrength != -1) {
-            signalStrength = WifiManager.calculateSignalLevel(lastScanStrength, 4)
-        }
-
-        val icon = "mdi:wifi-strength-" + when (signalStrength) {
-            -1 -> "off"
-            0 -> "outline"
-            else -> signalStrength
-        }
+        val icon = "mdi:wifi"
 
         onSensorUpdated(
             context,

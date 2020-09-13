@@ -128,17 +128,23 @@ class BatterySensorManager : SensorManager {
         if (!isEnabled(context, batteryState.id))
             return
 
-        val percentage: Int = getBatteryPercentage(intent)
         val isCharging = getIsCharging(intent)
         val chargerType = getChargerType(intent)
         val chargingStatus = getChargingStatus(intent)
         val batteryHealth = getBatteryHealth(intent)
 
+        val icon = when (chargingStatus) {
+            "charging" -> "mdi:battery-plus"
+            "discharging" -> "mdi:battery-minus"
+            "full" -> "mdi:battery-charging"
+            "not_charging" -> "mdi:battery"
+            else -> "mdi:battery-unknown"
+        }
         onSensorUpdated(
             context,
             batteryState,
             chargingStatus,
-            getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
+            icon,
             mapOf(
                 "is_charging" to isCharging, // Remove after next release
                 "charger_type" to chargerType, // Remove after next release
@@ -167,16 +173,19 @@ class BatterySensorManager : SensorManager {
         if (!isEnabled(context, chargerTypeState.id))
             return
 
-        val percentage: Int = getBatteryPercentage(intent)
-        val isCharging = getIsCharging(intent)
         val chargerType = getChargerType(intent)
-        val chargingStatus = getChargingStatus(intent)
 
+        val icon = when (chargerType) {
+            "ac" -> "mdi:power-plug"
+            "usb" -> "mdi:usb-port"
+            "wireless" -> "battery-charging-wireless"
+            else -> "mdi:battery-unknown"
+        }
         onSensorUpdated(
             context,
             chargerTypeState,
             chargerType,
-            getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
+            icon,
             mapOf()
         )
     }
@@ -185,17 +194,17 @@ class BatterySensorManager : SensorManager {
         if (!isEnabled(context, batteryHealthState.id))
             return
 
-        val percentage: Int = getBatteryPercentage(intent)
-        val isCharging = getIsCharging(intent)
-        val chargerType = getChargerType(intent)
-        val chargingStatus = getChargingStatus(intent)
         val batteryHealth = getBatteryHealth(intent)
 
+        val icon = when (batteryHealth) {
+            "good" -> "mdi:battery-heart-variant"
+            else -> "mdi:battery-alert"
+        }
         onSensorUpdated(
             context,
             batteryHealthState,
             batteryHealth,
-            getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
+            icon,
             mapOf()
         )
     }
