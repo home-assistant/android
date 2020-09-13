@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-  <!-- Do not localize -->
-  <string-array name="pref_theme_option_labels" translatable="false">
+  <string-array name="pref_theme_option_labels">
     <item>@string/themes_option_label_light</item>
     <item>@string/themes_option_label_dark</item>
     <item>@string/themes_option_label_system</item>
   </string-array>
-  <!-- Do not localize -->
-  <string-array name="pref_theme_option_values" translatable="false">
+  <string-array name="pref_theme_option_values">
     <item>@string/themes_option_value_light</item>
     <item>@string/themes_option_value_dark</item>
     <item>@string/themes_option_value_system</item>
@@ -23,6 +21,35 @@
   <string name="auth_error">Authentication Error</string>
   <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
   <string name="auth_request">Authentication Requested</string>
+  <string name="basic_sensor_name_activity">Detected Activity</string>
+  <string name="basic_sensor_name_alarm">Next Alarm</string>
+  <string name="basic_sensor_name_battery_health">Battery Health</string>
+  <string name="basic_sensor_name_battery_level">Battery Level</string>
+  <string name="basic_sensor_name_battery_state">Battery State</string>
+  <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
+  <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
+  <string name="basic_sensor_name_charger_type">Charger Type</string>
+  <string name="basic_sensor_name_charging">Is Charging</string>
+  <string name="basic_sensor_name_doze">Doze Mode</string>
+  <string name="basic_sensor_name_external_storage">External Storage</string>
+  <string name="basic_sensor_name_geolocation">Geocoded Location</string>
+  <string name="basic_sensor_name_interactive">Interactive</string>
+  <string name="basic_sensor_name_internal_storage">Internal Storage</string>
+  <string name="basic_sensor_name_last_reboot">Last Reboot</string>
+  <string name="basic_sensor_name_location_background">Background Location</string>
+  <string name="basic_sensor_name_location_zone">Location Zone</string>
+  <string name="basic_sensor_name_phone">Phone State</string>
+  <string name="basic_sensor_name_power_save">Power Save</string>
+  <string name="basic_sensor_name_public_ip">Public IP Address</string>
+  <string name="basic_sensor_name_sim1">SIM 1</string>
+  <string name="basic_sensor_name_sim2">SIM 2</string>
+  <string name="basic_sensor_name_wifi">WiFi Connection</string>
+  <string name="basic_sensor_name_wifi_bssid">WiFi BSSID</string>
+  <string name="basic_sensor_name_wifi_frequency">WiFi Frequency</string>
+  <string name="basic_sensor_name_wifi_ip">WiFi IP Address</string>
+  <string name="basic_sensor_name_wifi_link_speed">WiFi Link Speed</string>
+  <string name="basic_sensor_name_wifi_signal">WiFi Signal Strength</string>
+  <string name="basic_sensor_name_wifi_state">WiFi State</string>
   <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
   <string name="biometric_set_title">Confirm to continue</string>
   <string name="biometric_title">Home Assistant is locked</string>
@@ -140,112 +167,83 @@ for Home Assistant</string>
   <string name="select_entity_to_display">Select Entity to display</string>
   <string name="select_instance">Select the instance you would 
 like to connect to:</string>
+  <string name="sensor">Sensor</string>
   <string name="sensor_description">Description</string>
-  <string name="sensor_description_audio_sensor">The state of the devices ringer mode</string>
   <string name="sensor_description_audio_mode">The state of the devices audio mode</string>
-  <string name="sensor_description_headphone">Whether or not headphones are plugged into the device</string>
-  <string name="sensor_description_mic_muted">Whether or not the microphone is muted on the device</string>
-  <string name="sensor_description_music_active">Whether or not music is actively playing on the device</string>
-  <string name="sensor_description_speakerphone">Whether or not speakerphone is enabled on the device</string>
-  <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
-  <string name="sensor_description_volume_call">Volume level for calls on the device</string>
-  <string name="sensor_description_volume_music">Volume level for music on the device</string>
-  <string name="sensor_description_volume_ring">Volume level for the ringer on the device</string>
+  <string name="sensor_description_audio_sensor">The state of the devices ringer mode</string>
+  <string name="sensor_description_battery_health">The health of the battery</string>
   <string name="sensor_description_battery_level">The current battery level of the device</string>
   <string name="sensor_description_battery_state">The current charging state of the battery</string>
   <string name="sensor_description_bluetooth_connection">Information about currently connected bluetooth devices</string>
+  <string name="sensor_description_bluetooth_state">Whether or not bluetooth is enabled on the device</string>
+  <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
+  <string name="sensor_description_charging">Whether or not the device is actively charging</string>
   <string name="sensor_description_detected_activity">The current activity type as computed by Googles Activity Recognition API</string>
   <string name="sensor_description_dnd_sensor">The current state of Do Not Disturb</string>
+  <string name="sensor_description_doze">Whether or not the device is in Doze mode</string>
+  <string name="sensor_description_external_storage">Information about the total and available storage space externally</string>
   <string name="sensor_description_geocoded_location">Calculated address based on GPS data using Googles Location API</string>
+  <string name="sensor_description_headphone">Whether or not headphones are plugged into the device</string>
+  <string name="sensor_description_interactive">Whether or not the device is in an interactive state</string>
+  <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
   <string name="sensor_description_last_reboot">The date and time of the devices last reboot</string>
   <string name="sensor_description_light_sensor">The current level of illuminance</string>
   <string name="sensor_description_location_background">Update your location behind the scenes, periodically.</string>
   <string name="sensor_description_location_zone">Import existing Home Assistant zones as geofences for zone based tracking.</string>
+  <string name="sensor_description_mic_muted">Whether or not the microphone is muted on the device</string>
+  <string name="sensor_description_music_active">Whether or not music is actively playing on the device</string>
   <string name="sensor_description_next_alarm">The date and time of the next scheduled alarm, any app or manufacturer can override the default behavior. The package attribute will tell you which app set the next scheduled alarm.</string>
   <string name="sensor_description_none">No description</string>
-  <string name="sensor_description_interactive">Whether or not the device is in an interactive state</string>
-  <string name="sensor_description_doze">Whether or not the device is in Doze mode</string>
+  <string name="sensor_description_phone_state">Whether or not the phone is ringing or in a call, no other caller information is stored</string>
   <string name="sensor_description_power_save">Whether or not the device is in Power Save mode</string>
-  <string name="sensor_description_bluetooth_state">Whether or not bluetooth is enabled on the device</string>
-  <string name="sensor_description_charging">Whether or not the device is actively charging</string>
-  <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
-  <string name="sensor_description_battery_health">The health of the battery</string>
-  <string name="sensor_name_power">Power Sensors</string>
-  <string name="basic_sensor_name_internal_storage">Internal Storage</string>
-  <string name="basic_sensor_name_external_storage">External Storage</string>
-  <string name="sensor_name_ringer_mode">Ringer Mode</string>
+  <string name="sensor_description_pressure_sensor">The current ambient air pressure reading</string>
+  <string name="sensor_description_proximity_sensor">The current proximity reading, some devices only report near or far</string>
+  <string name="sensor_description_public_ip">The public IP address of the device. Enabling this you agree to use external service https://ipify.org to determine IP address.</string>
+  <string name="sensor_description_sim_1">Information about the current cellular provider in SIM slot 1</string>
+  <string name="sensor_description_sim_2">Information about the current cellular provider in SIM slot 2</string>
+  <string name="sensor_description_speakerphone">Whether or not speakerphone is enabled on the device</string>
+  <string name="sensor_description_steps_sensor">The total number of steps since the last reboot of the device</string>
+  <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
+  <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
+  <string name="sensor_description_volume_call">Volume level for calls on the device</string>
+  <string name="sensor_description_volume_music">Volume level for music on the device</string>
+  <string name="sensor_description_volume_ring">Volume level for the ringer on the device</string>
+  <string name="sensor_description_wifi_bssid">The mac address of the currently connected WiFi access point</string>
+  <string name="sensor_description_wifi_connection">The name of the network the device is currently connected to</string>
+  <string name="sensor_description_wifi_frequency">The frequency band of the connected network</string>
+  <string name="sensor_description_wifi_ip">The current IP address of the device on the network</string>
+  <string name="sensor_description_wifi_link_speed">The current link speed of the device to the connected network</string>
+  <string name="sensor_description_wifi_signal">The signal strength of the device to the WiFi network</string>
+  <string name="sensor_description_wifi_state">Whether or not WiFi is enabled on the device</string>
+  <string name="sensor_name_activity">Activity Sensors</string>
+  <string name="sensor_name_alarm">Alarm Sensor</string>
+  <string name="sensor_name_audio">Audio Sensors</string>
   <string name="sensor_name_audio_mode">Audio Mode</string>
+  <string name="sensor_name_battery">Battery Sensors</string>
+  <string name="sensor_name_bluetooth">Bluetooth Sensors</string>
+  <string name="sensor_name_dnd">Do Not Disturb Sensor</string>
+  <string name="sensor_name_geolocation">Geolocation Sensors</string>
   <string name="sensor_name_headphone">Headphones</string>
+  <string name="sensor_name_last_reboot">Last Reboot Sensor</string>
+  <string name="sensor_name_light">Light Sensor</string>
+  <string name="sensor_name_location">Location Sensors</string>
   <string name="sensor_name_mic_muted">Mic Muted</string>
   <string name="sensor_name_music_active">Music Active</string>
+  <string name="sensor_name_network">Network Sensors</string>
+  <string name="sensor_name_phone">Phone Sensors</string>
+  <string name="sensor_name_power">Power Sensors</string>
+  <string name="sensor_name_pressure">Pressure Sensor</string>
+  <string name="sensor_name_proximity">Proximity Sensor</string>
+  <string name="sensor_name_ringer_mode">Ringer Mode</string>
   <string name="sensor_name_speakerphone">Speakerphone</string>
+  <string name="sensor_name_steps">Steps Sensor</string>
+  <string name="sensor_name_storage">Storage Sensors</string>
   <string name="sensor_name_volume_alarm">Volume Level Alarm</string>
   <string name="sensor_name_volume_call">Volume Level Call</string>
   <string name="sensor_name_volume_music">Volume Level Music</string>
   <string name="sensor_name_volume_ring">Volume Level Ringer</string>
-  <string name="basic_sensor_name_power_save">Power Save</string>
-  <string name="basic_sensor_name_interactive">Interactive</string>
-  <string name="basic_sensor_name_doze">Doze Mode</string>
-  <string name="basic_sensor_name_activity">Detected Activity</string>
-  <string name="basic_sensor_name_geolocation">Geocoded Location</string>
-  <string name="basic_sensor_name_location_background">Background Location</string>
-  <string name="basic_sensor_name_location_zone">Location Zone</string>
-  <string name="basic_sensor_name_battery_level">Battery Level</string>
-  <string name="basic_sensor_name_battery_state">Battery State</string>
-  <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
-  <string name="basic_sensor_name_last_reboot">Last Reboot</string>
-  <string name="basic_sensor_name_wifi">WiFi Connection</string>
-  <string name="basic_sensor_name_wifi_bssid">WiFi BSSID</string>
-  <string name="basic_sensor_name_wifi_ip">WiFi IP Address</string>
-  <string name="basic_sensor_name_wifi_link_speed">WiFi Link Speed</string>
-  <string name="basic_sensor_name_wifi_state">WiFi State</string>
-  <string name="basic_sensor_name_wifi_frequency">WiFi Frequency</string>
-  <string name="basic_sensor_name_wifi_signal">WiFi Signal Strength</string>
-  <string name="basic_sensor_name_public_ip">Public IP Address</string>
-  <string name="basic_sensor_name_alarm">Next Alarm</string>
-  <string name="basic_sensor_name_phone">Phone State</string>
-  <string name="basic_sensor_name_sim1">SIM 1</string>
-  <string name="basic_sensor_name_sim2">SIM 2</string>
-  <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
-  <string name="basic_sensor_name_charging">Is Charging</string>
-  <string name="basic_sensor_name_charger_type">Charger Type</string>
-  <string name="basic_sensor_name_battery_health">Battery Health</string>
-  <string name="sensor_name_light">Light Sensor</string>
-  <string name="sensor_name_activity">Activity Sensors</string>
-  <string name="sensor_name_geolocation">Geolocation Sensors</string>
-  <string name="sensor_name_location">Location Sensors</string>
-  <string name="sensor_name_audio">Audio Sensors</string>
-  <string name="sensor_name_battery">Battery Sensors</string>
-  <string name="sensor_name_bluetooth">Bluetooth Sensors</string>
-  <string name="sensor_name_dnd">Do Not Disturb Sensor</string>
-  <string name="sensor_name_last_reboot">Last Reboot Sensor</string>
-  <string name="sensor_name_network">Network Sensors</string>
-  <string name="sensor_name_alarm">Alarm Sensor</string>
-  <string name="sensor_name_phone">Phone Sensors</string>
-  <string name="sensor_name_pressure">Pressure Sensor</string>
-  <string name="sensor_name_proximity">Proximity Sensor</string>
-  <string name="sensor_name_steps">Steps Sensor</string>
-  <string name="sensor_name_storage">Storage Sensors</string>
-  <string name="sensor_description_phone_state">Whether or not the phone is ringing or in a call, no other caller information is stored</string>
-  <string name="sensor_description_pressure_sensor">The current ambient air pressure reading</string>
-  <string name="sensor_description_proximity_sensor">The current proximity reading, some devices only report near or far</string>
-  <string name="sensor_description_sim_1">Information about the current cellular provider in SIM slot 1</string>
-  <string name="sensor_description_sim_2">Information about the current cellular provider in SIM slot 2</string>
-  <string name="sensor_description_steps_sensor">The total number of steps since the last reboot of the device</string>
-  <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
-  <string name="sensor_description_external_storage">Information about the total and available storage space externally</string>
-  <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
-  <string name="sensor_description_wifi_connection">The name of the network the device is currently connected to</string>
-  <string name="sensor_description_wifi_bssid">The mac address of the currently connected WiFi access point</string>
-  <string name="sensor_description_wifi_ip">The current IP address of the device on the network</string>
-  <string name="sensor_description_wifi_link_speed">The current link speed of the device to the connected network</string>
-  <string name="sensor_description_wifi_state">Whether or not WiFi is enabled on the device</string>
-  <string name="sensor_description_wifi_frequency">The frequency band of the connected network</string>
-  <string name="sensor_description_wifi_signal">The signal strength of the device to the WiFi network</string>
-  <string name="sensor_description_public_ip">The public IP address of the device. Enabling this you agree to use external service https://ipify.org to determine IP address.</string>
   <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
   <string name="sensor_title">Manage Sensors</string>
-  <string name="sensor">Sensor</string>
   <string name="sensors">Sensors</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
@@ -263,12 +261,9 @@ like to connect to:</string>
   <string name="themes_option_label_dark">Dark</string>
   <string name="themes_option_label_light">Light</string>
   <string name="themes_option_label_system">Follow System Settings</string>
-  <!-- Do not localize -->
-  <string name="themes_option_value_dark" translatable="false">dark</string>
-  <!-- Do not localize -->
-  <string name="themes_option_value_light" translatable="false">light</string>
-  <!-- Do not localize -->
-  <string name="themes_option_value_system" translatable="false">system</string>
+  <string name="themes_option_value_dark">dark</string>
+  <string name="themes_option_value_light">light</string>
+  <string name="themes_option_value_system">system</string>
   <string name="themes_title_settings">Theme</string>
   <string name="unable_to_register">Unable to Register Application</string>
   <string name="unique_id">Unique Id</string>
