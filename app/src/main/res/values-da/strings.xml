@@ -27,6 +27,7 @@ dit hjemmeinternet.</string>
   <string name="device_registration">Enhedsregistrering</string>
   <string name="dialog_add_panel_shortcut_content">Opret en genvej til dette punkt?</string>
   <string name="dialog_add_panel_shortcut_title">Tilføj genvej</string>
+  <string name="documentation">Dokumentation</string>
   <string name="entity_attribute_checkbox">Tilføj egenskabsværdi</string>
   <string name="error_auth_revoked">Det ser ud til, at din godkendelse blev tilbagekaldt. Forbind igen til Home Assistant.</string>
   <string name="error_connection_failed">Kan ikke oprette forbindelse til Home Assistant.</string>
@@ -66,6 +67,7 @@ Home Assistant-instans</string>
   <string name="manage_ssids_input_exists">Dette SSID findes allerede.</string>
   <string name="manual_setup">indtast adresse manuelt</string>
   <string name="map">Kort</string>
+  <string name="need_help">Brug for hjælp?</string>
   <string name="not_private">Din forbindelse til dette websted er ikke privat.</string>
   <string name="other_settings">Andre indstillinger</string>
   <string name="password">Adgangskode</string>
@@ -92,6 +94,8 @@ efter Home Assistant</string>
   <string name="select_entity_to_display">Vælg den entitet, der skal vises</string>
   <string name="select_instance">Vælg den instans, du gerne
 vil forbinde til:</string>
+  <string name="sensor_description_geocoded_location">Beregnet adresse baseret på GPS-data ved hjælp af Googles Location API</string>
+  <string name="sensor_description_location_background">Opdater din lokalitet bag kulisserne med jævne mellemrum.</string>
   <string name="session_timeout_title">Sessions-timeout (i sekunder)</string>
   <string name="set_lock_message">Der er ingen biometrisk sensor eller skærmlås-legitimation tilgængelig</string>
   <string name="set_lock_title">App-låsefejl</string>
@@ -102,6 +106,10 @@ vil forbinde til:</string>
   <string name="skip">Spring over</string>
   <string name="states">Oversigt</string>
   <string name="status_of_mobile_app_integration">Status for mobilapp-integration:</string>
+  <string name="themes_option_label_dark">Mørk</string>
+  <string name="themes_option_label_light">Lys</string>
+  <string name="themes_option_label_system">Følg systemindstillinger</string>
+  <string name="themes_title_settings">Tema</string>
   <string name="unable_to_register">Kunne ikke registrere applikationen</string>
   <string name="url_invalid">Ugyldig webadresse</string>
   <string name="url_parse_error">Kan ikke fortolke din Home Assistant-webadresse. Det skal ligne https://eksempel.com</string>

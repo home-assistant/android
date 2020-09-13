@@ -11,6 +11,7 @@
   <string name="enabled_title">Ynskeakele</string>
   <string name="exit">Ferlit</string>
   <string name="history">Skiednis</string>
+  <string name="input_url_hint"></string>
   <string name="label_label">Label:</string>
   <string name="location">Lokaasje</string>
   <string name="lock_title">App beskoattele</string>
