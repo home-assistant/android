@@ -49,6 +49,7 @@
             android:key="session_timeout"
             android:icon="@drawable/ic_timeout"
             android:title="@string/session_timeout_title"
+            app:isPreferenceVisible="false"
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory

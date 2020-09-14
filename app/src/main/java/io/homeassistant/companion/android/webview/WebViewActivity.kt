@@ -155,8 +155,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 exoToggleMute()
             }
         })
-        if (!presenter.isLockEnabled())
+        if (!presenter.isLockEnabled()) {
             blurView.setBlurEnabled(false)
+            unlocked = true
+        }
 
         authenticator = Authenticator(this, this, ::authenticationResult)
 
@@ -164,6 +166,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
         webView = findViewById(R.id.webview)
         webView.apply {
+            setOnTouchListener { _, _ ->
+                return@setOnTouchListener !unlocked
+            }
+
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             webViewClient = object : WebViewClient() {
@@ -400,6 +406,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (!unlocked && !presenter.isLockEnabled())
+            unlocked = true
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == NFC_COMPLETE && resultCode != -1) {
@@ -547,7 +559,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 if ((System.currentTimeMillis() > presenter.getSessionExpireMillis())) {
                     blurView.setBlurEnabled(true)
                     authenticator.authenticate()
-                } else blurView.setBlurEnabled(false)
+                } else {
+                    blurView.setBlurEnabled(false)
+                }
 
             presenter.onViewReady(intent.getStringExtra(EXTRA_PATH))
             intent.removeExtra(EXTRA_PATH)
