@@ -408,7 +408,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onResume() {
         super.onResume()
-        if(!unlocked && !presenter.isLockEnabled())
+        if (!unlocked && !presenter.isLockEnabled())
             unlocked = true
     }
 

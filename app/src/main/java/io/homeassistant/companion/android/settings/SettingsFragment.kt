@@ -70,8 +70,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             if (newValue == false) {
                 isValid = true
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
-            }
-            else {
+            } else {
                 isValid = true
                 if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
                     setLock = true
