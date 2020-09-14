@@ -31,7 +31,7 @@ jobs:
         name: Create Release Number
         id: rel_number
         with:
-          beta: true
+          beta: false
 
       - uses: ./.github/actions/inflate-secrets
         name: Inflate Secrets
@@ -43,6 +43,11 @@ jobs:
 
       - uses: ./.github/actions/create-release-notes
         name: Create Release Notes
+
+      - name: Swap release notes
+        run: |
+          rm ./app/build/outputs/changelogBeta
+          cp ./app/build/outputs/changelogGithub ./app/build/outputs/changelogBeta
 
       - name: Build Release
         env:
@@ -154,3 +159,12 @@ jobs:
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew publishFullReleaseBundle
+
+      - name: Promote to Beta to Production
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: ${{ steps.rel_number.outputs.version }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew promoteArtifact --from-track beta --promote-track production
