@@ -178,8 +178,8 @@ class BatterySensorManager : SensorManager {
         val icon = when (chargerType) {
             "ac" -> "mdi:power-plug"
             "usb" -> "mdi:usb-port"
-            "wireless" -> "battery-charging-wireless"
-            else -> "mdi:battery-unknown"
+            "wireless" -> "mdi:battery-charging-wireless"
+            else -> "mdi:battery"
         }
         onSensorUpdated(
             context,
@@ -221,7 +221,7 @@ class BatterySensorManager : SensorManager {
             BatteryManager.BATTERY_PLUGGED_AC -> "ac"
             BatteryManager.BATTERY_PLUGGED_USB -> "usb"
             BatteryManager.BATTERY_PLUGGED_WIRELESS -> "wireless"
-            else -> "unknown"
+            else -> "none"
         }
     }
 
