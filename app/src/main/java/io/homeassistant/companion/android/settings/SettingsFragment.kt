@@ -65,10 +65,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             isValid
         }
 
-        val onChangeBiometricValidator = Preference.OnPreferenceChangeListener { _, newValue ->
+        findPreference<SwitchPreference>("app_lock")?.setOnPreferenceChangeListener { _, newValue ->
             var isValid: Boolean
-            if (newValue == false)
+            if (newValue == false) {
                 isValid = true
+                findPreference<EditTextPreference>("session_timeout")?.isVisible = false
+            }
             else {
                 isValid = true
                 if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
@@ -87,16 +89,19 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             isValid
         }
 
+        findPreference<EditTextPreference>("session_timeout")?.let { pref ->
+            pref.setOnBindEditTextListener {
+                it.inputType = InputType.TYPE_CLASS_NUMBER
+            }
+            pref.isVisible = findPreference<SwitchPreference>("app_lock")?.isChecked == true
+        }
+
         findPreference<Preference>("nfc_tags")?.let {
             it.isVisible = presenter.nfcEnabled()
             it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
                 startActivity(NfcSetupActivity.newInstance(requireActivity()))
                 true
             }
-        }
-
-        findPreference<EditTextPreference>("session_timeout")?.setOnBindEditTextListener {
-            it.inputType = InputType.TYPE_CLASS_NUMBER
         }
 
         removeSystemFromThemesIfNeeded()
@@ -106,9 +111,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         findPreference<EditTextPreference>("connection_external")?.onPreferenceChangeListener =
             onChangeUrlValidator
-
-        findPreference<SwitchPreference>("app_lock")?.onPreferenceChangeListener =
-            onChangeBiometricValidator
 
         findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
             parentFragmentManager
@@ -171,8 +173,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     }
 
     private fun authenticationResult(result: Int) {
+        val success = result == Authenticator.SUCCESS
         val switchLock = findPreference<SwitchPreference>("app_lock")
-        switchLock?.isChecked = result == Authenticator.SUCCESS
+        switchLock?.isChecked = success
+        findPreference<EditTextPreference>("session_timeout")?.isVisible = success
     }
 
     private fun removeSystemFromThemesIfNeeded() {
