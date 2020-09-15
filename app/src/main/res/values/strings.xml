@@ -208,7 +208,7 @@ like to connect to:</string>
   <string name="sensor_description_volume_call">Volume level for calls on the device</string>
   <string name="sensor_description_volume_music">Volume level for music on the device</string>
   <string name="sensor_description_volume_ring">Volume level for the ringer on the device</string>
-  <string name="sensor_description_wifi_bssid">The mac address of the currently connected WiFi access point</string>
+  <string name="sensor_description_wifi_bssid">The mac address of the currently connected WiFi access point. The settings will allow you to replace the selected mac address with any name you want.</string>
   <string name="sensor_description_wifi_connection">The name of the network the device is currently connected to</string>
   <string name="sensor_description_wifi_frequency">The frequency band of the connected network</string>
   <string name="sensor_description_wifi_ip">The current IP address of the device on the network</string>
@@ -242,6 +242,7 @@ like to connect to:</string>
   <string name="sensor_name_volume_call">Volume Level Call</string>
   <string name="sensor_name_volume_music">Volume Level Music</string>
   <string name="sensor_name_volume_ring">Volume Level Ringer</string>
+  <string name="sensor_settings">Sensor Settings</string>
   <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
   <string name="sensor_title">Manage Sensors</string>
   <string name="sensors">Sensors</string>

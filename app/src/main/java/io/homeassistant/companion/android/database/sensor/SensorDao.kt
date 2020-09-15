@@ -17,11 +17,18 @@ interface SensorDao {
     @Query("SELECT * FROM Sensors WHERE id = :id")
     fun getFull(id: String): SensorWithAttributes?
 
+    @Transaction
+    @Query("SELECT * FROM Sensors WHERE id = :id")
+    fun getSettings(id: String): SensorWithSettings?
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun add(sensor: Sensor)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun add(attribute: Attribute)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun add(setting: Setting)
 
     @Update
     fun update(sensor: Sensor)

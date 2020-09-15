@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.sensors
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
+import android.text.InputType
+import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -13,6 +15,7 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.sensor.Setting
 
 class SensorDetailFragment(
     private val sensorManager: SensorManager,
@@ -92,10 +95,12 @@ class SensorDetailFragment(
 
         val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
         val fullData = sensorDao.getFull(basicSensor.id)
+        val sensorSettings = sensorDao.getSettings(basicSensor.id)
         if (fullData?.sensor == null)
             return
         val sensorData = fullData.sensor
         val attributes = fullData.attributes
+        val settings = sensorSettings?.settings
 
         findPreference<Preference>("unique_id")?.let {
             it.isCopyingEnabled = true
@@ -139,6 +144,35 @@ class SensorDetailFragment(
                     pref.title = attribute.name
                     pref.summary = attribute.value
                     pref.isIconSpaceReserved = false
+
+                    if (!it.contains(pref))
+                        it.addPreference(pref)
+                }
+                it.isVisible = true
+            } else
+                it.isVisible = false
+        }
+
+        findPreference<PreferenceCategory>("sensor_settings")?.let {
+            if (sensorData.enabled && !settings.isNullOrEmpty()) {
+                settings.forEach { setting ->
+                    val key = "setting_${setting.name}"
+                    val pref = findPreference(key) ?: EditTextPreference(requireContext())
+                    pref.key = key
+                    pref.title = setting.name
+                    if (setting.value != "")
+                        pref.summary = setting.value
+                    else
+                        pref.summary = pref.text
+                    pref.isIconSpaceReserved = false
+
+                    pref.setOnBindEditTextListener { fieldType ->
+                        if (setting.valueType == "int" || setting.valueType == "float")
+                            fieldType.inputType = InputType.TYPE_CLASS_NUMBER
+                    }
+
+                    if (pref.text != null)
+                        sensorDao.add(Setting(basicSensor.id, setting.name, pref.text, setting.valueType))
 
                     if (!it.contains(pref))
                         it.addPreference(pref)

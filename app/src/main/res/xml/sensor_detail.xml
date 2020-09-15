@@ -36,4 +36,9 @@
         app:key="attributes"
         app:title="@string/attributes"
         app:iconSpaceReserved="false"/>
+
+    <androidx.preference.PreferenceCategory
+        app:key="sensor_settings"
+        app:title="@string/sensor_settings"
+        app:iconSpaceReserved="false"/>
 </androidx.preference.PreferenceScreen>

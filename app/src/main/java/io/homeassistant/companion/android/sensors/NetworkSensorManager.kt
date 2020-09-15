@@ -7,6 +7,8 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Setting
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -174,7 +176,18 @@ class NetworkSensorManager : SensorManager {
             conInfo = wifiManager.connectionInfo
         }
 
-        val bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
+        var bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
+
+        val settingName = "replace_$bssid"
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val fullSensor = sensorDao.getSettings(bssidState.id)
+        val currentSetting = fullSensor?.settings?.firstOrNull { it.name == settingName }?.value ?: ""
+        if (currentSetting != "") {
+            bssid = currentSetting
+        } else {
+            sensorDao.add(Setting(bssidState.id, settingName, "", "string"))
+        }
+
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
         onSensorUpdated(
             context,
