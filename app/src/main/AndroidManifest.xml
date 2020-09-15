@@ -182,6 +182,14 @@
         <activity
             android:name=".nfc.NfcSetupActivity"
             android:label="@string/nfc_title_nfc_setup" />
+
+        <activity android:name=".share.ShareActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
