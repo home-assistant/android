@@ -350,6 +350,8 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                 }
                             }
                             "config/get" -> {
+                                val pm: PackageManager = context.packageManager
+                                val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
                                 val script = "externalBus(" +
                                         "${JSONObject(
                                             mapOf(
@@ -359,7 +361,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                                 "result" to JSONObject(
                                                     mapOf(
                                                         "hasSettingsScreen" to true,
-                                                        "canWriteTag" to true,
+                                                        "canWriteTag" to hasNfc,
                                                         "hasExoPlayer" to true
                                                     )
                                                 )

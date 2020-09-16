@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings
 
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
@@ -96,7 +97,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         findPreference<Preference>("nfc_tags")?.let {
-            it.isVisible = presenter.nfcEnabled()
+            val pm: PackageManager = requireContext().packageManager
+            if (pm.hasSystemFeature(PackageManager.FEATURE_NFC))
+                it.isVisible = presenter.nfcEnabled()
+            else
+                it.isVisible = false
             it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
                 startActivity(NfcSetupActivity.newInstance(requireActivity()))
                 true
