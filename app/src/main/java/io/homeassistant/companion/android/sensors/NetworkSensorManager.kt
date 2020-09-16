@@ -181,11 +181,18 @@ class NetworkSensorManager : SensorManager {
         val settingName = "replace_$bssid"
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val fullSensor = sensorDao.getSettings(bssidState.id)
+        val getNextBSSID = fullSensor?.settings?.firstOrNull { it.name == "get_next_bssid" }?.value ?: "false"
         val currentSetting = fullSensor?.settings?.firstOrNull { it.name == settingName }?.value ?: ""
-        if (currentSetting != "") {
-            bssid = currentSetting
+        if (getNextBSSID == "true") {
+            if (currentSetting == "") {
+                sensorDao.add(Setting(bssidState.id, "get_next_bssid", "false", "toggle"))
+                sensorDao.add(Setting(bssidState.id, settingName, "", "string"))
+            }
         } else {
-            sensorDao.add(Setting(bssidState.id, settingName, "", "string"))
+            if (currentSetting != "")
+                bssid = currentSetting
+
+            sensorDao.add(Setting(bssidState.id, "get_next_bssid", "false", "toggle"))
         }
 
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"

@@ -157,25 +157,51 @@ class SensorDetailFragment(
             if (sensorData.enabled && !settings.isNullOrEmpty()) {
                 settings.forEach { setting ->
                     val key = "setting_${setting.name}"
-                    val pref = findPreference(key) ?: EditTextPreference(requireContext())
-                    pref.key = key
-                    pref.title = setting.name
-                    if (setting.value != "")
-                        pref.summary = setting.value
-                    else
-                        pref.summary = pref.text
-                    pref.isIconSpaceReserved = false
+                    if (setting.valueType == "toggle") {
+                        val pref = findPreference(key) ?: SwitchPreference(requireContext())
+                        pref.key = key
+                        pref.title = setting.name
+                        pref.isChecked = setting.value == "true"
+                        pref.isIconSpaceReserved = false
+                        pref.setOnPreferenceChangeListener { _, newState ->
+                            val isEnabled = newState as Boolean
 
-                    pref.setOnBindEditTextListener { fieldType ->
-                        if (setting.valueType == "int" || setting.valueType == "float")
-                            fieldType.inputType = InputType.TYPE_CLASS_NUMBER
+                            if (isEnabled) {
+                                sensorDao.add(Setting(basicSensor.id, setting.name, "true", "toggle"))
+                                return@setOnPreferenceChangeListener true
+                            }
+                            return@setOnPreferenceChangeListener false
+                        }
+                        if (!it.contains(pref))
+                            it.addPreference(pref)
                     }
+                    if (setting.valueType == "string") {
+                        val pref = findPreference(key) ?: EditTextPreference(requireContext())
+                        pref.key = key
+                        pref.title = setting.name
+                        if (setting.value != "")
+                            pref.summary = setting.value
+                        else
+                            pref.summary = pref.text
+                        pref.isIconSpaceReserved = false
 
-                    if (pref.text != null)
-                        sensorDao.add(Setting(basicSensor.id, setting.name, pref.text, setting.valueType))
+                        pref.setOnBindEditTextListener { fieldType ->
+                            if (setting.valueType == "int" || setting.valueType == "float")
+                                fieldType.inputType = InputType.TYPE_CLASS_NUMBER
+                        }
 
+                        if (pref.text != null)
+                            sensorDao.add(
+                                Setting(
+                                    basicSensor.id,
+                                    setting.name,
+                                    pref.text,
+                                    setting.valueType
+                                )
+                            )
                     if (!it.contains(pref))
                         it.addPreference(pref)
+                    }
                 }
                 it.isVisible = true
             } else
