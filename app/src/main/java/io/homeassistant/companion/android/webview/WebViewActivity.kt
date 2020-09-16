@@ -428,7 +428,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     fun exoPlayHls(json: JSONObject) {
-        val uri = Uri.parse(json.getString("payload"))
+        val payload = json.getJSONObject("payload")
+        val uri = Uri.parse(payload.getString("url"))
+        exoMute = payload.optBoolean("muted")
         val dataSourceFactory = DefaultHttpDataSourceFactory(
             Util.getUserAgent(
                 applicationContext,
