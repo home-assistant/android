@@ -175,7 +175,7 @@ class SensorDetailFragment(
                         if (!it.contains(pref))
                             it.addPreference(pref)
                     }
-                    if (setting.valueType == "string") {
+                    if (setting.valueType == "string" || setting.valueType == "number") {
                         val pref = findPreference(key) ?: EditTextPreference(requireContext())
                         pref.key = key
                         pref.title = setting.name
@@ -186,7 +186,7 @@ class SensorDetailFragment(
                         pref.isIconSpaceReserved = false
 
                         pref.setOnBindEditTextListener { fieldType ->
-                            if (setting.valueType == "int" || setting.valueType == "float")
+                            if (setting.valueType == "number")
                                 fieldType.inputType = InputType.TYPE_CLASS_NUMBER
                         }
 
