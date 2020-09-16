@@ -297,4 +297,6 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_default">30</string>
   <string name="widget_text_size_label">Widget text size:</string>
+    <string name="share_success">Shared with Home Assistant</string>
+  <string name="share_failed">Sharing with Home Assistant Failed!</string>
 </resources>
