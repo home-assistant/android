@@ -212,6 +212,8 @@ sa chcete pripojiť:</string>
   <string name="set_lock_message">Nie je k dispozícii žiadny biometrický senzor alebo uzamknutie obrazovky</string>
   <string name="set_lock_title">Chyba uzamknutia aplikácie</string>
   <string name="settings">Nastavenia</string>
+  <string name="share_failed">Zdieľanie s Home Assistant zlyhalo!</string>
+  <string name="share_success">Zdieľané s Home Assistant</string>
   <string name="shopping_list">Nákupný zoznam</string>
   <string name="shortcuts">Odkazy</string>
   <string name="shortcuts_summary">Pridať odkaz do spúšťača</string>

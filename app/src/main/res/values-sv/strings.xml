@@ -11,7 +11,7 @@
   <string name="auth_request">Autentisering krävs</string>
   <string name="biometric_message">Använd biometrisk eller skärmlåskod för att låsa upp appen</string>
   <string name="biometric_set_title">Bekräfta för att fortsätta</string>
-  <string name="biometric_title">[%key_id:32141765%] måste låsas upp</string>
+  <string name="biometric_title">Home Assistant måste låsas upp</string>
   <string name="calendar">Kalender</string>
   <string name="cancel">Avbryt</string>
   <string name="checking_with_home_assistant">Kontrollerar med Home Assistant</string>
@@ -29,7 +29,7 @@
   <string name="error_auth_revoked">Det verkar som att din behörighet har upphört. Anslut igen till Home Assistant.</string>
   <string name="error_connection_failed">Kunde inte ansluta till Home Assistant</string>
   <string name="error_onboarding_connection_failed">Kunde inte ansluta till Home Assistant</string>
-  <string name="error_ssl">Kommunikationen med [%key_id:32141765%] bröts på grund av ett SSL-fel. Vänligen kontrollera att det finns ett giltigt certifikat.</string>
+  <string name="error_ssl">Kommunikationen med Home Assistant bröts på grund av ett SSL-fel. Vänligen kontrollera att det finns ett giltigt certifikat.</string>
   <string name="error_with_registration">Kontrollera att du har mobile_app 
  integration aktiverad i din Home Assistant instans.</string>
   <string name="event_error">Det gick inte att meddela HA om valt alternativ.</string>

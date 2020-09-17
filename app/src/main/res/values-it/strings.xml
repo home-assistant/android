@@ -30,6 +30,7 @@
   <string name="basic_sensor_name_location_zone">Zona di localizzazione</string>
   <string name="basic_sensor_name_phone">Stato del telefono</string>
   <string name="basic_sensor_name_power_save">Risparmio energetico</string>
+  <string name="basic_sensor_name_public_ip">Indirizzo IP pubblico</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
   <string name="basic_sensor_name_sim2">SIM 2</string>
   <string name="basic_sensor_name_wifi">Connessione WiFi</string>
@@ -186,6 +187,7 @@ Scansione della rete</string>
   <string name="sensor_description_power_save">Indica se il dispositivo è in modalità Risparmio energetico</string>
   <string name="sensor_description_pressure_sensor">L\'attuale lettura della pressione atmosferica</string>
   <string name="sensor_description_proximity_sensor">L\'attuale lettura di prossimità, alcuni dispositivi segnalano solo vicino o lontano</string>
+  <string name="sensor_description_public_ip">L\'indirizzo IP pubblico del dispositivo. Abilitando questa opzione, accetti di utilizzare il servizio esterno https://ipify.org per determinare l\'indirizzo IP.</string>
   <string name="sensor_description_sim_1">Informazioni sul provider di telefonia mobile corrente nello slot SIM 1</string>
   <string name="sensor_description_sim_2">Informazioni sul provider di telefonia mobile corrente nello slot SIM 2</string>
   <string name="sensor_description_speakerphone">Indica se il vivavoce è abilitato o meno sul dispositivo</string>
@@ -236,6 +238,8 @@ Scansione della rete</string>
   <string name="set_lock_message">Nessun sensore biometrico o credenziali del blocca schermo disponibili</string>
   <string name="set_lock_title">Errore di blocco dell\'app</string>
   <string name="settings">Impostazioni</string>
+  <string name="share_failed">Condivisione con Home Assistant non riuscita!</string>
+  <string name="share_success">Condiviso con Home Assistant</string>
   <string name="shopping_list">Lista della spesa</string>
   <string name="shortcuts">Collegamenti</string>
   <string name="shortcuts_summary">Aggiungi collegamento al launcher</string>
