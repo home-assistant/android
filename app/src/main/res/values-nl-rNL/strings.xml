@@ -30,6 +30,7 @@
   <string name="basic_sensor_name_location_zone">Locatie Zone</string>
   <string name="basic_sensor_name_phone">Telefoon Status</string>
   <string name="basic_sensor_name_power_save">Energiebesparing</string>
+  <string name="basic_sensor_name_public_ip">Openbaar IP-adres</string>
   <string name="basic_sensor_name_sim1">Simkaart 1</string>
   <string name="basic_sensor_name_sim2">Simkaart 2</string>
   <string name="basic_sensor_name_wifi">WiFi-verbinding</string>
@@ -182,6 +183,7 @@
   <string name="sensor_description_power_save">Of het apparaat zich in de energiebesparende modus bevindt</string>
   <string name="sensor_description_pressure_sensor">De huidige omgevingsluchtdrukwaarde</string>
   <string name="sensor_description_proximity_sensor">De huidige nabijheidsmeting, sommige apparaten rapporteren alleen dichtbij of veraf</string>
+  <string name="sensor_description_public_ip">Het openbare IP-adres van het apparaat. Als u dit inschakelt, gaat u ermee akkoord om de externe service https://ipify.org te gebruiken om het IP-adres te bepalen.</string>
   <string name="sensor_description_sim_1">Informatie over de huidige mobiele provider in simkaartsleuf 1</string>
   <string name="sensor_description_sim_2">Informatie over de huidige mobiele provider in simkaartsleuf 2</string>
   <string name="sensor_description_speakerphone">Of de luidsprekertelefoon al dan niet is ingeschakeld op het apparaat</string>

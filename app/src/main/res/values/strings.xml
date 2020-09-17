@@ -249,6 +249,8 @@ like to connect to:</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
   <string name="set_lock_title">App Locking Error</string>
   <string name="settings">Settings</string>
+  <string name="share_failed">Sharing with Home Assistant Failed!</string>
+  <string name="share_success">Shared with Home Assistant</string>
   <string name="shopping_list">Shopping List</string>
   <string name="shortcuts">Shortcuts</string>
   <string name="shortcuts_summary">Add shortcuts to launcher</string>
@@ -297,6 +299,4 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_default">30</string>
   <string name="widget_text_size_label">Widget text size:</string>
-    <string name="share_success">Shared with Home Assistant</string>
-  <string name="share_failed">Sharing with Home Assistant Failed!</string>
 </resources>

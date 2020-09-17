@@ -24,7 +24,7 @@
   <string name="basic_sensor_name_external_storage">Externer Speicher</string>
   <string name="basic_sensor_name_geolocation">Geokodierter Standort</string>
   <string name="basic_sensor_name_interactive">In Verwendung</string>
-  <string name="basic_sensor_name_internal_storage">Interne Speicher</string>
+  <string name="basic_sensor_name_internal_storage">Interner Speicher</string>
   <string name="basic_sensor_name_last_reboot">Letzter Neustart</string>
   <string name="basic_sensor_name_location_background">Hintergrund Standort</string>
   <string name="basic_sensor_name_location_zone">Standortzone</string>
@@ -155,7 +155,7 @@
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Beschreibung</string>
   <string name="sensor_description_audio_mode">Der Status des Audiomodus des Gerätes</string>
-  <string name="sensor_description_audio_sensor">Der Status des Ruftonmodus des Geräts sowie andere audiobezogene Attribute</string>
+  <string name="sensor_description_audio_sensor">Der Status des Klingeltonmodus des Geräts</string>
   <string name="sensor_description_battery_health">Der Zustand des Akkus</string>
   <string name="sensor_description_battery_level">Der aktuelle Akkuladestand des Geräts</string>
   <string name="sensor_description_battery_state">Der aktuelle Ladezustand des Akkus</string>
@@ -170,7 +170,7 @@
   <string name="sensor_description_geocoded_location">Berechnete Adresse basierend auf GPS-Daten unter Verwendung der Googles Location API</string>
   <string name="sensor_description_headphone">Gibt an, ob Kopfhörer an das Gerät angeschlossen sind</string>
   <string name="sensor_description_interactive">Gibt an, ob das Gerät gerade verwendet wird</string>
-  <string name="sensor_description_internal_storage">Informationen über den gesamten und intern verfügbaren Speicherplatz</string>
+  <string name="sensor_description_internal_storage">Informationen über den gesamten und verfügbaren internen Speicherplatz</string>
   <string name="sensor_description_last_reboot">Datum und Uhrzeit des letzten Neustarts des Geräts</string>
   <string name="sensor_description_light_sensor">Der aktuelle Messwert des Helligkeitssensors</string>
   <string name="sensor_description_location_background">Aktualisiere deinen Standort regelmäßig im Hintergrund.</string>
@@ -183,7 +183,7 @@
   <string name="sensor_description_power_save">Gibt an, ob sich das Gerät im Energiesparmodus befindet</string>
   <string name="sensor_description_pressure_sensor">Der aktuelle Messwert des Umgebungsluftdrucks</string>
   <string name="sensor_description_proximity_sensor">Der aktuelle Wert des Näherungssensors, manche Geräte melden nur nah oder fern</string>
-  <string name="sensor_description_public_ip">Die öffentliche IP-Adresse des Geräts. Wenndu dies aktivierst, stimmst du zu, dass der externe Dienst https://ipify.org verwendet wird, um die IP-Adresse zu bestimmen.</string>
+  <string name="sensor_description_public_ip">Die öffentliche IP-Adresse des Geräts. Wenn du dies aktivierst, stimmst du zu, dass der externe Dienst https://ipify.org verwendet wird, um die IP-Adresse zu bestimmen.</string>
   <string name="sensor_description_sim_1">Informationen zum aktuellen Mobilfunkanbieter in SIM-Steckplatz 1</string>
   <string name="sensor_description_sim_2">Informationen zum aktuellen Mobilfunkanbieter in SIM-Steckplatz 2</string>
   <string name="sensor_description_speakerphone">Gibt an, ob die Freisprecheinrichtung auf dem Gerät aktiviert ist</string>
@@ -194,7 +194,7 @@
   <string name="sensor_description_volume_music">Lautstärkepegel für Musik auf dem Gerät</string>
   <string name="sensor_description_volume_ring">Lautstärkepegel für den Klingelton des Gerätes</string>
   <string name="sensor_description_wifi_bssid">Die Mac-Adresse des aktuell verbundenen WLAN-Zugangspunkts</string>
-  <string name="sensor_description_wifi_connection">Informationen zum aktuell verbundenen WLAN</string>
+  <string name="sensor_description_wifi_connection">Der Name des Netzwerks, mit dem das Gerät derzeit verbunden ist</string>
   <string name="sensor_description_wifi_frequency">Das Frequenzband des verbundenen Netzwerks</string>
   <string name="sensor_description_wifi_ip">Die aktuelle IP-Adresse des Geräts im Netzwerk</string>
   <string name="sensor_description_wifi_link_speed">Die aktuelle Verbindungsgeschwindigkeit des Geräts zum verbundenen Netzwerk</string>
@@ -234,6 +234,8 @@
   <string name="set_lock_message">Kein biometrischer Sensor oder andere Displaysperren verfügbar</string>
   <string name="set_lock_title">App-Sperrfehler</string>
   <string name="settings">Einstellungen</string>
+  <string name="share_failed">Teilen mit Home Assistant fehlgeschlagen!</string>
+  <string name="share_success">Mit Home Assistant geteilt</string>
   <string name="shopping_list">Einkaufsliste</string>
   <string name="shortcuts">Verknüpfungen</string>
   <string name="shortcuts_summary">Verknüpfungen zum Startbildschirm hinzufügen</string>
