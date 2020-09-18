@@ -100,7 +100,6 @@ class SensorDetailFragment(
             return
         val sensorData = fullData.sensor
         val attributes = fullData.attributes
-        val settings = sensorSettings?.settings
 
         findPreference<Preference>("unique_id")?.let {
             it.isCopyingEnabled = true
@@ -154,8 +153,8 @@ class SensorDetailFragment(
         }
 
         findPreference<PreferenceCategory>("sensor_settings")?.let {
-            if (sensorData.enabled && !settings.isNullOrEmpty()) {
-                settings.forEach { setting ->
+            if (sensorData.enabled && !sensorSettings.isNullOrEmpty()) {
+                sensorSettings.forEach { setting ->
                     val key = "setting_${setting.name}"
                     if (setting.valueType == "toggle") {
                         val pref = findPreference(key) ?: SwitchPreference(requireContext())
@@ -168,14 +167,14 @@ class SensorDetailFragment(
 
                             if (isEnabled) {
                                 sensorDao.add(Setting(basicSensor.id, setting.name, "true", "toggle"))
-                                return@setOnPreferenceChangeListener true
+                            } else {
+                                sensorDao.add(Setting(basicSensor.id, setting.name, "false", "toggle"))
                             }
-                            return@setOnPreferenceChangeListener false
+                            return@setOnPreferenceChangeListener true
                         }
                         if (!it.contains(pref))
                             it.addPreference(pref)
-                    }
-                    if (setting.valueType == "string" || setting.valueType == "number") {
+                    } else if (setting.valueType == "string" || setting.valueType == "number") {
                         val pref = findPreference(key) ?: EditTextPreference(requireContext())
                         pref.key = key
                         pref.title = setting.name
