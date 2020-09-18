@@ -139,18 +139,20 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 val cursor = database.query("SELECT * FROM sensors")
                 val sensors = mutableListOf<ContentValues>()
-                while (cursor.moveToNext()) {
-                    sensors.add(ContentValues().also {
-                        it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
-                        it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                        it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
-                        it.put("state", "")
-                        it.put("state_type", "")
-                        it.put("type", "")
-                        it.put("icon", "")
-                        it.put("name", "")
-                        it.put("device_class", "")
-                    })
+                if (cursor.count > 0) {
+                    while (cursor.moveToNext()) {
+                        sensors.add(ContentValues().also {
+                            it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
+                            it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                            it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
+                            it.put("state", "")
+                            it.put("state_type", "")
+                            it.put("type", "")
+                            it.put("icon", "")
+                            it.put("name", "")
+                            it.put("device_class", "")
+                        })
+                    }
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
@@ -176,18 +178,20 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 val cursor = database.query("SELECT * FROM sensors")
                 val sensors = mutableListOf<ContentValues>()
-                while (cursor.moveToNext()) {
-                    sensors.add(ContentValues().also {
-                        it.put("id", cursor.getString(cursor.getColumnIndex("id")))
-                        it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                        it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
-                        it.put("state", "")
-                        it.put("last_sent_state", "")
-                        it.put("state_type", "")
-                        it.put("type", "")
-                        it.put("icon", "")
-                        it.put("name", "")
-                    })
+                if (cursor.count > 0) {
+                    while (cursor.moveToNext()) {
+                        sensors.add(ContentValues().also {
+                            it.put("id", cursor.getString(cursor.getColumnIndex("id")))
+                            it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                            it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
+                            it.put("state", "")
+                            it.put("last_sent_state", "")
+                            it.put("state_type", "")
+                            it.put("type", "")
+                            it.put("icon", "")
+                            it.put("name", "")
+                        })
+                    }
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
