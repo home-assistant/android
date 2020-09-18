@@ -7,6 +7,8 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Setting
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
@@ -70,6 +72,7 @@ class NetworkSensorManager : SensorManager {
             R.string.basic_sensor_name_public_ip,
             R.string.sensor_description_public_ip
         )
+        private const val GET_CURRENT_BSSID = "get_current_bssid"
     }
 
     override val enabledByDefault: Boolean
@@ -174,7 +177,27 @@ class NetworkSensorManager : SensorManager {
             conInfo = wifiManager.connectionInfo
         }
 
-        val bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
+        var bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
+
+        val settingName = "replace_$bssid"
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val sensorSettings = sensorDao.getSettings(bssidState.id)
+        val getCurrentBSSID = sensorSettings?.firstOrNull { it.name == GET_CURRENT_BSSID }?.value ?: "false"
+        val currentSetting = sensorSettings?.firstOrNull { it.name == settingName }?.value ?: ""
+        if (getCurrentBSSID == "true") {
+            if (currentSetting == "") {
+                sensorDao.add(Setting(bssidState.id, GET_CURRENT_BSSID, "false", "toggle"))
+                sensorDao.add(Setting(bssidState.id, settingName, bssid, "string"))
+            }
+        } else {
+            if (currentSetting != "")
+                bssid = currentSetting
+            else
+                sensorDao.removeSetting(bssidState.id, settingName)
+
+            sensorDao.add(Setting(bssidState.id, GET_CURRENT_BSSID, "false", "toggle"))
+        }
+
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
         onSensorUpdated(
             context,
