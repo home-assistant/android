@@ -165,11 +165,7 @@ class SensorDetailFragment(
                         pref.setOnPreferenceChangeListener { _, newState ->
                             val isEnabled = newState as Boolean
 
-                            if (isEnabled) {
-                                sensorDao.add(Setting(basicSensor.id, setting.name, "true", "toggle"))
-                            } else {
-                                sensorDao.add(Setting(basicSensor.id, setting.name, "false", "toggle"))
-                            }
+                            sensorDao.add(Setting(basicSensor.id, setting.name, isEnabled.toString(), "toggle"))
                             return@setOnPreferenceChangeListener true
                         }
                         if (!it.contains(pref))
