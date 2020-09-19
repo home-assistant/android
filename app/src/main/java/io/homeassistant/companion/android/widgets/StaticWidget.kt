@@ -128,7 +128,7 @@ class StaticWidget : AppWidgetProvider() {
         var fetchedAttributes: Map<*, *>
         var attributeValues: List<String?>
         try {
-            fetchedAttributes = entity?.attributes as Map<*, *>
+            fetchedAttributes = (entity?.attributes as? Map<*, *>)!!
             attributeValues = attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
             return entity.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
         } catch (e: Exception) {
