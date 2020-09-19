@@ -125,9 +125,16 @@ class StaticWidget : AppWidgetProvider() {
 
         if (attributeIds == null) return entity?.state
 
-        val fetchedAttributes = entity?.attributes as Map<*, *>
-        val attributeValues = attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
-        return entity.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
+        var fetchedAttributes: Map<*, *>
+        var attributeValues: List<String?>
+        try {
+            fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
+            attributeValues = attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
+            return entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
+        } catch (e: Exception) {
+            Log.d(TAG, "Unable to fetch entity state and attributes", e)
+        }
+        return null
     }
 
     override fun onReceive(context: Context, intent: Intent) {
