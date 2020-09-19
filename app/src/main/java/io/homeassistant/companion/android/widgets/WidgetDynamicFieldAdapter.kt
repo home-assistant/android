@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets
 
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,7 +11,7 @@ import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.Service
-import java.lang.Exception
+import kotlin.Exception
 import kotlinx.android.synthetic.main.widget_button_configure_dynamic_field.view.*
 
 class WidgetDynamicFieldAdapter(
@@ -127,7 +128,11 @@ class WidgetDynamicFieldAdapter(
         // Currently value can by Any? but will currently only be storing String?
         // This may have to be changed later if multi-select gets implemented
         if (serviceFieldList[position].value != null) {
-            serviceFieldList[position].value as String
+            try {
+                serviceFieldList[position].value as String
+            } catch (e: Exception) {
+                Log.d("WidgetField", "Unable to get service field list", e)
+            }
         }
 
         // Have the text view store its text for later recall
