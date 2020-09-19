@@ -21,6 +21,7 @@ class WidgetDynamicFieldAdapter(
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
+    private val TAG = "WidgetField"
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
         if (hasFocus && view is AutoCompleteTextView) {
             view.showDropDown()
@@ -131,7 +132,7 @@ class WidgetDynamicFieldAdapter(
             try {
                 serviceFieldList[position].value as String
             } catch (e: Exception) {
-                Log.d("WidgetField", "Unable to get service field list", e)
+                Log.d(TAG, "Unable to get service field list", e)
             }
         }
 
