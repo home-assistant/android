@@ -186,7 +186,7 @@ like to connect to:</string>
   <string name="sensor_description_headphone">Whether or not headphones are plugged into the device</string>
   <string name="sensor_description_interactive">Whether or not the device is in an interactive state</string>
   <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
-  <string name="sensor_description_last_reboot">The date and time of the devices last reboot</string>
+  <string name="sensor_description_last_reboot">The date and time of the devices last reboot. The setting below will allow you to adjust the deadband in milliseconds, if you still find the value to jump incorrectly. The default value is 60000 (1 minute).</string>
   <string name="sensor_description_light_sensor">The current level of illuminance</string>
   <string name="sensor_description_location_background">Update your location behind the scenes, periodically.</string>
   <string name="sensor_description_location_zone">Import existing Home Assistant zones as geofences for zone based tracking.</string>

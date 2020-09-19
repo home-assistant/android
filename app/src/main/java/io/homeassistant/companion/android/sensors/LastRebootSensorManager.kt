@@ -4,15 +4,21 @@ import android.content.Context
 import android.os.SystemClock
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Setting
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.GregorianCalendar
 import java.util.TimeZone
+import kotlin.math.absoluteValue
 
 class LastRebootSensorManager : SensorManager {
     companion object {
         private const val TAG = "LastReboot"
+        private const val LOCAL_TIME = "Local Time"
+        private const val DEADBAND = "deadband"
+        private const val TIME_MILLISECONDS = "Time in Milliseconds"
 
         private val lastRebootSensor = SensorManager.BasicSensor(
             "last_reboot",
@@ -49,8 +55,17 @@ class LastRebootSensorManager : SensorManager {
         var local = ""
         var utc = "unavailable"
 
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val fullSensor = sensorDao.getFull(lastRebootSensor.id)
+        val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
+        val lastTimeMillis = fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
+        val settingDeadband = sensorSetting?.firstOrNull { it.name == DEADBAND }?.value?.toIntOrNull() ?: 60000
+        sensorDao.add(Setting(lastRebootSensor.id, DEADBAND, settingDeadband.toString(), "number"))
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()
+            val diffMillis = (timeInMillis - lastTimeMillis).absoluteValue
+            if (lastTimeMillis != 0L && settingDeadband > diffMillis)
+                return
             val cal: Calendar = GregorianCalendar()
             cal.timeInMillis = timeInMillis
             local = cal.time.toString()
@@ -71,8 +86,8 @@ class LastRebootSensorManager : SensorManager {
             utc,
             icon,
             mapOf(
-                "Local Time" to local,
-                "Time in Milliseconds" to timeInMillis
+                LOCAL_TIME to local,
+                TIME_MILLISECONDS to timeInMillis
             )
         )
     }
