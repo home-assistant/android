@@ -128,9 +128,9 @@ class StaticWidget : AppWidgetProvider() {
         var fetchedAttributes: Map<*, *>
         var attributeValues: List<String?>
         try {
-            fetchedAttributes = (entity?.attributes as? Map<*, *>)!!
+            fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
             attributeValues = attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
-            return entity.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
+            return entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
         } catch (e: Exception) {
             Log.d(TAG, "Unable to fetch entity state and attributes", e)
         }
