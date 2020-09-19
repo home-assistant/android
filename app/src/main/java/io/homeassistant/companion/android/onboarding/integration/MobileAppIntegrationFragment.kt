@@ -161,7 +161,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
     override fun showError(skippable: Boolean) {
         if (skippable) {
-            skip.visibility = View.VISIBLE
+            if (skip != null)
+                skip.visibility = View.VISIBLE
         }
         viewFlipper.displayedChild = ERROR_VIEW
     }
