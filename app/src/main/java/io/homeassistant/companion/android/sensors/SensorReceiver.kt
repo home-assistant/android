@@ -37,7 +37,8 @@ class SensorReceiver : BroadcastReceiver() {
             PressureSensorManager(),
             ProximitySensorManager(),
             StepsSensorManager(),
-            StorageSensorManager()
+            StorageSensorManager(),
+            TrafficStatsManager()
         )
 
         const val ACTION_REQUEST_SENSORS_UPDATE =

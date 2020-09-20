@@ -21,6 +21,10 @@
   <string name="auth_error">Authentication Error</string>
   <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
   <string name="auth_request">Authentication Requested</string>
+  <string name="basic_sensor_name_mobile_rx_gb">Mobile Rx GB</string>
+  <string name="basic_sensor_name_mobile_tx_gb">Mobile Tx GB</string>
+  <string name="basic_sensor_name_total_rx_gb">Total Rx GB</string>
+  <string name="basic_sensor_name_total_tx_gb">Total Tx GB</string>
   <string name="basic_sensor_name_activity">Detected Activity</string>
   <string name="basic_sensor_name_alarm">Next Alarm</string>
   <string name="basic_sensor_name_battery_health">Battery Health</string>
@@ -169,6 +173,10 @@ for Home Assistant</string>
 like to connect to:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Description</string>
+  <string name="sensor_description_mobile_rx_gb">Total Rx GB on cellular data since last device reboot</string>
+  <string name="sensor_description_mobile_tx_gb">Total Tx GB on cellular data since last device reboot</string>
+  <string name="sensor_description_total_rx_gb">Total Rx GB since last device reboot</string>
+  <string name="sensor_description_total_tx_gb">Total Tx GB since last device reboot</string>
   <string name="sensor_description_audio_mode">The state of the devices audio mode</string>
   <string name="sensor_description_audio_sensor">The state of the devices ringer mode</string>
   <string name="sensor_description_battery_health">The health of the battery</string>
@@ -215,6 +223,7 @@ like to connect to:</string>
   <string name="sensor_description_wifi_link_speed">The current link speed of the device to the connected network</string>
   <string name="sensor_description_wifi_signal">The signal strength of the device to the WiFi network</string>
   <string name="sensor_description_wifi_state">Whether or not WiFi is enabled on the device</string>
+  <string name="sensor_name_traffic_stats">Traffic Stats Sensors</string>
   <string name="sensor_name_activity">Activity Sensors</string>
   <string name="sensor_name_alarm">Alarm Sensor</string>
   <string name="sensor_name_audio">Audio Sensors</string>
