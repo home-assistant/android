@@ -283,7 +283,10 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             // Create an icon pack and load all drawables.
             iconPack = createMaterialDesignIconPack(loader)
             iconPack.loadDrawables(loader.drawableLoader)
-            val iconDialog = IconDialog.newInstance(IconDialogSettings())
+            val settings = IconDialogSettings {
+                searchVisibility = IconDialog.SearchVisibility.ALWAYS
+            }
+            val iconDialog = IconDialog.newInstance(settings)
             onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[62017]!!))
             widget_config_icon_selector.setOnClickListener {
                 iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
