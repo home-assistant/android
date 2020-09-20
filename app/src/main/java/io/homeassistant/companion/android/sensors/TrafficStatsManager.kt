@@ -91,6 +91,7 @@ class TrafficStatsManager : SensorManager {
             mobileRx = TrafficStats.getMobileRxBytes().toFloat()
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the mobile rx bytes", e)
+            return
         }
 
         mobileRx /= GB
@@ -114,6 +115,7 @@ class TrafficStatsManager : SensorManager {
             mobileTx = TrafficStats.getMobileTxBytes().toFloat()
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the mobile tx bytes", e)
+            return
         }
 
         mobileTx /= GB
@@ -136,6 +138,7 @@ class TrafficStatsManager : SensorManager {
             totalRx = TrafficStats.getTotalRxBytes().toFloat().absoluteValue
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the total rx bytes", e)
+            return
         }
         totalRx /= GB
 
@@ -159,6 +162,7 @@ class TrafficStatsManager : SensorManager {
             totalTx = TrafficStats.getTotalTxBytes().toFloat().absoluteValue
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the total tx bytes", e)
+            return
         }
 
         totalTx /= GB
