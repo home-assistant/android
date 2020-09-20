@@ -65,7 +65,7 @@ class GeocodeSensorManager : SensorManager {
                 val sensorDao = AppDatabase.getInstance(context).sensorDao()
                 val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
                 val minAccuracy = sensorSettings
-                    .firstOrNull { it.name == "Minimum Accuracy" }?.value?.toIntOrNull()
+                    .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                     ?: DEFAULT_MINIMUM_ACCURACY
                 sensorDao.add(Setting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
 
