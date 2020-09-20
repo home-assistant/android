@@ -174,10 +174,9 @@ class SensorDetailFragment(
                         val pref = findPreference(key) ?: EditTextPreference(requireContext())
                         pref.key = key
                         pref.title = setting.name
-                        if (setting.value != "")
-                            pref.summary = setting.value
-                        else
-                            pref.summary = pref.text
+                        pref.dialogTitle = setting.name
+                        pref.text = setting.value
+                        pref.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
                         pref.isIconSpaceReserved = false
 
                         pref.setOnBindEditTextListener { fieldType ->

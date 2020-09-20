@@ -8,11 +8,15 @@ import android.os.Build
 import android.util.Log
 import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Setting
 import java.lang.Exception
 
 class GeocodeSensorManager : SensorManager {
 
     companion object {
+        private const val SETTING_ACCURACY = "Minimum Accuracy"
+        private const val DEFAULT_MINIMUM_ACCURACY = 200
         private const val TAG = "GeocodeSM"
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
@@ -58,7 +62,14 @@ class GeocodeSensorManager : SensorManager {
                     return@addOnSuccessListener
                 }
 
-                if (location.accuracy <= LocationSensorManager.MINIMUM_ACCURACY)
+                val sensorDao = AppDatabase.getInstance(context).sensorDao()
+                val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
+                val minAccuracy = sensorSettings
+                    .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
+                    ?: DEFAULT_MINIMUM_ACCURACY
+                sensorDao.add(Setting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+
+                if (location.accuracy <= minAccuracy)
                     address = Geocoder(context)
                         .getFromLocation(location.latitude, location.longitude, 1)
                         .firstOrNull()
