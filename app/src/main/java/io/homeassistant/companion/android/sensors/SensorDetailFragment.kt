@@ -155,7 +155,7 @@ class SensorDetailFragment(
         findPreference<PreferenceCategory>("sensor_settings")?.let {
             if (sensorData.enabled && !sensorSettings.isNullOrEmpty()) {
                 sensorSettings.forEach { setting ->
-                    val key = "setting_${setting.name}"
+                    val key = "setting_${basicSensor.id}_${setting.name}"
                     if (setting.valueType == "toggle") {
                         val pref = findPreference(key) ?: SwitchPreference(requireContext())
                         pref.key = key
@@ -175,8 +175,10 @@ class SensorDetailFragment(
                         pref.key = key
                         pref.title = setting.name
                         pref.dialogTitle = setting.name
-                        pref.text = setting.value
-                        pref.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
+                        if (pref.text != null)
+                            pref.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
+                        else
+                            pref.summary = setting.value
                         pref.isIconSpaceReserved = false
 
                         pref.setOnBindEditTextListener { fieldType ->
@@ -193,6 +195,8 @@ class SensorDetailFragment(
                                     setting.valueType
                                 )
                             )
+                        else
+                            pref.text = setting.value
                     if (!it.contains(pref))
                         it.addPreference(pref)
                     }
