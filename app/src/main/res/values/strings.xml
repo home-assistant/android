@@ -202,7 +202,7 @@ like to connect to:</string>
   <string name="sensor_description_location_zone">Import existing Home Assistant zones as geofences for zone based tracking.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.</string>
   <string name="sensor_description_mic_muted">Whether or not the microphone is muted on the device</string>
   <string name="sensor_description_music_active">Whether or not music is actively playing on the device</string>
-  <string name="sensor_description_next_alarm">The date and time of the next scheduled alarm, any app or manufacturer can override the default behavior. The package attribute will tell you which app set the next scheduled alarm.</string>
+  <string name="sensor_description_next_alarm">The date and time of the next scheduled alarm, any app or manufacturer can override the default behavior. The package attribute will tell you which app set the next scheduled alarm. The setting below will create an Allow List so you can specify what packages you want the alarm event from. This will ignore alarm events for packages not selected and the state will not update until the next scheduled alarm matches one of the selected packages.</string>
   <string name="sensor_description_none">No description</string>
   <string name="sensor_description_phone_state">Whether or not the phone is ringing or in a call, no other caller information is stored</string>
   <string name="sensor_description_power_save">Whether or not the device is in Power Save mode</string>

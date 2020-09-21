@@ -4,6 +4,8 @@ import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Setting
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -13,6 +15,7 @@ import java.util.TimeZone
 class NextAlarmManager : SensorManager {
     companion object {
         private const val TAG = "NextAlarm"
+        private const val ALLOW_LIST = "Allow List"
 
         val nextAlarm = SensorManager.BasicSensor(
             "next_alarm",
@@ -51,6 +54,10 @@ class NextAlarmManager : SensorManager {
         var utc = "unavailable"
         var pendingIntent = ""
 
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val sensorSetting = sensorDao.getSettings(nextAlarm.id)
+        val allowPackageList = sensorSetting?.firstOrNull { it.name == ALLOW_LIST }?.value ?: ""
+
         try {
             val alarmManager: AlarmManager =
                 context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -58,6 +65,15 @@ class NextAlarmManager : SensorManager {
             val alarmClockInfo = alarmManager.nextAlarmClock
 
             if (alarmClockInfo != null) {
+                pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: "Unknown"
+
+                if (allowPackageList != "") {
+                    val allowPackageListing = allowPackageList.split(", ")
+                    if (pendingIntent !in allowPackageListing)
+                        return
+                } else {
+                    sensorDao.add(Setting(nextAlarm.id, ALLOW_LIST, allowPackageList, "list-apps"))
+                }
                 triggerTime = alarmClockInfo.triggerTime
 
                 val cal: Calendar = GregorianCalendar()
@@ -68,8 +84,6 @@ class NextAlarmManager : SensorManager {
                 val sdf = SimpleDateFormat(dateFormat)
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
-
-                pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: "Unknown"
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)

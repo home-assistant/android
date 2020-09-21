@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.text.InputType
 import androidx.preference.EditTextPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -199,6 +200,37 @@ class SensorDetailFragment(
                             pref.text = setting.value
                     if (!it.contains(pref))
                         it.addPreference(pref)
+                    } else if (setting.valueType == "list-apps") {
+                        val packageManager: PackageManager? = context?.packageManager
+                        val packages = packageManager?.getInstalledApplications(PackageManager.GET_META_DATA)
+                        val packageName: MutableList<String> = ArrayList()
+                        if (packages != null) {
+                            for (packageItem in packages) {
+                                packageName.add(packageItem.packageName)
+                            }
+                            packageName.sort()
+                        }
+                        val pref = findPreference(key) ?: MultiSelectListPreference(requireContext())
+                        pref.key = key
+                        pref.title = setting.name
+                        pref.entries = packageName.toTypedArray()
+                        pref.entryValues = packageName.toTypedArray()
+                        pref.dialogTitle = setting.name
+                        pref.isIconSpaceReserved = false
+                        if (pref.values != null) {
+                            pref.summary = pref.values.toString()
+                            sensorDao.add(
+                                Setting(
+                                    basicSensor.id,
+                                    setting.name,
+                                    pref.values.toString().replace("[", "").replace("]", ""),
+                                    "list-apps"
+                                )
+                            )
+                        } else
+                            pref.summary = setting.value
+                        if (!it.contains(pref))
+                            it.addPreference(pref)
                     }
                 }
                 it.isVisible = true
