@@ -195,6 +195,8 @@ class SensorDetailFragment(
                                     setting.valueType
                                 )
                             )
+                        else
+                            pref.text = setting.value
                     if (!it.contains(pref))
                         it.addPreference(pref)
                     }
