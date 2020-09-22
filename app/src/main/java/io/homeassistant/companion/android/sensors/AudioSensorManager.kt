@@ -223,7 +223,7 @@ class AudioSensorManager : SensorManager {
 
         val isMicMuted = audioManager.isMicrophoneMute
 
-        val icon = if (isMicMuted) "mdi:microphone" else "mdi:microphone-off"
+        val icon = if (!isMicMuted) "mdi:microphone" else "mdi:microphone-off"
 
         onSensorUpdated(context,
             micMuted,
