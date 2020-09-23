@@ -10,16 +10,19 @@ import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
+import io.homeassistant.companion.android.BuildConfig
 import java.io.IOException
 
 object NFCUtil {
     @Throws(Exception::class)
     fun createNFCMessage(url: String, intent: Intent?): Boolean {
         val nfcRecord = NdefRecord.createUri(url)
-        val nfcMessage = NdefMessage(arrayOf(nfcRecord))
+        val applicationRecord = NdefRecord.createApplicationRecord(BuildConfig.APPLICATION_ID)
+        val nfcMessage = NdefMessage(arrayOf(nfcRecord, applicationRecord))
+        val nfcFallbackMessage = NdefMessage(arrayOf(nfcRecord))
         intent?.let {
             val tag = it.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
-            return writeMessageToTag(nfcMessage, tag)
+            return writeMessageToTag(nfcMessage, nfcFallbackMessage, tag)
         }
         return false
     }
@@ -42,17 +45,25 @@ object NFCUtil {
     }
 
     @Throws(Exception::class)
-    private fun writeMessageToTag(nfcMessage: NdefMessage, tag: Tag?): Boolean {
+    private fun writeMessageToTag(
+        nfcMessage: NdefMessage,
+        fallbackMessage: NdefMessage,
+        tag: Tag?
+    ): Boolean {
         val nDefTag = Ndef.get(tag)
 
         nDefTag?.let {
             it.connect()
+            var messageToWrite = nfcMessage
             if (it.maxSize < nfcMessage.toByteArray().size) {
+                messageToWrite = fallbackMessage
+            }
+            if (it.maxSize < fallbackMessage.toByteArray().size) {
                 // Message to large to write to NFC tag
                 throw Exception("Message is too large")
             }
             return if (it.isWritable) {
-                it.writeNdefMessage(nfcMessage)
+                it.writeNdefMessage(messageToWrite)
                 it.close()
                 // Message is written to tag
                 true
