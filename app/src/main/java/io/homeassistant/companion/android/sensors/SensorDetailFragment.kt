@@ -178,8 +178,10 @@ class SensorDetailFragment(
                         pref.dialogTitle = setting.name
                         if (pref.text != null)
                             pref.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
-                        else
+                        else {
                             pref.summary = setting.value
+                            pref.text = setting.value
+                        }
                         pref.isIconSpaceReserved = false
 
                         pref.setOnBindEditTextListener { fieldType ->
@@ -187,17 +189,17 @@ class SensorDetailFragment(
                                 fieldType.inputType = InputType.TYPE_CLASS_NUMBER
                         }
 
-                        if (pref.text != null)
+                        pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
                                 Setting(
                                     basicSensor.id,
                                     setting.name,
-                                    pref.text,
+                                    newValue as String,
                                     setting.valueType
                                 )
                             )
-                        else
-                            pref.text = setting.value
+                            return@setOnPreferenceChangeListener true
+                        }
                     if (!it.contains(pref))
                         it.addPreference(pref)
                     } else if (setting.valueType == "list-apps") {
@@ -217,17 +219,20 @@ class SensorDetailFragment(
                         pref.entryValues = packageName.toTypedArray()
                         pref.dialogTitle = setting.name
                         pref.isIconSpaceReserved = false
-                        if (pref.values != null) {
-                            pref.summary = pref.values.toString()
+                        pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
                                 Setting(
                                     basicSensor.id,
                                     setting.name,
-                                    pref.values.toString().replace("[", "").replace("]", ""),
+                                    newValue.toString().replace("[", "").replace("]", ""),
                                     "list-apps"
                                 )
                             )
-                        } else
+                            return@setOnPreferenceChangeListener true
+                        }
+                        if (pref.values != null)
+                            pref.summary = pref.values.toString()
+                        else
                             pref.summary = setting.value
                         if (!it.contains(pref))
                             it.addPreference(pref)
