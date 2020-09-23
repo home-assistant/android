@@ -10,13 +10,15 @@ import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
+import io.homeassistant.companion.android.BuildConfig
 import java.io.IOException
 
 object NFCUtil {
     @Throws(Exception::class)
     fun createNFCMessage(url: String, intent: Intent?): Boolean {
         val nfcRecord = NdefRecord.createUri(url)
-        val nfcMessage = NdefMessage(arrayOf(nfcRecord))
+        val applicationRecord = NdefRecord.createApplicationRecord(BuildConfig.APPLICATION_ID)
+        val nfcMessage = NdefMessage(arrayOf(nfcRecord, applicationRecord))
         intent?.let {
             val tag = it.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
             return writeMessageToTag(nfcMessage, tag)
