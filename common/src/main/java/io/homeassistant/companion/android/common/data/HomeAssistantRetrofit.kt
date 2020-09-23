@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -29,11 +30,13 @@ class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
             )
         )
         .client(
-            OkHttpClient.Builder()
-                .addInterceptor(HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BODY
-                })
-                .addInterceptor {
+            OkHttpClient.Builder().apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(HttpLoggingInterceptor().apply {
+                        level = HttpLoggingInterceptor.Level.BODY
+                    })
+                }
+            }.addInterceptor {
                     return@addInterceptor if (it.request().url.toString().contains(LOCAL_HOST)) {
                         val newRequest = runBlocking {
                             it.request().newBuilder()
