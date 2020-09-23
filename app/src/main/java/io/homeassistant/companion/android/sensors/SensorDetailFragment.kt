@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.text.InputType
 import androidx.preference.EditTextPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -177,8 +178,10 @@ class SensorDetailFragment(
                         pref.dialogTitle = setting.name
                         if (pref.text != null)
                             pref.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
-                        else
+                        else {
                             pref.summary = setting.value
+                            pref.text = setting.value
+                        }
                         pref.isIconSpaceReserved = false
 
                         pref.setOnBindEditTextListener { fieldType ->
@@ -186,19 +189,53 @@ class SensorDetailFragment(
                                 fieldType.inputType = InputType.TYPE_CLASS_NUMBER
                         }
 
-                        if (pref.text != null)
+                        pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
                                 Setting(
                                     basicSensor.id,
                                     setting.name,
-                                    pref.text,
+                                    newValue as String,
                                     setting.valueType
                                 )
                             )
-                        else
-                            pref.text = setting.value
+                            return@setOnPreferenceChangeListener true
+                        }
                     if (!it.contains(pref))
                         it.addPreference(pref)
+                    } else if (setting.valueType == "list-apps") {
+                        val packageManager: PackageManager? = context?.packageManager
+                        val packages = packageManager?.getInstalledApplications(PackageManager.GET_META_DATA)
+                        val packageName: MutableList<String> = ArrayList()
+                        if (packages != null) {
+                            for (packageItem in packages) {
+                                packageName.add(packageItem.packageName)
+                            }
+                            packageName.sort()
+                        }
+                        val pref = findPreference(key) ?: MultiSelectListPreference(requireContext())
+                        pref.key = key
+                        pref.title = setting.name
+                        pref.entries = packageName.toTypedArray()
+                        pref.entryValues = packageName.toTypedArray()
+                        pref.dialogTitle = setting.name
+                        pref.isIconSpaceReserved = false
+                        pref.setOnPreferenceChangeListener { _, newValue ->
+                            sensorDao.add(
+                                Setting(
+                                    basicSensor.id,
+                                    setting.name,
+                                    newValue.toString().replace("[", "").replace("]", ""),
+                                    "list-apps"
+                                )
+                            )
+                            return@setOnPreferenceChangeListener true
+                        }
+                        if (pref.values != null)
+                            pref.summary = pref.values.toString()
+                        else
+                            pref.summary = setting.value
+                        if (!it.contains(pref))
+                            it.addPreference(pref)
                     }
                 }
                 it.isVisible = true
