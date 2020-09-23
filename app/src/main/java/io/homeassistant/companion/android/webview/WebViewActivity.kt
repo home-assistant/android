@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.webview
 
+import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
@@ -11,20 +11,39 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.net.Uri
 import android.net.http.SslError
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.os.Handler
+import android.os.Parcelable
 import android.provider.MediaStore
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
 import android.view.View
-import android.webkit.*
+import android.webkit.CookieManager
+import android.webkit.HttpAuthHandler
+import android.webkit.JavascriptInterface
+import android.webkit.JsResult
+import android.webkit.PermissionRequest
+import android.webkit.SslErrorHandler
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import android.widget.*
+import android.webkit.WebViewClient
+import android.widget.CheckBox
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.graphics.ColorUtils
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -47,11 +66,11 @@ import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
+import java.io.File
+import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_playback_control_view.*
 import org.json.JSONObject
-import java.io.File
-import javax.inject.Inject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -61,8 +80,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         private const val TAG = "WebviewActivity"
         private const val CAMERA_REQUEST_CODE = 8675309
         private const val AUDIO_REQUEST_CODE = 42
-        private const val FILECHOOSER_RESULTCODE = 15
+        private const val FILE_CHOOSER_RESULT_CODE = 15
         private const val NFC_COMPLETE = 1
+        private const val PROFILE_IMAGE_FILE_NAME = "profile_image.jpg"
 
         fun newInstance(context: Context, path: String? = null): Intent {
             return Intent(context, WebViewActivity::class.java).apply {
@@ -294,6 +314,22 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     fileChooserParams: FileChooserParams?
                 ): Boolean {
 
+                    while (ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.READ_EXTERNAL_STORAGE
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        ActivityCompat.requestPermissions(
+                            this@WebViewActivity,
+                            arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE), 32
+                        )
+                    }
                     val imageStorageDir = File(
                         getExternalFilesDir(
                             Environment.DIRECTORY_PICTURES
@@ -301,50 +337,29 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     )
 
                     if (!imageStorageDir.exists()) {
-                        // Create AndroidExampleFolder at sdcard
                         imageStorageDir.mkdirs()
                     }
 
-                    val imageText = "file:" + imageStorageDir.absolutePath
-
-                    // Create camera captured image file path and name
                     val file = File(
-                        "/" + imageStorageDir + File.separator.toString() + "IMG_" + System.currentTimeMillis()
-                            .toString() + ".jpg"
+                        imageStorageDir.path + File.separator + PROFILE_IMAGE_FILE_NAME
                     )
 
-                    val test = "file:" + file.absolutePath
-                    val fileTest = File(test)
-                    mCapturedImageURI = Uri.fromFile(fileTest)
+                    mCapturedImageURI = FileProvider.getUriForFile(this@WebViewActivity, "io.homeassistant.companion.android.fileprovider", file)
 
-                    // Camera capture image intent
-                    val captureIntent = Intent(
-                        MediaStore.ACTION_IMAGE_CAPTURE
-                    )
-
+                    val captureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                    captureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                     captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI)
 
                     val i = Intent(Intent.ACTION_GET_CONTENT)
                     i.addCategory(Intent.CATEGORY_OPENABLE)
                     i.type = "image/*"
 
-                    // Create file chooser intent
-                    val chooserIntent = Intent.createChooser(i, "Image Chooser")
-
-                    // Set camera intent to file chooser
-
-                    chooserIntent.putExtra(
-                        Intent.EXTRA_INITIAL_INTENTS, arrayOf<Parcelable>(captureIntent)
-                    )
+                    val chooserIntent = Intent.createChooser(i, resources.getString(R.string.profile_image))
+                    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf<Parcelable>(captureIntent))
 
                     mFilePathCallback = uploadMsg
-                   // val i = Intent(Intent.ACTION_GET_CONTENT)
-                   // i.addCategory(Intent.CATEGORY_OPENABLE)
-                   // i.type = "image/*"
-                    startActivityForResult(
-                        chooserIntent,
-                        FILECHOOSER_RESULTCODE
-                    )
+
+                    startActivityForResult(chooserIntent, FILE_CHOOSER_RESULT_CODE)
                     return true
                 }
 
@@ -480,19 +495,12 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             webView.evaluateJavascript("externalBus(${JSONObject(message)})") {
                 Log.d(TAG, "NFC Write Complete $it")
             }
-        } else if (requestCode == FILECHOOSER_RESULTCODE){
-            var results: Uri? = if (data == null || data.dataString == null) mCapturedImageURI else data.data
-            Log.d("PHOTOUPLOAD", "image taken is $mCapturedImageURI")
-            Log.d("PHOTOUPLOAD", "image picked is ${data?.data}")
-            // Check that the response is a good one
-//            if (resultCode == Activity.RESULT_OK) {
-//                results = if (data != null) data.data else mCapturedImageURI
-//                Log.d("PHOTOUPLOAD", "image is $results")
-//            }
+        } else if (requestCode == FILE_CHOOSER_RESULT_CODE) {
+            val results: Uri? = if (data == null || data.dataString == null) mCapturedImageURI else data.data
             try {
                 mFilePathCallback!!.onReceiveValue(arrayOf(results))
             } catch (e: Exception) {
-                Log.d("PHOTOUPLOAD", "image failed", e)
+                Log.d(TAG, "Image failed to save", e)
             }
             mFilePathCallback = null
         }
