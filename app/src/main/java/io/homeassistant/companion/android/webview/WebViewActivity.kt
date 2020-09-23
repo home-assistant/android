@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
@@ -10,30 +11,16 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.net.Uri
 import android.net.http.SslError
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
+import android.os.*
+import android.provider.MediaStore
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
 import android.view.View
-import android.webkit.CookieManager
-import android.webkit.HttpAuthHandler
-import android.webkit.JavascriptInterface
-import android.webkit.JsResult
-import android.webkit.PermissionRequest
-import android.webkit.SslErrorHandler
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
+import android.webkit.*
 import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -60,10 +47,11 @@ import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_playback_control_view.*
 import org.json.JSONObject
+import java.io.File
+import javax.inject.Inject
 
 class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -73,6 +61,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         private const val TAG = "WebviewActivity"
         private const val CAMERA_REQUEST_CODE = 8675309
         private const val AUDIO_REQUEST_CODE = 42
+        private const val FILECHOOSER_RESULTCODE = 15
         private const val NFC_COMPLETE = 1
 
         fun newInstance(context: Context, path: String? = null): Intent {
@@ -96,6 +85,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private lateinit var myCustomView: View
     private lateinit var authenticator: Authenticator
     private lateinit var exoPlayerView: PlayerView
+
+    private var mFilePathCallback: ValueCallback<Array<Uri?>?>? = null
+    private var mCapturedImageURI: Uri? = null
 
     private var isConnected = false
     private var isShowingError = false
@@ -296,6 +288,66 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     }
                 }
 
+                override fun onShowFileChooser(
+                    view: WebView?,
+                    uploadMsg: ValueCallback<Array<Uri?>?>,
+                    fileChooserParams: FileChooserParams?
+                ): Boolean {
+
+                    val imageStorageDir = File(
+                        getExternalFilesDir(
+                            Environment.DIRECTORY_PICTURES
+                        ), "UserProfileImage"
+                    )
+
+                    if (!imageStorageDir.exists()) {
+                        // Create AndroidExampleFolder at sdcard
+                        imageStorageDir.mkdirs()
+                    }
+
+                    val imageText = "file:" + imageStorageDir.absolutePath
+
+                    // Create camera captured image file path and name
+                    val file = File(
+                        "/" + imageStorageDir + File.separator.toString() + "IMG_" + System.currentTimeMillis()
+                            .toString() + ".jpg"
+                    )
+
+                    val test = "file:" + file.absolutePath
+                    val fileTest = File(test)
+                    mCapturedImageURI = Uri.fromFile(fileTest)
+
+                    // Camera capture image intent
+                    val captureIntent = Intent(
+                        MediaStore.ACTION_IMAGE_CAPTURE
+                    )
+
+                    captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, mCapturedImageURI)
+
+                    val i = Intent(Intent.ACTION_GET_CONTENT)
+                    i.addCategory(Intent.CATEGORY_OPENABLE)
+                    i.type = "image/*"
+
+                    // Create file chooser intent
+                    val chooserIntent = Intent.createChooser(i, "Image Chooser")
+
+                    // Set camera intent to file chooser
+
+                    chooserIntent.putExtra(
+                        Intent.EXTRA_INITIAL_INTENTS, arrayOf<Parcelable>(captureIntent)
+                    )
+
+                    mFilePathCallback = uploadMsg
+                   // val i = Intent(Intent.ACTION_GET_CONTENT)
+                   // i.addCategory(Intent.CATEGORY_OPENABLE)
+                   // i.type = "image/*"
+                    startActivityForResult(
+                        chooserIntent,
+                        FILECHOOSER_RESULTCODE
+                    )
+                    return true
+                }
+
                 override fun onShowCustomView(view: View, callback: CustomViewCallback) {
                     myCustomView = view
                     decor.addView(
@@ -353,20 +405,22 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                 val pm: PackageManager = context.packageManager
                                 val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
                                 val script = "externalBus(" +
-                                        "${JSONObject(
-                                            mapOf(
-                                                "id" to JSONObject(message).get("id"),
-                                                "type" to "result",
-                                                "success" to true,
-                                                "result" to JSONObject(
-                                                    mapOf(
-                                                        "hasSettingsScreen" to true,
-                                                        "canWriteTag" to hasNfc,
-                                                        "hasExoPlayer" to true
+                                        "${
+                                            JSONObject(
+                                                mapOf(
+                                                    "id" to JSONObject(message).get("id"),
+                                                    "type" to "result",
+                                                    "success" to true,
+                                                    "result" to JSONObject(
+                                                        mapOf(
+                                                            "hasSettingsScreen" to true,
+                                                            "canWriteTag" to hasNfc,
+                                                            "hasExoPlayer" to true
+                                                        )
                                                     )
                                                 )
                                             )
-                                        )}" +
+                                        }" +
                                         ");"
                                 Log.d(TAG, script)
                                 webView.evaluateJavascript(script) {
@@ -426,6 +480,21 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             webView.evaluateJavascript("externalBus(${JSONObject(message)})") {
                 Log.d(TAG, "NFC Write Complete $it")
             }
+        } else if (requestCode == FILECHOOSER_RESULTCODE){
+            var results: Uri? = if (data == null || data.dataString == null) mCapturedImageURI else data.data
+            Log.d("PHOTOUPLOAD", "image taken is $mCapturedImageURI")
+            Log.d("PHOTOUPLOAD", "image picked is ${data?.data}")
+            // Check that the response is a good one
+//            if (resultCode == Activity.RESULT_OK) {
+//                results = if (data != null) data.data else mCapturedImageURI
+//                Log.d("PHOTOUPLOAD", "image is $results")
+//            }
+            try {
+                mFilePathCallback!!.onReceiveValue(arrayOf(results))
+            } catch (e: Exception) {
+                Log.d("PHOTOUPLOAD", "image failed", e)
+            }
+            mFilePathCallback = null
         }
     }
 
