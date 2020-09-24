@@ -88,6 +88,12 @@
     <PreferenceCategory
         android:title="@string/app_version_info">
         <Preference
+            android:key="changelog"
+            android:icon="@drawable/ic_changelog"
+            android:title="@string/changelog"
+            android:summary="https://github.com/home-assistant/android/releases"
+            app:enableCopying="true" />
+        <Preference
             android:key="version"
             android:icon="@drawable/app_icon"
             android:title="@string/application_version"

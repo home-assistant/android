@@ -60,6 +60,7 @@
   <string name="biometric_title">Home Assistant is locked</string>
   <string name="calendar">Calendar</string>
   <string name="cancel">Cancel</string>
+  <string name="changelog">Change Log</string>
   <string name="checking_with_home_assistant">Checking with Home Assistant</string>
   <string name="config">Configuration</string>
   <string name="configure_service_call">Configure Service Call</string>
