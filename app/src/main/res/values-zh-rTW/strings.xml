@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
   <string name="add_widget">新增小工具</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">應用程式詳細資料</string>
   <string name="application_version">應用程式版本</string>
   <string name="attributes">屬性</string>

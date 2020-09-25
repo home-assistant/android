@@ -2,7 +2,6 @@
 <resources>
   <string name="add_service_data_field">필드 추가</string>
   <string name="add_widget">위젯 추가</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">앱 버전 정보</string>
   <string name="application_version">응용 프로그램 버전</string>
   <string name="attempting_registration">응용 프로그램 등록 중…</string>
@@ -123,6 +122,12 @@
   <string name="security">보안</string>
   <string name="select_entity_to_display">표시할 구성요소 선택</string>
   <string name="select_instance">연결하려는 인스턴스를 선택해주세요:</string>
+  <string name="sensor_description">설명</string>
+  <string name="sensor_description_audio_sensor">기기의 알람 모드 상태</string>
+  <string name="sensor_description_battery_level">기기의 현재 배터리 용량</string>
+  <string name="sensor_description_battery_state">배터리의 현재 충전 상태</string>
+  <string name="sensor_description_bluetooth_connection">현재 연결된 블루투스 기기에 대한 정보</string>
+  <string name="sensor_description_dnd_sensor">방해 금지 모드의 현재 상태</string>
   <string name="sensor_summary">어떤 센서가 활성화/비활성화되었는지 관리할 수 있습니다.</string>
   <string name="sensor_title">센서 관리</string>
   <string name="sensors">센서</string>

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
   <string name="add_widget">Lisää widget</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">Sovelluksen version tiedot</string>
   <string name="application_version">Sovelluksen versio</string>
   <string name="attempting_registration">Rekisteröidään sovellusta...</string>

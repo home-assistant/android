@@ -2,7 +2,6 @@
 <resources>
   <string name="add_service_data_field">Ajouter un champ</string>
   <string name="add_widget">Ajouter un widget</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">Informations sur la version de l\'application</string>
   <string name="application_version">Version de l\'application</string>
   <string name="attempting_registration">Enregistrement de l\'application…</string>
@@ -26,13 +25,18 @@
   <string name="basic_sensor_name_interactive">Interactif</string>
   <string name="basic_sensor_name_internal_storage">Stockage interne</string>
   <string name="basic_sensor_name_last_reboot">Dernier redémarrage</string>
+  <string name="basic_sensor_name_location_accurate">Emplacement précis unique</string>
   <string name="basic_sensor_name_location_background">Localisation d\'arrière plan</string>
   <string name="basic_sensor_name_location_zone">Zone de localisation</string>
+  <string name="basic_sensor_name_mobile_rx_gb">Reçu mobile en GB</string>
+  <string name="basic_sensor_name_mobile_tx_gb">Transmis mobile en GB</string>
   <string name="basic_sensor_name_phone">État du téléphone</string>
   <string name="basic_sensor_name_power_save">Économie d\'énergie</string>
   <string name="basic_sensor_name_public_ip">Adresse IP publique</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
   <string name="basic_sensor_name_sim2">SIM 2</string>
+  <string name="basic_sensor_name_total_rx_gb">Total reçu Go</string>
+  <string name="basic_sensor_name_total_tx_gb">Total transmis Go</string>
   <string name="basic_sensor_name_wifi">Connexion Wi-Fi</string>
   <string name="basic_sensor_name_wifi_bssid">BSSID Wi-Fi</string>
   <string name="basic_sensor_name_wifi_frequency">Fréquence Wi-Fi</string>
@@ -111,6 +115,7 @@
   <string name="nfc_processing_tag_error">Erreur lors du traitement de la balise NFC</string>
   <string name="nfc_read_tag_instructions">Placez votre téléphone sur la balise NFC pour la lire.</string>
   <string name="nfc_summary">Configurer les balises NFC</string>
+  <string name="nfc_tag_identifier">Identificateur de balise</string>
   <string name="nfc_title_nfc_setup">Balises NFC</string>
   <string name="nfc_title_settings">Balises NFC</string>
   <string name="nfc_welcome_message">Les balises NFC écrites par l\'application déclenchent un événement une fois que vous approchez votre appareil. \n \n Les balises fonctionneront sur tout appareil sur lequel Home Assistant est installé et qui dispose du matériel pour les lire.</string>
@@ -168,9 +173,12 @@
   <string name="sensor_description_internal_storage">Informations sur l\'espace de stockage total et disponible en interne</string>
   <string name="sensor_description_last_reboot">La date et l\'heure du dernier redémarrage de l\'appareil</string>
   <string name="sensor_description_light_sensor">Le niveau d\'éclairement actuel</string>
+  <string name="sensor_description_location_accurate">Autorisez Home Assistant à envoyer une notification pour demander un emplacement précis avec l\'application demandant périodiquement un emplacement précis. Le paramètre Précision minimale vous permettra de décider de la précision de l\'emplacement de l\'appareil (en mètres) pour l\'envoyer à Home Assistant. Le temps minimum entre les mises à jour (en millisecondes) empêche l\'appareil d\'envoyer trop souvent l\'emplacement précis.</string>
   <string name="sensor_description_location_background">Mettre à jour votre localisation périodiquement en arrière-plan.</string>
   <string name="sensor_description_location_zone">Importez des zones existantes dans Home Assistant en tant que géorepérage pour un suivi basé sur une zone.</string>
   <string name="sensor_description_mic_muted">Si le micro est en sourdine ou non sur l\'appareil</string>
+  <string name="sensor_description_mobile_rx_gb">Total reçu en Go sur les données cellulaires depuis le dernier redémarrage de l\'appareil</string>
+  <string name="sensor_description_mobile_tx_gb">Total transmis en Go sur les données cellulaires depuis le dernier redémarrage de l\'appareil</string>
   <string name="sensor_description_music_active">Si de la musique est en cours de lecture ou non sur l\'appareil</string>
   <string name="sensor_description_next_alarm">La date et l\'heure de la prochaine alarme programmée, toute application ou fabricant peut remplacer le comportement par défaut. L\'attribut du package vous indiquera quelle application définira la prochaine alarme programmée.</string>
   <string name="sensor_description_none">Aucune description</string>
@@ -184,6 +192,8 @@
   <string name="sensor_description_speakerphone">Si le haut-parleur est activé ou non sur l\'appareil</string>
   <string name="sensor_description_steps_sensor">Le nombre total de pas depuis le dernier redémarrage de l\'appareil</string>
   <string name="sensor_description_storage_sensor">Informations sur l\'espace de stockage total et disponible en interne et en externe</string>
+  <string name="sensor_description_total_rx_gb">Total reçu en Go depuis le dernier redémarrage de l\'appareil</string>
+  <string name="sensor_description_total_tx_gb">Total transmis en Go depuis le dernier redémarrage de l\'appareil</string>
   <string name="sensor_description_volume_alarm">Niveau de volume des alarmes sur l\'appareil</string>
   <string name="sensor_description_volume_call">Niveau de volume des appels sur l\'appareil</string>
   <string name="sensor_description_volume_music">Niveau de volume de la musique sur l\'appareil</string>
@@ -218,10 +228,12 @@
   <string name="sensor_name_speakerphone">Haut-parleur</string>
   <string name="sensor_name_steps">Capteur de pas</string>
   <string name="sensor_name_storage">Capteur de stockage</string>
+  <string name="sensor_name_traffic_stats">Capteurs de statistiques de trafic</string>
   <string name="sensor_name_volume_alarm">Niveau de volume des alarmes</string>
   <string name="sensor_name_volume_call">Niveau de volume des appels</string>
   <string name="sensor_name_volume_music">Niveau de volume de la musique</string>
   <string name="sensor_name_volume_ring">Niveau de volume de la sonnerie</string>
+  <string name="sensor_settings">Paramètres du capteur</string>
   <string name="sensor_summary">Utilisez cette fonction pour gérer les capteurs qui sont activés/désactivés.</string>
   <string name="sensor_title">Gérer les capteurs</string>
   <string name="sensors">Capteurs</string>

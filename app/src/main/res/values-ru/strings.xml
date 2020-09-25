@@ -2,7 +2,6 @@
 <resources>
   <string name="add_service_data_field">Добавить поле</string>
   <string name="add_widget">Добавить виджет</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">Информация о приложении</string>
   <string name="application_version">Версия приложения</string>
   <string name="attempting_registration">Регистрация приложения…</string>
@@ -28,11 +27,15 @@
   <string name="basic_sensor_name_last_reboot">Последняя перезагрузка</string>
   <string name="basic_sensor_name_location_background">Отслеживание в фоновом режиме</string>
   <string name="basic_sensor_name_location_zone">Отслеживание на основе зон</string>
+  <string name="basic_sensor_name_mobile_rx_gb">Мобильный трафик Rx (Гб)</string>
+  <string name="basic_sensor_name_mobile_tx_gb">Мобильный трафик Tx (Гб)</string>
   <string name="basic_sensor_name_phone">Состояние телефона</string>
   <string name="basic_sensor_name_power_save">Режим энергосбережения</string>
   <string name="basic_sensor_name_public_ip">IP-адрес в глобальной сети</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
   <string name="basic_sensor_name_sim2">SIM 2</string>
+  <string name="basic_sensor_name_total_rx_gb">Весь трафик Rx (Гб)</string>
+  <string name="basic_sensor_name_total_tx_gb">Весь трафик Tx (Гб)</string>
   <string name="basic_sensor_name_wifi">WiFi соединение</string>
   <string name="basic_sensor_name_wifi_bssid">WiFi BSSID</string>
   <string name="basic_sensor_name_wifi_frequency">Частота WiFi</string>
@@ -177,6 +180,8 @@
   <string name="sensor_description_location_background">Местоположение будет периодически обновляться, даже при закрытом приложении.</string>
   <string name="sensor_description_location_zone">Зоны будут импортированы из Home Assistant для использования их в приложении</string>
   <string name="sensor_description_mic_muted">Отключен ли микрофон на устройстве</string>
+  <string name="sensor_description_mobile_rx_gb">Общий объем полученных данных мобильного интернета с момента последней перезагрузки устройства</string>
+  <string name="sensor_description_mobile_tx_gb">Общий объем переданных данных мобильного интернета с момента последней перезагрузки устройства</string>
   <string name="sensor_description_music_active">Воспроизводится ли музыка на устройстве</string>
   <string name="sensor_description_next_alarm">Дата и время следующего запланированного будильника, любое приложение или производитель может изменить поведение по умолчанию. Атрибут пакета сообщит вам, какое приложение установит следующий запланированный сигнал будильника</string>
   <string name="sensor_description_none">Нет описания</string>
@@ -190,11 +195,13 @@
   <string name="sensor_description_speakerphone">Включена ли громкая связь на устройстве</string>
   <string name="sensor_description_steps_sensor">Общее количество шагов с момента последней перезагрузки устройства</string>
   <string name="sensor_description_storage_sensor">Информация о внутреннем и внешнем пространстве для хранения</string>
+  <string name="sensor_description_total_rx_gb">Общий объем полученных данных с момента последней перезагрузки устройства</string>
+  <string name="sensor_description_total_tx_gb">Общий объем переданных данных с момента последней перезагрузки устройства</string>
   <string name="sensor_description_volume_alarm">Уровень громкости будильника</string>
   <string name="sensor_description_volume_call">Уровень громкости для вызовов</string>
   <string name="sensor_description_volume_music">Уровень громкости для музыки</string>
   <string name="sensor_description_volume_ring">Уровень громкости звонка</string>
-  <string name="sensor_description_wifi_bssid">MAC-адрес точки доступа WiFi, к которой подключено устройство</string>
+  <string name="sensor_description_wifi_bssid">MAC-адрес точки доступа WiFi, к которой подключено устройство. Включение переключателя «get_current_bssid» создаст новый параметр, позволяющий переименовать состояние, отправленное обратно в Home Assistant для выбранного MAC-адреса. По умолчанию переключатель будет выключен после сохранения текущего BSSID, поэтому Вам нужно будет включить его один раз для каждого BSSID, который Вы хотите переименовать. Вы также можете очистить значение, чтобы удалить настройку в следующем обновлении.</string>
   <string name="sensor_description_wifi_connection">Название сети Wi-Fi, к которой подключено устройство</string>
   <string name="sensor_description_wifi_frequency">Частотный диапазон подключенной сети</string>
   <string name="sensor_description_wifi_ip">IP-адрес устройства в сети</string>
@@ -224,10 +231,12 @@
   <string name="sensor_name_speakerphone">Громкая связь</string>
   <string name="sensor_name_steps">Сенсор пройденных шагов</string>
   <string name="sensor_name_storage">Хранилище</string>
+  <string name="sensor_name_traffic_stats">Статистика трафика</string>
   <string name="sensor_name_volume_alarm">Уровень громкости будильника</string>
   <string name="sensor_name_volume_call">Уровень громкости разговора</string>
   <string name="sensor_name_volume_music">Уровень громкости музыки</string>
   <string name="sensor_name_volume_ring">Уровень громкости звонка</string>
+  <string name="sensor_settings">Настройки сенсора</string>
   <string name="sensor_summary">Включение или отключение сенсоров мобильного приложения</string>
   <string name="sensor_title">Управление сенсорами</string>
   <string name="sensors">Сенсоры</string>

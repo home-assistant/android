@@ -2,7 +2,6 @@
 <resources>
   <string name="add_service_data_field">Añadir campo</string>
   <string name="add_widget">Añadir widget</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">Información sobre la app</string>
   <string name="application_version">Versión de la aplicación</string>
   <string name="attempting_registration">Registrando aplicación...</string>
@@ -26,13 +25,18 @@
   <string name="basic_sensor_name_interactive">Interactivo</string>
   <string name="basic_sensor_name_internal_storage">Almacenamiento interno</string>
   <string name="basic_sensor_name_last_reboot">Último reinicio</string>
+  <string name="basic_sensor_name_location_accurate">Localización precisa única</string>
   <string name="basic_sensor_name_location_background">Ubicación en segundo plano</string>
   <string name="basic_sensor_name_location_zone">Zona de ubicación</string>
+  <string name="basic_sensor_name_mobile_rx_gb">Rx en GB móviles</string>
+  <string name="basic_sensor_name_mobile_tx_gb">Tx en GB móviles</string>
   <string name="basic_sensor_name_phone">Estado del teléfono</string>
   <string name="basic_sensor_name_power_save">Ahorro de energía</string>
   <string name="basic_sensor_name_public_ip">Dirección IP pública</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
   <string name="basic_sensor_name_sim2">SIM 2</string>
+  <string name="basic_sensor_name_total_rx_gb">Rx en GB total</string>
+  <string name="basic_sensor_name_total_tx_gb">Tx en GB total</string>
   <string name="basic_sensor_name_wifi">Conexión Wifi</string>
   <string name="basic_sensor_name_wifi_bssid">BSSID Wifi</string>
   <string name="basic_sensor_name_wifi_frequency">Frecuencia Wifi</string>
@@ -174,9 +178,12 @@ instancia de Home Assistant</string>
   <string name="sensor_description_internal_storage">Información sobre el espacio de almacenamiento interno total y disponible</string>
   <string name="sensor_description_last_reboot">La fecha y hora del último reinicio del dispositivo</string>
   <string name="sensor_description_light_sensor">El nivel actual de luminosidad</string>
-  <string name="sensor_description_location_background">Actualiza tu ubicación en segundo plano, periódicamente.</string>
-  <string name="sensor_description_location_zone">Importar zonas de Home Assistant como geocercas para el seguimiento basado en zonas.</string>
+  <string name="sensor_description_location_accurate">Permite a Home Assistant enviar una notificación solicitando una ubicación precisa junto con la aplicación periódicamente solicitando una ubicación precisa. El ajuste de Precisión mínima te permite decidir como de precisa (en metros) tiene que ser la ubicación del dispositivo para mandarla a Home Assistant. El Tiempo mínimo entre actualizaciones (en milisegundos) evita que el dispositivo envíe la ubicación precisa demasiado frecuentemente.</string>
+  <string name="sensor_description_location_background">Actualiza tu ubicación en segundo plano, periódicamente. El ajuste de Precisión mínima te permite decidir como de precisa (en metros) tiene que ser la ubicación del dispositivo para mandarla a Home Assistant</string>
+  <string name="sensor_description_location_zone">Importar zonas de Home Assistant como geocercas para el seguimiento basado en zonas. El ajuste de Precisión mínima te permite decidir como de precisa (en metros) tiene que ser la ubicación del dispositivo para mandarla a Home Assistant</string>
   <string name="sensor_description_mic_muted">Si el micrófono está silenciado o no en el dispositivo</string>
+  <string name="sensor_description_mobile_rx_gb">Rx en GB totales en datos móviles desde el último reinicio del dispositivo</string>
+  <string name="sensor_description_mobile_tx_gb">Tx en GB totales en datos móviles desde el último reinicio del dispositivo</string>
   <string name="sensor_description_music_active">Si se está reproduciendo música activamente en el dispositivo o no</string>
   <string name="sensor_description_next_alarm">La fecha y hora de la siguiente alarma programada, cualquier aplicación o fabricante puede anular el comportamiento predeterminado. El atributo del paquete te dirá qué aplicación configuró la siguiente alarma programada.</string>
   <string name="sensor_description_none">No hay descripción</string>
@@ -190,6 +197,8 @@ instancia de Home Assistant</string>
   <string name="sensor_description_speakerphone">Si el altavoz está habilitado o no en el dispositivo</string>
   <string name="sensor_description_steps_sensor">El número total de pasos desde el último reinicio del dispositivo</string>
   <string name="sensor_description_storage_sensor">Información sobre el espacio de almacenamiento total y disponible interno y externo</string>
+  <string name="sensor_description_total_rx_gb">Rx en GB totales desde el último reinicio del dispositivo</string>
+  <string name="sensor_description_total_tx_gb">Tx en GB totales desde el último reinicio del dispositivo</string>
   <string name="sensor_description_volume_alarm">Nivel de volumen para alarmas en el dispositivo</string>
   <string name="sensor_description_volume_call">Nivel de volumen para llamadas en el dispositivo</string>
   <string name="sensor_description_volume_music">Nivel de volumen de la música en el dispositivo</string>
@@ -224,10 +233,12 @@ instancia de Home Assistant</string>
   <string name="sensor_name_speakerphone">Altavoz</string>
   <string name="sensor_name_steps">Sensor de pasos</string>
   <string name="sensor_name_storage">Sensor de almacenamiento</string>
+  <string name="sensor_name_traffic_stats">Sensores de estado de tráfico</string>
   <string name="sensor_name_volume_alarm">Nivel de volumen de alarma</string>
   <string name="sensor_name_volume_call">Nivel de volumen de llamada</string>
   <string name="sensor_name_volume_music">Nivel de volumen de música</string>
   <string name="sensor_name_volume_ring">Nivel de volumen del tono de llamada</string>
+  <string name="sensor_settings">Configuración del sensor</string>
   <string name="sensor_summary">Usa esto para controlar qué sensores están activados o desactivados.</string>
   <string name="sensor_title">Administrar sensores</string>
   <string name="sensors">Sensores</string>

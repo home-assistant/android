@@ -2,7 +2,6 @@
 <resources>
   <string name="add_service_data_field">Dodaj pole</string>
   <string name="add_widget">Dodaj widżet</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">Informacje o wersji aplikacji</string>
   <string name="application_version">Wersja aplikacji</string>
   <string name="attempting_registration">Rejestruję aplikację…</string>
@@ -227,6 +226,7 @@
   <string name="sensor_name_volume_call">Poziom głośności połączeń głosowych</string>
   <string name="sensor_name_volume_music">Poziom głośności muzyki</string>
   <string name="sensor_name_volume_ring">Poziom głośności dzwonka</string>
+  <string name="sensor_settings">Ustawienia sensora</string>
   <string name="sensor_summary">Użyj tego, aby włączyć/wyłączyć sensory</string>
   <string name="sensor_title">Zarządzaj sensorami</string>
   <string name="sensors">Sensory</string>
@@ -234,6 +234,8 @@
   <string name="set_lock_message">Brak danych biometrycznych lub poświadczenia blokady ekranu</string>
   <string name="set_lock_title">Błąd blokowania aplikacji</string>
   <string name="settings">Ustawienia</string>
+  <string name="share_failed">Udostępnianie do Home Assistanta nie powiodło się!</string>
+  <string name="share_success">Udostępniono do Home Assistanta</string>
   <string name="shopping_list">Lista zakupów</string>
   <string name="shortcuts">Skróty</string>
   <string name="shortcuts_summary">Dodaj skróty do launchera</string>
