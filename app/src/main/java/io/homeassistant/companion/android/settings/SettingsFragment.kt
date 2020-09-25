@@ -135,7 +135,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             val intent = Intent()
             intent.action = "android.intent.action.VIEW"
             intent.data = Uri.parse(link)
-            preferenceScreen.findPreference<Preference>("changelog")!!.intent = intent
+            it.intent = intent
         }
 
         findPreference<Preference>("version")?.let {
