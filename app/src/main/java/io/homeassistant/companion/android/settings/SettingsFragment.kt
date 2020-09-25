@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.settings
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.text.InputType
@@ -123,6 +125,17 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 .addToBackStack(getString(R.string.sensors))
                 .commit()
             return@setOnPreferenceClickListener true
+        }
+
+        findPreference<Preference>("changelog")?.let {
+            val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL"))
+                "https://github.com/home-assistant/android/releases"
+            else "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME}"
+            it.summary = link
+            val intent = Intent()
+            intent.action = "android.intent.action.VIEW"
+            intent.data = Uri.parse(link)
+            it.intent = intent
         }
 
         findPreference<Preference>("version")?.let {
