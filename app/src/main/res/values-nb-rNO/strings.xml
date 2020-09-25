@@ -2,7 +2,6 @@
 <resources>
   <string name="add_service_data_field">Legg til felt</string>
   <string name="add_widget">Legg til widget</string>
-  <string name="app_name"></string>
   <string name="app_version_info">Appversjonsinfo</string>
   <string name="application_version">Applikasjonsversjon</string>
   <string name="attempting_registration">Registrerer applikasjon...</string>
@@ -64,7 +63,6 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="home_assistant_not_discover">Kan ikke finne din 
 Home Assistant forekomst</string>
   <string name="icon">Ikon</string>
-  <string name="input_url"></string>
   <string name="input_url_hint">https://eksempel.duckdns.org:8123</string>
   <string name="label_attribute">Attributt:</string>
   <string name="label_dynamic_data">Data:</string>
@@ -224,6 +222,5 @@ for Home Assistant</string>
   <string name="widget_text_hint_service_data">Entitet ID</string>
   <string name="widget_text_hint_service_domain">Domene</string>
   <string name="widget_text_hint_service_service">Tjeneste</string>
-  <string name="widget_text_size_default"></string>
   <string name="widget_text_size_label">Widget tekststørrelse:</string>
 </resources>

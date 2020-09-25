@@ -2,7 +2,6 @@
 <resources>
   <string name="add_service_data_field">Feld hinzufügen</string>
   <string name="add_widget">Widget hinzufügen</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">App Version Info</string>
   <string name="application_version">Applikationsversion</string>
   <string name="attempting_registration">Registriere Applikation…</string>
@@ -26,13 +25,18 @@
   <string name="basic_sensor_name_interactive">In Verwendung</string>
   <string name="basic_sensor_name_internal_storage">Interner Speicher</string>
   <string name="basic_sensor_name_last_reboot">Letzter Neustart</string>
+  <string name="basic_sensor_name_location_accurate">Einzelne genaue Position</string>
   <string name="basic_sensor_name_location_background">Hintergrund Standort</string>
   <string name="basic_sensor_name_location_zone">Standortzone</string>
+  <string name="basic_sensor_name_mobile_rx_gb">Mobile Rx GB</string>
+  <string name="basic_sensor_name_mobile_tx_gb">Mobile Tx GB</string>
   <string name="basic_sensor_name_phone">Telefonstatus</string>
   <string name="basic_sensor_name_power_save">Energiesparen</string>
   <string name="basic_sensor_name_public_ip">Öffentliche IP-Adresse</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
   <string name="basic_sensor_name_sim2">SIM 2</string>
+  <string name="basic_sensor_name_total_rx_gb">Insgesamt empfangen (GB)</string>
+  <string name="basic_sensor_name_total_tx_gb">Insgesamt gesendet (GB)</string>
   <string name="basic_sensor_name_wifi">WLAN Verbindung</string>
   <string name="basic_sensor_name_wifi_bssid">WLAN BSSID</string>
   <string name="basic_sensor_name_wifi_frequency">WLAN Frequenz</string>
@@ -173,9 +177,12 @@
   <string name="sensor_description_internal_storage">Informationen über den gesamten und verfügbaren internen Speicherplatz</string>
   <string name="sensor_description_last_reboot">Datum und Uhrzeit des letzten Neustarts des Geräts</string>
   <string name="sensor_description_light_sensor">Der aktuelle Messwert des Helligkeitssensors</string>
+  <string name="sensor_description_location_accurate">Erlaube Home Assistant, eine Benachrichtigung zu senden, um einen genauen Standort anzufordern, zusammen mit dem Antrag, in regelmäßigen Abständen einen genauen Standort anzufordern. Mit der Einstellung Mindestgenauigkeit können Sie entscheiden, wie genau der Standort des Geräts (in Metern) sein muss, damit es an den Home Assistant gesendet werden kann. Die Mindestzeit zwischen Aktualisierungen (in Millisekunden) verhindert, dass das Gerät zu oft den genauen Standort sendet.</string>
   <string name="sensor_description_location_background">Aktualisiere deinen Standort regelmäßig im Hintergrund.</string>
   <string name="sensor_description_location_zone">Importieren Sie vorhandene Home Assistant-Zonen als Geofences für die zonenbasierte Standortbestimmung.</string>
   <string name="sensor_description_mic_muted">Gibt an, ob das Mikrofon am Gerät stummgeschaltet ist</string>
+  <string name="sensor_description_mobile_rx_gb">Insgesamt über Mobilfunk gesendet seit dem letzten Neustart (GB)</string>
+  <string name="sensor_description_mobile_tx_gb">Insgesamt über Mobilfunk empfangen seit dem letzten Neustart (GB)</string>
   <string name="sensor_description_music_active">Gibt an, ob auf dem Gerät aktiv Musik abgespielt wird</string>
   <string name="sensor_description_next_alarm">Datum und Uhrzeit des nächsten geplanten Alarms, jede App oder jeder Hersteller kann das Standardverhalten außer Kraft setzen. Das Paketattribut teilt dir mit, welche Anwendung den nächsten geplanten Alarm eingestellt hat.</string>
   <string name="sensor_description_none">Keine Beschreibung</string>
@@ -189,6 +196,8 @@
   <string name="sensor_description_speakerphone">Gibt an, ob die Freisprecheinrichtung auf dem Gerät aktiviert ist</string>
   <string name="sensor_description_steps_sensor">Die Gesamtzahl der Schritte seit dem letzten Neustart des Geräts</string>
   <string name="sensor_description_storage_sensor">Informationen über den gesamten und verfügbaren Speicherplatz (intern und extern)</string>
+  <string name="sensor_description_total_rx_gb">Insgesamt empfangen seit dem letzten Neustart (GB)</string>
+  <string name="sensor_description_total_tx_gb">Insgesamt gesendet seit dem letzten Neustart (GB)</string>
   <string name="sensor_description_volume_alarm">Lautstärkepegel für Alarme auf dem  Gerät</string>
   <string name="sensor_description_volume_call">Lautstärkepegel für Anrufe auf dem  Gerät</string>
   <string name="sensor_description_volume_music">Lautstärkepegel für Musik auf dem Gerät</string>
@@ -223,10 +232,12 @@
   <string name="sensor_name_speakerphone">Freisprechen</string>
   <string name="sensor_name_steps">Schrittsensor</string>
   <string name="sensor_name_storage">Speichersensor</string>
+  <string name="sensor_name_traffic_stats">Verkehrssensoren</string>
   <string name="sensor_name_volume_alarm">Lautstärke Wecker</string>
   <string name="sensor_name_volume_call">Lautstärke Anruf</string>
   <string name="sensor_name_volume_music">Lautstärke Musikwiedergabe</string>
   <string name="sensor_name_volume_ring">Lautstärke Klingelton</string>
+  <string name="sensor_settings">Sensoreinstellungen</string>
   <string name="sensor_summary">Verwende dies um Sensoren ein- bzw. auszuschalten.</string>
   <string name="sensor_title">Verwalte Sensoren</string>
   <string name="sensors">Sensoren</string>

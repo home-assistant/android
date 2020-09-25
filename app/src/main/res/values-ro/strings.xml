@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
   <string name="add_widget">Adaugă widgetul</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">Informații despre versiunea aplicației</string>
   <string name="application_version">Versiunea aplicației</string>
   <string name="attempting_registration">Aplicația se înregistrează...</string>

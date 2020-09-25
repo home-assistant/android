@@ -2,7 +2,6 @@
 <resources>
   <string name="add_service_data_field">Pridať pole</string>
   <string name="add_widget">Pridať miniaplikáciu</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">Informácie o verzii aplikácie</string>
   <string name="application_version">Verzia aplikácie</string>
   <string name="attempting_registration">Registrácia aplikácie...</string>
@@ -205,6 +204,7 @@ sa chcete pripojiť:</string>
   <string name="sensor_name_volume_call">Úroveň hlasitosti hovoru</string>
   <string name="sensor_name_volume_music">Úroveň hlasitosti hudby</string>
   <string name="sensor_name_volume_ring">Úroveň hlasitosti zvonenia</string>
+  <string name="sensor_settings">Nastavenie senzov</string>
   <string name="sensor_summary">Použite na povolenie/zakázanie senzorov.</string>
   <string name="sensor_title">Správa senzorov</string>
   <string name="sensors">Senzory</string>

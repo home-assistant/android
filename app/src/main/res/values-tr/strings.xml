@@ -2,7 +2,6 @@
 <resources>
   <string name="add_service_data_field">Öge ekle</string>
   <string name="add_widget">Widget ekle</string>
-  <string name="app_name">Home Assistant</string>
   <string name="app_version_info">Uygulama sürüm bilgisi</string>
   <string name="application_version">Uygulama sürümü</string>
   <string name="attempting_registration">Uygulama kaydediliyor…</string>
