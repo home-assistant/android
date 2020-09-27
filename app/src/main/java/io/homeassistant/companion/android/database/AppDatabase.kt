@@ -70,6 +70,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_9_10,
                     MIGRATION_10_11
                 )
+                .fallbackToDestructiveMigration()
                 .build()
         }
 
@@ -139,26 +140,37 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 val cursor = database.query("SELECT * FROM sensors")
                 val sensors = mutableListOf<ContentValues>()
-                if (cursor.count > 0) {
-                    while (cursor.moveToNext()) {
-                        sensors.add(ContentValues().also {
-                            it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
-                            it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                            it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
-                            it.put("state", "")
-                            it.put("state_type", "")
-                            it.put("type", "")
-                            it.put("icon", "")
-                            it.put("name", "")
-                            it.put("device_class", "")
-                        })
+                var migrationSuccessful = false
+                if (cursor.moveToFirst()) {
+                    try {
+                        while (cursor.moveToNext()) {
+                            sensors.add(ContentValues().also {
+                                it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
+                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                                it.put(
+                                    "registered",
+                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                )
+                                it.put("state", "")
+                                it.put("state_type", "")
+                                it.put("type", "")
+                                it.put("icon", "")
+                                it.put("name", "")
+                                it.put("device_class", "")
+                            })
+                        }
+                        migrationSuccessful = true
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                     }
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
-                sensors.forEach {
-                    database.insert("sensors", OnConflictStrategy.REPLACE, it)
+                if (migrationSuccessful) {
+                    sensors.forEach {
+                        database.insert("sensors", OnConflictStrategy.REPLACE, it)
+                    }
                 }
 
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))")
@@ -178,26 +190,37 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 val cursor = database.query("SELECT * FROM sensors")
                 val sensors = mutableListOf<ContentValues>()
-                if (cursor.count > 0) {
-                    while (cursor.moveToNext()) {
-                        sensors.add(ContentValues().also {
-                            it.put("id", cursor.getString(cursor.getColumnIndex("id")))
-                            it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                            it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
-                            it.put("state", "")
-                            it.put("last_sent_state", "")
-                            it.put("state_type", "")
-                            it.put("type", "")
-                            it.put("icon", "")
-                            it.put("name", "")
-                        })
+                var migrationSuccessful = false
+                if (cursor.moveToFirst()) {
+                    try {
+                        while (cursor.moveToNext()) {
+                            sensors.add(ContentValues().also {
+                                it.put("id", cursor.getString(cursor.getColumnIndex("id")))
+                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                                it.put(
+                                    "registered",
+                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                )
+                                it.put("state", "")
+                                it.put("last_sent_state", "")
+                                it.put("state_type", "")
+                                it.put("type", "")
+                                it.put("icon", "")
+                                it.put("name", "")
+                            })
+                        }
+                        migrationSuccessful = true
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                     }
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
-                sensors.forEach {
-                    database.insert("sensors", OnConflictStrategy.REPLACE, it)
+                if (migrationSuccessful) {
+                    sensors.forEach {
+                        database.insert("sensors", OnConflictStrategy.REPLACE, it)
+                    }
                 }
             }
         }
