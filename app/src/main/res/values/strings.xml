@@ -61,7 +61,6 @@
   <string name="calendar">Calendar</string>
   <string name="cancel">Cancel</string>
   <string name="changelog">Change Log</string>
-  <string name="select_file">Select a file</string>
   <string name="checking_with_home_assistant">Checking with Home Assistant</string>
   <string name="config">Configuration</string>
   <string name="configure_service_call">Configure Service Call</string>

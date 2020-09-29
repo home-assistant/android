@@ -99,7 +99,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private lateinit var authenticator: Authenticator
     private lateinit var exoPlayerView: PlayerView
 
-    private var mFilePathCallback: ValueCallback<Array<Uri?>?>? = null
+    private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
     private var isConnected = false
     private var isShowingError = false
     private var alertDialog: AlertDialog? = null
@@ -300,17 +300,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 }
 
                 override fun onShowFileChooser(
-                    view: WebView?,
-                    uploadMsg: ValueCallback<Array<Uri?>?>,
-                    fileChooserParams: FileChooserParams?
+                    view: WebView,
+                    uploadMsg: ValueCallback<Array<Uri>>,
+                    fileChooserParams: FileChooserParams
                 ): Boolean {
-                    val i = Intent(Intent.ACTION_GET_CONTENT)
-                    i.addCategory(Intent.CATEGORY_OPENABLE)
-                    i.type = "*/*"
                     mFilePathCallback = uploadMsg
-
-                    val chooserIntent = Intent.createChooser(i, resources.getString(R.string.select_file))
-                    startActivityForResult(chooserIntent, FILE_CHOOSER_RESULT_CODE)
+                    val i = fileChooserParams.createIntent()
+                    i.type = "*/*"
+                    startActivityForResult(i, FILE_CHOOSER_RESULT_CODE)
                     return true
                 }
 
@@ -445,11 +442,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 Log.d(TAG, "NFC Write Complete $it")
             }
         } else if (requestCode == FILE_CHOOSER_RESULT_CODE) {
-            val results: Uri? = data?.data
-            if (results != null)
-                mFilePathCallback!!.onReceiveValue(arrayOf(results))
-            else
-                mFilePathCallback?.onReceiveValue(arrayOf())
+            mFilePathCallback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data))
             mFilePathCallback = null
         }
     }
