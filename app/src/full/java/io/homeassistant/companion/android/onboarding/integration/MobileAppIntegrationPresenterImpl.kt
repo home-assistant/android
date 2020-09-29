@@ -13,7 +13,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
 ) : MobileAppIntegrationPresenterBase(
     view, integrationUseCase
 ) {
-    override suspend fun createRegistration(simple: Boolean, deviceName:String): DeviceRegistration {
+    override suspend fun createRegistration(simple: Boolean, deviceName: String): DeviceRegistration {
         val registration = super.createRegistration(simple, deviceName)
 
         if (!simple) {

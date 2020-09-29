@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 import android.annotation.SuppressLint
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -12,7 +11,6 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -26,8 +24,8 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
-import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
@@ -87,7 +85,6 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             findViewById<AppCompatButton>(R.id.retry).setOnClickListener {
                 presenter.onRegistrationAttempt(false, deviceName.text.toString())
             }
-
         }
     }
 
@@ -99,7 +96,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.firebase_error_title)
             .setMessage(R.string.firebase_error_message)
-            .setPositiveButton(R.string.skip) {  _, _ ->
+            .setPositiveButton(R.string.skip) { _, _ ->
                 presenter.onRegistrationAttempt(true, deviceName.text.toString())
             }
             .setNegativeButton(R.string.retry) { _, _ ->
@@ -174,5 +171,4 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                     ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
                 ?: false
     }
-
 }
