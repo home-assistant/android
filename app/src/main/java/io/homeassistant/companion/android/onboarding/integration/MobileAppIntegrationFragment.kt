@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -14,6 +15,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
 import androidx.fragment.app.Fragment
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
 import io.homeassistant.companion.android.DaggerPresenterComponent
@@ -79,23 +81,9 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             }
 
             findViewById<AppCompatButton>(R.id.finish).setOnClickListener {
-                showLoading()
                 presenter.onRegistrationAttempt(false, deviceName.text.toString())
             }
 
-            findViewById<AppCompatButton>(R.id.skip).setOnClickListener {
-                AlertDialog.Builder(context)
-                    .setTitle(R.string.firebase_error_title)
-                    .setMessage(R.string.firebase_error_message)
-                    .setPositiveButton(R.string.skip) { _, _ ->
-                        presenter.onRegistrationAttempt(true, deviceName.text.toString())
-                    }
-                    .setNegativeButton(R.string.retry) { _, _ ->
-                        presenter.onRegistrationAttempt(false, deviceName.text.toString())
-                    }
-                    .create()
-                    .show()
-            }
             findViewById<AppCompatButton>(R.id.retry).setOnClickListener {
                 presenter.onRegistrationAttempt(false, deviceName.text.toString())
             }
@@ -107,10 +95,20 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         (activity as MobileAppIntegrationListener).onIntegrationRegistrationComplete()
     }
 
-    override fun showError(skippable: Boolean) {
-        if (skippable && skip != null) {
-            skip.visibility = View.VISIBLE
-        }
+    override fun showWarning() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.firebase_error_title)
+            .setMessage(R.string.firebase_error_message)
+            .setPositiveButton(R.string.skip) {  _, _ ->
+                presenter.onRegistrationAttempt(true, deviceName.text.toString())
+            }
+            .setNegativeButton(R.string.retry) { _, _ ->
+                presenter.onRegistrationAttempt(false, deviceName.text.toString())
+            }
+            .show()
+    }
+
+    override fun showError() {
         viewFlipper.displayedChild = ERROR_VIEW
     }
 
