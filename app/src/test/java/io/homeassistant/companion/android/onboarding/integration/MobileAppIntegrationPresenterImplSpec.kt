@@ -41,7 +41,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             }
             describe("register") {
                 beforeEachTest {
-                    presenter.onRegistrationAttempt(true)
+                    presenter.onRegistrationAttempt(true, Build.MODEL ?: "UNKNOWN")
                 }
                 it("should register successfully") {
                     coVerify {
@@ -59,7 +59,7 @@ object MobileAppIntegrationPresenterImplSpec : Spek({
             }
             describe("register") {
                 beforeEachTest {
-                    presenter.onRegistrationAttempt(false)
+                    presenter.onRegistrationAttempt(false, Build.MODEL ?: "UNKNOWN")
                 }
                 it("should fail") {
                     coVerifyAll {
