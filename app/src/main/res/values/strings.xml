@@ -312,4 +312,7 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_default">30</string>
   <string name="widget_text_size_label">Widget text size:</string>
+  <string name="connect_to_home_assistant">Connect to Home Assistant</string>
+  <string name="enable_location_tracking">Enable Location Tracking</string>
+  <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.</string>
 </resources>
