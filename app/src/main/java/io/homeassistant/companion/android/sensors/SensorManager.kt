@@ -24,10 +24,10 @@ interface SensorManager {
         val unitOfMeasurement: String? = null
     )
 
-    fun requiredPermissions(): Array<String>
+    fun requiredPermissions(sensorId: String): Array<String>
 
-    fun checkPermission(context: Context): Boolean {
-        return requiredPermissions().all {
+    fun checkPermission(context: Context, sensorId: String): Boolean {
+        return requiredPermissions(sensorId).all {
             context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
         }
     }
@@ -35,7 +35,7 @@ interface SensorManager {
     fun isEnabled(context: Context, sensorId: String): Boolean {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         var sensor = sensorDao.get(sensorId)
-        val permission = checkPermission(context)
+        val permission = checkPermission(context, sensorId)
 
         // If we haven't created the entity yet do so and default to enabled if required
         if (sensor == null) {

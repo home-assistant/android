@@ -35,7 +35,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(lightSensor)
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 

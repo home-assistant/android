@@ -67,7 +67,7 @@ class StorageSensorManager : SensorManager {
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(storageSensor, externalStorage)
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 

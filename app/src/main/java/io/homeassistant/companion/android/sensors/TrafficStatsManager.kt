@@ -55,7 +55,7 @@ class TrafficStatsManager : SensorManager {
             listOf(rxBytesMobile, txBytesMobile, rxBytesTotal, txBytesTotal)
         } else listOf(rxBytesTotal, txBytesTotal)
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(senorId: String): Array<String> {
         return emptyArray()
     }
 

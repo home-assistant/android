@@ -54,7 +54,7 @@ class SensorDetailFragment(
 
         findPreference<SwitchPreference>("enabled")?.let {
             val dao = sensorDao.get(basicSensor.id)
-            val perm = sensorManager.checkPermission(requireContext())
+            val perm = sensorManager.checkPermission(requireContext(), basicSensor.id)
             if (dao == null && sensorManager.enabledByDefault) {
                 it.isChecked = perm
             }
@@ -66,8 +66,8 @@ class SensorDetailFragment(
             it.setOnPreferenceChangeListener { _, newState ->
                 val isEnabled = newState as Boolean
 
-                if (isEnabled && !sensorManager.checkPermission(requireContext())) {
-                    requestPermissions(sensorManager.requiredPermissions(), 0)
+                if (isEnabled && !sensorManager.checkPermission(requireContext(), basicSensor.id)) {
+                    requestPermissions(sensorManager.requiredPermissions(basicSensor.id), 0)
                     return@setOnPreferenceChangeListener false
                 }
 

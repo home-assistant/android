@@ -23,7 +23,7 @@ class GeocodeSensorManager : SensorManager {
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf()
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
