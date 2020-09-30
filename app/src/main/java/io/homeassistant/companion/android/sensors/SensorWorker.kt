@@ -31,7 +31,7 @@ class SensorWorker(
         private const val TAG = "SensorWorker"
         const val channelId = "Sensor Worker"
         const val NOTIFICATION_ID = 42
-        var notificationText = ""
+        var notificationText = "Updating Sensors"
 
         fun start(context: Context) {
             val constraints = Constraints.Builder()
