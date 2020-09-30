@@ -6,5 +6,7 @@ interface MobileAppIntegrationView {
 
     fun showLoading()
 
-    fun showError(skippable: Boolean = false)
+    fun showWarning()
+
+    fun showError()
 }

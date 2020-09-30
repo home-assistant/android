@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.onboarding.integration
 
-import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
@@ -22,29 +21,29 @@ open class MobileAppIntegrationPresenterBase constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    internal open suspend fun createRegistration(simple: Boolean): DeviceRegistration {
+    internal open suspend fun createRegistration(simple: Boolean, deviceName: String): DeviceRegistration {
         return DeviceRegistration(
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-            Build.MODEL ?: "UNKNOWN"
+            deviceName
         )
     }
 
-    override fun onRegistrationAttempt(simple: Boolean) {
+    override fun onRegistrationAttempt(simple: Boolean, deviceName: String) {
         view.showLoading()
         mainScope.launch {
             val deviceRegistration: DeviceRegistration
             try {
-                deviceRegistration = createRegistration(simple)
+                deviceRegistration = createRegistration(simple, deviceName)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to create registration.", e)
-                view.showError(true)
+                view.showWarning()
                 return@launch
             }
             try {
                 integrationUseCase.registerDevice(deviceRegistration)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to register with Home Assistant", e)
-                view.showError(false)
+                view.showError()
                 return@launch
             }
             view.deviceRegistered()
