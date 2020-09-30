@@ -24,6 +24,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -74,6 +75,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         private const val CAMERA_REQUEST_CODE = 8675309
         private const val AUDIO_REQUEST_CODE = 42
         private const val NFC_COMPLETE = 1
+        private const val FILE_CHOOSER_RESULT_CODE = 15
 
         fun newInstance(context: Context, path: String? = null): Intent {
             return Intent(context, WebViewActivity::class.java).apply {
@@ -97,6 +99,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     private lateinit var authenticator: Authenticator
     private lateinit var exoPlayerView: PlayerView
 
+    private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
     private var isConnected = false
     private var isShowingError = false
     private var alertDialog: AlertDialog? = null
@@ -296,6 +299,18 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                     }
                 }
 
+                override fun onShowFileChooser(
+                    view: WebView,
+                    uploadMsg: ValueCallback<Array<Uri>>,
+                    fileChooserParams: FileChooserParams
+                ): Boolean {
+                    mFilePathCallback = uploadMsg
+                    val i = fileChooserParams.createIntent()
+                    i.type = "*/*"
+                    startActivityForResult(i, FILE_CHOOSER_RESULT_CODE)
+                    return true
+                }
+
                 override fun onShowCustomView(view: View, callback: CustomViewCallback) {
                     myCustomView = view
                     decor.addView(
@@ -426,6 +441,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             webView.evaluateJavascript("externalBus(${JSONObject(message)})") {
                 Log.d(TAG, "NFC Write Complete $it")
             }
+        } else if (requestCode == FILE_CHOOSER_RESULT_CODE) {
+            mFilePathCallback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data))
+            mFilePathCallback = null
         }
     }
 
