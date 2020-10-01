@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/nfc_view"
     tools:context="io.homeassistant.companion.android.nfc.NfcSetupActivity">
 
     <com.google.android.material.appbar.AppBarLayout
