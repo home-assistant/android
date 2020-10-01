@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets
+package io.homeassistant.companion.android.widgets.button
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
+import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -34,9 +35,9 @@ class ButtonWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "ButtonWidget"
         private const val CALL_SERVICE =
-            "io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE"
+            "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
         internal const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.ButtonWidget.RECEIVE_DATA"
+            "io.homeassistant.companion.android.widgets.button.ButtonWidget.RECEIVE_DATA"
 
         internal const val EXTRA_DOMAIN = "EXTRA_DOMAIN"
         internal const val EXTRA_SERVICE = "EXTRA_SERVICE"

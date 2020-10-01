@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets
+package io.homeassistant.companion.android.widgets.entity
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -15,20 +15,21 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
+import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class StaticWidget : AppWidgetProvider() {
+class EntityWidget : AppWidgetProvider() {
 
     companion object {
         private const val TAG = "StaticWidget"
         internal const val RECEIVE_DATA =
-            "io.homeassistant.companion.android.widgets.StaticWidget.RECEIVE_DATA"
+            "io.homeassistant.companion.android.widgets.entity.StaticWidget.RECEIVE_DATA"
         internal const val UPDATE_ENTITY =
-            "io.homeassistant.companion.android.widgets.StaticWidget.UPDATE_ENTITY"
+            "io.homeassistant.companion.android.widgets.entity.StaticWidget.UPDATE_ENTITY"
 
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         internal const val EXTRA_ATTRIBUTE_IDS = "EXTRA_ATTRIBUTE_IDS"
@@ -73,7 +74,7 @@ class StaticWidget : AppWidgetProvider() {
     }
 
     private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
-        val intent = Intent(context, StaticWidget::class.java).apply {
+        val intent = Intent(context, EntityWidget::class.java).apply {
             action = UPDATE_ENTITY
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }

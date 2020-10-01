@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets
+package io.homeassistant.companion.android.widgets.button
 
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -30,6 +30,10 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
+import io.homeassistant.companion.android.widgets.DaggerProviderComponent
+import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
+import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
+import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_button_configure.*
 import kotlinx.coroutines.CoroutineScope
@@ -224,8 +228,7 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         }
 
         // Inject components
-        DaggerProviderComponent
-            .builder()
+        DaggerProviderComponent.builder()
             .appComponent((application as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
