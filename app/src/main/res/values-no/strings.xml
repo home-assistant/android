@@ -7,6 +7,7 @@
   <string name="attempting_registration">Registrerer applikasjon...</string>
   <string name="attributes">Attributter</string>
   <string name="auth_cancel">Godkjenning avbrutt</string>
+  <string name="auth_error">Godkjenningsfeil</string>
   <string name="auth_error_message">Feltene Brukernavn og Passord må fylles ut</string>
   <string name="auth_request">Forespørsel om godkjenning</string>
   <string name="basic_sensor_name_alarm">Neste alarm</string>
@@ -20,20 +21,32 @@
   <string name="basic_sensor_name_sim1">SIM 1</string>
   <string name="basic_sensor_name_sim2">SIM 2</string>
   <string name="basic_sensor_name_wifi">Wifi-tilkobling</string>
+  <string name="biometric_message">Lås opp med din biometriske legitimasjon eller skjermlås</string>
   <string name="biometric_set_title">Bekreft for å fortsette</string>
   <string name="biometric_title">Home Assistant må låses opp</string>
+  <string name="calendar">Kalender</string>
   <string name="cancel">Avbryt</string>
+  <string name="checking_with_home_assistant">Sjekker med Home Assistant</string>
+  <string name="config">Konfigurasjon</string>
   <string name="configure_service_call">Konfigurer tjeneste tilkalling</string>
+  <string name="configure_widget_label">Widget etikett</string>
+  <string name="connect_to_home_internet">Forsikre deg om at telefonen er tilkoblet 
+ditt hjemmenettverk.</string>
+  <string name="connected_to_home_assistant">Koblet til Home Assistant</string>
   <string name="create_template">Opprett mal</string>
+  <string name="developer_tools">Utviklerverktøy</string>
   <string name="device_class">Enhetsklasse</string>
   <string name="device_name">Enhetsnavn</string>
   <string name="device_registration">Enhetsregistrering</string>
+  <string name="dialog_add_panel_shortcut_content">Vil du lage en snarvei til dette elementet?</string>
+  <string name="dialog_add_panel_shortcut_title">Legg til snarvei</string>
   <string name="documentation">Dokumentasjon</string>
   <string name="enabled_summary">Verdier vil bli sendt til Home Assistant ved aktivering</string>
   <string name="enabled_title">Aktivert</string>
   <string name="entity_attribute_checkbox">Legg til attributtverdi</string>
   <string name="error_auth_revoked">Det ser ut til at godkjenningen din ble tilbakekalt, vennligst koble til Home Assistant på nytt.</string>
   <string name="error_connection_failed">Kunne ikke koble til Home Assistant</string>
+  <string name="error_onboarding_connection_failed">Kunne ikke koble til Home Assistant</string>
   <string name="error_ssl">Kan ikke kommunisere med Home Assistant på grunn av en SSL-feil. Forsikre deg om at sertifikatet ditt er gyldig.</string>
   <string name="error_with_registration">Vennligst kontroller at du har mobile_app 
 integrasjonen aktivert på din Home Assistant forekomst.</string>
@@ -45,6 +58,10 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="firebase_error_title">Firebase feil</string>
   <string name="fullscreen">Fullskjerm</string>
   <string name="fullscreen_def">Sett applikasjonen i fullskjerm</string>
+  <string name="grant_permission">Gi tillatelse</string>
+  <string name="history">Historie</string>
+  <string name="home_assistant_not_discover">Kan ikke finne din 
+Home Assistant forekomst</string>
   <string name="icon">Ikon</string>
   <string name="input_url_hint">https://eksempel.duckdns.org:8123</string>
   <string name="label_attribute">Attributt:</string>
@@ -53,12 +70,18 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="label_icon">Ikon:</string>
   <string name="label_label">Etikett:</string>
   <string name="label_service">Tjeneste:</string>
+  <string name="location">Plassering</string>
   <string name="lock_summary">Bruk biometrisk legitimasjon eller skjermlåsfor å låse opp appen</string>
   <string name="lock_title">Lås app</string>
+  <string name="lockscreen_message">Trykk for å låse opp:</string>
+  <string name="lockscreen_title">App låst!</string>
+  <string name="logbook">Loggbok</string>
+  <string name="mailbox">Postkasse</string>
   <string name="manage_ssids">Administrer SSID(er)</string>
   <string name="manage_ssids_input">Ny WiFi SSID</string>
   <string name="manage_ssids_input_exists">Denne SSID-en eksisterer allerede.</string>
   <string name="manual_setup">angi adresse manuelt</string>
+  <string name="map">Kart</string>
   <string name="need_help">Trenger hjelp?</string>
   <string name="nfc_btn_create_duplicate">Opprett duplikat</string>
   <string name="nfc_btn_fire_event">Utfør hendelse</string>
@@ -77,24 +100,41 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="nfc_title_nfc_setup">NFC tagger</string>
   <string name="nfc_title_settings">NFC tagger</string>
   <string name="nfc_welcome_fragment_label">NFC velkomstfragment</string>
-  <string name="nfc_welcome_message">NFC-tagger skrevet av appen vil utføre en hendelse når du tar enheten i nærheten av dem.\n\nTagger fungerer på alle enheter med Home Assistant installert som har maskinvarestøtte for å lese dem.</string>
+  <string name="nfc_welcome_message">NFC-tagger skrevet av appen vil utføre en hendelse når du tar enheten i nærheten av dem.
+
+Tagger fungerer på alle enheter med Home Assistant installert som har maskinvarestøtte for å lese dem.</string>
   <string name="nfc_write_fragment_label">NFC skriv fragment</string>
   <string name="nfc_write_tag_error">Feil under skriving av NFC tag</string>
   <string name="nfc_write_tag_instructions">Plasser telefonen over NFC taggen for å skrive følgende identifikator til den %1$s</string>
   <string name="nfc_write_tag_success">Skrevet NFC tag vellyket</string>
+  <string name="nfc_write_tag_too_early">Vennligst fyll ut skjemaet først</string>
   <string name="not_private">Din tilkobling til dette nettstedet er ikke privat.</string>
   <string name="other_settings">Andre innstillinger</string>
   <string name="password">Passord</string>
+  <string name="permission_explanation">For å kunne bruke funksjoner for posisjonssporing eller forskjellige tilkoblingsadresser basert på WiFi SSID, trenger vi tilgang til posisjonen din. Hvis du vil ha konsekvente bakgrunnsoppdateringer, må du også tillate bakgrunnsbehandling</string>
+  <string name="permission_explanation_calls">For å spore innkommende og utgående anrop, trenger vi tilgang til telefons tilstand. Ingen telefonnumre eller andre samtaledetaljer blir lagret.</string>
+  <string name="pref_call_tracking_summary">Tillat at applikasjonen oppdager anrop og varsler serveren om det.</string>
+  <string name="pref_call_tracking_title">Sporing av anrop</string>
   <string name="pref_connection_internal">URL for intern tilkobling</string>
   <string name="pref_connection_ssids_empty">Konfigurer WiFi SSID(er)</string>
   <string name="pref_connection_title">Tilkoblingsinformasjon</string>
   <string name="pref_connection_url">Home Assistant URL</string>
   <string name="pref_connection_wifi">Hjemmenettverk WiFi SSID</string>
+  <string name="pref_location_background_summary">Oppdater plasseringen din i bakgrunnen, periodisk.</string>
+  <string name="pref_location_background_title">Sporing av plassering i bakgrunnen</string>
+  <string name="pref_location_zone_summary">Importer eksisterende Home Assistant soner som geofences for sonebasert sporing.</string>
+  <string name="pref_location_zone_title">Sonebasert sporing</string>
+  <string name="profile">Profil</string>
   <string name="qrcode_processing_tag_error">Feil under behandling av QR kode</string>
+  <string name="rate_limit_notification.body">Du har nå sendt mer enn %s varsler i dag. Du vil ikke motta nye varsler før midnatt UTC.</string>
+  <string name="rate_limit_notification.title">Varslingsrate begrenset</string>
   <string name="refresh">Oppdater</string>
   <string name="required_fields">krever brukernavn og passord.</string>
   <string name="retry">Prøv på nytt</string>
   <string name="save">Lagre</string>
+  <string name="scan_again">Skann igjen</string>
+  <string name="scanning_network">Skanner nettverket
+for Home Assistant</string>
   <string name="security">Sikkerhet</string>
   <string name="select_entity_to_display">Velg entitet som skal vises</string>
   <string name="select_instance">Velg forekomsten du
@@ -116,6 +156,7 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="sensor_description_sim_1">Informasjon om gjeldende mobilleverandør i SIM-spor 1</string>
   <string name="sensor_description_sim_2">Informasjon om gjeldende mobilleverandør i SIM-spor 2</string>
   <string name="sensor_description_steps_sensor">Totalt antall trinn siden forrige omstart av enheten</string>
+  <string name="sensor_description_storage_sensor">Informasjon om den totale tilgjengelige lagringsplassen internt og eksternt.</string>
   <string name="sensor_description_wifi_connection">Informasjon om det tilkoblede Wi-Fi-nettverket</string>
   <string name="sensor_name_activity">Aktivitetssensorer</string>
   <string name="sensor_name_alarm">Alarmsensor</string>
@@ -140,8 +181,13 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="set_lock_message">Ingen biometrisk sensor eller skjermlås tilgjengelig</string>
   <string name="set_lock_title">Feil ved låsing av app</string>
   <string name="settings">Innstillinger</string>
+  <string name="shopping_list">Handleliste</string>
+  <string name="shortcuts">Snarveier</string>
+  <string name="shortcuts_summary">Legg til snarvei</string>
   <string name="skip">Hopp over</string>
   <string name="state">Tilstand</string>
+  <string name="states">Oversikt</string>
+  <string name="status_of_mobile_app_integration">Status for mobile_app integrasjonen:</string>
   <string name="tag_reader_title">Behandler tag</string>
   <string name="template_widget_default">Skriv inn mal her</string>
   <string name="themes_option_label_dark">Mørk</string>
@@ -167,10 +213,16 @@ integrasjonen aktivert på din Home Assistant forekomst.</string>
   <string name="widget_button_image_description">Serviceknapp</string>
   <string name="widget_config_service_error">En uoffisiell komponent forhindrer lasting av tjenestedata.</string>
   <string name="widget_creation_error">Kan ikke opprette widget.</string>
+  <string name="widget_image_description">Home Assistant widget</string>
   <string name="widget_label_placeholder_text">Etikett</string>
   <string name="widget_separator_input_hint">Ingen separator</string>
+  <string name="widget_separator_label">Tilstand og attributt skilletegn:</string>
+  <string name="widget_spinner_icon">Ikon:</string>
   <string name="widget_state_separator_label">Skilletegn for tilstand og attributt:</string>
   <string name="widget_static_image_description">Entitetstilstand</string>
   <string name="widget_text_hint_label">Etikett</string>
+  <string name="widget_text_hint_service_data">Entitet ID</string>
+  <string name="widget_text_hint_service_domain">Domene</string>
+  <string name="widget_text_hint_service_service">Tjeneste</string>
   <string name="widget_text_size_label">Widget tekststørrelse:</string>
 </resources>
