@@ -26,13 +26,8 @@
   <string name="nfc_write_tag_error">Error al escribir la etiqueta NFC</string>
   <string name="nfc_write_tag_instructions">Coloca el teléfono sobre la etiqueta NFC para escribir el siguiente identificador en ella %1$s</string>
   <string name="nfc_write_tag_success">Se escribió correctamente la etiqueta NFC</string>
-  <string name="nfc_write_tag_too_early">Por favor, primero rellena el formulario</string>
-  <string name="permission_explanation_calls">Para poder rastrear las llamadas entrantes y salientes necesitamos acceder al estado del teléfono. No se almacenarán números de teléfono ni otros detalles de las llamadas.</string>
-  <string name="pref_call_tracking_summary">Permitir que la aplicación detecte la llamada y notifique al servidor al respecto.</string>
-  <string name="pref_call_tracking_title">Rastreo de llamadas</string>
-  <string name="qrcode_processing_tag_error">Error al procesar la etiqueta qrcode</string>
-  <string name="rate_limit_notification.title">Notifications Rate Limited</string>
-  <string name="security">Seguridad</string>
+    <string name="qrcode_processing_tag_error">Error al procesar la etiqueta qrcode</string>
+    <string name="security">Seguridad</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Descripción</string>
   <string name="sensor_description_battery_health">La salud de la batería</string>

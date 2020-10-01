@@ -1,5 +1,2 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<resources>
-  <string name="rate_limit_notification.body">Danes ste poslali več kot %s obvestil. Novih obvestil ne boste prejeli do polnoči UTC.</string>
-  <string name="rate_limit_notification.title">Omejeno je število obvestil</string>
-</resources>
+<resources></resources>
