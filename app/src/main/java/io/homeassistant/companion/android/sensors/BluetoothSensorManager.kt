@@ -33,7 +33,7 @@ class BluetoothSensorManager : SensorManager {
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(bluetoothConnection, bluetoothState)
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.BLUETOOTH)
     }
 
@@ -56,7 +56,7 @@ class BluetoothSensorManager : SensorManager {
         var bondedString = ""
         var isBtOn = false
 
-        if (checkPermission(context)) {
+        if (checkPermission(context, bluetoothConnection.id)) {
 
             val bluetoothManager =
                 (context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
@@ -110,7 +110,7 @@ class BluetoothSensorManager : SensorManager {
 
         var isBtOn = false
 
-        if (checkPermission(context)) {
+        if (checkPermission(context, bluetoothState.id)) {
 
             val bluetoothManager =
                 (context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)

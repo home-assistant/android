@@ -44,7 +44,7 @@ class PowerSensorManager : SensorManager {
             listOf(interactiveDevice, powerSave)
         }
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 

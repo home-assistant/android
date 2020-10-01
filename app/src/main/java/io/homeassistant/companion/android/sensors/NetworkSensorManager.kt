@@ -91,14 +91,20 @@ class NetworkSensorManager : SensorManager {
             publicIp
         )
 
-    override fun requiredPermissions(): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            )
-        } else {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+    override fun requiredPermissions(sensorId: String): Array<String> {
+        return when {
+            sensorId == publicIp.id -> {
+                arrayOf()
+            }
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                )
+            }
+            else -> {
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+            }
         }
     }
 
@@ -124,7 +130,7 @@ class NetworkSensorManager : SensorManager {
         var lastScanStrength = -1
         var wifiEnabled = false
 
-        if (checkPermission(context)) {
+        if (checkPermission(context, wifiConnection.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo
@@ -171,7 +177,7 @@ class NetworkSensorManager : SensorManager {
 
         var conInfo: WifiInfo? = null
 
-        if (checkPermission(context)) {
+        if (checkPermission(context, bssidState.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo
@@ -215,7 +221,7 @@ class NetworkSensorManager : SensorManager {
         var conInfo: WifiInfo? = null
         var deviceIp = "Unknown"
 
-        if (checkPermission(context)) {
+        if (checkPermission(context, wifiIp.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo
@@ -246,7 +252,7 @@ class NetworkSensorManager : SensorManager {
         var linkSpeed = 0
         var lastScanStrength = -1
 
-        if (checkPermission(context)) {
+        if (checkPermission(context, wifiLinkSpeed.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo
@@ -288,7 +294,7 @@ class NetworkSensorManager : SensorManager {
 
         var wifiEnabled = false
 
-        if (checkPermission(context)) {
+        if (checkPermission(context, wifiState.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
 
@@ -312,7 +318,7 @@ class NetworkSensorManager : SensorManager {
         var conInfo: WifiInfo? = null
         var frequency = 0
 
-        if (checkPermission(context)) {
+        if (checkPermission(context, wifiFrequency.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo
@@ -342,7 +348,7 @@ class NetworkSensorManager : SensorManager {
         var conInfo: WifiInfo? = null
         var lastScanStrength = -1
 
-        if (checkPermission(context)) {
+        if (checkPermission(context, wifiSignalStrength.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo

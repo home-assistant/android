@@ -54,7 +54,7 @@ class BatterySensorManager : SensorManager {
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(batteryLevel, batteryState, isChargingState, chargerTypeState, batteryHealthState)
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 

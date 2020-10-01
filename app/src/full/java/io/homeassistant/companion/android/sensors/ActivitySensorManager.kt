@@ -108,7 +108,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(activity)
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
                 Manifest.permission.ACTIVITY_RECOGNITION

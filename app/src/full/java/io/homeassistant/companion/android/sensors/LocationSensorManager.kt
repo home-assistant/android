@@ -107,7 +107,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun setupLocationTracking() {
-        if (!checkPermission(latestContext)) {
+        if (!checkPermission(latestContext, backgroundLocation.id)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
         }
@@ -149,7 +149,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun requestLocationUpdates() {
-        if (!checkPermission(latestContext)) {
+        if (!checkPermission(latestContext, backgroundLocation.id)) {
             Log.w(TAG, "Not registering for location updates because of permissions.")
             return
         }
@@ -165,7 +165,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private suspend fun requestZoneUpdates() {
-        if (!checkPermission(latestContext)) {
+        if (!checkPermission(latestContext, zoneLocation.id)) {
             Log.w(TAG, "Not registering for zone based updates because of permissions.")
             return
         }
@@ -308,7 +308,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun requestSingleAccurateLocation() {
-        if (!checkPermission(latestContext)) {
+        if (!checkPermission(latestContext, singleAccurateLocation.id)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
         }
@@ -402,7 +402,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,

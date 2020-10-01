@@ -33,7 +33,7 @@ class GeocodeSensorManager : SensorManager {
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(geocodedLocation)
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -51,7 +51,7 @@ class GeocodeSensorManager : SensorManager {
     }
 
     private fun updateGeocodedLocation(context: Context) {
-        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context))
+        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context, geocodedLocation.id))
             return
         val locApi = LocationServices.getFusedLocationProviderClient(context)
         locApi.lastLocation.addOnSuccessListener { location ->

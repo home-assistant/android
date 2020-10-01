@@ -39,7 +39,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
                 Manifest.permission.ACTIVITY_RECOGNITION
@@ -65,7 +65,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, stepsSensor.id))
             return
 
-        if (checkPermission(latestContext)) {
+        if (checkPermission(latestContext, stepsSensor.id)) {
             mySensorManager =
                 latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 

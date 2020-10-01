@@ -66,12 +66,13 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             findViewById<TextInputEditText>(R.id.deviceName).setText(Build.MODEL)
 
             findViewById<SwitchMaterial>(R.id.locationTracking)?.let {
-                it.isChecked = LocationSensorManager().checkPermission(context)
+                val sensorId = LocationSensorManager.backgroundLocation.id
+                it.isChecked = LocationSensorManager().checkPermission(context, sensorId)
                 it.setOnCheckedChangeListener { _, isChecked ->
                     setLocationTracking(isChecked)
-                    if (isChecked && !LocationSensorManager().checkPermission(requireContext())) {
+                    if (isChecked && !LocationSensorManager().checkPermission(requireContext(), sensorId)) {
                         this@MobileAppIntegrationFragment.requestPermissions(
-                            LocationSensorManager().requiredPermissions(),
+                            LocationSensorManager().requiredPermissions(sensorId),
                             LOCATION_REQUEST_CODE
                         )
                     }

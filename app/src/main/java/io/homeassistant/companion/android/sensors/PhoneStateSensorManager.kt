@@ -44,7 +44,7 @@ class PhoneStateSensorManager : SensorManager {
             listOf(phoneState, sim_1, sim_2)
         else listOf(phoneState)
 
-    override fun requiredPermissions(): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
@@ -60,7 +60,7 @@ class PhoneStateSensorManager : SensorManager {
         if (!isEnabled(context, phoneState.id))
             return
         var currentPhoneState = "unavailable"
-        if (checkPermission(context)) {
+        if (checkPermission(context, phoneState.id)) {
             val telephonyManager =
                 (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
 
@@ -96,7 +96,7 @@ class PhoneStateSensorManager : SensorManager {
             var displayName = "Unavailable"
             val attrs = mutableMapOf<String, Any>()
 
-            if (checkPermission(context)) {
+            if (checkPermission(context, basicSimSensor.id)) {
                 val subscriptionManager =
                     (context.applicationContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE)) as SubscriptionManager
                 val info: SubscriptionInfo? = subscriptionManager.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
