@@ -1,5 +1,2 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<resources>
-  <string name="rate_limit_notification.body">Du har nå sendt mer enn %s varsler i dag. Du vil ikke motta nye varsler før midnatt UTC.</string>
-  <string name="rate_limit_notification.title">Varslingsfrekvens begrenset</string>
-</resources>
+<resources></resources>

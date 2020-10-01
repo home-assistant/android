@@ -1,32 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
   <string name="auth_request">Requiere Autenticación</string>
-  <string name="calendar">Calendario</string>
-  <string name="cancel">Cancelar</string>
-  <string name="config">Configuración</string>
-  <string name="developer_tools">Herramientas de desarrollo</string>
-  <string name="dialog_add_panel_shortcut_content">¿Crear un acceso directo a este elemento ?</string>
-  <string name="dialog_add_panel_shortcut_title">Añadir Acceso Directo</string>
-  <string name="history">Historia</string>
-  <string name="label_dynamic_data">Datos:</string>
+    <string name="cancel">Cancelar</string>
+    <string name="label_dynamic_data">Datos:</string>
   <string name="label_entity_id">Numero de Identificación</string>
   <string name="label_icon">Icono:</string>
   <string name="label_label">Etiqueta:</string>
   <string name="label_service">Servicio:</string>
-  <string name="logbook">Bitácora</string>
-  <string name="mailbox">Buzón de correo</string>
-  <string name="manage_ssids">Administrar SSID (s)</string>
+    <string name="manage_ssids">Administrar SSID (s)</string>
   <string name="manage_ssids_input">Nuevo WiFi SSID</string>
   <string name="manage_ssids_input_exists">Este SSID ya existe.</string>
-  <string name="map">Mapa</string>
-  <string name="password">Contraseña</string>
-  <string name="profile">Perfil</string>
-  <string name="rate_limit_notification.body">Hoy ha enviado más de %s notificacione(s). No recibirá nuevas notificaciones hasta la medianoche  horario UTC.</string>
-  <string name="rate_limit_notification.title">Limite de tasa de notificaciones</string>
-  <string name="save">Guardar</string>
-  <string name="shopping_list">Lista de la compra</string>
-  <string name="shortcuts">Accesos directos</string>
-  <string name="shortcuts_summary">Agregar accesos directos a la barra de aplicaciones</string>
-  <string name="states">Visión general</string>
-  <string name="username">Nombre de usuario</string>
+    <string name="password">Contraseña</string>
+    <string name="save">Guardar</string>
+    <string name="username">Nombre de usuario</string>
 </resources>
