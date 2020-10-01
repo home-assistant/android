@@ -38,7 +38,7 @@ class SensorDetailFragment(
     private val refresh = object : Runnable {
         override fun run() {
             refreshSensorData()
-            handler.postDelayed(this, 10000)
+            handler.postDelayed(this, 5000)
         }
     }
 
@@ -73,6 +73,8 @@ class SensorDetailFragment(
 
                 updateSensorEntity(isEnabled)
 
+                if (isEnabled)
+                    sensorManager.requestSensorUpdate(requireContext())
                 return@setOnPreferenceChangeListener true
             }
         }
@@ -167,6 +169,7 @@ class SensorDetailFragment(
                             val isEnabled = newState as Boolean
 
                             sensorDao.add(Setting(basicSensor.id, setting.name, isEnabled.toString(), "toggle"))
+                            sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
                         if (!it.contains(pref))
@@ -198,6 +201,7 @@ class SensorDetailFragment(
                                     setting.valueType
                                 )
                             )
+                            sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
                     if (!it.contains(pref))
@@ -228,6 +232,7 @@ class SensorDetailFragment(
                                     "list-apps"
                                 )
                             )
+                            sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
                         if (pref.values != null)
