@@ -28,6 +28,7 @@
   <string name="basic_sensor_name_battery_state">Battery State</string>
   <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
   <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
+  <string name="basic_sensor_name_call_number">Call Number</string>
   <string name="basic_sensor_name_charger_type">Charger Type</string>
   <string name="basic_sensor_name_charging">Is Charging</string>
   <string name="basic_sensor_name_doze">Doze Mode</string>
@@ -185,6 +186,7 @@ like to connect to:</string>
   <string name="sensor_description_battery_state">The current charging state of the battery</string>
   <string name="sensor_description_bluetooth_connection">Information about currently connected bluetooth devices</string>
   <string name="sensor_description_bluetooth_state">Whether or not bluetooth is enabled on the device</string>
+  <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
   <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
   <string name="sensor_description_charging">Whether or not the device is actively charging</string>
   <string name="sensor_description_detected_activity">The current activity type as computed by Googles Activity Recognition API</string>

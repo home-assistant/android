@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.telephony.TelephonyManager
 import android.util.Log
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -57,6 +58,13 @@ class SensorReceiver : BroadcastReceiver() {
         Intent.ACTION_POWER_DISCONNECTED
     )
 
+    private val skippableActions = mapOf(
+        "android.app.action.NEXT_ALARM_CLOCK_CHANGED" to NextAlarmManager.nextAlarm.id,
+        "android.bluetooth.device.action.ACL_CONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
+        "android.bluetooth.device.action.ACL_DISCONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
+        BluetoothAdapter.ACTION_STATE_CHANGED to BluetoothSensorManager.bluetoothState.id
+    )
+
     override fun onReceive(context: Context, intent: Intent) {
 
         DaggerSensorComponent.builder()
@@ -64,32 +72,18 @@ class SensorReceiver : BroadcastReceiver() {
             .build()
             .inject(this)
 
-        when (intent.action) {
-            "android.app.action.NEXT_ALARM_CLOCK_CHANGED" -> {
-                val sensorDao = AppDatabase.getInstance(context).sensorDao()
-                val sensor = sensorDao.get(NextAlarmManager.nextAlarm.id)
-                if (sensor?.enabled != true) {
-                    Log.d(TAG, "Alarm Sensor disabled, skipping sensors update")
-                    return
-                }
+        if (skippableActions.containsKey(intent.action)) {
+            val sensor = skippableActions[intent.action]
+            if (!isSensorEnabled(context, sensor!!)) {
+                Log.d(TAG, String.format
+                    ("Sensor %s corresponding to received event %s is disabled, skipping sensors update", sensor, intent.action))
+                return
             }
-            "android.bluetooth.device.action.ACL_CONNECTED",
-                "android.bluetooth.device.action.ACL_DISCONNECTED" -> {
-                val sensorDao = AppDatabase.getInstance(context).sensorDao()
-                val sensorBtConn = sensorDao.get(BluetoothSensorManager.bluetoothConnection.id)
-                if (sensorBtConn?.enabled != true) {
-                    Log.d(TAG, "Bluetooth Connection Sensor disabled, skipping sensors update")
-                    return
-                }
-            }
-            BluetoothAdapter.ACTION_STATE_CHANGED -> {
-                val sensorDao = AppDatabase.getInstance(context).sensorDao()
-                val sensorBtState = sensorDao.get(BluetoothSensorManager.bluetoothState.id)
-                if (sensorBtState?.enabled != true) {
-                    Log.d(TAG, "Bluetooth State Sensor disabled, skipping sensors update")
-                    return
-                }
-            }
+        }
+
+        if (intent.action.equals(TelephonyManager.ACTION_PHONE_STATE_CHANGED) &&
+            isSensorEnabled(context, PhoneStateSensorManager.callNumber.id)) {
+            PhoneStateSensorManager().updateCallNumber(context, intent)
         }
 
         ioScope.launch {
@@ -101,6 +95,10 @@ class SensorReceiver : BroadcastReceiver() {
                 updateSensors(context, integrationUseCase)
             }
         }
+    }
+
+    private fun isSensorEnabled(context: Context, id: String): Boolean {
+        return AppDatabase.getInstance(context).sensorDao().get(id)?.enabled == true
     }
 
     suspend fun updateSensors(
