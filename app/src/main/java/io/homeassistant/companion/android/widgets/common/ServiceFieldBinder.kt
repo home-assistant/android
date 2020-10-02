@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets
+package io.homeassistant.companion.android.widgets.common
 
 data class ServiceFieldBinder(
     val service: String,

@@ -53,7 +53,7 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".widgets.ButtonWidget" android:label="@string/widget_button_image_description">
+        <receiver android:name=".widgets.button.ButtonWidget" android:label="@string/widget_button_image_description">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="io.homeassistant.companion.android.widgets.ButtonWidget.CALL_SERVICE" />
@@ -65,7 +65,7 @@
                 android:resource="@xml/button_widget_info" />
         </receiver>
 
-        <receiver android:name=".widgets.StaticWidget" android:label="@string/widget_static_image_description">
+        <receiver android:name=".widgets.entity.EntityWidget" android:label="@string/widget_static_image_description">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="io.homeassistant.companion.android.widgets.StaticWidget.RECEIVE_DATA" />
@@ -73,7 +73,7 @@
 
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/static_widget_info" />
+                android:resource="@xml/entity_widget_info" />
         </receiver>
 
         <receiver android:name=".widgets.template.TemplateWidget" android:label="Template Widget">
@@ -94,13 +94,13 @@
                 android:resource="@xml/template_widget_info" />
         </receiver>
 
-        <activity android:name=".widgets.ButtonWidgetConfigureActivity">
+        <activity android:name=".widgets.button.ButtonWidgetConfigureActivity">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".widgets.StaticWidgetConfigureActivity">
+        <activity android:name=".widgets.entity.EntityWidgetConfigureActivity">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.widgets
+package io.homeassistant.companion.android.widgets.entity
 
 import android.app.Activity
 import android.appwidget.AppWidgetManager
@@ -18,6 +18,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.widgets.DaggerProviderComponent
+import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_static_configure.*
 import kotlinx.coroutines.CoroutineScope
@@ -26,9 +28,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class StaticWidgetConfigureActivity : Activity() {
+class EntityWidgetConfigureActivity : Activity() {
 
-    private val TAG: String = "StaticWidgetConfigAct"
+    companion object {
+        private const val TAG: String = "StaticWidgetConfigAct"
+    }
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
@@ -70,8 +74,7 @@ class StaticWidgetConfigureActivity : Activity() {
         }
 
         // Inject components
-        DaggerProviderComponent
-            .builder()
+        DaggerProviderComponent.builder()
             .appComponent((application as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
@@ -96,7 +99,7 @@ class StaticWidgetConfigureActivity : Activity() {
             try {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
-                fetchedEntities.sortBy({ e -> e.entityId })
+                fetchedEntities.sortBy { e -> e.entityId }
                 fetchedEntities.forEach {
                     entities[it.entityId] = it
                 }
@@ -145,43 +148,43 @@ class StaticWidgetConfigureActivity : Activity() {
     private var addWidgetButtonClickListener = View.OnClickListener {
         try {
 
-            val context = this@StaticWidgetConfigureActivity
+            val context = this@EntityWidgetConfigureActivity
 
             // Set up a broadcast intent and pass the service call data as extras
             val intent = Intent()
-            intent.action = StaticWidget.RECEIVE_DATA
-            intent.component = ComponentName(context, StaticWidget::class.java)
+            intent.action = EntityWidget.RECEIVE_DATA
+            intent.component = ComponentName(context, EntityWidget::class.java)
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
             intent.putExtra(
-                StaticWidget.EXTRA_ENTITY_ID,
+                EntityWidget.EXTRA_ENTITY_ID,
                 selectedEntity!!.entityId
             )
 
             intent.putExtra(
-                StaticWidget.EXTRA_LABEL,
+                EntityWidget.EXTRA_LABEL,
                 label.text.toString()
             )
 
             intent.putExtra(
-                StaticWidget.EXTRA_TEXT_SIZE,
+                EntityWidget.EXTRA_TEXT_SIZE,
                 textSize.text.toString()
             )
 
             intent.putExtra(
-                StaticWidget.EXTRA_STATE_SEPARATOR,
+                EntityWidget.EXTRA_STATE_SEPARATOR,
                 state_separator.text.toString()
             )
 
             if (appendAttributes) {
                 intent.putExtra(
-                    StaticWidget.EXTRA_ATTRIBUTE_IDS,
+                    EntityWidget.EXTRA_ATTRIBUTE_IDS,
                     selectedAttributeIds
                 )
 
                 intent.putExtra(
-                    StaticWidget.EXTRA_ATTRIBUTE_SEPARATOR,
+                    EntityWidget.EXTRA_ATTRIBUTE_SEPARATOR,
                     attribute_separator.text.toString()
                 )
             }
