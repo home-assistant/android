@@ -13,7 +13,6 @@ import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.migrations.Migrations
 import io.homeassistant.companion.android.sensors.SensorReceiver
 
 open class HomeAssistantApplication : Application(), GraphComponentAccessor {
@@ -24,8 +23,6 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
         super.onCreate()
 
         graph = Graph(this, 0)
-
-        Migrations(this).migrate()
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
