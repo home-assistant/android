@@ -156,6 +156,7 @@ abstract class AppDatabase : RoomDatabase() {
                 val cursor = database.query("SELECT * FROM sensors")
                 val sensors = mutableListOf<ContentValues>()
                 var migrationSuccessful = false
+                var migrationFailed = false
                 if (cursor.moveToFirst()) {
                     try {
                         while (cursor.moveToNext()) {
@@ -176,25 +177,8 @@ abstract class AppDatabase : RoomDatabase() {
                         }
                         migrationSuccessful = true
                     } catch (e: Exception) {
+                        migrationFailed = true
                         Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
-                        createNotificationChannel()
-                        val notification = NotificationCompat.Builder(appContext, channelId)
-                            .setSmallIcon(R.drawable.ic_stat_ic_notification)
-                            .setContentTitle(appContext.getString(R.string.database_migration_failed))
-                            .setPriority(NotificationCompat.PRIORITY_HIGH)
-                            .build()
-                        with(NotificationManagerCompat.from(appContext)) {
-                            notify(NOTIFICATION_ID, notification)
-                        }
-                        runBlocking {
-                            try {
-                                integrationRepository.fireEvent("mobile_app.migration_failed", mapOf())
-                                Log.d(TAG, "Event sent to Home Assistant")
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Unable to send event to Home Assistant", e)
-                                Toast.makeText(appContext, R.string.database_event_failure, Toast.LENGTH_LONG).show()
-                            }
-                        }
                     }
                 }
                 cursor.close()
@@ -205,6 +189,8 @@ abstract class AppDatabase : RoomDatabase() {
                         database.insert("sensors", OnConflictStrategy.REPLACE, it)
                     }
                 }
+                if (migrationFailed)
+                    notifyMigrationFailed()
 
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))")
             }
@@ -224,6 +210,7 @@ abstract class AppDatabase : RoomDatabase() {
                 val cursor = database.query("SELECT * FROM sensors")
                 val sensors = mutableListOf<ContentValues>()
                 var migrationSuccessful = false
+                var migrationFailed = false
                 if (cursor.moveToFirst()) {
                     try {
                         while (cursor.moveToNext()) {
@@ -244,25 +231,8 @@ abstract class AppDatabase : RoomDatabase() {
                         }
                         migrationSuccessful = true
                     } catch (e: Exception) {
+                        migrationFailed = true
                         Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
-                        createNotificationChannel()
-                        val notification = NotificationCompat.Builder(appContext, channelId)
-                            .setSmallIcon(R.drawable.ic_stat_ic_notification)
-                            .setContentTitle(appContext.getString(R.string.database_migration_failed))
-                            .setPriority(NotificationCompat.PRIORITY_HIGH)
-                            .build()
-                        with(NotificationManagerCompat.from(appContext)) {
-                            notify(NOTIFICATION_ID, notification)
-                        }
-                        runBlocking {
-                            try {
-                                integrationRepository.fireEvent("mobile_app.migration_failed", mapOf())
-                                Log.d(TAG, "Event sent to Home Assistant")
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Unable to send event to Home Assistant", e)
-                                Toast.makeText(appContext, R.string.database_event_failure, Toast.LENGTH_LONG).show()
-                            }
-                        }
                     }
                 }
                 cursor.close()
@@ -273,6 +243,8 @@ abstract class AppDatabase : RoomDatabase() {
                         database.insert("sensors", OnConflictStrategy.REPLACE, it)
                     }
                 }
+                if (migrationFailed)
+                    notifyMigrationFailed()
             }
         }
 
@@ -293,6 +265,27 @@ abstract class AppDatabase : RoomDatabase() {
                         channelId, TAG, NotificationManager.IMPORTANCE_HIGH
                     )
                     notificationManager?.createNotificationChannel(notificationChannel)
+                }
+            }
+        }
+
+        private fun notifyMigrationFailed() {
+            createNotificationChannel()
+            val notification = NotificationCompat.Builder(appContext, channelId)
+                .setSmallIcon(R.drawable.ic_stat_ic_notification)
+                .setContentTitle(appContext.getString(R.string.database_migration_failed))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .build()
+            with(NotificationManagerCompat.from(appContext)) {
+                notify(NOTIFICATION_ID, notification)
+            }
+            runBlocking {
+                try {
+                    integrationRepository.fireEvent("mobile_app.migration_failed", mapOf())
+                    Log.d(TAG, "Event sent to Home Assistant")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send event to Home Assistant", e)
+                    Toast.makeText(appContext, R.string.database_event_failure, Toast.LENGTH_LONG).show()
                 }
             }
         }
