@@ -90,7 +90,8 @@ class NfcSetupActivity : AppCompatActivity() {
                 val url = ndefMessage?.records?.get(0)?.toUri().toString()
                 val nfcTagId = UrlHandler.splitNfcTagId(url)
                 if (nfcTagId == null) {
-                    viewModel.postNewUUID()
+                    Log.w(TAG, "Unable to read tag!")
+                    Toast.makeText(this, R.string.nfc_invalid_tag, Toast.LENGTH_LONG).show()
                 } else {
                     viewModel.nfcReadEvent.postValue(nfcTagId)
                 }
