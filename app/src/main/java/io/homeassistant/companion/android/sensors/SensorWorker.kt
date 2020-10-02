@@ -31,13 +31,11 @@ class SensorWorker(
         private const val TAG = "SensorWorker"
         const val channelId = "Sensor Worker"
         const val NOTIFICATION_ID = 42
-        var notificationText = ""
 
         fun start(context: Context) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED).build()
 
-            notificationText = context.getString(R.string.updating_sensors)
             val sensorWorker =
                 PeriodicWorkRequestBuilder<SensorWorker>(15, TimeUnit.MINUTES)
                     .setConstraints(constraints)
@@ -64,7 +62,7 @@ class SensorWorker(
         createNotificationChannel()
         val notification = NotificationCompat.Builder(applicationContext, channelId)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
-            .setContentTitle(notificationText)
+            .setContentTitle(appContext.getString(R.string.updating_sensors))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
