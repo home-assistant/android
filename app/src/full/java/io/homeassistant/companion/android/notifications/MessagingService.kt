@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.RingtoneManager
 import android.os.Build
+import android.speech.tts.TextToSpeech
 import android.text.Spanned
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -100,6 +101,10 @@ class MessagingService : FirebaseMessagingService() {
                     Log.d(TAG, "Removing Notification channel ${it["tag"]}")
                     removeNotificationChannel(it["channel"]!!)
                 }
+                it[TITLE]?.startsWith("TTS")!! -> {
+                    Log.d(TAG, "Sending notification to TTS")
+                    speakNotification(it[MESSAGE])
+                }
                 else -> mainScope.launch {
                     Log.d(TAG, "Creating notification with following data: $it")
                     sendNotification(it)
@@ -134,6 +139,13 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
+    private fun speakNotification(message: String?) {
+        val textToSpeech = TextToSpeech(null, null)
+        textToSpeech.language = Locale.ENGLISH
+        textToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, "")
+        textToSpeech.stop()
+        textToSpeech.shutdown()
+    }
     /**
      * Create and show a simple notification containing the received FCM message.
      *
