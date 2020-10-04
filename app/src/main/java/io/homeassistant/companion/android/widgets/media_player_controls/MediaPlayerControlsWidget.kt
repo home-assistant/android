@@ -16,11 +16,11 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class MediaPlayerControlsWidget : AppWidgetProvider() {
 
@@ -124,7 +124,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                     R.id.widgetLabel,
                     label ?: entityId
                 )
-                //TO DO: update media image
+                // TODO: update media image
                 retrieveMediaPlayerImage(entityId)
                 setOnClickPendingIntent(
                     R.id.widgetMediaImage,
@@ -199,7 +199,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     private suspend fun retrieveMediaPlayerImage(entityId: String) {
         val entity = integrationUseCase.getEntities().find { e -> e.entityId.equals(entityId) }
 
-        // TO DO: get the dang image
+        // TODO: get the dang image
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -263,7 +263,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     private fun callPreviousTrackService(context: Context, appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity : MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -288,7 +288,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     private fun callRewindService(context: Context, appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity : MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -301,6 +301,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             val currentEntityInfo = integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
+            // TODO: Get current time from attributes and use it to seek 10s
 
             val domain = "media_player"
             val service = "media_previous_track"
@@ -315,7 +316,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     private fun callPlayPauseService(context: Context, appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity : MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -340,7 +341,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     private fun callFastForwardService(context: Context, appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity : MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
@@ -353,6 +354,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             val currentEntityInfo = integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
+            // TODO: Get current time from attributes and use it to seek 10s
 
             val domain = "media_player"
             val service = "media_next_track"
@@ -367,7 +369,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     private fun callNextTrackService(context: Context, appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
-            val entity : MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
 
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")

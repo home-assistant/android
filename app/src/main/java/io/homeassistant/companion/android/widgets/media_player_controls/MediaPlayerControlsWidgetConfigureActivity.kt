@@ -16,12 +16,17 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.android.synthetic.main.widget_media_controls_configure.*
-import kotlinx.android.synthetic.main.widget_static_configure.add_button
-import kotlinx.android.synthetic.main.widget_static_configure.label
-import kotlinx.android.synthetic.main.widget_static_configure.widget_text_config_entity_id
-import kotlinx.coroutines.*
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.widget_media_controls_configure.add_button
+import kotlinx.android.synthetic.main.widget_media_controls_configure.label
+import kotlinx.android.synthetic.main.widget_media_controls_configure.widget_show_seek_buttons_checkbox
+import kotlinx.android.synthetic.main.widget_media_controls_configure.widget_show_skip_buttons_checkbox
+import kotlinx.android.synthetic.main.widget_media_controls_configure.widget_text_config_entity_id
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class MediaPlayerControlsWidgetConfigureActivity : Activity() {
 
@@ -163,4 +168,3 @@ class MediaPlayerControlsWidgetConfigureActivity : Activity() {
         super.onDestroy()
     }
 }
-

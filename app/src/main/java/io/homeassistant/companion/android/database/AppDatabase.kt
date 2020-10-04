@@ -15,7 +15,14 @@ import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.Setting
-import io.homeassistant.companion.android.database.widget.*
+import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
+import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
+import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
+import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
+import io.homeassistant.companion.android.database.widget.StaticWidgetDao
+import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
+import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
+import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 
 @Database(
     entities = [
