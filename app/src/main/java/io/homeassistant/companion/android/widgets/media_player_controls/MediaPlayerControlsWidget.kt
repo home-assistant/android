@@ -344,14 +344,22 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 )
             }
 
-            val currentEntityInfo = integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
-            // TODO: Get current time from attributes and use it to seek 10s
+            val currentEntityInfo =
+                integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
+
+            val fetchedAttributes = currentEntityInfo?.attributes as Map<*, *>
+            val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
+
+            if (currentTime == null) {
+                return@launch
+            }
 
             val domain = "media_player"
-            val service = "media_previous_track"
+            val service = "media_seek"
 
             val serviceDataMap: HashMap<String, Any> = HashMap()
             serviceDataMap["entity_id"] = entity.entityId
+            serviceDataMap["seek_position"] = currentTime - 10
 
             integrationUseCase.callService(domain, service, serviceDataMap)
         }
@@ -397,14 +405,22 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 )
             }
 
-            val currentEntityInfo = integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
-            // TODO: Get current time from attributes and use it to seek 10s
+            val currentEntityInfo =
+                integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
+
+            val fetchedAttributes = currentEntityInfo?.attributes as Map<*, *>
+            val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
+
+            if (currentTime == null) {
+                return@launch
+            }
 
             val domain = "media_player"
-            val service = "media_next_track"
+            val service = "media_seek"
 
             val serviceDataMap: HashMap<String, Any> = HashMap()
             serviceDataMap["entity_id"] = entity.entityId
+            serviceDataMap["seek_position"] = currentTime + 10
 
             integrationUseCase.callService(domain, service, serviceDataMap)
         }
