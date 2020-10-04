@@ -317,5 +317,13 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_default">30</string>
   <string name="widget_text_size_label">Widget text size:</string>
-    <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
+  <string name="widget_media_show_skip">Show Skip Buttons</string>
+  <string name="widget_media_show_seek">Show Seek Buttons</string>
+  <string name="widget_media_image_description">Media Playing Preview Image</string>
+  <string name="widget_media_prev_track_button">Previous Track</string>
+  <string name="widget_media_rewind_button">Rewind</string>
+  <string name="widget_media_playpause_button">Play/Pause</string>
+  <string name="widget_media_fastforward_button">Fast Forward</string>
+  <string name="widget_media_next_track_button">Next Track</string>
+  <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
 </resources>
