@@ -71,6 +71,8 @@
 to your home internet.</string>
   <string name="connected_to_home_assistant">Connected to Home Assistant</string>
   <string name="create_template">Create Template</string>
+  <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
+  <string name="database_event_failure">Unable to send migration failure event to Home Assistant</string>
   <string name="developer_tools">Developer Tools</string>
   <string name="device_class">Device Class</string>
   <string name="device_name">Device Name</string>

@@ -1,14 +1,22 @@
 package io.homeassistant.companion.android.database
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import android.widget.Toast
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.room.Database
 import androidx.room.OnConflictStrategy
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.sensor.Attribute
@@ -21,6 +29,7 @@ import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
+import kotlinx.coroutines.runBlocking
 
 @Database(
     entities = [
@@ -44,17 +53,23 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
         internal const val TAG = "AppDatabase"
+        const val channelId = "App Database"
+        const val NOTIFICATION_ID = 45
+        lateinit var appContext: Context
+        lateinit var integrationRepository: IntegrationRepository
 
         @Volatile
         private var instance: AppDatabase? = null
 
         fun getInstance(context: Context): AppDatabase {
+            appContext = context
             return instance ?: synchronized(this) {
                 instance ?: buildDatabase(context).also { instance = it }
             }
         }
 
         private fun buildDatabase(context: Context): AppDatabase {
+            appContext = context
             return Room
                 .databaseBuilder(context, AppDatabase::class.java, DATABASE_NAME)
                 .allowMainThreadQueries()
@@ -70,6 +85,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_9_10,
                     MIGRATION_10_11
                 )
+                .fallbackToDestructiveMigration()
                 .build()
         }
 
@@ -139,27 +155,42 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 val cursor = database.query("SELECT * FROM sensors")
                 val sensors = mutableListOf<ContentValues>()
-                if (cursor.count > 0) {
-                    while (cursor.moveToNext()) {
-                        sensors.add(ContentValues().also {
-                            it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
-                            it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                            it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
-                            it.put("state", "")
-                            it.put("state_type", "")
-                            it.put("type", "")
-                            it.put("icon", "")
-                            it.put("name", "")
-                            it.put("device_class", "")
-                        })
+                var migrationSuccessful = false
+                var migrationFailed = false
+                if (cursor.moveToFirst()) {
+                    try {
+                        while (cursor.moveToNext()) {
+                            sensors.add(ContentValues().also {
+                                it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
+                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                                it.put(
+                                    "registered",
+                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                )
+                                it.put("state", "")
+                                it.put("state_type", "")
+                                it.put("type", "")
+                                it.put("icon", "")
+                                it.put("name", "")
+                                it.put("device_class", "")
+                            })
+                        }
+                        migrationSuccessful = true
+                    } catch (e: Exception) {
+                        migrationFailed = true
+                        Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                     }
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
-                sensors.forEach {
-                    database.insert("sensors", OnConflictStrategy.REPLACE, it)
+                if (migrationSuccessful) {
+                    sensors.forEach {
+                        database.insert("sensors", OnConflictStrategy.REPLACE, it)
+                    }
                 }
+                if (migrationFailed)
+                    notifyMigrationFailed()
 
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))")
             }
@@ -178,33 +209,84 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 val cursor = database.query("SELECT * FROM sensors")
                 val sensors = mutableListOf<ContentValues>()
-                if (cursor.count > 0) {
-                    while (cursor.moveToNext()) {
-                        sensors.add(ContentValues().also {
-                            it.put("id", cursor.getString(cursor.getColumnIndex("id")))
-                            it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                            it.put("registered", cursor.getInt(cursor.getColumnIndex("registered")))
-                            it.put("state", "")
-                            it.put("last_sent_state", "")
-                            it.put("state_type", "")
-                            it.put("type", "")
-                            it.put("icon", "")
-                            it.put("name", "")
-                        })
+                var migrationSuccessful = false
+                var migrationFailed = false
+                if (cursor.moveToFirst()) {
+                    try {
+                        while (cursor.moveToNext()) {
+                            sensors.add(ContentValues().also {
+                                it.put("id", cursor.getString(cursor.getColumnIndex("id")))
+                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                                it.put(
+                                    "registered",
+                                    cursor.getInt(cursor.getColumnIndex("registered"))
+                                )
+                                it.put("state", "")
+                                it.put("last_sent_state", "")
+                                it.put("state_type", "")
+                                it.put("type", "")
+                                it.put("icon", "")
+                                it.put("name", "")
+                            })
+                        }
+                        migrationSuccessful = true
+                    } catch (e: Exception) {
+                        migrationFailed = true
+                        Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                     }
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
-                sensors.forEach {
-                    database.insert("sensors", OnConflictStrategy.REPLACE, it)
+                if (migrationSuccessful) {
+                    sensors.forEach {
+                        database.insert("sensors", OnConflictStrategy.REPLACE, it)
+                    }
                 }
+                if (migrationFailed)
+                    notifyMigrationFailed()
             }
         }
 
         private val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', PRIMARY KEY(`sensor_id`, `name`))")
+            }
+        }
+
+        private fun createNotificationChannel() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+                var notificationChannel =
+                    notificationManager?.getNotificationChannel(channelId)
+                if (notificationChannel == null) {
+                    notificationChannel = NotificationChannel(
+                        channelId, TAG, NotificationManager.IMPORTANCE_HIGH
+                    )
+                    notificationManager?.createNotificationChannel(notificationChannel)
+                }
+            }
+        }
+
+        private fun notifyMigrationFailed() {
+            createNotificationChannel()
+            val notification = NotificationCompat.Builder(appContext, channelId)
+                .setSmallIcon(R.drawable.ic_stat_ic_notification)
+                .setContentTitle(appContext.getString(R.string.database_migration_failed))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .build()
+            with(NotificationManagerCompat.from(appContext)) {
+                notify(NOTIFICATION_ID, notification)
+            }
+            runBlocking {
+                try {
+                    integrationRepository.fireEvent("mobile_app.migration_failed", mapOf())
+                    Log.d(TAG, "Event sent to Home Assistant")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send event to Home Assistant", e)
+                    Toast.makeText(appContext, R.string.database_event_failure, Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
