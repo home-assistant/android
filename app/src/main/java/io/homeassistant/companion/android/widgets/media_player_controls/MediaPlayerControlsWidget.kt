@@ -6,9 +6,11 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import com.squareup.picasso.Picasso
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -124,10 +126,51 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                     R.id.widgetLabel,
                     label ?: entityId
                 )
-                // TODO: update media image
-                retrieveMediaPlayerImage(entityId)
+                val entityPictureUrl = retrieveMediaPlayerImageUrl(entityId)
+                if (entityPictureUrl == null) {
+                    setImageViewResource(
+                        R.id.widgetMediaImage,
+                        R.drawable.app_icon
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaPlaceholder,
+                        View.VISIBLE
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaImage,
+                        View.GONE
+                    )
+                } else {
+                    setViewVisibility(
+                        R.id.widgetMediaImage,
+                        View.VISIBLE
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaPlaceholder,
+                        View.GONE
+                    )
+                    Log.d(TAG, "Fetching media preview image")
+                    Handler().post {
+                        Picasso.get().load(entityPictureUrl).into(
+                            this,
+                            R.id.widgetMediaImage,
+                            intArrayOf(appWidgetId)
+                        )
+                        Log.d(TAG, "Fetch and load complete")
+                    }
+                }
+
                 setOnClickPendingIntent(
                     R.id.widgetMediaImage,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId,
+                        updateMediaIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                )
+                setOnClickPendingIntent(
+                    R.id.widgetMediaPlaceholder,
                     PendingIntent.getBroadcast(
                         context,
                         appWidgetId,
@@ -196,10 +239,11 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun retrieveMediaPlayerImage(entityId: String) {
+    private suspend fun retrieveMediaPlayerImageUrl(entityId: String): String? {
         val entity = integrationUseCase.getEntities().find { e -> e.entityId.equals(entityId) }
 
-        // TODO: get the dang image
+        val fetchedAttributes = entity?.attributes as Map<*, *>
+        return fetchedAttributes["entity_picture"]?.toString()
     }
 
     override fun onReceive(context: Context, intent: Intent) {

@@ -80,7 +80,8 @@
         <receiver android:name=".widgets.media_player_controls.MediaPlayerControlsWidget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.MediaPlayerControlsWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.UPDATE_MEDIA_IMAGE" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_PREV_TRACK" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_REWIND" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_PLAYPAUSE" />

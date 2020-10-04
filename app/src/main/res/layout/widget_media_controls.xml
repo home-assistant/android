@@ -5,8 +5,7 @@
     android:layout_height="match_parent"
     android:minHeight="40dp"
     android:minWidth="40dp"
-    android:background="@drawable/widget_button_background"
-    android:padding="4dp">
+    android:background="@drawable/widget_button_background">
 
     <LinearLayout
         android:id="@+id/widgetImageButtonLayout"
@@ -14,14 +13,27 @@
         android:layout_height="match_parent"
         android:orientation="horizontal">
 
-        <ImageView
-            android:id="@+id/widgetMediaImage"
+        <FrameLayout
             android:layout_width="60dp"
-            android:layout_height="match_parent"
-            android:src="@drawable/app_icon"
-            android:contentDescription="@string/widget_media_image_description"
-            android:gravity="center"
-            />
+            android:layout_height="match_parent">
+            <ImageView
+                android:id="@+id/widgetMediaImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="invisible"
+                android:contentDescription="@string/widget_media_image_description"
+                android:scaleType="centerCrop" />
+            <ImageView
+                android:id="@+id/widgetMediaPlaceholder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
+                android:src="@drawable/app_icon"
+                android:contentDescription="@string/widget_media_image_description"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
 
         <RelativeLayout
             android:id="@+id/widgetLabelLayout"
@@ -29,6 +41,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:minHeight="32sp"
+            android:layout_margin="4dp"
             android:orientation="vertical">
 
             <TextView
