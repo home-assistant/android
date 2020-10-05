@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import androidx.preference.Preference
@@ -25,20 +26,10 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             totalDisabledSensors = 0
             totalEnabledSensors = 0
             val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
-            SensorReceiver.MANAGERS.sortedBy { it.name }.filter { it.hasSensor(requireContext()) }.forEach { managers ->
-                managers.availableSensors.sortedBy { it.name }.forEach { basicSensor ->
+            SensorReceiver.MANAGERS.forEach { managers ->
+                managers.availableSensors.forEach { basicSensor ->
                     findPreference<Preference>(basicSensor.id)?.let {
                         val sensorEntity = sensorDao.get(basicSensor.id)
-                        val sensorSettings = sensorDao.getSettings(basicSensor.id)
-                        if (!sensorSettings.isNullOrEmpty()) {
-                            sensorSettings.forEach { setting ->
-                                if (!setting.name.isNullOrBlank())
-                                    if (getString(basicSensor.name) !in sensorsWithSettings) {
-                                        sensorsWithSettings += getString(basicSensor.name)
-                                        sensorsWithSettings.sort()
-                                    }
-                            }
-                        }
                         if (sensorEntity?.enabled == true) {
                             totalEnabledSensors += 1
                             if (basicSensor.unitOfMeasurement.isNullOrBlank())
@@ -62,23 +53,19 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 if (totalDisabledSensors == 0) {
                     it.title = getString(R.string.disable_all_sensors, totalEnabledSensors)
                     it.summary = ""
-                    it.isChecked = true
+                    it.isChecked = permissionsAllGranted
                 } else {
-                    if ((totalDisabledSensors + totalEnabledSensors) == totalDisabledSensors)
+                    if (totalEnabledSensors == 0)
                         it.title = getString(R.string.enable_all_sensors)
                     else
                         it.title = getString(R.string.enable_remaining_sensors, totalDisabledSensors)
                     it.summary = getString(R.string.enable_all_sensors_summary)
                     it.isChecked = false
                 }
-            }
-
-            findPreference<Preference>("sensors_with_settings")?.let {
-                it.summary = getString(
-                    R.string.sensors_with_settings,
-                    sensorsWithSettings.asList().toString().replace("[", "").replace("]", "")
-                )
-                it.isVisible = !sensorsWithSettings.isNullOrEmpty()
+                if (!permissionsAllGranted) {
+                    it.title = getString(R.string.enable_all_sensors)
+                    it.summary = getString(R.string.enable_all_sensors_summary)
+                }
             }
 
             handler.postDelayed(this, 10000)
@@ -88,7 +75,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
     companion object {
         private var totalEnabledSensors = 0
         private var totalDisabledSensors = 0
-        private var sensorsWithSettings: Array<String> = arrayOf()
+        private var permissionsAllGranted = true
         fun newInstance(): SensorsSettingsFragment {
             return SensorsSettingsFragment()
         }
@@ -129,7 +116,6 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 }
                 if (!permArray.isNullOrEmpty())
                     requestPermissions(permArray, 0)
-                handler.postDelayed(refresh, 0)
                 return@setOnPreferenceChangeListener true
             }
         }
@@ -173,5 +159,18 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
     override fun onPause() {
         super.onPause()
         handler.removeCallbacks(refresh)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        findPreference<SwitchPreference>("enable_disable_sensors")?.run {
+            permissionsAllGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            this.isChecked = permissionsAllGranted
+        }
     }
 }

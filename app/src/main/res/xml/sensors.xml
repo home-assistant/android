@@ -6,10 +6,6 @@
     <androidx.preference.PreferenceCategory
         app:key="enable_disable_category"
         app:title="@string/manage_all_sensors">
-        <androidx.preference.Preference
-            app:key="sensors_with_settings"
-            app:isPreferenceVisible="false"
-            app:selectable="false" />
         <androidx.preference.SwitchPreference
             app:key="enable_disable_sensors"/>
     </androidx.preference.PreferenceCategory>
