@@ -28,6 +28,7 @@ class SensorReceiver : BroadcastReceiver() {
             BluetoothSensorManager(),
             DNDSensorManager(),
             GeocodeSensorManager(),
+            KeyguardSensorManager(),
             LastRebootSensorManager(),
             LightSensorManager(),
             LocationSensorManager(),

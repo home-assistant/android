@@ -21,6 +21,10 @@
   <string name="auth_error">Authentication Error</string>
   <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
   <string name="auth_request">Authentication Requested</string>
+  <string name="basic_sensor_name_device_locked">Device Locked</string>
+  <string name="basic_sensor_name_device_secure">Device Secure</string>
+  <string name="basic_sensor_name_keyguard_locked">Keyguard Locked</string>
+  <string name="basic_sensor_name_keyguard_secure">Keyguard Secure</string>
   <string name="basic_sensor_name_activity">Detected Activity</string>
   <string name="basic_sensor_name_alarm">Next Alarm</string>
   <string name="basic_sensor_name_battery_health">Battery Health</string>
@@ -181,6 +185,10 @@ for Home Assistant</string>
 like to connect to:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Description</string>
+  <string name="sensor_description_device_locked">Whether the device is currently locked and requires a PIN, pattern or password to unlock.</string>
+  <string name="sensor_description_device_secure">Whether the device is secured with a PIN, pattern or password.</string>
+  <string name="sensor_description_keyguard_locked">Whether the keyguard is currently locked.</string>
+  <string name="sensor_description_keyguard_secure">Whether the keyguard is secured by a PIN, pattern or password or a SIM card is currently locked.</string>
   <string name="sensor_description_audio_mode">The state of the devices audio mode</string>
   <string name="sensor_description_audio_sensor">The state of the devices ringer mode</string>
   <string name="sensor_description_battery_health">The health of the battery</string>
@@ -234,6 +242,7 @@ like to connect to:</string>
   <string name="sensor_description_wifi_signal">The signal strength of the device to the WiFi network</string>
   <string name="sensor_description_wifi_state">Whether or not WiFi is enabled on the device</string>
   <string name="sensor_name_activity">Activity Sensors</string>
+  <string name="sensor_name_keyguard">Keyguard Sensors</string>
   <string name="sensor_name_alarm">Alarm Sensor</string>
   <string name="sensor_name_audio">Audio Sensors</string>
   <string name="sensor_name_audio_mode">Audio Mode</string>
