@@ -86,6 +86,13 @@ to your home internet.</string>
   <string name="documentation">Documentation</string>
   <string name="enable_location_tracking">Enable Location Tracking</string>
   <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.</string>
+  <string name="enable_all_sensors">Enable All Sensors</string>
+  <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
+  <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
+  <string name="manage_all_sensors">Manage All Sensors</string>
+  <string name="manage_all_sensors_summary">This device has %1$d available sensors to utilize.</string>
+  <string name="disable_all_sensors">Disable All %1$d Sensors</string>
+  <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
   <string name="enabled_title">Enabled</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
