@@ -12,6 +12,7 @@ import android.os.Build
 import android.speech.tts.TextToSpeech
 import android.text.Spanned
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -60,6 +61,7 @@ class MessagingService : FirebaseMessagingService() {
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
         const val CLEAR_NOTIFICATION = "clear_notification"
         const val REMOVE_CHANNEL = "remove_channel"
+        const val TTS = "TTS"
     }
 
     @Inject
@@ -101,9 +103,9 @@ class MessagingService : FirebaseMessagingService() {
                     Log.d(TAG, "Removing Notification channel ${it["tag"]}")
                     removeNotificationChannel(it["channel"]!!)
                 }
-                it[TITLE]?.startsWith("TTS")!! -> {
-                    Log.d(TAG, "Sending notification to TTS")
-                    speakNotification(it[MESSAGE])
+                it[MESSAGE] == TTS -> {
+                    Log.d(TAG, "Sending notification title to TTS")
+                    speakNotification(it[TITLE])
                 }
                 else -> mainScope.launch {
                     Log.d(TAG, "Creating notification with following data: $it")
@@ -139,13 +141,29 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun speakNotification(message: String?) {
-        val textToSpeech = TextToSpeech(null, null)
-        textToSpeech.language = Locale.ENGLISH
-        textToSpeech.speak(message, TextToSpeech.QUEUE_FLUSH, null, "")
-        textToSpeech.stop()
-        textToSpeech.shutdown()
+    private fun speakNotification(title: String?) {
+        var textToSpeech: TextToSpeech? = null
+        var tts = title
+        if (tts.isNullOrEmpty())
+            tts = getString(R.string.tts_no_title)
+        textToSpeech = TextToSpeech(applicationContext
+        ) {
+            if (it == TextToSpeech.SUCCESS) {
+                textToSpeech?.speak(tts, TextToSpeech.QUEUE_ADD, null, "")
+                Log.d(TAG, "speaking notification")
+
+                // We need to use some sort of delay to properly shut down the TTS engine
+                // We will be in the background and we don't call onDestroy here
+                // Without this delay nothing will be said and its probably not a good idea to keep it open
+                Thread.sleep(10000)
+                textToSpeech?.stop()
+                textToSpeech?.shutdown()
+            } else {
+                Toast.makeText(applicationContext, getString(R.string.tts_error, tts), Toast.LENGTH_LONG).show()
+            }
+        }
     }
+
     /**
      * Create and show a simple notification containing the received FCM message.
      *
