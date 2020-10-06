@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.media.RingtoneManager
 import android.os.Build
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
 import android.util.Log
 import android.widget.Toast
@@ -149,15 +150,24 @@ class MessagingService : FirebaseMessagingService() {
         textToSpeech = TextToSpeech(applicationContext
         ) {
             if (it == TextToSpeech.SUCCESS) {
+                val listener = object : UtteranceProgressListener() {
+                    override fun onStart(p0: String?) {
+                        // No op
+                    }
+
+                    override fun onDone(p0: String?) {
+                        textToSpeech?.stop()
+                        textToSpeech?.shutdown()
+                    }
+
+                    override fun onError(p0: String?) {
+                        textToSpeech?.stop()
+                        textToSpeech?.shutdown()
+                    }
+                }
+                textToSpeech?.setOnUtteranceProgressListener(listener)
                 textToSpeech?.speak(tts, TextToSpeech.QUEUE_ADD, null, "")
                 Log.d(TAG, "speaking notification")
-
-                // We need to use some sort of delay to properly shut down the TTS engine
-                // We will be in the background and we don't call onDestroy here
-                // Without this delay nothing will be said and its probably not a good idea to keep it open
-                Thread.sleep(10000)
-                textToSpeech?.stop()
-                textToSpeech?.shutdown()
             } else {
                 Toast.makeText(applicationContext, getString(R.string.tts_error, tts), Toast.LENGTH_LONG).show()
             }
