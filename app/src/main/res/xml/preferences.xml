@@ -88,6 +88,11 @@
     <PreferenceCategory
         android:title="@string/app_version_info">
         <Preference
+            android:key="notification_rate_limit"
+            android:title="Notification Rate Limit"
+            app:isPreferenceVisible="false"
+            android:summary="No notifications"/>
+        <Preference
             android:key="changelog"
             android:icon="@drawable/ic_changelog"
             android:title="@string/changelog"

@@ -127,6 +127,16 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             return@setOnPreferenceClickListener true
         }
 
+        if (BuildConfig.FLAVOR == "full") {
+            findPreference<Preference>("notification_rate_limit")?.let {
+                val rateLimits = presenter.getNotificationRateLimits()
+
+                if (!rateLimits.isNullOrEmpty())
+                    it.isVisible = true
+                it.summary = rateLimits
+            }
+        }
+
         findPreference<Preference>("changelog")?.let {
             val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL"))
                 "https://github.com/home-assistant/android/releases"

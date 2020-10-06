@@ -25,6 +25,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     companion object {
         private const val TAG = "SettingsPresenter"
+        private const val PREF_PUSH_TOKEN = "push_token"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -186,6 +187,12 @@ class SettingsPresenterImpl @Inject constructor(
 
             return@runBlocking splitVersion.size > 2 &&
                     (Integer.parseInt(splitVersion[0]) > 0 || Integer.parseInt(splitVersion[1]) >= 114)
+        }
+    }
+
+    override fun getNotificationRateLimits(): String {
+        return runBlocking {
+            integrationUseCase.getNotificationRateLimits()!!
         }
     }
 }
