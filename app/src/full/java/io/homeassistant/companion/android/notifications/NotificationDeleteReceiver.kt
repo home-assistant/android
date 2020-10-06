@@ -15,7 +15,7 @@ import kotlinx.coroutines.runBlocking
 
 class NotificationDeleteReceiver : BroadcastReceiver() {
     companion object {
-        const val EXTRA_MESSAGE = "EXTRA_MESSAGE"
+        const val EXTRA_DATA = "EXTRA_DATA"
         const val EXTRA_NOTIFICATION_GROUP = "EXTRA_NOTIFICATION_GROUP"
         const val EXTRA_NOTIFICATION_GROUP_ID = "EXTRA_NOTIFICATION_GROUP_ID"
         const val TAG = "NotifDeleteReceiver"
@@ -31,7 +31,7 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
             .build()
             .inject(this)
 
-        val message = intent.getStringExtra(EXTRA_MESSAGE)
+        val dataList = intent.getStringExtra(EXTRA_DATA)
         val group = intent.getStringExtra(EXTRA_NOTIFICATION_GROUP)
         val groupId = intent.getIntExtra(EXTRA_NOTIFICATION_GROUP_ID, -1)
 
@@ -42,9 +42,7 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
         // Then only the empty group is left and needs to be cancelled
         notificationManagerCompat.cancelGroupIfNeeded(group, groupId)
 
-        val data = mutableMapOf(
-            "message" to message
-        )
+        val data = convertString2Map(dataList)
 
         runBlocking {
             try {
@@ -58,6 +56,13 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
                     Toast.LENGTH_LONG
                 ).show()
             }
+        }
+    }
+
+    private fun convertString2Map(mapAsString: String): Map<String, String> {
+        return mapAsString.split(", ").associate {
+            val (left, right) = it.split("=")
+            left to right
         }
     }
 }

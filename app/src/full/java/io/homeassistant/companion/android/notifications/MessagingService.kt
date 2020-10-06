@@ -142,7 +142,6 @@ class MessagingService : FirebaseMessagingService() {
         val notificationManagerCompat = NotificationManagerCompat.from(this)
 
         val tag = data["tag"]
-        val message = data[MESSAGE]
         val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
 
         var group = data["group"]
@@ -189,7 +188,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleActions(notificationBuilder, tag, messageId, data)
 
-        handleDeleteIntent(notificationBuilder, message, messageId, group, groupId)
+        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
 
         handleContentIntent(notificationBuilder, messageId, group, groupId, data)
 
@@ -235,14 +234,16 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun handleDeleteIntent(
         builder: NotificationCompat.Builder,
-        message: String?,
+        data: Map<String, String>,
         messageId: Int,
         group: String?,
         groupId: Int
+
     ) {
 
+        val dataString = convertMap2String(data)
         val deleteIntent = Intent(this, NotificationDeleteReceiver::class.java).apply {
-            putExtra(NotificationDeleteReceiver.EXTRA_MESSAGE, message)
+            putExtra(NotificationDeleteReceiver.EXTRA_DATA, dataString)
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
         }
@@ -639,5 +640,14 @@ class MessagingService : FirebaseMessagingService() {
                 Log.e(TAG, "Issue updating token", e)
             }
         }
+    }
+
+    private fun convertMap2String(map: Map<String, String>): String {
+        val mapAsString = StringBuilder("")
+        for (key in map.keys) {
+            mapAsString.append(key + "=" + map[key] + ", ")
+        }
+        mapAsString.delete(mapAsString.length - 2, mapAsString.length).append("")
+        return mapAsString.toString()
     }
 }
