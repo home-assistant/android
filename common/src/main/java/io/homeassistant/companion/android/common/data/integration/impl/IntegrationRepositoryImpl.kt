@@ -22,18 +22,10 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Named
 import kotlin.Exception
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.FormBody
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
-import org.json.JSONObject
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -63,7 +55,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
         private const val TAG = "IntegrationRepository"
-        var rateLimits: String = ""
+        private const val RATE_LIMIT_URL = "https://mobile-apps.home-assistant.io/api/checkRateLimits"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -313,38 +305,15 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
-    override suspend fun getNotificationRateLimits(): String? {
-        val pushToken = localStorage.getString(PREF_PUSH_TOKEN)
-        val client = OkHttpClient()
-        val requestBody = pushToken?.let {
-            FormBody.Builder()
-                .add("push_token", it)
-                .build()
-        }
+    override suspend fun getNotificationRateLimits(): HashMap<String, *>? {
+        val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
+        val requestBody = mapOf("push_token" to pushToken)
+        var rateLimits: HashMap<String, *>? = null
 
-        val request = requestBody?.let {
-            Request.Builder()
-                .url("https://mobile-apps.home-assistant.io/api/checkRateLimits")
-                .post(it)
-                .build()
-        }
-
-        if (request != null) {
-            client.newCall(request).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    Log.e(TAG, "Unable to get notification rate limits", e)
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-                    if (!response.isSuccessful) throw IOException("Unexpected response code $response")
-                    try {
-                        val jsonObject = JSONObject(response.body!!.string())
-                        rateLimits = jsonObject.getString("rateLimits")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Unable to parse the received data", e)
-                    }
-                }
-            })
+        try {
+            rateLimits = integrationService.getRateLimit(RATE_LIMIT_URL, requestBody)["rateLimits"] as HashMap<String, *>?
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get notification rate limits", e)
         }
         return rateLimits
     }

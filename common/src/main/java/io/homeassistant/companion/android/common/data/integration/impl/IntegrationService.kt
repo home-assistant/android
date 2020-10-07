@@ -72,6 +72,12 @@ interface IntegrationService {
     ): Array<Panel>
 
     @POST
+    suspend fun getRateLimit(
+        @Url url: String,
+        @Body request: Map<String, String>
+    ): HashMap<String, *>
+
+    @POST
     suspend fun updateSensors(
         @Url url: HttpUrl,
         @Body request: IntegrationRequest

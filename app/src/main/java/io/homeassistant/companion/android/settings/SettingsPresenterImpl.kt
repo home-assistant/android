@@ -189,7 +189,7 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getNotificationRateLimits(): String {
+    override fun getNotificationRateLimits(): HashMap<String, *>? {
         return runBlocking {
             integrationUseCase.getNotificationRateLimits()!!
         }

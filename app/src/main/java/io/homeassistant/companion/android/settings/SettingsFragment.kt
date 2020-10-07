@@ -133,7 +133,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
                 if (!rateLimits.isNullOrEmpty())
                     it.isVisible = true
-                it.summary = rateLimits
+                it.summary = "\nSuccessful: ${rateLimits?.get("successful")}       Errors: ${rateLimits?.get("errors")}" +
+                        "\n\nRemaining/Maximum: ${rateLimits?.get("remaining")}/${rateLimits?.get("maximum")}" +
+                        "\n\nResets at: ${rateLimits?.get("resetsAt")}"
             }
         }
 
