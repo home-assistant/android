@@ -71,7 +71,7 @@ interface SensorManager {
             .getSettings(sensor.id)
             .firstOrNull { it.name == settingName }
             ?.value
-        if(setting == null)
+        if (setting == null)
             sensorDao.add(Setting(sensor.id, settingName, default, settingType))
 
         return setting ?: default

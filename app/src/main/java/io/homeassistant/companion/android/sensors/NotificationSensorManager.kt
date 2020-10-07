@@ -7,7 +7,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
 import io.homeassistant.companion.android.R
 
-class NotificationSensorManager: NotificationListenerService(), SensorManager {
+class NotificationSensorManager : NotificationListenerService(), SensorManager {
     companion object {
         val lastNotification = SensorManager.BasicSensor(
             "last_notification",
@@ -48,8 +48,8 @@ class NotificationSensorManager: NotificationListenerService(), SensorManager {
             ""
         ).split(", ").filter { it.isNotBlank() }
 
-        if(sbn.packageName == application.packageName
-            || (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)){
+        if (sbn.packageName == application.packageName ||
+            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)) {
             return
         }
 
@@ -59,7 +59,7 @@ class NotificationSensorManager: NotificationListenerService(), SensorManager {
             .plus("package" to sbn.packageName)
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
-        val state = attr["android.text"] ?: attr["android.title"]?: sbn.packageName
+        val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
 
         onSensorUpdated(
             applicationContext,
