@@ -316,7 +316,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun getNotificationRateLimits(): String? {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN)
         val client = OkHttpClient()
-        var requestBody = pushToken?.let {
+        val requestBody = pushToken?.let {
             FormBody.Builder()
                 .add("push_token", it)
                 .build()
@@ -332,7 +332,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         if (request != null) {
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    Log.e(TAG, "Unable to get notification rate limits")
+                    Log.e(TAG, "Unable to get notification rate limits", e)
                 }
 
                 override fun onResponse(call: Call, response: Response) {
@@ -340,9 +340,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                     try {
                         val jsonObject = JSONObject(response.body!!.string())
                         rateLimits = jsonObject.getString("rateLimits")
-                        Log.d(TAG, "RATE LIMITS $rateLimits")
                     } catch (e: Exception) {
-                        Log.e(TAG, "Unable to parse the received data")
+                        Log.e(TAG, "Unable to parse the received data", e)
                     }
                 }
             })

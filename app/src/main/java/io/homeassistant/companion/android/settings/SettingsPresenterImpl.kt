@@ -25,7 +25,6 @@ class SettingsPresenterImpl @Inject constructor(
 
     companion object {
         private const val TAG = "SettingsPresenter"
-        private const val PREF_PUSH_TOKEN = "push_token"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())

@@ -89,9 +89,10 @@
         android:title="@string/app_version_info">
         <Preference
             android:key="notification_rate_limit"
-            android:title="Notification Rate Limit"
+            android:title="@string/rate_limit_title"
             app:isPreferenceVisible="false"
-            android:summary="No notifications"/>
+            android:icon="@drawable/ic_notifications"
+            android:summary="@string/rate_limit_summary"/>
         <Preference
             android:key="changelog"
             android:icon="@drawable/ic_changelog"
