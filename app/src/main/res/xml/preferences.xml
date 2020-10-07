@@ -91,6 +91,7 @@
             android:key="notification_rate_limit"
             android:title="@string/rate_limit_title"
             app:isPreferenceVisible="false"
+            app:enableCopying="true"
             android:icon="@drawable/ic_notifications"
             android:summary="@string/rate_limit_summary"/>
         <Preference
