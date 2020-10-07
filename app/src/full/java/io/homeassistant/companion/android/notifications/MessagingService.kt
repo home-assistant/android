@@ -228,7 +228,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleActions(notificationBuilder, tag, messageId, data)
 
-        handleDeleteIntent(notificationBuilder, messageId, group, groupId)
+        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
 
         handleContentIntent(notificationBuilder, messageId, group, groupId, data)
 
@@ -274,12 +274,15 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun handleDeleteIntent(
         builder: NotificationCompat.Builder,
+        data: Map<String, String>,
         messageId: Int,
         group: String?,
         groupId: Int
+
     ) {
 
         val deleteIntent = Intent(this, NotificationDeleteReceiver::class.java).apply {
+            putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
         }

@@ -9,4 +9,6 @@ interface ServiceComponent {
     fun inject(service: MessagingService)
 
     fun inject(receiver: NotificationActionReceiver)
+
+    fun inject(receiver: NotificationDeleteReceiver)
 }

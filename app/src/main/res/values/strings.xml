@@ -138,6 +138,7 @@ Home Assistant instance</string>
   <string name="manual_setup">enter address manually</string>
   <string name="map">Map</string>
   <string name="need_help">Need Help?</string>
+  <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
   <string name="nfc_btn_create_duplicate">Create duplicate</string>
   <string name="nfc_btn_fire_event">Fire event</string>
   <string name="nfc_btn_read_tag">Read NFC Tag</string>
