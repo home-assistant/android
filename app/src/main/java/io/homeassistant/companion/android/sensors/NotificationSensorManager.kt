@@ -40,16 +40,36 @@ class NotificationSensorManager: NotificationListenerService(), SensorManager {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
 
+        val allowPackages = getSetting(
+            applicationContext,
+            lastNotification,
+            "Allow List",
+            "list-apps",
+            ""
+        ).split(", ").filter { it.isNotBlank() }
+
+        if(sbn.packageName == application.packageName
+            || (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)){
+            return
+        }
+
         val attr = sbn.notification.extras.keySet()
             .map { it to sbn.notification.extras.get(it) }
             .toMap()
+            .plus("package" to sbn.packageName)
+
+        // Attempt to use the text of the notification but fallback to package name if all else fails.
+        val state = attr["android.text"] ?: attr["android.title"]?: sbn.packageName
 
         onSensorUpdated(
             applicationContext,
             lastNotification,
-            sbn.packageName,
+            state.toString(),
             "mdi:bell-ring",
             attr
         )
+
+        // Need to send update!
+        SensorWorker.start(applicationContext)
     }
 }
