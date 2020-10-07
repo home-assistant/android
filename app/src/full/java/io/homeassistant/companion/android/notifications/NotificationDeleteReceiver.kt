@@ -31,7 +31,8 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
             .build()
             .inject(this)
 
-        val dataList = intent.getStringExtra(EXTRA_DATA)
+        @SuppressWarnings("unchecked")
+        val hashData = intent.getSerializableExtra(EXTRA_DATA) as HashMap<String, *>
         val group = intent.getStringExtra(EXTRA_NOTIFICATION_GROUP)
         val groupId = intent.getIntExtra(EXTRA_NOTIFICATION_GROUP_ID, -1)
 
@@ -42,11 +43,9 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
         // Then only the empty group is left and needs to be cancelled
         notificationManagerCompat.cancelGroupIfNeeded(group, groupId)
 
-        val data = convertString2Map(dataList)
-
         runBlocking {
             try {
-                integrationRepository.fireEvent("mobile_app_notification_dismissed", data)
+                integrationRepository.fireEvent("mobile_app_notification_dismissed", hashData)
                 Log.d(TAG, "Notification dismiss event successful!")
             } catch (e: Exception) {
                 Log.e(TAG, "Issue sending event to Home Assistant", e)
@@ -56,13 +55,6 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
                     Toast.LENGTH_LONG
                 ).show()
             }
-        }
-    }
-
-    private fun convertString2Map(mapAsString: String): Map<String, String> {
-        return mapAsString.split(", ").associate {
-            val (left, right) = it.split("=")
-            left to right
         }
     }
 }

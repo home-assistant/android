@@ -241,9 +241,8 @@ class MessagingService : FirebaseMessagingService() {
 
     ) {
 
-        val dataString = convertMap2String(data)
         val deleteIntent = Intent(this, NotificationDeleteReceiver::class.java).apply {
-            putExtra(NotificationDeleteReceiver.EXTRA_DATA, dataString)
+            putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
         }
@@ -640,14 +639,5 @@ class MessagingService : FirebaseMessagingService() {
                 Log.e(TAG, "Issue updating token", e)
             }
         }
-    }
-
-    private fun convertMap2String(map: Map<String, String>): String {
-        val mapAsString = StringBuilder("")
-        for (key in map.keys) {
-            mapAsString.append(key + "=" + map[key] + ", ")
-        }
-        mapAsString.delete(mapAsString.length - 2, mapAsString.length).append("")
-        return mapAsString.toString()
     }
 }
