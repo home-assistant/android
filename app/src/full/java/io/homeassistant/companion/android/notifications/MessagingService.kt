@@ -9,8 +9,11 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.RingtoneManager
 import android.os.Build
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -59,6 +62,7 @@ class MessagingService : FirebaseMessagingService() {
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
         const val CLEAR_NOTIFICATION = "clear_notification"
         const val REMOVE_CHANNEL = "remove_channel"
+        const val TTS = "TTS"
     }
 
     @Inject
@@ -100,6 +104,10 @@ class MessagingService : FirebaseMessagingService() {
                     Log.d(TAG, "Removing Notification channel ${it["tag"]}")
                     removeNotificationChannel(it["channel"]!!)
                 }
+                it[MESSAGE] == TTS -> {
+                    Log.d(TAG, "Sending notification title to TTS")
+                    speakNotification(it[TITLE])
+                }
                 else -> mainScope.launch {
                     Log.d(TAG, "Creating notification with following data: $it")
                     sendNotification(it)
@@ -131,6 +139,38 @@ class MessagingService : FirebaseMessagingService() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManagerCompat.deleteNotificationChannel(channelID)
+        }
+    }
+
+    private fun speakNotification(title: String?) {
+        var textToSpeech: TextToSpeech? = null
+        var tts = title
+        if (tts.isNullOrEmpty())
+            tts = getString(R.string.tts_no_title)
+        textToSpeech = TextToSpeech(applicationContext
+        ) {
+            if (it == TextToSpeech.SUCCESS) {
+                val listener = object : UtteranceProgressListener() {
+                    override fun onStart(p0: String?) {
+                        // No op
+                    }
+
+                    override fun onDone(p0: String?) {
+                        textToSpeech?.stop()
+                        textToSpeech?.shutdown()
+                    }
+
+                    override fun onError(p0: String?) {
+                        textToSpeech?.stop()
+                        textToSpeech?.shutdown()
+                    }
+                }
+                textToSpeech?.setOnUtteranceProgressListener(listener)
+                textToSpeech?.speak(tts, TextToSpeech.QUEUE_ADD, null, "")
+                Log.d(TAG, "speaking notification")
+            } else {
+                Toast.makeText(applicationContext, getString(R.string.tts_error, tts), Toast.LENGTH_LONG).show()
+            }
         }
     }
 
