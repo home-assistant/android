@@ -66,6 +66,8 @@ class MessagingService : FirebaseMessagingService() {
         const val CLEAR_NOTIFICATION = "clear_notification"
         const val REMOVE_CHANNEL = "remove_channel"
         const val TTS = "TTS"
+        const val DND_ON = "dnd_on"
+        const val DND_OFF = "dnd_off"
     }
 
     @Inject
@@ -110,6 +112,13 @@ class MessagingService : FirebaseMessagingService() {
                 it[MESSAGE] == TTS -> {
                     Log.d(TAG, "Sending notification title to TTS")
                     speakNotification(it[TITLE])
+                }
+                it[MESSAGE] == DND_OFF || it[MESSAGE] == DND_ON -> {
+                    Log.d(TAG, "Processing DND command")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                        handleDND(it[MESSAGE])
+                    else
+                        Log.d(TAG, "Skipping DND command due to android version")
                 }
                 else -> mainScope.launch {
                     Log.d(TAG, "Creating notification with following data: $it")
@@ -177,6 +186,21 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun handleDND(message: String?) {
+        val notificationManager = applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        if (!notificationManager.isNotificationPolicyAccessGranted) {
+            val intent = Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+        } else {
+            if (message == DND_ON) {
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+            } else {
+                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+            }
+        }
+    }
     /**
      * Create and show a simple notification containing the received FCM message.
      *
