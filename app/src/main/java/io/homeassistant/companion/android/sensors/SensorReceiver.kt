@@ -34,6 +34,7 @@ class SensorReceiver : BroadcastReceiver() {
             LocationSensorManager(),
             NetworkSensorManager(),
             NextAlarmManager(),
+            NotificationSensorManager(),
             PhoneStateSensorManager(),
             PowerSensorManager(),
             PressureSensorManager(),

@@ -40,6 +40,7 @@
   <string name="basic_sensor_name_geolocation">Geocoded Location</string>
   <string name="basic_sensor_name_interactive">Interactive</string>
   <string name="basic_sensor_name_internal_storage">Internal Storage</string>
+  <string name="basic_sensor_name_last_notification">Last Notification</string>
   <string name="basic_sensor_name_last_reboot">Last Reboot</string>
   <string name="basic_sensor_name_location_accurate">Single Accurate Location</string>
   <string name="basic_sensor_name_location_background">Background Location</string>
@@ -217,6 +218,7 @@ like to connect to:</string>
   <string name="sensor_description_headphone">Whether or not headphones are plugged into the device</string>
   <string name="sensor_description_interactive">Whether or not the device is in an interactive state</string>
   <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
+  <string name="sensor_description_last_notification">The details of the last notification.</string>
   <string name="sensor_description_last_reboot">The date and time of the devices last reboot. The setting below will allow you to adjust the deadband in milliseconds, if you still find the value to jump incorrectly. The default value is 60000 (1 minute).</string>
   <string name="sensor_description_light_sensor">The current level of illuminance</string>
   <string name="sensor_description_location_accurate">Allow Home Assistant to send a notification to request an accurate location along with the application periodically requesting an accurate location.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.  The Minimum time between updates (in milliseconds) keeps the device from sending the accurate location too often.</string>
@@ -261,6 +263,7 @@ like to connect to:</string>
   <string name="sensor_name_dnd">Do Not Disturb Sensor</string>
   <string name="sensor_name_geolocation">Geolocation Sensors</string>
   <string name="sensor_name_headphone">Headphones</string>
+  <string name="sensor_name_last_notification">Notification Sensors</string>
   <string name="sensor_name_last_reboot">Last Reboot Sensor</string>
   <string name="sensor_name_light">Light Sensor</string>
   <string name="sensor_name_location">Location Sensors</string>

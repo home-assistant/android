@@ -1,8 +1,11 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
+import android.provider.Settings
 import android.text.InputType
 import androidx.preference.EditTextPreference
 import androidx.preference.MultiSelectListPreference
@@ -67,7 +70,12 @@ class SensorDetailFragment(
                 val isEnabled = newState as Boolean
 
                 if (isEnabled && !sensorManager.checkPermission(requireContext(), basicSensor.id)) {
-                    requestPermissions(sensorManager.requiredPermissions(basicSensor.id), 0)
+                    val permissions = sensorManager.requiredPermissions(basicSensor.id)
+                    when {
+                        permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
+                            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                        else -> requestPermissions(permissions, 0)
+                    }
                     return@setOnPreferenceChangeListener false
                 }
 

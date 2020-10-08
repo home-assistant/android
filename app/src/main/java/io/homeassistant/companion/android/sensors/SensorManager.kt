@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.database.sensor.Setting
 
 interface SensorManager {
 
@@ -56,6 +57,24 @@ interface SensorManager {
 
     fun hasSensor(context: Context): Boolean {
         return true
+    }
+
+    fun getSetting(
+        context: Context,
+        sensor: BasicSensor,
+        settingName: String,
+        settingType: String,
+        default: String
+    ): String {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val setting = sensorDao
+            .getSettings(sensor.id)
+            .firstOrNull { it.name == settingName }
+            ?.value
+        if (setting == null)
+            sensorDao.add(Setting(sensor.id, settingName, default, settingType))
+
+        return setting ?: default
     }
 
     fun onSensorUpdated(
