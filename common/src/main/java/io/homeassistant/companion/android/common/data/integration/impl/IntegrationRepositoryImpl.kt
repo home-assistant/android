@@ -317,7 +317,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get notification rate limits", e)
         }
-        if (checkRateLimits!= null)
+        if (checkRateLimits != null)
             return checkRateLimits
 
         throw IntegrationException()
