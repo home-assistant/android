@@ -66,8 +66,13 @@ class MessagingService : FirebaseMessagingService() {
         const val CLEAR_NOTIFICATION = "clear_notification"
         const val REMOVE_CHANNEL = "remove_channel"
         const val TTS = "TTS"
-        const val DND_ON = "dnd_on"
-        const val DND_OFF = "dnd_off"
+        const val COMMAND_DND = "command_dnd"
+        const val DND_PRIORITY_ONLY = "priority_only"
+        const val DND_ALARMS_ONLY = "alarms_only"
+        const val DND_ALL = "off"
+        const val DND_NONE = "total_silence"
+        val DEVICE_COMMANDS = listOf(COMMAND_DND)
+        val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
     }
 
     @Inject
@@ -113,12 +118,28 @@ class MessagingService : FirebaseMessagingService() {
                     Log.d(TAG, "Sending notification title to TTS")
                     speakNotification(it[TITLE])
                 }
-                it[MESSAGE] == DND_OFF || it[MESSAGE] == DND_ON -> {
-                    Log.d(TAG, "Processing DND command")
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                        handleDND(it[MESSAGE])
-                    else
-                        Log.d(TAG, "Skipping DND command due to android version")
+                it[MESSAGE] in DEVICE_COMMANDS -> {
+                    Log.d(TAG, "Processing device command")
+                    when (it[MESSAGE]) {
+                        COMMAND_DND -> {
+                            if (it[TITLE] in DND_COMMANDS) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                                    handleDeviceCommands(it[MESSAGE], it[TITLE])
+                                else {
+                                    mainScope.launch {
+                                        Log.d(TAG, "Posting notification to device as it does not support DND commands")
+                                        sendNotification(it)
+                                    }
+                                }
+                            } else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid DND command received, posting notification to device")
+                                    sendNotification(it)
+                                }
+                            }
+                        }
+                        else -> Log.d(TAG, "No command received")
+                    }
                 }
                 else -> mainScope.launch {
                     Log.d(TAG, "Creating notification with following data: $it")
@@ -187,18 +208,27 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun handleDND(message: String?) {
-        val notificationManager = applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        if (!notificationManager.isNotificationPolicyAccessGranted) {
-            val intent = Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
-        } else {
-            if (message == DND_ON) {
-                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
-            } else {
-                notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+    private fun handleDeviceCommands(message: String?, title: String?) {
+        when (message) {
+            COMMAND_DND -> {
+                val notificationManager =
+                    applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                if (!notificationManager.isNotificationPolicyAccessGranted) {
+                    val intent =
+                        Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
+                } else {
+                    when (title) {
+                        DND_ALARMS_ONLY -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
+                        DND_ALL -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+                        DND_NONE -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
+                        DND_PRIORITY_ONLY -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+                        else -> Log.d(TAG, "Skipping invalid command")
+                    }
+                }
             }
+            else -> Log.d(TAG, "No command received")
         }
     }
     /**
