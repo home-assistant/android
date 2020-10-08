@@ -40,6 +40,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
 
+        if (!isEnabled(applicationContext, lastNotification.id))
+            return
+
         val allowPackages = getSetting(
             applicationContext,
             lastNotification,
