@@ -307,7 +307,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
-    override suspend fun getNotificationRateLimits(): RateLimitResponse? {
+    override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
         val requestBody = RateLimitRequest(pushToken)
         var checkRateLimits: RateLimitResponse? = null
@@ -317,7 +317,10 @@ class IntegrationRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get notification rate limits", e)
         }
-        return checkRateLimits
+        if (checkRateLimits!= null)
+            return checkRateLimits
+
+        throw IntegrationException()
     }
 
     override suspend fun getThemeColor(): String {

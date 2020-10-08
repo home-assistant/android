@@ -130,13 +130,13 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         if (BuildConfig.FLAVOR == "full") {
             findPreference<Preference>("notification_rate_limit")?.let {
-                val rateLimits = presenter.getNotificationRateLimits() as RateLimitResponse
+                val rateLimits = presenter.getNotificationRateLimits()
 
                 if (rateLimits != null)
                     it.isVisible = true
-                it.summary = "\nSuccessful: ${rateLimits.successful}       Errors: ${rateLimits.errors}" +
-                        "\n\nRemaining/Maximum: ${rateLimits.remaining}/${rateLimits.maximum}" +
-                        "\n\nResets at: ${rateLimits.resetsAt}"
+                it.summary = "\nSuccessful: ${rateLimits?.successful}       Errors: ${rateLimits?.errors}" +
+                        "\n\nRemaining/Maximum: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
+                        "\n\nResets at: ${rateLimits?.resetsAt}"
             }
         }
 

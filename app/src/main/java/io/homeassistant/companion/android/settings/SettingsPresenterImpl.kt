@@ -5,6 +5,7 @@ import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.themes.ThemesManager
 import javax.inject.Inject
@@ -189,12 +190,13 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getNotificationRateLimits(): Any {
+    override fun getNotificationRateLimits(): RateLimitResponse? {
         return runBlocking {
             try {
-                integrationUseCase.getNotificationRateLimits()!!
+                integrationUseCase.getNotificationRateLimits()
             } catch (e: Exception) {
                 Log.d(TAG, "Unable to get rate limits")
+                return@runBlocking null
             }
         }
     }
