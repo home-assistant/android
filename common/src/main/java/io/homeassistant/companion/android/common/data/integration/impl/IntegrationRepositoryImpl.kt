@@ -16,6 +16,8 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.SensorRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
@@ -305,17 +307,17 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
-    override suspend fun getNotificationRateLimits(): HashMap<String, *>? {
+    override suspend fun getNotificationRateLimits(): RateLimitResponse? {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
-        val requestBody = mapOf("push_token" to pushToken)
-        var rateLimits: HashMap<String, *>? = null
+        val requestBody = RateLimitRequest(pushToken)
+        var checkRateLimits: RateLimitResponse? = null
 
         try {
-            rateLimits = integrationService.getRateLimit(RATE_LIMIT_URL, requestBody)["rateLimits"] as HashMap<String, *>?
+            checkRateLimits = integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get notification rate limits", e)
         }
-        return rateLimits
+        return checkRateLimits
     }
 
     override suspend fun getThemeColor(): String {

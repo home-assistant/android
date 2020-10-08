@@ -9,7 +9,7 @@ interface SettingsPresenter {
     fun nfcEnabled(): Boolean
     fun isLockEnabled(): Boolean
     fun sessionTimeOut(): Int
-    fun getNotificationRateLimits(): HashMap<String, *>?
+    fun getNotificationRateLimits(): Any
 
     fun setSessionExpireMillis(value: Long)
     fun getSessionExpireMillis(): Long

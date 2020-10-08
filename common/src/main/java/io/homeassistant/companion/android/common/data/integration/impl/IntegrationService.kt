@@ -2,11 +2,13 @@ package io.homeassistant.companion.android.common.data.integration.impl
 
 import io.homeassistant.companion.android.common.data.integration.Panel
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
+import io.homeassistant.companion.android.common.data.integration.impl.entities.CheckRateLimits
 import io.homeassistant.companion.android.common.data.integration.impl.entities.DiscoveryInfoResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.DomainResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceResponse
 import okhttp3.HttpUrl
@@ -74,8 +76,8 @@ interface IntegrationService {
     @POST
     suspend fun getRateLimit(
         @Url url: String,
-        @Body request: Map<String, String>
-    ): HashMap<String, *>
+        @Body request: RateLimitRequest
+    ): CheckRateLimits
 
     @POST
     suspend fun updateSensors(

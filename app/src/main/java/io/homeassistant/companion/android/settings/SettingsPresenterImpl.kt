@@ -189,9 +189,13 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getNotificationRateLimits(): HashMap<String, *>? {
+    override fun getNotificationRateLimits(): Any {
         return runBlocking {
-            integrationUseCase.getNotificationRateLimits()!!
+            try {
+                integrationUseCase.getNotificationRateLimits()!!
+            } catch (e: Exception) {
+                Log.d(TAG, "Unable to get rate limits")
+            }
         }
     }
 }

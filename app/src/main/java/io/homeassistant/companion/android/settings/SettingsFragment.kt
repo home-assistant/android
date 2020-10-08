@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
@@ -129,13 +130,13 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         if (BuildConfig.FLAVOR == "full") {
             findPreference<Preference>("notification_rate_limit")?.let {
-                val rateLimits = presenter.getNotificationRateLimits()
+                val rateLimits = presenter.getNotificationRateLimits() as RateLimitResponse
 
-                if (!rateLimits.isNullOrEmpty())
+                if (rateLimits != null)
                     it.isVisible = true
-                it.summary = "\nSuccessful: ${rateLimits?.get("successful")}       Errors: ${rateLimits?.get("errors")}" +
-                        "\n\nRemaining/Maximum: ${rateLimits?.get("remaining")}/${rateLimits?.get("maximum")}" +
-                        "\n\nResets at: ${rateLimits?.get("resetsAt")}"
+                it.summary = "\nSuccessful: ${rateLimits.successful}       Errors: ${rateLimits.errors}" +
+                        "\n\nRemaining/Maximum: ${rateLimits.remaining}/${rateLimits.maximum}" +
+                        "\n\nResets at: ${rateLimits.resetsAt}"
             }
         }
 
