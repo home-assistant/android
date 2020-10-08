@@ -141,6 +141,8 @@ Home Assistant instance</string>
   <string name="need_help">Need Help?</string>
   <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
   <string name="nfc_btn_create_duplicate">Create duplicate</string>
+  <string name="rate_limit_title">Notification Rate Limit</string>
+  <string name="rate_limit_summary">Rate limit data</string>
   <string name="nfc_btn_fire_event">Fire event</string>
   <string name="nfc_btn_read_tag">Read NFC Tag</string>
   <string name="nfc_btn_share">Share</string>
