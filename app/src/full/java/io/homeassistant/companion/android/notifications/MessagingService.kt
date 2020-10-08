@@ -210,12 +210,8 @@ class MessagingService : FirebaseMessagingService() {
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
 
-        if (data["channel"] == "alarm_stream") {
-            notificationBuilder.setCategory(Notification.CATEGORY_ALARM)
-            notificationBuilder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), AudioManager.STREAM_ALARM)
-        } else {
-            notificationBuilder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-        }
+        handleSound(notificationBuilder, data)
+
         handlePersistent(notificationBuilder, tag, data)
 
         handleLargeIcon(notificationBuilder, data)
@@ -335,6 +331,18 @@ class MessagingService : FirebaseMessagingService() {
 
         handleColor(groupNotificationBuilder, data)
         return groupNotificationBuilder
+    }
+
+    private fun handleSound(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        if (data["channel"] == "alarm_stream") {
+            builder.setCategory(Notification.CATEGORY_ALARM)
+            builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), AudioManager.STREAM_ALARM)
+        } else {
+            builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+        }
     }
 
     private fun handleColor(
@@ -602,13 +610,10 @@ class MessagingService : FirebaseMessagingService() {
                 channelName,
                 handleImportance(data)
             )
-            if (channelName == "alarm_stream") {
-                val audioAttributes = AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .build()
-                channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), audioAttributes)
-            }
+
+            if (channelName == "alarm_stream")
+                handleChannelSound(channel)
+
             setChannelLedColor(data, channel)
             setChannelVibrationPattern(data, channel)
             notificationManagerCompat.createNotificationChannel(channel)
@@ -640,6 +645,17 @@ class MessagingService : FirebaseMessagingService() {
                 channel.vibrationPattern = arrVibrationPattern
             }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun handleChannelSound(
+        channel: NotificationChannel
+    ) {
+        val audioAttributes = AudioAttributes.Builder()
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .build()
+        channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), audioAttributes)
     }
 
     private fun parseVibrationPattern(
