@@ -49,9 +49,9 @@ class HaControlsProviderService: ControlsProviderService() {
     override fun createPublisherForAllAvailable(): Flow.Publisher<Control> {
         return Flow.Publisher { flow ->
             ioScope.launch {
-                integrationRepository.getEntities()
-                    .filter { it.entityId.startsWith("input_boolean") }
-                    .map { createControl(it) }
+                integrationRepository
+                    .getEntities()
+                    .mapNotNull { createControl(it) }
                     .forEach { flow.onNext(it) }
                 flow.onComplete()
             }
@@ -64,7 +64,7 @@ class HaControlsProviderService: ControlsProviderService() {
             ioScope.launch {
                 integrationRepository.getEntities()
                     .filter { it.entityId in controlIds }
-                    .map { createControl(it) }
+                    .mapNotNull { createControl(it) }
                     .forEach {
                         subscriber.onSubscribe(object : Flow.Subscription {
                             override fun request(n: Long) {
@@ -89,13 +89,19 @@ class HaControlsProviderService: ControlsProviderService() {
         consumer: Consumer<Int>)
     {
         Log.d(TAG, "Control: $controlId, action: $action")
-        when {
-            controlId.startsWith("input_boolean") ->{
-                handleToggle(controlId, action as BooleanAction)
+        when (action) {
+            is BooleanAction -> {
+                handleToggle(controlId, action)
             }
             else -> {
                 Log.e(TAG, "Not handling $controlId action!")
                 consumer.accept(ControlAction.RESPONSE_OK)
+            }
+        }
+        runBlocking {
+            //TODO: Make this less awful, aka make single entity call
+            integrationRepository.getEntities().firstOrNull { it.entityId == controlId }?.let {
+                updateSubscriber?.onNext(createSwitchControl(it))
             }
         }
     }
@@ -103,18 +109,28 @@ class HaControlsProviderService: ControlsProviderService() {
     private fun handleToggle(controlId: String, booleanAction: BooleanAction) {
         runBlocking {
             integrationRepository.callService(
-                "input_boolean",
+                controlId.split(".")[0],
                 if(booleanAction.newState) "turn_on" else "turn_off",
                 hashMapOf("entity_id" to controlId)
             )
-            //TODO: Make this suck less
-            integrationRepository.getEntities().firstOrNull { it.entityId == controlId }?.let {
-                updateSubscriber?.onNext(createControl(it))
-            }
         }
     }
 
-    private fun createControl(entity: Entity<Any>): Control {
+    private fun createControl(entity: Entity<Any>): Control? {
+        return when (entity.entityId.split(".")[0]) {
+            "camera",
+            "climate",
+            "fan",
+            "input_boolean",
+            "light",
+            "media_player",
+            "remote",
+            "switch" -> createSwitchControl(entity)
+            else -> null
+        }
+    }
+
+    private fun createSwitchControl(entity: Entity<Any>): Control {
         val control = Control.StatefulBuilder(
             entity.entityId,
             PendingIntent.getActivity(
