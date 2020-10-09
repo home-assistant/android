@@ -75,9 +75,9 @@ class PhoneStateSensorManager : SensorManager {
                     (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
 
                 currentPhoneState = when (telephonyManager.callState) {
-                    0 -> "idle"
-                    1 -> "ringing"
-                    2 -> "offhook"
+                    TelephonyManager.CALL_STATE_IDLE -> "idle"
+                    TelephonyManager.CALL_STATE_RINGING -> "ringing"
+                    TelephonyManager.CALL_STATE_OFFHOOK -> "offhook"
                     else -> "unknown"
                 }
             }
@@ -105,8 +105,9 @@ class PhoneStateSensorManager : SensorManager {
     fun updateCallNumber(context: Context, intent: Intent) {
         if (checkPermission(context, callNumber.id)) {
             if (intent.hasExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)) {
-                val number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
-                updateCallNumberSensor(context, number)
+                intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)?.let {
+                    updateCallNumberSensor(context, it)
+                }
             }
         }
     }
