@@ -73,6 +73,7 @@
                     android:padding="4dp"
                     android:contentDescription="@string/widget_media_prev_track_button"
                     android:src="@drawable/ic_prev_track"
+                    android:tint="@color/colorIcon"
                     android:scaleType="fitCenter"
                     android:background="?android:selectableItemBackground"/>
 
@@ -84,6 +85,7 @@
                     android:padding="4dp"
                     android:contentDescription="@string/widget_media_rewind_button"
                     android:src="@drawable/ic_rewind"
+                    android:tint="@color/colorIcon"
                     android:scaleType="fitCenter"
                     android:background="?android:selectableItemBackground"/>
 
@@ -95,6 +97,7 @@
                     android:padding="4dp"
                     android:contentDescription="@string/widget_media_playpause_button"
                     android:src="@drawable/ic_playpause"
+                    android:tint="@color/colorIcon"
                     android:scaleType="fitCenter"
                     android:background="?android:selectableItemBackground"/>
 
@@ -106,6 +109,7 @@
                     android:padding="4dp"
                     android:contentDescription="@string/widget_media_fastforward_button"
                     android:src="@drawable/ic_fastforward"
+                    android:tint="@color/colorIcon"
                     android:scaleType="fitCenter"
                     android:background="?android:selectableItemBackground"/>
 
@@ -117,6 +121,7 @@
                     android:padding="4dp"
                     android:contentDescription="@string/widget_media_next_track_button"
                     android:src="@drawable/ic_next_track"
+                    android:tint="@color/colorIcon"
                     android:scaleType="fitCenter"
                     android:background="?android:selectableItemBackground"/>
             </LinearLayout>
