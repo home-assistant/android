@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.preference.PreferenceCategory
+        app:key="enable_disable_category"
+        app:title="@string/manage_all_sensors">
+        <androidx.preference.SwitchPreference
+            app:key="enable_disable_sensors"/>
+    </androidx.preference.PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

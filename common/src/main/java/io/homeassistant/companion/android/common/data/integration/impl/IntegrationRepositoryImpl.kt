@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
+import android.util.Log
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
@@ -15,6 +16,8 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.SensorRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
@@ -23,6 +26,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import javax.inject.Inject
 import javax.inject.Named
+import kotlin.Exception
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class IntegrationRepositoryImpl @Inject constructor(
@@ -52,6 +56,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
+        private const val TAG = "IntegrationRepository"
+        private const val RATE_LIMIT_URL = "https://mobile-apps.home-assistant.io/api/checkRateLimits"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -299,6 +305,22 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getSessionExpireMillis(): Long {
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
+    }
+
+    override suspend fun getNotificationRateLimits(): RateLimitResponse {
+        val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
+        val requestBody = RateLimitRequest(pushToken)
+        var checkRateLimits: RateLimitResponse? = null
+
+        try {
+            checkRateLimits = integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get notification rate limits", e)
+        }
+        if (checkRateLimits != null)
+            return checkRateLimits
+
+        throw IntegrationException()
     }
 
     override suspend fun getThemeColor(): String {

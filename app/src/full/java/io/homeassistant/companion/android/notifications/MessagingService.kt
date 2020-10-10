@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.notifications
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -7,10 +8,15 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.RingtoneManager
 import android.os.Build
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -59,6 +65,7 @@ class MessagingService : FirebaseMessagingService() {
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
         const val CLEAR_NOTIFICATION = "clear_notification"
         const val REMOVE_CHANNEL = "remove_channel"
+        const val TTS = "TTS"
     }
 
     @Inject
@@ -100,6 +107,10 @@ class MessagingService : FirebaseMessagingService() {
                     Log.d(TAG, "Removing Notification channel ${it["tag"]}")
                     removeNotificationChannel(it["channel"]!!)
                 }
+                it[MESSAGE] == TTS -> {
+                    Log.d(TAG, "Sending notification title to TTS")
+                    speakNotification(it[TITLE])
+                }
                 else -> mainScope.launch {
                     Log.d(TAG, "Creating notification with following data: $it")
                     sendNotification(it)
@@ -131,6 +142,38 @@ class MessagingService : FirebaseMessagingService() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManagerCompat.deleteNotificationChannel(channelID)
+        }
+    }
+
+    private fun speakNotification(title: String?) {
+        var textToSpeech: TextToSpeech? = null
+        var tts = title
+        if (tts.isNullOrEmpty())
+            tts = getString(R.string.tts_no_title)
+        textToSpeech = TextToSpeech(applicationContext
+        ) {
+            if (it == TextToSpeech.SUCCESS) {
+                val listener = object : UtteranceProgressListener() {
+                    override fun onStart(p0: String?) {
+                        // No op
+                    }
+
+                    override fun onDone(p0: String?) {
+                        textToSpeech?.stop()
+                        textToSpeech?.shutdown()
+                    }
+
+                    override fun onError(p0: String?) {
+                        textToSpeech?.stop()
+                        textToSpeech?.shutdown()
+                    }
+                }
+                textToSpeech?.setOnUtteranceProgressListener(listener)
+                textToSpeech?.speak(tts, TextToSpeech.QUEUE_ADD, null, "")
+                Log.d(TAG, "speaking notification")
+            } else {
+                Toast.makeText(applicationContext, getString(R.string.tts_error, tts), Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -166,7 +209,8 @@ class MessagingService : FirebaseMessagingService() {
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
-            .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+
+        handleSound(notificationBuilder, data)
 
         handlePersistent(notificationBuilder, tag, data)
 
@@ -188,7 +232,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleActions(notificationBuilder, tag, messageId, data)
 
-        handleDeleteIntent(notificationBuilder, messageId, group, groupId)
+        handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
 
         handleContentIntent(notificationBuilder, messageId, group, groupId, data)
 
@@ -234,12 +278,15 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun handleDeleteIntent(
         builder: NotificationCompat.Builder,
+        data: Map<String, String>,
         messageId: Int,
         group: String?,
         groupId: Int
+
     ) {
 
         val deleteIntent = Intent(this, NotificationDeleteReceiver::class.java).apply {
+            putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
         }
@@ -284,6 +331,18 @@ class MessagingService : FirebaseMessagingService() {
 
         handleColor(groupNotificationBuilder, data)
         return groupNotificationBuilder
+    }
+
+    private fun handleSound(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        if (data["channel"] == "alarm_stream") {
+            builder.setCategory(Notification.CATEGORY_ALARM)
+            builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), AudioManager.STREAM_ALARM)
+        } else {
+            builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+        }
     }
 
     private fun handleColor(
@@ -552,6 +611,9 @@ class MessagingService : FirebaseMessagingService() {
                 handleImportance(data)
             )
 
+            if (channelName == "alarm_stream")
+                handleChannelSound(channel)
+
             setChannelLedColor(data, channel)
             setChannelVibrationPattern(data, channel)
             notificationManagerCompat.createNotificationChannel(channel)
@@ -583,6 +645,17 @@ class MessagingService : FirebaseMessagingService() {
                 channel.vibrationPattern = arrVibrationPattern
             }
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun handleChannelSound(
+        channel: NotificationChannel
+    ) {
+        val audioAttributes = AudioAttributes.Builder()
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setUsage(AudioAttributes.USAGE_ALARM)
+            .build()
+        channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), audioAttributes)
     }
 
     private fun parseVibrationPattern(

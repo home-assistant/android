@@ -340,9 +340,12 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         sensorDao.add(Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"))
 
         val maxRetries = 5
-        val request = createLocationRequest()
-        request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        request.numUpdates = maxRetries
+        val request = createLocationRequest().apply {
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            numUpdates = maxRetries
+            interval = 10000
+            fastestInterval = 5000
+        }
         LocationServices.getFusedLocationProviderClient(latestContext)
             .requestLocationUpdates(
                 request,

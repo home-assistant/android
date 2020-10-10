@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration
 
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+
 interface IntegrationRepository {
 
     suspend fun registerDevice(deviceRegistration: DeviceRegistration)
@@ -8,6 +10,7 @@ interface IntegrationRepository {
 
     suspend fun isRegistered(): Boolean
 
+    suspend fun getNotificationRateLimits(): RateLimitResponse
     suspend fun renderTemplate(template: String, variables: Map<String, String>): String
 
     suspend fun updateLocation(updateLocation: UpdateLocation)

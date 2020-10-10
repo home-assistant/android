@@ -21,6 +21,10 @@
   <string name="auth_error">Authentication Error</string>
   <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
   <string name="auth_request">Authentication Requested</string>
+  <string name="basic_sensor_name_device_locked">Device Locked</string>
+  <string name="basic_sensor_name_device_secure">Device Secure</string>
+  <string name="basic_sensor_name_keyguard_locked">Keyguard Locked</string>
+  <string name="basic_sensor_name_keyguard_secure">Keyguard Secure</string>
   <string name="basic_sensor_name_activity">Detected Activity</string>
   <string name="basic_sensor_name_alarm">Next Alarm</string>
   <string name="basic_sensor_name_battery_health">Battery Health</string>
@@ -36,6 +40,7 @@
   <string name="basic_sensor_name_geolocation">Geocoded Location</string>
   <string name="basic_sensor_name_interactive">Interactive</string>
   <string name="basic_sensor_name_internal_storage">Internal Storage</string>
+  <string name="basic_sensor_name_last_notification">Last Notification</string>
   <string name="basic_sensor_name_last_reboot">Last Reboot</string>
   <string name="basic_sensor_name_location_accurate">Single Accurate Location</string>
   <string name="basic_sensor_name_location_background">Background Location</string>
@@ -71,6 +76,8 @@
 to your home internet.</string>
   <string name="connected_to_home_assistant">Connected to Home Assistant</string>
   <string name="create_template">Create Template</string>
+  <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
+  <string name="database_event_failure">Unable to send migration failure event to Home Assistant</string>
   <string name="developer_tools">Developer Tools</string>
   <string name="device_class">Device Class</string>
   <string name="device_name">Device Name</string>
@@ -80,8 +87,17 @@ to your home internet.</string>
   <string name="documentation">Documentation</string>
   <string name="enable_location_tracking">Enable Location Tracking</string>
   <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.</string>
+  <string name="enable_all_sensors">Enable All Sensors</string>
+  <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
+  <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
+  <string name="manage_all_sensors">Manage All Sensors</string>
+  <string name="manage_all_sensors_summary">This device has %1$d available sensors to utilize.</string>
+  <string name="disable_all_sensors">Disable All %1$d Sensors</string>
+  <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
   <string name="enabled_title">Enabled</string>
+  <string name="tts_error">Unable to process notification "%1$s" as text to speech.</string>
+  <string name="tts_no_title">Please set a title for text to speech to process</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
   <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
   <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
@@ -123,7 +139,10 @@ Home Assistant instance</string>
   <string name="manual_setup">enter address manually</string>
   <string name="map">Map</string>
   <string name="need_help">Need Help?</string>
+  <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
   <string name="nfc_btn_create_duplicate">Create duplicate</string>
+  <string name="rate_limit_title">Notification Rate Limit</string>
+  <string name="rate_limit_summary">Rate limit data</string>
   <string name="nfc_btn_fire_event">Fire event</string>
   <string name="nfc_btn_read_tag">Read NFC Tag</string>
   <string name="nfc_btn_share">Share</string>
@@ -179,6 +198,10 @@ for Home Assistant</string>
 like to connect to:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Description</string>
+  <string name="sensor_description_device_locked">Whether the device is currently locked and requires a PIN, pattern or password to unlock.</string>
+  <string name="sensor_description_device_secure">Whether the device is secured with a PIN, pattern or password.</string>
+  <string name="sensor_description_keyguard_locked">Whether the keyguard is currently locked.</string>
+  <string name="sensor_description_keyguard_secure">Whether the keyguard is secured by a PIN, pattern or password or a SIM card is currently locked.</string>
   <string name="sensor_description_audio_mode">The state of the devices audio mode</string>
   <string name="sensor_description_audio_sensor">The state of the devices ringer mode</string>
   <string name="sensor_description_battery_health">The health of the battery</string>
@@ -197,6 +220,7 @@ like to connect to:</string>
   <string name="sensor_description_headphone">Whether or not headphones are plugged into the device</string>
   <string name="sensor_description_interactive">Whether or not the device is in an interactive state</string>
   <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
+  <string name="sensor_description_last_notification">The details of the last notification.</string>
   <string name="sensor_description_last_reboot">The date and time of the devices last reboot. The setting below will allow you to adjust the deadband in milliseconds, if you still find the value to jump incorrectly. The default value is 60000 (1 minute).</string>
   <string name="sensor_description_light_sensor">The current level of illuminance</string>
   <string name="sensor_description_location_accurate">Allow Home Assistant to send a notification to request an accurate location along with the application periodically requesting an accurate location.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.  The Minimum time between updates (in milliseconds) keeps the device from sending the accurate location too often.</string>
@@ -232,6 +256,7 @@ like to connect to:</string>
   <string name="sensor_description_wifi_signal">The signal strength of the device to the WiFi network</string>
   <string name="sensor_description_wifi_state">Whether or not WiFi is enabled on the device</string>
   <string name="sensor_name_activity">Activity Sensors</string>
+  <string name="sensor_name_keyguard">Keyguard Sensors</string>
   <string name="sensor_name_alarm">Alarm Sensor</string>
   <string name="sensor_name_audio">Audio Sensors</string>
   <string name="sensor_name_audio_mode">Audio Mode</string>
@@ -240,6 +265,7 @@ like to connect to:</string>
   <string name="sensor_name_dnd">Do Not Disturb Sensor</string>
   <string name="sensor_name_geolocation">Geolocation Sensors</string>
   <string name="sensor_name_headphone">Headphones</string>
+  <string name="sensor_name_last_notification">Notification Sensors</string>
   <string name="sensor_name_last_reboot">Last Reboot Sensor</string>
   <string name="sensor_name_light">Light Sensor</string>
   <string name="sensor_name_location">Location Sensors</string>

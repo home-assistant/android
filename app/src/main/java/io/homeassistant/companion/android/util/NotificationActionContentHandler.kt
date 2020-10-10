@@ -6,15 +6,23 @@ import android.net.Uri
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 object NotificationActionContentHandler {
+    private const val APP_PREFIX = "app://"
+
     fun openUri(context: Context, uri: String?, onComplete: () -> Unit = {}) {
         if (!uri.isNullOrBlank()) {
-            val intent = if (UrlHandler.isAbsoluteUrl(uri)) {
-                Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse(uri)
+            val intent = when {
+                uri.startsWith(APP_PREFIX) -> {
+                    context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
                 }
-            } else {
-                WebViewActivity.newInstance(context, uri)
-            }
+                UrlHandler.isAbsoluteUrl(uri) -> {
+                    Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(uri)
+                    }
+                }
+                else -> {
+                    WebViewActivity.newInstance(context, uri)
+                }
+            } ?: WebViewActivity.newInstance(context)
 
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             context.startActivity(intent)
