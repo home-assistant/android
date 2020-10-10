@@ -288,7 +288,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         mainScope.launch {
             Log.d(
                 TAG, "Saving service call config data:" + System.lineSeparator() +
-                "entity id: " + entitySelection + System.lineSeparator()
+                        "entity id: " + entitySelection + System.lineSeparator()
             )
             mediaPlayCtrlWidgetDao.add(
                 MediaPlayerControlsWidgetEntity(
@@ -312,18 +312,17 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
                 return@launch
-            } else {
-                Log.d(
-                    TAG, "Calling previous track service:" + System.lineSeparator() +
-                            "entity id: " + entity.entityId + System.lineSeparator()
-                )
             }
+
+            Log.d(
+                TAG, "Calling previous track service:" + System.lineSeparator() +
+                        "entity id: " + entity.entityId + System.lineSeparator()
+            )
 
             val domain = "media_player"
             val service = "media_previous_track"
 
-            val serviceDataMap: HashMap<String, Any> = HashMap()
-            serviceDataMap["entity_id"] = entity.entityId
+            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
 
             integrationUseCase.callService(domain, service, serviceDataMap)
         }
@@ -337,12 +336,12 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
                 return@launch
-            } else {
-                Log.d(
-                    TAG, "Calling rewind service:" + System.lineSeparator() +
-                            "entity id: " + entity.entityId + System.lineSeparator()
-                )
             }
+
+            Log.d(
+                TAG, "Calling rewind service:" + System.lineSeparator() +
+                        "entity id: " + entity.entityId + System.lineSeparator()
+            )
 
             val currentEntityInfo =
                 integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
@@ -357,8 +356,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             val domain = "media_player"
             val service = "media_seek"
 
-            val serviceDataMap: HashMap<String, Any> = HashMap()
-            serviceDataMap["entity_id"] = entity.entityId
+            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
             serviceDataMap["seek_position"] = currentTime - 10
 
             integrationUseCase.callService(domain, service, serviceDataMap)
@@ -373,18 +371,17 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
                 return@launch
-            } else {
-                Log.d(
-                    TAG, "Calling play/pause service:" + System.lineSeparator() +
-                            "entity id: " + entity.entityId + System.lineSeparator()
-                )
             }
+
+            Log.d(
+                TAG, "Calling play/pause service:" + System.lineSeparator() +
+                        "entity id: " + entity.entityId + System.lineSeparator()
+            )
 
             val domain = "media_player"
             val service = "media_play_pause"
 
-            val serviceDataMap: HashMap<String, Any> = HashMap()
-            serviceDataMap["entity_id"] = entity.entityId
+            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
 
             integrationUseCase.callService(domain, service, serviceDataMap)
         }
@@ -398,12 +395,12 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
                 return@launch
-            } else {
-                Log.d(
-                    TAG, "Calling fast forward service:" + System.lineSeparator() +
-                            "entity id: " + entity.entityId + System.lineSeparator()
-                )
             }
+
+            Log.d(
+                TAG, "Calling fast forward service:" + System.lineSeparator() +
+                        "entity id: " + entity.entityId + System.lineSeparator()
+            )
 
             val currentEntityInfo =
                 integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
@@ -418,8 +415,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             val domain = "media_player"
             val service = "media_seek"
 
-            val serviceDataMap: HashMap<String, Any> = HashMap()
-            serviceDataMap["entity_id"] = entity.entityId
+            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
             serviceDataMap["seek_position"] = currentTime + 10
 
             integrationUseCase.callService(domain, service, serviceDataMap)
@@ -434,22 +430,23 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             if (entity == null) {
                 Log.d(TAG, "Failed to retrieve media player entity")
                 return@launch
-            } else {
-                Log.d(
-                    TAG, "Calling next track service:" + System.lineSeparator() +
-                            "entity id: " + entity.entityId + System.lineSeparator()
-                )
             }
+
+            Log.d(
+                TAG, "Calling next track service:" + System.lineSeparator() +
+                        "entity id: " + entity.entityId + System.lineSeparator()
+            )
+
 
             val domain = "media_player"
             val service = "media_next_track"
 
-            val serviceDataMap: HashMap<String, Any> = HashMap()
-            serviceDataMap["entity_id"] = entity.entityId
+            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
 
             integrationUseCase.callService(domain, service, serviceDataMap)
         }
     }
+
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.

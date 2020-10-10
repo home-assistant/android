@@ -6,5 +6,5 @@
     android:minWidth="250dp"
     android:minHeight="40dp"
     android:updatePeriodMillis="86400000"
-    android:widgetCategory="home_screen" />
-    <!--android:previewImage="@drawable/example_appwidget_preview"-->
+    android:widgetCategory="home_screen"
+    android:previewImage="@drawable/widget_example_media_player_controls" />
