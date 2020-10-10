@@ -356,8 +356,10 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             val domain = "media_player"
             val service = "media_seek"
 
-            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
-            serviceDataMap["seek_position"] = currentTime - 10
+            val serviceDataMap: HashMap<String, Any> = hashMapOf(
+                "entity_id" to entity.entityId,
+                "seek_position" to currentTime - 10
+            )
 
             integrationUseCase.callService(domain, service, serviceDataMap)
         }
@@ -415,8 +417,10 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             val domain = "media_player"
             val service = "media_seek"
 
-            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
-            serviceDataMap["seek_position"] = currentTime + 10
+            val serviceDataMap: HashMap<String, Any> = hashMapOf(
+                "entity_id" to entity.entityId,
+                "seek_position" to currentTime + 10
+            )
 
             integrationUseCase.callService(domain, service, serviceDataMap)
         }
