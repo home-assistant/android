@@ -34,6 +34,7 @@ interface IntegrationRepository {
 
     suspend fun getServices(): Array<Service>
 
+    suspend fun getEntity(entityId: String): Entity<Any>?
     suspend fun getEntities(): Array<Entity<Any>>
 
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)

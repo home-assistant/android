@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RegisterDeviceResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.SingleEntityResponse
 import okhttp3.HttpUrl
 import okhttp3.ResponseBody
 import retrofit2.Response
@@ -18,6 +19,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Url
 
 interface IntegrationService {
@@ -37,6 +39,12 @@ interface IntegrationService {
     suspend fun getServices(
         @Header("Authorization") auth: String
     ): Array<DomainResponse>
+
+    @GET("/api/states/{entity}")
+    suspend fun getState(
+        @Header("Authorization") auth: String,
+        @Path("entity") entityId: String
+    ): SingleEntityResponse<Any>
 
     @GET("/api/states")
     suspend fun getStates(

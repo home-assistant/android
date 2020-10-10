@@ -240,7 +240,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     }
 
     private suspend fun retrieveMediaPlayerImageUrl(entityId: String): String? {
-        val entity = integrationUseCase.getEntities().find { e -> e.entityId.equals(entityId) }
+        val entity = integrationUseCase.getEntity(entityId)
 
         val fetchedAttributes = entity?.attributes as Map<*, *>
         return fetchedAttributes["entity_picture"]?.toString()
@@ -343,13 +343,18 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         "entity id: " + entity.entityId + System.lineSeparator()
             )
 
-            val currentEntityInfo =
-                integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
+            val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
 
-            val fetchedAttributes = currentEntityInfo?.attributes as Map<*, *>
+            if (currentEntityInfo == null) {
+                Log.d(TAG, "Failed to get current entity info, aborting call")
+                return@launch
+            }
+
+            val fetchedAttributes = currentEntityInfo.attributes as Map<*, *>
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
 
             if (currentTime == null) {
+                Log.d(TAG, "Failed to get entity current time, aborting call")
                 return@launch
             }
 
@@ -404,13 +409,18 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         "entity id: " + entity.entityId + System.lineSeparator()
             )
 
-            val currentEntityInfo =
-                integrationUseCase.getEntities().find { e -> e.entityId.equals(entity.entityId) }
+            val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
 
-            val fetchedAttributes = currentEntityInfo?.attributes as Map<*, *>
+            if (currentEntityInfo == null) {
+                Log.d(TAG, "Failed to get current entity info, aborting call")
+                return@launch
+            }
+
+            val fetchedAttributes = currentEntityInfo.attributes as Map<*, *>
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
 
             if (currentTime == null) {
+                Log.d(TAG, "Failed to get entity current time, aborting call")
                 return@launch
             }
 
