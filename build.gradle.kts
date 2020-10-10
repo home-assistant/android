@@ -16,6 +16,7 @@ buildscript {
         classpath(Config.Plugin.google)
         classpath(Config.Plugin.appDistribution)
         classpath(Config.Plugin.ktlint)
+        classpath(Config.Plugin.androidJunit5)
     }
 }
 
@@ -28,7 +29,6 @@ allprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     tasks.withType<KotlinCompile>().configureEach {
-        println("Configuring $name in project ${project.name}...")
         kotlinOptions {
             jvmTarget = "1.8"
         }
