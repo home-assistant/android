@@ -441,7 +441,6 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         "entity id: " + entity.entityId + System.lineSeparator()
             )
 
-
             val domain = "media_player"
             val service = "media_next_track"
 
