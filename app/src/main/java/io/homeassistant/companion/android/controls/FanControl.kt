@@ -21,7 +21,7 @@ class FanControl {
     companion object : HaControl {
         override fun createControl(
             context: Context,
-            entity: Entity<Map<*, *>>
+            entity: Entity<Map<String, Any>>
         ): Control {
             val speeds = entity.attributes["speed_list"].toString().split(", ")
 
@@ -62,9 +62,9 @@ class FanControl {
             return runBlocking {
                 // TODO: Get these from entity
                 val speeds = listOf("off", "low", "medium", "high")
-                val speed: String = if(action is BooleanAction){
-                    if(action.newState) speeds.last() else speeds.first()
-                } else if (action is FloatAction){
+                val speed: String = if (action is BooleanAction) {
+                    if (action.newState) speeds.last() else speeds.first()
+                } else if (action is FloatAction) {
                     speeds[action.newValue.toInt()]
                 } else {
                     ""

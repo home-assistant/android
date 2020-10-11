@@ -20,7 +20,7 @@ class DefaultSwitchControl {
     companion object : HaControl {
         override fun createControl(
             context: Context,
-            entity: Entity<Map<*, *>>
+            entity: Entity<Map<String, Any>>
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,

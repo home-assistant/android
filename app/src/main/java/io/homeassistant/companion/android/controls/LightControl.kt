@@ -21,7 +21,7 @@ class LightControl {
     companion object : HaControl {
         override fun createControl(
             context: Context,
-            entity: Entity<Map<*, *>>
+            entity: Entity<Map<String, Any>>
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -62,7 +62,7 @@ class LightControl {
                     is BooleanAction -> {
                         integrationRepository.callService(
                             action.templateId.split(".")[0],
-                            if(action.newState) "turn_on" else "turn_off",
+                            if (action.newState) "turn_on" else "turn_off",
                             hashMapOf(
                                 "entity_id" to action.templateId
                             )

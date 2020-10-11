@@ -57,10 +57,9 @@ class HaControlsProviderService : ControlsProviderService() {
             ioScope.launch {
                 integrationRepository
                     .getEntities()
-                    .mapNotNull { it as? Entity<Map<*, *>> }
                     .mapNotNull {
                         val domain = it.entityId.split(".")[0]
-                        domainToHaControl[domain]?.createControl(applicationContext, it)
+                        domainToHaControl[domain]?.createControl(applicationContext, it as Entity<Map<String, Any>>)
                     }
                     .forEach {
                         subscriber.onNext(it)
@@ -73,28 +72,24 @@ class HaControlsProviderService : ControlsProviderService() {
     override fun createPublisherFor(controlIds: MutableList<String>): Flow.Publisher<Control> {
         Log.d(TAG, "publisherFor $controlIds")
         return Flow.Publisher { subscriber ->
-            ioScope.launch {
-                integrationRepository.getEntities()
-                    .filter { it.entityId in controlIds }
-                    .mapNotNull { it as? Entity<Map<*, *>> }
-                    .mapNotNull {
-                        val domain = it.entityId.split(".")[0]
-                        domainToHaControl[domain]?.createControl(applicationContext, it)
-                    }
-                    .forEach {
-                        subscriber.onSubscribe(object : Flow.Subscription {
-                            override fun request(n: Long) {
-                                Log.d(TAG, "request $n")
-                                updateSubscriber = subscriber
-                            }
+            controlIds.forEach { controlId ->
+                ioScope.launch {
+                    val entity = integrationRepository.getEntity(controlId)
+                    val domain = entity.entityId.split(".")[0]
+                    val control = domainToHaControl[domain]?.createControl(applicationContext, entity)
+                    subscriber.onSubscribe(object : Flow.Subscription {
+                        override fun request(n: Long) {
+                            Log.d(TAG, "request $n")
+                            updateSubscriber = subscriber
+                        }
 
-                            override fun cancel() {
-                                Log.d(TAG, "cancel")
-                                updateSubscriber = null
-                            }
-                        })
-                        subscriber.onNext(it)
-                    }
+                        override fun cancel() {
+                            Log.d(TAG, "cancel")
+                            updateSubscriber = null
+                        }
+                    })
+                    subscriber.onNext(control)
+                }
             }
         }
     }
@@ -113,13 +108,8 @@ class HaControlsProviderService : ControlsProviderService() {
             runBlocking {
                 actionSuccess = haControl.performAction(integrationRepository, action)
 
-                // TODO: Make this less awful, aka make single entity call
-                val entity = integrationRepository
-                    .getEntities()
-                    .firstOrNull { it.entityId == controlId }
-                if (entity != null) {
-                    updateSubscriber?.onNext(haControl.createControl(applicationContext, entity as Entity<Map<*, *>>))
-                }
+                val entity = integrationRepository.getEntity(controlId)
+                updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))
             }
         }
         if (actionSuccess) {
