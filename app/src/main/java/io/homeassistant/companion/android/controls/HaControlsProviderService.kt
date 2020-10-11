@@ -35,7 +35,7 @@ class HaControlsProviderService : ControlsProviderService() {
         "camera" to null,
         "climate" to null,
         "fan" to null,
-        "light" to null,
+        "light" to LightControl,
         "media_player" to null,
         "remote" to null,
         "input_boolean" to DefaultSwitchControl,
