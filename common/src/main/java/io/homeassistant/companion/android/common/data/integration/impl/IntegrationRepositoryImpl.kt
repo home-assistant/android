@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
 import android.util.Log
+import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
@@ -44,7 +45,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val APP_ID = "io.homeassistant.companion.android"
         private const val APP_NAME = "Home Assistant"
         private const val OS_NAME = "Android"
-        private const val PUSH_URL = "https://mobile-apps.home-assistant.io/api/sendPush/android/v1"
+        private const val PUSH_URL = BuildConfig.PUSH_URL
 
         private const val PREF_APP_VERSION = "app_version"
         private const val PREF_DEVICE_NAME = "device_name"
@@ -57,7 +58,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
         private const val TAG = "IntegrationRepository"
-        private const val RATE_LIMIT_URL = "https://mobile-apps.home-assistant.io/api/checkRateLimits"
+        private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
