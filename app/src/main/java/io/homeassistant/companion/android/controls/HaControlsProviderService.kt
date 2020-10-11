@@ -7,7 +7,10 @@ import android.service.controls.ControlsProviderService
 import android.service.controls.DeviceTypes
 import android.service.controls.actions.BooleanAction
 import android.service.controls.actions.ControlAction
+import android.service.controls.actions.FloatAction
 import android.service.controls.templates.ControlButton
+import android.service.controls.templates.RangeTemplate
+import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -37,6 +40,18 @@ class HaControlsProviderService: ControlsProviderService() {
 
     private var updateSubscriber: Flow.Subscriber<in Control>? = null
 
+    private val domainToHaControl = mapOf<String, HaControl?>(
+        "camera" to null,
+        "climate" to null,
+        "fan" to null,
+        "light" to null,
+        "media_player" to null,
+        "remote" to null,
+        "input_boolean" to DefaultSwitchControl,
+        "switch" to DefaultSwitchControl,
+        "input_number" to null
+    )
+
     override fun onCreate() {
         super.onCreate()
 
@@ -47,13 +62,18 @@ class HaControlsProviderService: ControlsProviderService() {
     }
 
     override fun createPublisherForAllAvailable(): Flow.Publisher<Control> {
-        return Flow.Publisher { flow ->
+        return Flow.Publisher { subscriber ->
             ioScope.launch {
                 integrationRepository
                     .getEntities()
-                    .mapNotNull { createControl(it) }
-                    .forEach { flow.onNext(it) }
-                flow.onComplete()
+                    .mapNotNull {
+                        val domain = it.entityId.split(".")[0]
+                        domainToHaControl[domain]?.createControl(applicationContext, it)
+                    }
+                    .forEach {
+                        subscriber.onNext(it)
+                    }
+                subscriber.onComplete()
             }
         }
     }
@@ -64,7 +84,10 @@ class HaControlsProviderService: ControlsProviderService() {
             ioScope.launch {
                 integrationRepository.getEntities()
                     .filter { it.entityId in controlIds }
-                    .mapNotNull { createControl(it) }
+                    .mapNotNull {
+                        val domain = it.entityId.split(".")[0]
+                        domainToHaControl[domain]?.createControl(applicationContext, it)
+                    }
                     .forEach {
                         subscriber.onSubscribe(object : Flow.Subscription {
                             override fun request(n: Long) {
@@ -89,48 +112,45 @@ class HaControlsProviderService: ControlsProviderService() {
         consumer: Consumer<Int>)
     {
         Log.d(TAG, "Control: $controlId, action: $action")
-        when (action) {
-            is BooleanAction -> {
-                handleToggle(controlId, action)
-            }
-            else -> {
-                Log.e(TAG, "Not handling $controlId action!")
-                consumer.accept(ControlAction.RESPONSE_OK)
+        val domain = controlId.split(".")[0]
+        val haControl = domainToHaControl[domain]
+
+        var actionSuccess = false
+        if(haControl != null){
+            runBlocking {
+                actionSuccess = haControl.performAction(integrationRepository, action)
+
+                //TODO: Make this less awful, aka make single entity call
+                val entity = integrationRepository.getEntities().firstOrNull { it.entityId == controlId }
+                if(entity != null) {
+                    updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))
+                }
             }
         }
-        runBlocking {
-            //TODO: Make this less awful, aka make single entity call
-            integrationRepository.getEntities().firstOrNull { it.entityId == controlId }?.let {
-                updateSubscriber?.onNext(createSwitchControl(it))
-            }
+        if (actionSuccess){
+            consumer.accept(ControlAction.RESPONSE_OK)
+        } else {
+            consumer.accept(ControlAction.RESPONSE_UNKNOWN)
         }
     }
 
-    private fun handleToggle(controlId: String, booleanAction: BooleanAction) {
+    private fun handleFloatAction(controlId: String, floatAction: FloatAction){
         runBlocking {
             integrationRepository.callService(
                 controlId.split(".")[0],
-                if(booleanAction.newState) "turn_on" else "turn_off",
-                hashMapOf("entity_id" to controlId)
+                "set_value",
+                hashMapOf(
+                    "entity_id" to controlId,
+                    "value" to floatAction.newValue
+                )
             )
         }
     }
 
-    private fun createControl(entity: Entity<Any>): Control? {
-        return when (entity.entityId.split(".")[0]) {
-            "camera",
-            "climate",
-            "fan",
-            "input_boolean",
-            "light",
-            "media_player",
-            "remote",
-            "switch" -> createSwitchControl(entity)
-            else -> null
-        }
-    }
-
-    private fun createSwitchControl(entity: Entity<Any>): Control {
+    private fun createSliderControl(
+        entity: Entity<Map<String, Any>>,
+        deviceType: Int
+    ): Control {
         val control = Control.StatefulBuilder(
             entity.entityId,
             PendingIntent.getActivity(
@@ -141,14 +161,21 @@ class HaControlsProviderService: ControlsProviderService() {
             )
         )
         control.setTitle(entity.entityId)
-        control.setDeviceType(DeviceTypes.TYPE_SWITCH)
+        control.setDeviceType(deviceType)
         control.setStatus(Control.STATUS_OK)
         control.setControlTemplate(
-            ToggleTemplate(
+            ToggleRangeTemplate(
                 entity.entityId,
-                ControlButton(
-                    entity.state == "on",
-                    "Description")
+                (entity.state.toFloatOrNull()?:0) == 0,
+                "Description?",
+                RangeTemplate(
+                    entity.entityId+"_range",
+                    (entity.attributes["min"] as? Number)?.toFloat() ?: 0f,
+                    (entity.attributes["max"] as? Number)?.toFloat() ?: 0f,
+                    entity.state.toFloatOrNull() ?: 0f,
+                    (entity.attributes["step"] as? Number)?.toFloat() ?: 0f,
+                    null
+                )
             )
         )
         return control.build()
