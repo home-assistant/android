@@ -43,15 +43,14 @@ If you get stuck while setting up your own environment, you can ask questions in
 
 ### Push Notifications
 
-If you want to work on push notifications or use a development build with push notifications, please go the server side code [HERE](https://github.com/home-assistant/mobile-apps-fcm-push) and deploy it to your firebase project. Once you have your androidV1 URL to the deployed service, add it to your `local.properties` file, e.g.:
-
+If you want to work on push notifications or use a development build with push notifications, please go the server side code [HERE](https://github.com/home-assistant/mobile-apps-fcm-push) and deploy it to your firebase project. Once you have your androidV1 URL to the deployed service, set it in to your `${GRADLE_USER_HOME}/gradle.properties` file, e.g.:
 ```properties
-push_url=https://mydomain.cloudfunctions.net/androidV1
+homeAssistantAndroidPushUrl=https://mydomain.cloudfunctions.net/androidV1
 ```
 
 You can also define the rate limit function URL, e.g.:
 ```properties
-rate_limit_url=https://mydomain.cloudfunctions.net/checkRateLimits
+homeAssistantAndroidRateLimitUrl=https://mydomain.cloudfunctions.net/checkRateLimits
 ```
 
 ## App Flavors
