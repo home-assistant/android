@@ -242,8 +242,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     private suspend fun retrieveMediaPlayerImageUrl(entityId: String): String? {
         val entity = integrationUseCase.getEntity(entityId)
 
-        val fetchedAttributes = entity?.attributes as Map<*, *>
-        return fetchedAttributes["entity_picture"]?.toString()
+        return entity.attributes["entity_picture"]?.toString()
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -345,11 +344,6 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
             val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
 
-            if (currentEntityInfo == null) {
-                Log.d(TAG, "Failed to get current entity info, aborting call")
-                return@launch
-            }
-
             val fetchedAttributes = currentEntityInfo.attributes as Map<*, *>
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
 
@@ -410,11 +404,6 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             )
 
             val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
-
-            if (currentEntityInfo == null) {
-                Log.d(TAG, "Failed to get current entity info, aborting call")
-                return@launch
-            }
 
             val fetchedAttributes = currentEntityInfo.attributes as Map<*, *>
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()

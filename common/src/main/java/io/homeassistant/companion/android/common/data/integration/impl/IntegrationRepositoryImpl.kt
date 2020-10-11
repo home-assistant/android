@@ -381,31 +381,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         }.toTypedArray()
     }
 
-    override suspend fun getEntity(entityId: String): Entity<Any>? {
-        val response = integrationService.getState(
-            authenticationRepository.buildBearerToken(),
-            entityId
-        )
-
-        // If the entity_id doesn't match an existing entity,
-        // the following message is returned
-        if (response.message == "Entity not found.") {
-            return null
-        }
-
-        // If no message exists or the message does not indicate
-        // that the entity doesn't exist, assume it's returned
-        // the entity correctly and map the response to an entity object
-        return Entity(
-            entityId = response.entityId!!,
-            state = response.state!!,
-            attributes = response.attributes!!,
-            lastChanged = response.lastChanged!!,
-            lastUpdated = response.lastUpdated!!,
-            context = response.context!!
-        )
-    }
-
     override suspend fun getEntities(): Array<Entity<Any>> {
         val response = integrationService.getStates(authenticationRepository.buildBearerToken())
 
