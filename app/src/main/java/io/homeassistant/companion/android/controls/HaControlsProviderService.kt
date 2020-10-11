@@ -60,7 +60,7 @@ class HaControlsProviderService : ControlsProviderService() {
                     .mapNotNull { it as? Entity<Map<*, *>> }
                     .mapNotNull {
                         val domain = it.entityId.split(".")[0]
-                        domainToHaControl[domain]?.createControl(applicationContext, it as Entity<Map<*, *>>)
+                        domainToHaControl[domain]?.createControl(applicationContext, it)
                     }
                     .forEach {
                         subscriber.onNext(it)
