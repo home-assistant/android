@@ -121,6 +121,14 @@
             </intent-filter>
         </service>
 
+        <service android:name=".controls.HaControlsProviderService"
+            android:permission="android.permission.BIND_CONTROLS"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.controls.ControlsProviderService"/>
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".sensors.LocationSensorManager"
             android:enabled="true"

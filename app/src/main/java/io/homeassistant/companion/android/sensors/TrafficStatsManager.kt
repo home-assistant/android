@@ -62,11 +62,11 @@ class TrafficStatsManager : SensorManager {
     override fun hasSensor(context: Context): Boolean {
         val cm: ConnectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkInfo = cm.allNetworks
-        var networkCapabilities: NetworkCapabilities
+        var networkCapabilities: NetworkCapabilities?
         for (item in networkInfo) {
             networkCapabilities = cm.getNetworkCapabilities(item)
             if (!hasCellular)
-                hasCellular = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                hasCellular = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ?: false
         }
         return true
     }

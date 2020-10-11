@@ -43,7 +43,7 @@ class TagReaderActivity : AppCompatActivity() {
         mainScope.launch {
             if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
                 val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-                val ndefMessage = rawMessages[0] as NdefMessage?
+                val ndefMessage = rawMessages?.get(0) as NdefMessage?
                 val url = ndefMessage?.records?.get(0)?.toUri().toString()
                 try {
                     handleTag(url)

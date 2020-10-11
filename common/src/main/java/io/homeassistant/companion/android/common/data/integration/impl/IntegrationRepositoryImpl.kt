@@ -395,6 +395,21 @@ class IntegrationRepositoryImpl @Inject constructor(
         }.toTypedArray()
     }
 
+    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>> {
+        val response = integrationService.getState(
+            authenticationRepository.buildBearerToken(),
+            entityId
+        )
+        return Entity(
+            response.entityId,
+            response.state,
+            response.attributes,
+            response.lastChanged,
+            response.lastUpdated,
+            response.context
+        )
+    }
+
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
         val registeredSensors = localStorage.getStringSet(PREF_SENSORS_REGISTERED)
         if (registeredSensors?.contains(sensorRegistration.uniqueId) == true) {
