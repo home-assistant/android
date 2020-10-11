@@ -5,10 +5,9 @@ import android.content.Context
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
-import android.service.controls.actions.BooleanAction
 import android.service.controls.actions.ControlAction
-import android.service.controls.templates.ControlButton
-import android.service.controls.templates.ToggleTemplate
+import android.service.controls.actions.FloatAction
+import android.service.controls.templates.RangeTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -16,7 +15,7 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 
 @RequiresApi(Build.VERSION_CODES.R)
-class DefaultSwitchControl {
+class DefaultSliderControl {
     companion object : HaControl {
         override fun createControl(
             context: Context,
@@ -32,15 +31,16 @@ class DefaultSwitchControl {
                 )
             )
             control.setTitle(entity.attributes["friendly_name"].toString())
-            control.setDeviceType(DeviceTypes.TYPE_GENERIC_ON_OFF)
+            control.setDeviceType(DeviceTypes.TYPE_UNKNOWN)
             control.setStatus(Control.STATUS_OK)
             control.setControlTemplate(
-                ToggleTemplate(
+                RangeTemplate(
                     entity.entityId,
-                    ControlButton(
-                        entity.state == "on",
-                        "Description"
-                    )
+                    (entity.attributes["min"] as? Number)?.toFloat() ?: 0f,
+                    (entity.attributes["max"] as? Number)?.toFloat() ?: 0f,
+                    entity.state.toFloatOrNull() ?: 0f,
+                    (entity.attributes["step"] as? Number)?.toFloat() ?: 0f,
+                    null
                 )
             )
             return control.build()
@@ -53,8 +53,11 @@ class DefaultSwitchControl {
             return runBlocking {
                 integrationRepository.callService(
                     action.templateId.split(".")[0],
-                    if ((action as? BooleanAction)?.newState == true) "turn_on" else "turn_off",
-                    hashMapOf("entity_id" to action.templateId)
+                    "set_value",
+                    hashMapOf(
+                        "entity_id" to action.templateId,
+                        "value" to (action as? FloatAction)?.newValue.toString()
+                    )
                 )
                 return@runBlocking true
             }

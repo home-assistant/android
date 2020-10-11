@@ -1,33 +1,24 @@
 package io.homeassistant.companion.android.controls
 
-import android.app.PendingIntent
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.ControlsProviderService
-import android.service.controls.DeviceTypes
-import android.service.controls.actions.BooleanAction
 import android.service.controls.actions.ControlAction
-import android.service.controls.actions.FloatAction
-import android.service.controls.templates.ControlButton
-import android.service.controls.templates.RangeTemplate
-import android.service.controls.templates.ToggleRangeTemplate
-import android.service.controls.templates.ToggleTemplate
 import android.util.Log
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.webview.WebViewActivity
+import java.util.concurrent.Flow
+import java.util.function.Consumer
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.util.concurrent.Flow
-import java.util.function.Consumer
-import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.R)
-class HaControlsProviderService: ControlsProviderService() {
+class HaControlsProviderService : ControlsProviderService() {
 
     companion object {
         private const val TAG = "HaConProService"
@@ -40,7 +31,7 @@ class HaControlsProviderService: ControlsProviderService() {
 
     private var updateSubscriber: Flow.Subscriber<in Control>? = null
 
-    private val domainToHaControl = mapOf<String, HaControl?>(
+    private val domainToHaControl = mapOf(
         "camera" to null,
         "climate" to null,
         "fan" to null,
@@ -49,7 +40,7 @@ class HaControlsProviderService: ControlsProviderService() {
         "remote" to null,
         "input_boolean" to DefaultSwitchControl,
         "switch" to DefaultSwitchControl,
-        "input_number" to null
+        "input_number" to DefaultSliderControl
     )
 
     override fun onCreate() {
@@ -66,9 +57,10 @@ class HaControlsProviderService: ControlsProviderService() {
             ioScope.launch {
                 integrationRepository
                     .getEntities()
+                    .mapNotNull { it as? Entity<Map<*, *>> }
                     .mapNotNull {
                         val domain = it.entityId.split(".")[0]
-                        domainToHaControl[domain]?.createControl(applicationContext, it)
+                        domainToHaControl[domain]?.createControl(applicationContext, it as Entity<Map<*, *>>)
                     }
                     .forEach {
                         subscriber.onNext(it)
@@ -84,6 +76,7 @@ class HaControlsProviderService: ControlsProviderService() {
             ioScope.launch {
                 integrationRepository.getEntities()
                     .filter { it.entityId in controlIds }
+                    .mapNotNull { it as? Entity<Map<*, *>> }
                     .mapNotNull {
                         val domain = it.entityId.split(".")[0]
                         domainToHaControl[domain]?.createControl(applicationContext, it)
@@ -109,75 +102,30 @@ class HaControlsProviderService: ControlsProviderService() {
     override fun performControlAction(
         controlId: String,
         action: ControlAction,
-        consumer: Consumer<Int>)
-    {
+        consumer: Consumer<Int>
+    ) {
         Log.d(TAG, "Control: $controlId, action: $action")
         val domain = controlId.split(".")[0]
         val haControl = domainToHaControl[domain]
 
         var actionSuccess = false
-        if(haControl != null){
+        if (haControl != null) {
             runBlocking {
                 actionSuccess = haControl.performAction(integrationRepository, action)
 
-                //TODO: Make this less awful, aka make single entity call
-                val entity = integrationRepository.getEntities().firstOrNull { it.entityId == controlId }
-                if(entity != null) {
-                    updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))
+                // TODO: Make this less awful, aka make single entity call
+                val entity = integrationRepository
+                    .getEntities()
+                    .firstOrNull { it.entityId == controlId }
+                if (entity != null) {
+                    updateSubscriber?.onNext(haControl.createControl(applicationContext, entity as Entity<Map<*, *>>))
                 }
             }
         }
-        if (actionSuccess){
+        if (actionSuccess) {
             consumer.accept(ControlAction.RESPONSE_OK)
         } else {
             consumer.accept(ControlAction.RESPONSE_UNKNOWN)
         }
-    }
-
-    private fun handleFloatAction(controlId: String, floatAction: FloatAction){
-        runBlocking {
-            integrationRepository.callService(
-                controlId.split(".")[0],
-                "set_value",
-                hashMapOf(
-                    "entity_id" to controlId,
-                    "value" to floatAction.newValue
-                )
-            )
-        }
-    }
-
-    private fun createSliderControl(
-        entity: Entity<Map<String, Any>>,
-        deviceType: Int
-    ): Control {
-        val control = Control.StatefulBuilder(
-            entity.entityId,
-            PendingIntent.getActivity(
-                applicationContext,
-                0,
-                WebViewActivity.newInstance(applicationContext),
-                PendingIntent.FLAG_CANCEL_CURRENT
-            )
-        )
-        control.setTitle(entity.entityId)
-        control.setDeviceType(deviceType)
-        control.setStatus(Control.STATUS_OK)
-        control.setControlTemplate(
-            ToggleRangeTemplate(
-                entity.entityId,
-                (entity.state.toFloatOrNull()?:0) == 0,
-                "Description?",
-                RangeTemplate(
-                    entity.entityId+"_range",
-                    (entity.attributes["min"] as? Number)?.toFloat() ?: 0f,
-                    (entity.attributes["max"] as? Number)?.toFloat() ?: 0f,
-                    entity.state.toFloatOrNull() ?: 0f,
-                    (entity.attributes["step"] as? Number)?.toFloat() ?: 0f,
-                    null
-                )
-            )
-        )
-        return control.build()
     }
 }

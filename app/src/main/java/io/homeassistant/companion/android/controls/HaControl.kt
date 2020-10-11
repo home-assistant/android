@@ -8,7 +8,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 
 interface HaControl {
 
-    fun createControl(context: Context, entity: Entity<*>): Control
+    fun createControl(context: Context, entity: Entity<Map<*, *>>): Control
 
     fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
 }
