@@ -127,39 +127,23 @@ class NetworkSensorManager : SensorManager {
 
         var conInfo: WifiInfo? = null
         var ssid = "Unknown"
-        var lastScanStrength = -1
-        var wifiEnabled = false
 
         if (checkPermission(context, wifiConnection.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             conInfo = wifiManager.connectionInfo
 
-            wifiEnabled = wifiManager.isWifiEnabled
-
             ssid = if (conInfo.networkId == -1) {
                 "<not connected>"
             } else {
                 conInfo.ssid.removePrefix("\"").removeSuffix("\"")
             }
-
-            lastScanStrength = wifiManager.scanResults.firstOrNull {
-                it.BSSID == conInfo.bssid
-            }?.level ?: -1
         }
 
         val icon = if (ssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
 
         val attributes = conInfo?.let {
-            mapOf(
-                "bssid" to conInfo.bssid, // Remove after next release
-                "ip_address" to getIpAddress(conInfo.ipAddress), // Remove after next release
-                "link_speed" to conInfo.linkSpeed, // Remove after next release
-                "is_hidden" to conInfo.hiddenSSID,
-                "is_wifi_on" to wifiEnabled, // Remove after next release
-                "frequency" to conInfo.frequency, // Remove after next release
-                "signal_level" to lastScanStrength // Remove after next release
-            )
+            mapOf("is_hidden" to conInfo.hiddenSSID)
         }.orEmpty()
 
         onSensorUpdated(

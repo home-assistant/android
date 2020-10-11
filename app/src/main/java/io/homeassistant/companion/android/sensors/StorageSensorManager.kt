@@ -85,18 +85,6 @@ class StorageSensorManager : SensorManager {
         val totalInternalStorage = getTotalInternalMemorySize()
         val freeInternalStorage = getAvailableInternalMemorySize()
         val percentageFreeInternalStorage = getPercentageInternal()
-        externalPath = externalMemoryAvailable(context)
-        var totalExternalStorage = "No SD Card"
-        var freeExternalStorage = "No SD Card"
-
-        if (externalPath != null) {
-            val statSD = StatFs(externalPath.toString())
-            blockSizeSD = statSD.blockSizeLong
-            availableBlocksSD = statSD.availableBlocksLong
-            totalBlocksSD = statSD.blockCountLong
-            totalExternalStorage = getTotalExternalMemorySize()
-            freeExternalStorage = getAvailableExternalMemorySize()
-        }
 
         val icon = "mdi:harddisk"
 
@@ -106,9 +94,7 @@ class StorageSensorManager : SensorManager {
             icon,
             mapOf(
                 "Free internal storage" to freeInternalStorage,
-                "Total internal storage" to totalInternalStorage,
-                "Free external storage" to freeExternalStorage, // Remove after next release
-                "Total external storage" to totalExternalStorage // Remove after next release
+                "Total internal storage" to totalInternalStorage
             )
         )
     }
