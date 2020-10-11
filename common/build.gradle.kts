@@ -4,11 +4,16 @@ plugins {
     id("kotlin-kapt")
 }
 
+val homeAssistantAndroidPushUrl: String by project
+val homeAssistantAndroidRateLimitUrl: String by project
+
 android {
     compileSdkVersion(Config.Android.compileSdk)
 
     defaultConfig {
         minSdkVersion(Config.Android.minSdk)
+        buildConfigField("String", "PUSH_URL", "\"$homeAssistantAndroidPushUrl\"")
+        buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
     }
 }
 

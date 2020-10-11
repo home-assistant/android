@@ -1,12 +1,11 @@
 object Config {
 
     object Plugin {
-        const val android = "com.android.tools.build:gradle:4.0.1"
+        const val android = "com.android.tools.build:gradle:4.0.2"
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
-        const val google = "com.google.gms:google-services:4.3.3"
+        const val google = "com.google.gms:google-services:4.3.4"
         const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:1.4.0"
         const val ktlint = "org.jlleitschuh.gradle:ktlint-gradle:9.2.1"
-        const val playPublisher = "com.github.triplet.gradle:play-publisher:2.7.5"
         const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.0.0"
     }
 
@@ -16,9 +15,9 @@ object Config {
     }
 
     object Android {
-        const val compileSdk = 29
+        const val compileSdk = 30
         const val minSdk = 21
-        const val targetSdk = 29
+        const val targetSdk = 30
         const val ndk = "21.3.6528147"
     }
 

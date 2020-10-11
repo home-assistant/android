@@ -7,18 +7,6 @@ plugins {
     id("com.github.triplet.play") version "2.7.5"
 }
 
-buildscript {
-    repositories {
-        google()
-        jcenter()
-        maven(url = Config.Repository.gradle)
-    }
-    dependencies {
-        classpath(Config.Plugin.playPublisher)
-        classpath(Config.Plugin.androidJunit5)
-    }
-}
-
 android {
     compileSdkVersion(Config.Android.compileSdk)
 
@@ -96,7 +84,7 @@ android {
         unitTests.apply { isReturnDefaultValues = true }
     }
 
-    tasks.withType<Test> {
+    tasks.withType<Test>().configureEach {
         useJUnitPlatform {
             includeEngines("spek2")
         }

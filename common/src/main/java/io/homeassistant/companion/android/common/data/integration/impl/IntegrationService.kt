@@ -51,6 +51,12 @@ interface IntegrationService {
         @Header("Authorization") auth: String
     ): Array<EntityResponse<Any>>
 
+    @GET("/api/states/{entityId}")
+    suspend fun getState(
+        @Header("Authorization") auth: String,
+        @Path("entityId") entityId: String
+    ): EntityResponse<Map<String, Any>>
+
     @POST
     suspend fun callWebhook(
         @Url url: HttpUrl,
