@@ -12,19 +12,19 @@ class PowerSensorManager : SensorManager {
         private const val TAG = "PowerSensors"
         private const val packageName = "io.homeassistant.companion.android"
 
-        private val interactiveDevice = SensorManager.BasicSensor(
+        val interactiveDevice = SensorManager.BasicSensor(
             "is_interactive",
             "binary_sensor",
             R.string.basic_sensor_name_interactive,
             R.string.sensor_description_interactive
         )
-        private val doze = SensorManager.BasicSensor(
+        val doze = SensorManager.BasicSensor(
             "is_idle",
             "binary_sensor",
             R.string.basic_sensor_name_doze,
             R.string.sensor_description_doze
         )
-        private val powerSave = SensorManager.BasicSensor(
+        val powerSave = SensorManager.BasicSensor(
             "power_save",
             "binary_sensor",
             R.string.basic_sensor_name_power_save,
