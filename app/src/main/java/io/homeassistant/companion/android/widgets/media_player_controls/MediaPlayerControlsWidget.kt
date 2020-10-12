@@ -10,9 +10,11 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import android.widget.Toast
 import com.squareup.picasso.Picasso
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
@@ -126,7 +128,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                     R.id.widgetLabel,
                     label ?: entityId
                 )
-                val entityPictureUrl = retrieveMediaPlayerImageUrl(entityId)
+                val entityPictureUrl = retrieveMediaPlayerImageUrl(context, entityId)
                 if (entityPictureUrl == null) {
                     setImageViewResource(
                         R.id.widgetMediaImage,
@@ -239,8 +241,15 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun retrieveMediaPlayerImageUrl(entityId: String): String? {
-        val entity = integrationUseCase.getEntity(entityId)
+    private suspend fun retrieveMediaPlayerImageUrl(context: Context, entityId: String): String? {
+        val entity: Entity<Map<String, Any>>
+        try {
+            entity = integrationUseCase.getEntity(entityId)
+        } catch (e: Exception) {
+            Log.d(TAG, "Failed to fetch entity or entity does not exist")
+            Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            return null
+        }
 
         return entity.attributes["entity_picture"]?.toString()
     }
@@ -342,9 +351,16 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         "entity id: " + entity.entityId + System.lineSeparator()
             )
 
-            val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+            val currentEntityInfo: Entity<Map<String, Any>>
+            try {
+                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+            } catch (e: Exception) {
+                Log.d(TAG, "Failed to fetch entity or entity does not exist")
+                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                return@launch
+            }
 
-            val fetchedAttributes = currentEntityInfo.attributes as Map<*, *>
+            val fetchedAttributes = currentEntityInfo.attributes
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
 
             if (currentTime == null) {
@@ -403,9 +419,16 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         "entity id: " + entity.entityId + System.lineSeparator()
             )
 
-            val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+            val currentEntityInfo: Entity<Map<String, Any>>
+            try {
+                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+            } catch (e: Exception) {
+                Log.d(TAG, "Failed to fetch entity or entity does not exist")
+                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                return@launch
+            }
 
-            val fetchedAttributes = currentEntityInfo.attributes as Map<*, *>
+            val fetchedAttributes = currentEntityInfo.attributes
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
 
             if (currentTime == null) {
