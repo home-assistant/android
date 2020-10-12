@@ -12,6 +12,8 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
@@ -209,7 +211,13 @@ class MessagingService : FirebaseMessagingService() {
                 textToSpeech?.speak(tts, TextToSpeech.QUEUE_ADD, null, "")
                 Log.d(TAG, "speaking notification")
             } else {
-                Toast.makeText(applicationContext, getString(R.string.tts_error, tts), Toast.LENGTH_LONG).show()
+                Handler(Looper.getMainLooper()).post {
+                    Toast.makeText(
+                        applicationContext,
+                        getString(R.string.tts_error, tts),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
         }
     }
