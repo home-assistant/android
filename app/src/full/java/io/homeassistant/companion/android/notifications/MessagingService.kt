@@ -236,10 +236,7 @@ class MessagingService : FirebaseMessagingService() {
                     val notificationManager =
                         applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
-                        val intent =
-                            Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        startActivity(intent)
+                        requestDNDPermission()
                     } else {
                         when (title) {
                             DND_ALARMS_ONLY -> notificationManager.setInterruptionFilter(
@@ -259,11 +256,16 @@ class MessagingService : FirebaseMessagingService() {
             }
             COMMAND_RINGER_MODE -> {
                 val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                when (title) {
-                    RM_NORMAL -> audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
-                    RM_SILENT -> audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
-                    RM_VIBRATE -> audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
-                    else -> Log.d(TAG, "Skipping invalid command")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val notificationManager =
+                        applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                        requestDNDPermission()
+                    } else {
+                        processRingerMode(audioManager, title)
+                    }
+                } else {
+                    processRingerMode(audioManager, title)
                 }
             }
             else -> Log.d(TAG, "No command received")
@@ -776,6 +778,23 @@ class MessagingService : FirebaseMessagingService() {
             .trim()
             .toLowerCase(Locale.ROOT)
             .replace(" ", "_")
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun requestDNDPermission() {
+        val intent =
+            Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+    private fun processRingerMode(audioManager: AudioManager, title: String?) {
+        when (title) {
+            RM_NORMAL -> audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+            RM_SILENT -> audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+            RM_VIBRATE -> audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+            else -> Log.d(TAG, "Skipping invalid command")
+        }
     }
 
     /**
