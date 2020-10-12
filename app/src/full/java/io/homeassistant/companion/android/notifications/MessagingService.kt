@@ -116,7 +116,7 @@ class MessagingService : FirebaseMessagingService() {
                 }
                 it[MESSAGE] == TTS -> {
                     Log.d(TAG, "Sending notification title to TTS")
-                    speakNotification(it[TITLE])
+                    speakNotification(it)
                 }
                 it[MESSAGE] in DEVICE_COMMANDS -> {
                     Log.d(TAG, "Processing device command")
@@ -175,9 +175,9 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun speakNotification(title: String?) {
+    private fun speakNotification(data: Map<String, String>) {
         var textToSpeech: TextToSpeech? = null
-        var tts = title
+        var tts = data[TITLE]
         if (tts.isNullOrEmpty())
             tts = getString(R.string.tts_no_title)
         textToSpeech = TextToSpeech(applicationContext
@@ -199,6 +199,13 @@ class MessagingService : FirebaseMessagingService() {
                     }
                 }
                 textToSpeech?.setOnUtteranceProgressListener(listener)
+                if (data["channel"] == "alarm_stream") {
+                    val audioAttributes = AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .build()
+                    textToSpeech?.setAudioAttributes(audioAttributes)
+                }
                 textToSpeech?.speak(tts, TextToSpeech.QUEUE_ADD, null, "")
                 Log.d(TAG, "speaking notification")
             } else {
