@@ -45,13 +45,13 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
 
         runBlocking {
             try {
-                integrationRepository.fireEvent("mobile_app_notification_dismissed", hashData)
-                Log.d(TAG, "Notification dismiss event successful!")
+                integrationRepository.fireEvent("mobile_app_notification_cleared", hashData)
+                Log.d(TAG, "Notification cleared event successful!")
             } catch (e: Exception) {
                 Log.e(TAG, "Issue sending event to Home Assistant", e)
                 Toast.makeText(
                     context,
-                    R.string.notification_dismiss_failure,
+                    R.string.notification_clear_failure,
                     Toast.LENGTH_LONG
                 ).show()
             }
