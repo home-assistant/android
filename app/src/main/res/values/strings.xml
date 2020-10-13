@@ -139,7 +139,7 @@ Home Assistant instance</string>
   <string name="manual_setup">enter address manually</string>
   <string name="map">Map</string>
   <string name="need_help">Need Help?</string>
-  <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
+  <string name="notification_clear_failure">Failed to send event on notification cleared</string>
   <string name="nfc_btn_create_duplicate">Create duplicate</string>
   <string name="rate_limit_title">Notification Rate Limit</string>
   <string name="rate_limit_summary">Rate limit data</string>
