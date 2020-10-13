@@ -10,7 +10,7 @@ class AudioSensorManager : SensorManager {
     companion object {
         private const val TAG = "AudioSensor"
 
-        private val audioSensor = SensorManager.BasicSensor(
+        val audioSensor = SensorManager.BasicSensor(
             "audio_sensor",
             "sensor",
             R.string.sensor_name_ringer_mode,
@@ -28,7 +28,7 @@ class AudioSensorManager : SensorManager {
             R.string.sensor_name_headphone,
             R.string.sensor_description_headphone
         )
-        private val micMuted = SensorManager.BasicSensor(
+        val micMuted = SensorManager.BasicSensor(
             "mic_muted",
             "binary_sensor",
             R.string.sensor_name_mic_muted,
@@ -40,7 +40,7 @@ class AudioSensorManager : SensorManager {
             R.string.sensor_name_music_active,
             R.string.sensor_description_music_active
         )
-        private val speakerphoneState = SensorManager.BasicSensor(
+        val speakerphoneState = SensorManager.BasicSensor(
             "speakerphone_state",
             "binary_sensor",
             R.string.sensor_name_speakerphone,

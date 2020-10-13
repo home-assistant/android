@@ -9,7 +9,7 @@ class DNDSensorManager : SensorManager {
     companion object {
         private const val TAG = "DNDSensor"
 
-        private val dndSensor = SensorManager.BasicSensor(
+        val dndSensor = SensorManager.BasicSensor(
             "dnd_sensor",
             "sensor",
             R.string.sensor_name_dnd,
