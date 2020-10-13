@@ -330,6 +330,7 @@ like to connect to:</string>
   <string name="widget_button_image_description">Service Button</string>
   <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
   <string name="widget_creation_error">Unable to create widget.</string>
+  <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
   <string name="widget_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Label</string>
   <string name="widget_separator_input_hint">No separator</string>
@@ -343,5 +344,13 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_default">30</string>
   <string name="widget_text_size_label">Widget text size:</string>
-    <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
+  <string name="widget_media_show_skip">Show Skip Buttons</string>
+  <string name="widget_media_show_seek">Show Seek Buttons</string>
+  <string name="widget_media_image_description">Media Playing Preview Image</string>
+  <string name="widget_media_prev_track_button">Previous Track</string>
+  <string name="widget_media_rewind_button">Rewind</string>
+  <string name="widget_media_playpause_button">Play/Pause</string>
+  <string name="widget_media_fastforward_button">Fast Forward</string>
+  <string name="widget_media_next_track_button">Next Track</string>
+  <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
 </resources>

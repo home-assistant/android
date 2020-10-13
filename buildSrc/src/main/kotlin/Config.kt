@@ -81,6 +81,9 @@ object Config {
             const val okhttp = "com.squareup.okhttp3:okhttp:$okhttpVersion"
             const val okhttpInterceptor = "com.squareup.okhttp3:logging-interceptor:$okhttpVersion"
             const val okhttpMockServer = "com.squareup.okhttp3:mockwebserver:$okhttpVersion"
+
+            private const val picassoVersion = "2.8"
+            const val picasso = "com.squareup.picasso:picasso:${picassoVersion}"
         }
 
         object Testing {

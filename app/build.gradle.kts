@@ -133,6 +133,7 @@ dependencies {
 
     implementation(Config.Dependency.Misc.jackson)
     implementation(Config.Dependency.Square.okhttp)
+    implementation(Config.Dependency.Square.picasso)
 
     "fullImplementation"(Config.Dependency.Play.location)
     "fullImplementation"(Config.Dependency.Firebase.core)

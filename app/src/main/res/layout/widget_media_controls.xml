@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widgetLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minHeight="40dp"
+    android:minWidth="40dp"
+    android:background="@drawable/widget_button_background">
+
+    <LinearLayout
+        android:id="@+id/widgetImageButtonLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="60dp"
+            android:layout_height="match_parent">
+            <ImageView
+                android:id="@+id/widgetMediaImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="invisible"
+                android:contentDescription="@string/widget_media_image_description"
+                android:scaleType="centerCrop" />
+            <ImageView
+                android:id="@+id/widgetMediaPlaceholder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
+                android:src="@drawable/app_icon"
+                android:contentDescription="@string/widget_media_image_description"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
+
+        <RelativeLayout
+            android:id="@+id/widgetLabelLayout"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:minHeight="32sp"
+            android:layout_margin="4dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widgetLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_label_placeholder_text"
+                android:textSize="24sp"
+                android:textAlignment="center"
+                android:gravity="center"
+                android:textColor="@color/colorWidgetButtonLabel"
+                android:minLines="1"
+                android:maxLines="2"
+                />
+            <LinearLayout
+                android:id="@+id/widgetMediaButtonlayout"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:layout_below="@id/widgetLabel"
+                android:layout_alignParentBottom="true"
+                android:padding="4dp"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/widgetPrevTrackButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:padding="4dp"
+                    android:contentDescription="@string/widget_media_prev_track_button"
+                    android:src="@drawable/ic_prev_track"
+                    android:tint="@color/colorIcon"
+                    android:scaleType="fitCenter"
+                    android:background="?android:selectableItemBackground"/>
+
+                <ImageButton
+                    android:id="@+id/widgetRewindButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:padding="4dp"
+                    android:contentDescription="@string/widget_media_rewind_button"
+                    android:src="@drawable/ic_rewind"
+                    android:tint="@color/colorIcon"
+                    android:scaleType="fitCenter"
+                    android:background="?android:selectableItemBackground"/>
+
+                <ImageButton
+                    android:id="@+id/widgetPlayPauseButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1.5"
+                    android:padding="4dp"
+                    android:contentDescription="@string/widget_media_playpause_button"
+                    android:src="@drawable/ic_playpause"
+                    android:tint="@color/colorIcon"
+                    android:scaleType="fitCenter"
+                    android:background="?android:selectableItemBackground"/>
+
+                <ImageButton
+                    android:id="@+id/widgetFastForwardButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:padding="4dp"
+                    android:contentDescription="@string/widget_media_fastforward_button"
+                    android:src="@drawable/ic_fastforward"
+                    android:tint="@color/colorIcon"
+                    android:scaleType="fitCenter"
+                    android:background="?android:selectableItemBackground"/>
+
+                <ImageButton
+                    android:id="@+id/widgetNextTrackButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:padding="4dp"
+                    android:contentDescription="@string/widget_media_next_track_button"
+                    android:src="@drawable/ic_next_track"
+                    android:tint="@color/colorIcon"
+                    android:scaleType="fitCenter"
+                    android:background="?android:selectableItemBackground"/>
+            </LinearLayout>
+        </RelativeLayout>
+    </LinearLayout>
+</FrameLayout>
