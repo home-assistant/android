@@ -128,10 +128,7 @@ class BatterySensorManager : SensorManager {
         if (!isEnabled(context, batteryState.id))
             return
 
-        val isCharging = getIsCharging(intent)
-        val chargerType = getChargerType(intent)
         val chargingStatus = getChargingStatus(intent)
-        val batteryHealth = getBatteryHealth(intent)
 
         val icon = when (chargingStatus) {
             "charging" -> "mdi:battery-plus"
@@ -145,11 +142,7 @@ class BatterySensorManager : SensorManager {
             batteryState,
             chargingStatus,
             icon,
-            mapOf(
-                "is_charging" to isCharging, // Remove after next release
-                "charger_type" to chargerType, // Remove after next release
-                "battery_health" to batteryHealth // Remove after next release
-            )
+            mapOf()
         )
     }
 
