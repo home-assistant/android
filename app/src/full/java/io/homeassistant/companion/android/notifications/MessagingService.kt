@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -67,12 +68,23 @@ class MessagingService : FirebaseMessagingService() {
         const val REMOVE_CHANNEL = "remove_channel"
         const val TTS = "TTS"
         const val COMMAND_DND = "command_dnd"
+        const val COMMAND_RINGER_MODE = "command_ringer_mode"
+
+        // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
         const val DND_ALARMS_ONLY = "alarms_only"
         const val DND_ALL = "off"
         const val DND_NONE = "total_silence"
-        val DEVICE_COMMANDS = listOf(COMMAND_DND)
+
+        // Ringer mode commands
+        const val RM_NORMAL = "normal"
+        const val RM_SILENT = "silent"
+        const val RM_VIBRATE = "vibrate"
+
+        // Command groups
+        val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
+        val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
     }
 
     @Inject
@@ -134,6 +146,16 @@ class MessagingService : FirebaseMessagingService() {
                             } else {
                                 mainScope.launch {
                                     Log.d(TAG, "Invalid DND command received, posting notification to device")
+                                    sendNotification(it)
+                                }
+                            }
+                        }
+                        COMMAND_RINGER_MODE -> {
+                            if (it[TITLE] in RM_COMMANDS) {
+                                handleDeviceCommands(it[MESSAGE], it[TITLE])
+                            } else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid ringer mode command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
@@ -207,25 +229,43 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
     private fun handleDeviceCommands(message: String?, title: String?) {
         when (message) {
             COMMAND_DND -> {
-                val notificationManager =
-                    applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                if (!notificationManager.isNotificationPolicyAccessGranted) {
-                    val intent =
-                        Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                } else {
-                    when (title) {
-                        DND_ALARMS_ONLY -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS)
-                        DND_ALL -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
-                        DND_NONE -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE)
-                        DND_PRIORITY_ONLY -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
-                        else -> Log.d(TAG, "Skipping invalid command")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val notificationManager =
+                        applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                        requestDNDPermission()
+                    } else {
+                        when (title) {
+                            DND_ALARMS_ONLY -> notificationManager.setInterruptionFilter(
+                                NotificationManager.INTERRUPTION_FILTER_ALARMS
+                            )
+                            DND_ALL -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+                            DND_NONE -> notificationManager.setInterruptionFilter(
+                                NotificationManager.INTERRUPTION_FILTER_NONE
+                            )
+                            DND_PRIORITY_ONLY -> notificationManager.setInterruptionFilter(
+                                NotificationManager.INTERRUPTION_FILTER_PRIORITY
+                            )
+                            else -> Log.d(TAG, "Skipping invalid command")
+                        }
                     }
+                }
+            }
+            COMMAND_RINGER_MODE -> {
+                val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val notificationManager =
+                        applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                        requestDNDPermission()
+                    } else {
+                        processRingerMode(audioManager, title)
+                    }
+                } else {
+                    processRingerMode(audioManager, title)
                 }
             }
             else -> Log.d(TAG, "No command received")
@@ -738,6 +778,23 @@ class MessagingService : FirebaseMessagingService() {
             .trim()
             .toLowerCase(Locale.ROOT)
             .replace(" ", "_")
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun requestDNDPermission() {
+        val intent =
+            Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+    private fun processRingerMode(audioManager: AudioManager, title: String?) {
+        when (title) {
+            RM_NORMAL -> audioManager.ringerMode = AudioManager.RINGER_MODE_NORMAL
+            RM_SILENT -> audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
+            RM_VIBRATE -> audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
+            else -> Log.d(TAG, "Skipping invalid command")
+        }
     }
 
     /**
