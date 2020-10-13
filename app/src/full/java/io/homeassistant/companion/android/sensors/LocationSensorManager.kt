@@ -9,6 +9,7 @@ import android.location.Location
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
+import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
@@ -72,6 +73,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         private var lastLocationSend = 0L
         private var lastUpdateLocation = ""
+
+        private var zoneStatusEvent = ""
     }
 
     @Inject
@@ -208,6 +211,27 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         if (geofencingEvent.hasError()) {
             Log.e(TAG, "Error getting geofence broadcast status code: ${geofencingEvent.errorCode}")
             return
+        }
+
+        val validGeofencingEvents = listOf(Geofence.GEOFENCE_TRANSITION_ENTER, Geofence.GEOFENCE_TRANSITION_EXIT)
+        if (geofencingEvent.geofenceTransition in validGeofencingEvents) {
+            when (geofencingEvent.geofenceTransition) {
+                Geofence.GEOFENCE_TRANSITION_ENTER -> zoneStatusEvent = "mobile_app_zone_entered"
+                Geofence.GEOFENCE_TRANSITION_EXIT -> zoneStatusEvent = "mobile_app_zone_exited"
+            }
+            val zoneAttr = geofencingEvent.triggeringLocation.extras.keySet()
+                .map { it to geofencingEvent.triggeringLocation.extras.get(it) }
+                .toMap()
+            runBlocking {
+                try {
+                    integrationUseCase.fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
+                    Log.d(TAG, "Event sent to Home Assistant")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send event to Home Assistant", e)
+                    Toast.makeText(latestContext, R.string.zone_event_failure, Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
         }
 
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
