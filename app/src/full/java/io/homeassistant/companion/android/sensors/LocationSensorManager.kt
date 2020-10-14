@@ -320,6 +320,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             }
         }
         lastLocationSend = now
+        geofenceUpdate = false
         lastUpdateLocation = updateLocation.gps.contentToString()
 
         ioScope.launch {
