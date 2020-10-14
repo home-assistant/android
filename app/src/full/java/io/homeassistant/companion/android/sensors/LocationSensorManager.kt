@@ -74,9 +74,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         private var lastLocationSend = 0L
         private var lastUpdateLocation = ""
 
-        private var zoneStatusEvent = ""
         private var geofenceRegistered = false
-        private var geofenceUpdate = false
     }
 
     @Inject
@@ -238,21 +236,22 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         val validGeofencingEvents = listOf(Geofence.GEOFENCE_TRANSITION_ENTER, Geofence.GEOFENCE_TRANSITION_EXIT)
         if (geofencingEvent.geofenceTransition in validGeofencingEvents) {
-            when (geofencingEvent.geofenceTransition) {
-                Geofence.GEOFENCE_TRANSITION_ENTER -> zoneStatusEvent = "android.zone_entered"
-                Geofence.GEOFENCE_TRANSITION_EXIT -> zoneStatusEvent = "android.zone_exited"
+            val zoneStatusEvent = when (geofencingEvent.geofenceTransition) {
+                Geofence.GEOFENCE_TRANSITION_ENTER -> "android.zone_entered"
+                Geofence.GEOFENCE_TRANSITION_EXIT -> "android.zone_exited"
+                else -> ""
             }
-            val zoneAttr = geofencingEvent.triggeringLocation.extras.keySet()
-                .map { it to geofencingEvent.triggeringLocation.extras.get(it) }
-                .toMap()
-                .plus("accuracy" to geofencingEvent.triggeringLocation.accuracy)
-                .plus("altitude" to geofencingEvent.triggeringLocation.altitude)
-                .plus("bearing" to geofencingEvent.triggeringLocation.bearing)
-                .plus("latitude" to geofencingEvent.triggeringLocation.latitude)
-                .plus("longitude" to geofencingEvent.triggeringLocation.longitude)
-                .plus("provider" to geofencingEvent.triggeringLocation.provider)
-                .plus("time" to geofencingEvent.triggeringLocation.time)
-                .plus("zone" to geofencingEvent.triggeringGeofences[0].requestId)
+            val zoneAttr = mapOf(
+                "accuracy" to geofencingEvent.triggeringLocation.accuracy,
+                "altitude" to geofencingEvent.triggeringLocation.altitude,
+                "bearing" to geofencingEvent.triggeringLocation.bearing,
+                "latitude" to geofencingEvent.triggeringLocation.latitude,
+                "longitude" to geofencingEvent.triggeringLocation.longitude,
+                "provider" to geofencingEvent.triggeringLocation.provider,
+                "time" to geofencingEvent.triggeringLocation.time,
+                "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation.verticalAccuracyMeters.toInt() else 0,
+                "zone" to geofencingEvent.triggeringGeofences[0].requestId
+            )
             runBlocking {
                 try {
                     integrationUseCase.fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
@@ -277,15 +276,13 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 TAG,
                 "Geofence location accuracy didn't meet requirements, requesting new location."
             )
-            geofenceUpdate = false
             requestSingleAccurateLocation()
         } else {
-            geofenceUpdate = true
-            sendLocationUpdate(geofencingEvent.triggeringLocation)
+            sendLocationUpdate(geofencingEvent.triggeringLocation, "", true)
         }
     }
 
-    private fun sendLocationUpdate(location: Location, name: String = "") {
+    private fun sendLocationUpdate(location: Location, name: String = "", geofenceUpdate: Boolean = false) {
         Log.d(
             TAG, "Last Location: " +
                     "\nCoords:(${location.latitude}, ${location.longitude})" +
@@ -320,7 +317,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             }
         }
         lastLocationSend = now
-        geofenceUpdate = false
         lastUpdateLocation = updateLocation.gps.contentToString()
 
         ioScope.launch {
