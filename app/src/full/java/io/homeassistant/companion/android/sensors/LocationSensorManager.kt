@@ -219,6 +219,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             val geofencingClient = LocationServices.getGeofencingClient(latestContext)
             val zoneIntent = getLocationUpdateIntent(true)
             geofencingClient.removeGeofences(zoneIntent)
+            geofenceRegistered = false
             return
         }
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
@@ -350,6 +351,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     .build()
             )
         }
+        geofenceRegistered = true
         return geofencingRequestBuilder.build()
     }
 
