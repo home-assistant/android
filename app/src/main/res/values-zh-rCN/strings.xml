@@ -17,13 +17,18 @@
   <string name="basic_sensor_name_battery_state">电池状态</string>
   <string name="basic_sensor_name_bluetooth">蓝牙连接</string>
   <string name="basic_sensor_name_bluetooth_state">蓝牙状态</string>
+  <string name="basic_sensor_name_call_number">电话号码</string>
   <string name="basic_sensor_name_charger_type">充电类型</string>
   <string name="basic_sensor_name_charging">正在充电</string>
+  <string name="basic_sensor_name_device_locked">设备已锁定</string>
+  <string name="basic_sensor_name_device_secure">设备安全</string>
   <string name="basic_sensor_name_doze">低电耗模式</string>
   <string name="basic_sensor_name_external_storage">外部存储</string>
   <string name="basic_sensor_name_geolocation">地理编码位置</string>
   <string name="basic_sensor_name_interactive">交互状态</string>
   <string name="basic_sensor_name_internal_storage">内部存储</string>
+  <string name="basic_sensor_name_keyguard_locked">键盘锁已锁定</string>
+  <string name="basic_sensor_name_keyguard_secure">键盘锁安全</string>
   <string name="basic_sensor_name_last_reboot">上次重启</string>
   <string name="basic_sensor_name_location_accurate">单一准确位置</string>
   <string name="basic_sensor_name_location_background">后台位置</string>
@@ -54,17 +59,26 @@
   <string name="config">配置</string>
   <string name="configure_service_call">配置服务</string>
   <string name="configure_widget_label">小部件标签</string>
+  <string name="connect_to_home_assistant">连接 Home Assistant</string>
   <string name="connect_to_home_internet">确保手机已连接
 到您的家庭互联网。</string>
   <string name="connected_to_home_assistant">连接到 Home Assistant</string>
   <string name="create_template">创建模板</string>
+  <string name="database_event_failure">无法将迁移失败事件发送到Home Assistant</string>
+  <string name="database_migration_failed">数据库迁移失败，所有传感器和窗口小部件数据已重置。请重新启用传感器并重新创建小部件。</string>
   <string name="developer_tools">开发者工具</string>
   <string name="device_class">设备类别</string>
   <string name="device_name">设备名称</string>
   <string name="device_registration">设备注册</string>
   <string name="dialog_add_panel_shortcut_content">创建此项目的快捷方式？</string>
   <string name="dialog_add_panel_shortcut_title">添加快捷方式</string>
+  <string name="disable_all_sensors">禁用所有%1$d传感器</string>
   <string name="documentation">文档</string>
+  <string name="enable_all_sensors">启用所有传感器</string>
+  <string name="enable_all_sensors_summary">启用后将要求所有必需的权限</string>
+  <string name="enable_location_tracking">启用位置跟踪</string>
+  <string name="enable_location_tracking_description">启用此传感器将允许Home Assistant应用程序跟踪您的位置并将其报告给您的Home Assistant实例。确保您启用对位置的后台访问，否则我们将无法启用位置跟踪。</string>
+  <string name="enable_remaining_sensors">启用%1$d传感器</string>
   <string name="enabled_summary">启用后将发送到Home Assistant</string>
   <string name="enabled_title">启用</string>
   <string name="entity_attribute_checkbox">附加属性值</string>
@@ -101,6 +115,8 @@ Home Assistant实例</string>
   <string name="lockscreen_title">应用已锁定！</string>
   <string name="logbook">日志</string>
   <string name="mailbox">邮箱</string>
+  <string name="manage_all_sensors">管理所有传感器</string>
+  <string name="manage_all_sensors_summary">此设备具有%1$d可用传感器。</string>
   <string name="manage_ssids">管理SSID</string>
   <string name="manage_ssids_input">新的WiFi SSID</string>
   <string name="manage_ssids_input_exists">该SSID已经存在。</string>
@@ -116,6 +132,7 @@ Home Assistant实例</string>
   <string name="nfc_event_fired_fail">发射事件失败。请再试一遍。</string>
   <string name="nfc_event_fired_success">事件已触发</string>
   <string name="nfc_example_trigger">触发示例</string>
+  <string name="nfc_invalid_tag">该标签不包含Home Assistant数据</string>
   <string name="nfc_processing_tag_error">处理NFC标签时出错</string>
   <string name="nfc_read_fragment_label">NFC读取片段</string>
   <string name="nfc_read_tag_instructions">将手机放在NFC标签上以进行读取。</string>
@@ -131,6 +148,7 @@ Home Assistant实例</string>
   <string name="nfc_write_tag_success">成功写入NFC标签</string>
   <string name="nfc_write_tag_too_early">请先填写表单</string>
   <string name="not_private">您与该站点的连接不是私有的。</string>
+  <string name="notification_dismiss_failure">发送通知失败时发送事件失败</string>
   <string name="other_settings">其他设置</string>
   <string name="password">密码</string>
   <string name="permission_explanation">为了使用基于 WiFi SSID 的位置跟踪功能或不同的连接 URL，我们需要访问您的位置。如果需要一致的后台更新，还需要程序允许后台运行</string>
@@ -169,9 +187,12 @@ Home Assistant实例</string>
   <string name="sensor_description_battery_state">电池当前的充电状态</string>
   <string name="sensor_description_bluetooth_connection">有关当前连接的蓝牙设备的信息</string>
   <string name="sensor_description_bluetooth_state">是否在设备上启用了蓝牙</string>
+  <string name="sensor_description_call_number">来电或去电的手机号码</string>
   <string name="sensor_description_charger_type">当前插入设备的充电器类型</string>
   <string name="sensor_description_charging">设备是否正在充电</string>
   <string name="sensor_description_detected_activity">由Google的Activity Recognition API计算出的当前活动类型</string>
+  <string name="sensor_description_device_locked">是否锁定当前设备，并且需要PIN，图案或密码才能解锁。</string>
+  <string name="sensor_description_device_secure">设备是否用PIN，图案或密码保护。</string>
   <string name="sensor_description_dnd_sensor">\"请勿打扰\"的当前状态</string>
   <string name="sensor_description_doze">设备是否处于低电耗模式</string>
   <string name="sensor_description_external_storage">有关外部总存储空间和可用存储空间的信息</string>
@@ -179,6 +200,8 @@ Home Assistant实例</string>
   <string name="sensor_description_headphone">耳机是否已插入设备</string>
   <string name="sensor_description_interactive">设备是否处于交互状态</string>
   <string name="sensor_description_internal_storage">内部有关总存储空间和可用存储空间的信息</string>
+  <string name="sensor_description_keyguard_locked">键盘锁当前是否处于锁定状态。</string>
+  <string name="sensor_description_keyguard_secure">当前键盘锁是通过PIN，图案或密码保护的或SIM卡处于锁定状态。</string>
   <string name="sensor_description_last_reboot">上次重新启动设备的日期和时间。下面的设置将允许您调整中性区（以毫秒为单位）（如果您仍然发现该值跳转不正确）。默认值为 60000（1 分钟）。</string>
   <string name="sensor_description_light_sensor">当前照度级别</string>
   <string name="sensor_description_location_accurate">允许Home Assistant发送通知以请求准确的位置以及应用程序定期请求准确的位置。最低精度设置可让您决定设备位置的精度（以米为单位）才能发送到家庭助理。更新之间的最短时间（以毫秒为单位）可防止设备过于频繁地发送准确的位置。</string>
@@ -222,6 +245,7 @@ Home Assistant实例</string>
   <string name="sensor_name_dnd">免打扰传感器</string>
   <string name="sensor_name_geolocation">地理位置传感器</string>
   <string name="sensor_name_headphone">耳机通话</string>
+  <string name="sensor_name_keyguard">键盘锁传感器</string>
   <string name="sensor_name_last_reboot">上次重启传感器</string>
   <string name="sensor_name_light">光传感器</string>
   <string name="sensor_name_location">位置传感器</string>
@@ -245,6 +269,7 @@ Home Assistant实例</string>
   <string name="sensor_summary">使用它来管理启用/禁用的传感器。</string>
   <string name="sensor_title">管理传感器</string>
   <string name="sensors">传感器</string>
+  <string name="sensors_with_settings">以下传感器提供自定义设置： %1$s</string>
   <string name="session_timeout_title">会话超时（秒）</string>
   <string name="set_lock_message">没有可用的生物识别传感器或屏幕锁凭据</string>
   <string name="set_lock_title">应用锁定错误</string>
@@ -264,6 +289,8 @@ Home Assistant实例</string>
   <string name="themes_option_label_light">亮色</string>
   <string name="themes_option_label_system">跟随系统设置</string>
   <string name="themes_title_settings">主题</string>
+  <string name="tts_error">无法将通知“ %1$s ”作为文字转语音处理。</string>
+  <string name="tts_no_title">请设置文字标题以进行语音处理</string>
   <string name="unable_to_register">无法注册应用程序</string>
   <string name="unique_id">唯一 ID</string>
   <string name="updating_sensors">更新传感器</string>

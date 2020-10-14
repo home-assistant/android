@@ -53,6 +53,7 @@
   <string name="config">Настройки</string>
   <string name="configure_service_call">Настройка вызова службы</string>
   <string name="configure_widget_label">Название виджета</string>
+  <string name="connect_to_home_assistant">Подключиться к Home Assistant</string>
   <string name="connect_to_home_internet">Убедитесь, что Ваш телефон подключен 
 к домашней сети.</string>
   <string name="connected_to_home_assistant">Подключено к Home Assistant</string>
@@ -64,6 +65,8 @@
   <string name="dialog_add_panel_shortcut_content">Создать ярлык для этого элемента?</string>
   <string name="dialog_add_panel_shortcut_title">Добавить Ярлык</string>
   <string name="documentation">Документация</string>
+  <string name="enable_location_tracking">Включить отслеживание местоположения</string>
+  <string name="enable_location_tracking_description">Это позволит Home Assistant отслеживать Ваше местоположение. Убедитесь, что приложению предоставлен доступ к местоположению в фоновом режиме, в противном случае отслеживание местоположения работать не будет.</string>
   <string name="enabled_summary">Если выключено, значения не будут отправляться в Home Assistant</string>
   <string name="enabled_title">Включено</string>
   <string name="entity_attribute_checkbox">Добавить значение атрибута</string>

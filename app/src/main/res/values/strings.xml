@@ -21,10 +21,6 @@
   <string name="auth_error">Authentication Error</string>
   <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
   <string name="auth_request">Authentication Requested</string>
-  <string name="basic_sensor_name_device_locked">Device Locked</string>
-  <string name="basic_sensor_name_device_secure">Device Secure</string>
-  <string name="basic_sensor_name_keyguard_locked">Keyguard Locked</string>
-  <string name="basic_sensor_name_keyguard_secure">Keyguard Secure</string>
   <string name="basic_sensor_name_activity">Detected Activity</string>
   <string name="basic_sensor_name_alarm">Next Alarm</string>
   <string name="basic_sensor_name_battery_health">Battery Health</string>
@@ -35,11 +31,15 @@
   <string name="basic_sensor_name_call_number">Call Number</string>
   <string name="basic_sensor_name_charger_type">Charger Type</string>
   <string name="basic_sensor_name_charging">Is Charging</string>
+  <string name="basic_sensor_name_device_locked">Device Locked</string>
+  <string name="basic_sensor_name_device_secure">Device Secure</string>
   <string name="basic_sensor_name_doze">Doze Mode</string>
   <string name="basic_sensor_name_external_storage">External Storage</string>
   <string name="basic_sensor_name_geolocation">Geocoded Location</string>
   <string name="basic_sensor_name_interactive">Interactive</string>
   <string name="basic_sensor_name_internal_storage">Internal Storage</string>
+  <string name="basic_sensor_name_keyguard_locked">Keyguard Locked</string>
+  <string name="basic_sensor_name_keyguard_secure">Keyguard Secure</string>
   <string name="basic_sensor_name_last_notification">Last Notification</string>
   <string name="basic_sensor_name_last_reboot">Last Reboot</string>
   <string name="basic_sensor_name_location_accurate">Single Accurate Location</string>
@@ -76,28 +76,23 @@
 to your home internet.</string>
   <string name="connected_to_home_assistant">Connected to Home Assistant</string>
   <string name="create_template">Create Template</string>
-  <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
   <string name="database_event_failure">Unable to send migration failure event to Home Assistant</string>
+  <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
   <string name="developer_tools">Developer Tools</string>
   <string name="device_class">Device Class</string>
   <string name="device_name">Device Name</string>
   <string name="device_registration">Device Registration</string>
   <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
   <string name="dialog_add_panel_shortcut_title">Add Shortcut</string>
+  <string name="disable_all_sensors">Disable All %1$d Sensors</string>
   <string name="documentation">Documentation</string>
+  <string name="enable_all_sensors">Enable All Sensors</string>
+  <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
   <string name="enable_location_tracking">Enable Location Tracking</string>
   <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.</string>
-  <string name="enable_all_sensors">Enable All Sensors</string>
   <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
-  <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
-  <string name="manage_all_sensors">Manage All Sensors</string>
-  <string name="manage_all_sensors_summary">This device has %1$d available sensors to utilize.</string>
-  <string name="disable_all_sensors">Disable All %1$d Sensors</string>
-  <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
   <string name="enabled_title">Enabled</string>
-  <string name="tts_error">Unable to process notification "%1$s" as text to speech.</string>
-  <string name="tts_no_title">Please set a title for text to speech to process</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
   <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
   <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
@@ -133,16 +128,15 @@ Home Assistant instance</string>
   <string name="lockscreen_title">App Locked !</string>
   <string name="logbook">Logbook</string>
   <string name="mailbox">Mailbox</string>
+  <string name="manage_all_sensors">Manage All Sensors</string>
+  <string name="manage_all_sensors_summary">This device has %1$d available sensors to utilize.</string>
   <string name="manage_ssids">Manage SSID(s)</string>
   <string name="manage_ssids_input">New WiFi SSID</string>
   <string name="manage_ssids_input_exists">This SSID already exists.</string>
   <string name="manual_setup">enter address manually</string>
   <string name="map">Map</string>
   <string name="need_help">Need Help?</string>
-  <string name="notification_clear_failure">Failed to send event on notification cleared</string>
   <string name="nfc_btn_create_duplicate">Create duplicate</string>
-  <string name="rate_limit_title">Notification Rate Limit</string>
-  <string name="rate_limit_summary">Rate limit data</string>
   <string name="nfc_btn_fire_event">Fire event</string>
   <string name="nfc_btn_read_tag">Read NFC Tag</string>
   <string name="nfc_btn_share">Share</string>
@@ -151,6 +145,7 @@ Home Assistant instance</string>
   <string name="nfc_event_fired_fail">Firing event failed. Please try again.</string>
   <string name="nfc_event_fired_success">Event fired</string>
   <string name="nfc_example_trigger">Example Trigger</string>
+  <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
   <string name="nfc_processing_tag_error">Error while processing nfc tag</string>
   <string name="nfc_read_fragment_label">NFC Read Fragment</string>
   <string name="nfc_read_tag_instructions">Place your phone over the nfc tag to read it.</string>
@@ -166,6 +161,8 @@ Home Assistant instance</string>
   <string name="nfc_write_tag_success">Successfully wrote nfc tag</string>
   <string name="nfc_write_tag_too_early">Please fill out the form first</string>
   <string name="not_private">Your connection to this site is not private.</string>
+  <string name="notification_clear_failure">Failed to send event on notification cleared</string>
+  <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
   <string name="other_settings">Other Settings</string>
   <string name="password">Password</string>
   <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
@@ -185,6 +182,8 @@ Home Assistant instance</string>
   <string name="qrcode_processing_tag_error">Error while processing qrcode tag</string>
   <string name="rate_limit_notification.body">You have now sent more than %s notifications today. You will not receive new notifications until midnight UTC.</string>
   <string name="rate_limit_notification.title">Notifications Rate Limited</string>
+  <string name="rate_limit_summary">Rate limit data</string>
+  <string name="rate_limit_title">Notification Rate Limit</string>
   <string name="refresh">Refresh</string>
   <string name="required_fields">requires a username and password.</string>
   <string name="retry">Retry</string>
@@ -198,10 +197,6 @@ for Home Assistant</string>
 like to connect to:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Description</string>
-  <string name="sensor_description_device_locked">Whether the device is currently locked and requires a PIN, pattern or password to unlock.</string>
-  <string name="sensor_description_device_secure">Whether the device is secured with a PIN, pattern or password.</string>
-  <string name="sensor_description_keyguard_locked">Whether the keyguard is currently locked.</string>
-  <string name="sensor_description_keyguard_secure">Whether the keyguard is secured by a PIN, pattern or password or a SIM card is currently locked.</string>
   <string name="sensor_description_audio_mode">The state of the devices audio mode</string>
   <string name="sensor_description_audio_sensor">The state of the devices ringer mode</string>
   <string name="sensor_description_battery_health">The health of the battery</string>
@@ -213,6 +208,8 @@ like to connect to:</string>
   <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
   <string name="sensor_description_charging">Whether or not the device is actively charging</string>
   <string name="sensor_description_detected_activity">The current activity type as computed by Googles Activity Recognition API</string>
+  <string name="sensor_description_device_locked">Whether the device is currently locked and requires a PIN, pattern or password to unlock.</string>
+  <string name="sensor_description_device_secure">Whether the device is secured with a PIN, pattern or password.</string>
   <string name="sensor_description_dnd_sensor">The current state of Do Not Disturb</string>
   <string name="sensor_description_doze">Whether or not the device is in Doze mode</string>
   <string name="sensor_description_external_storage">Information about the total and available storage space externally</string>
@@ -220,6 +217,8 @@ like to connect to:</string>
   <string name="sensor_description_headphone">Whether or not headphones are plugged into the device</string>
   <string name="sensor_description_interactive">Whether or not the device is in an interactive state</string>
   <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
+  <string name="sensor_description_keyguard_locked">Whether the keyguard is currently locked.</string>
+  <string name="sensor_description_keyguard_secure">Whether the keyguard is secured by a PIN, pattern or password or a SIM card is currently locked.</string>
   <string name="sensor_description_last_notification">The details of the last notification.</string>
   <string name="sensor_description_last_reboot">The date and time of the devices last reboot. The setting below will allow you to adjust the deadband in milliseconds, if you still find the value to jump incorrectly. The default value is 60000 (1 minute).</string>
   <string name="sensor_description_light_sensor">The current level of illuminance</string>
@@ -256,7 +255,6 @@ like to connect to:</string>
   <string name="sensor_description_wifi_signal">The signal strength of the device to the WiFi network</string>
   <string name="sensor_description_wifi_state">Whether or not WiFi is enabled on the device</string>
   <string name="sensor_name_activity">Activity Sensors</string>
-  <string name="sensor_name_keyguard">Keyguard Sensors</string>
   <string name="sensor_name_alarm">Alarm Sensor</string>
   <string name="sensor_name_audio">Audio Sensors</string>
   <string name="sensor_name_audio_mode">Audio Mode</string>
@@ -265,6 +263,7 @@ like to connect to:</string>
   <string name="sensor_name_dnd">Do Not Disturb Sensor</string>
   <string name="sensor_name_geolocation">Geolocation Sensors</string>
   <string name="sensor_name_headphone">Headphones</string>
+  <string name="sensor_name_keyguard">Keyguard Sensors</string>
   <string name="sensor_name_last_notification">Notification Sensors</string>
   <string name="sensor_name_last_reboot">Last Reboot Sensor</string>
   <string name="sensor_name_light">Light Sensor</string>
@@ -289,6 +288,7 @@ like to connect to:</string>
   <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
   <string name="sensor_title">Manage Sensors</string>
   <string name="sensors">Sensors</string>
+  <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
   <string name="set_lock_title">App Locking Error</string>
@@ -311,6 +311,8 @@ like to connect to:</string>
   <string name="themes_option_value_light">light</string>
   <string name="themes_option_value_system">system</string>
   <string name="themes_title_settings">Theme</string>
+  <string name="tts_error">Unable to process notification \"%1$s\" as text to speech.</string>
+  <string name="tts_no_title">Please set a title for text to speech to process</string>
   <string name="unable_to_register">Unable to Register Application</string>
   <string name="unique_id">Unique Id</string>
   <string name="updating_sensors">Updating Sensors</string>
@@ -333,6 +335,14 @@ like to connect to:</string>
   <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
   <string name="widget_image_description">Home Assistant Widget</string>
   <string name="widget_label_placeholder_text">Label</string>
+  <string name="widget_media_fastforward_button">Fast Forward</string>
+  <string name="widget_media_image_description">Media Playing Preview Image</string>
+  <string name="widget_media_next_track_button">Next Track</string>
+  <string name="widget_media_playpause_button">Play/Pause</string>
+  <string name="widget_media_prev_track_button">Previous Track</string>
+  <string name="widget_media_rewind_button">Rewind</string>
+  <string name="widget_media_show_seek">Show Seek Buttons</string>
+  <string name="widget_media_show_skip">Show Skip Buttons</string>
   <string name="widget_separator_input_hint">No separator</string>
   <string name="widget_separator_label">State and attribute separator:</string>
   <string name="widget_spinner_icon">Icon:</string>
@@ -344,13 +354,4 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_default">30</string>
   <string name="widget_text_size_label">Widget text size:</string>
-  <string name="widget_media_show_skip">Show Skip Buttons</string>
-  <string name="widget_media_show_seek">Show Seek Buttons</string>
-  <string name="widget_media_image_description">Media Playing Preview Image</string>
-  <string name="widget_media_prev_track_button">Previous Track</string>
-  <string name="widget_media_rewind_button">Rewind</string>
-  <string name="widget_media_playpause_button">Play/Pause</string>
-  <string name="widget_media_fastforward_button">Fast Forward</string>
-  <string name="widget_media_next_track_button">Next Track</string>
-  <string name="nfc_invalid_tag">This tag does not contain Home Assistant data</string>
 </resources>

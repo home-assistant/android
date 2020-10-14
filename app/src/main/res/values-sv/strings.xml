@@ -21,7 +21,7 @@
   <string name="basic_sensor_name_doze">Dåsläge</string>
   <string name="basic_sensor_name_external_storage">Extern lagring</string>
   <string name="basic_sensor_name_geolocation">Geokodad plats</string>
-  <string name="basic_sensor_name_interactive">Interaktiv </string>
+  <string name="basic_sensor_name_interactive">Interaktiv</string>
   <string name="basic_sensor_name_internal_storage">Intern lagring</string>
   <string name="basic_sensor_name_last_reboot">Senaste omstart</string>
   <string name="basic_sensor_name_location_background">Bakgrundsplats</string>
@@ -79,8 +79,7 @@
   <string name="fullscreen_def">Sätt applikationen i helskärm</string>
   <string name="grant_permission">Bevilja behörighet</string>
   <string name="history">Historik</string>
-  <string name="home_assistant_not_discover">Det gick inte att hitta din 
- Home Assistant-instans</string>
+  <string name="home_assistant_not_discover">Det gick inte att hitta din Home Assistant-instans</string>
   <string name="icon">Ikon</string>
   <string name="label_dynamic_data">Data</string>
   <string name="label_entity_id">Entitets-ID</string>
@@ -109,7 +108,7 @@
   <string name="nfc_event_fired_fail">Avfyrningshändelsen misslyckades. Var god försök igen.</string>
   <string name="nfc_event_fired_success">Händelsen avfyrade</string>
   <string name="nfc_example_trigger">Exempel på utlösare</string>
-  <string name="nfc_processing_tag_error">Fel vid bearbetning av nfc-taggen</string>
+  <string name="nfc_processing_tag_error">Fel vid bearbetning av NFC taggen</string>
   <string name="nfc_read_fragment_label">NFC Läs fragment</string>
   <string name="nfc_read_tag_instructions">Placera din telefon över nfc-taggen för att läsa den.</string>
   <string name="nfc_summary">Konfigurera NFC-taggar</string>
@@ -122,7 +121,7 @@
   <string name="nfc_write_tag_instructions">Placera telefonen över nfc-taggen för att skriva följande identifierare till den %1$s</string>
   <string name="nfc_write_tag_success">Skrivning av nfc-taggen lyckades</string>
   <string name="nfc_write_tag_too_early">Fyll i formuläret först</string>
-  <string name="not_private">Anslutningen till denna sida är inte privat. </string>
+  <string name="not_private">Anslutningen till denna sida är inte privat.</string>
   <string name="other_settings">Övriga inställningar</string>
   <string name="password">Lösenord</string>
   <string name="permission_explanation">För att kunna använda platstjänster eller olika URL för att ansluta baserat på WiFi SSID så behövs åtkomst till platsdata. Om du vill ha regelbundna uppdateringar i bakgrunden så behöver du också tillåta bakgrundsprocesser.</string>

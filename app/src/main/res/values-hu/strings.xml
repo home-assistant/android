@@ -40,10 +40,12 @@
   <string name="biometric_title">A Home Assistant zárolva van</string>
   <string name="calendar">Naptár</string>
   <string name="cancel">Mégse</string>
+  <string name="changelog">Változási napló</string>
   <string name="checking_with_home_assistant">Ellenőrzés a Home Assistant-tal</string>
   <string name="config">Konfiguráció</string>
   <string name="configure_service_call">Szolgáltatás meghívásának konfigurálása</string>
   <string name="configure_widget_label">Widget címke</string>
+  <string name="connect_to_home_assistant">Csatlakozás az Otthoni segédhez</string>
   <string name="connect_to_home_internet">Győződj meg róla, hogy a telefonod az
 otthoni internetedre van csatlakoztatva.</string>
   <string name="connected_to_home_assistant">Csatlakoztatva a Home Assistant-hoz</string>
@@ -54,7 +56,10 @@ otthoni internetedre van csatlakoztatva.</string>
   <string name="device_registration">Eszköz regisztráció</string>
   <string name="dialog_add_panel_shortcut_content">Létrehozol egy parancsikont ehhez az elemhez?</string>
   <string name="dialog_add_panel_shortcut_title">Parancsikon létrehozása</string>
+  <string name="disable_all_sensors">Összes %1$d  Érzékelő Kikapcsolása</string>
   <string name="documentation">Dokumentáció</string>
+  <string name="enable_all_sensors">Összes Érzékelő Engedélyezése</string>
+  <string name="enable_remaining_sensors">Engedélyezze a (z) %1$d érzékelőt</string>
   <string name="enabled_title">Engedélyezve</string>
   <string name="entity_attribute_checkbox">Attribútumérték hozzáfűzése</string>
   <string name="error_auth_revoked">Úgy tűnik, hogy az engedélyed vissza lett vonva. Kérlek, csatlakozz újra a Home Assistant-hoz.</string>
@@ -91,6 +96,8 @@ a Home Assistant példányod</string>
   <string name="lockscreen_title">Alkalmazás zárolva!</string>
   <string name="logbook">Napló</string>
   <string name="mailbox">Postafiók</string>
+  <string name="manage_all_sensors">Összes Érzékelő Kezelése</string>
+  <string name="manage_all_sensors_summary">Ennek az eszköznek %1$d rendelkezésre álló érzékelője használható.</string>
   <string name="manage_ssids">SSID-k kezelése</string>
   <string name="manage_ssids_input">Új WiFi SSID</string>
   <string name="manage_ssids_input_exists">Ez az SSID már létezik.</string>
@@ -150,6 +157,7 @@ amihez csatlakozni szeretnél:</string>
   <string name="sensor_name_bluetooth">Bluetooth érzékelők</string>
   <string name="sensor_name_dnd">Ne zavarjanak érzékelő</string>
   <string name="sensor_name_headphone">Fejhallgató</string>
+  <string name="sensor_name_keyguard">Keyguard Érzékelők</string>
   <string name="sensor_name_last_reboot">Utolsó újraindítás érzékelő</string>
   <string name="sensor_name_light">Fényérzékelő</string>
   <string name="sensor_name_mic_muted">Mikrofon némítva</string>

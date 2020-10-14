@@ -18,6 +18,7 @@
   <string name="basic_sensor_name_bluetooth">Bluetooth pripojenie</string>
   <string name="basic_sensor_name_bluetooth_state">Stav Bluetooth</string>
   <string name="basic_sensor_name_charger_type">Typ nabíjačky</string>
+  <string name="basic_sensor_name_device_locked">Zariadenie uzamknuté</string>
   <string name="basic_sensor_name_external_storage">Externé úložisko</string>
   <string name="basic_sensor_name_geolocation">Geokódované umiestnenie</string>
   <string name="basic_sensor_name_internal_storage">Interné úložisko</string>
@@ -55,6 +56,7 @@ na váš domáci Internet.</string>
   <string name="dialog_add_panel_shortcut_content">Vytvoriť odkaz na túto položku?</string>
   <string name="dialog_add_panel_shortcut_title">Pridať odkaz</string>
   <string name="documentation">Dokumentácia</string>
+  <string name="enable_all_sensors_summary">Všetky požadované povolenia sa budú vyžiadané pri aktivovaní</string>
   <string name="enabled_summary">Keď je povolené hodnoty sa odošlú do Home Assistant</string>
   <string name="enabled_title">Povolené</string>
   <string name="entity_attribute_checkbox">Pridať hodnotu atribútu</string>
@@ -74,8 +76,7 @@ integráciu v Home Assistant.</string>
   <string name="fullscreen_def">Zobraziť aplikáciu na celú obrazovku</string>
   <string name="grant_permission">Udeliť povolenie</string>
   <string name="history">História</string>
-  <string name="home_assistant_not_discover">Nepodarilo sa nájsť váš
-Home Assistant</string>
+  <string name="home_assistant_not_discover">Nepodarilo sa nájsť váš Home Assistant</string>
   <string name="icon">Ikona</string>
   <string name="input_url">Home Assistant URL</string>
   <string name="input_url_hint">https://example.duckdns.org:8123</string>
@@ -92,6 +93,7 @@ Home Assistant</string>
   <string name="lockscreen_title">Aplikácia je zamknutá!</string>
   <string name="logbook">Denník</string>
   <string name="mailbox">Poštová schránka</string>
+  <string name="manage_all_sensors">Správa všetkých senzorov</string>
   <string name="manage_ssids">Spravovať identifikátory SSID</string>
   <string name="manage_ssids_input">Nové WiFi SSID</string>
   <string name="manage_ssids_input_exists">Tento identifikátor SSID už existuje.</string>
@@ -107,7 +109,7 @@ Home Assistant</string>
   <string name="nfc_event_fired_fail">Spustenie udalosti zlyhalo. Prosím skúste znova.</string>
   <string name="nfc_event_fired_success">Udalosť bola spustená</string>
   <string name="nfc_example_trigger">Príklad spúšťača</string>
-  <string name="nfc_processing_tag_error">Chyba pri spracovaní nfc tagu</string>
+  <string name="nfc_processing_tag_error">Chyba pri spracovaní NFC etiqueta</string>
   <string name="nfc_read_fragment_label">Prečítať NFC Fragment</string>
   <string name="nfc_read_tag_instructions">Položte telefón nad nfc tag a prečítajte si ho.</string>
   <string name="nfc_summary">Nastavenie NFC tagov</string>
@@ -121,7 +123,7 @@ Home Assistant</string>
   <string name="nfc_write_tag_instructions">Umiestnite telefón na nfc tag, aby ste doň mohli napísať nasledujúci identifikátor %1$s</string>
   <string name="nfc_write_tag_success">NFC tag bol úspešne zapísaný</string>
   <string name="nfc_write_tag_too_early">Najprv vyplňte formulár</string>
-  <string name="not_private">Pripojenie na túto lokalitu nie je súkromné.</string>
+  <string name="not_private">Pripojenie na túto lokalitu nie je súkromné</string>
   <string name="other_settings">Ďalšie nastavenia</string>
   <string name="password">Heslo</string>
   <string name="permission_explanation">Aby bolo možné používať funkcie sledovania polohy alebo rôzne adresy URL pripojenia založené na Wi-Fi SSID, potrebujeme prístup k vašej polohe. Ak chcete pravidelné aktualizácie na pozadí, budete tiež musieť povoliť spracovanie na pozadí</string>
@@ -145,8 +147,7 @@ Home Assistant</string>
   <string name="retry">Skúsiť znova</string>
   <string name="save">Uložiť</string>
   <string name="scan_again">skenovať znova</string>
-  <string name="scanning_network">Skenovanie siete
-pre Home Assistant</string>
+  <string name="scanning_network">Skenovanie siete pre Home Assistant</string>
   <string name="security">Bezpečnosť</string>
   <string name="select_entity_to_display">Vyberte Entitu, ktorú chcete zobraziť</string>
   <string name="select_instance">Vyberte inštanciu, ku ktorej
