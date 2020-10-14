@@ -75,6 +75,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         private var lastUpdateLocation = ""
 
         private var zoneStatusEvent = ""
+        private var geofenceRegistered = false
     }
 
     @Inject
@@ -173,6 +174,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             return
         }
 
+        if (geofenceRegistered) {
+            Log.w(TAG, "Not registering for zones as we already have")
+            return
+        }
+
         Log.d(TAG, "Registering for zone based location updates")
 
         try {
@@ -207,6 +213,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     private fun handleGeoUpdate(intent: Intent) {
         Log.d(TAG, "Received geofence update.")
+        if (!isEnabled(latestContext, zoneLocation.id)) {
+            isZoneLocationSetup = false
+            Log.w(TAG, "Unregistering geofences as zone tracking is disabled and intent was received")
+            val geofencingClient = LocationServices.getGeofencingClient(latestContext)
+            val zoneIntent = getLocationUpdateIntent(true)
+            geofencingClient.removeGeofences(zoneIntent)
+            return
+        }
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
             Log.e(TAG, "Error getting geofence broadcast status code: ${geofencingEvent.errorCode}")
@@ -216,8 +230,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val validGeofencingEvents = listOf(Geofence.GEOFENCE_TRANSITION_ENTER, Geofence.GEOFENCE_TRANSITION_EXIT)
         if (geofencingEvent.geofenceTransition in validGeofencingEvents) {
             when (geofencingEvent.geofenceTransition) {
-                Geofence.GEOFENCE_TRANSITION_ENTER -> zoneStatusEvent = "mobile_app_zone_entered"
-                Geofence.GEOFENCE_TRANSITION_EXIT -> zoneStatusEvent = "mobile_app_zone_exited"
+                Geofence.GEOFENCE_TRANSITION_ENTER -> zoneStatusEvent = "android.zone_entered"
+                Geofence.GEOFENCE_TRANSITION_EXIT -> zoneStatusEvent = "android.zone_exited"
             }
             val zoneAttr = geofencingEvent.triggeringLocation.extras.keySet()
                 .map { it to geofencingEvent.triggeringLocation.extras.get(it) }
@@ -229,7 +243,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 .plus("longitude" to geofencingEvent.triggeringLocation.longitude)
                 .plus("provider" to geofencingEvent.triggeringLocation.provider)
                 .plus("time" to geofencingEvent.triggeringLocation.time)
-
+                .plus("zone" to geofencingEvent.triggeringGeofences[0].requestId)
             runBlocking {
                 try {
                     integrationUseCase.fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
