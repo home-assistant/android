@@ -155,8 +155,7 @@ Home Assistant-instans</string>
   <string name="retry">Prøv igen</string>
   <string name="save">Gem</string>
   <string name="scan_again">scan igen</string>
-  <string name="scanning_network">Scanner netværket
-efter Home Assistant</string>
+  <string name="scanning_network">Scanner netværket efter Home Assistant</string>
   <string name="security">Sikkerhed</string>
   <string name="select_entity_to_display">Vælg den entitet, der skal vises</string>
   <string name="select_instance">Vælg den instans, du gerne

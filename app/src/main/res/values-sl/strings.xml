@@ -2,4 +2,5 @@
 <resources>
   <string name="rate_limit_notification.body">Danes ste poslali več kot %s obvestil. Novih obvestil ne boste prejeli do polnoči UTC.</string>
   <string name="rate_limit_notification.title">Omejeno je število obvestil</string>
+  <string name="scanning_network">Pregledujem omrežje za Home Assistant</string>
 </resources>

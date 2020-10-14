@@ -17,16 +17,20 @@
   <string name="basic_sensor_name_battery_state">État de la batterie</string>
   <string name="basic_sensor_name_bluetooth">Connexion Bluetooth</string>
   <string name="basic_sensor_name_bluetooth_state">État du Bluetooth</string>
+  <string name="basic_sensor_name_call_number">Numéro de téléphone</string>
   <string name="basic_sensor_name_charger_type">Type de chargeur</string>
   <string name="basic_sensor_name_charging">En charge</string>
+  <string name="basic_sensor_name_device_locked">Appareil verrouillé</string>
+  <string name="basic_sensor_name_device_secure">Appareil sécurisé</string>
   <string name="basic_sensor_name_doze">Mode Doze</string>
   <string name="basic_sensor_name_external_storage">Stockage externe</string>
   <string name="basic_sensor_name_geolocation">Lieu géocodé</string>
   <string name="basic_sensor_name_interactive">Interactif</string>
   <string name="basic_sensor_name_internal_storage">Stockage interne</string>
+  <string name="basic_sensor_name_last_notification">Dernière notification</string>
   <string name="basic_sensor_name_last_reboot">Dernier redémarrage</string>
   <string name="basic_sensor_name_location_accurate">Emplacement précis unique</string>
-  <string name="basic_sensor_name_location_background">Localisation d\'arrière plan</string>
+  <string name="basic_sensor_name_location_background">Localisation d\'arrière-plan</string>
   <string name="basic_sensor_name_location_zone">Zone de localisation</string>
   <string name="basic_sensor_name_mobile_rx_gb">Reçu mobile en GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Transmis mobile en GB</string>
@@ -59,15 +63,21 @@
  à votre Internet domestique.</string>
   <string name="connected_to_home_assistant">Connecté à Home Assistant</string>
   <string name="create_template">Créer un modèle</string>
+  <string name="database_event_failure">Impossible d\'envoyer l\'événement d\'échec de migration à Home Assistant</string>
+  <string name="database_migration_failed">La migration de la base de données a échoué, toutes les données des capteurs et des widgets ont été réinitialisées. Veuillez réactiver vos capteurs et recréer vos widgets</string>
   <string name="developer_tools">Outils de développement</string>
   <string name="device_class">Classe d\'appareil</string>
   <string name="device_name">Nom de l\'appareil</string>
   <string name="device_registration">Enregistrement de l\'appareil</string>
   <string name="dialog_add_panel_shortcut_content">Créer un raccourci vers cet élément?</string>
   <string name="dialog_add_panel_shortcut_title">Ajouter Un Raccourci</string>
+  <string name="disable_all_sensors">Désactiver tous les capteurs %1$d</string>
   <string name="documentation">Documentation</string>
+  <string name="enable_all_sensors">Activer tous les capteurs</string>
+  <string name="enable_all_sensors_summary">Toutes les autorisations requises seront demandées lors de l\'activation</string>
   <string name="enable_location_tracking">Permettre le suivi de la localisation</string>
   <string name="enable_location_tracking_description">L\'activation de ce capteur permettra à l\'application Home Assistant de suivre votre localisation et de la communiquer à votre instance de Home Assistant. Assurez-vous d\'activer l\'accès en arrière-plan à la localisation, sinon nous ne pourrons pas activer le suivi de la localisation.</string>
+  <string name="enable_remaining_sensors">Activer les capteurs %1$d</string>
   <string name="enabled_summary">Une fois activées, les valeurs seront envoyées à Home Assistant</string>
   <string name="enabled_title">Activé</string>
   <string name="entity_attribute_checkbox">Ajouter une valeur d\'attribut</string>
@@ -103,6 +113,8 @@
   <string name="lockscreen_title">L\'application est verrouillée !</string>
   <string name="logbook">Journal</string>
   <string name="mailbox">Boites aux lettres</string>
+  <string name="manage_all_sensors">Gérer tous les capteurs</string>
+  <string name="manage_all_sensors_summary">Cet appareil dispose de %1$d capteurs disponibles à utiliser.</string>
   <string name="manage_ssids">Gérer les SSID(s)</string>
   <string name="manage_ssids_input">Ajouter un nouveau SSID</string>
   <string name="manage_ssids_input_exists">Ce SSID existe déjà.</string>
@@ -118,6 +130,7 @@
   <string name="nfc_event_fired_fail">Le déclenchement de l\'événement à échoué. Veuillez réessayer.</string>
   <string name="nfc_event_fired_success">Événement déclenché</string>
   <string name="nfc_example_trigger">Exemple de déclencheur</string>
+  <string name="nfc_invalid_tag">Ce tag ne contient pas de données de Home Assistant</string>
   <string name="nfc_processing_tag_error">Erreur lors du traitement de la balise NFC</string>
   <string name="nfc_read_fragment_label">Fragment de lecture NFC</string>
   <string name="nfc_read_tag_instructions">Placez votre téléphone sur la balise NFC pour la lire.</string>
@@ -157,7 +170,7 @@
   <string name="retry">Réessayer</string>
   <string name="save">Enregistrer</string>
   <string name="scan_again">Rechercher à nouveau</string>
-  <string name="scanning_network">Recherche de Home Assistant sur le réseau</string>
+  <string name="scanning_network">Recherche de  Home Assistant sur le réseau</string>
   <string name="security">Sécurité</string>
   <string name="select_entity_to_display">Sélectionnez l\'entité à afficher</string>
   <string name="select_instance">Sélectionnez l\'instance à laquelle vous souhaitez vous connecter :</string>
@@ -170,9 +183,12 @@
   <string name="sensor_description_battery_state">L\'état de charge actuel de la batterie</string>
   <string name="sensor_description_bluetooth_connection">Informations sur les appareils Bluetooth actuellement connectés</string>
   <string name="sensor_description_bluetooth_state">Si le Bluetooth est activé ou non sur l\'appareil</string>
+  <string name="sensor_description_call_number">Le numéro de téléphone de l\'appel entrant ou sortant</string>
   <string name="sensor_description_charger_type">Le type de chargeur branché sur l\'appareil actuellement</string>
   <string name="sensor_description_charging">Si l\'appareil est en charge ou non</string>
   <string name="sensor_description_detected_activity">Le type d\'activité actuel tel que calculé par l\'API Googles Activity Recognition</string>
+  <string name="sensor_description_device_locked">Si l\'appareil est actuellement verrouillé et nécessite un code PIN, un schéma ou un mot de passe pour le déverrouiller.</string>
+  <string name="sensor_description_device_secure">Si l\'appareil est sécurisé avec un code PIN, un schéma ou un mot de passe.</string>
   <string name="sensor_description_dnd_sensor">L\'état actuel de Ne pas déranger</string>
   <string name="sensor_description_doze">Si l\'appareil est en mode Doze ou non</string>
   <string name="sensor_description_external_storage">Informations sur l\'espace de stockage total et disponible en externe</string>
@@ -180,6 +196,7 @@
   <string name="sensor_description_headphone">Si des écouteurs sont branchés ou non sur l\'appareil</string>
   <string name="sensor_description_interactive">Si l\'appareil est dans un état interactif ou non</string>
   <string name="sensor_description_internal_storage">Informations sur l\'espace de stockage total et disponible en interne</string>
+  <string name="sensor_description_last_notification">Les détails de la dernière notification</string>
   <string name="sensor_description_last_reboot">La date et l\'heure du dernier redémarrage de l\'appareil</string>
   <string name="sensor_description_light_sensor">Le niveau d\'éclairement actuel</string>
   <string name="sensor_description_location_accurate">Autorisez Home Assistant à envoyer une notification pour demander un emplacement précis avec l\'application demandant périodiquement un emplacement précis. Le paramètre Précision minimale vous permettra de décider de la précision de l\'emplacement de l\'appareil (en mètres) pour l\'envoyer à Home Assistant. Le temps minimum entre les mises à jour (en millisecondes) empêche l\'appareil d\'envoyer trop souvent l\'emplacement précis.</string>
@@ -223,6 +240,7 @@
   <string name="sensor_name_dnd">Capteur ne pas déranger</string>
   <string name="sensor_name_geolocation">Capteurs de géolocalisation</string>
   <string name="sensor_name_headphone">Écouteurs</string>
+  <string name="sensor_name_last_notification">Capteurs de notification</string>
   <string name="sensor_name_last_reboot">Capteur dernier redémarrage</string>
   <string name="sensor_name_light">Capteur de luminosité</string>
   <string name="sensor_name_location">Capteurs de localisation</string>
@@ -246,6 +264,7 @@
   <string name="sensor_summary">Utilisez cette fonction pour gérer les capteurs qui sont activés/désactivés.</string>
   <string name="sensor_title">Gérer les capteurs</string>
   <string name="sensors">Capteurs</string>
+  <string name="sensors_with_settings">Les capteurs suivants offrent des paramètres personnalisés: %1$s</string>
   <string name="session_timeout_title">Délai d’expiration de la session (en secondes)</string>
   <string name="set_lock_message">Aucun capteur biométrique ou informations d\'identification de verrouillage d\'écran disponibles</string>
   <string name="set_lock_title">Erreur de verrouillage de l\'application</string>

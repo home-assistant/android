@@ -21,6 +21,12 @@ android {
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments(mapOf("room.incremental" to "true"))
+            }
+        }
     }
 
     buildFeatures {
@@ -40,7 +46,7 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("release_keystore.keystore")
+            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
             keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
             keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""

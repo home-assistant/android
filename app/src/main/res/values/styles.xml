@@ -1,5 +1,4 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-
     <style name="Theme.HomeAssistant" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -39,7 +38,6 @@
     </style>
 
     <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert">
-        <item name="android:background">@color/colorDialogBackground</item>
         <item name="android:textColor">@color/colorDialogTitle</item>
         <item name="buttonBarPositiveButtonStyle">@style/Alert.Button.Positive</item>
         <item name="buttonBarNegativeButtonStyle">@style/Alert.Button.Negative</item>
@@ -51,7 +49,6 @@
     </style>
 
     <style name="Authentication_Dialog" parent="Theme.MaterialComponents.Light.Dialog">
-        <item name="android:background">@color/colorDialogBackground</item>
         <item name="android:textColor">@color/colorDialogTitle</item>
         <item name="buttonBarPositiveButtonStyle">@style/Alert.Button.Positive</item>
         <item name="buttonBarNegativeButtonStyle">@style/Alert.Button.Negative</item>
@@ -59,7 +56,6 @@
         <item name="windowMinWidthMajor">300dp</item>
         <item name="windowMinWidthMinor">0dp</item>
         <item name="android:textColorPrimary">@color/colorDialogMessage</item>
-
     </style>
 
     <style name="Alert.Button.Neutral" parent="Widget.MaterialComponents.Button.TextButton">
