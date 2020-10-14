@@ -222,6 +222,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             val zoneAttr = geofencingEvent.triggeringLocation.extras.keySet()
                 .map { it to geofencingEvent.triggeringLocation.extras.get(it) }
                 .toMap()
+                .plus("accuracy" to geofencingEvent.triggeringLocation.accuracy)
+                .plus("altitude" to geofencingEvent.triggeringLocation.altitude)
+                .plus("bearing" to geofencingEvent.triggeringLocation.bearing)
+                .plus("latitude" to geofencingEvent.triggeringLocation.latitude)
+                .plus("longitude" to geofencingEvent.triggeringLocation.longitude)
+                .plus("provider" to geofencingEvent.triggeringLocation.provider)
+                .plus("time" to geofencingEvent.triggeringLocation.time)
+
             runBlocking {
                 try {
                     integrationUseCase.fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
