@@ -1,7 +1,7 @@
 object Config {
 
     object Plugin {
-        const val android = "com.android.tools.build:gradle:4.0.2"
+        const val android = "com.android.tools.build:gradle:4.1.0"
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
         const val google = "com.google.gms:google-services:4.3.4"
         const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:1.4.0"
@@ -23,7 +23,7 @@ object Config {
 
     object Dependency {
         object Kotlin {
-            const val version = "1.3.72"
+            const val version = "1.4.10"
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
 
             private const val coroutinesVersion = "1.3.3"

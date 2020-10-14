@@ -21,6 +21,12 @@ android {
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments(mapOf("room.incremental" to "true"))
+            }
+        }
     }
 
     buildFeatures {

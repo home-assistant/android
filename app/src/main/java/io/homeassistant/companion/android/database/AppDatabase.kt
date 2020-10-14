@@ -44,7 +44,8 @@ import kotlinx.coroutines.runBlocking
         StaticWidgetEntity::class,
         TemplateWidgetEntity::class
     ],
-    version = 12
+    version = 12,
+    exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
