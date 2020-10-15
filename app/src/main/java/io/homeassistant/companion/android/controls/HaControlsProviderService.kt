@@ -128,7 +128,7 @@ class HaControlsProviderService : ControlsProviderService() {
 
                 val entity = integrationRepository.getEntity(controlId)
                 updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))
-                handler.postDelayed(750){
+                handler.postDelayed(750) {
                     // This is here because the state isn't aways instantly updated.  This should
                     // cause us to update a second time rapidly to ensure we display the correct state
                     updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))

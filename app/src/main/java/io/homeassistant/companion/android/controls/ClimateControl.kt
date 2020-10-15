@@ -16,7 +16,7 @@ import kotlinx.coroutines.runBlocking
 
 @RequiresApi(Build.VERSION_CODES.R)
 class ClimateControl {
-    companion object: HaControl {
+    companion object : HaControl {
 
         override fun createControl(
             context: Context,
@@ -64,6 +64,5 @@ class ClimateControl {
                 return@runBlocking true
             }
         }
-
     }
 }

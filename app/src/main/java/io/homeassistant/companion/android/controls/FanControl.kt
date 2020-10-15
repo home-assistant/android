@@ -42,7 +42,7 @@ class FanControl {
             control.setTitle(entity.attributes["friendly_name"].toString())
             control.setDeviceType(DeviceTypes.TYPE_FAN)
             control.setStatus(Control.STATUS_OK)
-            if(currentSpeed != null) {
+            if (currentSpeed != null) {
                 control.setControlTemplate(
                     ToggleRangeTemplate(
                         entity.entityId,
@@ -77,11 +77,11 @@ class FanControl {
             action: ControlAction
         ): Boolean {
             return runBlocking {
-                when(action) {
+                when (action) {
                     is BooleanAction -> {
                         integrationRepository.callService(
                             action.templateId.split(".")[0],
-                            if(action.newState) "turn_on" else "turn_off",
+                            if (action.newState) "turn_on" else "turn_off",
                             hashMapOf("entity_id" to action.templateId)
                         )
                     }

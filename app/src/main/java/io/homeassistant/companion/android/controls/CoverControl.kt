@@ -17,7 +17,7 @@ import kotlinx.coroutines.runBlocking
 
 @RequiresApi(Build.VERSION_CODES.R)
 class CoverControl {
-    companion object: HaControl{override fun createControl(
+    companion object : HaControl { override fun createControl(
         context: Context,
         entity: Entity<Map<String, Any>>
     ): Control {
@@ -58,6 +58,5 @@ class CoverControl {
                 return@runBlocking true
             }
         }
-
     }
 }
