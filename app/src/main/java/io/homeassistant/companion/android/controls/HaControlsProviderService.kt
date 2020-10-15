@@ -38,8 +38,9 @@ class HaControlsProviderService : ControlsProviderService() {
         "light" to LightControl,
         "media_player" to null,
         "remote" to null,
-        "input_boolean" to DefaultSwitchControl,
+        "scene" to SceneControl,
         "switch" to DefaultSwitchControl,
+        "input_boolean" to DefaultSwitchControl,
         "input_number" to DefaultSliderControl
     )
 
