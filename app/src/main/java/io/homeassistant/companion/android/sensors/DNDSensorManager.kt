@@ -38,9 +38,8 @@ class DNDSensorManager : SensorManager {
         if (!isEnabled(context, dndSensor.id))
             return
 
-        var dndState = "unavailable"
         try {
-            dndState = when (Global.getInt(context.contentResolver, "zen_mode")) {
+            val dndState = when (Global.getInt(context.contentResolver, "zen_mode")) {
                 0 -> "off"
                 1 -> "priority_only"
                 2 -> "total_silence"

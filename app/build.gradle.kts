@@ -118,6 +118,7 @@ dependencies {
     }
 
     implementation(Config.Dependency.Kotlin.core)
+    implementation(Config.Dependency.Kotlin.reflect)
     implementation(Config.Dependency.Kotlin.coroutines)
     implementation(Config.Dependency.Kotlin.coroutinesAndroid)
 

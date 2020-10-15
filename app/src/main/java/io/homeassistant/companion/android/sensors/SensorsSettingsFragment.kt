@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -19,7 +20,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
     private val refresh = object : Runnable {
         override fun run() {
             SensorWorker.start(requireContext())

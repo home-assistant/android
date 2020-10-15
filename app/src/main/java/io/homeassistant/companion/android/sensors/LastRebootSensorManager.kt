@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
@@ -47,6 +48,7 @@ class LastRebootSensorManager : SensorManager {
         updateLastReboot(context)
     }
 
+    @SuppressLint("SimpleDateFormat")
     private fun updateLastReboot(context: Context) {
         if (!isEnabled(context, lastRebootSensor.id))
             return
@@ -59,7 +61,7 @@ class LastRebootSensorManager : SensorManager {
         val fullSensor = sensorDao.getFull(lastRebootSensor.id)
         val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
         val lastTimeMillis = fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
-        val settingDeadband = sensorSetting?.firstOrNull { it.name == DEADBAND }?.value?.toIntOrNull() ?: 60000
+        val settingDeadband = sensorSetting.firstOrNull { it.name == DEADBAND }?.value?.toIntOrNull() ?: 60000
         sensorDao.add(Setting(lastRebootSensor.id, DEADBAND, settingDeadband.toString(), "number"))
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()

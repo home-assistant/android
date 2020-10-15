@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
@@ -152,7 +153,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         View.GONE
                     )
                     Log.d(TAG, "Fetching media preview image")
-                    Handler().post {
+                    Handler(Looper.getMainLooper()).post {
                         Picasso.get().load(entityPictureUrl).into(
                             this,
                             R.id.widgetMediaImage,
@@ -272,11 +273,11 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         when (action) {
             RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
             UPDATE_MEDIA_IMAGE -> updateAppWidget(context, appWidgetId)
-            CALL_PREV_TRACK -> callPreviousTrackService(context, appWidgetId)
+            CALL_PREV_TRACK -> callPreviousTrackService(appWidgetId)
             CALL_REWIND -> callRewindService(context, appWidgetId)
-            CALL_PLAYPAUSE -> callPlayPauseService(context, appWidgetId)
+            CALL_PLAYPAUSE -> callPlayPauseService(appWidgetId)
             CALL_FASTFORWARD -> callFastForwardService(context, appWidgetId)
-            CALL_NEXT_TRACK -> callNextTrackService(context, appWidgetId)
+            CALL_NEXT_TRACK -> callNextTrackService(appWidgetId)
         }
     }
 
@@ -312,7 +313,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private fun callPreviousTrackService(context: Context, appWidgetId: Int) {
+    private fun callPreviousTrackService(appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -380,7 +381,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private fun callPlayPauseService(context: Context, appWidgetId: Int) {
+    private fun callPlayPauseService(appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -448,7 +449,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private fun callNextTrackService(context: Context, appWidgetId: Int) {
+    private fun callNextTrackService(appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)

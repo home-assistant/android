@@ -44,7 +44,7 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_manual_setup, container, false).apply {
-            findViewById<AppCompatEditText>(R.id.home_assistant_url).setOnEditorActionListener { view, actionId, event ->
+            findViewById<AppCompatEditText>(R.id.home_assistant_url).setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     submitForm()
                     return@setOnEditorActionListener true

@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
@@ -231,7 +232,7 @@ class ButtonWidget : AppWidgetProvider() {
             views = getWidgetRemoteViews(context, appWidgetId)
 
             // Set a timer to change it back after 1 second
-            Handler().postDelayed({
+            Handler(Looper.getMainLooper()).postDelayed({
                 views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
                 views.setInt(
                     R.id.widgetLayout,

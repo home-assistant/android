@@ -172,8 +172,8 @@ class NetworkSensorManager : SensorManager {
         val settingName = "replace_$bssid"
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensorSettings = sensorDao.getSettings(bssidState.id)
-        val getCurrentBSSID = sensorSettings?.firstOrNull { it.name == GET_CURRENT_BSSID }?.value ?: "false"
-        val currentSetting = sensorSettings?.firstOrNull { it.name == settingName }?.value ?: ""
+        val getCurrentBSSID = sensorSettings.firstOrNull { it.name == GET_CURRENT_BSSID }?.value ?: "false"
+        val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
                 sensorDao.add(Setting(bssidState.id, GET_CURRENT_BSSID, "false", "toggle"))
@@ -202,13 +202,12 @@ class NetworkSensorManager : SensorManager {
         if (!isEnabled(context, wifiIp.id))
             return
 
-        var conInfo: WifiInfo? = null
         var deviceIp = "Unknown"
 
         if (checkPermission(context, wifiIp.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
-            conInfo = wifiManager.connectionInfo
+            val conInfo = wifiManager.connectionInfo
 
             deviceIp = if (conInfo.networkId == -1) {
                 "<not connected>"
@@ -232,14 +231,13 @@ class NetworkSensorManager : SensorManager {
         if (!isEnabled(context, wifiLinkSpeed.id))
             return
 
-        var conInfo: WifiInfo? = null
         var linkSpeed = 0
         var lastScanStrength = -1
 
         if (checkPermission(context, wifiLinkSpeed.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
-            conInfo = wifiManager.connectionInfo
+            val conInfo = wifiManager.connectionInfo
 
             linkSpeed = if (conInfo.networkId == -1) {
                 0
@@ -299,13 +297,12 @@ class NetworkSensorManager : SensorManager {
         if (!isEnabled(context, wifiFrequency.id))
             return
 
-        var conInfo: WifiInfo? = null
         var frequency = 0
 
         if (checkPermission(context, wifiFrequency.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
-            conInfo = wifiManager.connectionInfo
+            val conInfo = wifiManager.connectionInfo
 
             frequency = if (conInfo.networkId == -1) {
                 0
@@ -329,13 +326,12 @@ class NetworkSensorManager : SensorManager {
         if (!isEnabled(context, wifiSignalStrength.id))
             return
 
-        var conInfo: WifiInfo? = null
         var lastScanStrength = -1
 
         if (checkPermission(context, wifiSignalStrength.id)) {
             val wifiManager =
                 (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
-            conInfo = wifiManager.connectionInfo
+            val conInfo = wifiManager.connectionInfo
 
             lastScanStrength = wifiManager.scanResults.firstOrNull {
                 it.BSSID == conInfo.bssid

@@ -25,6 +25,7 @@ object Config {
         object Kotlin {
             const val version = "1.4.10"
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
+            const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${version}"
 
             private const val coroutinesVersion = "1.3.3"
             const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}"
