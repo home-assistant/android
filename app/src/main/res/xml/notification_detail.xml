@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:iconSpaceReserved="false">
+
+    <Preference
+        app:key="received_at"
+        app:title="@string/notification_received_at"
+        app:iconSpaceReserved="false"
+        app:enableCopying="true"/>
+
+    <Preference
+        app:key="message"
+        app:title="@string/notification_message"
+        app:iconSpaceReserved="false"
+        app:enableCopying="true" />
+
+    <Preference
+        app:key="data"
+        app:title="@string/notification_data"
+        app:iconSpaceReserved="false"
+        app:enableCopying="true" />
+</androidx.preference.PreferenceScreen>

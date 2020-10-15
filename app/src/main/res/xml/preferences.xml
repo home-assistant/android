@@ -86,7 +86,15 @@
         </Preference>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="@string/app_version_info">
+        android:title="@string/notifications"
+        android:key="notifications"
+        app:isPreferenceVisible="false">
+        <Preference
+            android:key="notification_history"
+            app:isPreferenceVisible="false"
+            android:title="@string/notification_history"
+            android:icon="@drawable/ic_notification_history"
+            android:summary="@string/notification_history_summary" />
         <Preference
             android:key="notification_rate_limit"
             android:title="@string/rate_limit_title"
@@ -94,6 +102,9 @@
             app:enableCopying="true"
             android:icon="@drawable/ic_notifications"
             android:summary="@string/rate_limit_summary"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/app_version_info">
         <Preference
             android:key="changelog"
             android:icon="@drawable/ic_changelog"
