@@ -5,18 +5,11 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.notifications.DaggerServiceComponent
 import java.util.Calendar
 import java.util.GregorianCalendar
-import javax.inject.Inject
 
 class NotificationHistoryFragment : PreferenceFragmentCompat() {
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
 
     companion object {
         fun newInstance(): NotificationHistoryFragment {
@@ -25,11 +18,6 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        DaggerServiceComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         setPreferencesFromResource(R.xml.notifications, rootKey)
         val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
