@@ -54,7 +54,7 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private val domainToHaControl = mapOf(
         "camera" to null,
-        "climate" to null,
+        "climate" to ClimateControl,
         "fan" to null,
         "light" to LightControl,
         "media_player" to null,
