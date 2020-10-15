@@ -14,6 +14,7 @@ import androidx.biometric.BiometricManager
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
+import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.BuildConfig
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
+import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import javax.inject.Inject
@@ -128,6 +130,21 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         if (BuildConfig.FLAVOR == "full") {
+            findPreference<PreferenceCategory>("notifications")?.let {
+                it.isVisible = true
+            }
+            findPreference<Preference>("notification_history")?.let {
+                it.isVisible = true
+                it.setOnPreferenceClickListener {
+                    parentFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.content, NotificationHistoryFragment.newInstance())
+                        .addToBackStack(getString(R.string.notifications))
+                        .commit()
+                    return@setOnPreferenceClickListener true
+                }
+            }
+
             findPreference<Preference>("notification_rate_limit")?.let {
                 val rateLimits = presenter.getNotificationRateLimits()
 

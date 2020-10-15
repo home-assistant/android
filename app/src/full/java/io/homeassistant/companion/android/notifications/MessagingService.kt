@@ -35,6 +35,8 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
@@ -114,6 +116,10 @@ class MessagingService : FirebaseMessagingService() {
         // Check if message contains a data payload.
         remoteMessage.data.let {
             Log.d(TAG, "Message data payload: " + remoteMessage.data)
+            val notificationDao = AppDatabase.getInstance(applicationContext).notificationDao()
+            val now = System.currentTimeMillis()
+            val notificationRow = NotificationItem(0, now, it[MESSAGE].toString(), it.toString())
+            notificationDao.add(notificationRow)
 
             when {
                 it[MESSAGE] == REQUEST_LOCATION_UPDATE -> {
