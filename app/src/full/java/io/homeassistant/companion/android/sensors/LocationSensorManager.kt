@@ -9,6 +9,7 @@ import android.location.Location
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
+import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
@@ -72,6 +73,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         private var lastLocationSend = 0L
         private var lastUpdateLocation = ""
+
+        private var geofenceRegistered = false
     }
 
     @Inject
@@ -122,6 +125,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     isBackgroundLocationSetup = false
                     isZoneLocationSetup = false
                 }
+                if (backgroundEnabled && !zoneEnabled && isZoneLocationSetup) {
+                    removeGeofenceUpdateRequests()
+                    isZoneLocationSetup = false
+                    Log.d(TAG, "Removing geofence update requests")
+                }
                 if (backgroundEnabled && !isBackgroundLocationSetup) {
                     isBackgroundLocationSetup = true
                     requestLocationUpdates()
@@ -143,9 +151,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         fusedLocationProviderClient.removeLocationUpdates(backgroundIntent)
 
+        removeGeofenceUpdateRequests()
+    }
+
+    private fun removeGeofenceUpdateRequests() {
         val geofencingClient = LocationServices.getGeofencingClient(latestContext)
         val zoneIntent = getLocationUpdateIntent(true)
         geofencingClient.removeGeofences(zoneIntent)
+        geofenceRegistered = false
     }
 
     private fun requestLocationUpdates() {
@@ -167,6 +180,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private suspend fun requestZoneUpdates() {
         if (!checkPermission(latestContext, zoneLocation.id)) {
             Log.w(TAG, "Not registering for zone based updates because of permissions.")
+            return
+        }
+
+        if (geofenceRegistered) {
+            Log.w(TAG, "Not registering for zones as we already have")
             return
         }
 
@@ -204,10 +222,46 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     private fun handleGeoUpdate(intent: Intent) {
         Log.d(TAG, "Received geofence update.")
+        if (!isEnabled(latestContext, zoneLocation.id)) {
+            isZoneLocationSetup = false
+            Log.w(TAG, "Unregistering geofences as zone tracking is disabled and intent was received")
+            removeGeofenceUpdateRequests()
+            return
+        }
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
             Log.e(TAG, "Error getting geofence broadcast status code: ${geofencingEvent.errorCode}")
             return
+        }
+
+        val validGeofencingEvents = listOf(Geofence.GEOFENCE_TRANSITION_ENTER, Geofence.GEOFENCE_TRANSITION_EXIT)
+        if (geofencingEvent.geofenceTransition in validGeofencingEvents) {
+            val zoneStatusEvent = when (geofencingEvent.geofenceTransition) {
+                Geofence.GEOFENCE_TRANSITION_ENTER -> "android.zone_entered"
+                Geofence.GEOFENCE_TRANSITION_EXIT -> "android.zone_exited"
+                else -> ""
+            }
+            val zoneAttr = mapOf(
+                "accuracy" to geofencingEvent.triggeringLocation.accuracy,
+                "altitude" to geofencingEvent.triggeringLocation.altitude,
+                "bearing" to geofencingEvent.triggeringLocation.bearing,
+                "latitude" to geofencingEvent.triggeringLocation.latitude,
+                "longitude" to geofencingEvent.triggeringLocation.longitude,
+                "provider" to geofencingEvent.triggeringLocation.provider,
+                "time" to geofencingEvent.triggeringLocation.time,
+                "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation.verticalAccuracyMeters.toInt() else 0,
+                "zone" to geofencingEvent.triggeringGeofences[0].requestId
+            )
+            runBlocking {
+                try {
+                    integrationUseCase.fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
+                    Log.d(TAG, "Event sent to Home Assistant")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send event to Home Assistant", e)
+                    Toast.makeText(latestContext, R.string.zone_event_failure, Toast.LENGTH_LONG)
+                        .show()
+                }
+            }
         }
 
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
@@ -224,11 +278,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             )
             requestSingleAccurateLocation()
         } else {
-            sendLocationUpdate(geofencingEvent.triggeringLocation)
+            sendLocationUpdate(geofencingEvent.triggeringLocation, "", true)
         }
     }
 
-    private fun sendLocationUpdate(location: Location, name: String = "") {
+    private fun sendLocationUpdate(location: Location, name: String = "", geofenceUpdate: Boolean = false) {
         Log.d(
             TAG, "Last Location: " +
                     "\nCoords:(${location.latitude}, ${location.longitude})" +
@@ -254,6 +308,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         if (lastUpdateLocation == updateLocation.gps.contentToString()) {
             if (now < lastLocationSend + 900000) {
                 Log.d(TAG, "Duplicate location received, not sending to HA")
+                return
+            }
+        } else {
+            if (now < lastLocationSend + 5000 && !geofenceUpdate) {
+                Log.d(TAG, "New location update not possible within 5 seconds, not sending to HA")
                 return
             }
         }
@@ -304,6 +363,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     .build()
             )
         }
+        geofenceRegistered = true
         return geofencingRequestBuilder.build()
     }
 
