@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.text.InputType
 import androidx.preference.EditTextPreference
@@ -37,7 +38,7 @@ class SensorDetailFragment(
     }
 
     private lateinit var sensorDao: SensorDao
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
     private val refresh = object : Runnable {
         override fun run() {
             refreshSensorData()

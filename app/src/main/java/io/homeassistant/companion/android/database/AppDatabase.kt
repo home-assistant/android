@@ -271,12 +271,12 @@ abstract class AppDatabase : RoomDatabase() {
                 val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
                 var notificationChannel =
-                    notificationManager?.getNotificationChannel(channelId)
+                    notificationManager.getNotificationChannel(channelId)
                 if (notificationChannel == null) {
                     notificationChannel = NotificationChannel(
                         channelId, TAG, NotificationManager.IMPORTANCE_HIGH
                     )
-                    notificationManager?.createNotificationChannel(notificationChannel)
+                    notificationManager.createNotificationChannel(notificationChannel)
                 }
             }
         }

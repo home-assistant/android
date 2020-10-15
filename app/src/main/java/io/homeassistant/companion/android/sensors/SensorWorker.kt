@@ -76,12 +76,12 @@ class SensorWorker(
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             var notificationChannel =
-                notificationManager?.getNotificationChannel(channelId)
+                notificationManager.getNotificationChannel(channelId)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
                     channelId, TAG, NotificationManager.IMPORTANCE_LOW
                 )
-                notificationManager?.createNotificationChannel(notificationChannel)
+                notificationManager.createNotificationChannel(notificationChannel)
             }
         }
     }

@@ -13,6 +13,7 @@ import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.Log
@@ -869,7 +870,7 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun waitForConnection() {
-        Handler().postDelayed({
+        Handler(Looper.getMainLooper()).postDelayed({
             if (!isConnected) {
                 showError()
             }

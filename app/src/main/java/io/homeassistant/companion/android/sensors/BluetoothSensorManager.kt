@@ -48,13 +48,11 @@ class BluetoothSensorManager : SensorManager {
         if (!isEnabled(context, bluetoothConnection.id))
             return
 
-        var connectedNotPairedAddress = ""
         var totalConnectedDevices = 0
         val icon = "mdi:bluetooth"
         val connectedPairedDevices: MutableList<String> = ArrayList()
         val connectedNotPairedDevices: MutableList<String> = ArrayList()
         var bondedString = ""
-        var isBtOn = false
 
         if (checkPermission(context, bluetoothConnection.id)) {
 
@@ -66,7 +64,7 @@ class BluetoothSensorManager : SensorManager {
                 var connectedAddress = ""
 
                 val adapter = bluetoothManager.adapter
-                isBtOn = adapter.isEnabled
+                val isBtOn = adapter.isEnabled
 
                 if (isBtOn) {
                     val bondedDevices = adapter.bondedDevices
@@ -80,7 +78,7 @@ class BluetoothSensorManager : SensorManager {
                     }
                     for (BluetoothDevice in btConnectedDevices) {
                         if (isConnected(BluetoothDevice)) {
-                            connectedNotPairedAddress = BluetoothDevice.address
+                            val connectedNotPairedAddress = BluetoothDevice.address
                             connectedNotPairedDevices.add(connectedNotPairedAddress)
                             if (connectedNotPairedAddress != connectedAddress) {
                                 totalConnectedDevices += 1

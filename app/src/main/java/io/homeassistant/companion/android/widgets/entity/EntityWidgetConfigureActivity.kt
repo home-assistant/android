@@ -130,7 +130,7 @@ class EntityWidgetConfigureActivity : Activity() {
         }
 
     private val attributeDropDownOnItemClick =
-        AdapterView.OnItemClickListener { parent, view, position, id ->
+        AdapterView.OnItemClickListener { parent, _, position, _ ->
             selectedAttributeIds.add(parent.getItemAtPosition(position) as String)
         }
 

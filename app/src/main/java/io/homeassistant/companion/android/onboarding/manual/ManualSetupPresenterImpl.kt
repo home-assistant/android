@@ -21,10 +21,10 @@ class ManualSetupPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onClickOk(url: String) {
+    override fun onClickOk(urlString: String) {
         mainScope.launch {
             try {
-                urlUseCase.saveUrl(url, false)
+                urlUseCase.saveUrl(urlString, false)
             } catch (e: MalformedHttpUrlException) {
                 Log.e(TAG, "Unable to parse url", e)
                 view.displayUrlError()

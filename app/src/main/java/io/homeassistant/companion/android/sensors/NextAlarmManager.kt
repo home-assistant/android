@@ -56,7 +56,7 @@ class NextAlarmManager : SensorManager {
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensorSetting = sensorDao.getSettings(nextAlarm.id)
-        val allowPackageList = sensorSetting?.firstOrNull { it.name == ALLOW_LIST }?.value ?: ""
+        val allowPackageList = sensorSetting.firstOrNull { it.name == ALLOW_LIST }?.value ?: ""
 
         try {
             val alarmManager: AlarmManager =

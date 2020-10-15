@@ -31,7 +31,6 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
             .build()
             .inject(this)
 
-        @SuppressWarnings("unchecked")
         val hashData = intent.getSerializableExtra(EXTRA_DATA) as HashMap<String, *>
         val group = intent.getStringExtra(EXTRA_NOTIFICATION_GROUP)
         val groupId = intent.getIntExtra(EXTRA_NOTIFICATION_GROUP_ID, -1)

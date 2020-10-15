@@ -55,12 +55,12 @@ class TrafficStatsManager : SensorManager {
             listOf(rxBytesMobile, txBytesMobile, rxBytesTotal, txBytesTotal)
         } else listOf(rxBytesTotal, txBytesTotal)
 
-    override fun requiredPermissions(senorId: String): Array<String> {
+    override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }
 
     override fun hasSensor(context: Context): Boolean {
-        val cm: ConnectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkInfo = cm.allNetworks
         var networkCapabilities: NetworkCapabilities?
         for (item in networkInfo) {
@@ -84,17 +84,15 @@ class TrafficStatsManager : SensorManager {
         if (!isEnabled(context, rxBytesMobile.id))
             return
 
-        var mobileRx = 0f
         val icon = "mdi:radio-tower"
 
-        try {
-            mobileRx = TrafficStats.getMobileRxBytes().toFloat()
+        val mobileRx = try {
+            TrafficStats.getMobileRxBytes().toFloat() / GB
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the mobile rx bytes", e)
             return
         }
 
-        mobileRx /= GB
         onSensorUpdated(context,
             rxBytesMobile,
             mobileRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
@@ -108,17 +106,15 @@ class TrafficStatsManager : SensorManager {
         if (!isEnabled(context, txBytesMobile.id))
             return
 
-        var mobileTx = 0f
         val icon = "mdi:radio-tower"
 
-        try {
-            mobileTx = TrafficStats.getMobileTxBytes().toFloat()
+        val mobileTx = try {
+            TrafficStats.getMobileTxBytes().toFloat() / GB
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the mobile tx bytes", e)
             return
         }
 
-        mobileTx /= GB
         onSensorUpdated(context,
             txBytesMobile,
             mobileTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
@@ -131,16 +127,14 @@ class TrafficStatsManager : SensorManager {
         if (!isEnabled(context, rxBytesTotal.id))
             return
 
-        var totalRx = 0f
         val icon = "mdi:radio-tower"
 
-        try {
-            totalRx = TrafficStats.getTotalRxBytes().toFloat().absoluteValue
+        val totalRx = try {
+            TrafficStats.getTotalRxBytes().toFloat().absoluteValue / GB
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the total rx bytes", e)
             return
         }
-        totalRx /= GB
 
         onSensorUpdated(context,
             rxBytesTotal,
@@ -155,17 +149,14 @@ class TrafficStatsManager : SensorManager {
         if (!isEnabled(context, txBytesTotal.id))
             return
 
-        var totalTx = 0f
         val icon = "mdi:radio-tower"
 
-        try {
-            totalTx = TrafficStats.getTotalTxBytes().toFloat().absoluteValue
+        val totalTx = try {
+            TrafficStats.getTotalTxBytes().toFloat().absoluteValue / GB
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the total tx bytes", e)
             return
         }
-
-        totalTx /= GB
 
         onSensorUpdated(context,
             txBytesTotal,

@@ -179,7 +179,7 @@ class EntityWidget : AppWidgetProvider() {
             Log.d(
                 TAG, "Saving service call config data:" + System.lineSeparator() +
                 "entity id: " + entitySelection + System.lineSeparator() +
-                "attribute: " + attributeSelection ?: "N/A"
+                "attribute: " + (attributeSelection ?: "N/A")
             )
             staticWidgetDao.add(StaticWidgetEntity(
                 appWidgetId,
