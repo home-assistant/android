@@ -273,7 +273,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `notification_history` (`id` INTEGER NOT NULL, `received` LONG NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL, PRIMARY KEY(`id`))")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `notification_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `received` INTEGER NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL)")
             }
         }
 
