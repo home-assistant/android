@@ -28,7 +28,7 @@ class FanControl {
             val speeds = entity.attributes["speed_list"].toString()
                 .removeSurrounding("[", "]")
                 .split(", ")
-            val currentSpeed: Int? = entity.attributes["speed"].toString().toIntOrNull()
+            val currentSpeed = entity.attributes["speed"].toString()
 
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -42,7 +42,7 @@ class FanControl {
             control.setTitle(entity.attributes["friendly_name"].toString())
             control.setDeviceType(DeviceTypes.TYPE_FAN)
             control.setStatus(Control.STATUS_OK)
-            if (currentSpeed != null) {
+            if (currentSpeed.isNotBlank()) {
                 control.setControlTemplate(
                     ToggleRangeTemplate(
                         entity.entityId,
@@ -52,7 +52,7 @@ class FanControl {
                             entity.entityId,
                             0f,
                             speeds.size.toFloat() - 1,
-                            speeds.indexOf(currentSpeed.toString()).toFloat(),
+                            speeds.indexOf(currentSpeed).toFloat(),
                             1f,
                             ""
                         )
