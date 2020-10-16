@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.onboarding.integration
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -71,10 +72,19 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 it.setOnCheckedChangeListener { _, isChecked ->
                     setLocationTracking(isChecked)
                     if (isChecked && !LocationSensorManager().checkPermission(requireContext(), sensorId)) {
-                        this@MobileAppIntegrationFragment.requestPermissions(
-                            LocationSensorManager().requiredPermissions(sensorId),
-                            LOCATION_REQUEST_CODE
-                        )
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            this@MobileAppIntegrationFragment.requestPermissions(
+                                LocationSensorManager().requiredPermissions(sensorId)
+                                    .toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                                    .toTypedArray(),
+                                LOCATION_REQUEST_CODE
+                            )
+                        } else {
+                            this@MobileAppIntegrationFragment.requestPermissions(
+                                LocationSensorManager().requiredPermissions(sensorId),
+                                LOCATION_REQUEST_CODE
+                            )
+                        }
                     }
                 }
             }
@@ -126,6 +136,11 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
+        }
 
         if (requestCode == LOCATION_REQUEST_CODE) {
             val hasPermission = grantResults.all { it == PackageManager.PERMISSION_GRANTED }

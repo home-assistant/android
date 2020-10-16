@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
@@ -116,7 +117,12 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     }
                 }
                 if (!permArray.isNullOrEmpty())
-                    requestPermissions(permArray, 0)
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        requestPermissions(permArray.toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0)
+                    } else {
+                        requestPermissions(permArray, 0)
+                    }
+
                 return@setOnPreferenceChangeListener true
             }
         }
@@ -168,6 +174,11 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
+        }
 
         findPreference<SwitchPreference>("enable_disable_sensors")?.run {
             permissionsAllGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
