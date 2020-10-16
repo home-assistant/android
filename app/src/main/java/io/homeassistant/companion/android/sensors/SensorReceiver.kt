@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
 import android.util.Log
@@ -98,8 +99,9 @@ class SensorReceiver : BroadcastReceiver() {
         }
 
         if (intent.action.equals(TelephonyManager.ACTION_PHONE_STATE_CHANGED) &&
-            isSensorEnabled(context, PhoneStateSensorManager.callNumber.id)) {
-            PhoneStateSensorManager().updateCallNumber(context, intent)
+            isSensorEnabled(context, PhoneStateSensorManager.callNumber.id) &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PhoneStateSensorManager().updateCallNumber(context)
         }
 
         ioScope.launch {

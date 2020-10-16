@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
@@ -48,13 +48,15 @@ class PhoneStateSensorManager : SensorManager {
         get() = R.string.sensor_name_phone
 
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
-            listOf(phoneState, callNumber, sim_1, sim_2)
-        else listOf(phoneState, callNumber)
+        get() = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> listOf(phoneState, callNumber, sim_1, sim_2)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 -> listOf(phoneState, sim_1, sim_2)
+            else -> listOf(phoneState)
+        }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return if (sensorId == callNumber.id) {
-            arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG)
+        return if (sensorId == callNumber.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_PHONE_NUMBERS)
         } else arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
@@ -84,7 +86,7 @@ class PhoneStateSensorManager : SensorManager {
             if (isEnabled(context, phoneState.id))
                 updatePhoneStateSensor(context, currentPhoneState)
 
-            if (isEnabled(context, callNumber.id) && currentPhoneState in arrayOf("idle", "unknown"))
+            if (isEnabled(context, callNumber.id) && currentPhoneState in arrayOf("idle", "unknown") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 updateCallNumberSensor(context, "none")
         }
     }
@@ -102,13 +104,12 @@ class PhoneStateSensorManager : SensorManager {
         )
     }
 
-    fun updateCallNumber(context: Context, intent: Intent) {
-        if (checkPermission(context, callNumber.id)) {
-            if (intent.hasExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)) {
-                intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)?.let {
-                    updateCallNumberSensor(context, it)
-                }
-            }
+    @SuppressLint("HardwareIds")
+    fun updateCallNumber(context: Context) {
+        if (checkPermission(context, callNumber.id) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val telephonyManager =
+                (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
+            updateCallNumberSensor(context, telephonyManager.line1Number)
         }
     }
 
