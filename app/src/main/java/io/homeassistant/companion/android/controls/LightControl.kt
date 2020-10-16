@@ -35,6 +35,7 @@ class LightControl {
             control.setTitle(entity.attributes["friendly_name"].toString())
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
             control.setStatus(Control.STATUS_OK)
+            control.setStatusText(if (entity.state == "off") "Off" else "On")
             control.setControlTemplate(
                 ToggleRangeTemplate(
                     entity.entityId,
@@ -44,9 +45,12 @@ class LightControl {
                         entity.entityId,
                         0f,
                         255f,
-                        (entity.attributes["brightness"] as? Number)?.toFloat() ?: 0f,
+                        (entity.attributes["brightness"] as? Number)
+                            ?.toFloat()
+                            ?.div(255f)
+                            ?.times(100) ?: 0f,
                         1f,
-                        ""
+                        "%.0f%%"
                     )
                 )
             )

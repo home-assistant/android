@@ -32,8 +32,14 @@ class DefaultSwitchControl {
                 )
             )
             control.setTitle(entity.attributes["friendly_name"].toString())
-            control.setDeviceType(DeviceTypes.TYPE_GENERIC_ON_OFF)
+            control.setDeviceType(
+                when (entity.entityId.split(".")[0]) {
+                    "switch" -> DeviceTypes.TYPE_SWITCH
+                    else -> DeviceTypes.TYPE_GENERIC_ON_OFF
+                }
+            )
             control.setStatus(Control.STATUS_OK)
+            control.setStatusText(if (entity.state == "off") "Off" else "On")
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,
