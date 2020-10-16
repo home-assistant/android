@@ -44,7 +44,7 @@ class LightControl {
                     RangeTemplate(
                         entity.entityId,
                         0f,
-                        255f,
+                        100f,
                         (entity.attributes["brightness"] as? Number)
                             ?.toFloat()
                             ?.div(255f)
@@ -74,12 +74,13 @@ class LightControl {
                         true
                     }
                     is FloatAction -> {
+                        val convertBrightness = action.newValue.div(100).times(255)
                         integrationRepository.callService(
                             action.templateId.split(".")[0],
                             "turn_on",
                             hashMapOf(
                                 "entity_id" to action.templateId,
-                                "brightness" to action.newValue.toInt()
+                                "brightness" to convertBrightness.toInt()
                             )
                         )
                         true
