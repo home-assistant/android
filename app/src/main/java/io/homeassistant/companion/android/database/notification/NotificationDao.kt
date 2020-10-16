@@ -17,11 +17,8 @@ interface NotificationDao {
     @Query("SELECT * FROM notification_history ORDER BY received DESC")
     fun getAll(): Array<NotificationItem>?
 
-    @Query("SELECT * FROM notification_history ORDER BY received DESC LIMIT 25")
-    fun getLast25(): Array<NotificationItem>?
-
-    @Query("SELECT * FROM notification_history WHERE message NOT IN (:commands) ORDER BY received DESC LIMIT 25")
-    fun getLast25NoCommands(commands: List<String>): Array<NotificationItem>?
+    @Query("SELECT * FROM notification_history ORDER BY received DESC LIMIT (:amount)")
+    fun getLastItems(amount: Int): Array<NotificationItem>?
 
     @Query("DELETE FROM notification_history WHERE id = :id")
     fun delete(id: Int)

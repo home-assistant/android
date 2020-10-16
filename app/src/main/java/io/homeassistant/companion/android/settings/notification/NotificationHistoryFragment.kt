@@ -16,13 +16,6 @@ import java.util.GregorianCalendar
 class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
     companion object {
-        val listCommands = listOf(
-            "request_location_update",
-            "TTS",
-            "command_dnd",
-            "command_ringer_mode",
-            "clear_notification"
-        )
         fun newInstance(): NotificationHistoryFragment {
             return NotificationHistoryFragment()
         }
@@ -36,38 +29,12 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         super.onResume()
 
         val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
-        val notificationList = notificationDao.getLast25()
+        val notificationList = notificationDao.getLastItems(25)
 
         val prefCategory = findPreference<PreferenceCategory>("list_notifications")
         if (!notificationList.isNullOrEmpty()) {
             prefCategory?.isVisible = true
-            prefCategory?.removeAll()
             reloadNotifications(notificationList, prefCategory)
-//            for (item in notificationList) {
-//                val pref = Preference(preferenceScreen.context)
-//                val cal: Calendar = GregorianCalendar()
-//                cal.timeInMillis = item.received
-//                pref.key = item.id.toString()
-//                pref.title = cal.time.toString()
-//                pref.summary = item.message
-//                pref.isIconSpaceReserved = false
-//
-//                pref.setOnPreferenceClickListener {
-//                    parentFragmentManager
-//                        .beginTransaction()
-//                        .replace(
-//                            R.id.content,
-//                            NotificationDetailFragment.newInstance(
-//                                item
-//                            )
-//                        )
-//                        .addToBackStack("Notification Detail")
-//                        .commit()
-//                    return@setOnPreferenceClickListener true
-//                }
-//
-//                prefCategory?.addPreference(pref)
-//            }
 
             findPreference<PreferenceCategory>("manage_notifications")?.let {
                 it.isVisible = true
@@ -77,19 +44,16 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 it.isVisible = true
                 it.setOnPreferenceChangeListener { preference, newValue ->
                     when (newValue) {
-                        "no_commands" -> {
-                            val newList = notificationDao.getLast25NoCommands(listCommands)
-                            prefCategory?.removeAll()
+                        "last25" -> reloadNotifications(notificationList, prefCategory)
+                        "last50" -> {
+                            val newList = notificationDao.getLastItems(50)
                             reloadNotifications(newList, prefCategory)
                         }
-                        "last25" -> {
-                            prefCategory?.removeAll()
-                            reloadNotifications(notificationList, prefCategory)
+                        "last100" -> {
+                            val newList = notificationDao.getLastItems(100)
+                            reloadNotifications(newList, prefCategory)
                         }
-                        else -> {
-                            prefCategory?.removeAll()
-                            reloadNotifications(notificationList, prefCategory)
-                        }
+                        else -> reloadNotifications(notificationList, prefCategory)
                     }
                     return@setOnPreferenceChangeListener true
                 }
@@ -140,6 +104,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
     }
 
     private fun reloadNotifications(notificationList: Array<NotificationItem>?, prefCategory: PreferenceCategory?) {
+        prefCategory?.removeAll()
         if (notificationList != null) {
             for (item in notificationList) {
                 val pref = Preference(preferenceScreen.context)

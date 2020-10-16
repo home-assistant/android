@@ -21,7 +21,7 @@
             android:entries="@array/filter_notifications_entries"
             android:entryValues="@array/filter_notifications_values"
             app:defaultValue="last25"
-            app:iconSpaceReserved="false"
+            app:icon="@drawable/ic_filter"
             app:isPreferenceVisible="false"
             app:useSimpleSummaryProvider="true" />
         <Preference

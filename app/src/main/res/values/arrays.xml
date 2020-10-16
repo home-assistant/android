@@ -1,27 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="filter_notifications_entries">
-        <item>Don\'t show commands</item>
-        <item>Only show commands</item>
-        <item>Only show TTS</item>
-        <item>Only show request_location_update</item>
-        <item>Only show command_dnd</item>
-        <item>Only show command_ringer_mode</item>
         <item>Show last 25 notifications</item>
         <item>Show last 50 notifications</item>
         <item>Show last 100 notifications</item>
-        <item>Show all notifications</item>
     </string-array>
     <string-array name="filter_notifications_values">
-        <item>no_commands</item>
-        <item>only_commands</item>
-        <item>TTS</item>
-        <item>request_location_update</item>
-        <item>command_dnd</item>
-        <item>command_ringer_mode</item>
         <item>last25</item>
         <item>last50</item>
         <item>last100</item>
-        <item>show_all</item>
     </string-array>
 </resources>
