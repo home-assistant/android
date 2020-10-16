@@ -82,7 +82,7 @@ android {
 
     playConfigs {
         register("minimal") {
-            isEnabled = false
+            enabled.set(false)
         }
     }
 
@@ -102,9 +102,9 @@ android {
 }
 
 play {
-    serviceAccountCredentials = file("playStorePublishServiceCredentialsFile.json")
-    track = "beta"
-    resolutionStrategy = "ignore"
+    serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
+    track.set("beta")
+    resolutionStrategy.set(ResolutionStrategy.IGNORE)
 }
 
 dependencies {
