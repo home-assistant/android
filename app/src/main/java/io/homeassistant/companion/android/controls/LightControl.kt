@@ -44,7 +44,7 @@ class LightControl {
                         entity.entityId,
                         0f,
                         255f,
-                        (entity.attributes["brightness"] as? Int)?.toFloat() ?: 0f,
+                        (entity.attributes["brightness"] as? Number)?.toFloat() ?: 0f,
                         1f,
                         ""
                     )

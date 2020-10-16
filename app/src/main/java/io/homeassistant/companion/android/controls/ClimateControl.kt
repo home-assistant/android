@@ -58,7 +58,7 @@ class ClimateControl {
                     "set_temperature",
                     hashMapOf(
                         "entity_id" to action.templateId,
-                        "value" to (action as? FloatAction)?.newValue.toString()
+                        "temperature" to (action as? FloatAction)?.newValue.toString()
                     )
                 )
                 return@runBlocking true
