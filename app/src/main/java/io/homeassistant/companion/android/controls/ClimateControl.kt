@@ -5,11 +5,9 @@ import android.content.Context
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
-import android.service.controls.actions.BooleanAction
 import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
 import android.service.controls.templates.RangeTemplate
-import android.service.controls.templates.ToggleRangeTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -17,8 +15,9 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 
 @RequiresApi(Build.VERSION_CODES.R)
-class LightControl {
+class ClimateControl {
     companion object : HaControl {
+
         override fun createControl(
             context: Context,
             entity: Entity<Map<String, Any>>
@@ -33,22 +32,18 @@ class LightControl {
                 )
             )
             control.setTitle(entity.attributes["friendly_name"].toString())
-            control.setDeviceType(DeviceTypes.TYPE_LIGHT)
+            control.setDeviceType(DeviceTypes.TYPE_AC_HEATER)
             control.setStatus(Control.STATUS_OK)
             control.setControlTemplate(
-                ToggleRangeTemplate(
+                RangeTemplate(
                     entity.entityId,
-                    entity.state != "off",
-                    "",
-                    RangeTemplate(
-                        entity.entityId,
-                        0f,
-                        255f,
-                        (entity.attributes["brightness"] as? Number)?.toFloat() ?: 0f,
-                        1f,
-                        ""
-                    )
+                    0f,
+                    100f,
+                    (entity.attributes["temperature"] as? Number)?.toFloat() ?: 0f,
+                    .5f,
+                    ""
                 )
+
             )
             return control.build()
         }
@@ -58,32 +53,15 @@ class LightControl {
             action: ControlAction
         ): Boolean {
             return runBlocking {
-                return@runBlocking when (action) {
-                    is BooleanAction -> {
-                        integrationRepository.callService(
-                            action.templateId.split(".")[0],
-                            if (action.newState) "turn_on" else "turn_off",
-                            hashMapOf(
-                                "entity_id" to action.templateId
-                            )
-                        )
-                        true
-                    }
-                    is FloatAction -> {
-                        integrationRepository.callService(
-                            action.templateId.split(".")[0],
-                            "turn_on",
-                            hashMapOf(
-                                "entity_id" to action.templateId,
-                                "brightness" to action.newValue.toInt()
-                            )
-                        )
-                        true
-                    }
-                    else -> {
-                        false
-                    }
-                }
+                integrationRepository.callService(
+                    action.templateId.split(".")[0],
+                    "set_temperature",
+                    hashMapOf(
+                        "entity_id" to action.templateId,
+                        "temperature" to (action as? FloatAction)?.newValue.toString()
+                    )
+                )
+                return@runBlocking true
             }
         }
     }

@@ -1,11 +1,14 @@
 package io.homeassistant.companion.android.controls
 
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.service.controls.Control
 import android.service.controls.ControlsProviderService
 import android.service.controls.actions.ControlAction
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.core.os.postDelayed
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -29,17 +32,37 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
+    private val monitoredEntities = mutableListOf<String>()
+    private val handler = Handler(Looper.getMainLooper())
+    // This is the poor mans way to do this.  We should really connect via websocket and update
+    // on events.  But now we get updates every 5 seconds while on power menu.
+    private val refresh = object : Runnable {
+        override fun run() {
+            monitoredEntities.forEach { entityId ->
+                ioScope.launch {
+                    val entity = integrationRepository.getEntity(entityId)
+                    val domain = entity.entityId.split(".")[0]
+                    val control = domainToHaControl[domain]?.createControl(applicationContext, entity)
+                    updateSubscriber?.onNext(control)
+                }
+            }
+            handler.postDelayed(this, 5000)
+        }
+    }
+
     private var updateSubscriber: Flow.Subscriber<in Control>? = null
 
     private val domainToHaControl = mapOf(
         "camera" to null,
-        "climate" to null,
-        "fan" to null,
+        "climate" to ClimateControl,
+        "cover" to CoverControl,
+        "fan" to FanControl,
         "light" to LightControl,
         "media_player" to null,
         "remote" to null,
-        "input_boolean" to DefaultSwitchControl,
+        "scene" to SceneControl,
         "switch" to DefaultSwitchControl,
+        "input_boolean" to DefaultSwitchControl,
         "input_number" to DefaultSliderControl
     )
 
@@ -72,25 +95,20 @@ class HaControlsProviderService : ControlsProviderService() {
     override fun createPublisherFor(controlIds: MutableList<String>): Flow.Publisher<Control> {
         Log.d(TAG, "publisherFor $controlIds")
         return Flow.Publisher { subscriber ->
-            controlIds.forEach { controlId ->
-                ioScope.launch {
-                    val entity = integrationRepository.getEntity(controlId)
-                    val domain = entity.entityId.split(".")[0]
-                    val control = domainToHaControl[domain]?.createControl(applicationContext, entity)
-                    subscriber.onSubscribe(object : Flow.Subscription {
-                        override fun request(n: Long) {
-                            Log.d(TAG, "request $n")
-                            updateSubscriber = subscriber
-                        }
-
-                        override fun cancel() {
-                            Log.d(TAG, "cancel")
-                            updateSubscriber = null
-                        }
-                    })
-                    subscriber.onNext(control)
+            subscriber.onSubscribe(object : Flow.Subscription {
+                override fun request(n: Long) {
+                    Log.d(TAG, "request $n")
+                    updateSubscriber = subscriber
                 }
-            }
+
+                override fun cancel() {
+                    Log.d(TAG, "cancel")
+                    updateSubscriber = null
+                    handler.removeCallbacks(refresh)
+                }
+            })
+            monitoredEntities.addAll(controlIds)
+            handler.post(refresh)
         }
     }
 
@@ -110,6 +128,11 @@ class HaControlsProviderService : ControlsProviderService() {
 
                 val entity = integrationRepository.getEntity(controlId)
                 updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))
+                handler.postDelayed(750) {
+                    // This is here because the state isn't aways instantly updated.  This should
+                    // cause us to update a second time rapidly to ensure we display the correct state
+                    updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))
+                }
             }
         }
         if (actionSuccess) {
