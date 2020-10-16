@@ -1,4 +1,5 @@
 import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
+import com.google.gms.googleservices.GoogleServicesPlugin.GoogleServicesPluginConfig
 
 plugins {
     id("com.android.application")
@@ -7,6 +8,7 @@ plugins {
     id("kotlin-android-extensions")
     id("com.google.firebase.appdistribution")
     id("com.github.triplet.play") version "3.0.0"
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -166,6 +168,7 @@ dependencies {
     implementation(Config.Dependency.Misc.exoUi)
 }
 
-// This plugin must stay at the bottom
-// https://developers.google.com/android/guides/google-services-plugin
-apply(plugin = "com.google.gms.google-services")
+// Disable to fix memory leak and be compatible with the configuration cache.
+configure<GoogleServicesPluginConfig> {
+    disableVersionCheck = true
+}
