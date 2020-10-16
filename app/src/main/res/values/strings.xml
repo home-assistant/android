@@ -169,6 +169,7 @@ Home Assistant instance</string>
   <string name="notification_history">Notification History</string>
   <string name="manage_all_notifications">Manage All Notifications</string>
   <string name="manage_this_notification">Manage This Notification</string>
+  <string name="last_25_drop_down_value">last25</string>
   <string name="delete_all_notifications">Delete all notifications from history</string>
   <string name="delete_this_notification">Delete this notification from history</string>
   <string name="confirm_delete_this_notification_title">Confirm deleting this notification</string>
