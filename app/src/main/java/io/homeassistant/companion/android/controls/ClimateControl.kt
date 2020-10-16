@@ -34,6 +34,14 @@ class ClimateControl {
             control.setTitle(entity.attributes["friendly_name"].toString())
             control.setDeviceType(DeviceTypes.TYPE_AC_HEATER)
             control.setStatus(Control.STATUS_OK)
+            control.setStatusText(
+                when (entity.state) {
+                    "off" -> "Off"
+                    "cool" -> "Cool"
+                    "heat" -> "Heat"
+                    else -> entity.state
+                }
+            )
             control.setControlTemplate(
                 RangeTemplate(
                     entity.entityId,
@@ -41,7 +49,7 @@ class ClimateControl {
                     100f,
                     (entity.attributes["temperature"] as? Number)?.toFloat() ?: 0f,
                     .5f,
-                    ""
+                    "%.0f"
                 )
 
             )

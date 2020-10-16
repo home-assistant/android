@@ -31,8 +31,21 @@ class CoverControl {
             )
         )
         control.setTitle(entity.attributes["friendly_name"].toString())
-        control.setDeviceType(DeviceTypes.TYPE_GARAGE)
+        control.setDeviceType(
+            when (entity.attributes["device_class"]) {
+                "awning" -> DeviceTypes.TYPE_AWNING
+                "blind" -> DeviceTypes.TYPE_BLINDS
+                "curtain" -> DeviceTypes.TYPE_CURTAIN
+                "door" -> DeviceTypes.TYPE_DOOR
+                "garage" -> DeviceTypes.TYPE_GARAGE
+                "gate" -> DeviceTypes.TYPE_GATE
+                "shutter" -> DeviceTypes.TYPE_SHUTTER
+                "window" -> DeviceTypes.TYPE_WINDOW
+                else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
+            }
+        )
         control.setStatus(Control.STATUS_OK)
+        control.setStatusText(if (entity.state == "open") "Open" else "Closed")
         control.setControlTemplate(
             ToggleTemplate(
                 entity.entityId,
