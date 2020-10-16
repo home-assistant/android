@@ -4,7 +4,7 @@ plugins {
     id("kotlin-kapt")
     id("kotlin-android-extensions")
     id("com.google.firebase.appdistribution")
-    id("com.github.triplet.play") version "2.7.5"
+    id("com.github.triplet.play") version "3.0.0"
 }
 
 android {
