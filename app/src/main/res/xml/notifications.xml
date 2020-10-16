@@ -32,7 +32,7 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:key="list_notifications"
-        android:title="@string/last_25_notifications"
+        android:title="@string/last_num_notifications"
         app:iconSpaceReserved="false"
         app:isPreferenceVisible="false" />
 </androidx.preference.PreferenceScreen>

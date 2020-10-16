@@ -34,6 +34,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         val prefCategory = findPreference<PreferenceCategory>("list_notifications")
         if (!notificationList.isNullOrEmpty()) {
             prefCategory?.isVisible = true
+            prefCategory?.title = getString(R.string.last_num_notifications, 25)
             reloadNotifications(notificationList, prefCategory)
 
             findPreference<PreferenceCategory>("manage_notifications")?.let {
@@ -44,16 +45,24 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 it.isVisible = true
                 it.setOnPreferenceChangeListener { preference, newValue ->
                     when (newValue) {
-                        "last25" -> reloadNotifications(notificationList, prefCategory)
+                        "last25" -> {
+                            prefCategory?.title = getString(R.string.last_num_notifications, 25)
+                            reloadNotifications(notificationList, prefCategory)
+                        }
                         "last50" -> {
                             val newList = notificationDao.getLastItems(50)
+                            prefCategory?.title = getString(R.string.last_num_notifications, 50)
                             reloadNotifications(newList, prefCategory)
                         }
                         "last100" -> {
                             val newList = notificationDao.getLastItems(100)
+                            prefCategory?.title = getString(R.string.last_num_notifications, 100)
                             reloadNotifications(newList, prefCategory)
                         }
-                        else -> reloadNotifications(notificationList, prefCategory)
+                        else -> {
+                            prefCategory?.title = getString(R.string.last_num_notifications, 25)
+                            reloadNotifications(notificationList, prefCategory)
+                        }
                     }
                     return@setOnPreferenceChangeListener true
                 }
