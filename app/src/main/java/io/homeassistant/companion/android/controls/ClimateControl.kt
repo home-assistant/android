@@ -36,9 +36,13 @@ class ClimateControl {
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "off" -> "Off"
+                    "auto" -> "Auto"
                     "cool" -> "Cool"
+                    "dry" -> "Dry"
+                    "fan_only" -> "Fan Only"
                     "heat" -> "Heat"
+                    "heat_cool" -> "Heat Cool"
+                    "off" -> "Off"
                     else -> entity.state
                 }
             )

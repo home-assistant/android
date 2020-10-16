@@ -39,7 +39,7 @@ class DefaultSwitchControl {
                 }
             )
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText((if (entity.state == "off") "Off" else "On"))
+            control.setStatusText(if (entity.state == "off") "Off" else "On")
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,

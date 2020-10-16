@@ -45,7 +45,14 @@ class CoverControl {
             }
         )
         control.setStatus(Control.STATUS_OK)
-        control.setStatusText(if (entity.state == "open") "Open" else "Closed")
+        control.setStatusText(
+            when (entity.state) {
+                "closed" -> "Closed"
+                "closing" -> "Closing"
+                "open" -> "Open"
+                "opening" -> "Opening"
+                else -> entity.state
+            })
         control.setControlTemplate(
             ToggleTemplate(
                 entity.entityId,
