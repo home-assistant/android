@@ -1,10 +1,12 @@
+import com.github.triplet.gradle.androidpublisher.ResolutionStrategy
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     id("kotlin-kapt")
     id("kotlin-android-extensions")
     id("com.google.firebase.appdistribution")
-    id("com.github.triplet.play") version "2.7.5"
+    id("com.github.triplet.play") version "3.0.0"
 }
 
 android {
@@ -82,7 +84,7 @@ android {
 
     playConfigs {
         register("minimal") {
-            isEnabled = false
+            enabled.set(false)
         }
     }
 
@@ -102,9 +104,9 @@ android {
 }
 
 play {
-    serviceAccountCredentials = file("playStorePublishServiceCredentialsFile.json")
-    track = "beta"
-    resolutionStrategy = "ignore"
+    serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
+    track.set("beta")
+    resolutionStrategy.set(ResolutionStrategy.IGNORE)
 }
 
 dependencies {
