@@ -101,7 +101,7 @@ object Config {
 
         object Misc {
             const val sentry = "io.sentry:sentry-android:2.2.2"
-            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1"
+            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.3"
             const val threeTenBp = "org.threeten:threetenbp:1.4.0"
             const val javaxInject = "javax.inject:javax.inject:1"
             const val blurView = "com.eightbitlab:blurview:1.6.3"
