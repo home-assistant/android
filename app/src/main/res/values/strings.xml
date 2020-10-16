@@ -167,6 +167,16 @@ Home Assistant instance</string>
   <string name="notification_dismiss_failure">Failed to send event on notification dismissed</string>
   <string name="notification_data">Full Notification Data</string>
   <string name="notification_history">Notification History</string>
+  <string name="manage_all_notifications">Manage All Notifications</string>
+  <string name="manage_this_notification">Manage This Notification</string>
+  <string name="delete_all_notifications">Delete all notifications from history</string>
+  <string name="delete_this_notification">Delete this notification from history</string>
+  <string name="confirm_delete_this_notification_title">Confirm deleting this notification</string>
+  <string name="confirm_delete_this_notification_message">Are you sure? This cannot be undone</string>
+  <string name="confirm_delete_all_notification_title">Confirm deleting all notifications</string>
+  <string name="confirm_delete_all_notification_message">Are you sure? This cannot be undone</string>
+  <string name="confirm_positive">YES</string>
+  <string name="confirm_negative">NO</string>
   <string name="notification_history_summary">History of Notifications (currently displays the last 25 notifications received)</string>
   <string name="notification_message">Message</string>
   <string name="notification_received_at">Notification Received At</string>

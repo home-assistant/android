@@ -20,4 +20,13 @@
         app:title="@string/notification_data"
         app:iconSpaceReserved="false"
         app:enableCopying="true" />
+    <PreferenceCategory
+        app:key="manage_this_notification"
+        app:iconSpaceReserved="false"
+        app:title="@string/manage_this_notification">
+        <Preference
+            app:key="delete_notification"
+            app:icon="@drawable/ic_delete"
+            app:title="@string/delete_this_notification"/>
+    </PreferenceCategory>
 </androidx.preference.PreferenceScreen>
