@@ -36,7 +36,7 @@ class AuthenticationPresenterImpl @Inject constructor(
 
     override fun onRedirectUrl(redirectUrl: String): Boolean {
         val code = Uri.parse(redirectUrl).getQueryParameter("code")
-        return if (redirectUrl.contains(AUTH_CALLBACK) && !code.isNullOrBlank()) {
+        return if (redirectUrl.startsWith(AUTH_CALLBACK) && !code.isNullOrBlank()) {
             mainScope.launch {
                 try {
                     authenticationUseCase.registerAuthorizationCode(code)
