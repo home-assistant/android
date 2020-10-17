@@ -182,6 +182,7 @@ Home Assistant instance</string>
   <string name="notification_received_at">Notification Received At</string>
   <string name="last_num_notifications">Last %1$d Notifications</string>
   <string name="no_notifications">No Notifications</string>
+  <string name="filter_notifications">Filter Notifications</string>
   <string name="no_notifications_summary">You have not received any notifications yet</string>
   <string name="other_settings">Other Settings</string>
   <string name="password">Password</string>

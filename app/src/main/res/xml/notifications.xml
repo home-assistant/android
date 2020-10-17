@@ -17,7 +17,7 @@
         app:iconSpaceReserved="false">
         <androidx.preference.DropDownPreference
             android:key="filter_notifications"
-            android:title="Filter Notifications"
+            android:title="@string/filter_notifications"
             android:entries="@array/filter_notifications_entries"
             android:entryValues="@array/filter_notifications_values"
             app:defaultValue="last25"

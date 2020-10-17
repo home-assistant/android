@@ -43,7 +43,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
             findPreference<DropDownPreference>("filter_notifications")?.let {
                 it.isVisible = true
-                it.setOnPreferenceChangeListener { preference, newValue ->
+                it.setOnPreferenceChangeListener { _, newValue ->
                     when (newValue) {
                         "last25" -> {
                             prefCategory?.title = getString(R.string.last_num_notifications, 25)
@@ -70,7 +70,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
             findPreference<Preference>("delete_all")?.let {
                 it.isVisible = true
-                it.setOnPreferenceClickListener { _ ->
+                it.setOnPreferenceClickListener {
                     deleteAllConfirmation(notificationDao)
                     return@setOnPreferenceClickListener true
                 }
