@@ -119,7 +119,7 @@
         <Preference
             android:key="privacy"
             android:icon="@drawable/ic_incognito"
-            android:title="Privacy Policy"
+            android:title="@string/privacy_policy"
             android:summary="https://www.home-assistant.io/privacy/" />
     </PreferenceCategory>
 
