@@ -8,6 +8,8 @@ import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.multi.MultiWidget
+import io.homeassistant.companion.android.widgets.multi.MultiWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
 
@@ -22,6 +24,9 @@ interface ProviderComponent {
 
     fun inject(receiver: EntityWidget)
     fun inject(activity: EntityWidgetConfigureActivity)
+
+    fun inject(receiver: MultiWidget)
+    fun inject(activity: MultiWidgetConfigureActivity)
 
     fun inject(receiver: TemplateWidget)
     fun inject(activity: TemplateWidgetConfigureActivity)

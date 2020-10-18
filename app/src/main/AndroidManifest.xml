@@ -96,6 +96,16 @@
                 android:resource="@xml/media_player_control_widget_info" />
         </receiver>
 
+        <receiver android:name=".widgets.multi.MultiWidget">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/multi_widget_info" />
+        </receiver>
+
         <receiver android:name=".widgets.template.TemplateWidget" android:label="Template Widget">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -126,6 +136,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".widgets.multi.MultiWidgetConfigureActivity">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
