@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.os.PowerManager
-import android.telephony.TelephonyManager
 import android.util.Log
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -95,11 +94,6 @@ class SensorReceiver : BroadcastReceiver() {
                     ("Sensor %s corresponding to received event %s is disabled, skipping sensors update", sensor, intent.action))
                 return
             }
-        }
-
-        if (intent.action.equals(TelephonyManager.ACTION_PHONE_STATE_CHANGED) &&
-            isSensorEnabled(context, PhoneStateSensorManager.callNumber.id)) {
-            PhoneStateSensorManager().updateCallNumber(context, intent)
         }
 
         ioScope.launch {
