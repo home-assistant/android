@@ -116,6 +116,11 @@
             android:icon="@drawable/app_icon"
             android:title="@string/application_version"
             android:summary="1.0.0 (1)"/>
+        <Preference
+            android:key="privacy"
+            android:icon="@drawable/ic_incognito"
+            android:title="Privacy Policy"
+            android:summary="https://www.home-assistant.io/privacy/" />
     </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>
