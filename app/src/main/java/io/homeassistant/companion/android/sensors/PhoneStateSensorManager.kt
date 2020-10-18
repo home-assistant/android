@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.sensors
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
@@ -18,13 +17,6 @@ class PhoneStateSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_phone,
             R.string.sensor_description_phone_state
-        )
-
-        val callNumber = SensorManager.BasicSensor(
-            "call_number",
-            "sensor",
-            R.string.basic_sensor_name_call_number,
-            R.string.sensor_description_call_number
         )
 
         val sim_1 = SensorManager.BasicSensor(
@@ -49,13 +41,11 @@ class PhoneStateSensorManager : SensorManager {
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
-            listOf(phoneState, callNumber, sim_1, sim_2)
-        else listOf(phoneState, callNumber)
+            listOf(phoneState, sim_1, sim_2)
+        else listOf(phoneState)
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return if (sensorId == callNumber.id) {
-            arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG)
-        } else arrayOf(Manifest.permission.READ_PHONE_STATE)
+        return arrayOf(Manifest.permission.READ_PHONE_STATE)
     }
 
     override fun requestSensorUpdate(
@@ -67,7 +57,7 @@ class PhoneStateSensorManager : SensorManager {
     }
 
     private fun checkPhoneState(context: Context) {
-        if (isEnabled(context, phoneState.id) || isEnabled(context, callNumber.id)) {
+        if (isEnabled(context, phoneState.id)) {
             var currentPhoneState = "unknown"
 
             if (checkPermission(context, phoneState.id)) {
@@ -81,11 +71,8 @@ class PhoneStateSensorManager : SensorManager {
                     else -> "unknown"
                 }
             }
-            if (isEnabled(context, phoneState.id))
-                updatePhoneStateSensor(context, currentPhoneState)
 
-            if (isEnabled(context, callNumber.id) && currentPhoneState in arrayOf("idle", "unknown"))
-                updateCallNumberSensor(context, "none")
+            updatePhoneStateSensor(context, currentPhoneState)
         }
     }
 
@@ -98,25 +85,6 @@ class PhoneStateSensorManager : SensorManager {
             phoneState,
             state,
             phoneIcon,
-            mapOf()
-        )
-    }
-
-    fun updateCallNumber(context: Context, intent: Intent) {
-        if (checkPermission(context, callNumber.id)) {
-            if (intent.hasExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)) {
-                intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)?.let {
-                    updateCallNumberSensor(context, it)
-                }
-            }
-        }
-    }
-
-    private fun updateCallNumberSensor(context: Context, number: String) {
-        onSensorUpdated(context,
-            callNumber,
-            number,
-            "mdi:numeric",
             mapOf()
         )
     }
