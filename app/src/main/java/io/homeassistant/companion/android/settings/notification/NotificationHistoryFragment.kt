@@ -112,7 +112,10 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         alert?.show()
     }
 
-    private fun reloadNotifications(notificationList: Array<NotificationItem>?, prefCategory: PreferenceCategory?) {
+    private fun reloadNotifications(
+        notificationList: Array<NotificationItem>?,
+        prefCategory: PreferenceCategory?
+    ) {
         prefCategory?.removeAll()
         if (notificationList != null) {
             for (item in notificationList) {

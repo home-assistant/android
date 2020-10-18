@@ -58,14 +58,16 @@ class LightSensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, lightSensor.id))
             return
 
-        mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+        mySensorManager =
+            latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val lightSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_LIGHT)
         if (lightSensors != null && !isListenerRegistered) {
             mySensorManager.registerListener(
                 this,
                 lightSensors,
-                SENSOR_DELAY_NORMAL)
+                SENSOR_DELAY_NORMAL
+            )
             Log.d(TAG, "Light sensor listener registered")
             isListenerRegistered = true
         }

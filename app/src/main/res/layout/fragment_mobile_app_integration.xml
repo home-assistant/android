@@ -4,6 +4,7 @@
     android:id="@+id/viewFlipper"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -31,8 +32,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/deviceName"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    />
+                    android:layout_height="wrap_content" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -41,7 +41,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/activity_margin"
-                android:text="@string/enable_location_tracking"/>
+                android:text="@string/enable_location_tracking" />
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/location_background_summary"

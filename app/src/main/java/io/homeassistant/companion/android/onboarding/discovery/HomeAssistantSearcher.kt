@@ -51,31 +51,34 @@ class HomeAssistantSearcher constructor(
     override fun onServiceFound(foundService: NsdServiceInfo) {
         Log.i(TAG, "Service discovery found HA: $foundService")
         lock.lock()
-        nsdManager.resolveService(foundService, object : NsdManager.ResolveListener {
-            override fun onResolveFailed(failedService: NsdServiceInfo?, errorCode: Int) {
-                // discoveryView.onScanError()
-                Log.w(TAG, "Failed to resolve service: $failedService, error: $errorCode")
-                lock.unlock()
-            }
-
-            override fun onServiceResolved(resolvedService: NsdServiceInfo?) {
-                Log.i(TAG, "Service resolved: $resolvedService")
-                resolvedService?.let {
-                    val baseUrl = it.attributes["base_url"]
-                    val version = it.attributes["version"]
-                    if (baseUrl != null && version != null) {
-                        discoveryView.onInstanceFound(
-                            HomeAssistantInstance(
-                                it.serviceName,
-                                URL(baseUrl.commonToUtf8String()),
-                                version.commonToUtf8String()
-                            )
-                        )
-                    }
+        nsdManager.resolveService(
+            foundService,
+            object : NsdManager.ResolveListener {
+                override fun onResolveFailed(failedService: NsdServiceInfo?, errorCode: Int) {
+                    // discoveryView.onScanError()
+                    Log.w(TAG, "Failed to resolve service: $failedService, error: $errorCode")
+                    lock.unlock()
                 }
-                lock.unlock()
+
+                override fun onServiceResolved(resolvedService: NsdServiceInfo?) {
+                    Log.i(TAG, "Service resolved: $resolvedService")
+                    resolvedService?.let {
+                        val baseUrl = it.attributes["base_url"]
+                        val version = it.attributes["version"]
+                        if (baseUrl != null && version != null) {
+                            discoveryView.onInstanceFound(
+                                HomeAssistantInstance(
+                                    it.serviceName,
+                                    URL(baseUrl.commonToUtf8String()),
+                                    version.commonToUtf8String()
+                                )
+                            )
+                        }
+                    }
+                    lock.unlock()
+                }
             }
-        })
+        )
     }
 
     override fun onServiceLost(service: NsdServiceInfo) {

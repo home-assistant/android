@@ -56,14 +56,16 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, pressureSensor.id))
             return
 
-        mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+        mySensorManager =
+            latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
 
         val pressureSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
         if (pressureSensors != null && !isListenerRegistered) {
             mySensorManager.registerListener(
                 this,
                 pressureSensors,
-                SENSOR_DELAY_NORMAL)
+                SENSOR_DELAY_NORMAL
+            )
             Log.d(TAG, "Pressure sensor listener registered")
             isListenerRegistered = true
         }

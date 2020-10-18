@@ -91,7 +91,9 @@ class PowerSensorManager : SensorManager {
             dozeState,
             icon,
             mapOf(
-                "ignoring_battery_optizimations" to powerManager.isIgnoringBatteryOptimizations(packageName)
+                "ignoring_battery_optizimations" to powerManager.isIgnoringBatteryOptimizations(
+                    packageName
+                )
             )
         )
     }

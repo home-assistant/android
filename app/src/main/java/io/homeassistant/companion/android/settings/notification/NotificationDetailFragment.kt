@@ -53,7 +53,9 @@ class NotificationDetailFragment(
     private fun deleteConfirmation() {
         val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
 
-        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(requireContext())
+        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(
+            requireContext()
+        )
 
         builder.setTitle(R.string.confirm_delete_this_notification_title)
         builder.setMessage(R.string.confirm_delete_this_notification_message)

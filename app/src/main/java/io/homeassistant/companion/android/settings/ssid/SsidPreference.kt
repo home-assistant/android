@@ -33,7 +33,10 @@ class SsidPreference @JvmOverloads constructor(
     init {
         val attributes = context.obtainStyledAttributes(attrs, R.styleable.SsidPreference)
         try {
-            summaryMaxLines = attributes.getInt(R.styleable.SsidPreference_summaryMaxLines, NO_MAX_LINES)
+            summaryMaxLines = attributes.getInt(
+                R.styleable.SsidPreference_summaryMaxLines,
+                NO_MAX_LINES
+            )
         } finally {
             attributes.recycle()
         }

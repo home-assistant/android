@@ -76,6 +76,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 android:text="@string/label_icon" />
+
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/widget_config_icon_selector"
                 android:layout_width="wrap_content"
@@ -83,7 +84,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintRight_toRightOf="parent"
-                android:src="@drawable/ic_flash_on_24dp"/>
+                android:src="@drawable/ic_flash_on_24dp" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>

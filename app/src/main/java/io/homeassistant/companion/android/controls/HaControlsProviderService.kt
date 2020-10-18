@@ -34,6 +34,7 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private val monitoredEntities = mutableListOf<String>()
     private val handler = Handler(Looper.getMainLooper())
+
     // This is the poor mans way to do this.  We should really connect via websocket and update
     // on events.  But now we get updates every 5 seconds while on power menu.
     private val refresh = object : Runnable {
@@ -42,7 +43,10 @@ class HaControlsProviderService : ControlsProviderService() {
                 ioScope.launch {
                     val entity = integrationRepository.getEntity(entityId)
                     val domain = entity.entityId.split(".")[0]
-                    val control = domainToHaControl[domain]?.createControl(applicationContext, entity)
+                    val control = domainToHaControl[domain]?.createControl(
+                        applicationContext,
+                        entity
+                    )
                     updateSubscriber?.onNext(control)
                 }
             }
@@ -82,7 +86,10 @@ class HaControlsProviderService : ControlsProviderService() {
                     .getEntities()
                     .mapNotNull {
                         val domain = it.entityId.split(".")[0]
-                        domainToHaControl[domain]?.createControl(applicationContext, it as Entity<Map<String, Any>>)
+                        domainToHaControl[domain]?.createControl(
+                            applicationContext,
+                            it as Entity<Map<String, Any>>
+                        )
                     }
                     .forEach {
                         subscriber.onNext(it)
@@ -95,18 +102,20 @@ class HaControlsProviderService : ControlsProviderService() {
     override fun createPublisherFor(controlIds: MutableList<String>): Flow.Publisher<Control> {
         Log.d(TAG, "publisherFor $controlIds")
         return Flow.Publisher { subscriber ->
-            subscriber.onSubscribe(object : Flow.Subscription {
-                override fun request(n: Long) {
-                    Log.d(TAG, "request $n")
-                    updateSubscriber = subscriber
-                }
+            subscriber.onSubscribe(
+                object : Flow.Subscription {
+                    override fun request(n: Long) {
+                        Log.d(TAG, "request $n")
+                        updateSubscriber = subscriber
+                    }
 
-                override fun cancel() {
-                    Log.d(TAG, "cancel")
-                    updateSubscriber = null
-                    handler.removeCallbacks(refresh)
+                    override fun cancel() {
+                        Log.d(TAG, "cancel")
+                        updateSubscriber = null
+                        handler.removeCallbacks(refresh)
+                    }
                 }
-            })
+            )
             monitoredEntities.addAll(controlIds)
             handler.post(refresh)
         }

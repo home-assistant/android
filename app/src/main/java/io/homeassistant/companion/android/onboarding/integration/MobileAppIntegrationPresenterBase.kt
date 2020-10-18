@@ -21,7 +21,10 @@ open class MobileAppIntegrationPresenterBase constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    internal open suspend fun createRegistration(simple: Boolean, deviceName: String): DeviceRegistration {
+    internal open suspend fun createRegistration(
+        simple: Boolean,
+        deviceName: String
+    ): DeviceRegistration {
         return DeviceRegistration(
             "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
             deviceName

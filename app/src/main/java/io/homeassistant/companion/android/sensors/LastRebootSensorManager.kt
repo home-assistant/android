@@ -60,8 +60,11 @@ class LastRebootSensorManager : SensorManager {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val fullSensor = sensorDao.getFull(lastRebootSensor.id)
         val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
-        val lastTimeMillis = fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
-        val settingDeadband = sensorSetting.firstOrNull { it.name == DEADBAND }?.value?.toIntOrNull() ?: 60000
+        val lastTimeMillis =
+            fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull()
+                ?: 0L
+        val settingDeadband =
+            sensorSetting.firstOrNull { it.name == DEADBAND }?.value?.toIntOrNull() ?: 60000
         sensorDao.add(Setting(lastRebootSensor.id, DEADBAND, settingDeadband.toString(), "number"))
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()

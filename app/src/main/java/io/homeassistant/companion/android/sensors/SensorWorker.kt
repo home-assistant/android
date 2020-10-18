@@ -41,14 +41,19 @@ class SensorWorker(
                     .setConstraints(constraints)
                     .build()
 
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, sensorWorker)
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                TAG,
+                ExistingPeriodicWorkPolicy.REPLACE,
+                sensorWorker
+            )
         }
     }
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private val notificationManager = appContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    private val notificationManager =
+        appContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
     init {
         DaggerSensorComponent.builder()
@@ -79,7 +84,9 @@ class SensorWorker(
                 notificationManager.getNotificationChannel(channelId)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    channelId, TAG, NotificationManager.IMPORTANCE_LOW
+                    channelId,
+                    TAG,
+                    NotificationManager.IMPORTANCE_LOW
                 )
                 notificationManager.createNotificationChannel(notificationChannel)
             }

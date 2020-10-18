@@ -22,8 +22,7 @@
             android:src="@drawable/ic_flash_on_24dp"
             android:contentDescription="@string/widget_button_image_description"
             android:gravity="center"
-            android:tint="@color/colorIcon"
-            />
+            android:tint="@color/colorIcon" />
 
         <LinearLayout
             android:id="@+id/widgetLabelLayout"
@@ -43,8 +42,7 @@
                 android:gravity="center"
                 android:textColor="@color/colorWidgetButtonLabel"
                 android:minLines="1"
-                android:maxLines="2"
-                />
+                android:maxLines="2" />
         </LinearLayout>
     </LinearLayout>
 
@@ -55,6 +53,5 @@
         android:padding="8dp"
         android:visibility="invisible"
         android:indeterminate="true"
-        android:indeterminateTint="@color/colorAccent"
-        />
+        android:indeterminateTint="@color/colorAccent" />
 </FrameLayout>

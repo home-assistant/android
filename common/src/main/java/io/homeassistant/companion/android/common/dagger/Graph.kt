@@ -48,7 +48,9 @@ class Graph(
                             Context.MODE_PRIVATE
                         )
                     ),
-                    WifiHelperImpl(application.getSystemService(Context.WIFI_SERVICE) as WifiManager),
+                    WifiHelperImpl(
+                        application.getSystemService(Context.WIFI_SERVICE) as WifiManager
+                    ),
                     Settings.Secure.getString(
                         application.contentResolver,
                         Settings.Secure.ANDROID_ID

@@ -16,6 +16,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             R.string.sensor_description_last_notification
         )
     }
+
     override val name: Int
         get() = R.string.sensor_name_last_notification
     override val availableSensors: List<SensorManager.BasicSensor>
@@ -52,7 +53,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         ).split(", ").filter { it.isNotBlank() }
 
         if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)) {
+            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)
+        ) {
             return
         }
 

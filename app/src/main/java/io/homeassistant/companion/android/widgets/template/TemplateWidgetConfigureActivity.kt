@@ -46,7 +46,8 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
         }
 
@@ -70,7 +71,10 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
                 var templateText: String?
                 var enabled: Boolean
                 try {
-                    templateText = integrationUseCase.renderTemplate(editableText.toString(), mapOf())
+                    templateText = integrationUseCase.renderTemplate(
+                        editableText.toString(),
+                        mapOf()
+                    )
                     enabled = true
                 } catch (e: Exception) {
                     templateText = "Error in template"

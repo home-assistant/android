@@ -172,7 +172,8 @@ class NetworkSensorManager : SensorManager {
         val settingName = "replace_$bssid"
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensorSettings = sensorDao.getSettings(bssidState.id)
-        val getCurrentBSSID = sensorSettings.firstOrNull { it.name == GET_CURRENT_BSSID }?.value ?: "false"
+        val getCurrentBSSID =
+            sensorSettings.firstOrNull { it.name == GET_CURRENT_BSSID }?.value ?: "false"
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
@@ -360,9 +361,9 @@ class NetworkSensorManager : SensorManager {
 
     private fun getIpAddress(ip: Int): String {
         return (ip and 0xFF).toString() + "." +
-                (ip shr 8 and 0xFF) + "." +
-                (ip shr 16 and 0xFF) + "." +
-                (ip shr 24 and 0xFF)
+            (ip shr 8 and 0xFF) + "." +
+            (ip shr 16 and 0xFF) + "." +
+            (ip shr 24 and 0xFF)
     }
 
     private fun updatePublicIpSensor(context: Context) {
@@ -373,28 +374,32 @@ class NetworkSensorManager : SensorManager {
         val client = OkHttpClient()
         val request = Request.Builder().url("https://api.ipify.org?format=json").build()
 
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e(TAG, "Error getting response from external service", e)
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (!response.isSuccessful) throw IOException("Unexpected response code $response")
-                try {
-                    val jsonObject = JSONObject(response.body!!.string())
-                    ip = jsonObject.getString("ip")
-                } catch (e: JSONException) {
-                    Log.e(TAG, "Unable to parse ip address from response", e)
+        client.newCall(request).enqueue(
+            object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.e(TAG, "Error getting response from external service", e)
                 }
 
-                onSensorUpdated(
-                    context,
-                    publicIp,
-                    ip,
-                    "mdi:ip",
-                    mapOf()
-                )
+                override fun onResponse(call: Call, response: Response) {
+                    if (!response.isSuccessful) throw IOException(
+                        "Unexpected response code $response"
+                    )
+                    try {
+                        val jsonObject = JSONObject(response.body!!.string())
+                        ip = jsonObject.getString("ip")
+                    } catch (e: JSONException) {
+                        Log.e(TAG, "Unable to parse ip address from response", e)
+                    }
+
+                    onSensorUpdated(
+                        context,
+                        publicIp,
+                        ip,
+                        "mdi:ip",
+                        mapOf()
+                    )
+                }
             }
-        })
+        )
     }
 }

@@ -73,7 +73,12 @@ class IntegrationRepositoryImpl @Inject constructor(
                 .discoveryInfo(authenticationRepository.buildBearerToken())
                 .version.split(".")
             // If we are above version 0.104.0 add device_id
-            if (version.size > 2 && (Integer.parseInt(version[0]) > 0 || Integer.parseInt(version[1]) >= 104)) {
+            if (version.size > 2 && (
+                Integer.parseInt(version[0]) > 0 || Integer.parseInt(
+                        version[1]
+                    ) >= 104
+                )
+            ) {
                 request.deviceId = deviceId
             }
         } catch (e: Exception) {
@@ -314,7 +319,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         var checkRateLimits: RateLimitResponse? = null
 
         try {
-            checkRateLimits = integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
+            checkRateLimits =
+                integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get notification rate limits", e)
         }

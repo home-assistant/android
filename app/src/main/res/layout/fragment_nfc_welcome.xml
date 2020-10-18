@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:text="@string/nfc_welcome_message"
         app:layout_constraintTop_toTopOf="parent"
-        android:paddingBottom="16dp"/>
+        android:paddingBottom="16dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_nfc_read"

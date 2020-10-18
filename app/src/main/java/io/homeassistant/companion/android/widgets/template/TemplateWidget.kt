@@ -75,9 +75,10 @@ class TemplateWidget : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
-            TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + action + System.lineSeparator() +
-                    "AppWidgetId: " + appWidgetId
+            TAG,
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + action + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId
         )
 
         ensureInjected(context)

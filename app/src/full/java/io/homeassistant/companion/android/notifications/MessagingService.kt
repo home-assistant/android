@@ -105,7 +105,9 @@ class MessagingService : FirebaseMessagingService() {
     override fun onCreate() {
         super.onCreate()
         DaggerServiceComponent.builder()
-            .appComponent((applicationContext.applicationContext as GraphComponentAccessor).appComponent)
+            .appComponent(
+                (applicationContext.applicationContext as GraphComponentAccessor).appComponent
+            )
             .build()
             .inject(this)
     }
@@ -147,13 +149,19 @@ class MessagingService : FirebaseMessagingService() {
                                     handleDeviceCommands(it[MESSAGE], it[TITLE])
                                 else {
                                     mainScope.launch {
-                                        Log.d(TAG, "Posting notification to device as it does not support DND commands")
+                                        Log.d(
+                                            TAG,
+                                            "Posting notification to device as it does not support DND commands"
+                                        )
                                         sendNotification(it)
                                     }
                                 }
                             } else {
                                 mainScope.launch {
-                                    Log.d(TAG, "Invalid DND command received, posting notification to device")
+                                    Log.d(
+                                        TAG,
+                                        "Invalid DND command received, posting notification to device"
+                                    )
                                     sendNotification(it)
                                 }
                             }
@@ -163,7 +171,10 @@ class MessagingService : FirebaseMessagingService() {
                                 handleDeviceCommands(it[MESSAGE], it[TITLE])
                             } else {
                                 mainScope.launch {
-                                    Log.d(TAG, "Invalid ringer mode command received, posting notification to device")
+                                    Log.d(
+                                        TAG,
+                                        "Invalid ringer mode command received, posting notification to device"
+                                    )
                                     sendNotification(it)
                                 }
                             }
@@ -210,7 +221,8 @@ class MessagingService : FirebaseMessagingService() {
         var tts = data[TITLE]
         if (tts.isNullOrEmpty())
             tts = getString(R.string.tts_no_title)
-        textToSpeech = TextToSpeech(applicationContext
+        textToSpeech = TextToSpeech(
+            applicationContext
         ) {
             if (it == TextToSpeech.SUCCESS) {
                 val listener = object : UtteranceProgressListener() {
@@ -263,7 +275,9 @@ class MessagingService : FirebaseMessagingService() {
                             DND_ALARMS_ONLY -> notificationManager.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_ALARMS
                             )
-                            DND_ALL -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+                            DND_ALL -> notificationManager.setInterruptionFilter(
+                                NotificationManager.INTERRUPTION_FILTER_ALL
+                            )
                             DND_NONE -> notificationManager.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_NONE
                             )
@@ -276,7 +290,8 @@ class MessagingService : FirebaseMessagingService() {
                 }
             }
             COMMAND_RINGER_MODE -> {
-                val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                val audioManager =
+                    applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager =
                         applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
@@ -292,6 +307,7 @@ class MessagingService : FirebaseMessagingService() {
             else -> Log.d(TAG, "No command received")
         }
     }
+
     /**
      * Create and show a simple notification containing the received FCM message.
      *
@@ -454,7 +470,10 @@ class MessagingService : FirebaseMessagingService() {
     ) {
         if (data["channel"] == "alarm_stream") {
             builder.setCategory(Notification.CATEGORY_ALARM)
-            builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), AudioManager.STREAM_ALARM)
+            builder.setSound(
+                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
+                AudioManager.STREAM_ALARM
+            )
         } else {
             builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
         }

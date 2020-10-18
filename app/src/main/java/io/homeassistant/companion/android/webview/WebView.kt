@@ -12,5 +12,9 @@ interface WebView {
 
     fun openOnBoarding()
 
-    fun showError(isAuthenticationError: Boolean = false, error: SslError? = null, description: String? = null)
+    fun showError(
+        isAuthenticationError: Boolean = false,
+        error: SslError? = null,
+        description: String? = null
+    )
 }

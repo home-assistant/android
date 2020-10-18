@@ -39,7 +39,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                             if (basicSensor.unitOfMeasurement.isNullOrBlank())
                                 it.summary = sensorEntity.state
                             else
-                                it.summary = sensorEntity.state + " " + basicSensor.unitOfMeasurement
+                                it.summary =
+                                    sensorEntity.state + " " + basicSensor.unitOfMeasurement
                             // TODO: Add the icon from mdi:icon?
                         } else {
                             totalDisabledSensors += 1
@@ -50,7 +51,10 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             }
 
             findPreference<PreferenceCategory>("enable_disable_category")?.let {
-                it.summary = getString(R.string.manage_all_sensors_summary, (totalDisabledSensors + totalEnabledSensors))
+                it.summary = getString(
+                    R.string.manage_all_sensors_summary,
+                    (totalDisabledSensors + totalEnabledSensors)
+                )
             }
 
             findPreference<SwitchPreference>("enable_disable_sensors")?.let {
@@ -62,7 +66,10 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     if (totalEnabledSensors == 0)
                         it.title = getString(R.string.enable_all_sensors)
                     else
-                        it.title = getString(R.string.enable_remaining_sensors, totalDisabledSensors)
+                        it.title = getString(
+                            R.string.enable_remaining_sensors,
+                            totalDisabledSensors
+                        )
                     it.summary = getString(R.string.enable_all_sensors_summary)
                     it.isChecked = false
                 }
@@ -120,9 +127,12 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 }
                 if (!permArray.isNullOrEmpty())
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        requestPermissions(permArray.toSet()
-                            .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                            .toTypedArray(), 0)
+                        requestPermissions(
+                            permArray.toSet()
+                                .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                                .toTypedArray(),
+                            0
+                        )
                     } else {
                         requestPermissions(permArray, 0)
                     }
@@ -131,7 +141,11 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        SensorReceiver.MANAGERS.sortedBy { getString(it.name) }.filter { it.hasSensor(requireContext()) }.forEach { manager ->
+        SensorReceiver.MANAGERS.sortedBy { getString(it.name) }.filter {
+            it.hasSensor(
+                requireContext()
+            )
+        }.forEach { manager ->
             val prefCategory = PreferenceCategory(preferenceScreen.context)
             prefCategory.title = getString(manager.name)
 
@@ -180,7 +194,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+        ) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
             return
         }

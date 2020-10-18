@@ -148,17 +148,21 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
         exoPlayerView.setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
         exoPlayerView.controllerHideOnTouch = true
         exoPlayerView.controllerShowTimeoutMs = 2000
-        exo_fullscreen_icon.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(view: View) {
-                isExoFullScreen = !isExoFullScreen
-                exoResizeLayout()
+        exo_fullscreen_icon.setOnClickListener(
+            object : View.OnClickListener {
+                override fun onClick(view: View) {
+                    isExoFullScreen = !isExoFullScreen
+                    exoResizeLayout()
+                }
             }
-        })
-        exo_mute_icon.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(view: View) {
-                exoToggleMute()
+        )
+        exo_mute_icon.setOnClickListener(
+            object : View.OnClickListener {
+                override fun onClick(view: View) {
+                    exoToggleMute()
+                }
             }
-        })
+        )
         if (!presenter.isLockEnabled()) {
             blurView.setBlurEnabled(false)
             unlocked = true
@@ -334,42 +338,46 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 }
             }
 
-            addJavascriptInterface(object : Any() {
-                @JavascriptInterface
-                fun getExternalAuth(payload: String) {
-                    JSONObject(payload).let {
-                        presenter.onGetExternalAuth(
-                            it.getString("callback"),
-                            it.has("force") && it.getBoolean("force")
-                        )
+            addJavascriptInterface(
+                object : Any() {
+                    @JavascriptInterface
+                    fun getExternalAuth(payload: String) {
+                        JSONObject(payload).let {
+                            presenter.onGetExternalAuth(
+                                it.getString("callback"),
+                                it.has("force") && it.getBoolean("force")
+                            )
+                        }
                     }
-                }
 
-                @JavascriptInterface
-                fun revokeExternalAuth(callback: String) {
-                    presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
-                    openOnBoarding()
-                    finish()
-                }
+                    @JavascriptInterface
+                    fun revokeExternalAuth(callback: String) {
+                        presenter.onRevokeExternalAuth(
+                            JSONObject(callback).get("callback") as String
+                        )
+                        openOnBoarding()
+                        finish()
+                    }
 
-                @JavascriptInterface
-                fun externalBus(message: String) {
-                    Log.d(TAG, "External bus $message")
-                    webView.post {
-                        val json = JSONObject(message)
-                        when (json.get("type")) {
-                            "connection-status" -> {
-                                isConnected = json.getJSONObject("payload")
-                                    .getString("event") == "connected"
-                                if (isConnected) {
-                                    alertDialog?.cancel()
+                    @JavascriptInterface
+                    fun externalBus(message: String) {
+                        Log.d(TAG, "External bus $message")
+                        webView.post {
+                            val json = JSONObject(message)
+                            when (json.get("type")) {
+                                "connection-status" -> {
+                                    isConnected = json.getJSONObject("payload")
+                                        .getString("event") == "connected"
+                                    if (isConnected) {
+                                        alertDialog?.cancel()
+                                    }
                                 }
-                            }
-                            "config/get" -> {
-                                val pm: PackageManager = context.packageManager
-                                val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
-                                val script = "externalBus(" +
-                                        "${JSONObject(
+                                "config/get" -> {
+                                    val pm: PackageManager = context.packageManager
+                                    val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
+                                    val script = "externalBus(" +
+                                        "${
+                                        JSONObject(
                                             mapOf(
                                                 "id" to JSONObject(message).get("id"),
                                                 "type" to "result",
@@ -382,33 +390,36 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                                                     )
                                                 )
                                             )
-                                        )}" +
+                                        )
+                                        }" +
                                         ");"
-                                Log.d(TAG, script)
-                                webView.evaluateJavascript(script) {
-                                    Log.d(TAG, "Callback $it")
+                                    Log.d(TAG, script)
+                                    webView.evaluateJavascript(script) {
+                                        Log.d(TAG, "Callback $it")
+                                    }
                                 }
+                                "config_screen/show" ->
+                                    startActivity(
+                                        SettingsActivity.newInstance(this@WebViewActivity)
+                                    )
+                                "tag/write" ->
+                                    startActivityForResult(
+                                        NfcSetupActivity.newInstance(
+                                            this@WebViewActivity,
+                                            json.getJSONObject("payload").getString("tag"),
+                                            JSONObject(message).getInt("id")
+                                        ),
+                                        NFC_COMPLETE
+                                    )
+                                "exoplayer/play_hls" -> exoPlayHls(json)
+                                "exoplayer/stop" -> exoStopHls()
+                                "exoplayer/resize" -> exoResizeHls(json)
                             }
-                            "config_screen/show" ->
-                                startActivity(
-                                    SettingsActivity.newInstance(this@WebViewActivity)
-                                )
-                            "tag/write" ->
-                                startActivityForResult(
-                                    NfcSetupActivity.newInstance(
-                                        this@WebViewActivity,
-                                        json.getJSONObject("payload").getString("tag"),
-                                        JSONObject(message).getInt("id")
-                                    ),
-                                    NFC_COMPLETE
-                                )
-                            "exoplayer/play_hls" -> exoPlayHls(json)
-                            "exoplayer/stop" -> exoStopHls()
-                            "exoplayer/resize" -> exoResizeHls(json)
                         }
                     }
-                }
-            }, "externalApp")
+                },
+                "externalApp"
+            )
         }
 
         themesManager.setThemeForWebView(this, webView.settings)
@@ -443,7 +454,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 Log.d(TAG, "NFC Write Complete $it")
             }
         } else if (requestCode == FILE_CHOOSER_RESULT_CODE) {
-            mFilePathCallback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data))
+            mFilePathCallback?.onReceiveValue(
+                WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+            )
             mFilePathCallback = null
         }
     }
@@ -478,14 +491,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
             exoPlayerView.visibility = View.VISIBLE
         }
         val script = "externalBus(" + "${
-            JSONObject(
-                mapOf(
-                    "id" to json.get("id"),
-                    "type" to "result",
-                    "success" to true,
-                    "result" to null
-                )
+        JSONObject(
+            mapOf(
+                "id" to json.get("id"),
+                "type" to "result",
+                "success" to true,
+                "result" to null
             )
+        )
         }" + ");"
         Log.d(TAG, script)
         webView.evaluateJavascript(script) { Log.d(TAG, "Callback $it") }
@@ -598,8 +611,10 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     private fun hideSystemUI() {
         if (isCutout())
-            decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+            decor.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                )
         else {
             decor.viewTreeObserver.addOnGlobalLayoutListener {
                 val r = Rect()
@@ -613,12 +628,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
                 decor.requestLayout()
             }
-            decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            decor.systemUiVisibility = (
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                     or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                )
         }
     }
 
@@ -646,7 +663,9 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        presenter.setSessionExpireMillis((System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000)))
+        presenter.setSessionExpireMillis(
+            (System.currentTimeMillis() + (presenter.sessionTimeOut() * 1000))
+        )
         unlocked = false
         videoHeight = decor.height
         val bounds = Rect(0, 0, 1920, 1080)
@@ -870,10 +889,13 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     }
 
     private fun waitForConnection() {
-        Handler(Looper.getMainLooper()).postDelayed({
-            if (!isConnected) {
-                showError()
-            }
-        }, CONNECTION_DELAY)
+        Handler(Looper.getMainLooper()).postDelayed(
+            {
+                if (!isConnected) {
+                    showError()
+                }
+            },
+            CONNECTION_DELAY
+        )
     }
 }

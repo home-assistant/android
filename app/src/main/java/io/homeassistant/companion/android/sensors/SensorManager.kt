@@ -45,10 +45,10 @@ interface SensorManager {
         }
 
         // If we don't have permission but we are still enabled then we aren't really enabled.
-            if (sensor.enabled && !permission) {
-                sensor.enabled = false
-                sensorDao.update(sensor)
-            }
+        if (sensor.enabled && !permission) {
+            sensor.enabled = false
+            sensorDao.update(sensor)
+        }
 
         return sensor.enabled
     }

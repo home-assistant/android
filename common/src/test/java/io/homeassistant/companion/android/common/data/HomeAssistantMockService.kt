@@ -9,32 +9,34 @@ import okhttp3.mockwebserver.MockWebServer
 class HomeAssistantMockService<T>(private val c: Class<T>) {
 
     private val mockServer: MockWebServer = MockWebServer()
-    private val homeAssistantRetrofit = HomeAssistantRetrofit(object : UrlRepository {
-        override suspend fun getApiUrls(): Array<URL> {
-            return arrayOf(getUrl()!!)
-        }
+    private val homeAssistantRetrofit = HomeAssistantRetrofit(
+        object : UrlRepository {
+            override suspend fun getApiUrls(): Array<URL> {
+                return arrayOf(getUrl()!!)
+            }
 
-        override suspend fun saveRegistrationUrls(
-            cloudHookUrl: String?,
-            remoteUiUrl: String?,
-            webhookId: String
-        ) {
-        }
+            override suspend fun saveRegistrationUrls(
+                cloudHookUrl: String?,
+                remoteUiUrl: String?,
+                webhookId: String
+            ) {
+            }
 
-        override suspend fun getUrl(isInternal: Boolean?): URL? {
-            return mockServer.url("/").toUrl()
-        }
+            override suspend fun getUrl(isInternal: Boolean?): URL? {
+                return mockServer.url("/").toUrl()
+            }
 
-        override suspend fun saveUrl(url: String, isInternal: Boolean?) {
-        }
+            override suspend fun saveUrl(url: String, isInternal: Boolean?) {
+            }
 
-        override suspend fun getHomeWifiSsids(): Set<String> {
-            return emptySet()
-        }
+            override suspend fun getHomeWifiSsids(): Set<String> {
+                return emptySet()
+            }
 
-        override suspend fun saveHomeWifiSsids(ssid: Set<String>) {
+            override suspend fun saveHomeWifiSsids(ssid: Set<String>) {
+            }
         }
-    }).retrofit
+    ).retrofit
 
     fun get(): T {
         return homeAssistantRetrofit.create(c)

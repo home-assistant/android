@@ -12,18 +12,17 @@
     <eightbitlab.com.blurview.BlurView
         android:id="@+id/blurView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </eightbitlab.com.blurview.BlurView>
+        android:layout_height="match_parent"></eightbitlab.com.blurview.BlurView>
 
     <FrameLayout
         android:id="@+id/exoviewGroup"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
         <com.google.android.exoplayer2.ui.PlayerView
             android:id="@+id/exoplayerView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-        </com.google.android.exoplayer2.ui.PlayerView>
+            android:layout_height="wrap_content"></com.google.android.exoplayer2.ui.PlayerView>
     </FrameLayout>
 
 </RelativeLayout>

@@ -91,7 +91,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:padding="5dp"
-                    android:text="@string/widget_attribute_separator_label"/>
+                    android:text="@string/widget_attribute_separator_label" />
 
                 <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/attribute_separator"
@@ -116,7 +116,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:padding="5dp"
-                android:text="@string/widget_text_size_label"/>
+                android:text="@string/widget_text_size_label" />
 
             <androidx.appcompat.widget.AppCompatEditText
                 android:id="@+id/textSize"
@@ -140,7 +140,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
                 android:padding="5dp"
-                android:text="@string/widget_state_separator_label"/>
+                android:text="@string/widget_state_separator_label" />
 
             <androidx.appcompat.widget.AppCompatEditText
                 android:id="@+id/state_separator"

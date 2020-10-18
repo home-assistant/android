@@ -51,7 +51,11 @@ class GeocodeSensorManager : SensorManager {
     }
 
     private fun updateGeocodedLocation(context: Context) {
-        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context, geocodedLocation.id))
+        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(
+                context,
+                geocodedLocation.id
+            )
+        )
             return
         val locApi = LocationServices.getFusedLocationProviderClient(context)
         locApi.lastLocation.addOnSuccessListener { location ->
@@ -67,7 +71,9 @@ class GeocodeSensorManager : SensorManager {
                 val minAccuracy = sensorSettings
                     .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                     ?: DEFAULT_MINIMUM_ACCURACY
-                sensorDao.add(Setting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+                sensorDao.add(
+                    Setting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number")
+                )
 
                 if (location.accuracy <= minAccuracy)
                     address = Geocoder(context)

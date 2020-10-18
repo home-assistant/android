@@ -76,8 +76,12 @@ class SensorDetailFragment(
                         permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
                             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                         android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q ->
-                            requestPermissions(permissions.toSet()
-                                .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0)
+                            requestPermissions(
+                                permissions.toSet()
+                                    .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                                    .toTypedArray(),
+                                0
+                            )
                         else -> requestPermissions(permissions, 0)
                     }
                     return@setOnPreferenceChangeListener false
@@ -180,7 +184,14 @@ class SensorDetailFragment(
                         pref.setOnPreferenceChangeListener { _, newState ->
                             val isEnabled = newState as Boolean
 
-                            sensorDao.add(Setting(basicSensor.id, setting.name, isEnabled.toString(), "toggle"))
+                            sensorDao.add(
+                                Setting(
+                                    basicSensor.id,
+                                    setting.name,
+                                    isEnabled.toString(),
+                                    "toggle"
+                                )
+                            )
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
@@ -192,7 +203,8 @@ class SensorDetailFragment(
                         pref.title = setting.name
                         pref.dialogTitle = setting.name
                         if (pref.text != null)
-                            pref.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
+                            pref.summaryProvider =
+                                EditTextPreference.SimpleSummaryProvider.getInstance()
                         else {
                             pref.summary = setting.value
                             pref.text = setting.value
@@ -216,11 +228,13 @@ class SensorDetailFragment(
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
-                    if (!it.contains(pref))
-                        it.addPreference(pref)
+                        if (!it.contains(pref))
+                            it.addPreference(pref)
                     } else if (setting.valueType == "list-apps") {
                         val packageManager: PackageManager? = context?.packageManager
-                        val packages = packageManager?.getInstalledApplications(PackageManager.GET_META_DATA)
+                        val packages = packageManager?.getInstalledApplications(
+                            PackageManager.GET_META_DATA
+                        )
                         val packageName: MutableList<String> = ArrayList()
                         if (packages != null) {
                             for (packageItem in packages) {
@@ -228,7 +242,9 @@ class SensorDetailFragment(
                             }
                             packageName.sort()
                         }
-                        val pref = findPreference(key) ?: MultiSelectListPreference(requireContext())
+                        val pref = findPreference(key) ?: MultiSelectListPreference(
+                            requireContext()
+                        )
                         pref.key = key
                         pref.title = setting.name
                         pref.entries = packageName.toTypedArray()
@@ -284,7 +300,8 @@ class SensorDetailFragment(
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+        ) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
         }
 

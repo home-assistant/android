@@ -39,7 +39,8 @@ fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolea
                 currentActiveNotifications.filter { s -> s.groupKey == groupKey }
 
             // Is the notification which should be deleted a group summary
-            var isGroupSummary = statusBarNotification.notification.flags and FLAG_GROUP_SUMMARY != 0
+            var isGroupSummary =
+                statusBarNotification.notification.flags and FLAG_GROUP_SUMMARY != 0
 
             // If the notification which should be delete is NOT a group summary AND
             // If there are only two left notifications, then this means only the current to be
@@ -51,7 +52,8 @@ fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolea
             // If there are only one left notifications, then this means only the empty group of
             // the notification is left.
             if (isGroupSummary && groupNotifications.size == 1 ||
-                !isGroupSummary && groupNotifications.size == 2) {
+                !isGroupSummary && groupNotifications.size == 2
+            ) {
                 val group = groupNotifications[0].notification.group
                 val groupId = group.hashCode()
                 this.cancel(group, groupId)

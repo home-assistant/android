@@ -93,7 +93,10 @@ class UrlRepositoryImpl @Inject constructor(
                 e.message
             )
         }
-        localStorage.putString(if (isInternal ?: isInternal()) PREF_LOCAL_URL else PREF_REMOTE_URL, trimUrl)
+        localStorage.putString(
+            if (isInternal ?: isInternal()) PREF_LOCAL_URL else PREF_REMOTE_URL,
+            trimUrl
+        )
     }
 
     override suspend fun getHomeWifiSsids(): Set<String> {

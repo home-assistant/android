@@ -82,11 +82,15 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onGetExternalAuth(callback: String, force: Boolean) {
         mainScope.launch {
             try {
-                view.setExternalAuth("$callback(true, ${authenticationUseCase.retrieveExternalAuthentication(force)})")
+                view.setExternalAuth(
+                    "$callback(true, ${authenticationUseCase.retrieveExternalAuthentication(force)})"
+                )
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
                 view.setExternalAuth("$callback(false)")
-                view.showError(isAuthenticationError = authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
+                view.showError(
+                    isAuthenticationError = authenticationUseCase.getSessionState() == SessionState.ANONYMOUS
+                )
             }
         }
     }

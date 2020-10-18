@@ -157,47 +157,49 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         }
     }
 
-    private val serviceTextWatcher: TextWatcher = (object : TextWatcher {
-        override fun afterTextChanged(p0: Editable?) {
-            val serviceText: String = p0.toString()
+    private val serviceTextWatcher: TextWatcher = (
+        object : TextWatcher {
+            override fun afterTextChanged(p0: Editable?) {
+                val serviceText: String = p0.toString()
 
-            if (services.keys.contains(serviceText)) {
-                Log.d(TAG, "Valid domain and service--processing dynamic fields")
+                if (services.keys.contains(serviceText)) {
+                    Log.d(TAG, "Valid domain and service--processing dynamic fields")
 
-                // Make sure there are not already any dynamic fields created
-                // This can happen if selecting the drop-down twice or pasting
-                dynamicFields.clear()
-
-                // We only call this if servicesAvailable was fetched and is not null,
-                // so we can safely assume that it is not null here
-                val fields = services[serviceText]!!.serviceData.fields
-                val fieldKeys = fields.keys
-                Log.d(TAG, "Fields applicable to this service: $fields")
-
-                fieldKeys.sorted().forEach { fieldKey ->
-                    Log.d(TAG, "Creating a text input box for $fieldKey")
-
-                    // Insert a dynamic layout
-                    // IDs get priority and go at the top, since the other fields
-                    // are usually optional but the ID is required
-                    if (fieldKey.contains("_id"))
-                        dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
-                    else
-                        dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
-                }
-
-                dynamicFieldAdapter.notifyDataSetChanged()
-            } else {
-                if (dynamicFields.size > 0) {
+                    // Make sure there are not already any dynamic fields created
+                    // This can happen if selecting the drop-down twice or pasting
                     dynamicFields.clear()
+
+                    // We only call this if servicesAvailable was fetched and is not null,
+                    // so we can safely assume that it is not null here
+                    val fields = services[serviceText]!!.serviceData.fields
+                    val fieldKeys = fields.keys
+                    Log.d(TAG, "Fields applicable to this service: $fields")
+
+                    fieldKeys.sorted().forEach { fieldKey ->
+                        Log.d(TAG, "Creating a text input box for $fieldKey")
+
+                        // Insert a dynamic layout
+                        // IDs get priority and go at the top, since the other fields
+                        // are usually optional but the ID is required
+                        if (fieldKey.contains("_id"))
+                            dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
+                        else
+                            dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
+                    }
+
                     dynamicFieldAdapter.notifyDataSetChanged()
+                } else {
+                    if (dynamicFields.size > 0) {
+                        dynamicFields.clear()
+                        dynamicFieldAdapter.notifyDataSetChanged()
+                    }
                 }
             }
-        }
 
-        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-    })
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+        }
+        )
 
     private fun getServiceString(service: Service): String {
         return "${service.domain}.${service.service}"
@@ -217,7 +219,8 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
         }
 

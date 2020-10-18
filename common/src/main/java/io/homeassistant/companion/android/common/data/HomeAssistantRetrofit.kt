@@ -32,22 +32,29 @@ class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
         .client(
             OkHttpClient.Builder().apply {
                 if (BuildConfig.DEBUG) {
-                    addInterceptor(HttpLoggingInterceptor().apply {
-                        level = HttpLoggingInterceptor.Level.BODY
-                    })
+                    addInterceptor(
+                        HttpLoggingInterceptor().apply {
+                            level = HttpLoggingInterceptor.Level.BODY
+                        }
+                    )
                 }
             }.addInterceptor {
-                    return@addInterceptor if (it.request().url.toString().contains(LOCAL_HOST)) {
-                        val newRequest = runBlocking {
-                            it.request().newBuilder()
-                                .url(it.request().url.toString().replace(LOCAL_HOST, urlRepository.getUrl().toString()))
-                                .build()
-                        }
-                        it.proceed(newRequest)
-                    } else {
-                        it.proceed(it.request())
+                return@addInterceptor if (it.request().url.toString().contains(LOCAL_HOST)) {
+                    val newRequest = runBlocking {
+                        it.request().newBuilder()
+                            .url(
+                                it.request().url.toString().replace(
+                                    LOCAL_HOST,
+                                    urlRepository.getUrl().toString()
+                                )
+                            )
+                            .build()
                     }
+                    it.proceed(newRequest)
+                } else {
+                    it.proceed(it.request())
                 }
+            }
                 .readTimeout(30L, TimeUnit.SECONDS)
                 .build()
         )

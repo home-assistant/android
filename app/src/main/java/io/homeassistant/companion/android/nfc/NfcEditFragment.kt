@@ -63,8 +63,13 @@ class NfcEditFragment : Fragment() {
         val nfcReadObserver = Observer<String> { uuid ->
             mainScope.launch {
                 et_tag_identifier_content.setText(uuid)
-                val deviceId = Settings.Secure.getString(requireActivity().contentResolver, Settings.Secure.ANDROID_ID)
-                et_tag_example_trigger_content.setText("- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: $uuid")
+                val deviceId = Settings.Secure.getString(
+                    requireActivity().contentResolver,
+                    Settings.Secure.ANDROID_ID
+                )
+                et_tag_example_trigger_content.setText(
+                    "- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: $uuid"
+                )
             }
         }
         viewModel.nfcReadEvent.observe(viewLifecycleOwner, nfcReadObserver)

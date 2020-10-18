@@ -101,7 +101,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private fun ensureInjected() {
         if (latestContext.applicationContext is GraphComponentAccessor) {
             DaggerSensorComponent.builder()
-                .appComponent((latestContext.applicationContext as GraphComponentAccessor).appComponent)
+                .appComponent(
+                    (latestContext.applicationContext as GraphComponentAccessor).appComponent
+                )
                 .build()
                 .inject(this)
         } else {
@@ -146,7 +148,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     private fun removeAllLocationUpdateRequests() {
         Log.d(TAG, "Removing all location requests.")
-        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
+        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(
+            latestContext
+        )
         val backgroundIntent = getLocationUpdateIntent(false)
 
         fusedLocationProviderClient.removeLocationUpdates(backgroundIntent)
@@ -168,7 +172,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
         Log.d(TAG, "Registering for location updates.")
 
-        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
+        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(
+            latestContext
+        )
         val intent = getLocationUpdateIntent(false)
 
         fusedLocationProviderClient.requestLocationUpdates(
@@ -211,7 +217,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             val minAccuracy = sensorSettings
                 .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                 ?: DEFAULT_MINIMUM_ACCURACY
-            sensorDao.add(Setting(backgroundLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+            sensorDao.add(
+                Setting(backgroundLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number")
+            )
             if (location.accuracy > minAccuracy) {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
@@ -224,7 +232,10 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         Log.d(TAG, "Received geofence update.")
         if (!isEnabled(latestContext, zoneLocation.id)) {
             isZoneLocationSetup = false
-            Log.w(TAG, "Unregistering geofences as zone tracking is disabled and intent was received")
+            Log.w(
+                TAG,
+                "Unregistering geofences as zone tracking is disabled and intent was received"
+            )
             removeGeofenceUpdateRequests()
             return
         }
@@ -234,7 +245,10 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             return
         }
 
-        val validGeofencingEvents = listOf(Geofence.GEOFENCE_TRANSITION_ENTER, Geofence.GEOFENCE_TRANSITION_EXIT)
+        val validGeofencingEvents = listOf(
+            Geofence.GEOFENCE_TRANSITION_ENTER,
+            Geofence.GEOFENCE_TRANSITION_EXIT
+        )
         if (geofencingEvent.geofenceTransition in validGeofencingEvents) {
             val zoneStatusEvent = when (geofencingEvent.geofenceTransition) {
                 Geofence.GEOFENCE_TRANSITION_ENTER -> "android.zone_entered"
@@ -282,12 +296,17 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun sendLocationUpdate(location: Location, name: String = "", geofenceUpdate: Boolean = false) {
+    private fun sendLocationUpdate(
+        location: Location,
+        name: String = "",
+        geofenceUpdate: Boolean = false
+    ) {
         Log.d(
-            TAG, "Last Location: " +
-                    "\nCoords:(${location.latitude}, ${location.longitude})" +
-                    "\nAccuracy: ${location.accuracy}" +
-                    "\nBearing: ${location.bearing}"
+            TAG,
+            "Last Location: " +
+                "\nCoords:(${location.latitude}, ${location.longitude})" +
+                "\nAccuracy: ${location.accuracy}" +
+                "\nBearing: ${location.bearing}"
         )
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
@@ -331,7 +350,12 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private fun getLocationUpdateIntent(isGeofence: Boolean): PendingIntent {
         val intent = Intent(latestContext, LocationSensorManager::class.java)
         intent.action = if (isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
-        return PendingIntent.getBroadcast(latestContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getBroadcast(
+            latestContext,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT
+        )
     }
 
     private fun createLocationRequest(): LocationRequest {
@@ -359,7 +383,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                         it.attributes.radius
                     )
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT)
+                    .setTransitionTypes(
+                        Geofence.GEOFENCE_TRANSITION_ENTER or Geofence.GEOFENCE_TRANSITION_EXIT
+                    )
                     .build()
             )
         }
@@ -380,24 +406,42 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val now = System.currentTimeMillis()
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
         val fullSensor = sensorDao.getFull(singleAccurateLocation.id)
-        val latestAccurateLocation = fullSensor?.attributes?.firstOrNull { it.name == "lastAccurateLocationRequest" }?.value?.toLongOrNull() ?: 0L
+        val latestAccurateLocation =
+            fullSensor?.attributes?.firstOrNull { it.name == "lastAccurateLocationRequest" }?.value?.toLongOrNull()
+                ?: 0L
 
         val sensorSettings = sensorDao.getSettings(singleAccurateLocation.id)
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(Setting(singleAccurateLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+        sensorDao.add(
+            Setting(singleAccurateLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number")
+        )
         val minTimeBetweenUpdates = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
             ?: 60000
-        sensorDao.add(Setting(singleAccurateLocation.id, SETTING_ACCURATE_UPDATE_TIME, minTimeBetweenUpdates.toString(), "number"))
+        sensorDao.add(
+            Setting(
+                singleAccurateLocation.id,
+                SETTING_ACCURATE_UPDATE_TIME,
+                minTimeBetweenUpdates.toString(),
+                "number"
+            )
+        )
 
         // Only update accurate location at most once a minute
         if (now < latestAccurateLocation + minTimeBetweenUpdates) {
             Log.d(TAG, "Not requesting accurate location, last accurate location was too recent")
             return
         }
-        sensorDao.add(Attribute(singleAccurateLocation.id, "lastAccurateLocationRequest", now.toString(), "string"))
+        sensorDao.add(
+            Attribute(
+                singleAccurateLocation.id,
+                "lastAccurateLocationRequest",
+                now.toString(),
+                "string"
+            )
+        )
 
         val maxRetries = 5
         val request = createLocationRequest().apply {

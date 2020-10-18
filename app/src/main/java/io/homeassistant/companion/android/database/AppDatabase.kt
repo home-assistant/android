@@ -102,28 +102,39 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))"
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))"
                 )
             }
         }
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `icon_id` INTEGER NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, PRIMARY KEY(`id`))")
-                database.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_id` TEXT, `label` TEXT, PRIMARY KEY(`id`))")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `button_widgets` (`id` INTEGER NOT NULL, `icon_id` INTEGER NOT NULL, `domain` TEXT NOT NULL, `service` TEXT NOT NULL, `service_data` TEXT NOT NULL, `label` TEXT, PRIMARY KEY(`id`))"
+                )
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_id` TEXT, `label` TEXT, PRIMARY KEY(`id`))"
+                )
             }
         }
 
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `static_widget` ADD `text_size` FLOAT NOT NULL DEFAULT '30'")
-                database.execSQL("ALTER TABLE `static_widget` ADD `separator` TEXT NOT NULL DEFAULT ' '")
+                database.execSQL(
+                    "ALTER TABLE `static_widget` ADD `text_size` FLOAT NOT NULL DEFAULT '30'"
+                )
+                database.execSQL(
+                    "ALTER TABLE `static_widget` ADD `separator` TEXT NOT NULL DEFAULT ' '"
+                )
             }
         }
 
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `template_widgets` (`id` INTEGER NOT NULL, `template` TEXT NOT NULL, PRIMARY KEY(`id`))")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `template_widgets` (`id` INTEGER NOT NULL, `template` TEXT NOT NULL, PRIMARY KEY(`id`))"
+                )
             }
         }
 
@@ -137,22 +148,38 @@ abstract class AppDatabase : RoomDatabase() {
                             while (widgets.moveToNext()) {
                                 val cv = ContentValues()
                                 cv.put("id", widgets.getInt(widgets.getColumnIndex("id")))
-                                cv.put("entity_id", widgets.getString(widgets.getColumnIndex("entity_id")))
-                                cv.put("attribute_ids", widgets.getString(widgets.getColumnIndex("attribute_id")))
+                                cv.put(
+                                    "entity_id",
+                                    widgets.getString(widgets.getColumnIndex("entity_id"))
+                                )
+                                cv.put(
+                                    "attribute_ids",
+                                    widgets.getString(widgets.getColumnIndex("attribute_id"))
+                                )
                                 cv.put("label", widgets.getString(widgets.getColumnIndex("label")))
-                                cv.put("text_size", widgets.getFloat(widgets.getColumnIndex("text_size")))
-                                cv.put("state_separator", widgets.getString(widgets.getColumnIndex("separator")))
+                                cv.put(
+                                    "text_size",
+                                    widgets.getFloat(widgets.getColumnIndex("text_size"))
+                                )
+                                cv.put(
+                                    "state_separator",
+                                    widgets.getString(widgets.getColumnIndex("separator"))
+                                )
                                 cv.put("attribute_separator", " ")
                                 contentValues.add(cv)
                             }
                             database.execSQL("DROP TABLE IF EXISTS `static_widget`")
-                            database.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))")
+                            database.execSQL(
+                                "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))"
+                            )
                             for (cv in contentValues) {
                                 database.insert("static_widget", 0, cv)
                             }
                         } else {
                             database.execSQL("DROP TABLE IF EXISTS `static_widget`")
-                            database.execSQL("CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))")
+                            database.execSQL(
+                                "CREATE TABLE IF NOT EXISTS `static_widget` (`id` INTEGER NOT NULL, `entity_id` TEXT NOT NULL, `attribute_ids` TEXT, `label` TEXT, `text_size` FLOAT NOT NULL DEFAULT '30', `state_separator` TEXT NOT NULL DEFAULT '', `attribute_separator` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`id`))"
+                            )
                         }
                     }
                     widgets.close()
@@ -171,20 +198,28 @@ abstract class AppDatabase : RoomDatabase() {
                 if (cursor.moveToFirst()) {
                     try {
                         while (cursor.moveToNext()) {
-                            sensors.add(ContentValues().also {
-                                it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
-                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                                it.put(
-                                    "registered",
-                                    cursor.getInt(cursor.getColumnIndex("registered"))
-                                )
-                                it.put("state", "")
-                                it.put("state_type", "")
-                                it.put("type", "")
-                                it.put("icon", "")
-                                it.put("name", "")
-                                it.put("device_class", "")
-                            })
+                            sensors.add(
+                                ContentValues().also {
+                                    it.put(
+                                        "id",
+                                        cursor.getString(cursor.getColumnIndex("unique_id"))
+                                    )
+                                    it.put(
+                                        "enabled",
+                                        cursor.getInt(cursor.getColumnIndex("enabled"))
+                                    )
+                                    it.put(
+                                        "registered",
+                                        cursor.getInt(cursor.getColumnIndex("registered"))
+                                    )
+                                    it.put("state", "")
+                                    it.put("state_type", "")
+                                    it.put("type", "")
+                                    it.put("icon", "")
+                                    it.put("name", "")
+                                    it.put("device_class", "")
+                                }
+                            )
                         }
                         migrationSuccessful = true
                     } catch (e: Exception) {
@@ -194,7 +229,9 @@ abstract class AppDatabase : RoomDatabase() {
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
-                database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))"
+                )
                 if (migrationSuccessful) {
                     sensors.forEach {
                         database.insert("sensors", OnConflictStrategy.REPLACE, it)
@@ -203,17 +240,23 @@ abstract class AppDatabase : RoomDatabase() {
                 if (migrationFailed)
                     notifyMigrationFailed()
 
-                database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensor_attributes` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, PRIMARY KEY(`sensor_id`, `name`))"
+                )
             }
         }
         private val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `sensor_attributes` ADD `value_type` TEXT NOT NULL DEFAULT 'string'")
+                database.execSQL(
+                    "ALTER TABLE `sensor_attributes` ADD `value_type` TEXT NOT NULL DEFAULT 'string'"
+                )
             }
         }
         private val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `sensors` ADD `state_changed` INTEGER NOT NULL DEFAULT ''")
+                database.execSQL(
+                    "ALTER TABLE `sensors` ADD `state_changed` INTEGER NOT NULL DEFAULT ''"
+                )
             }
         }
         private val MIGRATION_9_10 = object : Migration(9, 10) {
@@ -225,20 +268,25 @@ abstract class AppDatabase : RoomDatabase() {
                 if (cursor.moveToFirst()) {
                     try {
                         while (cursor.moveToNext()) {
-                            sensors.add(ContentValues().also {
-                                it.put("id", cursor.getString(cursor.getColumnIndex("id")))
-                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                                it.put(
-                                    "registered",
-                                    cursor.getInt(cursor.getColumnIndex("registered"))
-                                )
-                                it.put("state", "")
-                                it.put("last_sent_state", "")
-                                it.put("state_type", "")
-                                it.put("type", "")
-                                it.put("icon", "")
-                                it.put("name", "")
-                            })
+                            sensors.add(
+                                ContentValues().also {
+                                    it.put("id", cursor.getString(cursor.getColumnIndex("id")))
+                                    it.put(
+                                        "enabled",
+                                        cursor.getInt(cursor.getColumnIndex("enabled"))
+                                    )
+                                    it.put(
+                                        "registered",
+                                        cursor.getInt(cursor.getColumnIndex("registered"))
+                                    )
+                                    it.put("state", "")
+                                    it.put("last_sent_state", "")
+                                    it.put("state_type", "")
+                                    it.put("type", "")
+                                    it.put("icon", "")
+                                    it.put("name", "")
+                                }
+                            )
                         }
                         migrationSuccessful = true
                     } catch (e: Exception) {
@@ -248,7 +296,9 @@ abstract class AppDatabase : RoomDatabase() {
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
-                database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))"
+                )
                 if (migrationSuccessful) {
                     sensors.forEach {
                         database.insert("sensors", OnConflictStrategy.REPLACE, it)
@@ -261,31 +311,40 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', PRIMARY KEY(`sensor_id`, `name`))")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', PRIMARY KEY(`sensor_id`, `name`))"
+                )
             }
         }
 
         private val MIGRATION_11_12 = object : Migration(11, 12) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `mediaplayctrls_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, `label` TEXT, `showSkip` INTEGER NOT NULL, `showSeek` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `mediaplayctrls_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, `label` TEXT, `showSkip` INTEGER NOT NULL, `showSeek` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+                )
             }
         }
 
         private val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `notification_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `received` INTEGER NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL)")
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `notification_history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `received` INTEGER NOT NULL, `message` TEXT NOT NULL, `data` TEXT NOT NULL)"
+                )
             }
         }
 
         private fun createNotificationChannel() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val notificationManager =
+                    appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
                 var notificationChannel =
                     notificationManager.getNotificationChannel(channelId)
                 if (notificationChannel == null) {
                     notificationChannel = NotificationChannel(
-                        channelId, TAG, NotificationManager.IMPORTANCE_HIGH
+                        channelId,
+                        TAG,
+                        NotificationManager.IMPORTANCE_HIGH
                     )
                     notificationManager.createNotificationChannel(notificationChannel)
                 }
@@ -308,7 +367,8 @@ abstract class AppDatabase : RoomDatabase() {
                     Log.d(TAG, "Event sent to Home Assistant")
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to send event to Home Assistant", e)
-                    Toast.makeText(appContext, R.string.database_event_failure, Toast.LENGTH_LONG).show()
+                    Toast.makeText(appContext, R.string.database_event_failure, Toast.LENGTH_LONG)
+                        .show()
                 }
             }
         }

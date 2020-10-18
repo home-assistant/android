@@ -40,7 +40,7 @@
             android:contentDescription="@null"
             android:layout_gravity="center_vertical"
             android:src="@drawable/ic_plus"
-            android:tint="@android:color/white"/>
+            android:tint="@android:color/white" />
 
     </LinearLayout>
 

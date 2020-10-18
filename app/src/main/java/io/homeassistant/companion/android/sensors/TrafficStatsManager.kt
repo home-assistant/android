@@ -66,10 +66,13 @@ class TrafficStatsManager : SensorManager {
         for (item in networkInfo) {
             networkCapabilities = cm.getNetworkCapabilities(item)
             if (!hasCellular)
-                hasCellular = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ?: false
+                hasCellular = networkCapabilities?.hasTransport(
+                    NetworkCapabilities.TRANSPORT_CELLULAR
+                ) ?: false
         }
         return true
     }
+
     override fun requestSensorUpdate(
         context: Context
     ) {
@@ -93,7 +96,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             rxBytesMobile,
             mobileRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,
@@ -115,13 +119,15 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             txBytesMobile,
             mobileTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,
             mapOf()
         )
     }
+
     private fun updateTotalRxBytes(context: Context) {
 
         if (!isEnabled(context, rxBytesTotal.id))
@@ -136,7 +142,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             rxBytesTotal,
             totalRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,
@@ -158,7 +165,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             txBytesTotal,
             totalTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,

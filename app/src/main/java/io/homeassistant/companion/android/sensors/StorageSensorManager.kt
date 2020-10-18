@@ -44,9 +44,11 @@ class StorageSensorManager : SensorManager {
                 if (item != null) {
                     Log.d(
                         TAG,
-                        "PATH $item is mounted ${Environment.getExternalStorageState(item) == Environment.MEDIA_MOUNTED} and removable is ${Environment.isExternalStorageRemovable(
+                        "PATH $item is mounted ${Environment.getExternalStorageState(item) == Environment.MEDIA_MOUNTED} and removable is ${
+                        Environment.isExternalStorageRemovable(
                             item
-                        )}"
+                        )
+                        }"
                     )
                     if (Environment.getExternalStorageState(item) == Environment.MEDIA_MOUNTED) {
                         removable = Environment.isExternalStorageRemovable(item)
@@ -88,7 +90,8 @@ class StorageSensorManager : SensorManager {
 
         val icon = "mdi:harddisk"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             storageSensor,
             percentageFreeInternalStorage,
             icon,
@@ -115,12 +118,14 @@ class StorageSensorManager : SensorManager {
             totalBlocksSD = statSD.blockCountLong
             totalExternalStorage = getTotalExternalMemorySize()
             freeExternalStorage = getAvailableExternalMemorySize()
-            percentFreeExternal = ((availableBlocksSD.toDouble() / totalBlocksSD.toDouble()) * 100).roundToInt()
+            percentFreeExternal =
+                ((availableBlocksSD.toDouble() / totalBlocksSD.toDouble()) * 100).roundToInt()
         }
 
         val icon = "mdi:micro-sd"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             externalStorage,
             percentFreeExternal,
             icon,

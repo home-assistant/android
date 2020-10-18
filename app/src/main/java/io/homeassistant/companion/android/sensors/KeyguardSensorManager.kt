@@ -43,10 +43,15 @@ class KeyguardSensorManager : SensorManager {
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() = when {
-            (Build.VERSION.SDK_INT >= 23) -> listOf(deviceLocked, deviceSecure, keyguardLocked, keyguardSecure)
+            (Build.VERSION.SDK_INT >= 23) -> listOf(
+                deviceLocked,
+                deviceSecure,
+                keyguardLocked,
+                keyguardSecure
+            )
             (Build.VERSION.SDK_INT >= 22) -> listOf(deviceLocked, keyguardLocked, keyguardSecure)
             else -> listOf(keyguardLocked, keyguardSecure)
-    }
+        }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -74,7 +79,8 @@ class KeyguardSensorManager : SensorManager {
         val isLocked = km.isDeviceLocked
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             deviceLocked,
             isLocked,
             icon,
@@ -91,7 +97,8 @@ class KeyguardSensorManager : SensorManager {
         val isSecure = km.isDeviceSecure
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             deviceSecure,
             isSecure,
             icon,
@@ -107,7 +114,8 @@ class KeyguardSensorManager : SensorManager {
         val isLocked = km.isKeyguardLocked
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             keyguardLocked,
             isLocked,
             icon,
@@ -123,7 +131,8 @@ class KeyguardSensorManager : SensorManager {
         val isSecure = km.isKeyguardSecure
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             keyguardSecure,
             isSecure,
             icon,

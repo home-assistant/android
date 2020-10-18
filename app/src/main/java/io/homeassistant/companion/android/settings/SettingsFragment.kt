@@ -59,7 +59,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
         val onChangeUrlValidator = Preference.OnPreferenceChangeListener { _, newValue ->
-            val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
+            val isValid =
+                newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
             if (!isValid) {
                 AlertDialog.Builder(requireActivity())
                     .setTitle(R.string.url_invalid)
@@ -77,7 +78,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 findPreference<EditTextPreference>("session_timeout")?.isVisible = false
             } else {
                 isValid = true
-                if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
+                if (BiometricManager.from(requireActivity())
+                    .canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS
+                ) {
                     setLock = true
                     authenticator.title = getString(R.string.biometric_set_title)
                     authenticator.authenticate()
@@ -150,16 +153,22 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
                 if (rateLimits != null)
                     it.isVisible = true
-                it.summary = "\nSuccessful: ${rateLimits?.successful}       Errors: ${rateLimits?.errors}" +
-                        "\n\nRemaining/Maximum: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
-                        "\n\nResets at: ${rateLimits?.resetsAt}"
+                it.summary =
+                    "\nSuccessful: ${rateLimits?.successful}       Errors: ${rateLimits?.errors}" +
+                    "\n\nRemaining/Maximum: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
+                    "\n\nResets at: ${rateLimits?.resetsAt}"
             }
         }
 
         findPreference<Preference>("changelog")?.let {
             val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL"))
                 "https://github.com/home-assistant/android/releases"
-            else "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
+            else "https://github.com/home-assistant/android/releases/tag/${
+            BuildConfig.VERSION_NAME.replace(
+                "-full",
+                ""
+            ).replace("-minimal", "")
+            }"
             it.summary = link
             val intent = Intent()
             intent.action = "android.intent.action.VIEW"

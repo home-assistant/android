@@ -81,7 +81,8 @@ class PhoneStateSensorManager : SensorManager {
         if (state == "ringing" || state == "offhook")
             phoneIcon += "-in-talk"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             phoneState,
             state,
             phoneIcon,
@@ -103,8 +104,15 @@ class PhoneStateSensorManager : SensorManager {
 
             if (checkPermission(context, basicSimSensor.id)) {
                 val subscriptionManager =
-                    (context.applicationContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE)) as SubscriptionManager
-                val info: SubscriptionInfo? = subscriptionManager.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
+                    (
+                        context.applicationContext.getSystemService(
+                            Context.TELEPHONY_SUBSCRIPTION_SERVICE
+                        )
+                        ) as SubscriptionManager
+                val info: SubscriptionInfo? =
+                    subscriptionManager.getActiveSubscriptionInfoForSimSlotIndex(
+                        slotIndex
+                    )
 
                 if (info != null) {
                     displayName = info.displayName.toString()
@@ -115,13 +123,15 @@ class PhoneStateSensorManager : SensorManager {
                         attrs["mcc"] = info.mccString.toString()
                         attrs["mnc"] = info.mncString.toString()
                         attrs["is opportunistic"] = info.isOpportunistic
-                        if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) attrs["data roaming"] = "enable"
+                        if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) attrs["data roaming"] =
+                            "enable"
                         else attrs["data roaming"] = "disable"
                     }
                 }
             }
 
-            onSensorUpdated(context,
+            onSensorUpdated(
+                context,
                 basicSimSensor,
                 displayName,
                 "mdi:sim",

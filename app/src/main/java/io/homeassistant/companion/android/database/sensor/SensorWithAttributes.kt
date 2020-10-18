@@ -20,7 +20,9 @@ data class SensorWithAttributes(
                 "float" -> it.value.toFloat()
                 "int" -> it.value.toInt()
                 "string" -> it.value
-                else -> throw IllegalArgumentException("Attribute: ${it.name} is of unknown type: ${it.valueType}")
+                else -> throw IllegalArgumentException(
+                    "Attribute: ${it.name} is of unknown type: ${it.valueType}"
+                )
             }
             it.name to attributeValue
         }.toMap()

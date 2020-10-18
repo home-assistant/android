@@ -77,7 +77,9 @@ class SettingsPresenterImpl @Inject constructor(
                 }
                 "registration_name" -> {
                     try {
-                        integrationUseCase.updateRegistration(DeviceRegistration(deviceName = value!!))
+                        integrationUseCase.updateRegistration(
+                            DeviceRegistration(deviceName = value!!)
+                        )
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue updating registration with new device name", e)
                     }
@@ -186,7 +188,7 @@ class SettingsPresenterImpl @Inject constructor(
             }
 
             return@runBlocking splitVersion.size > 2 &&
-                    (Integer.parseInt(splitVersion[0]) > 0 || Integer.parseInt(splitVersion[1]) >= 114)
+                (Integer.parseInt(splitVersion[0]) > 0 || Integer.parseInt(splitVersion[1]) >= 114)
         }
     }
 

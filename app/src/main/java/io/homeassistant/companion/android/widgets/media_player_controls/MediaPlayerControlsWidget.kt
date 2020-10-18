@@ -260,9 +260,10 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
-            TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + action + System.lineSeparator() +
-                    "AppWidgetId: " + appWidgetId
+            TAG,
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + action + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId
         )
 
         ensureInjected(context)
@@ -296,8 +297,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
         mainScope.launch {
             Log.d(
-                TAG, "Saving service call config data:" + System.lineSeparator() +
-                        "entity id: " + entitySelection + System.lineSeparator()
+                TAG,
+                "Saving service call config data:" + System.lineSeparator() +
+                    "entity id: " + entitySelection + System.lineSeparator()
             )
             mediaPlayCtrlWidgetDao.add(
                 MediaPlayerControlsWidgetEntity(
@@ -324,8 +326,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling previous track service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling previous track service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
@@ -348,8 +351,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling rewind service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling rewind service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val currentEntityInfo: Entity<Map<String, Any>>
@@ -357,7 +361,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
-                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                    .show()
                 return@launch
             }
 
@@ -392,8 +397,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling play/pause service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling play/pause service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
@@ -416,8 +422,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling fast forward service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling fast forward service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val currentEntityInfo: Entity<Map<String, Any>>
@@ -425,7 +432,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
-                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                    .show()
                 return@launch
             }
 
@@ -460,8 +468,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling next track service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling next track service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"

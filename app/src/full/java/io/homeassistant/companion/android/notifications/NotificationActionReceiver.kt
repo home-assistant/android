@@ -65,7 +65,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
         when (intent.action) {
             FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
-            OPEN_URI -> NotificationActionContentHandler.openUri(context, notificationAction.uri, onComplete)
+            OPEN_URI -> NotificationActionContentHandler.openUri(
+                context,
+                notificationAction.uri,
+                onComplete
+            )
         }
 
         // Make sure the notification shade closes

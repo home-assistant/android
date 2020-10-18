@@ -90,8 +90,14 @@ class SensorReceiver : BroadcastReceiver() {
         if (skippableActions.containsKey(intent.action)) {
             val sensor = skippableActions[intent.action]
             if (!isSensorEnabled(context, sensor!!)) {
-                Log.d(TAG, String.format
-                    ("Sensor %s corresponding to received event %s is disabled, skipping sensors update", sensor, intent.action))
+                Log.d(
+                    TAG,
+                    String.format(
+                        "Sensor %s corresponding to received event %s is disabled, skipping sensors update",
+                        sensor,
+                        intent.action
+                    )
+                )
                 return
             }
         }

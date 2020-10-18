@@ -52,7 +52,13 @@ class BatterySensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_battery
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(batteryLevel, batteryState, isChargingState, chargerTypeState, batteryHealthState)
+        get() = listOf(
+            batteryLevel,
+            batteryState,
+            isChargingState,
+            chargerTypeState,
+            batteryHealthState
+        )
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -206,7 +212,7 @@ class BatterySensorManager : SensorManager {
         val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
         return status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL
+            status == BatteryManager.BATTERY_STATUS_FULL
     }
 
     private fun getChargerType(intent: Intent): String {

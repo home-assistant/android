@@ -63,7 +63,8 @@ class EntityWidgetConfigureActivity : Activity() {
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
         }
 
@@ -136,7 +137,10 @@ class EntityWidgetConfigureActivity : Activity() {
 
     private fun setupAttributes() {
         val fetchedAttributes = selectedEntity?.attributes as Map<String, String>
-        val attributesAdapter = ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line)
+        val attributesAdapter = ArrayAdapter<String>(
+            this,
+            android.R.layout.simple_dropdown_item_1line
+        )
         widget_text_config_attribute.setAdapter(attributesAdapter)
         attributesAdapter.addAll(*fetchedAttributes.keys.toTypedArray())
         widget_text_config_attribute.setTokenizer(CommaTokenizer())

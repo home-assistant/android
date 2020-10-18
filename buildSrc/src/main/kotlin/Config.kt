@@ -22,10 +22,14 @@ object Config {
             const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${version}"
 
             private const val coroutinesVersion = "1.3.3"
-            const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}"
-            const val coroutinesPlayServices = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.3.8"
-            const val coroutinesAndroid = "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}"
-            const val coroutinesTest = "org.jetbrains.kotlinx:kotlinx-coroutines-test:${coroutinesVersion}"
+            const val coroutines =
+                "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}"
+            const val coroutinesPlayServices =
+                "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.3.8"
+            const val coroutinesAndroid =
+                "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}"
+            const val coroutinesTest =
+                "org.jetbrains.kotlinx:kotlinx-coroutines-test:${coroutinesVersion}"
         }
 
         object Google {
@@ -70,7 +74,8 @@ object Config {
         object Square {
             private const val retrofitVersion = "2.8.1"
             const val retrofit = "com.squareup.retrofit2:retrofit:${retrofitVersion}"
-            const val retrofitJacksonConverter = "com.squareup.retrofit2:converter-jackson:${retrofitVersion}"
+            const val retrofitJacksonConverter =
+                "com.squareup.retrofit2:converter-jackson:${retrofitVersion}"
 
             private const val okhttpVersion = "4.5.0"
             const val okhttp = "com.squareup.okhttp3:okhttp:$okhttpVersion"
@@ -107,5 +112,4 @@ object Config {
             const val exoUi = "com.google.android.exoplayer:exoplayer-ui:2.11.7"
         }
     }
-
 }

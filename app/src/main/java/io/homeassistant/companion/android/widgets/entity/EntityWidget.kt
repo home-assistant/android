@@ -130,8 +130,12 @@ class EntityWidget : AppWidgetProvider() {
         var attributeValues: List<String?>
         try {
             fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
-            attributeValues = attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
-            return entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
+            attributeValues =
+                attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
+            return entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
+                .plus(
+                    attributeValues.joinToString(attributeSeparator)
+                )
         } catch (e: Exception) {
             Log.d(TAG, "Unable to fetch entity state and attributes", e)
         }
@@ -143,9 +147,10 @@ class EntityWidget : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
-            TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + action + System.lineSeparator() +
-                    "AppWidgetId: " + appWidgetId
+            TAG,
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + action + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId
         )
 
         ensureInjected(context)
@@ -177,19 +182,22 @@ class EntityWidget : AppWidgetProvider() {
 
         mainScope.launch {
             Log.d(
-                TAG, "Saving service call config data:" + System.lineSeparator() +
-                "entity id: " + entitySelection + System.lineSeparator() +
-                "attribute: " + (attributeSelection ?: "N/A")
+                TAG,
+                "Saving service call config data:" + System.lineSeparator() +
+                    "entity id: " + entitySelection + System.lineSeparator() +
+                    "attribute: " + (attributeSelection ?: "N/A")
             )
-            staticWidgetDao.add(StaticWidgetEntity(
-                appWidgetId,
-                entitySelection,
-                attributeSelection?.joinToString(","),
-                labelSelection,
-                textSizeSelection?.toFloatOrNull() ?: 30F,
-                stateSeparatorSelection ?: "",
-                attributeSeparatorSelection ?: ""
-            ))
+            staticWidgetDao.add(
+                StaticWidgetEntity(
+                    appWidgetId,
+                    entitySelection,
+                    attributeSelection?.joinToString(","),
+                    labelSelection,
+                    textSizeSelection?.toFloatOrNull() ?: 30F,
+                    stateSeparatorSelection ?: "",
+                    attributeSeparatorSelection ?: ""
+                )
+            )
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }

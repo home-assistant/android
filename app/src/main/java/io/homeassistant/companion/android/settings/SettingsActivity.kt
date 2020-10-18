@@ -12,7 +12,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 
-class SettingsActivity : AppCompatActivity(),
+class SettingsActivity :
+    AppCompatActivity(),
     PreferenceFragmentCompat.OnPreferenceDisplayDialogCallback {
 
     companion object {
@@ -49,7 +50,10 @@ class SettingsActivity : AppCompatActivity(),
         }
     }
 
-    override fun onPreferenceDisplayDialog(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
+    override fun onPreferenceDisplayDialog(
+        caller: PreferenceFragmentCompat,
+        pref: Preference
+    ): Boolean {
         if (pref is SsidPreference) {
             val ssidDialog = SsidDialogFragment.newInstance("connection_internal_ssids")
             ssidDialog.show(supportFragmentManager, SSID_DIALOG_TAG)

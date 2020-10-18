@@ -17,53 +17,55 @@ import kotlinx.coroutines.runBlocking
 
 @RequiresApi(Build.VERSION_CODES.R)
 class CoverControl {
-    companion object : HaControl { override fun createControl(
-        context: Context,
-        entity: Entity<Map<String, Any>>
-    ): Control {
-        val control = Control.StatefulBuilder(
-            entity.entityId,
-            PendingIntent.getActivity(
-                context,
-                0,
-                WebViewActivity.newInstance(context),
-                PendingIntent.FLAG_CANCEL_CURRENT
-            )
-        )
-        control.setTitle(entity.attributes["friendly_name"].toString())
-        control.setDeviceType(
-            when (entity.attributes["device_class"]) {
-                "awning" -> DeviceTypes.TYPE_AWNING
-                "blind" -> DeviceTypes.TYPE_BLINDS
-                "curtain" -> DeviceTypes.TYPE_CURTAIN
-                "door" -> DeviceTypes.TYPE_DOOR
-                "garage" -> DeviceTypes.TYPE_GARAGE
-                "gate" -> DeviceTypes.TYPE_GATE
-                "shutter" -> DeviceTypes.TYPE_SHUTTER
-                "window" -> DeviceTypes.TYPE_WINDOW
-                else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
-            }
-        )
-        control.setStatus(Control.STATUS_OK)
-        control.setStatusText(
-            when (entity.state) {
-                "closed" -> "Closed"
-                "closing" -> "Closing"
-                "open" -> "Open"
-                "opening" -> "Opening"
-                else -> entity.state
-            })
-        control.setControlTemplate(
-            ToggleTemplate(
+    companion object : HaControl {
+        override fun createControl(
+            context: Context,
+            entity: Entity<Map<String, Any>>
+        ): Control {
+            val control = Control.StatefulBuilder(
                 entity.entityId,
-                ControlButton(
-                    entity.state == "open",
-                    "Description"
+                PendingIntent.getActivity(
+                    context,
+                    0,
+                    WebViewActivity.newInstance(context),
+                    PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
-        )
-        return control.build()
-    }
+            control.setTitle(entity.attributes["friendly_name"].toString())
+            control.setDeviceType(
+                when (entity.attributes["device_class"]) {
+                    "awning" -> DeviceTypes.TYPE_AWNING
+                    "blind" -> DeviceTypes.TYPE_BLINDS
+                    "curtain" -> DeviceTypes.TYPE_CURTAIN
+                    "door" -> DeviceTypes.TYPE_DOOR
+                    "garage" -> DeviceTypes.TYPE_GARAGE
+                    "gate" -> DeviceTypes.TYPE_GATE
+                    "shutter" -> DeviceTypes.TYPE_SHUTTER
+                    "window" -> DeviceTypes.TYPE_WINDOW
+                    else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
+                }
+            )
+            control.setStatus(Control.STATUS_OK)
+            control.setStatusText(
+                when (entity.state) {
+                    "closed" -> "Closed"
+                    "closing" -> "Closing"
+                    "open" -> "Open"
+                    "opening" -> "Opening"
+                    else -> entity.state
+                }
+            )
+            control.setControlTemplate(
+                ToggleTemplate(
+                    entity.entityId,
+                    ControlButton(
+                        entity.state == "open",
+                        "Description"
+                    )
+                )
+            )
+            return control.build()
+        }
 
         override fun performAction(
             integrationRepository: IntegrationRepository,

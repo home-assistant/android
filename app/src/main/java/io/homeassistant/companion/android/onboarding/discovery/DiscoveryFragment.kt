@@ -59,7 +59,11 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
         savedInstanceState: Bundle?
     ): View? {
 
-        listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(requireContext(), R.layout.instance_item, instances) {
+        listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(
+            requireContext(),
+            R.layout.instance_item,
+            instances
+        ) {
             @SuppressLint("InflateParams")
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val v = convertView ?: LayoutInflater.from(context).inflate(
@@ -78,7 +82,11 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
         return inflater.inflate(R.layout.fragment_discovery, container, false).apply {
             findViewById<ListView>(R.id.instance_list_view)?.apply {
                 adapter = listViewAdapter
-                setOnItemClickListener { _, _, position, _ -> presenter.onUrlSelected(instances[position].url) }
+                setOnItemClickListener { _, _, position, _ ->
+                    presenter.onUrlSelected(
+                        instances[position].url
+                    )
+                }
             }
 
             this.findViewById<Button>(R.id.manual_setup)

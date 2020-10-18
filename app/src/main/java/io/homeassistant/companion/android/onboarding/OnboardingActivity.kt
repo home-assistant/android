@@ -15,8 +15,12 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
 
-class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener,
-    AuthenticationListener, MobileAppIntegrationListener {
+class OnboardingActivity :
+    AppCompatActivity(),
+    DiscoveryListener,
+    ManualSetupListener,
+    AuthenticationListener,
+    MobileAppIntegrationListener {
 
     companion object {
         const val SESSION_CONNECTED = "is_registered"

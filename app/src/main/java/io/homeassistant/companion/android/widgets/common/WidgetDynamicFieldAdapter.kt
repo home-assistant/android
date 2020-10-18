@@ -118,7 +118,8 @@ class WidgetDynamicFieldAdapter(
             // populate the autocomplete with valid values
             val fieldAdapter = SingleItemArrayAdapter<String>(context) { it!! }
             fieldAdapter.addAll(
-                services[serviceText]!!.serviceData.fields.getValue(fieldKey).values!!.sorted().toMutableList()
+                services[serviceText]!!.serviceData.fields.getValue(fieldKey).values!!.sorted()
+                    .toMutableList()
             )
             autoCompleteTextView.setAdapter(fieldAdapter)
             autoCompleteTextView.setTokenizer(CommaTokenizer())
@@ -137,19 +138,21 @@ class WidgetDynamicFieldAdapter(
         }
 
         // Have the text view store its text for later recall
-        autoCompleteTextView.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(p0: Editable?) {
-                // Don't store data that's empty (or just whitespace)
-                if (!p0.isNullOrBlank()) {
-                    serviceFieldList[position].value = p0.toString().toJsonType()
-                } else {
-                    serviceFieldList[position].value = null
+        autoCompleteTextView.addTextChangedListener(
+            object : TextWatcher {
+                override fun afterTextChanged(p0: Editable?) {
+// Don't store data that's empty (or just whitespace)
+                    if (!p0.isNullOrBlank()) {
+                        serviceFieldList[position].value = p0.toString().toJsonType()
+                    } else {
+                        serviceFieldList[position].value = null
+                    }
                 }
-            }
 
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-        })
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            }
+        )
     }
 
     private fun String.toJsonType(): Any? {

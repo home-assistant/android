@@ -59,7 +59,8 @@ class MediaPlayerControlsWidgetConfigureActivity : Activity() {
         val extras = intent.extras
         if (extras != null) {
             appWidgetId = extras.getInt(
-                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+                AppWidgetManager.EXTRA_APPWIDGET_ID,
+                AppWidgetManager.INVALID_APPWIDGET_ID
             )
         }
 
@@ -117,7 +118,7 @@ class MediaPlayerControlsWidgetConfigureActivity : Activity() {
     private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
             selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
-    }
+        }
 
     private var addWidgetButtonClickListener = View.OnClickListener {
         try {

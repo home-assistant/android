@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.preference.PreferenceScreen
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.preference.PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     app:iconSpaceReserved="false">
 
     <Preference
         app:key="received_at"
         app:title="@string/notification_received_at"
         app:iconSpaceReserved="false"
-        app:enableCopying="true"/>
+        app:enableCopying="true" />
 
     <Preference
         app:key="message"
@@ -27,6 +26,6 @@
         <Preference
             app:key="delete_notification"
             app:icon="@drawable/ic_delete"
-            app:title="@string/delete_this_notification"/>
+            app:title="@string/delete_this_notification" />
     </PreferenceCategory>
 </androidx.preference.PreferenceScreen>

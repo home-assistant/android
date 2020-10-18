@@ -71,7 +71,11 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 it.isChecked = LocationSensorManager().checkPermission(context, sensorId)
                 it.setOnCheckedChangeListener { _, isChecked ->
                     setLocationTracking(isChecked)
-                    if (isChecked && !LocationSensorManager().checkPermission(requireContext(), sensorId)) {
+                    if (isChecked && !LocationSensorManager().checkPermission(
+                            requireContext(),
+                            sensorId
+                        )
+                    ) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                             this@MobileAppIntegrationFragment.requestPermissions(
                                 LocationSensorManager().requiredPermissions(sensorId)
@@ -138,7 +142,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        ) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
         }
 
@@ -183,8 +188,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-                context?.getSystemService(PowerManager::class.java)
-                    ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
-                ?: false
+            context?.getSystemService(PowerManager::class.java)
+            ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
+            ?: false
     }
 }
