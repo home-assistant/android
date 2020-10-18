@@ -2,20 +2,20 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
+    id("com.github.ben-manes.versions") version "0.33.0"
 }
 
 buildscript {
     repositories {
         google()
         jcenter()
-        maven(url = Config.Repository.gradle)
+        gradlePluginPortal()
     }
     dependencies {
         classpath(Config.Plugin.android)
         classpath(Config.Plugin.kotlin)
         classpath(Config.Plugin.google)
         classpath(Config.Plugin.appDistribution)
-        classpath(Config.Plugin.ktlint)
         classpath(Config.Plugin.androidJunit5)
     }
 }

@@ -5,13 +5,7 @@ object Config {
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
         const val google = "com.google.gms:google-services:4.3.4"
         const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:1.4.0"
-        const val ktlint = "org.jlleitschuh.gradle:ktlint-gradle:9.2.1"
-        const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.0.0"
-    }
-
-    object Repository {
-        const val gradle = "https://plugins.gradle.org/m2/"
-        const val lokalize = "https://maven.lokalise.co"
+        const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
     }
 
     object Android {
