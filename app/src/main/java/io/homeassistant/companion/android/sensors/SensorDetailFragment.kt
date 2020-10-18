@@ -75,6 +75,9 @@ class SensorDetailFragment(
                     when {
                         permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
                             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q ->
+                            requestPermissions(permissions.toSet()
+                                .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0)
                         else -> requestPermissions(permissions, 0)
                     }
                     return@setOnPreferenceChangeListener false
@@ -279,6 +282,11 @@ class SensorDetailFragment(
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
+        }
 
         findPreference<SwitchPreference>("enabled")?.run {
             isChecked = grantResults.all { it == PackageManager.PERMISSION_GRANTED }

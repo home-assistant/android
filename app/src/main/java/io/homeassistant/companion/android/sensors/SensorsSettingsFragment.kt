@@ -1,9 +1,12 @@
 package io.homeassistant.companion.android.sensors
 
+import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -116,7 +119,14 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     }
                 }
                 if (!permArray.isNullOrEmpty())
-                    requestPermissions(permArray, 0)
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        requestPermissions(permArray.toSet()
+                            .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                            .toTypedArray(), 0)
+                    } else {
+                        requestPermissions(permArray, 0)
+                    }
+
                 return@setOnPreferenceChangeListener true
             }
         }
@@ -168,6 +178,15 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
+            return
+        }
+
+        if (permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE })
+            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
 
         findPreference<SwitchPreference>("enable_disable_sensors")?.run {
             permissionsAllGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
