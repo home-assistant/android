@@ -15,6 +15,15 @@
         android:title="@string/manage_all_notifications"
         app:isPreferenceVisible="false"
         app:iconSpaceReserved="false">
+        <androidx.preference.DropDownPreference
+            android:key="filter_notifications"
+            android:title="@string/filter_notifications"
+            android:entries="@array/filter_notifications_entries"
+            android:entryValues="@array/filter_notifications_values"
+            app:defaultValue="last25"
+            app:icon="@drawable/ic_filter"
+            app:isPreferenceVisible="false"
+            app:useSimpleSummaryProvider="true" />
         <Preference
             android:key="delete_all"
             android:title="@string/delete_all_notifications"
@@ -23,7 +32,7 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:key="list_notifications"
-        android:title="@string/last_25_notifications"
+        android:title="@string/last_num_notifications"
         app:iconSpaceReserved="false"
         app:isPreferenceVisible="false" />
 </androidx.preference.PreferenceScreen>

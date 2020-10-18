@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="filter_notifications_entries">
+        <item>Show last 25 notifications</item>
+        <item>Show last 50 notifications</item>
+        <item>Show last 100 notifications</item>
+    </string-array>
+    <string-array name="filter_notifications_values">
+        <item>last25</item>
+        <item>last50</item>
+        <item>last100</item>
+    </string-array>
+</resources>
