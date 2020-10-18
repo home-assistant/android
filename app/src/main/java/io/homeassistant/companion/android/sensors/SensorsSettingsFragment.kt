@@ -118,7 +118,9 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 }
                 if (!permArray.isNullOrEmpty())
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        requestPermissions(permArray.toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0)
+                        requestPermissions(permArray.toSet()
+                            .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                            .toTypedArray(), 0)
                     } else {
                         requestPermissions(permArray, 0)
                     }
