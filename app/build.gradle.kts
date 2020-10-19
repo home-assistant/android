@@ -91,7 +91,7 @@ android {
     }
 
     testOptions {
-        unitTests.apply { isReturnDefaultValues = true }
+        unitTests.isReturnDefaultValues = true
     }
 
     tasks.withType<Test>().configureEach {

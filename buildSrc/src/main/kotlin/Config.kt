@@ -4,7 +4,7 @@ object Config {
         const val android = "com.android.tools.build:gradle:4.1.0"
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
         const val google = "com.google.gms:google-services:4.3.4"
-        const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:1.4.0"
+        const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:2.0.1"
         const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
     }
 
@@ -96,8 +96,6 @@ object Config {
         object Misc {
             const val sentry = "io.sentry:sentry-android:2.2.2"
             const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.3"
-            const val threeTenBp = "org.threeten:threetenbp:1.4.0"
-            const val javaxInject = "javax.inject:javax.inject:1"
             const val blurView = "com.eightbitlab:blurview:1.6.3"
             const val iconDialog = "com.maltaisn:icondialog:3.3.0"
             const val iconDialogMaterial = "com.maltaisn:iconpack-community-material:5.3.45"
