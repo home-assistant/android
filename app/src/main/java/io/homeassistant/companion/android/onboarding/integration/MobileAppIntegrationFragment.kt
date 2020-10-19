@@ -89,10 +89,6 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 }
             }
 
-            findViewById<AppCompatButton>(R.id.privacy).setOnClickListener {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.home-assistant.io/privacy/")))
-            }
-
             findViewById<AppCompatButton>(R.id.finish).setOnClickListener {
                 presenter.onRegistrationAttempt(false, deviceName.text.toString())
             }

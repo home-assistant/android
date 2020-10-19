@@ -376,4 +376,5 @@ like to connect to:</string>
   <string name="widget_text_size_default">30</string>
   <string name="widget_text_size_label">Widget text size:</string>
     <string name="privacy_policy">Privacy Policy</string>
+    <string name="privacy_url">https://www.home-assistant.io/privacy</string>
 </resources>

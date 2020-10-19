@@ -50,19 +50,20 @@
                 android:layout_marginEnd="50dp"
                 android:text="@string/enable_location_tracking_description" />
 
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/privacy"
+                android:layout_marginTop="@dimen/activity_margin"
+                android:autoLink="web"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/privacy_url" />
+
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:layout_marginTop="@dimen/activity_margin" >
-
-                <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/privacy"
-                    style="@style/Widget.HomeAssistant.Button.Outlined"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:text="@string/privacy_policy" />
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/finish"
