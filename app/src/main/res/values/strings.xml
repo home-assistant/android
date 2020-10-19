@@ -90,7 +90,7 @@ to your home internet.</string>
   <string name="enable_all_sensors">Enable All Sensors</string>
   <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
   <string name="enable_location_tracking">Enable Location Tracking</string>
-  <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.</string>
+  <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.  Your location data is sent directly to your Home Assistant instance and is never sent to a 3rd party.</string>
   <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
   <string name="enabled_title">Enabled</string>
@@ -375,4 +375,6 @@ like to connect to:</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_default">30</string>
   <string name="widget_text_size_label">Widget text size:</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="privacy_url">https://www.home-assistant.io/privacy</string>
 </resources>
