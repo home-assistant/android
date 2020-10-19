@@ -10,6 +10,16 @@
     <item>@string/themes_option_value_dark</item>
     <item>@string/themes_option_value_system</item>
   </string-array>
+  <string-array name="pref_lang_option_labels">
+    <item>@string/lang_option_label_default</item>
+    <item>French</item>
+    <item>English</item>
+  </string-array>
+  <string-array name="pref_lang_option_values">
+    <item>@string/lang_option_value_default</item>
+    <item>fr</item>
+    <item>en</item>
+  </string-array>
   <string name="add_service_data_field">Add Field</string>
   <string name="add_widget">Add widget</string>
   <string name="app_name">Home Assistant</string>
@@ -94,6 +104,7 @@ to your home internet.</string>
   <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
   <string name="enabled_title">Enabled</string>
+  <string name="entities">Entities</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
   <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
   <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
@@ -122,6 +133,9 @@ Home Assistant instance</string>
   <string name="label_icon">Icon:</string>
   <string name="label_label">Label:</string>
   <string name="label_service">Service:</string>
+  <string name="lang_option_label_default">Device Language</string>
+  <string name="lang_option_value_default">default</string>
+  <string name="lang_title_settings">Language</string>
   <string name="location">Location</string>
   <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
   <string name="lock_title">Lock app</string>

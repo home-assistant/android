@@ -44,7 +44,7 @@ class Graph(
                     ),
                     LocalStorageImpl(
                         application.getSharedPreferences(
-                            "themes",
+                            "prefs",
                             Context.MODE_PRIVATE
                         )
                     ),

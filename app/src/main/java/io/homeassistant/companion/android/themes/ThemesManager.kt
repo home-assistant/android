@@ -7,12 +7,12 @@ import android.webkit.WebSettings
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
-import io.homeassistant.companion.android.common.data.themes.ThemesRepository
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 
 class ThemesManager @Inject constructor(
-    private val themesUseCase: ThemesRepository
+    private val themesUseCase: PrefsRepository
 ) {
 
     fun getCurrentTheme(): String {

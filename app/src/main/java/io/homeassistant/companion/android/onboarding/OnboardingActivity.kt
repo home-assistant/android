@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.onboarding
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
@@ -15,7 +15,7 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
 
-class OnboardingActivity : AppCompatActivity(), DiscoveryListener, ManualSetupListener,
+class OnboardingActivity : BaseActivity(), DiscoveryListener, ManualSetupListener,
     AuthenticationListener, MobileAppIntegrationListener {
 
     companion object {

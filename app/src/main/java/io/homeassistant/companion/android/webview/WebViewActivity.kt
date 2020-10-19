@@ -37,7 +37,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -48,6 +47,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import eightbitlab.com.blurview.RenderScriptBlur
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -67,7 +67,7 @@ import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_playback_control_view.*
 import org.json.JSONObject
 
-class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
+class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
 
     companion object {
         const val EXTRA_PATH = "path"

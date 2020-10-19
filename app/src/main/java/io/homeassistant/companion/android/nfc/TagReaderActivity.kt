@@ -6,7 +6,7 @@ import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -18,7 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class TagReaderActivity : AppCompatActivity() {
+class TagReaderActivity : BaseActivity() {
 
     val TAG = TagReaderActivity::class.simpleName
 

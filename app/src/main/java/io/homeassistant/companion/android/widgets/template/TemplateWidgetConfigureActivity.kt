@@ -4,8 +4,8 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -18,7 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class TemplateWidgetConfigureActivity : AppCompatActivity() {
+class TemplateWidgetConfigureActivity : BaseActivity() {
     companion object {
         private const val TAG: String = "TemplateWidgetConfigAct"
     }

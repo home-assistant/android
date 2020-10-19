@@ -172,6 +172,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             it.summary = BuildConfig.VERSION_NAME
         }
 
+        findPreference<ListPreference>("languages")?.let {
+            it.entries = presenter.getAvailableLanguages().keys.toTypedArray()
+            it.entryValues = presenter.getAvailableLanguages().values.toTypedArray()
+        }
+
         presenter.onCreate()
     }
 
@@ -201,6 +206,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 Log.d("SettingsFragment", "Unable to set the icon tint", e)
             }
         }
+    }
+
+    override fun onLangSettingsChanged() {
+        requireActivity().recreate()
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {

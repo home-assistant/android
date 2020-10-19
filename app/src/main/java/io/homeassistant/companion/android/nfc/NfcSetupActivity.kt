@@ -8,12 +8,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.UrlHandler
 
-class NfcSetupActivity : AppCompatActivity() {
+class NfcSetupActivity : BaseActivity() {
 
     // private val viewModel: NfcViewModel by viewModels()
     private lateinit var viewModel: NfcViewModel

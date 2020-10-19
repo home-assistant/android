@@ -14,4 +14,6 @@ interface SettingsPresenter {
 
     fun setSessionExpireMillis(value: Long)
     fun getSessionExpireMillis(): Long
+
+    fun getAvailableLanguages(): Map<String, String>
 }
