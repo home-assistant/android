@@ -157,10 +157,6 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getAvailableLanguages(): Map<String, String> {
-        return langsManager.getSupportedLanguages()
-    }
-
     override fun isLockEnabled(): Boolean {
         return runBlocking {
             authenticationUseCase.isLockEnabled()

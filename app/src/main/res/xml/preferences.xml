@@ -67,8 +67,6 @@
         <ListPreference
             android:key="languages"
             android:defaultValue="@string/lang_option_value_default"
-            android:entries="@array/pref_lang_option_labels"
-            android:entryValues="@array/pref_lang_option_values"
             android:icon="@drawable/ic_languages"
             android:title="@string/lang_title_settings"
             app:useSimpleSummaryProvider="true"/>

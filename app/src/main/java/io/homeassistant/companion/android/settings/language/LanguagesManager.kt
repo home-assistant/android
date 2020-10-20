@@ -14,7 +14,6 @@ import kotlinx.coroutines.runBlocking
 class LanguagesManager @Inject constructor(
     private var prefs: PrefsRepository
 ) {
-
     companion object {
         private const val DEF_LOCALE = "default"
     }
@@ -40,28 +39,20 @@ class LanguagesManager @Inject constructor(
         }
     }
 
-    private fun getDeviceLanguage(): String {
+    private fun getDefaultLocale(config: Configuration): Locale {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Resources.getSystem().configuration.locales.get(0).language
+            config.locales.get(0)
         } else {
-            Resources.getSystem().configuration.locale.language
+            config.locale
         }
+    }
+
+    private fun getDeviceLanguage(): String {
+        return getDefaultLocale(Resources.getSystem().configuration).language
     }
 
     private fun getApplicationLanguage(context: Context): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            context.resources.configuration.locales.get(0).language
-        } else {
-            context.resources.configuration.locale.language
-        }
-    }
-
-    fun getSupportedLanguages(): Map<String, String> {
-        val languages = mutableMapOf<String, String>()
-        Locale.getAvailableLocales().forEach {
-            languages[it.displayLanguage] = it.language
-        }
-        return languages
+        return getDefaultLocale(context.resources.configuration).language
     }
 
     fun getContextWrapper(context: Context): ContextWrapper {
@@ -81,6 +72,7 @@ class LanguagesManager @Inject constructor(
     private fun updateContext(context: Context, lang: String): Context {
         val resources: Resources = context.resources
         val configuration: Configuration = resources.configuration
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             val localeList = LocaleList(Locale(lang))
             LocaleList.setDefault(localeList)
@@ -88,6 +80,7 @@ class LanguagesManager @Inject constructor(
         } else {
             configuration.locale = Locale(lang)
         }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
             context.createConfigurationContext(configuration)
         } else {

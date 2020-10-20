@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
+import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
@@ -173,8 +174,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         findPreference<ListPreference>("languages")?.let {
-            it.entries = presenter.getAvailableLanguages().keys.toTypedArray()
-            it.entryValues = presenter.getAvailableLanguages().values.toTypedArray()
+            val languages = LanguagesProvider().getSupportedLanguages(requireContext().applicationContext)
+            it.entries = languages.keys.toTypedArray()
+            it.entryValues = languages.values.toTypedArray()
         }
 
         presenter.onCreate()
