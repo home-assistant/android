@@ -162,10 +162,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 "https://github.com/home-assistant/android/releases"
             else "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
             it.summary = link
-            val intent = Intent()
-            intent.action = "android.intent.action.VIEW"
-            intent.data = Uri.parse(link)
-            it.intent = intent
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
         }
 
         findPreference<Preference>("version")?.let {
@@ -177,6 +174,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             val languages = LanguagesProvider().getSupportedLanguages(requireContext().applicationContext)
             it.entries = languages.keys.toTypedArray()
             it.entryValues = languages.values.toTypedArray()
+
+        findPreference<Preference>("privacy")?.let {
+            it.summary = "https://www.home-assistant.io/privacy/"
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
         }
 
         presenter.onCreate()
