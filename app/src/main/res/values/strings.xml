@@ -369,6 +369,12 @@ like to connect to:</string>
   <string name="widget_spinner_icon">Icon:</string>
   <string name="widget_state_separator_label">State and attribute separator:</string>
   <string name="widget_static_image_description">Entity State</string>
+  <string name="no_entity_state_widgets">No Entity State Widgets Found</string>
+  <string name="no_entity_state_widgets_summary">You have not added any Entity State widgets, please add one from the home screen to populate this list.</string>
+  <string name="list_entity_state_widgets">List of Entity State Widgets</string>
+  <string name="manage_entity_state_widgets">Manage Entity State Widgets</string>
+  <string name="manage_entity_state_widgets_summary">Edit your Entity State widgets, adding/deleting can only be done from the home screen</string>
+  <string name="update_widget">Update Widget</string>
   <string name="widget_text_hint_label">Label</string>
   <string name="widget_text_hint_service_data">Entity ID</string>
   <string name="widget_text_hint_service_domain">Domain</string>

@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import javax.inject.Inject
@@ -27,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class EntityWidgetConfigureActivity : Activity() {
 
@@ -79,6 +81,39 @@ class EntityWidgetConfigureActivity : Activity() {
             .build()
             .inject(this)
 
+        val staticWidgetDao = AppDatabase.getInstance(applicationContext).staticWidgetDao()
+        val staticWidget = staticWidgetDao.get(appWidgetId)
+        if (staticWidget != null) {
+            widget_text_config_entity_id.setText(staticWidget.entityId)
+            label.setText(staticWidget.label)
+            textSize.setText(staticWidget.textSize.toInt().toString())
+            state_separator.setText(staticWidget.stateSeparator)
+            val entity = runBlocking {
+                try {
+                    integrationUseCase.getEntity(staticWidget.entityId)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to get entity information", e)
+                    Toast.makeText(applicationContext, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                        .show()
+                    null
+                }
+            }
+
+            if (!staticWidget.attributeIds.isNullOrEmpty()) {
+                append_attribute_value_checkbox.isChecked = true
+                appendAttributes = true
+                for (item in staticWidget.attributeIds.split(','))
+                    selectedAttributeIds.add(item)
+                widget_text_config_attribute.setText(staticWidget.attributeIds.replace(",", ", "))
+                attribute_value_linear_layout.visibility = VISIBLE
+                attribute_separator.setText(staticWidget.attributeSeparator)
+            }
+            if (entity != null) {
+                selectedEntity = entity as Entity<Any>?
+                setupAttributes()
+            }
+            add_button.setText(R.string.update_widget)
+        }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
         widget_text_config_entity_id.setAdapter(entityAdapter)
@@ -157,9 +192,13 @@ class EntityWidgetConfigureActivity : Activity() {
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
+            val entity: String = if (selectedEntity == null)
+                widget_text_config_entity_id.text.toString()
+            else
+                selectedEntity!!.entityId
             intent.putExtra(
                 EntityWidget.EXTRA_ENTITY_ID,
-                selectedEntity!!.entityId
+                entity
             )
 
             intent.putExtra(
@@ -178,9 +217,13 @@ class EntityWidgetConfigureActivity : Activity() {
             )
 
             if (appendAttributes) {
+                val attributes = if (selectedAttributeIds.isNullOrEmpty())
+                    widget_text_config_attribute.text.toString()
+                else
+                    selectedAttributeIds
                 intent.putExtra(
                     EntityWidget.EXTRA_ATTRIBUTE_IDS,
-                    selectedAttributeIds
+                    attributes
                 )
 
                 intent.putExtra(
