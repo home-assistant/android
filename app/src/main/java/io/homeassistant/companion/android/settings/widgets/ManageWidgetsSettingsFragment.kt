@@ -11,16 +11,16 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 
-class StaticWidgetSettingsFragment : PreferenceFragmentCompat() {
+class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
 
     companion object {
-        fun newInstance(): StaticWidgetSettingsFragment {
-            return StaticWidgetSettingsFragment()
+        fun newInstance(): ManageWidgetsSettingsFragment {
+            return ManageWidgetsSettingsFragment()
         }
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        setPreferencesFromResource(R.xml.static_widgets, rootKey)
+        setPreferencesFromResource(R.xml.manage_widgets, rootKey)
     }
 
     override fun onResume() {
@@ -37,7 +37,7 @@ class StaticWidgetSettingsFragment : PreferenceFragmentCompat() {
             findPreference<PreferenceCategory>("list_entity_state_widgets")?.let {
                 it.isVisible = false
             }
-            findPreference<Preference>("no_entity_state_widgets")?.let {
+            findPreference<Preference>("no_widgets")?.let {
                 it.isVisible = true
             }
         }

@@ -28,7 +28,7 @@ import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
-import io.homeassistant.companion.android.settings.widgets.StaticWidgetSettingsFragment
+import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -133,8 +133,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("manage_entity_state_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, StaticWidgetSettingsFragment.newInstance())
-                .addToBackStack(getString(R.string.widget_static_image_description))
+                .replace(R.id.content, ManageWidgetsSettingsFragment.newInstance())
+                .addToBackStack(getString(R.string.widgets))
                 .commit()
             return@setOnPreferenceClickListener true
         }

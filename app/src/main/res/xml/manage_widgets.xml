@@ -3,10 +3,11 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <Preference
-        android:key="no_entity_state_widgets"
-        android:title="@string/no_entity_state_widgets"
-        android:summary="@string/no_entity_state_widgets_summary"
+        android:key="no_widgets"
+        android:title="@string/no_widgets"
+        android:summary="@string/no_widgets_summary"
         android:selectable="false"
+        app:iconSpaceReserved="false"
         app:isPreferenceVisible="false" />
 
     <PreferenceCategory
