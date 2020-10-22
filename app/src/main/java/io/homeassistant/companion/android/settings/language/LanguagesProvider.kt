@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.LocaleList
 import android.util.DisplayMetrics
 import io.homeassistant.companion.android.R
-import io.sentry.core.util.StringUtils
 import java.util.Locale
 
 class LanguagesProvider {
@@ -21,7 +20,7 @@ class LanguagesProvider {
 
         listLocales.forEach {
             if (getStringResource(context, it) != defString || it == Locale.ENGLISH.language) {
-                val name = StringUtils.capitalize(makeLocale(it).displayLanguage).toString()
+                val name = makeLocale(it).displayLanguage.capitalize()
                 listAppLocales["$name ($it)"] = it
             }
         }
