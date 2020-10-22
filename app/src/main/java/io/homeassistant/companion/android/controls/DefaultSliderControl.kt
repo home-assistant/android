@@ -39,11 +39,7 @@ class DefaultSliderControl {
                     (entity.attributes["min"] as? Number)?.toFloat() ?: 0f,
                     (entity.attributes["max"] as? Number)?.toFloat() ?: 1f,
                     entity.state.toFloatOrNull() ?: 0f,
-                    (
-                            if ((entity.attributes["step"] as? Number)?.toFloat()!! <= 0)
-                                1
-                            else
-                                entity.attributes["step"] as? Number)?.toFloat() ?: 1f,
+                    (entity.attributes["step"] as? Number)?.toFloat() ?: 1f,
                     null
                 )
             )
