@@ -219,6 +219,9 @@ class MessagingService : FirebaseMessagingService() {
     private fun speakNotification(data: Map<String, String>) {
         var textToSpeech: TextToSpeech? = null
         var tts = data[TITLE]
+        val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val currentAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+        val maxAlarmVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
             tts = getString(R.string.tts_no_title)
         textToSpeech = TextToSpeech(applicationContext
@@ -226,21 +229,26 @@ class MessagingService : FirebaseMessagingService() {
             if (it == TextToSpeech.SUCCESS) {
                 val listener = object : UtteranceProgressListener() {
                     override fun onStart(p0: String?) {
-                        // No op
+                        if (data["channel"] == "alarm_stream_max")
+                            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxAlarmVolume, 0)
                     }
 
                     override fun onDone(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
+                        if (data["channel"] == "alarm_stream_max")
+                            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, currentAlarmVolume, 0)
                     }
 
                     override fun onError(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
+                        if (data["channel"] == "alarm_stream_max")
+                            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, currentAlarmVolume, 0)
                     }
                 }
                 textToSpeech?.setOnUtteranceProgressListener(listener)
-                if (data["channel"] == "alarm_stream") {
+                if (data["channel"] == "alarm_stream" || data["channel"] == "alarm_stream_max") {
                     val audioAttributes = AudioAttributes.Builder()
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .setUsage(AudioAttributes.USAGE_ALARM)
