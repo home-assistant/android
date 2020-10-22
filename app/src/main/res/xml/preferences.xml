@@ -107,7 +107,7 @@
         android:key="widgets"
         android:title="Widgets">
         <Preference
-            android:key="manage_entity_state_widgets"
+            android:key="manage_widgets"
             android:icon="@drawable/ic_widget"
             android:title="@string/manage_widgets"
             android:summary="@string/manage_widgets_summary" />

@@ -130,7 +130,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             return@setOnPreferenceClickListener true
         }
 
-        findPreference<Preference>("manage_entity_state_widgets")?.setOnPreferenceClickListener {
+        findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
                 .replace(R.id.content, ManageWidgetsSettingsFragment.newInstance())
