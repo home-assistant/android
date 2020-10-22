@@ -8,14 +8,30 @@ import androidx.room.PrimaryKey
 data class MultiWidgetEntity(
     @PrimaryKey
     val id: Int,
-    @ColumnInfo(name = "icon_id")
-    val iconId: Int,
-    @ColumnInfo(name = "domain")
-    val domain: String,
-    @ColumnInfo(name = "service")
-    val service: String,
-    @ColumnInfo(name = "service_data")
-    val serviceData: String,
+    @ColumnInfo(name = "upper_button_present")
+    val upperButton: Int,
+    @ColumnInfo(name = "upper_icon_id")
+    val upperIconId: Int?,
+    @ColumnInfo(name = "upper_domain")
+    val upperDomain: String?,
+    @ColumnInfo(name = "upper_service")
+    val upperService: String?,
+    @ColumnInfo(name = "upper_service_data")
+    val upperServiceData: String?,
+    @ColumnInfo(name = "lower_button_present")
+    val lowerButton: Int,
+    @ColumnInfo(name = "lower_icon_id")
+    val lowerIconId: Int?,
+    @ColumnInfo(name = "lower_domain")
+    val lowerDomain: String?,
+    @ColumnInfo(name = "lower_service")
+    val lowerService: String?,
+    @ColumnInfo(name = "lower_service_data")
+    val lowerServiceData: String?,
+    @ColumnInfo(name = "label_type")
+    val labelType: Int,
     @ColumnInfo(name = "label")
-    val label: String?
+    val label: String?,
+    @ColumnInfo(name = "template")
+    val template: String?
 )
