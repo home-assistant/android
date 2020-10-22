@@ -174,6 +174,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             val languages = LanguagesProvider().getSupportedLanguages(requireContext().applicationContext)
             it.entries = languages.keys.toTypedArray()
             it.entryValues = languages.values.toTypedArray()
+        }
 
         findPreference<Preference>("privacy")?.let {
             it.summary = "https://www.home-assistant.io/privacy/"

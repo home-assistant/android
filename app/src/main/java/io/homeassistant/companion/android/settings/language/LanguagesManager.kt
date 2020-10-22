@@ -39,6 +39,14 @@ class LanguagesManager @Inject constructor(
         }
     }
 
+    private fun makeLocale(lang: String): Locale {
+        return if (lang.contains('-')) {
+            Locale(lang.split('-')[0], lang.split('-')[1])
+        } else {
+            Locale(lang)
+        }
+    }
+
     private fun getDefaultLocale(config: Configuration): Locale {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             config.locales.get(0)
@@ -47,21 +55,22 @@ class LanguagesManager @Inject constructor(
         }
     }
 
-    private fun getDeviceLanguage(): String {
-        return getDefaultLocale(Resources.getSystem().configuration).language
+    private fun getDeviceLocale(): Locale {
+        return getDefaultLocale(Resources.getSystem().configuration)
     }
 
-    private fun getApplicationLanguage(context: Context): String {
-        return getDefaultLocale(context.resources.configuration).language
+    private fun getApplicationLocale(context: Context): Locale {
+        return getDefaultLocale(context.resources.configuration)
     }
 
     fun getContextWrapper(context: Context): ContextWrapper {
         return when {
-            getCurrentLang() == DEF_LOCALE && getApplicationLanguage(context) != getDeviceLanguage() -> {
-                ContextWrapper(updateContext(context, getDeviceLanguage()))
+            getCurrentLang() == DEF_LOCALE && getApplicationLocale(context) != getDeviceLocale() -> {
+                ContextWrapper(updateContext(context, getDeviceLocale()))
             }
-            getCurrentLang() != DEF_LOCALE && getCurrentLang() != getDeviceLanguage() -> {
-                ContextWrapper(updateContext(context, getCurrentLang()))
+            getCurrentLang() != DEF_LOCALE -> {
+                val locale = makeLocale(getCurrentLang())
+                ContextWrapper(updateContext(context, locale))
             }
             else -> {
                 ContextWrapper(context)
@@ -69,16 +78,16 @@ class LanguagesManager @Inject constructor(
         }
     }
 
-    private fun updateContext(context: Context, lang: String): Context {
+    private fun updateContext(context: Context, locale: Locale): Context {
         val resources: Resources = context.resources
         val configuration: Configuration = resources.configuration
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val localeList = LocaleList(Locale(lang))
+            val localeList = LocaleList(locale)
             LocaleList.setDefault(localeList)
             configuration.setLocales(localeList)
         } else {
-            configuration.locale = Locale(lang)
+            configuration.locale = locale
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {

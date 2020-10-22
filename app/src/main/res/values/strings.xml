@@ -94,7 +94,6 @@ to your home internet.</string>
   <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
   <string name="enabled_title">Enabled</string>
-  <string name="entities">Entities</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
   <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
   <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
@@ -125,6 +124,7 @@ Home Assistant instance</string>
   <string name="label_service">Service:</string>
   <string name="lang_option_label_default">Device Language</string>
   <string name="lang_option_value_default">default</string>
+  <string name="lang_summary_settings">Changing default language may have influence on device entities naming</string>
   <string name="lang_title_settings">Language</string>
   <string name="location">Location</string>
   <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
