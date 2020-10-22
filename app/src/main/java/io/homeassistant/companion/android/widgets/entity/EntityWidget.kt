@@ -9,8 +9,10 @@ import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
 import android.widget.RemoteViews
+import android.widget.Toast
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -95,7 +97,7 @@ class EntityWidget : AppWidgetProvider() {
                 )
                 setTextViewText(
                     R.id.widgetText,
-                    resolveTextToShow(entityId, attributeIds, stateSeparator, attributeSeparator)
+                    resolveTextToShow(context, entityId, attributeIds, stateSeparator, attributeSeparator)
                 )
                 setTextViewText(
                     R.id.widgetLabel,
@@ -117,13 +119,19 @@ class EntityWidget : AppWidgetProvider() {
     }
 
     private suspend fun resolveTextToShow(
+        context: Context,
         entityId: String?,
         attributeIds: String?,
         stateSeparator: String,
         attributeSeparator: String
     ): CharSequence? {
-        val entity = integrationUseCase.getEntities().find { e -> e.entityId.equals(entityId) }
-
+        var entity: Entity<Map<String, Any>>? = null
+        try {
+            entity = entityId?.let { integrationUseCase.getEntity(it) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to fetch entity", e)
+            Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+        }
         if (attributeIds == null) return entity?.state
 
         var fetchedAttributes: Map<*, *>
@@ -133,7 +141,8 @@ class EntityWidget : AppWidgetProvider() {
             attributeValues = attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
             return entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
         } catch (e: Exception) {
-            Log.d(TAG, "Unable to fetch entity state and attributes", e)
+            Log.e(TAG, "Unable to fetch entity state and attributes", e)
+            Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
         return null
     }
