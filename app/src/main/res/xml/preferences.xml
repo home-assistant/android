@@ -104,6 +104,15 @@
             android:summary="@string/rate_limit_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="widgets"
+        android:title="Widgets">
+        <Preference
+            android:key="manage_widgets"
+            android:icon="@drawable/ic_widget"
+            android:title="@string/manage_widgets"
+            android:summary="@string/manage_widgets_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/app_version_info">
         <Preference
             android:key="changelog"

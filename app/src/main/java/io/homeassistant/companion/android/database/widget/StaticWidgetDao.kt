@@ -20,4 +20,7 @@ interface StaticWidgetDao {
 
     @Query("DELETE FROM static_widget WHERE id = :id")
     fun delete(id: Int)
+
+    @Query("SELECT * FROM static_widget")
+    fun getAll(): Array<StaticWidgetEntity>?
 }
