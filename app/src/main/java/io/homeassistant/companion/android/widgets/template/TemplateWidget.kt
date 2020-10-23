@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.RemoteViews
+import android.widget.Toast
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -121,6 +122,7 @@ class TemplateWidget : AppWidgetProvider() {
                     renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
+                    Toast.makeText(context, R.string.widget_template_error, Toast.LENGTH_LONG).show()
                 }
                 setTextViewText(
                     R.id.widgetTemplateText,

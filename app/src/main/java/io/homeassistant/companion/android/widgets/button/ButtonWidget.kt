@@ -11,6 +11,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
+import android.widget.Toast
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -217,6 +218,7 @@ class ButtonWidget : AppWidgetProvider() {
                     feedbackIcon = R.drawable.ic_check_black_24dp
                 } catch (e: Exception) {
                     Log.e(TAG, "Could not send service call.", e)
+                    Toast.makeText(context, R.string.widget_service_call_failure, Toast.LENGTH_LONG).show()
                 }
             }
 

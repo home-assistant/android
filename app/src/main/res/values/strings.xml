@@ -378,6 +378,8 @@ like to connect to:</string>
   <string name="update_widget">Update Widget</string>
   <string name="widget_text_hint_label">Label</string>
   <string name="widget_text_hint_service_data">Entity ID</string>
+  <string name="widget_service_call_failure">Unable to send service call</string>
+  <string name="widget_template_error">Unable to render the template</string>
   <string name="widget_text_hint_service_domain">Domain</string>
   <string name="widget_text_hint_service_service">Service</string>
   <string name="widget_text_size_default">30</string>
