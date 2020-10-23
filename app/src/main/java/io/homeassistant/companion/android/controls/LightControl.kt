@@ -12,6 +12,7 @@ import android.service.controls.actions.FloatAction
 import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -36,7 +37,8 @@ class LightControl {
             control.setTitle(entity.attributes["friendly_name"].toString())
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText(if (entity.state == "off") "Off" else "On")
+            control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(
+                R.string.state_on))
             control.setControlTemplate(
                 ToggleRangeTemplate(
                     entity.entityId,
