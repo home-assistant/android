@@ -205,8 +205,7 @@ class BatterySensorManager : SensorManager {
     private fun getIsCharging(intent: Intent): Boolean {
         val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
-        return status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL
+        return status == BatteryManager.BATTERY_STATUS_CHARGING
     }
 
     private fun getChargerType(intent: Intent): String {
