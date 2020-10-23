@@ -53,6 +53,7 @@ class HaControlsProviderService : ControlsProviderService() {
     private var updateSubscriber: Flow.Subscriber<in Control>? = null
 
     private val domainToHaControl = mapOf(
+        "automation" to DefaultSwitchControl,
         "camera" to null,
         "climate" to ClimateControl,
         "cover" to CoverControl,
@@ -61,6 +62,7 @@ class HaControlsProviderService : ControlsProviderService() {
         "media_player" to null,
         "remote" to null,
         "scene" to SceneControl,
+        "script" to SceneControl,
         "switch" to DefaultSwitchControl,
         "input_boolean" to DefaultSwitchControl,
         "input_number" to DefaultSliderControl
