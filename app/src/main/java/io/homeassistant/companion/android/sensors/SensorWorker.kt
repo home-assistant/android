@@ -18,6 +18,7 @@ import androidx.work.WorkerParameters
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.database.AppDatabase
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -58,18 +59,21 @@ class SensorWorker(
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        Log.d(TAG, "Updating all Sensors.")
-        createNotificationChannel()
-        val notification = NotificationCompat.Builder(applicationContext, channelId)
-            .setSmallIcon(R.drawable.ic_stat_ic_notification)
-            .setContentTitle(appContext.getString(R.string.updating_sensors))
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+        val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
+        val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
+        if (enabledSensorCount > 0) {
+            Log.d(TAG, "Updating all Sensors.")
+            createNotificationChannel()
+            val notification = NotificationCompat.Builder(applicationContext, channelId)
+                .setSmallIcon(R.drawable.ic_stat_ic_notification)
+                .setContentTitle(appContext.getString(R.string.updating_sensors))
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build()
 
-        val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
-        setForeground(foregroundInfo)
-
-        SensorReceiver().updateSensors(appContext, integrationUseCase)
+            val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
+            setForeground(foregroundInfo)
+            SensorReceiver().updateSensors(appContext, integrationUseCase)
+        }
         Result.success()
     }
 
