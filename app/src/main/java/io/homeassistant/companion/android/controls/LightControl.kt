@@ -23,6 +23,8 @@ import kotlinx.coroutines.runBlocking
 @RequiresApi(Build.VERSION_CODES.R)
 class LightControl {
     companion object : HaControl {
+        const val SUPPORT_BRIGHTNESS = 1
+
         override fun createControl(
             context: Context,
             entity: Entity<Map<String, Any>>
@@ -42,7 +44,7 @@ class LightControl {
             control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(
                 R.string.state_on))
             control.setControlTemplate(
-                    if ((entity.attributes["supported_features"] as Int) and 1 == 1)
+                    if ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS)
                         ToggleRangeTemplate(
                                 entity.entityId,
                                 entity.state != "off",
