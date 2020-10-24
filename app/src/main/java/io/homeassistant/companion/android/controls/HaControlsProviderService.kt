@@ -59,6 +59,7 @@ class HaControlsProviderService : ControlsProviderService() {
         "cover" to CoverControl,
         "fan" to FanControl,
         "light" to LightControl,
+        "lock" to LockControl,
         "media_player" to null,
         "remote" to null,
         "scene" to SceneControl,

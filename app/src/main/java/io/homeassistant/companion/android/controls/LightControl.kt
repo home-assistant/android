@@ -9,8 +9,10 @@ import android.service.controls.DeviceTypes
 import android.service.controls.actions.BooleanAction
 import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
+import android.service.controls.templates.ControlButton
 import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
+import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -21,6 +23,8 @@ import kotlinx.coroutines.runBlocking
 @RequiresApi(Build.VERSION_CODES.R)
 class LightControl {
     companion object : HaControl {
+        const val SUPPORT_BRIGHTNESS = 1
+
         override fun createControl(
             context: Context,
             entity: Entity<Map<String, Any>>
@@ -40,22 +44,31 @@ class LightControl {
             control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(
                 R.string.state_on))
             control.setControlTemplate(
-                ToggleRangeTemplate(
-                    entity.entityId,
-                    entity.state != "off",
-                    "",
-                    RangeTemplate(
-                        entity.entityId,
-                        0f,
-                        100f,
-                        (entity.attributes["brightness"] as? Number)
-                            ?.toFloat()
-                            ?.div(255f)
-                            ?.times(100) ?: 0f,
-                        1f,
-                        "%.0f%%"
-                    )
-                )
+                    if ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS)
+                        ToggleRangeTemplate(
+                                entity.entityId,
+                                entity.state != "off",
+                                "",
+                                RangeTemplate(
+                                        entity.entityId,
+                                        0f,
+                                        100f,
+                                        (entity.attributes["brightness"] as? Number)
+                                                ?.toFloat()
+                                                ?.div(255f)
+                                                ?.times(100) ?: 0f,
+                                        1f,
+                                        "%.0f%%"
+                                )
+                        )
+                    else
+                        ToggleTemplate(
+                                entity.entityId,
+                                ControlButton(
+                                        entity.state == "on",
+                                        "Description"
+                                )
+                        )
             )
             return control.build()
         }
