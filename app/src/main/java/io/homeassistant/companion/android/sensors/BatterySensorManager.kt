@@ -22,8 +22,7 @@ class BatterySensorManager : SensorManager {
             "battery_state",
             "sensor",
             R.string.basic_sensor_name_battery_state,
-            R.string.sensor_description_battery_state,
-            "battery"
+            R.string.sensor_description_battery_state
         )
         private val isChargingState = SensorManager.BasicSensor(
             "is_charging",
