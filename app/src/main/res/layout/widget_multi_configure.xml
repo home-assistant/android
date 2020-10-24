@@ -18,7 +18,7 @@
             android:text="@string/config" />
 
         <RadioGroup
-            android:id="@+id/widget_multi_type_selector_group"
+            android:id="@+id/widget_config_type_selector_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -49,12 +49,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:labelFor="@id/widget_text_config_entity_id"
+                android:labelFor="@id/widget_config_entity_id_text"
                 android:padding="5dp"
                 android:text="@string/label_entity_id" />
 
             <AutoCompleteTextView
-                android:id="@+id/widget_text_config_entity_id"
+                android:id="@+id/widget_config_entity_id_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:completionThreshold="0"
@@ -69,7 +69,7 @@
             android:orientation="vertical">
 
             <CheckBox
-                android:id="@+id/widget_multi_button_above_checkbox"
+                android:id="@+id/widget_config_button_above_checkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
@@ -94,12 +94,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:labelFor="@id/widget_text_config_upper_service"
+                    android:labelFor="@id/widget_config_upper_service_text"
                     android:padding="5dp"
                     android:text="@string/label_service" />
 
                 <AutoCompleteTextView
-                    android:id="@+id/widget_text_config_upper_service"
+                    android:id="@+id/widget_config_upper_service_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:completionThreshold="0"
@@ -122,7 +122,7 @@
                 android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/add_field_button_upper"
+                android:id="@+id/widget_config_add_field_button_upper"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
@@ -162,7 +162,7 @@
             android:orientation="vertical">
 
             <CheckBox
-                android:id="@+id/widget_multi_button_below_checkbox"
+                android:id="@+id/widget_config_button_below_checkbox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
@@ -187,12 +187,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:labelFor="@id/widget_text_config_lower_service"
+                    android:labelFor="@id/widget_config_lower_service_text"
                     android:padding="5dp"
                     android:text="@string/label_service" />
 
                 <AutoCompleteTextView
-                    android:id="@+id/widget_text_config_lower_service"
+                    android:id="@+id/widget_config_lower_service_text"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:completionThreshold="0"
@@ -215,7 +215,7 @@
                 android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/add_field_button_lower"
+                android:id="@+id/widget_config_add_field_button_lower"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
@@ -249,7 +249,7 @@
         </LinearLayout>
 
         <RadioGroup
-            android:id="@+id/widget_multi_label_selector_group"
+            android:id="@+id/widget_config_label_selector_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -325,7 +325,7 @@
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/add_button"
+            android:id="@+id/widget_config_add_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"

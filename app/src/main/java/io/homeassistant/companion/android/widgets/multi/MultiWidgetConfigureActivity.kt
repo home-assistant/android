@@ -36,32 +36,32 @@ import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
 import javax.inject.Inject
-import kotlinx.android.synthetic.main.widget_multi_configure.add_button
-import kotlinx.android.synthetic.main.widget_multi_configure.add_field_button_lower
-import kotlinx.android.synthetic.main.widget_multi_configure.add_field_button_upper
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_add_button
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_add_field_button_lower
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_add_field_button_upper
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_button_above_checkbox
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_button_below_checkbox
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_entity_id_layout
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_entity_id_text
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_fields_lower_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_fields_upper_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_custom_button
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_entity_button
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_layout
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_selector_group
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower_button_config_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower_icon_selector
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower_service_error
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower_service_text
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_template_edit
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_template_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_template_render
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_type_selector_group
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_upper_button_config_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_upper_icon_selector
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_upper_service_error
-import kotlinx.android.synthetic.main.widget_multi_configure.widget_multi_button_above_checkbox
-import kotlinx.android.synthetic.main.widget_multi_configure.widget_multi_button_below_checkbox
-import kotlinx.android.synthetic.main.widget_multi_configure.widget_multi_label_selector_group
-import kotlinx.android.synthetic.main.widget_multi_configure.widget_multi_type_selector_group
-import kotlinx.android.synthetic.main.widget_multi_configure.widget_text_config_entity_id
-import kotlinx.android.synthetic.main.widget_multi_configure.widget_text_config_lower_service
-import kotlinx.android.synthetic.main.widget_multi_configure.widget_text_config_upper_service
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_upper_service_text
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -113,7 +113,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         setResult(RESULT_CANCELED)
 
         setContentView(R.layout.widget_multi_configure)
-        add_button.setOnClickListener(addWidgetClickListener)
+        widget_config_add_button.setOnClickListener(addWidgetClickListener)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -139,20 +139,20 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
 
-        widget_multi_type_selector_group.setOnCheckedChangeListener(widgetTypeSelectGroupListener)
+        widget_config_type_selector_group.setOnCheckedChangeListener(widgetTypeSelectGroupListener)
 
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
-        widget_text_config_entity_id.setAdapter(entityAdapter)
-        widget_text_config_entity_id.onFocusChangeListener = dropDownOnFocus
+        widget_config_entity_id_text.setAdapter(entityAdapter)
+        widget_config_entity_id_text.onFocusChangeListener = dropDownOnFocus
 
-        widget_multi_button_above_checkbox.setOnCheckedChangeListener { _, checked ->
+        widget_config_button_above_checkbox.setOnCheckedChangeListener { _, checked ->
             if (checked) {
                 widget_config_upper_button_config_layout.visibility = View.VISIBLE
             } else {
                 widget_config_upper_button_config_layout.visibility = View.GONE
             }
         }
-        widget_multi_button_below_checkbox.setOnCheckedChangeListener { _, checked ->
+        widget_config_button_below_checkbox.setOnCheckedChangeListener { _, checked ->
             if (checked) {
                 widget_config_lower_button_config_layout.visibility = View.VISIBLE
             } else {
@@ -164,12 +164,12 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             if (it != null) getServiceString(it) else ""
         }
 
-        widget_text_config_upper_service.setAdapter(serviceAdapter)
-        widget_text_config_upper_service.onFocusChangeListener = dropDownOnFocus
-        widget_text_config_upper_service.addTextChangedListener(serviceTextWatcherUpper)
-        widget_text_config_lower_service.setAdapter(serviceAdapter)
-        widget_text_config_lower_service.onFocusChangeListener = dropDownOnFocus
-        widget_text_config_lower_service.addTextChangedListener(serviceTextWatcherLower)
+        widget_config_upper_service_text.setAdapter(serviceAdapter)
+        widget_config_upper_service_text.onFocusChangeListener = dropDownOnFocus
+        widget_config_upper_service_text.addTextChangedListener(serviceTextWatcherUpper)
+        widget_config_lower_service_text.setAdapter(serviceAdapter)
+        widget_config_lower_service_text.onFocusChangeListener = dropDownOnFocus
+        widget_config_lower_service_text.addTextChangedListener(serviceTextWatcherLower)
         updateServiceAdaptor()
 
         dynamicFieldUpperAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFieldsUpper)
@@ -179,14 +179,14 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         widget_config_fields_upper_layout.layoutManager = LinearLayoutManager(this)
         widget_config_fields_lower_layout.layoutManager = LinearLayoutManager(this)
 
-        add_field_button_upper.setOnClickListener(onAddFieldUpperListener)
-        add_field_button_lower.setOnClickListener(onAddFieldLowerListener)
+        widget_config_add_field_button_upper.setOnClickListener(onAddFieldUpperListener)
+        widget_config_add_field_button_lower.setOnClickListener(onAddFieldLowerListener)
 
-        widget_multi_label_selector_group.setOnCheckedChangeListener(widgetLabelSelectGroupListener)
+        widget_config_label_selector_group.setOnCheckedChangeListener(widgetLabelSelectGroupListener)
 
         widget_config_template_edit.addTextChangedListener(templateTextWatcher)
 
-        add_button.setOnClickListener(addWidgetClickListener)
+        widget_config_add_button.setOnClickListener(addWidgetClickListener)
 
         mainScope.launch {
             try {
@@ -293,9 +293,9 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
             // If upper button is configured, pass the data for it
-            if (widget_multi_button_above_checkbox.isChecked) {
+            if (widget_config_button_above_checkbox.isChecked) {
                 // Analyze service call for upper button
-                val serviceText = context.widget_text_config_upper_service.text.toString()
+                val serviceText = context.widget_config_upper_service_text.text.toString()
                 val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
                 val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
                 val serviceDataMap = HashMap<String, Any>()
@@ -324,9 +324,9 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             }
 
             // If lower button is configured, pass the data for it
-            if (widget_multi_button_below_checkbox.isChecked) {
+            if (widget_config_button_below_checkbox.isChecked) {
                 // Analyze service call for lower button
-                val serviceText = context.widget_text_config_lower_service.text.toString()
+                val serviceText = context.widget_config_lower_service_text.text.toString()
                 val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
                 val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
                 val serviceDataMap = HashMap<String, Any>()
@@ -362,7 +362,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                     intent.putExtra(MultiWidget.EXTRA_LABEL_TYPE, MultiWidget.LABEL_TEMPLATE)
                     intent.putExtra(
                         MultiWidget.EXTRA_TEMPLATE,
-                        "{{ states." + widget_text_config_entity_id.text.toString() + ".name }}"
+                        "{{ states." + widget_config_entity_id_text.text.toString() + ".name }}"
                     )
                 }
                 TEMPLATE_LABEL_TYPE -> {
@@ -418,7 +418,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 dynamicFieldsLower.add(
                     ServiceFieldBinder(
-                        context.widget_text_config_lower_service.text.toString(),
+                        context.widget_config_lower_service_text.text.toString(),
                         fieldKeyInput.text.toString()
                     )
                 )
@@ -443,7 +443,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 dynamicFieldsUpper.add(
                     ServiceFieldBinder(
-                        context.widget_text_config_upper_service.text.toString(),
+                        context.widget_config_upper_service_text.text.toString(),
                         fieldKeyInput.text.toString()
                     )
                 )
@@ -554,7 +554,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 }
                 runOnUiThread {
                     widget_config_template_render.text = templateText
-                    add_button.isEnabled = enabled
+                    widget_config_add_button.isEnabled = enabled
                 }
             }
         }
