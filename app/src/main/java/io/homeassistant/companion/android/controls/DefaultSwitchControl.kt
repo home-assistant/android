@@ -11,6 +11,7 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -40,7 +41,7 @@ class DefaultSwitchControl {
                 }
             )
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText(if (entity.state == "off") "Off" else "On")
+            control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(R.string.state_on))
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,

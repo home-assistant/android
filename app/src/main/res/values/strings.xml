@@ -388,4 +388,16 @@ like to connect to:</string>
   <string name="widget_text_size_label">Widget text size:</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="privacy_url">https://www.home-assistant.io/privacy</string>
+  <string name="state_on">On</string>
+  <string name="state_off">Off</string>
+  <string name="state_auto">Auto</string>
+  <string name="state_cool">Cool</string>
+  <string name="state_dry">Dry</string>
+  <string name="state_fan_only">Fan Only</string>
+  <string name="state_heat">Heat</string>
+  <string name="state_heat_cool">Heat Cool</string>
+  <string name="state_closed">Closed</string>
+  <string name="state_closing">Closing</string>
+  <string name="state_open">Open</string>
+  <string name="state_opening">Opening</string>
 </resources>
