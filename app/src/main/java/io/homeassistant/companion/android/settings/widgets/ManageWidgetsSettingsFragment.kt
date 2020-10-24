@@ -9,7 +9,9 @@ import androidx.preference.PreferenceFragmentCompat
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
+import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
 
 class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
 
@@ -28,17 +30,32 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
 
         val staticWidgetDao = AppDatabase.getInstance(requireContext()).staticWidgetDao()
         val staticWidgetList = staticWidgetDao.getAll()
-
-        val prefCategory = findPreference<PreferenceCategory>("list_entity_state_widgets")
-        if (!staticWidgetList.isNullOrEmpty()) {
-            prefCategory?.isVisible = true
-            reloadStaticWidgets(staticWidgetList, prefCategory)
-        } else {
-            findPreference<PreferenceCategory>("list_entity_state_widgets")?.let {
-                it.isVisible = false
-            }
+        val templateWidgetDao = AppDatabase.getInstance(requireContext()).templateWidgetDao()
+        val templateWidgetList = templateWidgetDao.getAll()
+        if (staticWidgetList.isNullOrEmpty() && templateWidgetList.isNullOrEmpty()) {
             findPreference<Preference>("no_widgets")?.let {
                 it.isVisible = true
+            }
+        } else {
+
+            val prefCategoryState = findPreference<PreferenceCategory>("list_entity_state_widgets")
+            if (!staticWidgetList.isNullOrEmpty()) {
+                prefCategoryState?.isVisible = true
+                reloadStaticWidgets(staticWidgetList, prefCategoryState)
+            } else {
+                findPreference<PreferenceCategory>("list_entity_state_widgets")?.let {
+                    it.isVisible = false
+                }
+            }
+
+            val prefCategoryTemplate = findPreference<PreferenceCategory>("list_template_widgets")
+            if (!templateWidgetList.isNullOrEmpty()) {
+                prefCategoryTemplate?.isVisible = true
+                reloadTemplateWidgets(templateWidgetList, prefCategoryTemplate)
+            } else {
+                findPreference<PreferenceCategory>("list_template_widgets")?.let {
+                    it.isVisible = false
+                }
             }
         }
     }
@@ -59,6 +76,29 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
 
                 pref.setOnPreferenceClickListener {
                     val intent = Intent(requireContext(), EntityWidgetConfigureActivity::class.java).apply {
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, item.id)
+                    }
+                    startActivity(intent)
+                    return@setOnPreferenceClickListener true
+                }
+
+                prefCategory?.addPreference(pref)
+            }
+        }
+    }
+
+    private fun reloadTemplateWidgets(templateWidgetList: Array<TemplateWidgetEntity>?, prefCategory: PreferenceCategory?) {
+        prefCategory?.removeAll()
+        if (templateWidgetList != null) {
+            for (item in templateWidgetList) {
+                val pref = Preference(preferenceScreen.context)
+
+                pref.key = item.id.toString()
+                pref.title = item.template.take(100)
+                pref.isIconSpaceReserved = false
+
+                pref.setOnPreferenceClickListener {
+                    val intent = Intent(requireContext(), TemplateWidgetConfigureActivity::class.java).apply {
                         putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, item.id)
                     }
                     startActivity(intent)

@@ -15,4 +15,9 @@
         android:title="@string/list_entity_state_widgets"
         app:iconSpaceReserved="false"
         app:isPreferenceVisible="false" />
+    <PreferenceCategory
+        android:key="list_template_widgets"
+        android:title="@string/list_template_widgets"
+        app:iconSpaceReserved="false"
+        app:isPreferenceVisible="false" />
 </androidx.preference.PreferenceScreen>

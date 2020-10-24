@@ -9,6 +9,7 @@ import androidx.core.widget.doAfterTextChanged
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_template_configure.*
@@ -63,24 +64,18 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
             .build()
             .inject(this)
 
+        val templateWidgetDao = AppDatabase.getInstance(applicationContext).templateWidgetDao()
+        val templateWidget = templateWidgetDao.get(appWidgetId)
+        if (templateWidget != null) {
+            templateText.setText(templateWidget.template)
+            add_button.setText(R.string.update_widget)
+            renderTemplateText(templateWidget.template)
+        }
+
         templateText.doAfterTextChanged { editableText ->
             if (editableText == null)
                 return@doAfterTextChanged
-            ioScope.launch {
-                var templateText: String?
-                var enabled: Boolean
-                try {
-                    templateText = integrationUseCase.renderTemplate(editableText.toString(), mapOf())
-                    enabled = true
-                } catch (e: Exception) {
-                    templateText = "Error in template"
-                    enabled = false
-                }
-                runOnUiThread {
-                    renderedTemplate.text = templateText
-                    add_button.isEnabled = enabled
-                }
-            }
+            renderTemplateText(editableText.toString())
         }
 
         add_button.setOnClickListener {
@@ -103,5 +98,23 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
     override fun onDestroy() {
         mainScope.cancel()
         super.onDestroy()
+    }
+
+    private fun renderTemplateText(template: String) {
+        ioScope.launch {
+            var templateText: String?
+            var enabled: Boolean
+            try {
+                templateText = integrationUseCase.renderTemplate(template, mapOf())
+                enabled = true
+            } catch (e: Exception) {
+                templateText = "Error in template"
+                enabled = false
+            }
+            runOnUiThread {
+                renderedTemplate.text = templateText
+                add_button.isEnabled = enabled
+            }
+        }
     }
 }

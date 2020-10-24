@@ -373,6 +373,7 @@ like to connect to:</string>
   <string name="no_widgets">No Widgets Found</string>
   <string name="no_widgets_summary">You have not added any widgets, please add one from the home screen to populate this list.</string>
   <string name="list_entity_state_widgets">List of Entity State Widgets</string>
+  <string name="list_template_widgets">List of Template Widgets</string>
   <string name="widgets">Widgets</string>
   <string name="manage_widgets">Manage Widgets</string>
   <string name="manage_widgets_summary">Edit your widgets, adding/deleting can only be done from the home screen</string>
