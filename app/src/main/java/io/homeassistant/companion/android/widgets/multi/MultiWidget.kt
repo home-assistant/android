@@ -69,6 +69,9 @@ class MultiWidget : AppWidgetProvider() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
+    val Boolean.int
+        get() = if (this) 1 else 0
+
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -136,10 +139,9 @@ class MultiWidget : AppWidgetProvider() {
     }
 
     private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
-        // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
-        // and label need to be re-assigned, or the next time the layout updates
-        // (e.g home screen rotation) the widget will fall back on its default layout
-        // without any click listener being applied
+        // Every time AppWidgetManager.updateAppWidget(...) is called, the click listeners
+        // and label/template need to be re-assigned, or  the widget will fall back on its
+        // default layout without any click listeners being applied
 
         val updateIntent = Intent(context, MultiWidget::class.java).apply {
             action = UPDATE_WIDGET
@@ -335,6 +337,11 @@ class MultiWidget : AppWidgetProvider() {
     private fun callService(context: Context, appWidgetId: Int, upper: Boolean) {
         val widget = multiWidgetDao.get(appWidgetId)
 
+        if (widget == null) {
+            Log.e(TAG, "Could not retrieve widget from database; aborting.")
+            return
+        }
+
         mainScope.launch {
             // Load the service call data from database
             val domain: String?
@@ -342,13 +349,13 @@ class MultiWidget : AppWidgetProvider() {
             val serviceDataJson: String?
 
             if (upper) {
-                domain = widget?.upperDomain
-                service = widget?.upperService
-                serviceDataJson = widget?.lowerServiceData
+                domain = widget.upperDomain
+                service = widget.upperService
+                serviceDataJson = widget.lowerServiceData
             } else {
-                domain = widget?.lowerDomain
-                service = widget?.lowerService
-                serviceDataJson = widget?.lowerServiceData
+                domain = widget.lowerDomain
+                service = widget.lowerService
+                serviceDataJson = widget.lowerServiceData
             }
 
             Log.d(
@@ -374,9 +381,7 @@ class MultiWidget : AppWidgetProvider() {
                         if (entityIdWithoutBrackets.find()) {
                             val value = entityIdWithoutBrackets.group(1)
                             if (value != null) {
-                                if (value == "all" ||
-                                    value.split(",").contains("all")
-                                ) {
+                                if (value == "all" || value.split(",").contains("all")) {
                                     serviceDataMap["entity_id"] = "all"
                                 }
                             }
@@ -389,16 +394,9 @@ class MultiWidget : AppWidgetProvider() {
                 }
             }
 
-            // Set a timer to change it back after 1 second
-            /*Handler(Looper.getMainLooper()).postDelayed({
-                views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
-                views.setInt(
-                    R.id.widgetLayout,
-                    "setBackgroundResource",
-                    R.drawable.widget_button_background
-                )
-                appWidgetManager.updateAppWidget(appWidgetId, views)
-            }, 1000)*/
+            // Update app widget once service call has been made
+            // in case template needs to display a state change
+            updateAppWidget(context, appWidgetId)
         }
     }
 
@@ -412,7 +410,4 @@ class MultiWidget : AppWidgetProvider() {
             throw Exception("Application Context passed is not of our application!")
         }
     }
-
-    val Boolean.int
-        get() = if (this) 1 else 0
 }

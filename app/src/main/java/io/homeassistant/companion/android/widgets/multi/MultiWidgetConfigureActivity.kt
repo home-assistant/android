@@ -102,6 +102,9 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
+    override val iconDialogIconPack: IconPack?
+        get() = iconPack
+
     public override fun onCreate(icicle: Bundle?) {
         super.onCreate(icicle)
 
@@ -223,6 +226,33 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 iconDialog.show(supportFragmentManager, LOWER_ICON_DIALOG_TAG)
             }
         }
+    }
+
+    override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<Icon>) {
+        Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
+        val selectedIcon = icons.firstOrNull()
+        if (selectedIcon != null) {
+            when (dialog.tag) {
+                UPPER_ICON_DIALOG_TAG -> widget_config_upper_icon_selector.tag = selectedIcon.id
+                LOWER_ICON_DIALOG_TAG -> widget_config_lower_icon_selector.tag = selectedIcon.id
+            }
+            val iconDrawable = selectedIcon.drawable
+            if (iconDrawable != null) {
+                val icon = DrawableCompat.wrap(iconDrawable)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    DrawableCompat.setTint(icon, resources.getColor(R.color.colorIcon, theme))
+                }
+                when (dialog.tag) {
+                    UPPER_ICON_DIALOG_TAG -> widget_config_upper_icon_selector.setImageBitmap(icon.toBitmap())
+                    LOWER_ICON_DIALOG_TAG -> widget_config_lower_icon_selector.setImageBitmap(icon.toBitmap())
+                }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        mainScope.cancel()
+        super.onDestroy()
     }
 
     private fun getServiceString(service: Service): String {
@@ -572,35 +602,5 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 filterByEntity = false
             }
         }
-    }
-
-    override val iconDialogIconPack: IconPack?
-        get() = iconPack
-
-    override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<Icon>) {
-        Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
-        val selectedIcon = icons.firstOrNull()
-        if (selectedIcon != null) {
-            when (dialog.tag) {
-                UPPER_ICON_DIALOG_TAG -> widget_config_upper_icon_selector.tag = selectedIcon.id
-                LOWER_ICON_DIALOG_TAG -> widget_config_lower_icon_selector.tag = selectedIcon.id
-            }
-            val iconDrawable = selectedIcon.drawable
-            if (iconDrawable != null) {
-                val icon = DrawableCompat.wrap(iconDrawable)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    DrawableCompat.setTint(icon, resources.getColor(R.color.colorIcon, theme))
-                }
-                when (dialog.tag) {
-                    UPPER_ICON_DIALOG_TAG -> widget_config_upper_icon_selector.setImageBitmap(icon.toBitmap())
-                    LOWER_ICON_DIALOG_TAG -> widget_config_lower_icon_selector.setImageBitmap(icon.toBitmap())
-                }
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        mainScope.cancel()
-        super.onDestroy()
     }
 }
