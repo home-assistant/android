@@ -9,10 +9,12 @@ import androidx.preference.PreferenceFragmentCompat
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
+import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
 
 class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
@@ -36,15 +38,17 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
         val templateWidgetList = templateWidgetDao.getAll()
         val buttonWidgetDao = AppDatabase.getInstance(requireContext()).buttonWidgetDao()
         val buttonWidgetList = buttonWidgetDao.getAll()
+        val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(requireContext()).mediaPlayCtrlWidgetDao()
+        val mediaWidgetList = mediaPlayerControlsWidgetDao.getAll()
 
-        if (staticWidgetList.isNullOrEmpty() && templateWidgetList.isNullOrEmpty() && buttonWidgetList.isNullOrEmpty()) {
+        if (staticWidgetList.isNullOrEmpty() && templateWidgetList.isNullOrEmpty() &&
+            buttonWidgetList.isNullOrEmpty() && mediaWidgetList.isNullOrEmpty()) {
             findPreference<Preference>("no_widgets")?.let {
                 it.isVisible = true
             }
         } else {
 
             val prefCategoryStatic = findPreference<PreferenceCategory>("list_entity_state_widgets")
-
             if (!staticWidgetList.isNullOrEmpty()) {
                 prefCategoryStatic?.isVisible = true
                 reloadStaticWidgets(staticWidgetList, prefCategoryStatic)
@@ -71,6 +75,16 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
                 reloadButtonWidgets(buttonWidgetList, prefCategoryButton)
             } else {
                 findPreference<PreferenceCategory>("list_button_widgets")?.let {
+                    it.isVisible = false
+                }
+            }
+
+            val prefCategoryMedia = findPreference<PreferenceCategory>("list_media_player_widgets")
+            if (!mediaWidgetList.isNullOrEmpty()) {
+                prefCategoryMedia?.isVisible = true
+                reloadMediaPlayerWidgets(mediaWidgetList, prefCategoryMedia)
+            } else {
+                findPreference<PreferenceCategory>("list_media_player_widgets")?.let {
                     it.isVisible = false
                 }
             }
@@ -142,7 +156,35 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
                 pref.isIconSpaceReserved = false
 
                 pref.setOnPreferenceClickListener {
-                    val intent = Intent(requireContext(), ButtonWidgetConfigureActivity::class.java).apply {
+                    val intent =
+                        Intent(requireContext(), ButtonWidgetConfigureActivity::class.java).apply {
+                            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, item.id)
+                        }
+                    startActivity(intent)
+                    return@setOnPreferenceClickListener true
+                }
+
+                prefCategory?.addPreference(pref)
+            }
+        }
+    }
+
+    private fun reloadMediaPlayerWidgets(mediaWidgetList: Array<MediaPlayerControlsWidgetEntity>?, prefCategory: PreferenceCategory?) {
+        prefCategory?.removeAll()
+        if (mediaWidgetList != null) {
+            for (item in mediaWidgetList) {
+                val pref = Preference(preferenceScreen.context)
+
+                pref.key = item.id.toString()
+                if (!item.label.isNullOrEmpty()) {
+                    pref.title = item.label
+                    pref.summary = item.entityId
+                } else
+                    pref.title = item.entityId
+                pref.isIconSpaceReserved = false
+
+                pref.setOnPreferenceClickListener {
+                    val intent = Intent(requireContext(), MediaPlayerControlsWidgetConfigureActivity::class.java).apply {
                         putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, item.id)
                     }
                     startActivity(intent)

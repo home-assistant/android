@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import javax.inject.Inject
@@ -27,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class MediaPlayerControlsWidgetConfigureActivity : Activity() {
 
@@ -75,6 +77,27 @@ class MediaPlayerControlsWidgetConfigureActivity : Activity() {
             .build()
             .inject(this)
 
+        val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(applicationContext).mediaPlayCtrlWidgetDao()
+        val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
+        if (mediaPlayerWidget != null) {
+            label.setText(mediaPlayerWidget.label)
+            widget_text_config_entity_id.setText(mediaPlayerWidget.entityId)
+            widget_show_seek_buttons_checkbox.isChecked = mediaPlayerWidget.showSeek
+            widget_show_skip_buttons_checkbox.isChecked = mediaPlayerWidget.showSkip
+            val entity = runBlocking {
+                try {
+                    integrationUseCase.getEntity(mediaPlayerWidget.entityId)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to get entity information", e)
+                    Toast.makeText(applicationContext, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                        .show()
+                    null
+                }
+            }
+            if (entity != null)
+                selectedEntity = entity as Entity<Any>?
+            add_button.setText(R.string.update_widget)
+        }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
         widget_text_config_entity_id.setAdapter(entityAdapter)
