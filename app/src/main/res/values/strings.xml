@@ -400,4 +400,6 @@ like to connect to:</string>
   <string name="state_closing">Closing</string>
   <string name="state_open">Open</string>
   <string name="state_opening">Opening</string>
+  <string name="state_locked">Locked</string>
+  <string name="state_unlocked">Unlocked</string>
 </resources>
