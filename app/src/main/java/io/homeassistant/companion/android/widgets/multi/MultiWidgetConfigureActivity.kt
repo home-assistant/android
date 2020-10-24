@@ -43,6 +43,8 @@ import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_entit
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_fields_lower_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_fields_upper_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_custom_button
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_entity_button
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower_button_config_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower_icon_selector
@@ -254,49 +256,102 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         try {
             val context = this@MultiWidgetConfigureActivity
 
-            // Set up a broadcast intent and pass the service call data as extras
+            // Set up a broadcast intent to pass data as extras
             val intent = Intent()
             intent.action = MultiWidget.RECEIVE_DATA
             intent.component = ComponentName(context, MultiWidget::class.java)
-
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
-            // Analyze and send service and domain
-            val serviceText = context.widget_text_config_upper_service.text.toString()
-            val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
-            val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
-            intent.putExtra(
-                MultiWidget.EXTRA_DOMAIN,
-                domain
-            )
-            intent.putExtra(
-                MultiWidget.EXTRA_SERVICE,
-                service
-            )
+            // If upper button is configured, pass the data for it
+            if (widget_multi_button_above_checkbox.isChecked) {
+                // Analyze service call for upper button
+                val serviceText = context.widget_text_config_upper_service.text.toString()
+                val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
+                val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
+                val serviceDataMap = HashMap<String, Any>()
+                dynamicFieldsUpper.forEach {
+                    if (it.value != null) {
+                        serviceDataMap[it.field] = it.value!!
+                    }
+                }
 
-            // Fetch and send label and icon
-            intent.putExtra(
-                MultiWidget.EXTRA_LABEL,
-                context.widget_config_label.text.toString()
-            )
-            intent.putExtra(
-                MultiWidget.EXTRA_ICON,
-                context.widget_config_upper_icon_selector.tag as Int
-            )
+                // Pass service call data as extras
+                intent.putExtra(MultiWidget.EXTRA_UPPER_BUTTON, true)
+                intent.putExtra(MultiWidget.EXTRA_UPPER_DOMAIN, domain)
+                intent.putExtra(MultiWidget.EXTRA_UPPER_SERVICE, service)
+                intent.putExtra(
+                    MultiWidget.EXTRA_UPPER_SERVICE_DATA,
+                    jacksonObjectMapper().writeValueAsString(serviceDataMap)
+                )
 
-            // Analyze and send service data
-            val serviceDataMap = HashMap<String, Any>()
-            dynamicFieldsUpper.forEach {
-                if (it.value != null) {
-                    serviceDataMap[it.field] = it.value!!
+                // Pass icon ID
+                intent.putExtra(
+                    MultiWidget.EXTRA_UPPER_ICON_ID,
+                    context.widget_config_upper_icon_selector.tag as Int
+                )
+            } else {
+                intent.putExtra(MultiWidget.EXTRA_UPPER_BUTTON, false)
+            }
+
+            // If lower button is configured, pass the data for it
+            if (widget_multi_button_below_checkbox.isChecked) {
+                // Analyze service call for lower button
+                val serviceText = context.widget_text_config_lower_service.text.toString()
+                val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
+                val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
+                val serviceDataMap = HashMap<String, Any>()
+                dynamicFieldsLower.forEach {
+                    if (it.value != null) {
+                        serviceDataMap[it.field] = it.value!!
+                    }
+                }
+
+                // Pass service call data as extras
+                intent.putExtra(MultiWidget.EXTRA_LOWER_BUTTON, true)
+                intent.putExtra(MultiWidget.EXTRA_LOWER_DOMAIN, domain)
+                intent.putExtra(MultiWidget.EXTRA_LOWER_SERVICE, service)
+                intent.putExtra(
+                    MultiWidget.EXTRA_LOWER_SERVICE_DATA,
+                    jacksonObjectMapper().writeValueAsString(serviceDataMap)
+                )
+
+                // Pass icon ID
+                intent.putExtra(
+                    MultiWidget.EXTRA_LOWER_ICON_ID,
+                    context.widget_config_lower_icon_selector.tag as Int
+                )
+            } else {
+                intent.putExtra(MultiWidget.EXTRA_UPPER_BUTTON, false)
+            }
+
+            // Analyze label type
+            when (labelType) {
+                ENTITY_LABEL_TYPE -> {
+                    // entity label type is secretly a template
+                    // that just display's the entity's friendly name
+                    intent.putExtra(MultiWidget.EXTRA_LABEL_TYPE, MultiWidget.LABEL_TEMPLATE)
+                    intent.putExtra(
+                        MultiWidget.EXTRA_TEMPLATE,
+                        "{{ states." + widget_text_config_entity_id.text.toString() + ".name }}"
+                    )
+                }
+                TEMPLATE_LABEL_TYPE -> {
+                    intent.putExtra(MultiWidget.EXTRA_LABEL_TYPE, MultiWidget.LABEL_TEMPLATE)
+                    intent.putExtra(
+                        MultiWidget.EXTRA_TEMPLATE,
+                        context.widget_config_template_edit.text.toString()
+                    )
+                }
+                CUSTOM_LABEL_TYPE -> {
+                    intent.putExtra(MultiWidget.EXTRA_LABEL_TYPE, MultiWidget.LABEL_PLAINTEXT)
+                    intent.putExtra(
+                        MultiWidget.EXTRA_LABEL,
+                        context.widget_config_label.text.toString()
+                    )
                 }
             }
 
-            intent.putExtra(
-                MultiWidget.EXTRA_SERVICE_DATA,
-                jacksonObjectMapper().writeValueAsString(serviceDataMap)
-            )
-
+            // Finish up and broadcast intent
             context.sendBroadcast(intent)
 
             // Make sure we pass back the original appWidgetId
@@ -503,10 +558,17 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         when (checkedId) {
             R.id.widget_multi_type_entity_button -> {
                 widget_config_entity_id_layout.visibility = View.VISIBLE
+                widget_config_label_entity_button.isEnabled = true
                 filterByEntity = true
             }
             R.id.widget_multi_type_service_button -> {
                 widget_config_entity_id_layout.visibility = View.GONE
+                if (widget_config_label_entity_button.isChecked) {
+                    widget_config_label_entity_button.isChecked = true
+                    widget_config_label_custom_button.isChecked = true
+                }
+                widget_config_label_entity_button.isEnabled = false
+
                 filterByEntity = false
             }
         }
