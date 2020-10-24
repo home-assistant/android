@@ -8,8 +8,10 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
+import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
 
@@ -32,16 +34,20 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
         val staticWidgetList = staticWidgetDao.getAll()
         val templateWidgetDao = AppDatabase.getInstance(requireContext()).templateWidgetDao()
         val templateWidgetList = templateWidgetDao.getAll()
-        if (staticWidgetList.isNullOrEmpty() && templateWidgetList.isNullOrEmpty()) {
+        val buttonWidgetDao = AppDatabase.getInstance(requireContext()).buttonWidgetDao()
+        val buttonWidgetList = buttonWidgetDao.getAll()
+
+        if (staticWidgetList.isNullOrEmpty() && templateWidgetList.isNullOrEmpty() && buttonWidgetList.isNullOrEmpty()) {
             findPreference<Preference>("no_widgets")?.let {
                 it.isVisible = true
             }
         } else {
 
-            val prefCategoryState = findPreference<PreferenceCategory>("list_entity_state_widgets")
+            val prefCategoryStatic = findPreference<PreferenceCategory>("list_entity_state_widgets")
+
             if (!staticWidgetList.isNullOrEmpty()) {
-                prefCategoryState?.isVisible = true
-                reloadStaticWidgets(staticWidgetList, prefCategoryState)
+                prefCategoryStatic?.isVisible = true
+                reloadStaticWidgets(staticWidgetList, prefCategoryStatic)
             } else {
                 findPreference<PreferenceCategory>("list_entity_state_widgets")?.let {
                     it.isVisible = false
@@ -54,6 +60,17 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
                 reloadTemplateWidgets(templateWidgetList, prefCategoryTemplate)
             } else {
                 findPreference<PreferenceCategory>("list_template_widgets")?.let {
+                    it.isVisible = false
+                }
+            }
+
+            val prefCategoryButton =
+                findPreference<PreferenceCategory>("list_button_widgets")
+            if (!buttonWidgetList.isNullOrEmpty()) {
+                prefCategoryButton?.isVisible = true
+                reloadButtonWidgets(buttonWidgetList, prefCategoryButton)
+            } else {
+                findPreference<PreferenceCategory>("list_button_widgets")?.let {
                     it.isVisible = false
                 }
             }
@@ -99,6 +116,33 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
 
                 pref.setOnPreferenceClickListener {
                     val intent = Intent(requireContext(), TemplateWidgetConfigureActivity::class.java).apply {
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, item.id)
+                    }
+                    startActivity(intent)
+                    return@setOnPreferenceClickListener true
+                }
+
+                prefCategory?.addPreference(pref)
+            }
+        }
+    }
+
+    private fun reloadButtonWidgets(buttonWidgetList: Array<ButtonWidgetEntity>?, prefCategory: PreferenceCategory?) {
+        prefCategory?.removeAll()
+        if (buttonWidgetList != null) {
+            for (item in buttonWidgetList) {
+                val pref = Preference(preferenceScreen.context)
+
+                pref.key = item.id.toString()
+                if (!item.label.isNullOrEmpty()) {
+                    pref.title = item.label
+                    pref.summary = "${item.domain}.${item.service}"
+                } else
+                    pref.title = "${item.domain}.${item.service}"
+                pref.isIconSpaceReserved = false
+
+                pref.setOnPreferenceClickListener {
+                    val intent = Intent(requireContext(), ButtonWidgetConfigureActivity::class.java).apply {
                         putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, item.id)
                     }
                     startActivity(intent)

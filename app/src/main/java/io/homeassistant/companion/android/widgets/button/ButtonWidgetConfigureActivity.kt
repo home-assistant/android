@@ -19,6 +19,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.data.Icon
@@ -30,6 +31,7 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -233,6 +235,15 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             .build()
             .inject(this)
 
+        val buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
+        val buttonWidget = buttonWidgetDao.get(appWidgetId)
+        var serviceText = ""
+        if (buttonWidget != null) {
+            serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
+            widget_text_config_service.setText(serviceText)
+            label.setText(buttonWidget.label)
+            add_button.setText(R.string.update_widget)
+        }
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
 
@@ -248,7 +259,37 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 integrationUseCase.getServices().forEach {
                     services[getServiceString(it)] = it
                 }
-                serviceAdapter.addAll(services.values)
+                if (buttonWidget != null) {
+                    serviceAdapter.add(services[serviceText])
+                    val fields = services[serviceText]!!.serviceData.fields
+                    val fieldKeys = fields.keys
+                    Log.d(TAG, "Fields applicable to this service: $fields")
+                    val serviceDataMap: HashMap<String, Any> =
+                        jacksonObjectMapper().readValue(buttonWidget.serviceData)
+                    for (item in serviceDataMap) {
+                        val value: String = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
+                        dynamicFields.add(ServiceFieldBinder(serviceText, item.key, value))
+
+                        fieldKeys.sorted().forEach { fieldKey ->
+                            Log.d(TAG, "Creating a text input box for $fieldKey")
+
+                            // Insert a dynamic layout
+                            // IDs get priority and go at the top, since the other fields
+                            // are usually optional but the ID is required
+                            if (fieldKey != item.key) {
+                                if (fieldKey.contains("_id"))
+                                    dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
+                                else
+                                    dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
+                            }
+                        }
+                    }
+                    integrationUseCase.getEntities().forEach {
+                        entities[it.entityId] = it
+                    }
+                    dynamicFieldAdapter.notifyDataSetChanged()
+                } else
+                    serviceAdapter.addAll(services.values)
                 serviceAdapter.sort()
 
                 // Update service adapter
@@ -290,7 +331,8 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 searchVisibility = IconDialog.SearchVisibility.ALWAYS
             }
             val iconDialog = IconDialog.newInstance(settings)
-            onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[62017]!!))
+            val iconId = buttonWidget?.iconId ?: 62017
+            onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[iconId]!!))
             widget_config_icon_selector.setOnClickListener {
                 iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
             }

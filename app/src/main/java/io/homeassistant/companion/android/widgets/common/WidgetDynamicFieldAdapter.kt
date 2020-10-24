@@ -130,7 +130,7 @@ class WidgetDynamicFieldAdapter(
         // This may have to be changed later if multi-select gets implemented
         if (serviceFieldList[position].value != null) {
             try {
-                serviceFieldList[position].value as String
+                autoCompleteTextView.setText(serviceFieldList[position].value as String)
             } catch (e: Exception) {
                 Log.d(TAG, "Unable to get service field list", e)
             }
