@@ -23,12 +23,12 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MultiWidgetDao
 import io.homeassistant.companion.android.database.widget.MultiWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
+import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.util.regex.Pattern
 
 class MultiWidget : AppWidgetProvider() {
     companion object {
