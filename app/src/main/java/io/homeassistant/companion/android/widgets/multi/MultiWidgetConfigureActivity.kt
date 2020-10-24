@@ -18,6 +18,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.maltaisn.icondialog.IconDialog
@@ -89,6 +90,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
 
     private lateinit var iconPack: IconPack
 
+    private lateinit var fetchedServices: Array<Service>
     private var services = HashMap<String, Service>()
     private var entities = HashMap<String, Entity<Any>>()
 
@@ -144,6 +146,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
         widget_config_entity_id_text.setAdapter(entityAdapter)
         widget_config_entity_id_text.onFocusChangeListener = dropDownOnFocus
+        widget_config_entity_id_text.doAfterTextChanged { updateServiceAdaptor() }
 
         widget_config_button_above_checkbox.setOnCheckedChangeListener { _, checked ->
             if (checked) {
@@ -160,7 +163,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             }
         }
 
-        serviceAdapter = SingleItemArrayAdapter<Service>(this) {
+        serviceAdapter = SingleItemArrayAdapter(this) {
             if (it != null) getServiceString(it) else ""
         }
 
@@ -170,7 +173,6 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         widget_config_lower_service_text.setAdapter(serviceAdapter)
         widget_config_lower_service_text.onFocusChangeListener = dropDownOnFocus
         widget_config_lower_service_text.addTextChangedListener(serviceTextWatcherLower)
-        updateServiceAdaptor()
 
         dynamicFieldUpperAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFieldsUpper)
         dynamicFieldLowerAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFieldsLower)
@@ -206,6 +208,17 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 // If entities fail to load, it's okay to pass
                 // an empty map to the dynamicFieldAdapter
                 Log.e(TAG, "Failed to query entities", e)
+            }
+
+            try {
+                // Fetch services and store for later filtering
+                fetchedServices = integrationUseCase.getServices()
+                updateServiceAdaptor()
+            } catch (e: Exception) {
+                // Custom components can cause services to not load
+                // Display error text
+                widget_config_upper_service_error.visibility = View.VISIBLE
+                widget_config_lower_service_error.visibility = View.VISIBLE
             }
         }
 
@@ -260,26 +273,26 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
     }
 
     private fun updateServiceAdaptor() {
-        mainScope.launch {
-            try {
-                // Fetch services
-                integrationUseCase.getServices().forEach {
-                    services[getServiceString(it)] = it
-                }
-                serviceAdapter.addAll(services.values)
-                serviceAdapter.sort()
+        // Analyze fetched services
+        fetchedServices.forEach {
+            if (filterByEntity) {
+                val domain = widget_config_entity_id_text.text
+                    .toString().split(".", limit = 2)[0]
 
-                // Update service adapter
-                runOnUiThread {
-                    serviceAdapter.notifyDataSetChanged()
-                }
-            } catch (e: Exception) {
-                // Custom components can cause services to not load
-                // Display error text
-                widget_config_upper_service_error.visibility = View.VISIBLE
-                widget_config_lower_service_error.visibility = View.VISIBLE
+                // If we are creating an entity-focused widget,
+                // only populate services associated with that widget
+                if (it.domain != domain) return@forEach
             }
+            services[getServiceString(it)] = it
         }
+
+        // Clear out service adaptor or duplicates will appear
+        serviceAdapter.clear()
+        serviceAdapter.addAll(services.values)
+        serviceAdapter.sort()
+
+        // Update service adapter
+        serviceAdapter.notifyDataSetChanged()
     }
 
     private val addWidgetClickListener = View.OnClickListener {
@@ -317,7 +330,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 // Pass icon ID
                 intent.putExtra(
                     MultiWidget.EXTRA_UPPER_ICON_ID,
-                    context.widget_config_upper_icon_selector.tag as Int
+                    context.widget_config_upper_icon_selector.tag as Int? ?: 62017 // Lightning bolt
                 )
             } else {
                 intent.putExtra(MultiWidget.EXTRA_UPPER_BUTTON, false)
@@ -348,17 +361,17 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 // Pass icon ID
                 intent.putExtra(
                     MultiWidget.EXTRA_LOWER_ICON_ID,
-                    context.widget_config_lower_icon_selector.tag as Int
+                    context.widget_config_lower_icon_selector.tag as Int? ?: 62017 // Lightning bolt
                 )
             } else {
-                intent.putExtra(MultiWidget.EXTRA_UPPER_BUTTON, false)
+                intent.putExtra(MultiWidget.EXTRA_LOWER_BUTTON, false)
             }
 
             // Analyze label type
             when (labelType) {
                 ENTITY_LABEL_TYPE -> {
-                    // entity label type is secretly a template
-                    // that just display's the entity's friendly name
+                    // Entity label type is secretly a template
+                    // that just displays the entity's friendly name
                     intent.putExtra(MultiWidget.EXTRA_LABEL_TYPE, MultiWidget.LABEL_TEMPLATE)
                     intent.putExtra(
                         MultiWidget.EXTRA_TEMPLATE,
@@ -476,17 +489,23 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                     // Insert a dynamic layout
                     // IDs get priority and go at the top, since the other fields
                     // are usually optional but the ID is required
-                    if (fieldKey.contains("_id"))
-                        dynamicFieldsLower.add(0, ServiceFieldBinder(serviceText, fieldKey))
-                    else
+                    if (fieldKey.contains("_id")) {
+                        dynamicFieldsLower.add(
+                            0, ServiceFieldBinder(
+                                serviceText,
+                                fieldKey,
+                                widget_config_entity_id_text.text.toString()
+                            )
+                        )
+                    } else
                         dynamicFieldsLower.add(ServiceFieldBinder(serviceText, fieldKey))
                 }
 
-                dynamicFieldUpperAdapter.notifyDataSetChanged()
+                dynamicFieldLowerAdapter.notifyDataSetChanged()
             } else {
-                if (dynamicFieldsUpper.size > 0) {
-                    dynamicFieldsUpper.clear()
-                    dynamicFieldUpperAdapter.notifyDataSetChanged()
+                if (dynamicFieldsLower.size > 0) {
+                    dynamicFieldsLower.clear()
+                    dynamicFieldLowerAdapter.notifyDataSetChanged()
                 }
             }
         }
@@ -518,9 +537,15 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                     // Insert a dynamic layout
                     // IDs get priority and go at the top, since the other fields
                     // are usually optional but the ID is required
-                    if (fieldKey.contains("_id"))
-                        dynamicFieldsUpper.add(0, ServiceFieldBinder(serviceText, fieldKey))
-                    else
+                    if (fieldKey.contains("_id")) {
+                        dynamicFieldsUpper.add(
+                            0, ServiceFieldBinder(
+                                serviceText,
+                                fieldKey,
+                                widget_config_entity_id_text.text.toString()
+                            )
+                        )
+                    } else
                         dynamicFieldsUpper.add(ServiceFieldBinder(serviceText, fieldKey))
                 }
 

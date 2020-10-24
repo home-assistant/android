@@ -202,7 +202,7 @@ class MultiWidget : AppWidgetProvider() {
             if (widget != null) {
                 // If there are buttons, set button icons
                 if (widget.lowerButton == 1) {
-                    val iconId = widget.lowerIconId ?: 988171 // Lightning bolt
+                    val iconId = widget.lowerIconId ?: 62017 // Lightning bolt
                     val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
                     if (iconDrawable != null) {
                         val icon = DrawableCompat.wrap(iconDrawable)
@@ -351,7 +351,7 @@ class MultiWidget : AppWidgetProvider() {
             if (upper) {
                 domain = widget.upperDomain
                 service = widget.upperService
-                serviceDataJson = widget.lowerServiceData
+                serviceDataJson = widget.upperServiceData
             } else {
                 domain = widget.lowerDomain
                 service = widget.lowerService
@@ -370,7 +370,6 @@ class MultiWidget : AppWidgetProvider() {
             } else {
                 // If everything loaded correctly, package the service data and attempt the call
                 try {
-
                     // Convert JSON to HashMap
                     val serviceDataMap: HashMap<String, Any> =
                         jacksonObjectMapper().readValue(serviceDataJson)

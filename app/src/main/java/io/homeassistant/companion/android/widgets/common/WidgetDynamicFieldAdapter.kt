@@ -1,13 +1,12 @@
 package io.homeassistant.companion.android.widgets.common
 
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.Service
@@ -21,7 +20,10 @@ class WidgetDynamicFieldAdapter(
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
-    private val TAG = "WidgetField"
+    companion object {
+        private const val TAG = "WidgetField"
+    }
+
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
         if (hasFocus && view is AutoCompleteTextView) {
             view.showDropDown()
@@ -118,7 +120,8 @@ class WidgetDynamicFieldAdapter(
             // populate the autocomplete with valid values
             val fieldAdapter = SingleItemArrayAdapter<String>(context) { it!! }
             fieldAdapter.addAll(
-                services[serviceText]!!.serviceData.fields.getValue(fieldKey).values!!.sorted().toMutableList()
+                services[serviceText]!!.serviceData.fields.getValue(fieldKey).values!!.sorted()
+                    .toMutableList()
             )
             autoCompleteTextView.setAdapter(fieldAdapter)
             autoCompleteTextView.setTokenizer(CommaTokenizer())
@@ -130,26 +133,21 @@ class WidgetDynamicFieldAdapter(
         // This may have to be changed later if multi-select gets implemented
         if (serviceFieldList[position].value != null) {
             try {
-                serviceFieldList[position].value as String
+                autoCompleteTextView.setText(serviceFieldList[position].value as String)
             } catch (e: Exception) {
                 Log.d(TAG, "Unable to get service field list", e)
             }
         }
 
         // Have the text view store its text for later recall
-        autoCompleteTextView.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(p0: Editable?) {
-                // Don't store data that's empty (or just whitespace)
-                if (!p0.isNullOrBlank()) {
-                    serviceFieldList[position].value = p0.toString().toJsonType()
-                } else {
-                    serviceFieldList[position].value = null
-                }
+        autoCompleteTextView.doAfterTextChanged {
+            // Don't store data that's empty (or just whitespace)
+            if (!it.isNullOrBlank()) {
+                serviceFieldList[position].value = it.toString().toJsonType()
+            } else {
+                serviceFieldList[position].value = null
             }
-
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-        })
+        }
     }
 
     private fun String.toJsonType(): Any? {
