@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.graphics.drawable.DrawableCompat
@@ -55,9 +56,16 @@ class MultiWidget : AppWidgetProvider() {
         internal const val EXTRA_LABEL_TYPE = "EXTRA_LABEL_TYPE"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_TEMPLATE = "EXTRA_TEMPLATE"
+        internal const val EXTRA_LABEL_TEXT_SIZE = "EXTRA_LABEL_TEXT_SIZE"
+        internal const val EXTRA_LABEL_MAX_LINES = "EXTRA_LABEL_MAX_LINES"
 
         internal const val LABEL_PLAINTEXT = 0
         internal const val LABEL_TEMPLATE = 1
+
+        // Label text size units are in SP
+        internal const val LABEL_TEXT_SMALL = 12
+        internal const val LABEL_TEXT_MED = 16
+        internal const val LABEL_TEXT_LARGE = 24
     }
 
     @Inject
@@ -245,6 +253,14 @@ class MultiWidget : AppWidgetProvider() {
                         setTextViewText(R.id.widgetLabel, renderedTemplate)
                     }
                 }
+
+                // Set label formatting
+                setTextViewTextSize(
+                    R.id.widgetLabel,
+                    TypedValue.COMPLEX_UNIT_SP,
+                    widget.labelTextSize.toFloat()
+                )
+                setInt(R.id.widgetLabel, "setMaxLines", widget.labelMaxLines)
             }
         }
     }
@@ -266,6 +282,8 @@ class MultiWidget : AppWidgetProvider() {
         val labelType: Int? = extras.getInt(EXTRA_LABEL_TYPE)
         val label: String? = extras.getString(EXTRA_LABEL)
         val template: String? = extras.getString(EXTRA_TEMPLATE)
+        val labelTextSize: Int? = extras.getInt(EXTRA_LABEL_TEXT_SIZE)
+        var labelMaxLines: Int? = extras.getInt(EXTRA_LABEL_MAX_LINES)
 
         // First verification
         if (upperButton == null || lowerButton == null || labelType == null) {
@@ -289,6 +307,10 @@ class MultiWidget : AppWidgetProvider() {
             }
         }
 
+        // If max lines is 0, it is intended to be unlimited
+        // Set it to the actual 'max' value
+        if (labelMaxLines == 0) labelMaxLines = Integer.MAX_VALUE
+
         mainScope.launch {
             Log.d(
                 TAG, "Saving multi widget config data:" + System.lineSeparator() +
@@ -304,7 +326,9 @@ class MultiWidget : AppWidgetProvider() {
                         "lowerServiceData: " + lowerServiceData + System.lineSeparator() +
                         "labelType: " + labelType + System.lineSeparator() +
                         "label: " + label + System.lineSeparator() +
-                        "template: " + template + System.lineSeparator()
+                        "template: " + template + System.lineSeparator() +
+                        "labelTextSize: " + labelTextSize + System.lineSeparator() +
+                        "labelMaxLines: " + labelMaxLines + System.lineSeparator()
             )
 
             multiWidgetDao.add(
@@ -322,7 +346,9 @@ class MultiWidget : AppWidgetProvider() {
                     lowerServiceData,
                     labelType,
                     label,
-                    template
+                    template,
+                    labelTextSize ?: LABEL_TEXT_SMALL,
+                    labelMaxLines ?: 2
                 )
             )
 

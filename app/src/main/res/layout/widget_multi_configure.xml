@@ -324,6 +324,62 @@
                 android:text="@string/template_widget_default" />
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_margin="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:labelFor="@id/widget_config_label_text_size"
+                android:padding="5dp"
+                android:text="Label text size:" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <Spinner
+                android:id="@+id/widget_config_label_text_size"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_margin="5dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:labelFor="@id/widget_config_label_text_lines"
+                android:padding="5dp"
+                android:text="Maximum lines for label (0 for unlimited):" />
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <EditText
+                android:id="@+id/widget_config_label_text_lines"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionNext"
+                android:textAlignment="center"
+                android:hint="2"
+                android:text="2"
+                android:inputType="number"
+                android:maxLength="2" />
+        </LinearLayout>
+
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/widget_config_add_button"
             android:layout_width="wrap_content"

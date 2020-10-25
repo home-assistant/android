@@ -10,6 +10,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.RadioGroup
@@ -51,6 +52,8 @@ import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_entity_button
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_selector_group
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_text_lines
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_label_text_size
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower_button_config_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower_icon_selector
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower_service_error
@@ -187,6 +190,14 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         widget_config_label_selector_group.setOnCheckedChangeListener(widgetLabelSelectGroupListener)
 
         widget_config_template_edit.addTextChangedListener(templateTextWatcher)
+
+        widget_config_label_text_size.adapter = ArrayAdapter.createFromResource(
+            this,
+            R.array.widget_label_font_size,
+            android.R.layout.simple_spinner_item
+        ).also {
+            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
 
         widget_config_add_button.setOnClickListener(addWidgetClickListener)
 
@@ -393,6 +404,22 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                     )
                 }
             }
+
+            // Send label formatting
+            when (widget_config_label_text_size.selectedItem) {
+                resources.getString(R.string.widget_font_size_small) ->
+                    intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE, MultiWidget.LABEL_TEXT_SMALL)
+                resources.getString(R.string.widget_font_size_medium) ->
+                    intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE, MultiWidget.LABEL_TEXT_MED)
+                resources.getString(R.string.widget_font_size_large) ->
+                    intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE, MultiWidget.LABEL_TEXT_LARGE)
+                else ->
+                    intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE, MultiWidget.LABEL_TEXT_MED)
+            }
+            intent.putExtra(
+                MultiWidget.EXTRA_LABEL_MAX_LINES,
+                widget_config_label_text_lines.text.toString().toInt()
+            )
 
             // Finish up and broadcast intent
             context.sendBroadcast(intent)
@@ -625,6 +652,8 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 widget_config_label_entity_button.isEnabled = false
 
                 filterByEntity = false
+
+                updateServiceAdaptor()
             }
         }
     }

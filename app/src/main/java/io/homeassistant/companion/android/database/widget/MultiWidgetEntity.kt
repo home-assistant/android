@@ -33,5 +33,9 @@ data class MultiWidgetEntity(
     @ColumnInfo(name = "label")
     val label: String?,
     @ColumnInfo(name = "template")
-    val template: String?
+    val template: String?,
+    @ColumnInfo(name = "label_text_size")
+    val labelTextSize: Int,
+    @ColumnInfo(name = "label_max_lines")
+    val labelMaxLines: Int
 )

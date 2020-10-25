@@ -287,7 +287,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_13_14 = object : Migration(11, 12) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `multi_widgets` (`id` INTEGER NOT NULL, `upper_button_present` INTEGER NOT NULL, `upper_icon_id` INTEGER, `upper_domain` TEXT, `upper_service` TEXT, `upper_service_data` TEXT, `lower_button_present` INTEGER NOT NULL, `lower_icon_id` INTEGER, `lower_domain` TEXT, `lower_service` TEXT, `lower_service_data` TEXT, `label_type` INTEGER NOT NULL, `label` TEXT, `template` TEXT, PRIMARY KEY(`id`))")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `multi_widgets` (`id` INTEGER NOT NULL, `upper_button_present` INTEGER NOT NULL, `upper_icon_id` INTEGER, `upper_domain` TEXT, `upper_service` TEXT, `upper_service_data` TEXT, `lower_button_present` INTEGER NOT NULL, `lower_icon_id` INTEGER, `lower_domain` TEXT, `lower_service` TEXT, `lower_service_data` TEXT, `label_type` INTEGER NOT NULL, `label` TEXT, `template` TEXT, `labelTextSize` INTEGER NOT NULL, `labelMaxLines` INTEGER NOT NULL, PRIMARY KEY(`id`))")
             }
         }
 

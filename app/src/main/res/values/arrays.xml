@@ -10,4 +10,9 @@
         <item>last50</item>
         <item>last100</item>
     </string-array>
+    <string-array name="widget_label_font_size">
+		<item>@string/widget_font_size_small</item>
+        <item>@string/widget_font_size_medium</item>
+		<item>@string/widget_font_size_large</item>
+    </string-array>
 </resources>
