@@ -20,4 +20,7 @@ interface ButtonWidgetDao {
 
     @Query("DELETE FROM button_widgets WHERE id = :id")
     fun delete(id: Int)
+
+    @Query("SELECT * FROM button_widgets")
+    fun getAll(): Array<ButtonWidgetEntity>?
 }
