@@ -70,7 +70,6 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
 
     private var onDeleteWidget = View.OnClickListener {
         val context = this@ButtonWidgetConfigureActivity
-
         deleteConfirmation(context)
     }
 
