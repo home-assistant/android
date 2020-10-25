@@ -46,6 +46,15 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
             findPreference<Preference>("no_widgets")?.let {
                 it.isVisible = true
             }
+            findPreference<PreferenceCategory>("list_entity_state_widgets")?.let {
+                it.isVisible = false
+            }
+            findPreference<PreferenceCategory>("list_template_widgets")?.let {
+                it.isVisible = false
+            }
+            findPreference<PreferenceCategory>("list_button_widgets")?.let {
+                it.isVisible = false
+            }
         } else {
 
             val prefCategoryStatic = findPreference<PreferenceCategory>("list_entity_state_widgets")
