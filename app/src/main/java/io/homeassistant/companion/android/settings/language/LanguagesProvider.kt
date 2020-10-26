@@ -5,6 +5,7 @@ import android.content.res.Resources
 import android.os.Build
 import android.os.LocaleList
 import android.util.DisplayMetrics
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import java.util.Locale
 
@@ -12,18 +13,34 @@ class LanguagesProvider {
 
     fun getSupportedLanguages(context: Context): Map<String, String> {
         val listAppLocales = mutableMapOf<String, String>()
+        val langManager = LanguagesManagerProvider().getManager(context)
         val resources = context.resources
-        val listLocales = resources.assets.locales
 
-        listAppLocales[resources.getString(R.string.lang_option_label_default)] = resources.getString(R.string.lang_option_value_default)
-        val defString = getStringResource(context, "")
+        if (langManager.getAppVersion() != BuildConfig.VERSION_NAME || langManager.getLocales().isNullOrEmpty()) {
+            val listLocales = resources.assets.locales
+            val defString = getStringResource(context, "")
+            var supportedLocales = ""
 
-        listLocales.forEach {
-            if (getStringResource(context, it) != defString || it == Locale.ENGLISH.language) {
-                val name = makeLocale(it).displayLanguage.capitalize()
-                listAppLocales["$name ($it)"] = it
+            listLocales.forEach {
+                if (getStringResource(context, it) != defString || it == Locale.ENGLISH.language) {
+                    val name = makeLocale(it).displayLanguage.capitalize()
+                    listAppLocales["$name ($it)"] = it
+                    supportedLocales += "$it,"
+                }
+            }
+            langManager.saveAppVersion(BuildConfig.VERSION_NAME)
+            langManager.saveLocales(supportedLocales)
+        } else {
+            val listLocales = langManager.getLocales()!!.split(',')
+            listLocales.forEach {
+                if (it.isNotEmpty()) {
+                    val name = makeLocale(it).displayLanguage.capitalize()
+                    listAppLocales["$name ($it)"] = it
+                }
             }
         }
+
+        listAppLocales[resources.getString(R.string.lang_option_label_default)] = resources.getString(R.string.lang_option_value_default)
         return listAppLocales
     }
 

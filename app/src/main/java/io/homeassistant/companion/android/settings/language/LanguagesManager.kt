@@ -18,6 +18,18 @@ class LanguagesManager @Inject constructor(
         private const val DEF_LOCALE = "default"
     }
 
+    fun getAppVersion(): String? {
+        return runBlocking {
+            prefs.getAppVersion()
+        }
+    }
+
+    fun saveAppVersion(ver: String) {
+        return runBlocking {
+            prefs.saveAppVersion(ver)
+        }
+    }
+
     fun getCurrentLang(): String {
         return runBlocking {
             val lang = prefs.getCurrentLang()
@@ -36,6 +48,18 @@ class LanguagesManager @Inject constructor(
                     prefs.saveLang(lang)
                 }
             }
+        }
+    }
+
+    fun getLocales(): String? {
+        return runBlocking {
+            prefs.getLocales()
+        }
+    }
+
+    fun saveLocales(locales: String) {
+        return runBlocking {
+            prefs.saveLocales(locales)
         }
     }
 

@@ -171,7 +171,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         findPreference<ListPreference>("languages")?.let {
-            val languages = LanguagesProvider().getSupportedLanguages(requireContext().applicationContext)
+            val languages = LanguagesProvider().getSupportedLanguages(requireContext())
             it.entries = languages.keys.toTypedArray()
             it.entryValues = languages.values.toTypedArray()
         }
