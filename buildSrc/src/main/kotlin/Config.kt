@@ -63,7 +63,7 @@ object Config {
 
         object Firebase {
             const val core = "com.google.firebase:firebase-core:17.3.0"
-            const val iid = "com.google.firebase:firebase-iid:20.1.5"
+            const val iid = "com.google.firebase:firebase-iid:20.3.0"
             const val messaging = "com.google.firebase:firebase-messaging:20.3.0"
         }
 
