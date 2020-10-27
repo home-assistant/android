@@ -23,6 +23,12 @@
         app:isPreferenceVisible="false" />
 
     <PreferenceCategory
+        android:key="list_media_player_widgets"
+        android:title="@string/list_media_player_widgets"
+        app:iconSpaceReserved="false"
+        app:isPreferenceVisible="false" />
+
+    <PreferenceCategory
         android:key="list_template_widgets"
         android:title="@string/list_template_widgets"
         app:iconSpaceReserved="false"

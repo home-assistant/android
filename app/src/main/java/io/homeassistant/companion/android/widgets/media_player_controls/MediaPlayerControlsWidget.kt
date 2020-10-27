@@ -210,6 +210,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                             PendingIntent.FLAG_UPDATE_CURRENT
                         )
                     )
+                    setViewVisibility(R.id.widgetPrevTrackButton, View.VISIBLE)
+                    setViewVisibility(R.id.widgetNextTrackButton, View.VISIBLE)
                 } else {
                     setViewVisibility(R.id.widgetPrevTrackButton, View.GONE)
                     setViewVisibility(R.id.widgetNextTrackButton, View.GONE)
@@ -234,6 +236,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                             PendingIntent.FLAG_UPDATE_CURRENT
                         )
                     )
+                    setViewVisibility(R.id.widgetRewindButton, View.VISIBLE)
+                    setViewVisibility(R.id.widgetFastForwardButton, View.VISIBLE)
                 } else {
                     setViewVisibility(R.id.widgetRewindButton, View.GONE)
                     setViewVisibility(R.id.widgetFastForwardButton, View.GONE)
