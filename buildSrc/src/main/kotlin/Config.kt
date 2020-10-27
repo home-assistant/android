@@ -21,19 +21,19 @@ object Config {
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
             const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${version}"
 
-            private const val coroutinesVersion = "1.3.3"
+            private const val coroutinesVersion = "1.3.9"
             const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}"
-            const val coroutinesPlayServices = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.3.8"
+            const val coroutinesPlayServices = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.3.9"
             const val coroutinesAndroid = "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}"
             const val coroutinesTest = "org.jetbrains.kotlinx:kotlinx-coroutines-test:${coroutinesVersion}"
         }
 
         object Google {
-            private const val daggerVersion = "2.28.3"
+            private const val daggerVersion = "2.29.1"
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
-            const val material = "com.google.android.material:material:1.2.0"
+            const val material = "com.google.android.material:material:1.2.1"
         }
 
         object AndroidX {
@@ -58,21 +58,21 @@ object Config {
         }
 
         object Play {
-            const val location = "com.google.android.gms:play-services-location:17.0.0"
+            const val location = "com.google.android.gms:play-services-location:17.1.0"
         }
 
         object Firebase {
             const val core = "com.google.firebase:firebase-core:17.3.0"
-            const val iid = "com.google.firebase:firebase-iid:20.1.5"
-            const val messaging = "com.google.firebase:firebase-messaging:20.1.5"
+            const val iid = "com.google.firebase:firebase-iid:20.3.0"
+            const val messaging = "com.google.firebase:firebase-messaging:20.3.0"
         }
 
         object Square {
-            private const val retrofitVersion = "2.8.1"
+            private const val retrofitVersion = "2.9.0"
             const val retrofit = "com.squareup.retrofit2:retrofit:${retrofitVersion}"
             const val retrofitJacksonConverter = "com.squareup.retrofit2:converter-jackson:${retrofitVersion}"
 
-            private const val okhttpVersion = "4.5.0"
+            private const val okhttpVersion = "4.9.0"
             const val okhttp = "com.squareup.okhttp3:okhttp:$okhttpVersion"
             const val okhttpInterceptor = "com.squareup.okhttp3:logging-interceptor:$okhttpVersion"
             const val okhttpMockServer = "com.squareup.okhttp3:mockwebserver:$okhttpVersion"
