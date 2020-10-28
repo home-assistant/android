@@ -55,7 +55,14 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
             findPreference<PreferenceCategory>("list_button_widgets")?.let {
                 it.isVisible = false
             }
+            findPreference<PreferenceCategory>("list_media_player_widgets")?.let {
+                it.isVisible = false
+            }
         } else {
+
+            findPreference<Preference>("no_widgets")?.let {
+                it.isVisible = false
+            }
 
             val prefCategoryStatic = findPreference<PreferenceCategory>("list_entity_state_widgets")
             if (!staticWidgetList.isNullOrEmpty()) {
