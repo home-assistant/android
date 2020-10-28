@@ -371,6 +371,7 @@ like to connect to:</string>
   <string name="widget_multi_button_below">Button Below Label</string>
   <string name="widget_separator_input_hint">No separator</string>
   <string name="widget_separator_label">State and attribute separator:</string>
+  <string name="widget_service_error">Widget service call failed</string>
   <string name="widget_spinner_icon">Icon:</string>
   <string name="widget_state_separator_label">State and attribute separator:</string>
   <string name="widget_static_image_description">Entity State</string>

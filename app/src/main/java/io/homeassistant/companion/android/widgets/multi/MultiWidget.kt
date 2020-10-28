@@ -10,6 +10,7 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import android.widget.Toast
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -76,9 +77,6 @@ class MultiWidget : AppWidgetProvider() {
     private var iconPack: IconPack? = null
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
-    val Boolean.int
-        get() = if (this) 1 else 0
 
     override fun onUpdate(
         context: Context,
@@ -168,7 +166,7 @@ class MultiWidget : AppWidgetProvider() {
 
         // Create an icon pack and load all drawables if a button is present
         if (widget != null) {
-            if ((widget.upperButton == 1) || (widget.lowerButton == 1)) {
+            if (widget.upperButton || widget.lowerButton) {
                 if (iconPack == null) {
                     val loader = IconPackLoader(context)
                     iconPack = createMaterialDesignIconPack(loader)
@@ -209,7 +207,7 @@ class MultiWidget : AppWidgetProvider() {
 
             if (widget != null) {
                 // If there are buttons, set button icons
-                if (widget.lowerButton == 1) {
+                if (widget.lowerButton) {
                     val iconId = widget.lowerIconId ?: 62017 // Lightning bolt
                     val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
                     if (iconDrawable != null) {
@@ -220,8 +218,8 @@ class MultiWidget : AppWidgetProvider() {
                     setViewVisibility(R.id.widgetImageButtonLower, View.GONE)
                 }
 
-                if (widget.upperButton == 1) {
-                    val iconId = widget.upperIconId ?: 988171 // Lightning bolt
+                if (widget.upperButton) {
+                    val iconId = widget.upperIconId ?: 62017 // Lightning bolt
                     val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
                     if (iconDrawable != null) {
                         val icon = DrawableCompat.wrap(iconDrawable)
@@ -234,7 +232,7 @@ class MultiWidget : AppWidgetProvider() {
                 // Set label/template text
                 when (widget.labelType) {
                     LABEL_PLAINTEXT -> {
-                        if ((widget.label == null) || (widget.label == "")) {
+                        if (widget.label.isNullOrBlank()) {
                             setViewVisibility(R.id.widgetLabelLayout, View.GONE)
                         }
                         setTextViewText(R.id.widgetLabel, widget.label)
@@ -334,12 +332,12 @@ class MultiWidget : AppWidgetProvider() {
             multiWidgetDao.add(
                 MultiWidgetEntity(
                     appWidgetId,
-                    upperButton.int,
+                    upperButton,
                     upperIconId,
                     upperDomain,
                     upperService,
                     upperServiceData,
-                    lowerButton.int,
+                    lowerButton,
                     lowerIconId,
                     lowerDomain,
                     lowerService,
@@ -416,6 +414,7 @@ class MultiWidget : AppWidgetProvider() {
                     integrationUseCase.callService(domain, service, serviceDataMap)
                 } catch (e: Exception) {
                     Log.e(TAG, "Could not send service call.", e)
+                    Toast.makeText(context, R.string.widget_service_error, Toast.LENGTH_SHORT).show()
                 }
             }
 

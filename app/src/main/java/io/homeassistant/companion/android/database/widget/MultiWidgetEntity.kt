@@ -9,7 +9,7 @@ data class MultiWidgetEntity(
     @PrimaryKey
     val id: Int,
     @ColumnInfo(name = "upper_button_present")
-    val upperButton: Int,
+    val upperButton: Boolean,
     @ColumnInfo(name = "upper_icon_id")
     val upperIconId: Int?,
     @ColumnInfo(name = "upper_domain")
@@ -19,7 +19,7 @@ data class MultiWidgetEntity(
     @ColumnInfo(name = "upper_service_data")
     val upperServiceData: String?,
     @ColumnInfo(name = "lower_button_present")
-    val lowerButton: Int,
+    val lowerButton: Boolean,
     @ColumnInfo(name = "lower_icon_id")
     val lowerIconId: Int?,
     @ColumnInfo(name = "lower_domain")
