@@ -17,27 +17,12 @@
             android:layout_marginBottom="20dp"
             android:text="@string/config" />
 
-        <RadioGroup
-            android:id="@+id/widget_config_type_selector_group"
+        <androidx.appcompat.widget.AppCompatCheckBox
+            android:id="@+id/widget_config_type_entity_checkbox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <androidx.appcompat.widget.AppCompatRadioButton
-                android:id="@+id/widget_multi_type_entity_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:checked="true"
-                android:text="Entity mode" />
-
-            <androidx.appcompat.widget.AppCompatRadioButton
-                android:id="@+id/widget_multi_type_service_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="General mode" />
-        </RadioGroup>
+            android:checked="true"
+            android:text="Filter widget actions for single entity" />
 
         <LinearLayout
             android:id="@+id/widget_config_entity_id_layout"

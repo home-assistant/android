@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.RadioGroup
 import android.widget.Toast
@@ -61,7 +62,7 @@ import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_lower
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_template_edit
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_template_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_template_render
-import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_type_selector_group
+import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_type_entity_checkbox
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_upper_button_config_layout
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_upper_icon_selector
 import kotlinx.android.synthetic.main.widget_multi_configure.widget_config_upper_service_error
@@ -144,7 +145,9 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
 
-        widget_config_type_selector_group.setOnCheckedChangeListener(widgetTypeSelectGroupListener)
+        widget_config_type_entity_checkbox.setOnCheckedChangeListener(
+            widgetEntityModeCheckboxListener
+        )
 
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
         widget_config_entity_id_text.setAdapter(entityAdapter)
@@ -636,14 +639,13 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             }
         }
 
-    private val widgetTypeSelectGroupListener = RadioGroup.OnCheckedChangeListener { _, checkedId ->
-        when (checkedId) {
-            R.id.widget_multi_type_entity_button -> {
+    private val widgetEntityModeCheckboxListener =
+        CompoundButton.OnCheckedChangeListener { _, checked ->
+            if (checked) {
                 widget_config_entity_id_layout.visibility = View.VISIBLE
                 widget_config_label_entity_button.isEnabled = true
                 filterByEntity = true
-            }
-            R.id.widget_multi_type_service_button -> {
+            } else {
                 widget_config_entity_id_layout.visibility = View.GONE
                 if (widget_config_label_entity_button.isChecked) {
                     widget_config_label_entity_button.isChecked = true
@@ -652,9 +654,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 widget_config_label_entity_button.isEnabled = false
 
                 filterByEntity = false
-
-                updateServiceAdaptor()
             }
+            updateServiceAdaptor()
         }
-    }
 }
