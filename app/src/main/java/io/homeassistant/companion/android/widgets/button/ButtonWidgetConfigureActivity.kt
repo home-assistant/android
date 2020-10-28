@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.button
 
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -9,6 +10,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
@@ -65,6 +67,11 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
+
+    private var onDeleteWidget = View.OnClickListener {
+        val context = this@ButtonWidgetConfigureActivity
+        deleteConfirmation(context)
+    }
 
     private var onAddWidget = View.OnClickListener {
         try {
@@ -243,6 +250,8 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             widget_text_config_service.setText(serviceText)
             label.setText(buttonWidget.label)
             add_button.setText(R.string.update_widget)
+            delete_button.visibility = VISIBLE
+            delete_button.setOnClickListener(onDeleteWidget)
         }
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
@@ -361,5 +370,31 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 widget_config_icon_selector.setImageBitmap(icon.toBitmap())
             }
         }
+    }
+
+    private fun deleteConfirmation(context: Context) {
+        val buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
+
+        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
+
+        builder.setTitle(R.string.confirm_delete_this_widget_title)
+        builder.setMessage(R.string.confirm_delete_this_widget_message)
+
+        builder.setPositiveButton(
+            R.string.confirm_positive
+        ) { dialog, _ ->
+            buttonWidgetDao.delete(appWidgetId)
+            dialog.dismiss()
+            finish()
+        }
+
+        builder.setNegativeButton(
+            R.string.confirm_negative
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert: android.app.AlertDialog? = builder.create()
+        alert?.show()
     }
 }

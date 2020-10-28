@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.media_player_controls
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -19,6 +20,7 @@ import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_media_controls_configure.add_button
+import kotlinx.android.synthetic.main.widget_media_controls_configure.delete_button
 import kotlinx.android.synthetic.main.widget_media_controls_configure.label
 import kotlinx.android.synthetic.main.widget_media_controls_configure.widget_show_seek_buttons_checkbox
 import kotlinx.android.synthetic.main.widget_media_controls_configure.widget_show_skip_buttons_checkbox
@@ -97,6 +99,8 @@ class MediaPlayerControlsWidgetConfigureActivity : Activity() {
             if (entity != null)
                 selectedEntity = entity as Entity<Any>?
             add_button.setText(R.string.update_widget)
+            delete_button.visibility = View.VISIBLE
+            delete_button.setOnClickListener(onDeleteWidget)
         }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
@@ -189,5 +193,36 @@ class MediaPlayerControlsWidgetConfigureActivity : Activity() {
     override fun onDestroy() {
         mainScope.cancel()
         super.onDestroy()
+    }
+
+    private var onDeleteWidget = View.OnClickListener {
+        val context = this@MediaPlayerControlsWidgetConfigureActivity
+        deleteConfirmation(context)
+    }
+
+    private fun deleteConfirmation(context: Context) {
+        val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
+
+        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
+
+        builder.setTitle(R.string.confirm_delete_this_widget_title)
+        builder.setMessage(R.string.confirm_delete_this_widget_message)
+
+        builder.setPositiveButton(
+            R.string.confirm_positive
+        ) { dialog, _ ->
+            mediaPlayerControlsWidgetDao.delete(appWidgetId)
+            dialog.dismiss()
+            finish()
+        }
+
+        builder.setNegativeButton(
+            R.string.confirm_negative
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert: android.app.AlertDialog? = builder.create()
+        alert?.show()
     }
 }

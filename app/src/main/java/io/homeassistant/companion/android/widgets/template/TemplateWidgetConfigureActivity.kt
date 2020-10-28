@@ -2,8 +2,11 @@ package io.homeassistant.companion.android.widgets.template
 
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.view.View.VISIBLE
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import io.homeassistant.companion.android.R
@@ -70,6 +73,8 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
             templateText.setText(templateWidget.template)
             add_button.setText(R.string.update_widget)
             renderTemplateText(templateWidget.template)
+            delete_button.visibility = VISIBLE
+            delete_button.setOnClickListener(onDeleteWidget)
         }
 
         templateText.doAfterTextChanged { editableText ->
@@ -116,5 +121,36 @@ class TemplateWidgetConfigureActivity : AppCompatActivity() {
                 add_button.isEnabled = enabled
             }
         }
+    }
+
+    private var onDeleteWidget = View.OnClickListener {
+        val context = this@TemplateWidgetConfigureActivity
+        deleteConfirmation(context)
+    }
+
+    private fun deleteConfirmation(context: Context) {
+        val templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
+
+        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
+
+        builder.setTitle(R.string.confirm_delete_this_widget_title)
+        builder.setMessage(R.string.confirm_delete_this_widget_message)
+
+        builder.setPositiveButton(
+            R.string.confirm_positive
+        ) { dialog, _ ->
+            templateWidgetDao.delete(appWidgetId)
+            dialog.dismiss()
+            finish()
+        }
+
+        builder.setNegativeButton(
+            R.string.confirm_negative
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert: android.app.AlertDialog? = builder.create()
+        alert?.show()
     }
 }

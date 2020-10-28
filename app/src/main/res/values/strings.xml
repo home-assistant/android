@@ -172,6 +172,8 @@ Home Assistant instance</string>
   <string name="manage_this_notification">Manage This Notification</string>
   <string name="delete_all_notifications">Delete all notifications from history</string>
   <string name="delete_this_notification">Delete this notification from history</string>
+  <string name="confirm_delete_this_widget_title">Confirm deleting this widget</string>
+  <string name="confirm_delete_this_widget_message">Are you sure? This cannot be undone. If you accidentally deleted the wrong widget you will need to remove the bad widget from the home screen and create a new one.</string>
   <string name="confirm_delete_this_notification_title">Confirm deleting this notification</string>
   <string name="confirm_delete_this_notification_message">Are you sure? This cannot be undone</string>
   <string name="confirm_delete_all_notification_title">Confirm deleting all notifications</string>
@@ -378,6 +380,7 @@ like to connect to:</string>
   <string name="list_media_player_widgets">List of Media Player Widgets</string>
   <string name="widgets">Widgets</string>
   <string name="manage_widgets">Manage Widgets</string>
+  <string name="delete_widget">Delete Widget</string>
   <string name="manage_widgets_summary">Edit your widgets, adding/deleting can only be done from the home screen</string>
   <string name="update_widget">Update Widget</string>
   <string name="widget_text_hint_label">Label</string>

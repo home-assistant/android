@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.entity
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -113,6 +114,8 @@ class EntityWidgetConfigureActivity : Activity() {
                 setupAttributes()
             }
             add_button.setText(R.string.update_widget)
+            delete_button.visibility = VISIBLE
+            delete_button.setOnClickListener(onDeleteWidget)
         }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
@@ -250,5 +253,36 @@ class EntityWidgetConfigureActivity : Activity() {
     override fun onDestroy() {
         mainScope.cancel()
         super.onDestroy()
+    }
+
+    private var onDeleteWidget = View.OnClickListener {
+        val context = this@EntityWidgetConfigureActivity
+        deleteConfirmation(context)
+    }
+
+    private fun deleteConfirmation(context: Context) {
+        val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
+
+        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
+
+        builder.setTitle(R.string.confirm_delete_this_widget_title)
+        builder.setMessage(R.string.confirm_delete_this_widget_message)
+
+        builder.setPositiveButton(
+            R.string.confirm_positive
+        ) { dialog, _ ->
+            staticWidgetDao.delete(appWidgetId)
+            dialog.dismiss()
+            finish()
+        }
+
+        builder.setNegativeButton(
+            R.string.confirm_negative
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert: android.app.AlertDialog? = builder.create()
+        alert?.show()
     }
 }
