@@ -86,6 +86,18 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
+    private fun updateAllWidgets(
+        context: Context,
+        mediaPlayerWidgetList: Array<MediaPlayerControlsWidgetEntity>?
+    ) {
+        if (mediaPlayerWidgetList != null) {
+            Log.d(TAG, "Updating all widgets")
+            for (item in mediaPlayerWidgetList) {
+                updateAppWidget(context, item.id)
+            }
+        }
+    }
+
     private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
         val updateMediaIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
             action = UPDATE_MEDIA_IMAGE
@@ -272,6 +284,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         ensureInjected(context)
 
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
+        val mediaPlayerWidgetList = mediaPlayCtrlWidgetDao.getAll()
 
         super.onReceive(context, intent)
         when (action) {
@@ -282,6 +295,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             CALL_PLAYPAUSE -> callPlayPauseService(appWidgetId)
             CALL_FASTFORWARD -> callFastForwardService(context, appWidgetId)
             CALL_NEXT_TRACK -> callNextTrackService(appWidgetId)
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, mediaPlayerWidgetList)
         }
     }
 
