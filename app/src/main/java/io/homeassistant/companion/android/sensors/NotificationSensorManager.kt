@@ -67,7 +67,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         onSensorUpdated(
             applicationContext,
             lastNotification,
-            state.toString(),
+            state.toString().take(255),
             "mdi:bell-ring",
             attr
         )
