@@ -75,6 +75,18 @@ class EntityWidget : AppWidgetProvider() {
         }
     }
 
+    private fun updateAllWidgets(
+        context: Context,
+        staticWidgetEntityList: Array<StaticWidgetEntity>?
+    ) {
+        if (staticWidgetEntityList != null) {
+            Log.d(TAG, "Updating all widgets")
+            for (item in staticWidgetEntityList) {
+                updateAppWidget(context, item.id)
+            }
+        }
+    }
+
     private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
         val intent = Intent(context, EntityWidget::class.java).apply {
             action = UPDATE_ENTITY
@@ -160,12 +172,14 @@ class EntityWidget : AppWidgetProvider() {
         ensureInjected(context)
 
         staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
+        val staticWidgetList = staticWidgetDao.getAll()
 
         super.onReceive(context, intent)
 
         when (action) {
             RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
             UPDATE_ENTITY -> updateAppWidget(context, appWidgetId)
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, staticWidgetList)
         }
     }
 

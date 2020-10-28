@@ -14,6 +14,9 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.widgets.entity.EntityWidget
+import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget
+import io.homeassistant.companion.android.widgets.template.TemplateWidget
 
 open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
@@ -102,6 +105,26 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
                 IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
             )
         }
+
+        // Update widgets when the screen turns on, updates are skipped if widgets were not added
+        val entityWidget = EntityWidget()
+        val mediaPlayerWidget = MediaPlayerControlsWidget()
+        val templateWidget = TemplateWidget()
+
+        registerReceiver(
+            entityWidget,
+            IntentFilter(Intent.ACTION_SCREEN_ON)
+        )
+
+        registerReceiver(
+            mediaPlayerWidget,
+            IntentFilter(Intent.ACTION_SCREEN_ON)
+        )
+
+        registerReceiver(
+            templateWidget,
+            IntentFilter(Intent.ACTION_SCREEN_ON)
+        )
     }
 
     override val appComponent: AppComponent
