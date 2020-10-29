@@ -72,6 +72,9 @@
             android:icon="@drawable/ic_color_lens_24dp"
             android:title="@string/themes_title_settings"
             app:useSimpleSummaryProvider="true"/>
+        <Preference
+            android:key="background"
+            android:title="Background Access"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/need_help">

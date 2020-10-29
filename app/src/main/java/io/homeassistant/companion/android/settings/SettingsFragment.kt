@@ -1,11 +1,14 @@
 package io.homeassistant.companion.android.settings
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.text.InputType
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
@@ -114,6 +117,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         removeSystemFromThemesIfNeeded()
+
+        updateBackgroundAccessPref()
 
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
@@ -254,5 +259,50 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 }
             }
         }
+    }
+
+    private fun updateBackgroundAccessPref() {
+        findPreference<Preference>("background")?.let {
+            if (isIgnoringBatteryOptimizations()) {
+                it.setSummary(R.string.background_access_enabled)
+                it.setOnPreferenceClickListener {
+                    true
+                }
+            } else {
+                it.setSummary(R.string.background_access_disabled)
+                it.setOnPreferenceClickListener {
+                    requestBackgroundAccess()
+                    true
+                }
+            }
+        }
+    }
+
+    @SuppressLint("BatteryLife")
+    private fun requestBackgroundAccess() {
+        val intent: Intent
+        if (!isIgnoringBatteryOptimizations()) {
+            intent = Intent(
+                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                Uri.parse("package:${activity?.packageName}")
+            )
+            startActivityForResult(intent, 0)
+        }
+    }
+
+    private fun isIgnoringBatteryOptimizations(): Boolean {
+        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
+                context?.getSystemService(PowerManager::class.java)
+                    ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
+                ?: false
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        updateBackgroundAccessPref()
     }
 }
