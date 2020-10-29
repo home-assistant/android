@@ -76,49 +76,25 @@ class BatterySensorManager : SensorManager {
         return (level.toFloat() / scale.toFloat() * 100.0f).toInt()
     }
 
-    private fun getBatteryIcon(
-        percentage: Int,
-        isCharging: Boolean = false,
-        chargerType: String? = null,
-        chargingStatus: String? = null
-    ): String {
-        var batteryIcon = "mdi:battery"
+    private fun updateBatteryLevel(context: Context, intent: Intent) {
+        if (!isEnabled(context, batteryLevel.id))
+            return
+        val percentage: Int = getBatteryPercentage(intent)
 
-        if (chargingStatus == "unknown") {
-            batteryIcon += "-unknown"
-
-            return batteryIcon
-        }
-
-        if (isCharging)
-            batteryIcon += "-charging"
-
-        if (chargerType == "wireless")
-            batteryIcon += "-wireless"
+        var icon = "mdi:battery"
 
         val batteryStep: Int = percentage / 10
-        batteryIcon += when (batteryStep) {
+        icon += when (batteryStep) {
             0 -> "-outline"
             10 -> ""
             else -> "-${batteryStep}0"
         }
 
-        return batteryIcon
-    }
-
-    private fun updateBatteryLevel(context: Context, intent: Intent) {
-        if (!isEnabled(context, batteryLevel.id))
-            return
-        val percentage: Int = getBatteryPercentage(intent)
-        val isCharging = getIsCharging(intent)
-        val chargerType = getChargerType(intent)
-        val chargingStatus = getChargingStatus(intent)
-
         onSensorUpdated(
             context,
             batteryLevel,
             percentage,
-            getBatteryIcon(percentage, isCharging, chargerType, chargingStatus),
+            icon,
             mapOf()
         )
     }
