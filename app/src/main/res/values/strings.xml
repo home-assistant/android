@@ -21,6 +21,9 @@
   <string name="auth_error">Authentication Error</string>
   <string name="auth_error_message">The \'Username\' and \'Password\' fields must be completed</string>
   <string name="auth_request">Authentication Requested</string>
+  <string name="background_access_title">Background Access</string>
+  <string name="background_access_enabled">Home Assistant has access to run in the background.</string>
+  <string name="background_access_disabled">Home Assistant does not have access to run in the background.  Click here to request permissions.</string>
   <string name="basic_sensor_name_activity">Detected Activity</string>
   <string name="basic_sensor_name_alarm">Next Alarm</string>
   <string name="basic_sensor_name_battery_health">Battery Health</string>
