@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.entity
 
-import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
