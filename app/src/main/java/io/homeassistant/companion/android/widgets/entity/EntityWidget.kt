@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
@@ -69,6 +70,11 @@ class EntityWidget : AppWidgetProvider() {
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
+        if (!isConnectionActive(context)) {
+            Log.d(TAG, "Skipping widget update since network connection is not active")
+            return
+        }
+
         mainScope.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)
             appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -234,5 +240,11 @@ class EntityWidget : AppWidgetProvider() {
         appWidgetIds.forEach { appWidgetId ->
             staticWidgetDao.delete(appWidgetId)
         }
+    }
+
+    private fun isConnectionActive(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        return activeNetworkInfo?.isConnected ?: false
     }
 }
