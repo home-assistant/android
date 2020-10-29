@@ -305,16 +305,42 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         val now = System.currentTimeMillis()
 
-        if (lastUpdateLocation == updateLocation.gps.contentToString()) {
-            if (now < lastLocationSend + 900000) {
-                Log.d(TAG, "Duplicate location received, not sending to HA")
-                return
+        Log.d(TAG, "Begin evaluating if location update should be skipped")
+        if (now < location.time) {
+            Log.d(TAG, "Skipping location update that came from the future. $now should always be greater than ${location.time}")
+            return
+        }
+
+        if (location.time < lastLocationSend) {
+            Log.d(
+                TAG,
+                "Skipping old location update since time is before the last one we sent, received: ${location.time} last sent: $lastLocationSend"
+            )
+            return
+        }
+
+        if (now - location.time < 300000) {
+            Log.d(
+                TAG,
+                "Received location that is ${now - location.time} milliseconds old, ${location.time} compared to $now with source ${location.provider}"
+            )
+            if (lastUpdateLocation == updateLocation.gps.contentToString()) {
+                if (now < lastLocationSend + 900000) {
+                    Log.d(TAG, "Duplicate location received, not sending to HA")
+                    return
+                }
+            } else {
+                if (now < lastLocationSend + 5000 && !geofenceUpdate) {
+                    Log.d(
+                        TAG,
+                        "New location update not possible within 5 seconds, not sending to HA"
+                    )
+                    return
+                }
             }
         } else {
-            if (now < lastLocationSend + 5000 && !geofenceUpdate) {
-                Log.d(TAG, "New location update not possible within 5 seconds, not sending to HA")
-                return
-            }
+            Log.d(TAG, "Skipping location update due to old timestamp ${location.time} compared to $now")
+            return
         }
         lastLocationSend = now
         lastUpdateLocation = updateLocation.gps.contentToString()
@@ -322,6 +348,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
+                Log.d(TAG, "Location update sent successfully")
             } catch (e: Exception) {
                 Log.e(TAG, "Could not update location.", e)
             }
