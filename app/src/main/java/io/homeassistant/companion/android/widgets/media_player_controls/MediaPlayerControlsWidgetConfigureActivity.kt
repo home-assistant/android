@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -32,7 +33,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class MediaPlayerControlsWidgetConfigureActivity : Activity() {
+class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
     companion object {
         private const val TAG: String = "MediaWidgetConfigAct"
