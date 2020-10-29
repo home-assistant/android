@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.controls
 
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
@@ -9,6 +10,7 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
 import android.service.controls.templates.RangeTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -27,7 +29,7 @@ class ClimateControl {
                 PendingIntent.getActivity(
                     context,
                     0,
-                    WebViewActivity.newInstance(context),
+                    WebViewActivity.newInstance(context.applicationContext).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
@@ -36,13 +38,13 @@ class ClimateControl {
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "auto" -> "Auto"
-                    "cool" -> "Cool"
-                    "dry" -> "Dry"
-                    "fan_only" -> "Fan Only"
-                    "heat" -> "Heat"
-                    "heat_cool" -> "Heat Cool"
-                    "off" -> "Off"
+                    "auto" -> context.getString(R.string.state_auto)
+                    "cool" -> context.getString(R.string.state_cool)
+                    "dry" -> context.getString(R.string.state_dry)
+                    "fan_only" -> context.getString(R.string.state_fan_only)
+                    "heat" -> context.getString(R.string.state_heat)
+                    "heat_cool" -> context.getString(R.string.state_heat_cool)
+                    "off" -> context.getString(R.string.state_off)
                     else -> entity.state
                 }
             )

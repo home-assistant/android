@@ -1,9 +1,9 @@
-name: Nightly Playstore Beta
+name: Weekly Playstore Beta
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 4 * * *'
+    - cron: '0 4 * * 0'
 jobs:
   play_publish:
     name: Play Publish
@@ -55,8 +55,8 @@ jobs:
 
       - name: Check for build need
         run: |
-          commits = git log --since="24 hours ago" --oneline | wc -l
-          echo "commits=$commits >> $GITHUB_ENV
+          commits=$(git log --since="7 days ago" --oneline | wc -l)
+          echo "commits=$commits" >> $GITHUB_ENV
 
       - name: Deploy to Playstore Beta
         # Only run if a new commit is present.  This should prevent a new beta being created

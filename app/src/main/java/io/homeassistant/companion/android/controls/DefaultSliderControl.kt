@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.controls
 
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
@@ -26,7 +27,7 @@ class DefaultSliderControl {
                 PendingIntent.getActivity(
                     context,
                     0,
-                    WebViewActivity.newInstance(context),
+                    WebViewActivity.newInstance(context.applicationContext).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
@@ -37,9 +38,9 @@ class DefaultSliderControl {
                 RangeTemplate(
                     entity.entityId,
                     (entity.attributes["min"] as? Number)?.toFloat() ?: 0f,
-                    (entity.attributes["max"] as? Number)?.toFloat() ?: 0f,
+                    (entity.attributes["max"] as? Number)?.toFloat() ?: 1f,
                     entity.state.toFloatOrNull() ?: 0f,
-                    (entity.attributes["step"] as? Number)?.toFloat() ?: 0f,
+                    (entity.attributes["step"] as? Number)?.toFloat() ?: 1f,
                     null
                 )
             )

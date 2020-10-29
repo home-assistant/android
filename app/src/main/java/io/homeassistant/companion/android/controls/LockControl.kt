@@ -18,7 +18,7 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 
 @RequiresApi(Build.VERSION_CODES.R)
-class DefaultSwitchControl {
+class LockControl {
     companion object : HaControl {
         override fun createControl(
             context: Context,
@@ -35,18 +35,15 @@ class DefaultSwitchControl {
             )
             control.setTitle(entity.attributes["friendly_name"].toString())
             control.setDeviceType(
-                when (entity.entityId.split(".")[0]) {
-                    "switch" -> DeviceTypes.TYPE_SWITCH
-                    else -> DeviceTypes.TYPE_GENERIC_ON_OFF
-                }
+                DeviceTypes.TYPE_LOCK
             )
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(R.string.state_on))
+            control.setStatusText(if (entity.state == "locked") context.getString(R.string.state_locked) else context.getString(R.string.state_unlocked))
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,
                     ControlButton(
-                        entity.state == "on",
+                        entity.state == "locked",
                         "Description"
                     )
                 )
@@ -61,7 +58,7 @@ class DefaultSwitchControl {
             return runBlocking {
                 integrationRepository.callService(
                     action.templateId.split(".")[0],
-                    if ((action as? BooleanAction)?.newState == true) "turn_on" else "turn_off",
+                    if ((action as? BooleanAction)?.newState == true) "lock" else "unlock",
                     hashMapOf("entity_id" to action.templateId)
                 )
                 return@runBlocking true

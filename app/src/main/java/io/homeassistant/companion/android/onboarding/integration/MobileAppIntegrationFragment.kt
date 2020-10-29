@@ -12,6 +12,7 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -37,6 +38,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         private const val BACKGROUND_REQUEST = 99
 
         private const val LOCATION_REQUEST_CODE = 0
+
+        private var dialog: AlertDialog? = null
 
         fun newInstance(): MobileAppIntegrationFragment {
             return MobileAppIntegrationFragment()
@@ -72,19 +75,18 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 it.setOnCheckedChangeListener { _, isChecked ->
                     setLocationTracking(isChecked)
                     if (isChecked && !LocationSensorManager().checkPermission(requireContext(), sensorId)) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            this@MobileAppIntegrationFragment.requestPermissions(
-                                LocationSensorManager().requiredPermissions(sensorId)
-                                    .toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                                    .toTypedArray(),
-                                LOCATION_REQUEST_CODE
-                            )
-                        } else {
-                            this@MobileAppIntegrationFragment.requestPermissions(
-                                LocationSensorManager().requiredPermissions(sensorId),
-                                LOCATION_REQUEST_CODE
-                            )
-                        }
+                        dialog = AlertDialog.Builder(requireContext())
+                            .setTitle(R.string.enable_location_tracking)
+                            .setMessage(R.string.enable_location_tracking_prompt)
+                            .setPositiveButton(android.R.string.ok) { _, _ ->
+                                requestPermissions(
+                                    sensorId
+                                )
+                            }
+                            .setNegativeButton(android.R.string.cancel) { _, _ -> }
+                            .setOnDismissListener { _ -> it.isChecked = LocationSensorManager().checkPermission(requireContext(), sensorId) }
+                            .create()
+                        dialog?.show()
                     }
                 }
             }
@@ -130,6 +132,22 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         super.onDestroy()
     }
 
+    private fun requestPermissions(sensorId: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            this@MobileAppIntegrationFragment.requestPermissions(
+                LocationSensorManager().requiredPermissions(sensorId)
+                    .toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    .toTypedArray(),
+                LOCATION_REQUEST_CODE
+            )
+        } else {
+            this@MobileAppIntegrationFragment.requestPermissions(
+                LocationSensorManager().requiredPermissions(sensorId),
+                LOCATION_REQUEST_CODE
+            )
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -137,9 +155,11 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
+        dialog?.dismiss()
+
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), LOCATION_REQUEST_CODE)
         }
 
         if (requestCode == LOCATION_REQUEST_CODE) {

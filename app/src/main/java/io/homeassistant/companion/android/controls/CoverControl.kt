@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.controls
 
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
@@ -10,6 +11,7 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -26,7 +28,7 @@ class CoverControl {
             PendingIntent.getActivity(
                 context,
                 0,
-                WebViewActivity.newInstance(context),
+                WebViewActivity.newInstance(context.applicationContext).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_CANCEL_CURRENT
             )
         )
@@ -47,10 +49,10 @@ class CoverControl {
         control.setStatus(Control.STATUS_OK)
         control.setStatusText(
             when (entity.state) {
-                "closed" -> "Closed"
-                "closing" -> "Closing"
-                "open" -> "Open"
-                "opening" -> "Opening"
+                "closed" -> context.getString(R.string.state_closed)
+                "closing" -> context.getString(R.string.state_closing)
+                "open" -> context.getString(R.string.state_open)
+                "opening" -> context.getString(R.string.state_opening)
                 else -> entity.state
             })
         control.setControlTemplate(

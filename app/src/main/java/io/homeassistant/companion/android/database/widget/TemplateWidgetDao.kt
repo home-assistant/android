@@ -20,4 +20,7 @@ interface TemplateWidgetDao {
 
     @Query("DELETE FROM template_widgets WHERE id = :id")
     fun delete(id: Int)
+
+    @Query("SELECT * FROM template_widgets")
+    fun getAll(): Array<TemplateWidgetEntity>?
 }

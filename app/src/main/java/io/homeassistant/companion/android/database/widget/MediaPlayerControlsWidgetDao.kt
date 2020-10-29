@@ -20,4 +20,7 @@ interface MediaPlayerControlsWidgetDao {
 
     @Query("DELETE FROM mediaplayctrls_widgets WHERE id = :id")
     fun delete(id: Int)
+
+    @Query("SELECT * FROM mediaplayctrls_widgets")
+    fun getAll(): Array<MediaPlayerControlsWidgetEntity>?
 }
