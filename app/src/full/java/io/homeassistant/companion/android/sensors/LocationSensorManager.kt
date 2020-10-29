@@ -125,10 +125,15 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     isBackgroundLocationSetup = false
                     isZoneLocationSetup = false
                 }
-                if (backgroundEnabled && !zoneEnabled && isZoneLocationSetup) {
+                if (!zoneEnabled && isZoneLocationSetup) {
                     removeGeofenceUpdateRequests()
                     isZoneLocationSetup = false
                     Log.d(TAG, "Removing geofence update requests")
+                }
+                if (!backgroundEnabled && isBackgroundLocationSetup) {
+                    removeBackgroundUpdateRequests()
+                    isBackgroundLocationSetup = false
+                    Log.d(TAG, "Removing background update requests")
                 }
                 if (backgroundEnabled && !isBackgroundLocationSetup) {
                     isBackgroundLocationSetup = true
@@ -146,12 +151,15 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     private fun removeAllLocationUpdateRequests() {
         Log.d(TAG, "Removing all location requests.")
+        removeBackgroundUpdateRequests()
+        removeGeofenceUpdateRequests()
+    }
+
+    private fun removeBackgroundUpdateRequests() {
         val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
         val backgroundIntent = getLocationUpdateIntent(false)
 
         fusedLocationProviderClient.removeLocationUpdates(backgroundIntent)
-
-        removeGeofenceUpdateRequests()
     }
 
     private fun removeGeofenceUpdateRequests() {
