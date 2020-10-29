@@ -53,7 +53,7 @@ class DataModule(
     fun provideIntegrationLocalStorage() = integrationLocalStorage
 
     @Provides
-    @Named("prefs")
+    @Named("themes")
     fun providePrefsLocalStorage() = prefsLocalStorage
 
     @Provides

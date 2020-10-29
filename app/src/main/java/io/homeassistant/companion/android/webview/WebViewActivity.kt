@@ -60,6 +60,7 @@ import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
@@ -93,12 +94,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @Inject
     lateinit var themesManager: ThemesManager
 
+    @Inject
+    lateinit var languagesManager: LanguagesManager
+
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
     private lateinit var myCustomView: View
     private lateinit var authenticator: Authenticator
     private lateinit var exoPlayerView: PlayerView
+    private lateinit var currentLang: String
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
     private var isConnected = false
@@ -422,10 +427,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 if (presenter.isFullScreen())
                     hideSystemUI()
         }
+
+        currentLang = languagesManager.getCurrentLang()
     }
 
     override fun onResume() {
         super.onResume()
+        if (currentLang != languagesManager.getCurrentLang())
+            recreate()
         if (!unlocked && !presenter.isLockEnabled())
             unlocked = true
     }

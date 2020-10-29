@@ -42,6 +42,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     @Inject
     lateinit var presenter: SettingsPresenter
+    @Inject
+    lateinit var langProvider: LanguagesProvider
     private lateinit var authenticator: Authenticator
     private var setLock = false
 
@@ -171,7 +173,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
 
         findPreference<ListPreference>("languages")?.let {
-            val languages = LanguagesProvider().getSupportedLanguages(requireContext())
+            val languages = langProvider.getSupportedLanguages(requireContext())
             it.entries = languages.keys.toTypedArray()
             it.entryValues = languages.values.toTypedArray()
         }

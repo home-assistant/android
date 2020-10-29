@@ -8,12 +8,14 @@ import android.util.DisplayMetrics
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import java.util.Locale
+import javax.inject.Inject
 
-class LanguagesProvider {
+class LanguagesProvider @Inject constructor(
+    private var langManager: LanguagesManager
+) {
 
     fun getSupportedLanguages(context: Context): Map<String, String> {
-        val listAppLocales = mutableMapOf<String, String>()
-        val langManager = LanguagesManagerProvider().getManager(context)
+        val listAppLocales = sortedMapOf<String, String>()
         val resources = context.resources
 
         if (langManager.getAppVersion() != BuildConfig.VERSION_NAME || langManager.getLocales().isNullOrEmpty()) {
@@ -40,8 +42,9 @@ class LanguagesProvider {
             }
         }
 
-        listAppLocales[resources.getString(R.string.lang_option_label_default)] = resources.getString(R.string.lang_option_value_default)
-        return listAppLocales
+        val languages = mutableMapOf(resources.getString(R.string.lang_option_label_default) to resources.getString(R.string.lang_option_value_default))
+        languages.putAll(listAppLocales)
+        return languages
     }
 
     private fun getStringResource(context: Context, lang: String): String {

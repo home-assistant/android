@@ -5,7 +5,7 @@ import javax.inject.Inject
 import javax.inject.Named
 
 class PrefsRepositoryImpl @Inject constructor(
-    @Named("prefs") private val localStorage: LocalStorage
+    @Named("themes") private val localStorage: LocalStorage
 ) : PrefsRepository {
 
     companion object {
