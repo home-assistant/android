@@ -42,6 +42,7 @@ class SensorReceiver : BroadcastReceiver() {
             PowerSensorManager(),
             PressureSensorManager(),
             ProximitySensorManager(),
+            SleepAsAndroidManager(),
             StepsSensorManager(),
             StorageSensorManager(),
             TrafficStatsManager()
@@ -61,6 +62,19 @@ class SensorReceiver : BroadcastReceiver() {
         Intent.ACTION_BATTERY_OKAY,
         Intent.ACTION_POWER_CONNECTED,
         Intent.ACTION_POWER_DISCONNECTED
+    )
+
+    private val sleepAsAndroidEvents = listOf(
+        "com.urbandroid.sleep.TRACKING_DEEP_SLEEP_AUTO",
+        "com.urbandroid.sleep.TRACKING_LIGHT_SLEEP_AUTO",
+        "com.urbandroid.sleep.alarmclock.ALARM_SNOOZE_CLICKED_ACTION_AUTO",
+        "com.urbandroid.sleep.alarmclock.TIME_TO_BED_ALARM_ALERT_AUTO",
+        "com.urbandroid.sleep.LUCID_CUE_ACTION_AUTO",
+        "com.urbandroid.sleep.ANTISNORING_ACTION_AUTO",
+        "com.urbandroid.sleep.audio.SOUND_EVENT_AUTO",
+        "com.urbandroid.sleep.alarmclock.AUTO_START_SLEEP_TRACK_AUTO",
+        "com.urbandroid.sleep.alarmclock.ALARM_ALERT_DISMISS_AUTO",
+        "com.urbandroid.sleep.alarmclock.ALARM_ALERT_START_AUTO"
     )
 
     // Suppress Lint because we only register for the receiver if the android version matches the intent
@@ -95,6 +109,20 @@ class SensorReceiver : BroadcastReceiver() {
                 return
             }
         }
+
+        // Update Sleep as Android sensors if enabled as intents are received
+        if ((intent.action == "com.urbandroid.sleep.alarmclock.SLEEP_TRACKING_STARTED_AUTO" ||
+                    intent.action == "com.urbandroid.sleep.alarmclock.SLEEP_TRACKING_STOPPED_AUTO") &&
+                    isSensorEnabled(context, SleepAsAndroidManager.sleepTracking.id))
+            SleepAsAndroidManager().updateSleepTracking(context, intent)
+
+        if ((intent.action == "com.urbandroid.sleep.ACTION_LULLABY_START_PLAYBACK_AUTO" ||
+                    intent.action == "com.urbandroid.sleep.ACTION_LULLABY_STOPPED_PLAYBACK_AUTO") &&
+                    isSensorEnabled(context, SleepAsAndroidManager.lullaby.id))
+            SleepAsAndroidManager().updateLullaby(context, intent)
+
+        if (sleepAsAndroidEvents.contains(intent.action) && isSensorEnabled(context, SleepAsAndroidManager.sleepEvents.id))
+            SleepAsAndroidManager().updateSleepEvents(context, intent)
 
         ioScope.launch {
             updateSensors(context, integrationUseCase)
