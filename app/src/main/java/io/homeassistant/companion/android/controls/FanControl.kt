@@ -53,9 +53,9 @@ class FanControl {
                             entity.entityId,
                             0f,
                             speeds.size.toFloat() - 1,
-                            speeds.indexOf(currentSpeed).toFloat(),
+                            if (entity.state == "on") speeds.indexOf(currentSpeed).toFloat() else 0f,
                             1f,
-                            ""
+                            "%.0f"
                         )
                     )
                 )
