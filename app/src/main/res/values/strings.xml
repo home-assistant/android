@@ -126,6 +126,10 @@ Home Assistant instance</string>
   <string name="label_icon">Icon:</string>
   <string name="label_label">Label:</string>
   <string name="label_service">Service:</string>
+  <string name="lang_option_label_default">Device Language</string>
+  <string name="lang_option_value_default">default</string>
+  <string name="lang_summary_settings">Changing default language may have influence on device entities naming</string>
+  <string name="lang_title_settings">Language</string>
   <string name="location">Location</string>
   <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
   <string name="lock_title">Lock app</string>

@@ -12,8 +12,8 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.common.data.integration.impl.IntegrationService
-import io.homeassistant.companion.android.common.data.themes.ThemesRepository
-import io.homeassistant.companion.android.common.data.themes.ThemesRepositoryImpl
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepositoryImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
@@ -24,7 +24,7 @@ class DataModule(
     private val urlStorage: LocalStorage,
     private val sessionLocalStorage: LocalStorage,
     private val integrationLocalStorage: LocalStorage,
-    private val themesLocalStorage: LocalStorage,
+    private val prefsLocalStorage: LocalStorage,
     private val wifiHelper: WifiHelper,
     private val deviceId: String
 ) {
@@ -54,7 +54,7 @@ class DataModule(
 
     @Provides
     @Named("themes")
-    fun provideThemesLocalStorage() = themesLocalStorage
+    fun providePrefsLocalStorage() = prefsLocalStorage
 
     @Provides
     @Named("manufacturer")
@@ -84,6 +84,6 @@ class DataModule(
         fun bindIntegrationService(repository: IntegrationRepositoryImpl): IntegrationRepository
 
         @Binds
-        fun bindThemesRepositoryImpl(repository: ThemesRepositoryImpl): ThemesRepository
+        fun bindPrefsRepositoryImpl(repository: PrefsRepositoryImpl): PrefsRepository
     }
 }

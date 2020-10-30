@@ -5,4 +5,6 @@ interface SettingsView {
     fun disableInternalConnection()
 
     fun enableInternalConnection()
+
+    fun onLangSettingsChanged()
 }

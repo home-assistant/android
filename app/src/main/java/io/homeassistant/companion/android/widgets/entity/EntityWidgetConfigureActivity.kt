@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.widgets.entity
 
-import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
@@ -15,6 +14,7 @@ import android.widget.LinearLayout.GONE
 import android.widget.LinearLayout.VISIBLE
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import android.widget.Toast
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -31,7 +31,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class EntityWidgetConfigureActivity : Activity() {
+class EntityWidgetConfigureActivity : BaseActivity() {
 
     companion object {
         private const val TAG: String = "StaticWidgetConfigAct"

@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
+import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
@@ -45,6 +46,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     @Inject
     lateinit var presenter: SettingsPresenter
+    @Inject
+    lateinit var langProvider: LanguagesProvider
     private lateinit var authenticator: Authenticator
     private var setLock = false
 
@@ -184,6 +187,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             it.summary = BuildConfig.VERSION_NAME
         }
 
+        findPreference<ListPreference>("languages")?.let {
+            val languages = langProvider.getSupportedLanguages(requireContext())
+            it.entries = languages.keys.toTypedArray()
+            it.entryValues = languages.values.toTypedArray()
+        }
+
         findPreference<Preference>("privacy")?.let {
             it.summary = "https://www.home-assistant.io/privacy/"
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
@@ -218,6 +227,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 Log.d("SettingsFragment", "Unable to set the icon tint", e)
             }
         }
+    }
+
+    override fun onLangSettingsChanged() {
+        requireActivity().recreate()
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {

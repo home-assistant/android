@@ -61,9 +61,15 @@
             android:summary="@string/fullscreen_def"/>
         <Preference
             android:key="nfc_tags"
-            android:icon="@drawable/ic_plus"
+            android:icon="@drawable/ic_nfc"
             android:title="@string/nfc_title_settings"
             android:summary="@string/nfc_summary" />
+        <ListPreference
+            android:key="languages"
+            android:defaultValue="@string/lang_option_value_default"
+            android:icon="@drawable/ic_languages"
+            android:title="@string/lang_title_settings"
+            android:summary="@string/lang_summary_settings" />
         <ListPreference
             android:key="themes"
             android:defaultValue="@string/themes_option_value_light"
