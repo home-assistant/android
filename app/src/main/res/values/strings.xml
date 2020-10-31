@@ -187,6 +187,7 @@ Home Assistant instance</string>
   <string name="basic_sensor_sleep_events">Sleep Events</string>
   <string name="sensor_description_sleep_events">Additional one time events from Sleep as Android</string>
   <string name="confirm_delete_this_widget_title">Confirm deleting this widget</string>
+  <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
   <string name="confirm_delete_this_widget_message">Are you sure? This cannot be undone. If you accidentally deleted the wrong widget you will need to remove the bad widget from the home screen and create a new one.</string>
   <string name="confirm_delete_this_notification_title">Confirm deleting this notification</string>
   <string name="confirm_delete_this_notification_message">Are you sure? This cannot be undone</string>

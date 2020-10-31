@@ -73,6 +73,7 @@ class MessagingService : FirebaseMessagingService() {
         const val TTS = "TTS"
         const val COMMAND_DND = "command_dnd"
         const val COMMAND_RINGER_MODE = "command_ringer_mode"
+        const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -86,7 +87,7 @@ class MessagingService : FirebaseMessagingService() {
         const val RM_VIBRATE = "vibrate"
 
         // Command groups
-        val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE)
+        val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
     }
@@ -144,7 +145,7 @@ class MessagingService : FirebaseMessagingService() {
                         COMMAND_DND -> {
                             if (it[TITLE] in DND_COMMANDS) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                                    handleDeviceCommands(it[MESSAGE], it[TITLE])
+                                    handleDeviceCommands(it)
                                 else {
                                     mainScope.launch {
                                         Log.d(TAG, "Posting notification to device as it does not support DND commands")
@@ -160,10 +161,20 @@ class MessagingService : FirebaseMessagingService() {
                         }
                         COMMAND_RINGER_MODE -> {
                             if (it[TITLE] in RM_COMMANDS) {
-                                handleDeviceCommands(it[MESSAGE], it[TITLE])
+                                handleDeviceCommands(it)
                             } else {
                                 mainScope.launch {
                                     Log.d(TAG, "Invalid ringer mode command received, posting notification to device")
+                                    sendNotification(it)
+                                }
+                            }
+                        }
+                        COMMAND_BROADCAST_INTENT -> {
+                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty())
+                                handleDeviceCommands(it)
+                            else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid broadcast command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
@@ -250,7 +261,9 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun handleDeviceCommands(message: String?, title: String?) {
+    private fun handleDeviceCommands(data: Map<String, String>) {
+        val message = data[MESSAGE]
+        val title = data[TITLE]
         when (message) {
             COMMAND_DND -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -287,6 +300,18 @@ class MessagingService : FirebaseMessagingService() {
                     }
                 } else {
                     processRingerMode(audioManager, title)
+                }
+            }
+            COMMAND_BROADCAST_INTENT -> {
+                try {
+                    val packageName = data["channel"]
+                    val intent = Intent(title)
+                    intent.`package` = packageName
+                    Log.d(TAG, "Sending broadcast intent")
+                    applicationContext.sendBroadcast(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send broadcast intent please check command format", e)
+                    Toast.makeText(applicationContext, R.string.broadcast_intent_error, Toast.LENGTH_LONG).show()
                 }
             }
             else -> Log.d(TAG, "No command received")
