@@ -145,7 +145,7 @@ class MessagingService : FirebaseMessagingService() {
                         COMMAND_DND -> {
                             if (it[TITLE] in DND_COMMANDS) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                                    handleDeviceCommands(it[MESSAGE], it[TITLE])
+                                    handleDeviceCommands(it)
                                 else {
                                     mainScope.launch {
                                         Log.d(TAG, "Posting notification to device as it does not support DND commands")
@@ -161,7 +161,7 @@ class MessagingService : FirebaseMessagingService() {
                         }
                         COMMAND_RINGER_MODE -> {
                             if (it[TITLE] in RM_COMMANDS) {
-                                handleDeviceCommands(it[MESSAGE], it[TITLE])
+                                handleDeviceCommands(it)
                             } else {
                                 mainScope.launch {
                                     Log.d(TAG, "Invalid ringer mode command received, posting notification to device")
@@ -170,8 +170,8 @@ class MessagingService : FirebaseMessagingService() {
                             }
                         }
                         COMMAND_BROADCAST_INTENT -> {
-                            if (!it[TITLE].isNullOrEmpty() && it[TITLE]!!.contains("-"))
-                                handleDeviceCommands(it[MESSAGE], it[TITLE])
+                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty())
+                                handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
                                     Log.d(TAG, "Invalid broadcast command received, posting notification to device")
@@ -261,7 +261,9 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun handleDeviceCommands(message: String?, title: String?) {
+    private fun handleDeviceCommands(data: Map<String, String>) {
+        val message = data[MESSAGE]
+        val title = data[TITLE]
         when (message) {
             COMMAND_DND -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -302,9 +304,8 @@ class MessagingService : FirebaseMessagingService() {
             }
             COMMAND_BROADCAST_INTENT -> {
                 try {
-                    val packageName = title!!.split("-")[0]
-                    val actionName = title.split("-")[1]
-                    val intent = Intent(actionName)
+                    val packageName = data["channel"]
+                    val intent = Intent(title)
                     intent.`package` = packageName
                     Log.d(TAG, "Sending broadcast intent")
                     applicationContext.sendBroadcast(intent)
