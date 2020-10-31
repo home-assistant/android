@@ -179,6 +179,13 @@ Home Assistant instance</string>
   <string name="manage_this_notification">Manage This Notification</string>
   <string name="delete_all_notifications">Delete all notifications from history</string>
   <string name="delete_this_notification">Delete this notification from history</string>
+  <string name="basic_sensor_sleep_tracking">Sleep Tracking</string>
+  <string name="sensor_description_sleep_tracking">Sleep tracking status from Sleep as Android</string>
+  <string name="sensor_name_sleep_as_android">Sleep as Android Sensors</string>
+  <string name="basic_sensor_lullaby">Lullaby</string>
+  <string name="sensor_description_lullaby">If a lullaby is playing</string>
+  <string name="basic_sensor_sleep_events">Sleep Events</string>
+  <string name="sensor_description_sleep_events">Additional one time events from Sleep as Android</string>
   <string name="confirm_delete_this_widget_title">Confirm deleting this widget</string>
   <string name="confirm_delete_this_widget_message">Are you sure? This cannot be undone. If you accidentally deleted the wrong widget you will need to remove the bad widget from the home screen and create a new one.</string>
   <string name="confirm_delete_this_notification_title">Confirm deleting this notification</string>
