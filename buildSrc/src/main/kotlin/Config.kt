@@ -33,7 +33,7 @@ object Config {
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
-            const val material = "com.google.android.material:material:1.2.1"
+            const val material = "com.google.android.material:material:1.2.0"
         }
 
         object AndroidX {
