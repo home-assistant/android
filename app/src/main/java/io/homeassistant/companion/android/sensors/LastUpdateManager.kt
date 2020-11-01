@@ -31,7 +31,7 @@ class LastUpdateManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        sendLastUpdate(context, "")
+        // No op
     }
 
     fun sendLastUpdate(context: Context, intentAction: String?) {
