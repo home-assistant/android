@@ -190,6 +190,9 @@ Home Assistant instance</string>
   <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
   <string name="confirm_delete_this_widget_message">Are you sure? This cannot be undone. If you accidentally deleted the wrong widget you will need to remove the bad widget from the home screen and create a new one.</string>
   <string name="confirm_delete_this_notification_title">Confirm deleting this notification</string>
+  <string name="basic_sensor_name_last_update">Last Update Trigger</string>
+  <string name="sensor_description_last_update">The intent for the last update that was sent, periodic updates will show as \"SensorWorker\".</string>
+  <string name="sensor_name_last_update">Last Update Sensor</string>
   <string name="confirm_delete_this_notification_message">Are you sure? This cannot be undone</string>
   <string name="confirm_delete_all_notification_title">Confirm deleting all notifications</string>
   <string name="confirm_delete_all_notification_message">Are you sure? This cannot be undone</string>

@@ -33,6 +33,7 @@ class SensorReceiver : BroadcastReceiver() {
             GeocodeSensorManager(),
             KeyguardSensorManager(),
             LastRebootSensorManager(),
+            LastUpdateManager(),
             LightSensorManager(),
             LocationSensorManager(),
             NetworkSensorManager(),
@@ -123,6 +124,9 @@ class SensorReceiver : BroadcastReceiver() {
 
         if (sleepAsAndroidEvents.contains(intent.action) && isSensorEnabled(context, SleepAsAndroidManager.sleepEvents.id))
             SleepAsAndroidManager().updateSleepEvents(context, intent)
+
+        if (isSensorEnabled(context, LastUpdateManager.lastUpdate.id))
+            LastUpdateManager().sendLastUpdate(context, intent.action)
 
         ioScope.launch {
             updateSensors(context, integrationUseCase)

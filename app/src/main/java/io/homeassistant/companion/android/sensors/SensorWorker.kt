@@ -72,6 +72,11 @@ class SensorWorker(
 
             val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
             setForeground(foregroundInfo)
+            val lastUpdateSensor = sensorDao.get(LastUpdateManager.lastUpdate.id)
+            if (lastUpdateSensor != null) {
+                if (lastUpdateSensor.enabled)
+                    LastUpdateManager().sendLastUpdate(appContext, TAG)
+            }
             SensorReceiver().updateSensors(appContext, integrationUseCase)
         }
         Result.success()
