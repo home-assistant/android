@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/widgetLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -23,8 +24,8 @@
             android:src="@drawable/ic_flash_on_24dp"
             android:contentDescription="@string/widget_button_image_description"
             android:gravity="center"
-            app:tint="@color/colorIcon"
-            />
+            android:tint="@color/colorIcon"
+            tools:ignore="UseAppTint" />
 
         <LinearLayout
             android:id="@+id/widgetLabelLayout"
