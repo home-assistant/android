@@ -12,7 +12,6 @@ fun initCrashReporting(context: Context) {
         return
 
     SentryAndroid.init(context) { options ->
-        options.release = "${BuildConfig.APPLICATION_ID}@${BuildConfig.VERSION_NAME}"
         options.isEnableSessionTracking = true
         options.isEnableNdk = false
         options.dsn = "https://2d646f40f9574e0b9579e301a69bb030@o427061.ingest.sentry.io/5372876"

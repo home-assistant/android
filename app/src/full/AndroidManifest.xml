@@ -6,6 +6,7 @@
     <application
         android:name=".HomeAssistantApplication" >
         <meta-data android:name="io.sentry.auto-init" android:value="false" />
+        <meta-data android:name="io.sentry.release" android:value="${sentryRelease}" />
 
         <receiver
             android:name=".notifications.NotificationActionReceiver"
