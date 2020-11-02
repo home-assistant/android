@@ -188,11 +188,11 @@ abstract class AppDatabase : RoomDatabase() {
                         }
                         migrationSuccessful = true
                     }
+                    cursor.close()
                 } catch (e: Exception) {
                     migrationFailed = true
                     Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                 }
-                cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
                 if (migrationSuccessful) {
@@ -242,11 +242,11 @@ abstract class AppDatabase : RoomDatabase() {
                         }
                         migrationSuccessful = true
                     }
+                    cursor.close()
                 } catch (e: Exception) {
                     migrationFailed = true
                     Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                 }
-                cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
                 if (migrationSuccessful) {
