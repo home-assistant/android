@@ -168,8 +168,8 @@ abstract class AppDatabase : RoomDatabase() {
                 val sensors = mutableListOf<ContentValues>()
                 var migrationSuccessful = false
                 var migrationFailed = false
-                if (cursor.moveToFirst()) {
-                    try {
+                try {
+                    if (cursor.moveToFirst()) {
                         while (cursor.moveToNext()) {
                             sensors.add(ContentValues().also {
                                 it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
@@ -187,10 +187,10 @@ abstract class AppDatabase : RoomDatabase() {
                             })
                         }
                         migrationSuccessful = true
-                    } catch (e: Exception) {
-                        migrationFailed = true
-                        Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                     }
+                } catch (e: Exception) {
+                    migrationFailed = true
+                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
@@ -222,8 +222,8 @@ abstract class AppDatabase : RoomDatabase() {
                 val sensors = mutableListOf<ContentValues>()
                 var migrationSuccessful = false
                 var migrationFailed = false
-                if (cursor.moveToFirst()) {
-                    try {
+                try {
+                    if (cursor.moveToFirst()) {
                         while (cursor.moveToNext()) {
                             sensors.add(ContentValues().also {
                                 it.put("id", cursor.getString(cursor.getColumnIndex("id")))
@@ -241,10 +241,10 @@ abstract class AppDatabase : RoomDatabase() {
                             })
                         }
                         migrationSuccessful = true
-                    } catch (e: Exception) {
-                        migrationFailed = true
-                        Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                     }
+                } catch (e: Exception) {
+                    migrationFailed = true
+                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                 }
                 cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
