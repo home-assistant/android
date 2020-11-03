@@ -25,6 +25,8 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
     override fun onCreate() {
         super.onCreate()
 
+        initCrashReporting(applicationContext)
+
         graph = Graph(this, 0)
 
         val sensorReceiver = SensorReceiver()
