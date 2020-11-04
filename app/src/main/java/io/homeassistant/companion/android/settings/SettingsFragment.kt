@@ -172,6 +172,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                         "\n\nRemaining/Maximum: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
                         "\n\nResets at: ${rateLimits?.resetsAt}"
             }
+            findPreference<SwitchPreference>("crash_reporting")?.let {
+                it.isVisible = true
+                it.setOnPreferenceChangeListener { _, newValue ->
+                    val checked = newValue as Boolean
+
+                    true
+                }
+            }
         }
 
         findPreference<Preference>("changelog")?.let {

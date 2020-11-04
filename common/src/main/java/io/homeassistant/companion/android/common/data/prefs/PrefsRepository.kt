@@ -16,4 +16,8 @@ interface PrefsRepository {
     suspend fun getLocales(): String?
 
     suspend fun saveLocales(lang: String)
+
+    suspend fun isCrashReporting(): Boolean
+
+    suspend fun setCrashReporting(crash: Boolean)
 }

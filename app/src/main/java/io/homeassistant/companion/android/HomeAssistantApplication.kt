@@ -17,17 +17,24 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
     lateinit var graph: Graph
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     override fun onCreate() {
         super.onCreate()
 
-        initCrashReporting(applicationContext)
-
         graph = Graph(this, 0)
+
+        ioScope.launch {
+            initCrashReporting(applicationContext, graph.appComponent.prefsUseCase().isCrashReporting())
+        }
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
