@@ -18,6 +18,7 @@ data class SensorWithAttributes(
             val attributeValue = when (it.valueType) {
                 "boolean" -> it.value.toBoolean()
                 "float" -> it.value.toFloat()
+                "long" -> it.value.toLong()
                 "int" -> it.value.toInt()
                 "string" -> it.value
                 else -> throw IllegalArgumentException("Attribute: ${it.name} is of unknown type: ${it.valueType}")
