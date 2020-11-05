@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.Context
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -308,7 +310,13 @@ abstract class AppDatabase : RoomDatabase() {
                     Log.d(TAG, "Event sent to Home Assistant")
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to send event to Home Assistant", e)
-                    Toast.makeText(appContext, R.string.database_event_failure, Toast.LENGTH_LONG).show()
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            appContext,
+                            R.string.database_event_failure,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
         }
