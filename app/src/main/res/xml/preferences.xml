@@ -139,6 +139,12 @@
             android:icon="@drawable/ic_incognito"
             android:title="@string/privacy_policy"
             android:summary="@string/privacy_url" />
+        <SwitchPreference
+            android:key="crash_reporting"
+            android:icon="@drawable/ic_android_debug_bridge"
+            app:isPreferenceVisible="false"
+            android:title="@string/crash_reporting"
+            android:summary="@string/crash_reporting_summary" />
     </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

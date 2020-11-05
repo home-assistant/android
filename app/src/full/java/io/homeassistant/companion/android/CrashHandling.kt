@@ -9,9 +9,9 @@ import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLProtocolException
 
-fun initCrashReporting(context: Context) {
-    // Don't init on debug builds
-    if (BuildConfig.DEBUG)
+fun initCrashReporting(context: Context, enabled: Boolean) {
+    // Don't init on debug builds or when disabled
+    if (BuildConfig.DEBUG || !enabled)
         return
 
     SentryAndroid.init(context) { options ->

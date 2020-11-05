@@ -13,6 +13,7 @@ class PrefsRepositoryImpl @Inject constructor(
         private const val PREF_THEME = "theme"
         private const val PREF_LANG = "lang"
         private const val PREF_LOCALES = "locales"
+        private const val PREF_CRASH_REPORTING_DISABLED = "crash_reporting"
     }
 
     override suspend fun getAppVersion(): String? {
@@ -45,5 +46,13 @@ class PrefsRepositoryImpl @Inject constructor(
 
     override suspend fun saveLocales(locales: String) {
         localStorage.putString(PREF_LOCALES, locales)
+    }
+
+    override suspend fun isCrashReporting(): Boolean {
+        return !localStorage.getBoolean(PREF_CRASH_REPORTING_DISABLED)
+    }
+
+    override suspend fun setCrashReporting(crashReportingEnabled: Boolean) {
+        localStorage.putBoolean(PREF_CRASH_REPORTING_DISABLED, !crashReportingEnabled)
     }
 }
