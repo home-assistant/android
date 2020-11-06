@@ -33,7 +33,7 @@ class DefaultSwitchControl {
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
-            control.setTitle(entity.attributes["friendly_name"].toString())
+            control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(
                 when (entity.entityId.split(".")[0]) {
                     "switch" -> DeviceTypes.TYPE_SWITCH

@@ -38,7 +38,7 @@ class LightControl {
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
-            control.setTitle(entity.attributes["friendly_name"].toString())
+            control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(
