@@ -49,26 +49,6 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
             }
         )
 
-        // Register for Sleep as Android intents
-        registerReceiver(
-            sensorReceiver, IntentFilter().apply {
-                addAction("com.urbandroid.sleep.alarmclock.SLEEP_TRACKING_STARTED_AUTO")
-                addAction("com.urbandroid.sleep.alarmclock.SLEEP_TRACKING_STOPPED_AUTO")
-                addAction("com.urbandroid.sleep.alarmclock.ALARM_ALERT_START_AUTO")
-                addAction("com.urbandroid.sleep.alarmclock.ALARM_ALERT_DISMISS_AUTO")
-                addAction("com.urbandroid.sleep.ACTION_LULLABY_START_PLAYBACK_AUTO")
-                addAction("com.urbandroid.sleep.ACTION_LULLABY_STOPPED_PLAYBACK_AUTO")
-                addAction("com.urbandroid.sleep.TRACKING_DEEP_SLEEP_AUTO")
-                addAction("com.urbandroid.sleep.TRACKING_LIGHT_SLEEP_AUTO")
-                addAction("com.urbandroid.sleep.alarmclock.ALARM_SNOOZE_CLICKED_ACTION_AUTO")
-                addAction("com.urbandroid.sleep.alarmclock.TIME_TO_BED_ALARM_ALERT_AUTO")
-                addAction("com.urbandroid.sleep.LUCID_CUE_ACTION_AUTO")
-                addAction("com.urbandroid.sleep.ANTISNORING_ACTION_AUTO")
-                addAction("com.urbandroid.sleep.audio.SOUND_EVENT_AUTO")
-                addAction("com.urbandroid.sleep.alarmclock.AUTO_START_SLEEP_TRACK_AUTO")
-            }
-        )
-
         // This will cause interactive and power save to update upon a state change
         registerReceiver(
             sensorReceiver, IntentFilter().apply {
