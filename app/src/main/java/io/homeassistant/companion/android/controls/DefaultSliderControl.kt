@@ -31,7 +31,7 @@ class DefaultSliderControl {
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
-            control.setTitle(entity.attributes["friendly_name"].toString())
+            control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_UNKNOWN)
             control.setStatus(Control.STATUS_OK)
             control.setControlTemplate(
