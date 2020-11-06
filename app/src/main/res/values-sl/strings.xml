@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="background_access_disabled">Home Assistant nima dostopa za zagon v ozadju. Kliknite tukaj, če želite zahtevati dovoljenja.</string>
+  <string name="background_access_enabled">Home Assistant ima dostop za zagon v ozadju.</string>
+  <string name="background_access_title">Dostop v ozadju</string>
+  <string name="confirm_delete_all_notification_message">Ali ste prepričani? Tega ni mogoče razveljaviti</string>
+  <string name="confirm_delete_all_notification_title">Potrdite brisanje vseh obvestil</string>
+  <string name="confirm_delete_this_notification_title">Potrdite brisanje tega obvestila</string>
+  <string name="confirm_delete_this_widget_title">Potrdite brisanje tega pripomočka</string>
+  <string name="confirm_negative">Ne</string>
+  <string name="confirm_positive">Da</string>
+  <string name="connect_to_home_internet">Prepričajte se, da je vaš telefon povezan
+z domačim internetom.</string>
+  <string name="delete_widget">Izbriši pripomoček</string>
+  <string name="input_url">spletna povezava Home Assistant</string>
+  <string name="input_url_hint">https://example.duckdns.org:8123</string>
+  <string name="lang_option_label_default">Jezik naprave</string>
+  <string name="list_button_widgets">Seznam pripomočkov za gumbe</string>
+  <string name="location">Lokacija</string>
+  <string name="manual_setup">ročno vnesite naslov</string>
   <string name="rate_limit_notification.body">Danes ste poslali več kot %s obvestil. Novih obvestil ne boste prejeli do polnoči UTC.</string>
   <string name="rate_limit_notification.title">Omejeno je število obvestil</string>
+  <string name="retry">Poskusite znova</string>
+  <string name="scan_again">znova poišči</string>
   <string name="scanning_network">Pregledujem omrežje za Home Assistant</string>
+  <string name="skip">Preskoči</string>
+  <string name="state_auto">Samodejno</string>
+  <string name="state_closed">Zaprto</string>
+  <string name="state_dry">Suho</string>
+  <string name="state_fan_only">Samo ventilator</string>
+  <string name="state_locked">Zaklenjeno</string>
+  <string name="state_off">Izklopljeno</string>
+  <string name="state_on">Vklopljeno</string>
+  <string name="state_open">Odprt</string>
+  <string name="state_unlocked">Odklenjeno</string>
 </resources>
