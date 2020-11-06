@@ -387,7 +387,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleContentIntent(notificationBuilder, messageId, group, groupId, data)
 
-        handleChronometer(notificationBuilder, data);
+        handleChronometer(notificationBuilder, data)
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             handleLegacyPriority(notificationBuilder, data)
@@ -414,16 +414,15 @@ class MessagingService : FirebaseMessagingService() {
         val notificationWhen = data[WHEN]?.toLong() ?: 0
         val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
 
-
-        if(notificationWhen != 0L) {
+        if (notificationWhen != 0L) {
             builder.setWhen(notificationWhen)
             builder.setUsesChronometer(usesChronometer)
 
-           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-               val countdown = notificationWhen > System.currentTimeMillis()
-               builder.addExtras(Bundle()) // Without this builder.setChronometerCountDown throws a null reference exception
-               builder.setChronometerCountDown(countdown)
-           }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val countdown = notificationWhen > System.currentTimeMillis()
+                builder.addExtras(Bundle()) // Without this builder.setChronometerCountDown throws a null reference exception
+                builder.setChronometerCountDown(countdown)
+            }
         }
     }
 
