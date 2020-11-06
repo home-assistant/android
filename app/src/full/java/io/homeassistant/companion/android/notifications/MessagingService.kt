@@ -411,7 +411,7 @@ class MessagingService : FirebaseMessagingService() {
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        val notificationWhen = data[WHEN]?.toLong() ?: 0
+        val notificationWhen = data[WHEN]?.toLong()?.times(1000) ?: 0
         val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
 
         if (notificationWhen != 0L) {
