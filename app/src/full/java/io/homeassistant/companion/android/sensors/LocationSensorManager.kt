@@ -36,6 +36,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     companion object {
         private const val SETTING_ACCURACY = "Minimum Accuracy"
         private const val SETTING_ACCURATE_UPDATE_TIME = "Minimum time between updates"
+        private const val SETTING_INCLUDE_SENSOR_UPDATE = "Include in sensor update"
 
         private const val DEFAULT_MINIMUM_ACCURACY = 200
 
@@ -518,12 +519,18 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         ensureInjected()
         if (isEnabled(context, zoneLocation.id) || isEnabled(context, backgroundLocation.id))
             setupLocationTracking()
-        if (isEnabled(context, backgroundLocation.id)) {
-            context.sendBroadcast(
-                Intent(context, this.javaClass).apply {
-                    action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
-                }
-            )
-        }
+        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+        val sensorSetting = sensorDao.getSettings(singleAccurateLocation.id)
+        val includeSensorUpdate = sensorSetting.firstOrNull { it.name == SETTING_INCLUDE_SENSOR_UPDATE }?.value ?: "false"
+        if (includeSensorUpdate == "true") {
+            if (isEnabled(context, singleAccurateLocation.id)) {
+                context.sendBroadcast(
+                    Intent(context, this.javaClass).apply {
+                        action = ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
+                    }
+                )
+            }
+        } else
+            sensorDao.add(Setting(singleAccurateLocation.id, SETTING_INCLUDE_SENSOR_UPDATE, "false", "toggle"))
     }
 }
