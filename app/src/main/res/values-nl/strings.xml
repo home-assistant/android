@@ -14,7 +14,7 @@
   <string name="basic_sensor_name_alarm">Volgende alarm</string>
   <string name="basic_sensor_name_battery_health">Batterijstatus</string>
   <string name="basic_sensor_name_battery_level">Batterijniveau</string>
-  <string name="basic_sensor_name_battery_state">Batterij Status</string>
+  <string name="basic_sensor_name_battery_state">Batterij laadstatus</string>
   <string name="basic_sensor_name_bluetooth">Bluetooth-verbinding</string>
   <string name="basic_sensor_name_bluetooth_state">Bluetooth-status</string>
   <string name="basic_sensor_name_call_number">Bel nummer</string>
@@ -24,19 +24,19 @@
   <string name="basic_sensor_name_device_secure">Apparaat beveiligd</string>
   <string name="basic_sensor_name_doze">Doze-modus</string>
   <string name="basic_sensor_name_external_storage">Externe opslag</string>
-  <string name="basic_sensor_name_geolocation">Geocodeerde locatie</string>
+  <string name="basic_sensor_name_geolocation">Gegeocodeerde locatie</string>
   <string name="basic_sensor_name_interactive">Interactief</string>
   <string name="basic_sensor_name_internal_storage">Interne opslag</string>
   <string name="basic_sensor_name_keyguard_locked">Toetsenblokkering vergrendeld</string>
   <string name="basic_sensor_name_keyguard_secure">Toetsenblokkering vergrendeld veilig</string>
   <string name="basic_sensor_name_last_notification">Laatste melding</string>
   <string name="basic_sensor_name_last_reboot">Laatste herstart</string>
-  <string name="basic_sensor_name_location_accurate">Enkel nauwkeurige locatie</string>
+  <string name="basic_sensor_name_location_accurate">Enkele nauwkeurige locatie</string>
   <string name="basic_sensor_name_location_background">Achtergrondlocatie</string>
   <string name="basic_sensor_name_location_zone">Locatie Zone</string>
   <string name="basic_sensor_name_mobile_rx_gb">Mobiel Rx GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Mobiel Tx GB</string>
-  <string name="basic_sensor_name_phone">Telefoon Status</string>
+  <string name="basic_sensor_name_phone">Telefoon status</string>
   <string name="basic_sensor_name_power_save">Energiebesparing</string>
   <string name="basic_sensor_name_public_ip">Openbaar IP-adres</string>
   <string name="basic_sensor_name_sim1">Simkaart 1</string>
@@ -88,7 +88,7 @@
   <string name="enable_location_tracking_description">Als u deze sensor inschakelt, kan de Home Assistant-toepassing uw locatie volgen en deze rapporteren aan uw Home Assistant-instantie. Zorg ervoor dat u achtergrondtoegang tot de locatie inschakelt, anders kunnen we locatietracering niet inschakelen. Uw locatiegegevens worden rechtstreeks naar uw Home Assistant-instantie verzonden en worden nooit naar een derde partij verzonden.</string>
   <string name="enable_location_tracking_prompt">Deze app verzamelt locatiegegevens om locatietracering, wifi-verbindingsstatus en URL-besluitvorming mogelijk te maken, zelfs wanneer de app is gesloten of niet in gebruik is.</string>
   <string name="enable_remaining_sensors">Schakel %1$d sensoren in</string>
-  <string name="enabled_summary">Indien ingeschakeld, worden de waarden naar Home Assistant gestuurd</string>
+  <string name="enabled_summary">Sensorwaarden worden naar Home Assistant gestuurd wanneer ingeschakeld</string>
   <string name="enabled_title">Ingeschakeld</string>
   <string name="entity_attribute_checkbox">Attribuutwaarde toevoegen</string>
   <string name="error_auth_revoked">Het lijkt erop dat uw autorisatie is ingetrokken. Maak opnieuw verbinding met Home Assistant.</string>
@@ -127,7 +127,7 @@
   <string name="lockscreen_message">Tik om te ontgrendelen:</string>
   <string name="lockscreen_title">App vergrendeld!</string>
   <string name="logbook">Logboek</string>
-  <string name="mailbox">Brievenbus</string>
+  <string name="mailbox">Postvak</string>
   <string name="manage_all_notifications">Beheer alle meldingen</string>
   <string name="manage_all_sensors">Beheer alle sensoren</string>
   <string name="manage_all_sensors_summary">Dit apparaat heeft %1$d beschikbare sensoren om te gebruiken.</string>
@@ -164,7 +164,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en dat hardw
   <string name="nfc_write_fragment_label">NFC schrijffragment</string>
   <string name="nfc_write_tag_error">Fout bij het schrijven van de nfc-tag</string>
   <string name="nfc_write_tag_instructions">Plaats de telefoon over de nfc-tag om de volgende identificatie erin te schrijven %1$s</string>
-  <string name="nfc_write_tag_success">Nfc-tag succesvol geschreven</string>
+  <string name="nfc_write_tag_success">NFC-tag succesvol geschreven</string>
   <string name="nfc_write_tag_too_early">Vul alstublieft eerst het formulier in</string>
   <string name="no_notifications">Geen notificaties</string>
   <string name="no_notifications_summary">U heeft nog geen notificaties ontvangen.</string>
@@ -197,7 +197,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en dat hardw
   <string name="privacy_policy">Privacybeleid</string>
   <string name="privacy_url">https://www.home-assistant.io/privacy</string>
   <string name="profile">Profiel</string>
-  <string name="qrcode_processing_tag_error">Fout bij het verwerken van de qrcode-tag</string>
+  <string name="qrcode_processing_tag_error">Fout bij het verwerken van de QR-code tag</string>
   <string name="rate_limit_notification.body">U hebt vandaag meer dan %s meldingen verzonden. Je ontvangt geen nieuwe meldingen tot middernacht UTC.</string>
   <string name="rate_limit_notification.title">Aantal notificaties gelimiteerd</string>
   <string name="rate_limit_summary">Gegevens snelheidslimiet</string>
