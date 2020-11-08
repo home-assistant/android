@@ -354,6 +354,7 @@ like to connect to:</string>
   <string name="widget_config_service_error">A custom component is preventing service data from loading.</string>
   <string name="widget_creation_error">Unable to create widget.</string>
   <string name="widget_entity_fetch_error">Unable to fetch data for configured entity.</string>
+  <string name="widget_finalize">Done</string>
   <string name="widget_font_size_small">Small</string>
   <string name="widget_font_size_medium">Medium</string>
   <string name="widget_font_size_large">Large</string>

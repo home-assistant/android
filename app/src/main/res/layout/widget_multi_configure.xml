@@ -62,6 +62,11 @@
                 android:text="@string/widget_multi_button_above" />
         </LinearLayout>
 
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/widget_config_element_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <LinearLayout
             android:id="@+id/widget_config_upper_button_config_layout"
             android:layout_width="match_parent"
@@ -366,11 +371,18 @@
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/widget_config_add_button"
+            android:id="@+id/widget_config_add_button_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:text="Add button to widget" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/widget_config_finalize_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:layout_marginTop="8dp"
-            android:text="@string/add_widget" />
+            android:text="@string/widget_finalize" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
