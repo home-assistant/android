@@ -24,6 +24,9 @@
   <string name="background_access_disabled">Home Assistant does not have access to run in the background.  Click here to request permissions.</string>
   <string name="background_access_enabled">Home Assistant has access to run in the background.</string>
   <string name="background_access_title">Background Access</string>
+  <string name="basic_sensor_name_current_version">Current Version</string>
+  <string name="sensor_description_current_version">The current installed application version</string>
+  <string name="sensor_name_app_sensor">App Sensors</string>
   <string name="basic_sensor_lullaby">Lullaby</string>
   <string name="basic_sensor_name_activity">Detected Activity</string>
   <string name="basic_sensor_name_alarm">Next Alarm</string>
