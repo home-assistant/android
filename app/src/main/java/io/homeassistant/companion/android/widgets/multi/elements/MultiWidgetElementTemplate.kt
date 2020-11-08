@@ -7,4 +7,8 @@ class MultiWidgetElementTemplate : MultiWidgetElement {
 
     // Create a variable for storing the template data
     lateinit var templateData: String
+
+    override fun retrieveFinalValues() {
+        // TODO
+    }
 }

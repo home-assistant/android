@@ -17,7 +17,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:labelFor="@id/widget_config_upper_service_text"
+            android:labelFor="@id/widget_element_service_text"
             android:padding="5dp"
             android:text="@string/label_service" />
 

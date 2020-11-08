@@ -7,4 +7,8 @@ class MultiWidgetElementPlaintext : MultiWidgetElement {
 
     // Create a variable for storing the text
     lateinit var text: String
+
+    override fun retrieveFinalValues() {
+        // TODO
+    }
 }

@@ -72,7 +72,7 @@ class WidgetDynamicElementAdapter(
 
     internal fun addButton(iconDialog: IconDialog) {
         this.iconDialog = iconDialog
-        elements.add(MultiWidgetElementButton())
+        elements.add(MultiWidgetElementButton(services))
         notifyDataSetChanged()
     }
 
@@ -87,12 +87,13 @@ class WidgetDynamicElementAdapter(
     }
 
     private fun bindButtonViews(dynamicElementLayout: View, element: MultiWidgetElementButton) {
-        // Store layout view for icon update purposes
-        element.layout = dynamicElementLayout
-
         // Prepare dynamic field variables
         val dynamicFields = ArrayList<ServiceFieldBinder>()
         val dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
+
+        // Store layout views for icon update purposes
+        element.layout = dynamicElementLayout
+        element.dynamicFields = dynamicFields
 
         // Set up service edit text field
         dynamicElementLayout.widget_element_service_text.setAdapter(serviceAdapter)

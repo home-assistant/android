@@ -9,20 +9,16 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.CompoundButton
-import android.widget.EditText
 import android.widget.RadioGroup
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.data.Icon
@@ -35,12 +31,11 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicElementAdapter
-import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElement
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementButton
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementType
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_multi_config_button.view.*
 import kotlinx.android.synthetic.main.widget_multi_configure.*
@@ -74,14 +69,9 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
     private var services = HashMap<String, Service>()
     private var entities = HashMap<String, Entity<Any>>()
 
-    private var dynamicFieldsLower = ArrayList<ServiceFieldBinder>()
-    private var dynamicFieldsUpper = ArrayList<ServiceFieldBinder>()
-
     private var elements = ArrayList<MultiWidgetElement>()
     private lateinit var dynamicElementAdapter: WidgetDynamicElementAdapter
 
-    private lateinit var dynamicFieldLowerAdapter: WidgetDynamicFieldAdapter
-    private lateinit var dynamicFieldUpperAdapter: WidgetDynamicFieldAdapter
     private lateinit var serviceAdapter: SingleItemArrayAdapter<Service>
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -133,38 +123,9 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         widget_config_entity_id_text.onFocusChangeListener = dropDownOnFocus
         widget_config_entity_id_text.doAfterTextChanged { updateServiceAdaptor() }
 
-        widget_config_button_above_checkbox.setOnCheckedChangeListener { _, checked ->
-            if (checked) {
-                widget_config_upper_button_config_layout.visibility = View.VISIBLE
-            } else {
-                widget_config_upper_button_config_layout.visibility = View.GONE
-            }
-        }
-        widget_config_button_below_checkbox.setOnCheckedChangeListener { _, checked ->
-            if (checked) {
-                widget_config_lower_button_config_layout.visibility = View.VISIBLE
-            } else {
-                widget_config_lower_button_config_layout.visibility = View.GONE
-            }
-        }
-
         serviceAdapter = SingleItemArrayAdapter(this) {
             if (it != null) getServiceString(it) else ""
         }
-
-        widget_config_upper_service_text.setAdapter(serviceAdapter)
-        widget_config_upper_service_text.onFocusChangeListener = dropDownOnFocus
-        widget_config_upper_service_text.addTextChangedListener(serviceTextWatcherUpper)
-        widget_config_lower_service_text.setAdapter(serviceAdapter)
-        widget_config_lower_service_text.onFocusChangeListener = dropDownOnFocus
-        widget_config_lower_service_text.addTextChangedListener(serviceTextWatcherLower)
-
-        dynamicFieldUpperAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFieldsUpper)
-        dynamicFieldLowerAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFieldsLower)
-        widget_config_fields_upper_layout.adapter = dynamicFieldUpperAdapter
-        widget_config_fields_lower_layout.adapter = dynamicFieldLowerAdapter
-        widget_config_fields_upper_layout.layoutManager = LinearLayoutManager(this)
-        widget_config_fields_lower_layout.layoutManager = LinearLayoutManager(this)
 
         dynamicElementAdapter = WidgetDynamicElementAdapter(
             this,
@@ -177,9 +138,6 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         )
         widget_config_element_layout.adapter = dynamicElementAdapter
         widget_config_element_layout.layoutManager = LinearLayoutManager(this)
-
-        widget_config_add_field_button_upper.setOnClickListener(onAddFieldUpperListener)
-        widget_config_add_field_button_lower.setOnClickListener(onAddFieldLowerListener)
 
         widget_config_add_button_button.setOnClickListener(onAddButtonElementListener)
 
@@ -224,8 +182,11 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             } catch (e: Exception) {
                 // Custom components can cause services to not load
                 // Display error text
-                widget_config_upper_service_error.visibility = View.VISIBLE
-                widget_config_lower_service_error.visibility = View.VISIBLE
+                elements.forEach { element ->
+                    if (element is MultiWidgetElementButton) {
+                        element.layout.widget_element_service_error.visibility = View.VISIBLE
+                    }
+                }
             }
         }
 
@@ -319,66 +280,26 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             intent.component = ComponentName(context, MultiWidget::class.java)
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
-            // If upper button is configured, pass the data for it
-            if (widget_config_button_above_checkbox.isChecked) {
-                // Analyze service call for upper button
-                val serviceText = context.widget_config_upper_service_text.text.toString()
-                val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
-                val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
-                val serviceDataMap = HashMap<String, Any>()
-                dynamicFieldsUpper.forEach {
-                    if (it.value != null) {
-                        serviceDataMap[it.field] = it.value!!
+            // Pass the number of elements to be processed
+            intent.putExtra(MultiWidget.EXTRA_ELEMENT_COUNT, elements.size)
+
+            // Iterate through each element and create an intent for the correct type of data
+            elements.forEachIndexed { index, element ->
+                // Have each element grab its values according to its type
+                element.retrieveFinalValues()
+
+                // Create an appropriate intent based on the element type
+                when (element.type) {
+                    MultiWidgetElementType.TYPE_BUTTON -> (element as MultiWidgetElementButton).let {
+                        // Pass service call data as extras
+                        intent.putExtra(MultiWidget.EXTRA_DOMAIN + index, element.domain)
+                        intent.putExtra(MultiWidget.EXTRA_SERVICE + index, element.service)
+                        intent.putExtra(MultiWidget.EXTRA_SERVICE_DATA + index, element.serviceData)
+                        intent.putExtra(MultiWidget.EXTRA_ICON_ID + index, element.iconId)
                     }
+                    MultiWidgetElementType.TYPE_PLAINTEXT -> {}
+                    MultiWidgetElementType.TYPE_TEMPLATE -> {}
                 }
-
-                // Pass service call data as extras
-                intent.putExtra(MultiWidget.EXTRA_UPPER_BUTTON, true)
-                intent.putExtra(MultiWidget.EXTRA_UPPER_DOMAIN, domain)
-                intent.putExtra(MultiWidget.EXTRA_UPPER_SERVICE, service)
-                intent.putExtra(
-                    MultiWidget.EXTRA_UPPER_SERVICE_DATA,
-                    jacksonObjectMapper().writeValueAsString(serviceDataMap)
-                )
-
-                // Pass icon ID
-                intent.putExtra(
-                    MultiWidget.EXTRA_UPPER_ICON_ID,
-                    context.widget_config_upper_icon_selector.tag as Int? ?: 62017 // Lightning bolt
-                )
-            } else {
-                intent.putExtra(MultiWidget.EXTRA_UPPER_BUTTON, false)
-            }
-
-            // If lower button is configured, pass the data for it
-            if (widget_config_button_below_checkbox.isChecked) {
-                // Analyze service call for lower button
-                val serviceText = context.widget_config_lower_service_text.text.toString()
-                val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
-                val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
-                val serviceDataMap = HashMap<String, Any>()
-                dynamicFieldsLower.forEach {
-                    if (it.value != null) {
-                        serviceDataMap[it.field] = it.value!!
-                    }
-                }
-
-                // Pass service call data as extras
-                intent.putExtra(MultiWidget.EXTRA_LOWER_BUTTON, true)
-                intent.putExtra(MultiWidget.EXTRA_LOWER_DOMAIN, domain)
-                intent.putExtra(MultiWidget.EXTRA_LOWER_SERVICE, service)
-                intent.putExtra(
-                    MultiWidget.EXTRA_LOWER_SERVICE_DATA,
-                    jacksonObjectMapper().writeValueAsString(serviceDataMap)
-                )
-
-                // Pass icon ID
-                intent.putExtra(
-                    MultiWidget.EXTRA_LOWER_ICON_ID,
-                    context.widget_config_lower_icon_selector.tag as Int? ?: 62017 // Lightning bolt
-                )
-            } else {
-                intent.putExtra(MultiWidget.EXTRA_LOWER_BUTTON, false)
             }
 
             // Analyze label type
@@ -446,155 +367,9 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         }
     }
 
-    private val onAddFieldLowerListener = View.OnClickListener {
-        val context = this@MultiWidgetConfigureActivity
-        val fieldKeyInput = EditText(context)
-        fieldKeyInput.layoutParams = ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
-        )
-
-        AlertDialog.Builder(context)
-            .setTitle("Field")
-            .setView(fieldKeyInput)
-            .setNegativeButton(android.R.string.cancel) { _, _ -> }
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                dynamicFieldsLower.add(
-                    ServiceFieldBinder(
-                        context.widget_config_lower_service_text.text.toString(),
-                        fieldKeyInput.text.toString()
-                    )
-                )
-
-                dynamicFieldLowerAdapter.notifyDataSetChanged()
-            }
-            .show()
-    }
-
     private val onAddButtonElementListener = View.OnClickListener {
         dynamicElementAdapter.addButton(iconDialog)
     }
-
-    private val onAddFieldUpperListener = View.OnClickListener {
-        val context = this@MultiWidgetConfigureActivity
-        val fieldKeyInput = EditText(context)
-        fieldKeyInput.layoutParams = ViewGroup.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
-        )
-
-        AlertDialog.Builder(context)
-            .setTitle("Field")
-            .setView(fieldKeyInput)
-            .setNegativeButton(android.R.string.cancel) { _, _ -> }
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                dynamicFieldsUpper.add(
-                    ServiceFieldBinder(
-                        context.widget_config_upper_service_text.text.toString(),
-                        fieldKeyInput.text.toString()
-                    )
-                )
-
-                dynamicFieldUpperAdapter.notifyDataSetChanged()
-            }
-            .show()
-    }
-
-    private val serviceTextWatcherLower: TextWatcher = (object : TextWatcher {
-        override fun afterTextChanged(p0: Editable?) {
-            val serviceText: String = p0.toString()
-
-            if (services.keys.contains(serviceText)) {
-                Log.d(TAG, "Valid domain and service--processing dynamic fields")
-
-                // Make sure there are not already any dynamic fields created
-                // This can happen if selecting the drop-down twice or pasting
-                dynamicFieldsLower.clear()
-
-                // We only call this if servicesAvailable was fetched and is not null,
-                // so we can safely assume that it is not null here
-                val fields = services[serviceText]!!.serviceData.fields
-                val fieldKeys = fields.keys
-                Log.d(TAG, "Fields applicable to this service: $fields")
-
-                fieldKeys.sorted().forEach { fieldKey ->
-                    Log.d(TAG, "Creating a text input box for $fieldKey")
-
-                    // Insert a dynamic layout
-                    // IDs get priority and go at the top, since the other fields
-                    // are usually optional but the ID is required
-                    if (fieldKey.contains("_id")) {
-                        dynamicFieldsLower.add(
-                            0, ServiceFieldBinder(
-                                serviceText,
-                                fieldKey,
-                                widget_config_entity_id_text.text.toString()
-                            )
-                        )
-                    } else
-                        dynamicFieldsLower.add(ServiceFieldBinder(serviceText, fieldKey))
-                }
-
-                dynamicFieldLowerAdapter.notifyDataSetChanged()
-            } else {
-                if (dynamicFieldsLower.size > 0) {
-                    dynamicFieldsLower.clear()
-                    dynamicFieldLowerAdapter.notifyDataSetChanged()
-                }
-            }
-        }
-
-        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-    })
-
-    private val serviceTextWatcherUpper: TextWatcher = (object : TextWatcher {
-        override fun afterTextChanged(p0: Editable?) {
-            val serviceText: String = p0.toString()
-
-            if (services.keys.contains(serviceText)) {
-                Log.d(TAG, "Valid domain and service--processing dynamic fields")
-
-                // Make sure there are not already any dynamic fields created
-                // This can happen if selecting the drop-down twice or pasting
-                dynamicFieldsUpper.clear()
-
-                // We only call this if servicesAvailable was fetched and is not null,
-                // so we can safely assume that it is not null here
-                val fields = services[serviceText]!!.serviceData.fields
-                val fieldKeys = fields.keys
-                Log.d(TAG, "Fields applicable to this service: $fields")
-
-                fieldKeys.sorted().forEach { fieldKey ->
-                    Log.d(TAG, "Creating a text input box for $fieldKey")
-
-                    // Insert a dynamic layout
-                    // IDs get priority and go at the top, since the other fields
-                    // are usually optional but the ID is required
-                    if (fieldKey.contains("_id")) {
-                        dynamicFieldsUpper.add(
-                            0, ServiceFieldBinder(
-                                serviceText,
-                                fieldKey,
-                                widget_config_entity_id_text.text.toString()
-                            )
-                        )
-                    } else
-                        dynamicFieldsUpper.add(ServiceFieldBinder(serviceText, fieldKey))
-                }
-
-                dynamicFieldUpperAdapter.notifyDataSetChanged()
-            } else {
-                if (dynamicFieldsUpper.size > 0) {
-                    dynamicFieldsUpper.clear()
-                    dynamicFieldUpperAdapter.notifyDataSetChanged()
-                }
-            }
-        }
-
-        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-    })
 
     private val templateTextWatcher: TextWatcher = (object : TextWatcher {
         override fun afterTextChanged(editableText: Editable?) {
