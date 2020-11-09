@@ -76,6 +76,7 @@ class TagReaderActivity : BaseActivity() {
         // https://www.home-assistant.io/tag/5f0ba733-172f-430d-a7f8-e4ad940c88d7
 
         val nfcTagId = UrlHandler.splitNfcTagId(url)
+        Log.d(TAG, "nfcTagId: $nfcTagId")
         if (nfcTagId != null) {
             integrationUseCase.scanTag(hashMapOf("tag_id" to nfcTagId))
         } else {

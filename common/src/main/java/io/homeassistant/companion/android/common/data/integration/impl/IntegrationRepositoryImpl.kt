@@ -224,6 +224,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                     ).isSuccessful
             } catch (e: Exception) {
                 // Ignore failure until we are out of URLS to try!
+                Log.d(TAG, "Unable to send tag data for URL: $it with data: $data", e)
             }
             // if we had a successful call we can return
             if (wasSuccess)
