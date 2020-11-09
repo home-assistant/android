@@ -94,7 +94,7 @@
   <string name="error_auth_revoked">Het lijkt erop dat uw autorisatie is ingetrokken. Maak opnieuw verbinding met Home Assistant.</string>
   <string name="error_connection_failed">Niet mogelijk om te verbinden met Home Assistant.</string>
   <string name="error_onboarding_connection_failed">Niet mogelijk om te verbinden met Home Assistant.</string>
-  <string name="error_ssl">Niet in staat om te communiceren met Home Assistant vanwege een SSL-fout.  Zorg voor een geldig certificaat.</string>
+  <string name="error_ssl">Niet in staat om te communiceren met Home Assistant vanwege een SSL-fout. Zorg voor een geldig certificaat.</string>
   <string name="error_with_registration">Controleer of de mobile_app integratie is ingeschakeld in je Home Assistant instantie.</string>
   <string name="event_error">Kan HA niet op de hoogte stellen van de gekozen optie.</string>
   <string name="exit">Verlaat</string>
@@ -102,7 +102,7 @@
   <string name="filter_notifications">Filter meldingen</string>
   <string name="finish">Voltooien</string>
   <string name="firebase_error_message">Bij het negeren van deze foutmelding is het niet mogelijk om pushmeldingen te ontvangen.</string>
-  <string name="firebase_error_title">Firebase Fout</string>
+  <string name="firebase_error_title">Firebase fout</string>
   <string name="fullscreen">Volledig scherm</string>
   <string name="fullscreen_def">Applicatie in volledig scherm weergeven</string>
   <string name="grant_permission">Toestemming verlenen</string>
@@ -119,7 +119,7 @@
   <string name="label_service">Service:</string>
   <string name="last_25_notifications">Laatste 25 meldingen</string>
   <string name="last_num_notifications">Laatste %1$d meldingen</string>
-  <string name="list_entity_state_widgets">Lijst van entiteits status widgets</string>
+  <string name="list_entity_state_widgets">Lijst van entiteitsstatus widgets</string>
   <string name="list_template_widgets">Lijst met sjabloonwidgets</string>
   <string name="location">Locatie</string>
   <string name="lock_summary">Gebruik biometrische of schermvergrendeling-inloggegevens om de app te ontgrendelen.</string>
@@ -209,7 +209,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en dat hardw
   <string name="scan_again">opnieuw scannen</string>
   <string name="scanning_network">Netwerk scannen naar Home Assistant</string>
   <string name="security">Beveiliging</string>
-  <string name="select_entity_to_display">Selecteer Entiteit om weer te geven</string>
+  <string name="select_entity_to_display">Selecteer entiteit om weer te geven</string>
   <string name="select_instance">Selecteer de instantie waarmee je verbinding wilt maken:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Beschrijving</string>
@@ -260,14 +260,14 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en dat hardw
   <string name="sensor_description_volume_call">Volumeniveau voor oproepen op het apparaat</string>
   <string name="sensor_description_volume_music">Volumeniveau voor muziek op het apparaat</string>
   <string name="sensor_description_volume_ring">Volumeniveau voor de beltoon op het apparaat</string>
-  <string name="sensor_description_wifi_bssid">Het mac-adres van het momenteel verbonden wifi-toegangspunt. Als u de schakelaar \"get_current_bssid\" inschakelt, wordt een nieuwe instelling gemaakt waarmee u de status kunt hernoemen die naar Home Assistant is teruggestuurd voor het gekozen mac-adres. De schakelaar wordt standaard uitgeschakeld nadat de huidige BSSID is opgeslagen, dus u moet deze eenmaal inschakelen voor elke BSSID die u wilt hernoemen. U kunt de waarde ook wissen om de instelling in de volgende update te verwijderen.</string>
+  <string name="sensor_description_wifi_bssid">Het MAC-adres van het momenteel verbonden WiFi-toegangspunt. Als u de schakelaar \"get_current_bssid\" inschakelt, wordt een nieuwe instelling gemaakt waarmee u de status kunt hernoemen die naar Home Assistant is teruggestuurd voor het gekozen MAC-adres. De schakelaar wordt standaard uitgeschakeld nadat de huidige BSSID is opgeslagen, dus u moet deze eenmaal inschakelen voor elke BSSID die u wilt hernoemen. U kunt de waarde ook wissen om de instelling in de volgende update te verwijderen.</string>
   <string name="sensor_description_wifi_connection">De naam van het netwerk waarmee het apparaat momenteel is verbonden</string>
   <string name="sensor_description_wifi_frequency">De frequentieband van het verbonden netwerk</string>
   <string name="sensor_description_wifi_ip">Het huidige IP-adres van het apparaat op het netwerk</string>
   <string name="sensor_description_wifi_link_speed">De huidige verbindingssnelheid van het apparaat met het verbonden netwerk</string>
   <string name="sensor_description_wifi_signal">De signaalsterkte van het apparaat naar het WiFi-netwerk</string>
-  <string name="sensor_description_wifi_state">Of wifi is ingeschakeld op het apparaat</string>
-  <string name="sensor_name_activity">Activiteitensensors</string>
+  <string name="sensor_description_wifi_state">Of WiFi is ingeschakeld op het apparaat</string>
+  <string name="sensor_name_activity">Activiteitsensors</string>
   <string name="sensor_name_alarm">Alarm Sensor</string>
   <string name="sensor_name_audio">Audio sensors</string>
   <string name="sensor_name_audio_mode">Audiomodus</string>
