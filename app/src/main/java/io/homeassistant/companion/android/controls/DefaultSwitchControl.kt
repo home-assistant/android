@@ -40,6 +40,14 @@ class DefaultSwitchControl {
                     else -> DeviceTypes.TYPE_GENERIC_ON_OFF
                 }
             )
+            control.setZone(
+                when (entity.entityId.split(".")[0]) {
+                    "automation" -> context.getString(R.string.domain_automation)
+                    "input_boolean" -> context.getString(R.string.domain_input_boolean)
+                    "switch" -> context.getString(R.string.domain_switch)
+                    else -> entity.entityId.split(".")[0].capitalize()
+                }
+            )
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(R.string.state_on))
             control.setControlTemplate(

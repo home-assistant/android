@@ -40,6 +40,7 @@ class LightControl {
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
+            control.setZone(context.getString(R.string.domain_light))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(
                 R.string.state_on))

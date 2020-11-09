@@ -9,6 +9,7 @@ import android.service.controls.DeviceTypes
 import android.service.controls.actions.ControlAction
 import android.service.controls.templates.StatelessTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -33,6 +34,13 @@ class SceneControl {
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_ROUTINE)
+            control.setZone(
+                when (entity.entityId.split(".")[0]) {
+                    "scene" -> context.getString(R.string.domain_scene)
+                    "script" -> context.getString(R.string.domain_script)
+                    else -> entity.entityId.split(".")[0].capitalize()
+                }
+            )
             control.setStatus(Control.STATUS_OK)
             control.setControlTemplate(
                 StatelessTemplate(

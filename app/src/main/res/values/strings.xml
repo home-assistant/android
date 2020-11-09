@@ -139,6 +139,17 @@ integration enabled on your home assistant instance.</string>
   <string name="home_assistant_not_discover">Unable to find your 
 Home Assistant instance</string>
   <string name="icon">Icon</string>
+  <string name="domain_scene">Scene</string>
+  <string name="domain_script">Script</string>
+  <string name="domain_climate">Climate</string>
+  <string name="domain_cover">Cover</string>
+  <string name="domain_input_number">Input Number</string>
+  <string name="domain_switch">Switch</string>
+  <string name="domain_automation">Automation</string>
+  <string name="domain_fan">Fan</string>
+  <string name="domain_light">Light</string>
+  <string name="domain_lock">Lock</string>
+  <string name="domain_input_boolean">Input Boolean</string>
   <string name="input_url">Home Assistant URL</string>
   <string name="input_url_hint">https://example.duckdns.org:8123</string>
   <string name="label_attribute">Attribute:</string>
