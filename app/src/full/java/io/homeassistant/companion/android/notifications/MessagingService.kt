@@ -825,6 +825,8 @@ class MessagingService : FirebaseMessagingService() {
     ) {
         val audioAttributes = AudioAttributes.Builder()
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
+            .setLegacyStreamType(AudioManager.STREAM_ALARM)
             .setUsage(AudioAttributes.USAGE_ALARM)
             .build()
         channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), audioAttributes)
