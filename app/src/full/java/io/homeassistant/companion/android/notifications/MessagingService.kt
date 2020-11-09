@@ -13,6 +13,7 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
@@ -64,6 +65,8 @@ class MessagingService : FirebaseMessagingService() {
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
+        const val CHRONOMETER = "chronometer"
+        const val WHEN = "when"
         const val GROUP_PREFIX = "group_"
 
         // special action constants
@@ -384,6 +387,8 @@ class MessagingService : FirebaseMessagingService() {
 
         handleContentIntent(notificationBuilder, messageId, group, groupId, data)
 
+        handleChronometer(notificationBuilder, data)
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             handleLegacyPriority(notificationBuilder, data)
             handleLegacyLedColor(notificationBuilder, data)
@@ -398,6 +403,25 @@ class MessagingService : FirebaseMessagingService() {
                 if (!previousGroup.isBlank()) {
                     notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)
                 }
+            }
+        }
+    }
+
+    private fun handleChronometer(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        val notificationWhen = data[WHEN]?.toLong()?.times(1000) ?: 0
+        val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
+
+        if (notificationWhen != 0L) {
+            builder.setWhen(notificationWhen)
+            builder.setUsesChronometer(usesChronometer)
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val countdown = notificationWhen > System.currentTimeMillis()
+                builder.addExtras(Bundle()) // Without this builder.setChronometerCountDown throws a null reference exception
+                builder.setChronometerCountDown(countdown)
             }
         }
     }
