@@ -455,7 +455,7 @@ class MessagingService : FirebaseMessagingService() {
         data: Map<String, String>
     ) {
         try { // Without this, a non-numeric when value will crash the app
-            val notificationWhen = data[WHEN]?.toLong()?.times(1000) ?: 0
+            val notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
             val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
 
             if (notificationWhen != 0L) {
