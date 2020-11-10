@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.os.SystemClock
 import io.homeassistant.companion.android.R
 import java.util.Date
 import java.util.Locale
@@ -55,7 +56,8 @@ class TimeZoneManager : SensorManager {
                 "in_daylight_time" to timeZone.inDaylightTime(date),
                 "time_zone_id" to timeZone.id,
                 "time_zone_short" to timeZone.getDisplayName(timeZone.inDaylightTime(date), TimeZone.SHORT, Locale.ENGLISH),
-                "uses_daylight_time" to timeZone.useDaylightTime()
+                "uses_daylight_time" to timeZone.useDaylightTime(),
+                "utc_offset" to timeZone.getOffset(System.currentTimeMillis())
             )
         )
     }
