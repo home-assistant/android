@@ -46,6 +46,7 @@ class CoverControl {
                 else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
             }
         )
+        control.setZone(context.getString(R.string.domain_cover))
         control.setStatus(Control.STATUS_OK)
         control.setStatusText(
             when (entity.state) {

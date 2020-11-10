@@ -37,6 +37,7 @@ class LockControl {
             control.setDeviceType(
                 DeviceTypes.TYPE_LOCK
             )
+            control.setZone(context.getString(R.string.domain_lock))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(if (entity.state == "locked") context.getString(R.string.state_locked) else context.getString(R.string.state_unlocked))
             control.setControlTemplate(

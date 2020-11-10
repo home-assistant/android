@@ -14,6 +14,7 @@ import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -42,6 +43,7 @@ class FanControl {
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_FAN)
+            control.setZone(context.getString(R.string.domain_fan))
             control.setStatus(Control.STATUS_OK)
             if (currentSpeed.isNotBlank()) {
                 control.setControlTemplate(

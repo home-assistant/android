@@ -35,6 +35,7 @@ class ClimateControl {
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_AC_HEATER)
+            control.setZone(context.getString(R.string.domain_climate))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
