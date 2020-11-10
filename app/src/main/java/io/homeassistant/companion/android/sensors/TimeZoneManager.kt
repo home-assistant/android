@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import android.os.SystemClock
 import io.homeassistant.companion.android.R
 import java.util.Date
 import java.util.Locale
