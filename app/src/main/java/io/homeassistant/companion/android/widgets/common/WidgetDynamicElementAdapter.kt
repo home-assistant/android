@@ -145,6 +145,9 @@ class WidgetDynamicElementAdapter(
     }
 
     private fun bindPlaintextViews(dynamicElementLayout: View, element: MultiWidgetElementPlaintext) {
+        // Store layout views so the element can finalize its own values
+        element.layout = dynamicElementLayout
+
         // Set up the text size spinner
         dynamicElementLayout.widget_element_label_text_size.adapter =
             ArrayAdapter.createFromResource(

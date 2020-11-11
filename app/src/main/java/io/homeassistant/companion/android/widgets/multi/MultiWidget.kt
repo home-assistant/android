@@ -56,9 +56,11 @@ class MultiWidget : AppWidgetProvider() {
         internal const val EXTRA_LOWER_SERVICE_DATA = "EXTRA_LOWER_SERVICE_DATA"
         internal const val EXTRA_LABEL_TYPE = "EXTRA_LABEL_TYPE"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
-        internal const val EXTRA_TEMPLATE = "EXTRA_TEMPLATE"
         internal const val EXTRA_LABEL_TEXT_SIZE = "EXTRA_LABEL_TEXT_SIZE"
         internal const val EXTRA_LABEL_MAX_LINES = "EXTRA_LABEL_MAX_LINES"
+        internal const val EXTRA_TEMPLATE = "EXTRA_TEMPLATE"
+        internal const val EXTRA_TEMPLATE_TEXT_SIZE = "EXTRA_TEMPLATE_TEXT_SIZE"
+        internal const val EXTRA_TEMPLATE_MAX_LINES = "EXTRA_TEMPLATE_MAX_LINES"
 
         internal const val EXTRA_ELEMENT_COUNT = "EXTRA_ELEMENT_COUNT"
         internal const val EXTRA_DOMAIN = "EXTRA_DOMAIN_"

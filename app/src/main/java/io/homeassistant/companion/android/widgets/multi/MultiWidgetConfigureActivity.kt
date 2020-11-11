@@ -32,6 +32,8 @@ import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicElementAdapter
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElement
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementButton
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementPlaintext
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementTemplate
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementType
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_multi_config_button.view.*
@@ -287,7 +289,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             // Iterate through each element and create an intent for the correct type of data
             elements.forEachIndexed { index, element ->
                 // Have each element grab its values according to its type
-                element.retrieveFinalValues()
+                element.retrieveFinalValues(this)
 
                 // Create an appropriate intent based on the element type
                 when (element.type) {
@@ -298,53 +300,20 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                         intent.putExtra(MultiWidget.EXTRA_SERVICE_DATA + index, element.serviceData)
                         intent.putExtra(MultiWidget.EXTRA_ICON_ID + index, element.iconId)
                     }
-                    MultiWidgetElementType.TYPE_PLAINTEXT -> {}
-                    MultiWidgetElementType.TYPE_TEMPLATE -> {}
+                    MultiWidgetElementType.TYPE_TEMPLATE -> (element as MultiWidgetElementTemplate).let {
+                        // Pass template string and layout data as extras
+                        intent.putExtra(MultiWidget.EXTRA_TEMPLATE + index, element.templateData)
+                        intent.putExtra(MultiWidget.EXTRA_TEMPLATE_TEXT_SIZE + index, element.textSize)
+                        intent.putExtra(MultiWidget.EXTRA_TEMPLATE_MAX_LINES + index, element.textLines)
+                    }
+                    MultiWidgetElementType.TYPE_PLAINTEXT -> (element as MultiWidgetElementPlaintext).let {
+                        // Pass plaintext label and layout data as extras
+                        intent.putExtra(MultiWidget.EXTRA_LABEL + index, element.text)
+                        intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE + index, element.textSize)
+                        intent.putExtra(MultiWidget.EXTRA_LABEL_MAX_LINES + index, element.textLines)
+                    }
                 }
             }
-
-            // Analyze label type
-            /*when (labelType) {
-                ENTITY_LABEL_TYPE -> {
-                    // Entity label type is secretly a template
-                    // that just displays the entity's friendly name
-                    intent.putExtra(MultiWidget.EXTRA_LABEL_TYPE, MultiWidget.LABEL_TEMPLATE)
-                    intent.putExtra(
-                        MultiWidget.EXTRA_TEMPLATE,
-                        "{{ states." + widget_config_entity_id_text.text.toString() + ".name }}"
-                    )
-                }
-                TEMPLATE_LABEL_TYPE -> {
-                    intent.putExtra(MultiWidget.EXTRA_LABEL_TYPE, MultiWidget.LABEL_TEMPLATE)
-                    intent.putExtra(
-                        MultiWidget.EXTRA_TEMPLATE,
-                        context.widget_config_template_edit.text.toString()
-                    )
-                }
-                CUSTOM_LABEL_TYPE -> {
-                    intent.putExtra(MultiWidget.EXTRA_LABEL_TYPE, MultiWidget.LABEL_PLAINTEXT)
-                    intent.putExtra(
-                        MultiWidget.EXTRA_LABEL,
-                        context.widget_config_label.text.toString()
-                    )
-                }
-            }*/
-
-            // Send label formatting
-            /*when (widget_config_label_text_size.selectedItem) {
-                resources.getString(R.string.widget_font_size_small) ->
-                    intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE, MultiWidget.LABEL_TEXT_SMALL)
-                resources.getString(R.string.widget_font_size_medium) ->
-                    intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE, MultiWidget.LABEL_TEXT_MED)
-                resources.getString(R.string.widget_font_size_large) ->
-                    intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE, MultiWidget.LABEL_TEXT_LARGE)
-                else ->
-                    intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE, MultiWidget.LABEL_TEXT_MED)
-            }
-            intent.putExtra(
-                MultiWidget.EXTRA_LABEL_MAX_LINES,
-                widget_config_label_text_lines.text.toString().toInt()
-            )*/
 
             // Finish up and broadcast intent
             context.sendBroadcast(intent)

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.multi.elements
 
+import android.content.Context
 import android.view.View
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.common.data.integration.Service
@@ -29,7 +30,7 @@ class MultiWidgetElementButton(
     lateinit var layout: View
     lateinit var dynamicFields: ArrayList<ServiceFieldBinder>
 
-    override fun retrieveFinalValues() {
+    override fun retrieveFinalValues(context: Context) {
         // Analyze service call information
         val serviceText = layout.widget_element_service_text.text.toString()
         val serviceDataMap = HashMap<String, Any>()
