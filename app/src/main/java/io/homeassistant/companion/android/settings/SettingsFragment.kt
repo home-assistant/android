@@ -14,7 +14,6 @@ import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
@@ -250,12 +249,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 permissionToCheck = android.Manifest.permission.ACCESS_FINE_LOCATION
-            }
-            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 permissionToCheck = android.Manifest.permission.ACCESS_COARSE_LOCATION
             }
 
-            if(permissionToCheck.isNullOrEmpty() || checkPermission(permissionToCheck, LOCATION_REQUEST_CODE)) {
+            if (permissionToCheck.isNullOrEmpty() || checkPermission(permissionToCheck, LOCATION_REQUEST_CODE)) {
                 openSsidDialog()
             }
         } else {
@@ -318,15 +316,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
-    fun checkPermission(permission: String, requestCode: Int): Boolean  {
+    fun checkPermission(permission: String, requestCode: Int): Boolean {
         return if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
-            requestPermissions(arrayOf(permission), requestCode )
+            requestPermissions(arrayOf(permission), requestCode)
             false
         } else true
     }
 
-    private fun openSsidDialog()
-    {
+    private fun openSsidDialog() {
         // check if dialog is already showing
         val fm = parentFragmentManager
         if (fm.findFragmentByTag(SSID_DIALOG_TAG) != null) {
@@ -352,9 +349,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         updateBackgroundAccessPref()
-        if(requestCode == LOCATION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty()
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED
+        if (requestCode == LOCATION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED
             ) {
                 openSsidDialog()
             }
