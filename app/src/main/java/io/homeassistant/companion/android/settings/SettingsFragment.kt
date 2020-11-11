@@ -14,6 +14,8 @@ import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -40,6 +42,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
+        private const val LOCATION_REQUEST_CODE = 0
 
         fun newInstance() = SettingsFragment()
     }
@@ -243,14 +246,18 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
         if (preference is SsidPreference) {
-            // check if dialog is already showing
-            val fm = parentFragmentManager
-            if (fm.findFragmentByTag(SSID_DIALOG_TAG) != null) {
-                return
+            lateinit var permissionToCheck: String
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                permissionToCheck = android.Manifest.permission.ACCESS_FINE_LOCATION
             }
-            val ssidDialog = SsidDialogFragment.newInstance("connection_internal_ssids")
-            ssidDialog.setTargetFragment(this, 0)
-            ssidDialog.show(fm, SSID_DIALOG_TAG)
+            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                permissionToCheck = android.Manifest.permission.ACCESS_COARSE_LOCATION
+            }
+
+            if(permissionToCheck.isNullOrEmpty() || checkPermission(permissionToCheck, LOCATION_REQUEST_CODE)) {
+                openSsidDialog()
+            }
         } else {
             super.onDisplayPreferenceDialog(preference)
         }
@@ -311,6 +318,26 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
+    fun checkPermission(permission: String, requestCode: Int): Boolean  {
+        return if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+            requestPermissions(arrayOf(permission), requestCode )
+            false
+        } else true
+    }
+
+    private fun openSsidDialog()
+    {
+        // check if dialog is already showing
+        val fm = parentFragmentManager
+        if (fm.findFragmentByTag(SSID_DIALOG_TAG) != null) {
+            return
+        }
+
+        val ssidDialog = SsidDialogFragment.newInstance("connection_internal_ssids")
+        ssidDialog.setTargetFragment(this, 0)
+        ssidDialog.show(fm, SSID_DIALOG_TAG)
+    }
+
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
                 context?.getSystemService(PowerManager::class.java)
@@ -325,5 +352,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         updateBackgroundAccessPref()
+        if(requestCode == LOCATION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty()
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            ) {
+                openSsidDialog()
+            }
+        }
     }
 }

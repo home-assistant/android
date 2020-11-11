@@ -12,12 +12,9 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 
-class SettingsActivity : BaseActivity(),
-    PreferenceFragmentCompat.OnPreferenceDisplayDialogCallback {
+class SettingsActivity : BaseActivity() {
 
     companion object {
-        private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
-
         fun newInstance(context: Context): Intent {
             return Intent(context, SettingsActivity::class.java)
         }
@@ -47,14 +44,5 @@ class SettingsActivity : BaseActivity(),
             }
             else -> super.onOptionsItemSelected(item)
         }
-    }
-
-    override fun onPreferenceDisplayDialog(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
-        if (pref is SsidPreference) {
-            val ssidDialog = SsidDialogFragment.newInstance("connection_internal_ssids")
-            ssidDialog.show(supportFragmentManager, SSID_DIALOG_TAG)
-            return true
-        }
-        return false
     }
 }
