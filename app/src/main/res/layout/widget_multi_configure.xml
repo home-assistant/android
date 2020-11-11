@@ -52,144 +52,33 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <RadioGroup
-            android:id="@+id/widget_config_label_selector_group"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <androidx.appcompat.widget.AppCompatRadioButton
-                android:id="@+id/widget_config_label_entity_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:checked="true"
-                android:text="Entity Name" />
-
-            <androidx.appcompat.widget.AppCompatRadioButton
-                android:id="@+id/widget_config_label_template_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Template" />
-
-            <androidx.appcompat.widget.AppCompatRadioButton
-                android:id="@+id/widget_config_label_custom_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Custom" />
-        </RadioGroup>
-
-        <LinearLayout
-            android:id="@+id/widget_config_label_layout"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_vertical"
-                android:padding="5dp"
-                android:text="@string/label_label" />
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/widget_config_label"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="@string/widget_text_hint_label"
-                android:imeOptions="actionDone"
-                android:inputType="text" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/widget_config_template_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/widget_config_template_edit"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="top"
-                android:inputType="textMultiLine"
-                android:minLines="4"
-                android:text="@string/template_widget_default" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:id="@+id/widget_config_template_render"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/template_widget_default" />
-        </LinearLayout>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:layout_margin="5dp"
             android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:labelFor="@id/widget_config_label_text_size"
-                android:padding="5dp"
-                android:text="Label text size:" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-
-            <Spinner
-                android:id="@+id/widget_config_label_text_size"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:layout_margin="5dp"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:labelFor="@id/widget_config_label_text_lines"
-                android:padding="5dp"
-                android:text="Maximum lines for label (0 for unlimited):" />
-
-            <Space
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-
-            <EditText
-                android:id="@+id/widget_config_label_text_lines"
-                android:layout_width="50dp"
-                android:layout_height="wrap_content"
-                android:imeOptions="actionNext"
-                android:textAlignment="center"
-                android:hint="2"
-                android:text="2"
-                android:inputType="number"
-                android:maxLength="2" />
-        </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/widget_config_add_button_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:text="Add button to widget" />
+            android:text="Add button" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/widget_config_add_plaintext_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:text="Add label" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/widget_config_add_template_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:text="Add template" />
+        </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/widget_config_finalize_button"

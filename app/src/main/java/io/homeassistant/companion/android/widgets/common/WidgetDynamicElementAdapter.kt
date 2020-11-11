@@ -6,10 +6,13 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatCheckBox
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.maltaisn.icondialog.IconDialog
@@ -23,6 +26,8 @@ import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElem
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementTemplate
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementType
 import kotlinx.android.synthetic.main.widget_multi_config_button.view.*
+import kotlinx.android.synthetic.main.widget_multi_config_plaintext.view.*
+import kotlinx.android.synthetic.main.widget_multi_config_template.view.*
 
 class WidgetDynamicElementAdapter(
     private var context: MultiWidgetConfigureActivity,
@@ -40,19 +45,24 @@ class WidgetDynamicElementAdapter(
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
 
     lateinit var iconDialog: IconDialog
+    lateinit var getTemplateTextAsync: (templateText: String, renderView: AppCompatTextView) -> Unit
 
     override fun getItemCount(): Int {
         return elements.size
     }
 
+    override fun getItemViewType(position: Int): Int {
+        return when (elements[position].type) {
+            MultiWidgetElementType.TYPE_BUTTON -> R.layout.widget_multi_config_button
+            MultiWidgetElementType.TYPE_PLAINTEXT -> R.layout.widget_multi_config_plaintext
+            MultiWidgetElementType.TYPE_TEMPLATE -> R.layout.widget_multi_config_template
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
 
-        val dynamicElementLayout = inflater.inflate(
-            R.layout.widget_multi_config_button,
-            parent,
-            false
-        )
+        val dynamicElementLayout = inflater.inflate(viewType, parent, false)
 
         return ViewHolder(dynamicElementLayout)
     }
@@ -63,10 +73,14 @@ class WidgetDynamicElementAdapter(
                 holder.itemView,
                 elements[position] as MultiWidgetElementButton
             )
-            MultiWidgetElementType.TYPE_TEMPLATE -> {
-            }
-            MultiWidgetElementType.TYPE_PLAINTEXT -> {
-            }
+            MultiWidgetElementType.TYPE_PLAINTEXT -> bindPlaintextViews(
+                holder.itemView,
+                elements[position] as MultiWidgetElementPlaintext
+            )
+            MultiWidgetElementType.TYPE_TEMPLATE -> bindTemplateViews(
+                holder.itemView,
+                elements[position] as MultiWidgetElementTemplate
+            )
         }
     }
 
@@ -76,7 +90,8 @@ class WidgetDynamicElementAdapter(
         notifyDataSetChanged()
     }
 
-    internal fun addTemplate() {
+    internal fun addTemplate(getTemplateTextAsync: (templateText: String, renderView: AppCompatTextView) -> Unit) {
+        this.getTemplateTextAsync = getTemplateTextAsync
         elements.add(MultiWidgetElementTemplate())
         notifyDataSetChanged()
     }
@@ -129,72 +144,106 @@ class WidgetDynamicElementAdapter(
         }
     }
 
+    private fun bindPlaintextViews(dynamicElementLayout: View, element: MultiWidgetElementPlaintext) {
+        // Set up the text size spinner
+        dynamicElementLayout.widget_element_label_text_size.adapter =
+            ArrayAdapter.createFromResource(
+                context,
+                R.array.widget_label_font_size,
+                android.R.layout.simple_spinner_item
+            ).also {
+                it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
+    }
+
+    private fun bindTemplateViews(dynamicElementLayout: View, element: MultiWidgetElementTemplate) {
+        // Have the user-edited template text get passed back to the main activity so it can
+        // render in a coroutine and the rendered text can be updated asynchronously
+        val templateTextEdit = dynamicElementLayout.widget_element_template_edit
+        val templateTextRender = dynamicElementLayout.widget_element_template_render
+        templateTextEdit.doAfterTextChanged {
+            getTemplateTextAsync(
+                templateTextEdit.text.toString(),
+                templateTextRender
+            )
+        }
+
+        // Set up the text size spinner
+        dynamicElementLayout.widget_element_template_text_size.adapter =
+            ArrayAdapter.createFromResource(
+                context,
+                R.array.widget_label_font_size,
+                android.R.layout.simple_spinner_item
+            ).also {
+                it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            }
+    }
+
     private fun createServiceTextWatcher(
         dynamicFields: ArrayList<ServiceFieldBinder>,
         dynamicFieldAdapter: WidgetDynamicFieldAdapter
     ): TextWatcher {
-        return (
-                object : TextWatcher {
-                    override fun afterTextChanged(p0: Editable?) {
-                        val serviceText: String = p0.toString()
+        return (object : TextWatcher {
+            override fun afterTextChanged(p0: Editable?) {
+                val serviceText: String = p0.toString()
 
-                        if (services.keys.contains(serviceText)) {
-                            Log.d(
-                                TAG,
-                                "Valid domain and service--processing dynamic fields"
-                            )
+                if (services.keys.contains(serviceText)) {
+                    Log.d(
+                        TAG,
+                        "Valid domain and service--processing dynamic fields"
+                    )
 
-                            // Make sure there are not already any dynamic fields created
-                            // This can happen if selecting the drop-down twice or pasting
-                            dynamicFields.clear()
+                    // Make sure there are not already any dynamic fields created
+                    // This can happen if selecting the drop-down twice or pasting
+                    dynamicFields.clear()
 
-                            // We only call this if servicesAvailable was fetched and is not null,
-                            // so we can safely assume that it is not null here
-                            val fields = services[serviceText]!!.serviceData.fields
-                            val fieldKeys = fields.keys
-                            Log.d(
-                                TAG,
-                                "Fields applicable to this service: $fields"
-                            )
+                    // We only call this if servicesAvailable was fetched and is not null,
+                    // so we can safely assume that it is not null here
+                    val fields = services[serviceText]!!.serviceData.fields
+                    val fieldKeys = fields.keys
+                    Log.d(
+                        TAG,
+                        "Fields applicable to this service: $fields"
+                    )
 
-                            fieldKeys.sorted().forEach { fieldKey ->
-                                Log.d(
-                                    TAG,
-                                    "Creating a text input box for $fieldKey"
+                    fieldKeys.sorted().forEach { fieldKey ->
+                        Log.d(
+                            TAG,
+                            "Creating a text input box for $fieldKey"
+                        )
+
+                        // Insert a dynamic layout
+                        // IDs get priority and go at the top, since the other fields
+                        // are usually optional but the ID is required
+                        if (fieldKey.contains("_id")) {
+                            dynamicFields.add(
+                                0, ServiceFieldBinder(
+                                    serviceText,
+                                    fieldKey,
+                                    if (entityFilterCheckbox.isChecked) entityIdTextView.text.toString() else null
                                 )
-
-                                // Insert a dynamic layout
-                                // IDs get priority and go at the top, since the other fields
-                                // are usually optional but the ID is required
-                                if (fieldKey.contains("_id")) {
-                                    dynamicFields.add(
-                                        0, ServiceFieldBinder(
-                                            serviceText,
-                                            fieldKey,
-                                            if (entityFilterCheckbox.isChecked) entityIdTextView.text.toString() else null
-                                        )
-                                    )
-                                } else
-                                    dynamicFields.add(
-                                        ServiceFieldBinder(
-                                            serviceText,
-                                            fieldKey
-                                        )
-                                    )
-                            }
-
-                            dynamicFieldAdapter.notifyDataSetChanged()
-                        } else {
-                            if (dynamicFields.size > 0) {
-                                dynamicFields.clear()
-                                dynamicFieldAdapter.notifyDataSetChanged()
-                            }
-                        }
+                            )
+                        } else
+                            dynamicFields.add(
+                                ServiceFieldBinder(
+                                    serviceText,
+                                    fieldKey
+                                )
+                            )
                     }
 
-                    override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                    override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-                })
+                    dynamicFieldAdapter.notifyDataSetChanged()
+                } else {
+                    if (dynamicFields.size > 0) {
+                        dynamicFields.clear()
+                        dynamicFieldAdapter.notifyDataSetChanged()
+                    }
+                }
+            }
+
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+        })
     }
 
     private fun createAddFieldLowerListener(

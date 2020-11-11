@@ -5,16 +5,13 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.CompoundButton
-import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.widget.doAfterTextChanged
@@ -140,18 +137,8 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         widget_config_element_layout.layoutManager = LinearLayoutManager(this)
 
         widget_config_add_button_button.setOnClickListener(onAddButtonElementListener)
-
-        widget_config_label_selector_group.setOnCheckedChangeListener(widgetLabelSelectGroupListener)
-
-        widget_config_template_edit.addTextChangedListener(templateTextWatcher)
-
-        widget_config_label_text_size.adapter = ArrayAdapter.createFromResource(
-            this,
-            R.array.widget_label_font_size,
-            android.R.layout.simple_spinner_item
-        ).also {
-            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        }
+        widget_config_add_plaintext_button.setOnClickListener(onAddPlaintextElementListener)
+        widget_config_add_template_button.setOnClickListener(onAddTemplateElementListener)
 
         widget_config_finalize_button.setOnClickListener(addWidgetClickListener)
 
@@ -270,6 +257,20 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         serviceAdapter.notifyDataSetChanged()
     }
 
+    private fun getTemplateTextAsync(templateText: String, renderView: AppCompatTextView) {
+        ioScope.launch {
+            var renderedText: String?
+            try {
+                renderedText = integrationUseCase.renderTemplate(templateText, mapOf())
+            } catch (e: Exception) {
+                renderedText = "Error in template"
+            }
+            runOnUiThread {
+                renderView.text = renderedText
+            }
+        }
+    }
+
     private val addWidgetClickListener = View.OnClickListener {
         try {
             val context = this@MultiWidgetConfigureActivity
@@ -303,7 +304,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             }
 
             // Analyze label type
-            when (labelType) {
+            /*when (labelType) {
                 ENTITY_LABEL_TYPE -> {
                     // Entity label type is secretly a template
                     // that just displays the entity's friendly name
@@ -327,10 +328,10 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                         context.widget_config_label.text.toString()
                     )
                 }
-            }
+            }*/
 
             // Send label formatting
-            when (widget_config_label_text_size.selectedItem) {
+            /*when (widget_config_label_text_size.selectedItem) {
                 resources.getString(R.string.widget_font_size_small) ->
                     intent.putExtra(MultiWidget.EXTRA_LABEL_TEXT_SIZE, MultiWidget.LABEL_TEXT_SMALL)
                 resources.getString(R.string.widget_font_size_medium) ->
@@ -343,7 +344,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             intent.putExtra(
                 MultiWidget.EXTRA_LABEL_MAX_LINES,
                 widget_config_label_text_lines.text.toString().toInt()
-            )
+            )*/
 
             // Finish up and broadcast intent
             context.sendBroadcast(intent)
@@ -371,67 +372,21 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         dynamicElementAdapter.addButton(iconDialog)
     }
 
-    private val templateTextWatcher: TextWatcher = (object : TextWatcher {
-        override fun afterTextChanged(editableText: Editable?) {
-            if (editableText == null) return
+    private val onAddPlaintextElementListener = View.OnClickListener {
+        dynamicElementAdapter.addPlaintext()
+    }
 
-            ioScope.launch {
-                var templateText: String?
-                var enabled: Boolean
-                try {
-                    templateText =
-                        integrationUseCase.renderTemplate(editableText.toString(), mapOf())
-                    enabled = true
-                } catch (e: Exception) {
-                    templateText = "Error in template"
-                    enabled = false
-                }
-                runOnUiThread {
-                    widget_config_template_render.text = templateText
-                    widget_config_finalize_button.isEnabled = enabled
-                }
-            }
-        }
-
-        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-    })
-
-    private val widgetLabelSelectGroupListener =
-        RadioGroup.OnCheckedChangeListener { _, checkedId ->
-            when (checkedId) {
-                R.id.widget_config_label_entity_button -> {
-                    widget_config_label_layout.visibility = View.GONE
-                    widget_config_template_layout.visibility = View.GONE
-                    labelType = ENTITY_LABEL_TYPE
-                }
-                R.id.widget_config_label_template_button -> {
-                    widget_config_label_layout.visibility = View.GONE
-                    widget_config_template_layout.visibility = View.VISIBLE
-                    labelType = TEMPLATE_LABEL_TYPE
-                }
-                R.id.widget_config_label_custom_button -> {
-                    widget_config_label_layout.visibility = View.VISIBLE
-                    widget_config_template_layout.visibility = View.GONE
-                    labelType = CUSTOM_LABEL_TYPE
-                }
-            }
-        }
+    private val onAddTemplateElementListener = View.OnClickListener {
+        dynamicElementAdapter.addTemplate(::getTemplateTextAsync)
+    }
 
     private val widgetEntityModeCheckboxListener =
         CompoundButton.OnCheckedChangeListener { _, checked ->
             if (checked) {
                 widget_config_entity_id_layout.visibility = View.VISIBLE
-                widget_config_label_entity_button.isEnabled = true
                 filterByEntity = true
             } else {
                 widget_config_entity_id_layout.visibility = View.GONE
-                if (widget_config_label_entity_button.isChecked) {
-                    widget_config_label_entity_button.isChecked = true
-                    widget_config_label_custom_button.isChecked = true
-                }
-                widget_config_label_entity_button.isEnabled = false
-
                 filterByEntity = false
             }
             updateServiceAdaptor()
