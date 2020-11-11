@@ -131,7 +131,7 @@ class WidgetDynamicElementAdapter(
 
         // Set up add field button
         dynamicElementLayout.widget_element_add_field_button.setOnClickListener(
-            createAddFieldLowerListener(
+            createAddFieldListener(
                 dynamicFields,
                 dynamicFieldAdapter,
                 dynamicElementLayout.widget_element_service_text
@@ -249,7 +249,7 @@ class WidgetDynamicElementAdapter(
         })
     }
 
-    private fun createAddFieldLowerListener(
+    private fun createAddFieldListener(
         dynamicFields: ArrayList<ServiceFieldBinder>,
         dynamicFieldAdapter: WidgetDynamicFieldAdapter,
         serviceTextView: AutoCompleteTextView
