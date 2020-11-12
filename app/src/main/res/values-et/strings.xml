@@ -24,6 +24,8 @@
   <string name="basic_sensor_name_call_number">Numbrinäit</string>
   <string name="basic_sensor_name_charger_type">Laadija tüüp</string>
   <string name="basic_sensor_name_charging">Laeb</string>
+  <string name="basic_sensor_name_current_time_zone">Praegune ajavöönd</string>
+  <string name="basic_sensor_name_current_version">Praegune järk</string>
   <string name="basic_sensor_name_device_locked">Seade on lukustatud</string>
   <string name="basic_sensor_name_device_secure">Seade on turvatud</string>
   <string name="basic_sensor_name_doze">Osaline energiasääst</string>
@@ -95,6 +97,17 @@
   <string name="dialog_add_panel_shortcut_title">Lisa otsetee</string>
   <string name="disable_all_sensors">Keela kõik %1$d andurit</string>
   <string name="documentation">Dokumentatsioon</string>
+  <string name="domain_automation">Automatiseering</string>
+  <string name="domain_climate">Kliimaseade</string>
+  <string name="domain_cover">(Akna)kate</string>
+  <string name="domain_fan">Ventilaator</string>
+  <string name="domain_input_boolean">Tõeväärtus</string>
+  <string name="domain_input_number">Arvsisend</string>
+  <string name="domain_light">Valgusti</string>
+  <string name="domain_lock">Lukk</string>
+  <string name="domain_scene">Stseen</string>
+  <string name="domain_script">Skript</string>
+  <string name="domain_switch">Lüliti</string>
   <string name="enable_all_sensors">Luba kõik andurid</string>
   <string name="enable_all_sensors_summary">Lubamisel küsitakse kõiki nõutavaid lube</string>
   <string name="enable_location_tracking">Luba asukoha jälgimine</string>
@@ -240,6 +253,8 @@
   <string name="sensor_description_call_number">Sissetuleva või väljuva kõne numbrinäit</string>
   <string name="sensor_description_charger_type">Seadmega ühendatud laadija</string>
   <string name="sensor_description_charging">Kas seadet laetakse või mitte</string>
+  <string name="sensor_description_current_time_zone">Seadme praegune ajavöönd</string>
+  <string name="sensor_description_current_version">Paigaldatud rakenduse järk</string>
   <string name="sensor_description_detected_activity">Tegevuse tüüp mis põhineb Google Activity Recognition API-i</string>
   <string name="sensor_description_device_locked">Kas seade on praegu lukus ja vajab avamiseks PIN-koodi, mustrit või parooli.</string>
   <string name="sensor_description_device_secure">Kas seade on kaitstud PIN-koodi, mustri või parooliga.</string>
@@ -293,6 +308,7 @@
   <string name="sensor_description_wifi_state">Kas WiFi on lubatud või mitte</string>
   <string name="sensor_name_activity">Aktiivsusandurid</string>
   <string name="sensor_name_alarm">Teavituste andur</string>
+  <string name="sensor_name_app_sensor">Rakenduse andurid</string>
   <string name="sensor_name_audio">Heliseadmete andurid</string>
   <string name="sensor_name_audio_mode">Helirežiim</string>
   <string name="sensor_name_battery">Aku andurid</string>
@@ -318,6 +334,7 @@
   <string name="sensor_name_speakerphone">Valjuhääldi</string>
   <string name="sensor_name_steps">Sammuloendur</string>
   <string name="sensor_name_storage">Salvestusruumi andurid</string>
+  <string name="sensor_name_time_zone">Ajavööndi andur</string>
   <string name="sensor_name_traffic_stats">Liiklusandmete andurid</string>
   <string name="sensor_name_volume_alarm">Teavituse helitugevus</string>
   <string name="sensor_name_volume_call">Kõne helitugevus</string>

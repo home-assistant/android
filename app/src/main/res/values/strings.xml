@@ -24,9 +24,6 @@
   <string name="background_access_disabled">Home Assistant does not have access to run in the background.  Click here to request permissions.</string>
   <string name="background_access_enabled">Home Assistant has access to run in the background.</string>
   <string name="background_access_title">Background Access</string>
-  <string name="basic_sensor_name_current_version">Current Version</string>
-  <string name="sensor_description_current_version">The current installed application version</string>
-  <string name="sensor_name_app_sensor">App Sensors</string>
   <string name="basic_sensor_lullaby">Lullaby</string>
   <string name="basic_sensor_name_activity">Detected Activity</string>
   <string name="basic_sensor_name_alarm">Next Alarm</string>
@@ -38,6 +35,8 @@
   <string name="basic_sensor_name_call_number">Call Number</string>
   <string name="basic_sensor_name_charger_type">Charger Type</string>
   <string name="basic_sensor_name_charging">Is Charging</string>
+  <string name="basic_sensor_name_current_time_zone">Current Time Zone</string>
+  <string name="basic_sensor_name_current_version">Current Version</string>
   <string name="basic_sensor_name_device_locked">Device Locked</string>
   <string name="basic_sensor_name_device_secure">Device Secure</string>
   <string name="basic_sensor_name_doze">Doze Mode</string>
@@ -110,6 +109,17 @@ to your home internet.</string>
   <string name="dialog_add_panel_shortcut_title">Add Shortcut</string>
   <string name="disable_all_sensors">Disable All %1$d Sensors</string>
   <string name="documentation">Documentation</string>
+  <string name="domain_automation">Automation</string>
+  <string name="domain_climate">Climate</string>
+  <string name="domain_cover">Cover</string>
+  <string name="domain_fan">Fan</string>
+  <string name="domain_input_boolean">Input Boolean</string>
+  <string name="domain_input_number">Input Number</string>
+  <string name="domain_light">Light</string>
+  <string name="domain_lock">Lock</string>
+  <string name="domain_scene">Scene</string>
+  <string name="domain_script">Script</string>
+  <string name="domain_switch">Switch</string>
   <string name="enable_all_sensors">Enable All Sensors</string>
   <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
   <string name="enable_location_tracking">Enable Location Tracking</string>
@@ -139,21 +149,7 @@ integration enabled on your home assistant instance.</string>
   <string name="home_assistant_not_discover">Unable to find your 
 Home Assistant instance</string>
   <string name="icon">Icon</string>
-  <string name="domain_scene">Scene</string>
-  <string name="domain_script">Script</string>
-  <string name="domain_climate">Climate</string>
-  <string name="domain_cover">Cover</string>
-  <string name="domain_input_number">Input Number</string>
-  <string name="domain_switch">Switch</string>
-  <string name="domain_automation">Automation</string>
-  <string name="domain_fan">Fan</string>
-  <string name="domain_light">Light</string>
-  <string name="domain_lock">Lock</string>
-  <string name="domain_input_boolean">Input Boolean</string>
   <string name="input_url">Home Assistant URL</string>
-  <string name="basic_sensor_name_current_time_zone">Current Time Zone</string>
-  <string name="sensor_description_current_time_zone">The current time zone the device is in</string>
-  <string name="sensor_name_time_zone">Time Zone Sensor</string>
   <string name="input_url_hint">https://example.duckdns.org:8123</string>
   <string name="label_attribute">Attribute:</string>
   <string name="label_dynamic_data">Data:</string>
@@ -273,6 +269,8 @@ like to connect to:</string>
   <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
   <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
   <string name="sensor_description_charging">Whether or not the device is actively charging</string>
+  <string name="sensor_description_current_time_zone">The current time zone the device is in</string>
+  <string name="sensor_description_current_version">The current installed application version</string>
   <string name="sensor_description_detected_activity">The current activity type as computed by Googles Activity Recognition API</string>
   <string name="sensor_description_device_locked">Whether the device is currently locked and requires a PIN, pattern or password to unlock.</string>
   <string name="sensor_description_device_secure">Whether the device is secured with a PIN, pattern or password.</string>
@@ -326,6 +324,7 @@ like to connect to:</string>
   <string name="sensor_description_wifi_state">Whether or not WiFi is enabled on the device</string>
   <string name="sensor_name_activity">Activity Sensors</string>
   <string name="sensor_name_alarm">Alarm Sensor</string>
+  <string name="sensor_name_app_sensor">App Sensors</string>
   <string name="sensor_name_audio">Audio Sensors</string>
   <string name="sensor_name_audio_mode">Audio Mode</string>
   <string name="sensor_name_battery">Battery Sensors</string>
@@ -351,6 +350,7 @@ like to connect to:</string>
   <string name="sensor_name_speakerphone">Speakerphone</string>
   <string name="sensor_name_steps">Steps Sensor</string>
   <string name="sensor_name_storage">Storage Sensors</string>
+  <string name="sensor_name_time_zone">Time Zone Sensor</string>
   <string name="sensor_name_traffic_stats">Traffic Stats Sensors</string>
   <string name="sensor_name_volume_alarm">Volume Level Alarm</string>
   <string name="sensor_name_volume_call">Volume Level Call</string>

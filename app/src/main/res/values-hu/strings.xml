@@ -24,6 +24,7 @@
   <string name="basic_sensor_name_call_number">Hívószám</string>
   <string name="basic_sensor_name_charger_type">Töltő típusa</string>
   <string name="basic_sensor_name_charging">Töltődik</string>
+  <string name="basic_sensor_name_current_version">Jelenlegi verzió</string>
   <string name="basic_sensor_name_device_locked">Eszköz zárolva</string>
   <string name="basic_sensor_name_device_secure">Eszköz biztonságos</string>
   <string name="basic_sensor_name_doze">Doze mód</string>
@@ -47,6 +48,7 @@
   <string name="basic_sensor_name_wifi_link_speed">WiFi kapcsolat sebessége</string>
   <string name="basic_sensor_name_wifi_signal">WiFi jelerősség</string>
   <string name="basic_sensor_name_wifi_state">WiFi állapot</string>
+  <string name="basic_sensor_sleep_events">Alvási események</string>
   <string name="basic_sensor_sleep_tracking">Alváskövetés</string>
   <string name="biometric_message">Feloldás biometrikus vagy képernyőzár hitelesítő adatokkal</string>
   <string name="biometric_set_title">Erősítsd meg a folytatáshoz</string>
@@ -69,6 +71,7 @@
   <string name="connect_to_home_internet">Győződj meg róla, hogy a telefonod az
 otthoni internetedre van csatlakoztatva.</string>
   <string name="connected_to_home_assistant">Csatlakoztatva a Home Assistant-hoz</string>
+  <string name="crash_reporting">Összeomlás jelentése</string>
   <string name="create_template">Sablon létrehozása</string>
   <string name="delete_all_notifications">Az összes értesítés törlése az előzményekből</string>
   <string name="delete_this_notification">Az értesítés törlése az előzményekből</string>
@@ -81,6 +84,17 @@ otthoni internetedre van csatlakoztatva.</string>
   <string name="dialog_add_panel_shortcut_title">Parancsikon létrehozása</string>
   <string name="disable_all_sensors">Az összes (%1$d) érzékelő letiltása</string>
   <string name="documentation">Dokumentáció</string>
+  <string name="domain_automation">Automatizálás</string>
+  <string name="domain_climate">Hűtés/fűtés</string>
+  <string name="domain_cover">Árnyékolás</string>
+  <string name="domain_fan">Ventilátor</string>
+  <string name="domain_input_boolean">Logikai bemenet</string>
+  <string name="domain_input_number">Szám bemenet</string>
+  <string name="domain_light">Világítás</string>
+  <string name="domain_lock">Zár</string>
+  <string name="domain_scene">Jelenet</string>
+  <string name="domain_script">Szkript</string>
+  <string name="domain_switch">Kapcsoló</string>
   <string name="enable_all_sensors">Az összes érzékelő engedélyezése</string>
   <string name="enable_all_sensors_summary">Minden szükséges engedélykérés fel lesz téve az engedélyezéskor</string>
   <string name="enable_remaining_sensors">%1$d érzékelő engedélyezése</string>
@@ -196,12 +210,13 @@ keresése a hálózaton</string>
 amihez csatlakozni szeretnél:</string>
   <string name="sensor">Érzékelő</string>
   <string name="sensor_description">Leírás</string>
-  <string name="sensor_description_battery_level">A készülék aktuális akkumulátorszintje</string>
+  <string name="sensor_description_battery_level">Az eszköz aktuális akkumulátorszintje</string>
   <string name="sensor_description_battery_state">Az akkumulátor aktuális töltési állapota</string>
   <string name="sensor_description_bluetooth_connection">Információ a jelenleg csatlakoztatott bluetooth eszközökről</string>
   <string name="sensor_description_call_number">A bejövő vagy kimenő hívás mobilszáma</string>
-  <string name="sensor_description_charger_type">A készülékhez csatlakoztatott töltő típusa</string>
+  <string name="sensor_description_charger_type">Az eszközhöz csatlakoztatott töltő típusa</string>
   <string name="sensor_description_charging">Az eszköz aktívan tölt-e</string>
+  <string name="sensor_description_current_version">A jelenlegi telepített alkalmazásverzió</string>
   <string name="sensor_description_device_locked">Azt jelzi, hogy az eszköz jelenleg zárolva van-e, és a zárolás feloldásához PIN-kód, minta vagy jelszó szükséges-e.</string>
   <string name="sensor_description_device_secure">Azt jelzi, hogy az eszköz PIN-kóddal, mintával vagy jelszóval van-e biztosítva.</string>
   <string name="sensor_description_dnd_sensor">A Ne Zavarjanak mód jelenlegi állapota</string>
@@ -211,10 +226,16 @@ amihez csatlakozni szeretnél:</string>
   <string name="sensor_description_keyguard_secure">Azt jelzi, hogy a billentyűzár pin-kóddal, mintával vagy jelszóval van biztosítva vagy egy SIM-kártya zárolva van.</string>
   <string name="sensor_description_last_notification">Az utolsó értesítés részletei.</string>
   <string name="sensor_description_light_sensor">A megvilágítás jelenlegi szintje</string>
+  <string name="sensor_description_lullaby">Ha altatódal szól</string>
   <string name="sensor_description_none">Nincs leírás</string>
   <string name="sensor_description_power_save">Az eszköz energiatakarékos módban van-e</string>
   <string name="sensor_description_public_ip">Az eszköz nyilvános IP-címe. Ennek engedélyezésével elfogadod a https://ipify.org külső szolgáltatás használatát az IP-cím meghatározásához.</string>
   <string name="sensor_description_sleep_tracking">Alváskövetés állapota a Sleep as Android-ból</string>
+  <string name="sensor_description_speakerphone">A kihangosító engedélyezve van-e az eszközön</string>
+  <string name="sensor_description_volume_alarm">Az eszközön lévő riasztások hangereje</string>
+  <string name="sensor_description_volume_call">Az eszköz hívásának hangereje</string>
+  <string name="sensor_description_volume_music">Az eszköz zenéjének hangereje</string>
+  <string name="sensor_description_volume_ring">Az eszköz csengetésének hangereje</string>
   <string name="sensor_description_wifi_connection">A hálózat neve amihez jelenleg kapcsolódva vagy</string>
   <string name="sensor_description_wifi_frequency">A csatlakoztatott hálózat frekvenciasávja</string>
   <string name="sensor_description_wifi_state">A WiFi be van-e kapcsolva az eszközön</string>
@@ -230,6 +251,7 @@ amihez csatlakozni szeretnél:</string>
   <string name="sensor_name_keyguard">Billentyűzár érzékelők</string>
   <string name="sensor_name_last_notification">Értesítési érzékelők</string>
   <string name="sensor_name_last_reboot">Utolsó újraindítás érzékelő</string>
+  <string name="sensor_name_last_update">Utolsó frissítés érzékelő</string>
   <string name="sensor_name_light">Fényérzékelő</string>
   <string name="sensor_name_location">Helyérzékelők</string>
   <string name="sensor_name_mic_muted">Mikrofon némítva</string>
