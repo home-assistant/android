@@ -145,6 +145,12 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
+    override fun isSsidUsed(): Boolean {
+        return runBlocking {
+            urlUseCase.getHomeWifiSsids().isNotEmpty()
+        }
+    }
+
     private fun parseColorWithRgb(colorString: String): Int {
         val c: Pattern = Pattern.compile("rgb *\\( *([0-9]+), *([0-9]+), *([0-9]+) *\\)")
         val m: Matcher = c.matcher(colorString)

@@ -211,4 +211,16 @@ class SettingsPresenterImpl @Inject constructor(
             }
         }
     }
+
+    override fun clearSsids() {
+        mainScope.launch {
+            urlUseCase.saveHomeWifiSsids(emptySet())
+        }
+    }
+
+    override fun isSsidUsed(): Boolean {
+        return runBlocking {
+            urlUseCase.getHomeWifiSsids().isNotEmpty()
+        }
+    }
 }

@@ -361,6 +361,11 @@ like to connect to:</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
   <string name="set_lock_title">App Locking Error</string>
+  <string name="location_disabled_title">Location is disabled</string>
+  <string name="location_disabled_option_message">To use this option, location needs to be enabled! Do you want to enable location?</string>
+  <string name="location_disabled_option_ssid_used_message">To use this option, location needs to be enabled! Do you want to enable location or disable this option?</string>
+  <string name="location_disabled_option_disable">Disable option</string>
+  <string name="location_disabled_general_message">The location is disabled. The following enabled options require you to enable location. If you do not enable the location, the sensors/settings will not work!\n\n%1$s\nDo you want to enable location?</string>
   <string name="settings">Settings</string>
   <string name="share_failed">Sharing with Home Assistant Failed!</string>
   <string name="share_success">Shared with Home Assistant</string>

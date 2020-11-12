@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webview
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -58,10 +59,12 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
@@ -245,6 +248,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         }
                     }
                     return false
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
                 }
             }
 
@@ -437,6 +444,34 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             recreate()
         if (!unlocked && !presenter.isLockEnabled())
             unlocked = true
+
+        checkAndWarnForDisabledLocation()
+    }
+
+    private fun checkAndWarnForDisabledLocation() {
+        var showLocationDisabledWarning = false
+        var options = ""
+        if (!DisabledLocationHandler.isLocationEnabled(this)) {
+            if (presenter.isSsidUsed()) {
+                showLocationDisabledWarning = true
+                options += "- " + getString(R.string.pref_connection_wifi) + "\n"
+            }
+            for (manager in SensorReceiver.MANAGERS) {
+                for (basicSensor in manager.availableSensors) {
+                    if (manager.isEnabled(this, basicSensor.id)) {
+                        var permissions = manager.requiredPermissions(basicSensor.id)
+                        if (DisabledLocationHandler.containsLocationPermission(permissions)) {
+                            showLocationDisabledWarning = true
+                            options += "- " + getString(basicSensor.name) + "\n"
+                        }
+                    }
+                }
+            }
+
+            if (showLocationDisabledWarning) {
+                DisabledLocationHandler.showLocationDisabledWarnDialog(this@WebViewActivity, this, getString(R.string.location_disabled_general_message, options))
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

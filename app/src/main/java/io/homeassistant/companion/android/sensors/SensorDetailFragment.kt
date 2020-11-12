@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 
 class SensorDetailFragment(
     private val sensorManager: SensorManager,
@@ -70,17 +71,28 @@ class SensorDetailFragment(
             it.setOnPreferenceChangeListener { _, newState ->
                 val isEnabled = newState as Boolean
 
-                if (isEnabled && !sensorManager.checkPermission(requireContext(), basicSensor.id)) {
+                if (isEnabled) {
                     val permissions = sensorManager.requiredPermissions(basicSensor.id)
-                    when {
-                        permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
-                            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q ->
-                            requestPermissions(permissions.toSet()
-                                .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0)
-                        else -> requestPermissions(permissions, 0)
+                    val context = requireContext()
+                    if (DisabledLocationHandler.containsLocationPermission(permissions) &&
+                        !DisabledLocationHandler.isLocationEnabled(context)) {
+                        DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
+                        return@setOnPreferenceChangeListener false
+                    } else {
+                        if (!sensorManager.checkPermission(context, basicSensor.id)) {
+                            when {
+                                permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
+                                    startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q ->
+                                    requestPermissions(
+                                        permissions.toSet()
+                                            .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0
+                                    )
+                                else -> requestPermissions(permissions, 0)
+                            }
+                            return@setOnPreferenceChangeListener false
+                        }
                     }
-                    return@setOnPreferenceChangeListener false
                 }
 
                 updateSensorEntity(isEnabled)

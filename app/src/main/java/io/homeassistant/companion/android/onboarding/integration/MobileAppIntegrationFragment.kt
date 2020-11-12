@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 
@@ -71,23 +72,33 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             findViewById<SwitchMaterial>(R.id.locationTracking)?.let {
                 val sensorId = LocationSensorManager.backgroundLocation.id
-                it.isChecked = LocationSensorManager().checkPermission(context, sensorId)
+                it.isChecked = DisabledLocationHandler.isLocationEnabled(context) && LocationSensorManager().checkPermission(context, sensorId)
                 it.setOnCheckedChangeListener { _, isChecked ->
-                    setLocationTracking(isChecked)
-                    if (isChecked && !LocationSensorManager().checkPermission(requireContext(), sensorId)) {
-                        dialog = AlertDialog.Builder(requireContext())
-                            .setTitle(R.string.enable_location_tracking)
-                            .setMessage(R.string.enable_location_tracking_prompt)
-                            .setPositiveButton(android.R.string.ok) { _, _ ->
-                                requestPermissions(
-                                    sensorId
-                                )
+                    var checked = false
+                    if (isChecked) {
+                        if (!DisabledLocationHandler.isLocationEnabled(context)) {
+                            DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
+                        } else {
+                            if (!LocationSensorManager().checkPermission(requireContext(), sensorId)) {
+                                dialog = AlertDialog.Builder(requireContext())
+                                    .setTitle(R.string.enable_location_tracking)
+                                    .setMessage(R.string.enable_location_tracking_prompt)
+                                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                                        requestPermissions(
+                                            sensorId
+                                        )
+                                    }
+                                    .setNegativeButton(android.R.string.cancel) { _, _ -> }
+                                    .create()
+                                dialog?.show()
+                            } else {
+                                checked = true
                             }
-                            .setNegativeButton(android.R.string.cancel) { _, _ -> }
-                            .setOnDismissListener { _ -> it.isChecked = LocationSensorManager().checkPermission(requireContext(), sensorId) }
-                            .create()
-                        dialog?.show()
+                        }
                     }
+
+                    setLocationTracking(checked)
+                    it.isChecked = checked
                 }
             }
 

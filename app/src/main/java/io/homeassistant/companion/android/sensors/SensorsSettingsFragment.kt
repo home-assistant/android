@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 import javax.inject.Inject
 
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
@@ -98,36 +99,47 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
             var permArray: Array<String> = arrayOf()
             it.setOnPreferenceChangeListener { _, newState ->
+                val context = requireContext()
                 val enabledAll = newState as Boolean
-                val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
-                SensorReceiver.MANAGERS.forEach { managers ->
-                    managers.availableSensors.forEach { basicSensor ->
-                        var sensorEntity = sensorDao.get(basicSensor.id)
+                if (!DisabledLocationHandler.isLocationEnabled(context)) {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
+                    return@setOnPreferenceChangeListener false
+                } else {
 
-                        if (!managers.checkPermission(requireContext(), basicSensor.id))
-                            permArray += managers.requiredPermissions(basicSensor.id).asList()
+                    val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
-                        if (sensorEntity != null) {
-                            sensorEntity.enabled = enabledAll
-                            sensorEntity.lastSentState = ""
-                            sensorDao.update(sensorEntity)
-                        } else {
-                            sensorEntity = Sensor(basicSensor.id, enabledAll, false, "")
-                            sensorDao.add(sensorEntity)
+                    SensorReceiver.MANAGERS.forEach { managers ->
+                        managers.availableSensors.forEach { basicSensor ->
+                            var sensorEntity = sensorDao.get(basicSensor.id)
+
+                            if (!managers.checkPermission(requireContext(), basicSensor.id))
+                                permArray += managers.requiredPermissions(basicSensor.id).asList()
+
+                            if (sensorEntity != null) {
+                                sensorEntity.enabled = enabledAll
+                                sensorEntity.lastSentState = ""
+                                sensorDao.update(sensorEntity)
+                            } else {
+                                sensorEntity = Sensor(basicSensor.id, enabledAll, false, "")
+                                sensorDao.add(sensorEntity)
+                            }
                         }
                     }
-                }
-                if (!permArray.isNullOrEmpty())
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        requestPermissions(permArray.toSet()
-                            .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                            .toTypedArray(), 0)
-                    } else {
-                        requestPermissions(permArray, 0)
-                    }
 
-                return@setOnPreferenceChangeListener true
+                    if (!permArray.isNullOrEmpty()) {
+                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                            requestPermissions(
+                                permArray.toSet()
+                                    .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                                    .toTypedArray(), 0
+                            )
+                        } else {
+                            requestPermissions(permArray, 0)
+                        }
+                    }
+                    return@setOnPreferenceChangeListener true
+                }
             }
         }
 

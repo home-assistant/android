@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -34,6 +35,7 @@ import io.homeassistant.companion.android.settings.notification.NotificationHist
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -42,12 +44,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     companion object {
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
         private const val LOCATION_REQUEST_CODE = 0
-
         fun newInstance() = SettingsFragment()
     }
 
     @Inject
     lateinit var presenter: SettingsPresenter
+
     @Inject
     lateinit var langProvider: LanguagesProvider
     private lateinit var authenticator: Authenticator
@@ -245,16 +247,28 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
         if (preference is SsidPreference) {
-            lateinit var permissionToCheck: String
+            lateinit var permissionsToCheck: Array<String>
+            if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                permissionToCheck = android.Manifest.permission.ACCESS_FINE_LOCATION
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                permissionToCheck = android.Manifest.permission.ACCESS_COARSE_LOCATION
-            }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    permissionsToCheck = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    permissionsToCheck = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                }
 
-            if (permissionToCheck.isNullOrEmpty() || checkPermission(permissionToCheck, LOCATION_REQUEST_CODE)) {
-                openSsidDialog()
+                if (permissionsToCheck.isNullOrEmpty() || checkPermission(permissionsToCheck, LOCATION_REQUEST_CODE)) {
+                    openSsidDialog()
+                }
+            } else {
+                val context = requireContext()
+                if (presenter.isSsidUsed()) {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_ssid_used_message), true) {
+                        presenter.clearSsids()
+                        preference.setSsids(emptySet())
+                    }
+                } else {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
+                }
             }
         } else {
             super.onDisplayPreferenceDialog(preference)
@@ -316,9 +330,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
-    fun checkPermission(permission: String, requestCode: Int): Boolean {
-        return if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
-            requestPermissions(arrayOf(permission), requestCode)
+    fun checkPermission(permissions: Array<String>, requestCode: Int): Boolean {
+        val permissionsNeeded = mutableListOf<String>()
+        for (permission in permissions) {
+            if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+                permissionsNeeded.add(permission)
+            }
+        }
+        return if (permissionsNeeded.isNotEmpty()) {
+            requestPermissions(permissionsNeeded.toTypedArray(), requestCode)
             false
         } else true
     }
@@ -349,10 +369,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         updateBackgroundAccessPref()
-        if (requestCode == LOCATION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED
-            ) {
+
+        if (requestCode == LOCATION_REQUEST_CODE && grantResults.isNotEmpty()) {
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 openSsidDialog()
             }
         }

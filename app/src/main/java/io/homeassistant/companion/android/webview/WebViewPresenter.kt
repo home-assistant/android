@@ -20,4 +20,6 @@ interface WebViewPresenter {
     fun getSessionExpireMillis(): Long
 
     fun onFinish()
+
+    fun isSsidUsed(): Boolean
 }
