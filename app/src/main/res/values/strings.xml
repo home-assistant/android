@@ -151,6 +151,9 @@ Home Assistant instance</string>
   <string name="domain_lock">Lock</string>
   <string name="domain_input_boolean">Input Boolean</string>
   <string name="input_url">Home Assistant URL</string>
+  <string name="basic_sensor_name_current_time_zone">Current Time Zone</string>
+  <string name="sensor_description_current_time_zone">The current time zone the device is in</string>
+  <string name="sensor_name_time_zone">Time Zone Sensor</string>
   <string name="input_url_hint">https://example.duckdns.org:8123</string>
   <string name="label_attribute">Attribute:</string>
   <string name="label_dynamic_data">Data:</string>
