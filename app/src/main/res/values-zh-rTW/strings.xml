@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="add_service_data_field">新增欄位</string>
   <string name="add_widget">新增小工具</string>
   <string name="app_version_info">應用程式詳細資料</string>
   <string name="application_version">應用程式版本</string>
@@ -160,6 +161,7 @@
   <string name="notification_history">通知紀錄</string>
   <string name="notification_history_summary">近期的通知 (顯示最近收到的 25 則通知)</string>
   <string name="notification_message">訊息</string>
+  <string name="notification_received_at">通知接收於</string>
   <string name="notifications">通知提示</string>
   <string name="other_settings">其他設定</string>
   <string name="password">密碼</string>
