@@ -454,18 +454,22 @@ class MessagingService : FirebaseMessagingService() {
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        val notificationWhen = data[WHEN]?.toLong()?.times(1000) ?: 0
-        val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
+        try { // Without this, a non-numeric when value will crash the app
+            val notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
+            val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
 
-        if (notificationWhen != 0L) {
-            builder.setWhen(notificationWhen)
-            builder.setUsesChronometer(usesChronometer)
+            if (notificationWhen != 0L) {
+                builder.setWhen(notificationWhen)
+                builder.setUsesChronometer(usesChronometer)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                val countdown = notificationWhen > System.currentTimeMillis()
-                builder.addExtras(Bundle()) // Without this builder.setChronometerCountDown throws a null reference exception
-                builder.setChronometerCountDown(countdown)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    val countdown = notificationWhen > System.currentTimeMillis()
+                    builder.addExtras(Bundle()) // Without this builder.setChronometerCountDown throws a null reference exception
+                    builder.setChronometerCountDown(countdown)
+                }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error while handling chronometer notification", e)
         }
     }
 
