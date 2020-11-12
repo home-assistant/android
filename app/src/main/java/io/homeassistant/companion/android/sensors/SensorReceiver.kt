@@ -46,6 +46,7 @@ class SensorReceiver : BroadcastReceiver() {
             ProximitySensorManager(),
             StepsSensorManager(),
             StorageSensorManager(),
+            TimeZoneManager(),
             TrafficStatsManager()
         )
 

@@ -24,6 +24,7 @@
   <string name="basic_sensor_name_call_number">电话号码</string>
   <string name="basic_sensor_name_charger_type">充电类型</string>
   <string name="basic_sensor_name_charging">正在充电</string>
+  <string name="basic_sensor_name_current_version">当前版本</string>
   <string name="basic_sensor_name_device_locked">设备已锁定</string>
   <string name="basic_sensor_name_device_secure">设备安全</string>
   <string name="basic_sensor_name_doze">低电耗模式</string>
@@ -80,6 +81,8 @@
   <string name="connect_to_home_internet">确保手机已连接
 到您的家庭互联网。</string>
   <string name="connected_to_home_assistant">连接到 Home Assistant</string>
+  <string name="crash_reporting">崩溃报告</string>
+  <string name="crash_reporting_summary">启用此功能可帮助开发人员修复错误和崩溃。如果应用程序崩溃，它将自动生成并发送报告。如果您发现崩溃，请在Github上创建一个问题！</string>
   <string name="create_template">创建模板</string>
   <string name="database_event_failure">无法将迁移失败事件发送到Home Assistant</string>
   <string name="database_migration_failed">数据库迁移失败，所有传感器和窗口小部件数据已重置。请重新启用传感器并重新创建小部件。</string>
@@ -241,6 +244,7 @@ Home Assistant实例</string>
   <string name="sensor_description_call_number">来电或去电的手机号码</string>
   <string name="sensor_description_charger_type">当前插入设备的充电器类型</string>
   <string name="sensor_description_charging">设备是否正在充电</string>
+  <string name="sensor_description_current_version">当前安装的应用程序版本</string>
   <string name="sensor_description_detected_activity">由Google的Activity Recognition API计算出的当前活动类型</string>
   <string name="sensor_description_device_locked">是否锁定当前设备，并且需要PIN，图案或密码才能解锁。</string>
   <string name="sensor_description_device_secure">设备是否用PIN，图案或密码保护。</string>
@@ -294,6 +298,7 @@ Home Assistant实例</string>
   <string name="sensor_description_wifi_state">设备上是否启用了WiFi</string>
   <string name="sensor_name_activity">活动传感器</string>
   <string name="sensor_name_alarm">报警传感器</string>
+  <string name="sensor_name_app_sensor">应用传感器</string>
   <string name="sensor_name_audio">音频传感器</string>
   <string name="sensor_name_audio_mode">音频模式</string>
   <string name="sensor_name_battery">电池传感器</string>

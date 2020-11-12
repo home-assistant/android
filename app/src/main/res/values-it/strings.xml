@@ -13,6 +13,7 @@
   <string name="background_access_disabled">Home Assistant non ha accesso all\'esecuzione in background. Fare clic qui per richiedere le autorizzazioni.</string>
   <string name="background_access_enabled">Home Assistant ha accesso all\'esecuzione in background.</string>
   <string name="background_access_title">Accesso in background</string>
+  <string name="basic_sensor_lullaby">Ninna nanna</string>
   <string name="basic_sensor_name_activity">Attività rilevata</string>
   <string name="basic_sensor_name_alarm">Prossimo Allarme</string>
   <string name="basic_sensor_name_battery_health">Integrità della batteria</string>
@@ -23,6 +24,7 @@
   <string name="basic_sensor_name_call_number">Chiama il numero</string>
   <string name="basic_sensor_name_charger_type">Tipo di caricabatterie</string>
   <string name="basic_sensor_name_charging">È in carica</string>
+  <string name="basic_sensor_name_current_version">Versione attuale</string>
   <string name="basic_sensor_name_device_locked">Dispositivo bloccato</string>
   <string name="basic_sensor_name_device_secure">Dispositivo sicuro</string>
   <string name="basic_sensor_name_doze">Modalità Doze</string>
@@ -34,6 +36,7 @@
   <string name="basic_sensor_name_keyguard_secure">Protezione blocco tastiera</string>
   <string name="basic_sensor_name_last_notification">Ultima notifica</string>
   <string name="basic_sensor_name_last_reboot">Ultimo riavvio</string>
+  <string name="basic_sensor_name_last_update">Ultimo aggiornamento di attivazione</string>
   <string name="basic_sensor_name_location_accurate">Singola posizione accurata</string>
   <string name="basic_sensor_name_location_background">Posizione in background</string>
   <string name="basic_sensor_name_location_zone">Zona di localizzazione</string>
@@ -53,9 +56,12 @@
   <string name="basic_sensor_name_wifi_link_speed">Velocità di collegamento WiFi</string>
   <string name="basic_sensor_name_wifi_signal">Potenza del segnale WiFi</string>
   <string name="basic_sensor_name_wifi_state">Stato WiFi</string>
+  <string name="basic_sensor_sleep_events">Eventi Sleep</string>
+  <string name="basic_sensor_sleep_tracking">Monitoraggio del sonno</string>
   <string name="biometric_message">Sbloccare usando le credenziali biometriche o del blocca schermo</string>
   <string name="biometric_set_title">Conferma per continuare</string>
   <string name="biometric_title">Home Assistant è bloccato</string>
+  <string name="broadcast_intent_error">Impossibile inviare l\'intento di trasmissione, si prega di controllare il formato del comando</string>
   <string name="calendar">Calendario</string>
   <string name="cancel">Annulla</string>
   <string name="changelog">Registro delle modifiche</string>
@@ -75,6 +81,8 @@
   <string name="connect_to_home_internet">Assicurati che il tuo telefono sia collegato 
 alla rete Internet di casa tua.</string>
   <string name="connected_to_home_assistant">Connesso a Home Assistant</string>
+  <string name="crash_reporting">Segnalazione di arresti anomali</string>
+  <string name="crash_reporting_summary">Aiuta gli sviluppatori a correggere bug e arresti anomali lasciandolo abilitato. Se l\'applicazione si arresta in modo anomalo, verrà automaticamente generato e inviato un rapporto. Se noti un crash crea anche un problema su Github!</string>
   <string name="create_template">Crea modello</string>
   <string name="database_event_failure">Impossibile inviare l\'evento di errore di migrazione a Home Assistant</string>
   <string name="database_migration_failed">Migrazione del database fallita, tutti i dati dei sensori e dei widget sono stati resettati. Si prega di riattivare i sensori e di ricreare i widget.</string>
@@ -89,6 +97,17 @@ alla rete Internet di casa tua.</string>
   <string name="dialog_add_panel_shortcut_title">Aggiungi collegamento</string>
   <string name="disable_all_sensors">Disabilita tutti i %1$d sensori</string>
   <string name="documentation">Documentazione</string>
+  <string name="domain_automation">Automazione</string>
+  <string name="domain_climate">Termostato</string>
+  <string name="domain_cover">Scuri</string>
+  <string name="domain_fan">Ventilatore</string>
+  <string name="domain_input_boolean">Input booleano</string>
+  <string name="domain_input_number">Input numerico</string>
+  <string name="domain_light">Luce</string>
+  <string name="domain_lock">Serratura</string>
+  <string name="domain_scene">Scena</string>
+  <string name="domain_script">Script</string>
+  <string name="domain_switch">Interruttore</string>
   <string name="enable_all_sensors">Abilita tutti i sensori</string>
   <string name="enable_all_sensors_summary">Tutte le autorizzazioni necessarie saranno richieste al momento dell\'abilitazione</string>
   <string name="enable_location_tracking">Abilita il rilevamento della posizione</string>
@@ -237,6 +256,7 @@ Scansione della rete</string>
   <string name="sensor_description_call_number">Il numero di cellulare della chiamata in entrata o in uscita</string>
   <string name="sensor_description_charger_type">Il tipo di caricabatterie attualmente collegato al dispositivo</string>
   <string name="sensor_description_charging">Indica se il dispositivo si sta caricando attivamente o meno</string>
+  <string name="sensor_description_current_version">L\'attuale versione dell\'applicazione installata</string>
   <string name="sensor_description_detected_activity">Il tipo di attività corrente come calcolato da Googles Activity Recognition API</string>
   <string name="sensor_description_device_locked">Indica se il dispositivo è attualmente bloccato e richiede un PIN, una sequenza o una password per sbloccarlo.</string>
   <string name="sensor_description_device_secure">Indica se il dispositivo è protetto con un PIN, una sequenza o una password.</string>
@@ -251,10 +271,12 @@ Scansione della rete</string>
   <string name="sensor_description_keyguard_secure">Se il blocco tastiera è protetto da un PIN, una sequenza o una password o una scheda SIM è attualmente bloccata.</string>
   <string name="sensor_description_last_notification">Dettagli dell\'ultima notifica.</string>
   <string name="sensor_description_last_reboot">La data e l\'ora dell\'ultimo riavvio dei dispositivi. L\'impostazione seguente ti consentirà di regolare la zona neutra in millisecondi, se trovi ancora che il valore salti in modo errato. Il valore predefinito è 60000 (1 minuto).</string>
+  <string name="sensor_description_last_update">Lo scopo dell\'ultimo aggiornamento inviato, gli aggiornamenti periodici verranno visualizzati come \"SensorWorker\".</string>
   <string name="sensor_description_light_sensor">L\'attuale livello d\'illuminamento</string>
-  <string name="sensor_description_location_accurate">Consenti a Home Assistant di inviare una notifica per richiedere una posizione accurata insieme all\'applicazione che richiede periodicamente una posizione accurata.  L\'impostazione Precisione minima consente di decidere l\'accuratezza della posizione del dispositivo (in metri) per l\'invio all\'Assistente Home.  Il tempo minimo tra gli aggiornamenti (in millisecondi) impedisce al dispositivo di inviare la posizione accurata troppo spesso.</string>
+  <string name="sensor_description_location_accurate">Consenti a Home Assistant di inviare una notifica per richiedere una posizione accurata insieme all\'applicazione richiedente periodicamente una posizione accurata.  L\'impostazione \"Precisione Minima\" ti consente di decidere quanto accurata deve essere la posizione del dispositivo (in metri) in modo da inviarla ad Home Assistant.  Il \"Tempo minimo tra gli aggiornamenti\" (in millisecondi) impedisce al dispositivo di inviare la posizione accurata troppo frequentemente. L\'impostazione \"Includi nell\'aggiornamento del sensore\" farà una richiesta di posizione ad ogni aggiornamento dello stesso. </string>
   <string name="sensor_description_location_background">Aggiorna periodicamente la tua posizione dietro le quinte. L\'impostazione di Precisione Minima permetterà di decidere quanto precisa deve essere la posizione del dispositivo (in metri) per poterlo inviare a Home Assistant.</string>
   <string name="sensor_description_location_zone">Importa le zone esistenti di Home Assistant come recinti geografici virtuali per il tracciamento basato sulle zone. L\'impostazione Precisione Minima ti consentirà di decidere quanto deve essere precisa la posizione del dispositivo (in metri) per poterlo inviare a Home Assistant.</string>
+  <string name="sensor_description_lullaby">Se una ninna nanna sta suonando</string>
   <string name="sensor_description_mic_muted">Indica se il microfono è disattivato o meno sul dispositivo</string>
   <string name="sensor_description_mobile_rx_gb">GB totali ricevuti sulla rete dati cellulare dall\'ultimo riavvio del dispositivo</string>
   <string name="sensor_description_mobile_tx_gb">GB totali trasmessi sulla rete dati cellulare dall\'ultimo riavvio del dispositivo</string>
@@ -268,6 +290,8 @@ Scansione della rete</string>
   <string name="sensor_description_public_ip">L\'indirizzo IP pubblico del dispositivo. Abilitando questa opzione, accetti di utilizzare il servizio esterno https://ipify.org per determinare l\'indirizzo IP.</string>
   <string name="sensor_description_sim_1">Informazioni sul provider di telefonia mobile corrente nello slot SIM 1</string>
   <string name="sensor_description_sim_2">Informazioni sul provider di telefonia mobile corrente nello slot SIM 2</string>
+  <string name="sensor_description_sleep_events">Eventi occasionali aggiuntivi da Sleep as Android</string>
+  <string name="sensor_description_sleep_tracking">Stato di monitoraggio del sonno da Sleep as Android</string>
   <string name="sensor_description_speakerphone">Indica se il vivavoce è abilitato o meno sul dispositivo</string>
   <string name="sensor_description_steps_sensor">Il numero totale di passi dall\'ultimo riavvio del dispositivo</string>
   <string name="sensor_description_storage_sensor">Informazioni sullo spazio di archiviazione totale e disponibile internamente ed esternamente</string>
@@ -286,6 +310,7 @@ Scansione della rete</string>
   <string name="sensor_description_wifi_state">Indica se il WiFi è abilitato o meno sul dispositivo</string>
   <string name="sensor_name_activity">Sensori di attività</string>
   <string name="sensor_name_alarm">Sensore di Allarme</string>
+  <string name="sensor_name_app_sensor">Sensori App</string>
   <string name="sensor_name_audio">Sensori Audio</string>
   <string name="sensor_name_audio_mode">Modalità Audio</string>
   <string name="sensor_name_battery">Sensori della batteria</string>
@@ -296,6 +321,7 @@ Scansione della rete</string>
   <string name="sensor_name_keyguard">Sensori di blocco tastiera</string>
   <string name="sensor_name_last_notification">Sensori di notifica</string>
   <string name="sensor_name_last_reboot">Sensore ultimo riavvio</string>
+  <string name="sensor_name_last_update">Ultimo aggiornamento del sensore</string>
   <string name="sensor_name_light">Sensore di luce</string>
   <string name="sensor_name_location">Sensori di posizione</string>
   <string name="sensor_name_mic_muted">Microfono Silenziato</string>
@@ -306,6 +332,7 @@ Scansione della rete</string>
   <string name="sensor_name_pressure">Sensore di pressione</string>
   <string name="sensor_name_proximity">Sensore di prossimità</string>
   <string name="sensor_name_ringer_mode">Modalità Suoneria</string>
+  <string name="sensor_name_sleep_as_android">Sensori Sleep as Android</string>
   <string name="sensor_name_speakerphone">Vivavoce</string>
   <string name="sensor_name_steps">Contapassi</string>
   <string name="sensor_name_storage">Sensori di archiviazione</string>

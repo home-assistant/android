@@ -24,6 +24,7 @@
   <string name="basic_sensor_name_call_number">Telefonnummer</string>
   <string name="basic_sensor_name_charger_type">Lader type</string>
   <string name="basic_sensor_name_charging">Lader</string>
+  <string name="basic_sensor_name_current_version">Gjeldende versjon</string>
   <string name="basic_sensor_name_device_locked">Enhet låst</string>
   <string name="basic_sensor_name_device_secure">Enhet sikker</string>
   <string name="basic_sensor_name_doze">Doze modus</string>
@@ -80,6 +81,8 @@
   <string name="connect_to_home_internet">Forsikre deg om at telefonen er tilkoblet 
 ditt hjemmenettverk</string>
   <string name="connected_to_home_assistant">Koblet til Home Assistant</string>
+  <string name="crash_reporting">Feilrapportering</string>
+  <string name="crash_reporting_summary">Hjelp utviklerne med å fikse feil ved å la dette være aktivert. Hvis appen krasjer, vil dette automatisk generere og sende en rapport. Hvis du oppdager en feil, opprett også et problem på GitHub!</string>
   <string name="create_template">Opprett mal</string>
   <string name="database_event_failure">Kan ikke sende migreringsfeilhendelse til Home Assistant</string>
   <string name="database_migration_failed">Databasemigrering mislyktes, alle sensor- og moduldata er tilbakestilt. Aktiver sensorene dine på nytt og opprett modulene dine på nytt.</string>
@@ -94,6 +97,17 @@ ditt hjemmenettverk</string>
   <string name="dialog_add_panel_shortcut_title">Legg til snarvei</string>
   <string name="disable_all_sensors">Deaktiver alle %1$d sensorer</string>
   <string name="documentation">Dokumentasjon</string>
+  <string name="domain_automation">Automasjon</string>
+  <string name="domain_climate">Klima</string>
+  <string name="domain_cover">Dekke</string>
+  <string name="domain_fan">Vifte</string>
+  <string name="domain_input_boolean">Innputt boolsk</string>
+  <string name="domain_input_number">Innputt nummer</string>
+  <string name="domain_light">Lys</string>
+  <string name="domain_lock">Lås</string>
+  <string name="domain_scene">Scene</string>
+  <string name="domain_script">Skript</string>
+  <string name="domain_switch">Bryter</string>
   <string name="enable_all_sensors">Aktiver alle sensorer</string>
   <string name="enable_all_sensors_summary">Alle nødvendige tillatelser vil bli forespurt ved aktivering</string>
   <string name="enable_location_tracking">Aktiver posisjonssporing</string>
@@ -245,6 +259,7 @@ for Home Assistant</string>
   <string name="sensor_description_call_number">Telefonnummeret til den innkommende eller utgående samtalen</string>
   <string name="sensor_description_charger_type">Type lader som er tilkoblet enheten for øyeblikket</string>
   <string name="sensor_description_charging">Hvorvidt enheten lades aktivt</string>
+  <string name="sensor_description_current_version">Gjeldende installerte applikasjonsversjonen</string>
   <string name="sensor_description_detected_activity">Gjeldende aktivitetstype som beregnes av Googles API for aktivitetsgjenkjenning</string>
   <string name="sensor_description_device_locked">Hvorvidt enheten for øyeblikket er låst og krever PIN-kode, mønster eller passord for å låse opp</string>
   <string name="sensor_description_device_secure">Hvorvidt enheten er sikret med en PIN-kode, et mønster eller passord</string>
@@ -298,6 +313,7 @@ for Home Assistant</string>
   <string name="sensor_description_wifi_state">Hvorvidt WiFi er aktivert på enheten</string>
   <string name="sensor_name_activity">Aktivitetssensorer</string>
   <string name="sensor_name_alarm">Alarmsensor</string>
+  <string name="sensor_name_app_sensor">App-sensorer</string>
   <string name="sensor_name_audio">Lydsensor</string>
   <string name="sensor_name_audio_mode">Lydmodus</string>
   <string name="sensor_name_battery">Batterisensorer</string>
@@ -366,7 +382,7 @@ for Home Assistant</string>
   <string name="themes_option_label_light">Lys</string>
   <string name="themes_option_label_system">Følg systeminnstillinger</string>
   <string name="themes_title_settings">Tema</string>
-  <string name="tts_error">Kunne ikke behandle varselet \" %1$s \" som tekst til tale</string>
+  <string name="tts_error">Kunne ikke behandle varselet \"%1$s\" som tekst til tale</string>
   <string name="tts_no_title">Vennligst angi en tittel for tekst til tale som skal behandles</string>
   <string name="unable_to_register">Kunne ikke registrere applikasjonen</string>
   <string name="unique_id">Unik ID</string>

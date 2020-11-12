@@ -24,6 +24,7 @@
   <string name="basic_sensor_name_call_number">Telefonní číslo</string>
   <string name="basic_sensor_name_charger_type">Typ nabíječky</string>
   <string name="basic_sensor_name_charging">Nabíjí se</string>
+  <string name="basic_sensor_name_current_version">Současná verze</string>
   <string name="basic_sensor_name_device_locked">Zařízení uzamčeno</string>
   <string name="basic_sensor_name_device_secure">Zabezpečené zařízení</string>
   <string name="basic_sensor_name_doze">Režim Doze</string>
@@ -94,6 +95,17 @@
   <string name="dialog_add_panel_shortcut_title">Přidat zástupce</string>
   <string name="disable_all_sensors">Deaktivovat všech %1$d senzorů</string>
   <string name="documentation">Dokumentace</string>
+  <string name="domain_automation">Automatizace</string>
+  <string name="domain_climate">Klima</string>
+  <string name="domain_cover">Roleta</string>
+  <string name="domain_fan">Ventilátor</string>
+  <string name="domain_input_boolean">Pomocníci - přepínače</string>
+  <string name="domain_input_number">Pomocníci - čísla</string>
+  <string name="domain_light">Světlo</string>
+  <string name="domain_lock">Zámek</string>
+  <string name="domain_scene">Scéna</string>
+  <string name="domain_script">Skript</string>
+  <string name="domain_switch">Přepínač</string>
   <string name="enable_all_sensors">Povolit všechny senzory</string>
   <string name="enable_all_sensors_summary">Všechna požadovaná oprávnění budou vyžádána po povolení</string>
   <string name="enable_location_tracking">Povolit sledování polohy</string>
@@ -238,6 +250,7 @@ integraci povolenou v Home Assistant.</string>
   <string name="sensor_description_call_number">Telefonní číslo odchozího nebo příchozího volání</string>
   <string name="sensor_description_charger_type">Aktuální typ nabíječky zapojené do zařízení</string>
   <string name="sensor_description_charging">Zda-li se zařízení aktivně nabíjí</string>
+  <string name="sensor_description_current_version">Aktuálně nainstalovaná verze aplikace</string>
   <string name="sensor_description_detected_activity">Aktuální typ aktivity vyhodnocený pomocí Google Activity Recognition API</string>
   <string name="sensor_description_device_locked">Zda-li je zařízení aktuálně uzamčeno a vyžaduje odemčení PINem, znakem nebo heslem.</string>
   <string name="sensor_description_device_secure">Zda-li je zařízení zabezpečeno PINem, znakem nebo heslem.</string>
@@ -290,6 +303,7 @@ integraci povolenou v Home Assistant.</string>
   <string name="sensor_description_wifi_state">Zda-li je v zařízení WiFi povoleno</string>
   <string name="sensor_name_activity">Senzor Aktivity</string>
   <string name="sensor_name_alarm">Senzor Budíku</string>
+  <string name="sensor_name_app_sensor">Senzory aplikace</string>
   <string name="sensor_name_audio">Senzory Zvuku</string>
   <string name="sensor_name_audio_mode">Režim zvuku</string>
   <string name="sensor_name_battery">Senzory Baterie</string>
