@@ -8,7 +8,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
-import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.graphics.drawable.DrawableCompat
@@ -25,6 +24,10 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MultiWidgetDao
 import io.homeassistant.companion.android.database.widget.MultiWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetButtonEntity
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementType
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetPlaintextEntity
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetTemplateEntity
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -35,41 +38,34 @@ import kotlinx.coroutines.launch
 class MultiWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "MultiWidget"
-        private const val CALL_LOWER_SERVICE =
-            "io.homeassistant.companion.android.widgets.multi.MultiWidget.CALL_LOWER_SERVICE"
-        private const val CALL_UPPER_SERVICE =
-            "io.homeassistant.companion.android.widgets.multi.MultiWidget.CALL_UPPER_SERVICE"
+        private const val CALL_SERVICE =
+            "io.homeassistant.companion.android.widgets.multi.MultiWidget.CALL_SERVICE"
         internal const val RECEIVE_DATA =
             "io.homeassistant.companion.android.widgets.multi.MultiWidget.RECEIVE_DATA"
         private const val UPDATE_WIDGET =
             "io.homeassistant.companion.android.widgets.multi.MultiWidget.UPDATE_WIDGET"
 
-        internal const val EXTRA_UPPER_BUTTON = "EXTRA_UPPER_BUTTON"
-        internal const val EXTRA_UPPER_ICON_ID = "EXTRA_UPPER_ICON_ID"
-        internal const val EXTRA_UPPER_DOMAIN = "EXTRA_UPPER_DOMAIN"
-        internal const val EXTRA_UPPER_SERVICE = "EXTRA_UPPER_SERVICE"
-        internal const val EXTRA_UPPER_SERVICE_DATA = "EXTRA_UPPER_SERVICE_DATA"
-        internal const val EXTRA_LOWER_BUTTON = "EXTRA_LOWER_BUTTON"
-        internal const val EXTRA_LOWER_ICON_ID = "EXTRA_LOWER_ICON_ID"
-        internal const val EXTRA_LOWER_DOMAIN = "EXTRA_LOWER_DOMAIN"
-        internal const val EXTRA_LOWER_SERVICE = "EXTRA_LOWER_SERVICE"
-        internal const val EXTRA_LOWER_SERVICE_DATA = "EXTRA_LOWER_SERVICE_DATA"
-        internal const val EXTRA_LABEL_TYPE = "EXTRA_LABEL_TYPE"
-        internal const val EXTRA_LABEL = "EXTRA_LABEL"
-        internal const val EXTRA_LABEL_TEXT_SIZE = "EXTRA_LABEL_TEXT_SIZE"
-        internal const val EXTRA_LABEL_MAX_LINES = "EXTRA_LABEL_MAX_LINES"
-        internal const val EXTRA_TEMPLATE = "EXTRA_TEMPLATE"
-        internal const val EXTRA_TEMPLATE_TEXT_SIZE = "EXTRA_TEMPLATE_TEXT_SIZE"
-        internal const val EXTRA_TEMPLATE_MAX_LINES = "EXTRA_TEMPLATE_MAX_LINES"
+        // Const for identifying which button is being pressed
+        private const val ELEMENT_ID = "INTENT_ELEMENT_ID"
 
-        internal const val EXTRA_ELEMENT_COUNT = "EXTRA_ELEMENT_COUNT"
+        // Const for passing the number and types of elements from config
+        internal const val EXTRA_ELEMENT_TYPES = "EXTRA_ELEMENT_TYPES"
+
+        // Button element constants
         internal const val EXTRA_DOMAIN = "EXTRA_DOMAIN_"
         internal const val EXTRA_SERVICE = "EXTRA_SERVICE_"
         internal const val EXTRA_SERVICE_DATA = "EXTRA_SERVICE_DATA_"
         internal const val EXTRA_ICON_ID = "EXTRA_ICON_ID_"
 
-        internal const val LABEL_PLAINTEXT = 0
-        internal const val LABEL_TEMPLATE = 1
+        // Plaintext element constants
+        internal const val EXTRA_LABEL = "EXTRA_LABEL_"
+        internal const val EXTRA_LABEL_TEXT_SIZE = "EXTRA_LABEL_TEXT_SIZE_"
+        internal const val EXTRA_LABEL_MAX_LINES = "EXTRA_LABEL_MAX_LINES_"
+
+        // Template element constants
+        internal const val EXTRA_TEMPLATE = "EXTRA_TEMPLATE_"
+        internal const val EXTRA_TEMPLATE_TEXT_SIZE = "EXTRA_TEMPLATE_TEXT_SIZE_"
+        internal const val EXTRA_TEMPLATE_MAX_LINES = "EXTRA_TEMPLATE_MAX_LINES_"
 
         // Label text size units are in SP
         internal const val LABEL_TEXT_SMALL = 12
@@ -131,8 +127,7 @@ class MultiWidget : AppWidgetProvider() {
         when (action) {
             UPDATE_WIDGET -> updateAppWidget(context, appWidgetId)
             RECEIVE_DATA -> saveConfiguration(context, intent.extras, appWidgetId)
-            CALL_UPPER_SERVICE -> callService(context, appWidgetId, true)
-            CALL_LOWER_SERVICE -> callService(context, appWidgetId, false)
+            CALL_SERVICE -> callService(context, appWidgetId, intent.extras?.getInt(ELEMENT_ID))
         }
     }
 
@@ -157,206 +152,206 @@ class MultiWidget : AppWidgetProvider() {
         // and label/template need to be re-assigned, or  the widget will fall back on its
         // default layout without any click listeners being applied
 
-        val updateIntent = Intent(context, MultiWidget::class.java).apply {
-            action = UPDATE_WIDGET
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        }
-        val lowerServiceIntent = Intent(context, MultiWidget::class.java).apply {
-            action = CALL_LOWER_SERVICE
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        }
-        val upperServiceIntent = Intent(context, MultiWidget::class.java).apply {
-            action = CALL_UPPER_SERVICE
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        }
-
+        // Fetch widget and create basic RemoteViews to populate with dynamic elements
         val widget = multiWidgetDao.get(appWidgetId)
+        val widgetView = RemoteViews(context.packageName, R.layout.widget_multi)
 
-        // Create an icon pack and load all drawables if a button is present
-        if (widget != null) {
-            if (widget.upperButton || widget.lowerButton) {
-                if (iconPack == null) {
-                    val loader = IconPackLoader(context)
-                    iconPack = createMaterialDesignIconPack(loader)
-                    iconPack!!.loadDrawables(loader.drawableLoader)
+        // Analyze each element in the widget and add it to the view
+        widget?.elements?.forEachIndexed { index, element ->
+            val elementView: RemoteViews
+
+            when (element.type) {
+                MultiWidgetElementType.TYPE_BUTTON -> {
+                    val buttonElement = element as MultiWidgetButtonEntity
+
+                    // Create an icon pack and load all drawables if not already loaded
+                    if (iconPack == null) {
+                        val loader = IconPackLoader(context)
+                        iconPack = createMaterialDesignIconPack(loader)
+                        iconPack!!.loadDrawables(loader.drawableLoader)
+                    }
+
+                    // Create an intent for the button press
+                    val serviceIntent = Intent(context, MultiWidget::class.java).apply {
+                        action = CALL_SERVICE
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                        putExtra(ELEMENT_ID, index)
+                    }
+
+                    // Create new button view
+                    elementView = RemoteViews(
+                        context.packageName,
+                        R.layout.widget_multi_element_button
+                    )
+
+                    // Tie the service call intent and set button icon
+                    elementView.apply {
+                        setOnClickPendingIntent(
+                            R.id.widget_multi_element_button,
+                            PendingIntent.getBroadcast(
+                                context,
+                                appWidgetId,
+                                serviceIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT
+                            )
+                        )
+                        val iconId = buttonElement.iconId
+                        val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
+                        if (iconDrawable != null) {
+                            val icon = DrawableCompat.wrap(iconDrawable)
+                            setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap())
+                        }
+                    }
+                }
+                MultiWidgetElementType.TYPE_PLAINTEXT -> {
+                    val plaintextElement = element as MultiWidgetPlaintextEntity
+
+                    // Create an intent to update the widget on tap
+                    val updateIntent = Intent(context, MultiWidget::class.java).apply {
+                        action = UPDATE_WIDGET
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                    }
+
+                    // Create new label view
+                    elementView = RemoteViews(
+                        context.packageName,
+                        R.layout.widget_multi_element_label
+                    )
+
+                    // Tie the update intent and set the text of the label
+                    elementView.apply {
+                        setOnClickPendingIntent(
+                            R.id.widget_multi_element_label,
+                            PendingIntent.getBroadcast(
+                                context,
+                                appWidgetId,
+                                updateIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT
+                            )
+                        )
+                        setTextViewText(R.id.widget_multi_element_label, plaintextElement.text)
+                        setTextViewTextSize(
+                            R.id.widget_multi_element_label,
+                            TypedValue.COMPLEX_UNIT_SP,
+                            plaintextElement.textSize.toFloat()
+                        )
+                        setInt(
+                            R.id.widget_multi_element_label,
+                            "setMaxLines",
+                            plaintextElement.maxLines
+                        )
+                    }
+                }
+                MultiWidgetElementType.TYPE_TEMPLATE -> {
+                    val templateElement = element as MultiWidgetTemplateEntity
+
+                    var renderedTemplate = "Loading..."
+                    try {
+                        renderedTemplate = integrationUseCase.renderTemplate(
+                            templateElement.templateData,
+                            mapOf()
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Cannot render template: ${templateElement.templateData}", e)
+                    }
+
+                    // Create an intent to update the widget on tap
+                    val updateIntent = Intent(context, MultiWidget::class.java).apply {
+                        action = UPDATE_WIDGET
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                    }
+
+                    // Create new label view
+                    elementView = RemoteViews(
+                        context.packageName,
+                        R.layout.widget_multi_element_label
+                    )
+
+                    // Tie the update intent and set the text of the label
+                    elementView.apply {
+                        setOnClickPendingIntent(
+                            R.id.widget_multi_element_label,
+                            PendingIntent.getBroadcast(
+                                context,
+                                appWidgetId,
+                                updateIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT
+                            )
+                        )
+
+                        setTextViewText(R.id.widget_multi_element_label, renderedTemplate)
+                        setTextViewTextSize(
+                            R.id.widget_multi_element_label,
+                            TypedValue.COMPLEX_UNIT_SP,
+                            templateElement.textSize.toFloat()
+                        )
+                        setInt(
+                            R.id.widget_multi_element_label,
+                            "setMaxLines",
+                            templateElement.maxLines
+                        )
+                    }
                 }
             }
+
+            // Add the element view to the main widget remote view
+            widgetView.addView(R.id.widget_multi_element_layout, elementView)
         }
 
-        return RemoteViews(context.packageName, R.layout.widget_multi).apply {
-            // Set on-click pending intents
-            setOnClickPendingIntent(
-                R.id.widgetLabel,
-                PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId,
-                    updateIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            )
-            setOnClickPendingIntent(
-                R.id.widgetImageButtonUpper,
-                PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId,
-                    upperServiceIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            )
-            setOnClickPendingIntent(
-                R.id.widgetImageButtonLower,
-                PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId,
-                    lowerServiceIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            )
-
-            if (widget != null) {
-                // If there are buttons, set button icons
-                if (widget.lowerButton) {
-                    val iconId = widget.lowerIconId ?: 62017 // Lightning bolt
-                    val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
-                    if (iconDrawable != null) {
-                        val icon = DrawableCompat.wrap(iconDrawable)
-                        setImageViewBitmap(R.id.widgetImageButtonLower, icon.toBitmap())
-                    }
-                } else {
-                    setViewVisibility(R.id.widgetImageButtonLower, View.GONE)
-                }
-
-                if (widget.upperButton) {
-                    val iconId = widget.upperIconId ?: 62017 // Lightning bolt
-                    val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
-                    if (iconDrawable != null) {
-                        val icon = DrawableCompat.wrap(iconDrawable)
-                        setImageViewBitmap(R.id.widgetImageButtonUpper, icon.toBitmap())
-                    }
-                } else {
-                    setViewVisibility(R.id.widgetImageButtonUpper, View.GONE)
-                }
-
-                // Set label/template text
-                when (widget.labelType) {
-                    LABEL_PLAINTEXT -> {
-                        if (widget.label.isNullOrBlank()) {
-                            setViewVisibility(R.id.widgetLabelLayout, View.GONE)
-                        }
-                        setTextViewText(R.id.widgetLabel, widget.label)
-                    }
-                    LABEL_TEMPLATE -> {
-                        var renderedTemplate = "Loading"
-                        try {
-                            renderedTemplate =
-                                integrationUseCase.renderTemplate(
-                                    widget.template as String,
-                                    mapOf()
-                                )
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Unable to render template: ${widget.template}", e)
-                        }
-                        setTextViewText(R.id.widgetLabel, renderedTemplate)
-                    }
-                }
-
-                // Set label formatting
-                setTextViewTextSize(
-                    R.id.widgetLabel,
-                    TypedValue.COMPLEX_UNIT_SP,
-                    widget.labelTextSize.toFloat()
-                )
-                setInt(R.id.widgetLabel, "setMaxLines", widget.labelMaxLines)
-            }
-        }
+        return widgetView
     }
 
     private fun saveConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
-        // Retrieve configuration values from extras bundle
-        val upperButton: Boolean? = extras.getBoolean(EXTRA_UPPER_BUTTON)
-        val upperIconId: Int? = extras.getInt(EXTRA_UPPER_ICON_ID)
-        val upperDomain: String? = extras.getString(EXTRA_UPPER_DOMAIN)
-        val upperService: String? = extras.getString(EXTRA_UPPER_SERVICE)
-        val upperServiceData: String? = extras.getString(EXTRA_UPPER_SERVICE_DATA)
-        val lowerButton: Boolean? = extras.getBoolean(EXTRA_LOWER_BUTTON)
-        val lowerIconId: Int? = extras.getInt(EXTRA_LOWER_ICON_ID)
-        val lowerDomain: String? = extras.getString(EXTRA_LOWER_DOMAIN)
-        val lowerService: String? = extras.getString(EXTRA_LOWER_SERVICE)
-        val lowerServiceData: String? = extras.getString(EXTRA_LOWER_SERVICE_DATA)
-        val labelType: Int? = extras.getInt(EXTRA_LABEL_TYPE)
-        val label: String? = extras.getString(EXTRA_LABEL)
-        val template: String? = extras.getString(EXTRA_TEMPLATE)
-        val labelTextSize: Int? = extras.getInt(EXTRA_LABEL_TEXT_SIZE)
-        var labelMaxLines: Int? = extras.getInt(EXTRA_LABEL_MAX_LINES)
+        // Retrieve element type array from extras bundle
+        @Suppress("UNCHECKED_CAST")
+        val elementTypes: Array<MultiWidgetElementType> =
+            extras.getSerializable(EXTRA_ELEMENT_TYPES) as Array<MultiWidgetElementType>
 
-        // First verification
-        if (upperButton == null || lowerButton == null || labelType == null) {
-            Log.e(TAG, "Did not receive complete configuration")
-            return
-        }
+        // Set up variables for elements from extras
+        val elements = ArrayList<io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementEntity>()
 
-        if (upperButton) {
-            // Additional verification
-            if (upperDomain == null || upperService == null || upperServiceData == null) {
-                Log.e(TAG, "Did not receive complete service call data for upper button")
-                return
+        elementTypes.forEachIndexed { index, elementType ->
+            when (elementType) {
+                MultiWidgetElementType.TYPE_BUTTON ->
+                    elements.add(
+                        MultiWidgetButtonEntity(
+                            appWidgetId,
+                            index,
+                            extras.getString(EXTRA_DOMAIN + index)!!,
+                            extras.getString(EXTRA_SERVICE + index)!!,
+                            extras.getString(EXTRA_SERVICE_DATA + index)!!,
+                            extras.getInt(EXTRA_ICON_ID + index)
+                        )
+                    )
+                MultiWidgetElementType.TYPE_PLAINTEXT ->
+                    elements.add(
+                        MultiWidgetPlaintextEntity(
+                            appWidgetId,
+                            index,
+                            extras.getString(EXTRA_LABEL + index)!!,
+                            extras.getInt(EXTRA_LABEL_TEXT_SIZE + index),
+                            extras.getInt(EXTRA_LABEL_MAX_LINES + index)
+                        )
+                    )
+                MultiWidgetElementType.TYPE_TEMPLATE ->
+                    elements.add(
+                        MultiWidgetPlaintextEntity(
+                            appWidgetId,
+                            index,
+                            extras.getString(EXTRA_TEMPLATE + index)!!,
+                            extras.getInt(EXTRA_TEMPLATE_TEXT_SIZE + index),
+                            extras.getInt(EXTRA_TEMPLATE_MAX_LINES + index)
+                        )
+                    )
             }
         }
-
-        if (lowerButton) {
-            // Additional verification
-            if (lowerDomain == null || lowerService == null || lowerServiceData == null) {
-                Log.e(TAG, "Did not receive complete service call data for lower button")
-                return
-            }
-        }
-
-        // If max lines is 0, it is intended to be unlimited
-        // Set it to the actual 'max' value
-        if (labelMaxLines == 0) labelMaxLines = Integer.MAX_VALUE
 
         mainScope.launch {
-            Log.d(
-                TAG, "Saving multi widget config data:" + System.lineSeparator() +
-                        "upperButton: " + upperButton + System.lineSeparator() +
-                        "upperIconId: " + upperIconId + System.lineSeparator() +
-                        "upperDomain: " + upperDomain + System.lineSeparator() +
-                        "upperService: " + upperService + System.lineSeparator() +
-                        "upperServiceData: " + upperServiceData + System.lineSeparator() +
-                        "lowerButton: " + lowerButton + System.lineSeparator() +
-                        "lowerIconId: " + lowerIconId + System.lineSeparator() +
-                        "lowerDomain: " + lowerDomain + System.lineSeparator() +
-                        "lowerService: " + lowerService + System.lineSeparator() +
-                        "lowerServiceData: " + lowerServiceData + System.lineSeparator() +
-                        "labelType: " + labelType + System.lineSeparator() +
-                        "label: " + label + System.lineSeparator() +
-                        "template: " + template + System.lineSeparator() +
-                        "labelTextSize: " + labelTextSize + System.lineSeparator() +
-                        "labelMaxLines: " + labelMaxLines + System.lineSeparator()
-            )
+            Log.d(TAG, "Saving multi widget config data.")
 
-            multiWidgetDao.add(
-                MultiWidgetEntity(
-                    appWidgetId,
-                    upperButton,
-                    upperIconId,
-                    upperDomain,
-                    upperService,
-                    upperServiceData,
-                    lowerButton,
-                    lowerIconId,
-                    lowerDomain,
-                    lowerService,
-                    lowerServiceData,
-                    labelType,
-                    label,
-                    template,
-                    labelTextSize ?: LABEL_TEXT_SMALL,
-                    labelMaxLines ?: 2
-                )
-            )
+            multiWidgetDao.add(MultiWidgetEntity(appWidgetId, elements))
 
             // It is the responsibility of the configuration activity to update the app widget
             // This method is only called during the initial setup of the widget,
@@ -366,7 +361,7 @@ class MultiWidget : AppWidgetProvider() {
         }
     }
 
-    private fun callService(context: Context, appWidgetId: Int, upper: Boolean) {
+    private fun callService(context: Context, appWidgetId: Int, elementId: Int?) {
         val widget = multiWidgetDao.get(appWidgetId)
 
         if (widget == null) {
@@ -374,21 +369,19 @@ class MultiWidget : AppWidgetProvider() {
             return
         }
 
+        val buttonEntity: MultiWidgetButtonEntity
+        try {
+            buttonEntity = widget.elements[elementId!!] as MultiWidgetButtonEntity
+        } catch (e: IndexOutOfBoundsException) {
+            Log.e(TAG, "Could not find correct widget element; aborting")
+            return
+        }
+
         mainScope.launch {
             // Load the service call data from database
-            val domain: String?
-            val service: String?
-            val serviceDataJson: String?
-
-            if (upper) {
-                domain = widget.upperDomain
-                service = widget.upperService
-                serviceDataJson = widget.upperServiceData
-            } else {
-                domain = widget.lowerDomain
-                service = widget.lowerService
-                serviceDataJson = widget.lowerServiceData
-            }
+            val domain = buttonEntity.domain
+            val service = buttonEntity.service
+            val serviceDataJson = buttonEntity.serviceData
 
             Log.d(
                 TAG, "Service Call Data loaded:" + System.lineSeparator() +
@@ -397,33 +390,30 @@ class MultiWidget : AppWidgetProvider() {
                         "service_data: " + serviceDataJson
             )
 
-            if (domain == null || service == null || serviceDataJson == null) {
-                Log.w(TAG, "Service Call Data incomplete.  Aborting service call")
-            } else {
-                // If everything loaded correctly, package the service data and attempt the call
-                try {
-                    // Convert JSON to HashMap
-                    val serviceDataMap: HashMap<String, Any> =
-                        jacksonObjectMapper().readValue(serviceDataJson)
+            // Package the service data and attempt the call
+            try {
+                // Convert JSON to HashMap
+                val serviceDataMap: HashMap<String, Any> =
+                    jacksonObjectMapper().readValue(serviceDataJson)
 
-                    if (serviceDataMap["entity_id"] != null) {
-                        val entityIdWithoutBrackets = Pattern.compile("\\[(.*?)\\]")
-                            .matcher(serviceDataMap["entity_id"].toString())
-                        if (entityIdWithoutBrackets.find()) {
-                            val value = entityIdWithoutBrackets.group(1)
-                            if (value != null) {
-                                if (value == "all" || value.split(",").contains("all")) {
-                                    serviceDataMap["entity_id"] = "all"
-                                }
+                if (serviceDataMap["entity_id"] != null) {
+                    val entityIdWithoutBrackets = Pattern.compile("\\[(.*?)\\]")
+                        .matcher(serviceDataMap["entity_id"].toString())
+                    if (entityIdWithoutBrackets.find()) {
+                        val value = entityIdWithoutBrackets.group(1)
+                        if (value != null) {
+                            if (value == "all" || value.split(",").contains("all")) {
+                                serviceDataMap["entity_id"] = "all"
                             }
                         }
                     }
-
-                    integrationUseCase.callService(domain, service, serviceDataMap)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Could not send service call.", e)
-                    Toast.makeText(context, R.string.widget_service_error, Toast.LENGTH_SHORT).show()
                 }
+
+                integrationUseCase.callService(domain, service, serviceDataMap)
+            } catch (e: Exception) {
+                Log.e(TAG, "Could not send service call.", e)
+                Toast.makeText(context, R.string.widget_service_error, Toast.LENGTH_SHORT)
+                    .show()
             }
 
             // Update app widget once service call has been made

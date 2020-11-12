@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.widgets.multi.MultiWidget
 import kotlinx.android.synthetic.main.widget_multi_config_plaintext.view.*
 
-class MultiWidgetElementPlaintext : MultiWidgetElement {
+class MultiWidgetPlaintext : MultiWidgetElement {
     // Define the type of the element
     override val type: MultiWidgetElementType
         get() = MultiWidgetElementType.TYPE_PLAINTEXT

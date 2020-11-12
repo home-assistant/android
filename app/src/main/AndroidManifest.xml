@@ -99,8 +99,7 @@
         <receiver android:name=".widgets.multi.MultiWidget">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.multi.MultiWidget.CALL_LOWER_SERVICE" />
-                <action android:name="io.homeassistant.companion.android.widgets.multi.MultiWidget.CALL_UPPER_SERVICE" />
+                <action android:name="io.homeassistant.companion.android.widgets.multi.MultiWidget.CALL_SERVICE" />
                 <action android:name="io.homeassistant.companion.android.widgets.multi.MultiWidget.RECEIVE_DATA" />
                 <action android:name="io.homeassistant.companion.android.widgets.multi.MultiWidget.UPDATE_WIDGET" />
             </intent-filter>

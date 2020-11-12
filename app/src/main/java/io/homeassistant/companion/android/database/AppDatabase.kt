@@ -13,6 +13,7 @@ import androidx.room.Database
 import androidx.room.OnConflictStrategy
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.homeassistant.companion.android.R
@@ -31,6 +32,7 @@ import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWid
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.MultiWidgetDao
 import io.homeassistant.companion.android.database.widget.MultiWidgetEntity
+import io.homeassistant.companion.android.database.widget.MultiWidgetEntityConverters
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
@@ -53,6 +55,7 @@ import kotlinx.coroutines.runBlocking
     version = 14,
     exportSchema = false
 )
+@TypeConverters(MultiWidgetEntityConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
     abstract fun sensorDao(): SensorDao
@@ -287,7 +290,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_13_14 = object : Migration(13, 14) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `multi_widgets` (`id` INTEGER NOT NULL, `upper_button_present` INTEGER NOT NULL, `upper_icon_id` INTEGER, `upper_domain` TEXT, `upper_service` TEXT, `upper_service_data` TEXT, `lower_button_present` INTEGER NOT NULL, `lower_icon_id` INTEGER, `lower_domain` TEXT, `lower_service` TEXT, `lower_service_data` TEXT, `label_type` INTEGER NOT NULL, `label` TEXT, `template` TEXT, `label_text_size` INTEGER NOT NULL, `label_max_lines` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `multi_widgets` (`id` INTEGER NOT NULL, `elements` TEXT NOT NULL, PRIMARY KEY(`id`))")
             }
         }
 

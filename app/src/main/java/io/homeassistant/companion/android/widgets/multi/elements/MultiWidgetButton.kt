@@ -5,11 +5,10 @@ import android.view.View
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
-import kotlinx.android.synthetic.main.widget_button_configure.view.*
 import kotlinx.android.synthetic.main.widget_multi_config_button.view.*
 
-class MultiWidgetElementButton(
-    private val services: HashMap<String, Service>
+class MultiWidgetButton(
+    private val services: HashMap<String, Service>?
 ) : MultiWidgetElement {
     // Define the type of the element
     override val type: MultiWidgetElementType
@@ -40,11 +39,11 @@ class MultiWidgetElementButton(
             }
         }
 
-        domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
+        domain = services!![serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
         service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
         serviceData = jacksonObjectMapper().writeValueAsString(serviceDataMap)
 
         // Fetch icon ID from selector
-        iconId = layout.widget_config_icon_selector.tag as Int? ?: iconId
+        iconId = layout.widget_element_icon_selector.tag as Int? ?: iconId
     }
 }

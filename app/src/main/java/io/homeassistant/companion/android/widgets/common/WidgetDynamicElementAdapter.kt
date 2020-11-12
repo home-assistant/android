@@ -20,11 +20,11 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.widgets.multi.MultiWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetButton
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElement
-import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementButton
-import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementPlaintext
-import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementTemplate
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementType
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetPlaintext
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetTemplate
 import kotlinx.android.synthetic.main.widget_multi_config_button.view.*
 import kotlinx.android.synthetic.main.widget_multi_config_plaintext.view.*
 import kotlinx.android.synthetic.main.widget_multi_config_template.view.*
@@ -71,37 +71,37 @@ class WidgetDynamicElementAdapter(
         when (elements[position].type) {
             MultiWidgetElementType.TYPE_BUTTON -> bindButtonViews(
                 holder.itemView,
-                elements[position] as MultiWidgetElementButton
+                elements[position] as MultiWidgetButton
             )
             MultiWidgetElementType.TYPE_PLAINTEXT -> bindPlaintextViews(
                 holder.itemView,
-                elements[position] as MultiWidgetElementPlaintext
+                elements[position] as MultiWidgetPlaintext
             )
             MultiWidgetElementType.TYPE_TEMPLATE -> bindTemplateViews(
                 holder.itemView,
-                elements[position] as MultiWidgetElementTemplate
+                elements[position] as MultiWidgetTemplate
             )
         }
     }
 
     internal fun addButton(iconDialog: IconDialog) {
         this.iconDialog = iconDialog
-        elements.add(MultiWidgetElementButton(services))
+        elements.add(MultiWidgetButton(services))
         notifyDataSetChanged()
     }
 
     internal fun addTemplate(getTemplateTextAsync: (templateText: String, renderView: AppCompatTextView) -> Unit) {
         this.getTemplateTextAsync = getTemplateTextAsync
-        elements.add(MultiWidgetElementTemplate())
+        elements.add(MultiWidgetTemplate())
         notifyDataSetChanged()
     }
 
     internal fun addPlaintext() {
-        elements.add(MultiWidgetElementPlaintext())
+        elements.add(MultiWidgetPlaintext())
         notifyDataSetChanged()
     }
 
-    private fun bindButtonViews(dynamicElementLayout: View, element: MultiWidgetElementButton) {
+    private fun bindButtonViews(dynamicElementLayout: View, element: MultiWidgetButton) {
         // Prepare dynamic field variables
         val dynamicFields = ArrayList<ServiceFieldBinder>()
         val dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
@@ -144,7 +144,7 @@ class WidgetDynamicElementAdapter(
         }
     }
 
-    private fun bindPlaintextViews(dynamicElementLayout: View, element: MultiWidgetElementPlaintext) {
+    private fun bindPlaintextViews(dynamicElementLayout: View, element: MultiWidgetPlaintext) {
         // Store layout views so the element can finalize its own values
         element.layout = dynamicElementLayout
 
@@ -159,7 +159,10 @@ class WidgetDynamicElementAdapter(
             }
     }
 
-    private fun bindTemplateViews(dynamicElementLayout: View, element: MultiWidgetElementTemplate) {
+    private fun bindTemplateViews(dynamicElementLayout: View, element: MultiWidgetTemplate) {
+        // Store layout views so the element can finalize its own values
+        element.layout = dynamicElementLayout
+
         // Have the user-edited template text get passed back to the main activity so it can
         // render in a coroutine and the rendered text can be updated asynchronously
         val templateTextEdit = dynamicElementLayout.widget_element_template_edit
