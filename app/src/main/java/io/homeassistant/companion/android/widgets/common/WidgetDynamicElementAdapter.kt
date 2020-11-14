@@ -87,18 +87,18 @@ class WidgetDynamicElementAdapter(
     internal fun addButton(iconDialog: IconDialog) {
         this.iconDialog = iconDialog
         elements.add(MultiWidgetButton(services))
-        notifyDataSetChanged()
+        notifyItemInserted(elements.size - 1)
     }
 
     internal fun addTemplate(getTemplateTextAsync: (templateText: String, renderView: AppCompatTextView) -> Unit) {
         this.getTemplateTextAsync = getTemplateTextAsync
         elements.add(MultiWidgetTemplate())
-        notifyDataSetChanged()
+        notifyItemInserted(elements.size - 1)
     }
 
     internal fun addPlaintext() {
         elements.add(MultiWidgetPlaintext())
-        notifyDataSetChanged()
+        notifyItemInserted(elements.size - 1)
     }
 
     private fun bindButtonViews(dynamicElementLayout: View, element: MultiWidgetButton) {
