@@ -72,11 +72,11 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             findViewById<SwitchMaterial>(R.id.locationTracking)?.let {
                 val sensorId = LocationSensorManager.backgroundLocation.id
-                it.isChecked = DisabledLocationHandler.isLocationEnabled(context) && LocationSensorManager().checkPermission(context, sensorId)
+                it.isChecked = DisabledLocationHandler.isLocationEnabled(context, true) && LocationSensorManager().checkPermission(context, sensorId)
                 it.setOnCheckedChangeListener { _, isChecked ->
                     var checked = false
                     if (isChecked) {
-                        if (!DisabledLocationHandler.isLocationEnabled(context)) {
+                        if (!DisabledLocationHandler.isLocationEnabled(context, true)) {
                             DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
                         } else {
                             if (!LocationSensorManager().checkPermission(requireContext(), sensorId)) {

@@ -44,6 +44,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     companion object {
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
         private const val LOCATION_REQUEST_CODE = 0
+        private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
         fun newInstance() = SettingsFragment()
     }
 
@@ -248,15 +249,22 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     override fun onDisplayPreferenceDialog(preference: Preference) {
         if (preference is SsidPreference) {
             lateinit var permissionsToCheck: Array<String>
-            if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                permissionsToCheck = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                permissionsToCheck = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
+            }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    permissionsToCheck = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    permissionsToCheck = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            val fineLocation = DisabledLocationHandler.containsFineLocationPermission(permissionsToCheck)
+
+            if (DisabledLocationHandler.isLocationEnabled(requireContext(), fineLocation)) {
+                var permissionsToRequest: Array<String>? = null
+                if (!permissionsToCheck.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    // For Android 11 we need to remove the Background Location Permission Check
+                    // as for Android 11 the Background Location Request needs to be done separately
+                    permissionsToRequest = permissionsToCheck.toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
                 }
-
-                if (permissionsToCheck.isNullOrEmpty() || checkPermission(permissionsToCheck, LOCATION_REQUEST_CODE)) {
+                if (permissionsToCheck.isNullOrEmpty() || checkPermission(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest)) {
                     openSsidDialog()
                 }
             } else {
@@ -330,11 +338,13 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
-    fun checkPermission(permissions: Array<String>, requestCode: Int): Boolean {
+    fun checkPermission(permissions: Array<String>, requestCode: Int, requestPermissions: Array<String>? = null): Boolean {
         val permissionsNeeded = mutableListOf<String>()
         for (permission in permissions) {
             if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
-                permissionsNeeded.add(permission)
+                if (requestPermissions.isNullOrEmpty() || requestPermissions.contains(permission)) {
+                    permissionsNeeded.add(permission)
+                }
             }
         }
         return if (permissionsNeeded.isNotEmpty()) {
@@ -370,7 +380,18 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         updateBackgroundAccessPref()
 
+        val isGreaterR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+
         if (requestCode == LOCATION_REQUEST_CODE && grantResults.isNotEmpty()) {
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                if (isGreaterR) {
+                    // For Android 11 we need to remove the Background Location Permission Check
+                    // as for Android 11 the Background Location Request needs to be done separately
+                    requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), BACKGROUND_LOCATION_REQUEST_CODE)
+                }
+            }
+        }
+        if ((requestCode == LOCATION_REQUEST_CODE && !isGreaterR || requestCode == BACKGROUND_LOCATION_REQUEST_CODE && isGreaterR) && grantResults.isNotEmpty()) {
             if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 openSsidDialog()
             }

@@ -451,26 +451,30 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private fun checkAndWarnForDisabledLocation() {
         var showLocationDisabledWarning = false
         var options = ""
-        if (!DisabledLocationHandler.isLocationEnabled(this)) {
-            if (presenter.isSsidUsed()) {
-                showLocationDisabledWarning = true
-                options += "- " + getString(R.string.pref_connection_wifi) + "\n"
-            }
-            for (manager in SensorReceiver.MANAGERS) {
-                for (basicSensor in manager.availableSensors) {
-                    if (manager.isEnabled(this, basicSensor.id)) {
-                        var permissions = manager.requiredPermissions(basicSensor.id)
-                        if (DisabledLocationHandler.containsLocationPermission(permissions)) {
-                            showLocationDisabledWarning = true
-                            options += "- " + getString(basicSensor.name) + "\n"
-                        }
+
+        if (!DisabledLocationHandler.isLocationEnabled(this, false) && presenter.isSsidUsed()) {
+            showLocationDisabledWarning = true
+            options += "- " + getString(R.string.pref_connection_wifi) + "\n"
+        }
+        for (manager in SensorReceiver.MANAGERS) {
+            for (basicSensor in manager.availableSensors) {
+                if (manager.isEnabled(this, basicSensor.id)) {
+                    var permissions = manager.requiredPermissions(basicSensor.id)
+
+                    val fineLocation = DisabledLocationHandler.containsFineLocationPermission(permissions)
+                    val coarseLocation = DisabledLocationHandler.containsCoarseLocationPermission(permissions)
+
+                    if ((fineLocation || coarseLocation)) {
+                        if (DisabledLocationHandler.isLocationEnabled(this, fineLocation))
+                        showLocationDisabledWarning = true
+                        options += "- " + getString(basicSensor.name) + "\n"
                     }
                 }
             }
+        }
 
-            if (showLocationDisabledWarning) {
-                DisabledLocationHandler.showLocationDisabledWarnDialog(this@WebViewActivity, this, getString(R.string.location_disabled_general_message, options))
-            }
+        if (showLocationDisabledWarning) {
+            DisabledLocationHandler.showLocationDisabledWarnDialog(this@WebViewActivity, this, getString(R.string.location_disabled_general_message, options))
         }
     }
 

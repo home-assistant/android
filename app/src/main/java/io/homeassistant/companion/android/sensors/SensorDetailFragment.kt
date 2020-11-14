@@ -74,8 +74,11 @@ class SensorDetailFragment(
                 if (isEnabled) {
                     val permissions = sensorManager.requiredPermissions(basicSensor.id)
                     val context = requireContext()
-                    if (DisabledLocationHandler.containsLocationPermission(permissions) &&
-                        !DisabledLocationHandler.isLocationEnabled(context)) {
+                    val fineLocation = DisabledLocationHandler.containsFineLocationPermission(permissions)
+                    val coarseLocation = DisabledLocationHandler.containsCoarseLocationPermission(permissions)
+
+                    if ((fineLocation || coarseLocation) &&
+                        !DisabledLocationHandler.isLocationEnabled(context, fineLocation)) {
                         DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
                         return@setOnPreferenceChangeListener false
                     } else {

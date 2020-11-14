@@ -102,7 +102,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 val context = requireContext()
                 val enabledAll = newState as Boolean
 
-                if (!DisabledLocationHandler.isLocationEnabled(context)) {
+                if (!DisabledLocationHandler.isLocationEnabled(context, true)) {
                     DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
                     return@setOnPreferenceChangeListener false
                 } else {

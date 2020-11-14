@@ -5,30 +5,29 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.location.LocationManager
-import android.os.Build
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
 import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
 import io.homeassistant.companion.android.R
 
 object DisabledLocationHandler {
-    fun isLocationEnabled(context: Context): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            // This is new method provided in API 28
-            val lm: LocationManager =
-                context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    fun isLocationEnabled(context: Context, fineLocation: Boolean): Boolean {
+        val lm: LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        return if (VERSION.SDK_INT >= VERSION_CODES.P) {
             lm.isLocationEnabled
         } else {
-            // This is Deprecated in API 28
-            val mode = Settings.Secure.getInt(
-                context.contentResolver, Settings.Secure.LOCATION_MODE,
-                Settings.Secure.LOCATION_MODE_OFF
-            )
-            mode != Settings.Secure.LOCATION_MODE_OFF
+            (!fineLocation && lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || (fineLocation && lm.isProviderEnabled(LocationManager.GPS_PROVIDER)))
         }
     }
 
-    fun containsLocationPermission(permissions: Array<String>): Boolean {
-        return permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) || permissions.contains(Manifest.permission.ACCESS_COARSE_LOCATION)
+    fun containsFineLocationPermission(permissions: Array<String>): Boolean {
+        return permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+
+    fun containsCoarseLocationPermission(permissions: Array<String>): Boolean {
+        return permissions.contains(Manifest.permission.ACCESS_COARSE_LOCATION)
     }
 
     fun showLocationDisabledWarnDialog(activity: Activity, context: Context, message: String, withDisableOption: Boolean = false, callback: (() -> Unit)? = null) {
