@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.notification
 
 import android.os.Bundle
+import android.text.Html.fromHtml
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import io.homeassistant.companion.android.R
@@ -33,7 +34,7 @@ class NotificationDetailFragment(
         }
 
         findPreference<Preference>("message")?.let {
-            it.summary = notification.message
+            it.summary = fromHtml(notification.message)
         }
 
         findPreference<Preference>("data")?.let {

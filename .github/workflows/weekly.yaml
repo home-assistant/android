@@ -55,7 +55,7 @@ jobs:
 
       - name: Check for build need
         run: |
-          commits=$(git log --since="24 hours ago" --oneline | wc -l)
+          commits=$(git log --since="7 days ago" --oneline | wc -l)
           echo "commits=$commits" >> $GITHUB_ENV
 
       - name: Deploy to Playstore Beta

@@ -61,9 +61,15 @@
             android:summary="@string/fullscreen_def"/>
         <Preference
             android:key="nfc_tags"
-            android:icon="@drawable/ic_plus"
+            android:icon="@drawable/ic_nfc"
             android:title="@string/nfc_title_settings"
             android:summary="@string/nfc_summary" />
+        <ListPreference
+            android:key="languages"
+            android:defaultValue="@string/lang_option_value_default"
+            android:icon="@drawable/ic_languages"
+            android:title="@string/lang_title_settings"
+            android:summary="@string/lang_summary_settings" />
         <ListPreference
             android:key="themes"
             android:defaultValue="@string/themes_option_value_light"
@@ -72,6 +78,9 @@
             android:icon="@drawable/ic_color_lens_24dp"
             android:title="@string/themes_title_settings"
             app:useSimpleSummaryProvider="true"/>
+        <Preference
+            android:key="background"
+            android:title="Background Access"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/need_help">
@@ -104,6 +113,15 @@
             android:summary="@string/rate_limit_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="widgets"
+        android:title="Widgets">
+        <Preference
+            android:key="manage_widgets"
+            android:icon="@drawable/ic_widget"
+            android:title="@string/manage_widgets"
+            android:summary="@string/manage_widgets_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/app_version_info">
         <Preference
             android:key="changelog"
@@ -121,6 +139,12 @@
             android:icon="@drawable/ic_incognito"
             android:title="@string/privacy_policy"
             android:summary="@string/privacy_url" />
+        <SwitchPreference
+            android:key="crash_reporting"
+            android:icon="@drawable/ic_android_debug_bridge"
+            app:isPreferenceVisible="false"
+            android:title="@string/crash_reporting"
+            android:summary="@string/crash_reporting_summary" />
     </PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

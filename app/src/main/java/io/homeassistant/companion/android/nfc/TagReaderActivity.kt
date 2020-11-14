@@ -6,7 +6,7 @@ import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -18,7 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class TagReaderActivity : AppCompatActivity() {
+class TagReaderActivity : BaseActivity() {
 
     val TAG = TagReaderActivity::class.simpleName
 
@@ -76,8 +76,10 @@ class TagReaderActivity : AppCompatActivity() {
         // https://www.home-assistant.io/tag/5f0ba733-172f-430d-a7f8-e4ad940c88d7
 
         val nfcTagId = UrlHandler.splitNfcTagId(url)
+        Log.d(TAG, "nfcTagId: $nfcTagId")
         if (nfcTagId != null) {
             integrationUseCase.scanTag(hashMapOf("tag_id" to nfcTagId))
+            Log.d(TAG, "Tag scanned to HA successfully")
         } else {
             Toast.makeText(this, R.string.nfc_processing_tag_error, Toast.LENGTH_LONG).show()
         }

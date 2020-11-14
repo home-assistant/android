@@ -6,7 +6,9 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +23,9 @@ class SettingsPresenterImpl @Inject constructor(
     private val urlUseCase: UrlRepository,
     private val integrationUseCase: IntegrationRepository,
     private val authenticationUseCase: AuthenticationRepository,
-    private val themesManager: ThemesManager
+    private val prefsRepository: PrefsRepository,
+    private val themesManager: ThemesManager,
+    private val langsManager: LanguagesManager
 ) : SettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -35,6 +39,7 @@ class SettingsPresenterImpl @Inject constructor(
             return@runBlocking when (key) {
                 "fullscreen" -> integrationUseCase.isFullScreenEnabled()
                 "app_lock" -> authenticationUseCase.isLockEnabled()
+                "crash_reporting" -> prefsRepository.isCrashReporting()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -45,6 +50,7 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
+                "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -58,6 +64,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "registration_name" -> integrationUseCase.getRegistration().deviceName
                 "session_timeout" -> integrationUseCase.getSessionTimeOut().toString()
                 "themes" -> themesManager.getCurrentTheme()
+                "languages" -> langsManager.getCurrentLang()
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }
@@ -83,6 +90,10 @@ class SettingsPresenterImpl @Inject constructor(
                     }
                 }
                 "themes" -> themesManager.saveTheme(value)
+                "languages" -> {
+                    langsManager.saveLang(value)
+                    settingsView.onLangSettingsChanged()
+                }
                 else -> throw IllegalArgumentException("No string found by this key: $key")
             }
         }

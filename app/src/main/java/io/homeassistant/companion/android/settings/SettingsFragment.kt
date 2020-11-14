@@ -1,11 +1,14 @@
 package io.homeassistant.companion.android.settings
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.text.InputType
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
@@ -25,9 +28,11 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
+import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
+import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -41,6 +46,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     @Inject
     lateinit var presenter: SettingsPresenter
+    @Inject
+    lateinit var langProvider: LanguagesProvider
     private lateinit var authenticator: Authenticator
     private var setLock = false
 
@@ -114,6 +121,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         removeSystemFromThemesIfNeeded()
 
+        updateBackgroundAccessPref()
+
         findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
             onChangeUrlValidator
 
@@ -125,6 +134,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 .beginTransaction()
                 .replace(R.id.content, SensorsSettingsFragment.newInstance())
                 .addToBackStack(getString(R.string.sensors))
+                .commit()
+            return@setOnPreferenceClickListener true
+        }
+
+        findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, ManageWidgetsSettingsFragment.newInstance())
+                .addToBackStack(getString(R.string.widgets))
                 .commit()
             return@setOnPreferenceClickListener true
         }
@@ -154,6 +172,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                         "\n\nRemaining/Maximum: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
                         "\n\nResets at: ${rateLimits?.resetsAt}"
             }
+            findPreference<SwitchPreference>("crash_reporting")?.let {
+                it.isVisible = true
+                it.setOnPreferenceChangeListener { _, newValue ->
+                    val checked = newValue as Boolean
+
+                    true
+                }
+            }
         }
 
         findPreference<Preference>("changelog")?.let {
@@ -167,6 +193,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("version")?.let {
             it.isCopyingEnabled = true
             it.summary = BuildConfig.VERSION_NAME
+        }
+
+        findPreference<ListPreference>("languages")?.let {
+            val languages = langProvider.getSupportedLanguages(requireContext())
+            it.entries = languages.keys.toTypedArray()
+            it.entryValues = languages.values.toTypedArray()
         }
 
         findPreference<Preference>("privacy")?.let {
@@ -203,6 +235,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 Log.d("SettingsFragment", "Unable to set the icon tint", e)
             }
         }
+    }
+
+    override fun onLangSettingsChanged() {
+        requireActivity().recreate()
     }
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
@@ -244,5 +280,50 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 }
             }
         }
+    }
+
+    private fun updateBackgroundAccessPref() {
+        findPreference<Preference>("background")?.let {
+            if (isIgnoringBatteryOptimizations()) {
+                it.setSummary(R.string.background_access_enabled)
+                it.setOnPreferenceClickListener {
+                    true
+                }
+            } else {
+                it.setSummary(R.string.background_access_disabled)
+                it.setOnPreferenceClickListener {
+                    requestBackgroundAccess()
+                    true
+                }
+            }
+        }
+    }
+
+    @SuppressLint("BatteryLife")
+    private fun requestBackgroundAccess() {
+        val intent: Intent
+        if (!isIgnoringBatteryOptimizations()) {
+            intent = Intent(
+                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                Uri.parse("package:${activity?.packageName}")
+            )
+            startActivityForResult(intent, 0)
+        }
+    }
+
+    private fun isIgnoringBatteryOptimizations(): Boolean {
+        return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
+                context?.getSystemService(PowerManager::class.java)
+                    ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
+                ?: false
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        updateBackgroundAccessPref()
     }
 }

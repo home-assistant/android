@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.widgets.entity
 
-import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -14,10 +14,12 @@ import android.widget.LinearLayout.GONE
 import android.widget.LinearLayout.VISIBLE
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import android.widget.Toast
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import javax.inject.Inject
@@ -27,8 +29,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-class EntityWidgetConfigureActivity : Activity() {
+class EntityWidgetConfigureActivity : BaseActivity() {
 
     companion object {
         private const val TAG: String = "StaticWidgetConfigAct"
@@ -79,6 +82,41 @@ class EntityWidgetConfigureActivity : Activity() {
             .build()
             .inject(this)
 
+        val staticWidgetDao = AppDatabase.getInstance(applicationContext).staticWidgetDao()
+        val staticWidget = staticWidgetDao.get(appWidgetId)
+        if (staticWidget != null) {
+            widget_text_config_entity_id.setText(staticWidget.entityId)
+            label.setText(staticWidget.label)
+            textSize.setText(staticWidget.textSize.toInt().toString())
+            state_separator.setText(staticWidget.stateSeparator)
+            val entity = runBlocking {
+                try {
+                    integrationUseCase.getEntity(staticWidget.entityId)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to get entity information", e)
+                    Toast.makeText(applicationContext, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                        .show()
+                    null
+                }
+            }
+
+            if (!staticWidget.attributeIds.isNullOrEmpty()) {
+                append_attribute_value_checkbox.isChecked = true
+                appendAttributes = true
+                for (item in staticWidget.attributeIds.split(','))
+                    selectedAttributeIds.add(item)
+                widget_text_config_attribute.setText(staticWidget.attributeIds.replace(",", ", "))
+                attribute_value_linear_layout.visibility = VISIBLE
+                attribute_separator.setText(staticWidget.attributeSeparator)
+            }
+            if (entity != null) {
+                selectedEntity = entity as Entity<Any>?
+                setupAttributes()
+            }
+            add_button.setText(R.string.update_widget)
+            delete_button.visibility = VISIBLE
+            delete_button.setOnClickListener(onDeleteWidget)
+        }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
         widget_text_config_entity_id.setAdapter(entityAdapter)
@@ -157,9 +195,13 @@ class EntityWidgetConfigureActivity : Activity() {
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
+            val entity: String = if (selectedEntity == null)
+                widget_text_config_entity_id.text.toString()
+            else
+                selectedEntity!!.entityId
             intent.putExtra(
                 EntityWidget.EXTRA_ENTITY_ID,
-                selectedEntity!!.entityId
+                entity
             )
 
             intent.putExtra(
@@ -178,9 +220,13 @@ class EntityWidgetConfigureActivity : Activity() {
             )
 
             if (appendAttributes) {
+                val attributes = if (selectedAttributeIds.isNullOrEmpty())
+                    widget_text_config_attribute.text.toString()
+                else
+                    selectedAttributeIds
                 intent.putExtra(
                     EntityWidget.EXTRA_ATTRIBUTE_IDS,
-                    selectedAttributeIds
+                    attributes
                 )
 
                 intent.putExtra(
@@ -207,5 +253,36 @@ class EntityWidgetConfigureActivity : Activity() {
     override fun onDestroy() {
         mainScope.cancel()
         super.onDestroy()
+    }
+
+    private var onDeleteWidget = View.OnClickListener {
+        val context = this@EntityWidgetConfigureActivity
+        deleteConfirmation(context)
+    }
+
+    private fun deleteConfirmation(context: Context) {
+        val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
+
+        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
+
+        builder.setTitle(R.string.confirm_delete_this_widget_title)
+        builder.setMessage(R.string.confirm_delete_this_widget_message)
+
+        builder.setPositiveButton(
+            R.string.confirm_positive
+        ) { dialog, _ ->
+            staticWidgetDao.delete(appWidgetId)
+            dialog.dismiss()
+            finish()
+        }
+
+        builder.setNegativeButton(
+            R.string.confirm_negative
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert: android.app.AlertDialog? = builder.create()
+        alert?.show()
     }
 }

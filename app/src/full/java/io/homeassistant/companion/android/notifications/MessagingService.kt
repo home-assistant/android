@@ -13,6 +13,7 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.speech.tts.TextToSpeech
@@ -64,6 +65,8 @@ class MessagingService : FirebaseMessagingService() {
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
+        const val CHRONOMETER = "chronometer"
+        const val WHEN = "when"
         const val GROUP_PREFIX = "group_"
 
         // special action constants
@@ -73,6 +76,8 @@ class MessagingService : FirebaseMessagingService() {
         const val TTS = "TTS"
         const val COMMAND_DND = "command_dnd"
         const val COMMAND_RINGER_MODE = "command_ringer_mode"
+        const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
+        const val COMMAND_VOLUME_LEVEL = "command_volume_level"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -85,10 +90,18 @@ class MessagingService : FirebaseMessagingService() {
         const val RM_SILENT = "silent"
         const val RM_VIBRATE = "vibrate"
 
+        // Channel streams
+        const val ALARM_STREAM = "alarm_stream"
+        const val ALARM_STREAM_MAX = "alarm_stream_max"
+        const val MUSIC_STREAM = "music_stream"
+        const val NOTIFICATION_STREAM = "notification_stream"
+        const val RING_STREAM = "ring_stream"
+
         // Command groups
-        val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE)
+        val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT, COMMAND_VOLUME_LEVEL)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
+        val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
     }
 
     @Inject
@@ -144,7 +157,7 @@ class MessagingService : FirebaseMessagingService() {
                         COMMAND_DND -> {
                             if (it[TITLE] in DND_COMMANDS) {
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                                    handleDeviceCommands(it[MESSAGE], it[TITLE])
+                                    handleDeviceCommands(it)
                                 else {
                                     mainScope.launch {
                                         Log.d(TAG, "Posting notification to device as it does not support DND commands")
@@ -160,10 +173,31 @@ class MessagingService : FirebaseMessagingService() {
                         }
                         COMMAND_RINGER_MODE -> {
                             if (it[TITLE] in RM_COMMANDS) {
-                                handleDeviceCommands(it[MESSAGE], it[TITLE])
+                                handleDeviceCommands(it)
                             } else {
                                 mainScope.launch {
                                     Log.d(TAG, "Invalid ringer mode command received, posting notification to device")
+                                    sendNotification(it)
+                                }
+                            }
+                        }
+                        COMMAND_BROADCAST_INTENT -> {
+                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty())
+                                handleDeviceCommands(it)
+                            else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid broadcast command received, posting notification to device")
+                                    sendNotification(it)
+                                }
+                            }
+                        }
+                        COMMAND_VOLUME_LEVEL -> {
+                            if (!it["channel"].isNullOrEmpty() && it["channel"] in CHANNEL_VOLUME_STREAM &&
+                                !it[TITLE].isNullOrEmpty() && it[TITLE]?.toIntOrNull() != null)
+                                handleDeviceCommands(it)
+                            else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid volume command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
@@ -208,6 +242,9 @@ class MessagingService : FirebaseMessagingService() {
     private fun speakNotification(data: Map<String, String>) {
         var textToSpeech: TextToSpeech? = null
         var tts = data[TITLE]
+        val audioManager = applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val currentAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
+        val maxAlarmVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
             tts = getString(R.string.tts_no_title)
         textToSpeech = TextToSpeech(applicationContext
@@ -215,21 +252,26 @@ class MessagingService : FirebaseMessagingService() {
             if (it == TextToSpeech.SUCCESS) {
                 val listener = object : UtteranceProgressListener() {
                     override fun onStart(p0: String?) {
-                        // No op
+                        if (data["channel"] == ALARM_STREAM_MAX)
+                            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxAlarmVolume, 0)
                     }
 
                     override fun onDone(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
+                        if (data["channel"] == ALARM_STREAM_MAX)
+                            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, currentAlarmVolume, 0)
                     }
 
                     override fun onError(p0: String?) {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
+                        if (data["channel"] == ALARM_STREAM_MAX)
+                            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, currentAlarmVolume, 0)
                     }
                 }
                 textToSpeech?.setOnUtteranceProgressListener(listener)
-                if (data["channel"] == "alarm_stream") {
+                if (data["channel"] == ALARM_STREAM || data["channel"] == ALARM_STREAM_MAX) {
                     val audioAttributes = AudioAttributes.Builder()
                         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                         .setUsage(AudioAttributes.USAGE_ALARM)
@@ -250,7 +292,9 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
-    private fun handleDeviceCommands(message: String?, title: String?) {
+    private fun handleDeviceCommands(data: Map<String, String>) {
+        val message = data[MESSAGE]
+        val title = data[TITLE]
         when (message) {
             COMMAND_DND -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -287,6 +331,41 @@ class MessagingService : FirebaseMessagingService() {
                     }
                 } else {
                     processRingerMode(audioManager, title)
+                }
+            }
+            COMMAND_BROADCAST_INTENT -> {
+                try {
+                    val packageName = data["channel"]
+                    val intent = Intent(title)
+                    intent.`package` = packageName
+                    Log.d(TAG, "Sending broadcast intent")
+                    applicationContext.sendBroadcast(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send broadcast intent please check command format", e)
+                    Toast.makeText(applicationContext, R.string.broadcast_intent_error, Toast.LENGTH_LONG).show()
+                }
+            }
+            COMMAND_VOLUME_LEVEL -> {
+                val audioManager =
+                    applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val notificationManager =
+                        applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                        requestDNDPermission()
+                    } else {
+                        processStreamVolume(
+                            audioManager,
+                            data["channel"].toString(),
+                            title!!.toInt()
+                        )
+                    }
+                } else {
+                    processStreamVolume(
+                        audioManager,
+                        data["channel"].toString(),
+                        title!!.toInt()
+                    )
                 }
             }
             else -> Log.d(TAG, "No command received")
@@ -351,6 +430,8 @@ class MessagingService : FirebaseMessagingService() {
 
         handleContentIntent(notificationBuilder, messageId, group, groupId, data)
 
+        handleChronometer(notificationBuilder, data)
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             handleLegacyPriority(notificationBuilder, data)
             handleLegacyLedColor(notificationBuilder, data)
@@ -366,6 +447,29 @@ class MessagingService : FirebaseMessagingService() {
                     notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)
                 }
             }
+        }
+    }
+
+    private fun handleChronometer(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        try { // Without this, a non-numeric when value will crash the app
+            val notificationWhen = data[WHEN]?.toLongOrNull()?.times(1000) ?: 0
+            val usesChronometer = data[CHRONOMETER]?.toBoolean() ?: false
+
+            if (notificationWhen != 0L) {
+                builder.setWhen(notificationWhen)
+                builder.setUsesChronometer(usesChronometer)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    val countdown = notificationWhen > System.currentTimeMillis()
+                    builder.addExtras(Bundle()) // Without this builder.setChronometerCountDown throws a null reference exception
+                    builder.setChronometerCountDown(countdown)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error while handling chronometer notification", e)
         }
     }
 
@@ -452,7 +556,7 @@ class MessagingService : FirebaseMessagingService() {
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        if (data["channel"] == "alarm_stream") {
+        if (data["channel"] == ALARM_STREAM) {
             builder.setCategory(Notification.CATEGORY_ALARM)
             builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), AudioManager.STREAM_ALARM)
         } else {
@@ -726,7 +830,7 @@ class MessagingService : FirebaseMessagingService() {
                 handleImportance(data)
             )
 
-            if (channelName == "alarm_stream")
+            if (channelName == ALARM_STREAM)
                 handleChannelSound(channel)
 
             setChannelLedColor(data, channel)
@@ -768,6 +872,8 @@ class MessagingService : FirebaseMessagingService() {
     ) {
         val audioAttributes = AudioAttributes.Builder()
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
+            .setLegacyStreamType(AudioManager.STREAM_ALARM)
             .setUsage(AudioAttributes.USAGE_ALARM)
             .build()
         channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), audioAttributes)
@@ -815,6 +921,41 @@ class MessagingService : FirebaseMessagingService() {
             RM_SILENT -> audioManager.ringerMode = AudioManager.RINGER_MODE_SILENT
             RM_VIBRATE -> audioManager.ringerMode = AudioManager.RINGER_MODE_VIBRATE
             else -> Log.d(TAG, "Skipping invalid command")
+        }
+    }
+
+    private fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int) {
+        var volumeLevel = volume
+        when (stream) {
+            ALARM_STREAM -> {
+                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM))
+                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+                else if (volumeLevel < 0)
+                    volumeLevel = 0
+                audioManager.setStreamVolume(AudioManager.STREAM_ALARM, volumeLevel, AudioManager.FLAG_SHOW_UI)
+            }
+            MUSIC_STREAM -> {
+                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC))
+                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                else if (volumeLevel < 0)
+                    volumeLevel = 0
+                audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volumeLevel, AudioManager.FLAG_SHOW_UI)
+            }
+            NOTIFICATION_STREAM -> {
+                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION))
+                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
+                else if (volumeLevel < 0)
+                    volumeLevel = 0
+                audioManager.setStreamVolume(AudioManager.STREAM_NOTIFICATION, volumeLevel, AudioManager.FLAG_SHOW_UI)
+            }
+            RING_STREAM -> {
+                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_RING))
+                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
+                else if (volumeLevel < 0)
+                    volumeLevel = 0
+                audioManager.setStreamVolume(AudioManager.STREAM_RING, volumeLevel, AudioManager.FLAG_SHOW_UI)
+            }
+            else -> Log.d(TAG, "Skipping command due to invalid channel stream")
         }
     }
 

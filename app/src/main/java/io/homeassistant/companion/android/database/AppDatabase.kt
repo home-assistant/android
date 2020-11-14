@@ -5,6 +5,8 @@ import android.app.NotificationManager
 import android.content.ContentValues
 import android.content.Context
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
@@ -176,8 +178,8 @@ abstract class AppDatabase : RoomDatabase() {
                 val sensors = mutableListOf<ContentValues>()
                 var migrationSuccessful = false
                 var migrationFailed = false
-                if (cursor.moveToFirst()) {
-                    try {
+                try {
+                    if (cursor.moveToFirst()) {
                         while (cursor.moveToNext()) {
                             sensors.add(ContentValues().also {
                                 it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
@@ -195,12 +197,12 @@ abstract class AppDatabase : RoomDatabase() {
                             })
                         }
                         migrationSuccessful = true
-                    } catch (e: Exception) {
-                        migrationFailed = true
-                        Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                     }
+                    cursor.close()
+                } catch (e: Exception) {
+                    migrationFailed = true
+                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                 }
-                cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
                 if (migrationSuccessful) {
@@ -233,8 +235,8 @@ abstract class AppDatabase : RoomDatabase() {
                 val sensors = mutableListOf<ContentValues>()
                 var migrationSuccessful = false
                 var migrationFailed = false
-                if (cursor.moveToFirst()) {
-                    try {
+                try {
+                    if (cursor.moveToFirst()) {
                         while (cursor.moveToNext()) {
                             sensors.add(ContentValues().also {
                                 it.put("id", cursor.getString(cursor.getColumnIndex("id")))
@@ -252,12 +254,12 @@ abstract class AppDatabase : RoomDatabase() {
                             })
                         }
                         migrationSuccessful = true
-                    } catch (e: Exception) {
-                        migrationFailed = true
-                        Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                     }
+                    cursor.close()
+                } catch (e: Exception) {
+                    migrationFailed = true
+                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
                 }
-                cursor.close()
                 database.execSQL("DROP TABLE IF EXISTS `sensors`")
                 database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, `last_sent_state` TEXT NOT NULL, `state_type` TEXT NOT NULL, `type` TEXT NOT NULL, `icon` TEXT NOT NULL, `name` TEXT NOT NULL, `device_class` TEXT, `unit_of_measurement` TEXT, PRIMARY KEY(`id`))")
                 if (migrationSuccessful) {
@@ -325,7 +327,13 @@ abstract class AppDatabase : RoomDatabase() {
                     Log.d(TAG, "Event sent to Home Assistant")
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to send event to Home Assistant", e)
-                    Toast.makeText(appContext, R.string.database_event_failure, Toast.LENGTH_LONG).show()
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            appContext,
+                            R.string.database_event_failure,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
         }

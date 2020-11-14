@@ -40,10 +40,15 @@ class HaControlsProviderService : ControlsProviderService() {
         override fun run() {
             monitoredEntities.forEach { entityId ->
                 ioScope.launch {
-                    val entity = integrationRepository.getEntity(entityId)
-                    val domain = entity.entityId.split(".")[0]
-                    val control = domainToHaControl[domain]?.createControl(applicationContext, entity)
-                    updateSubscriber?.onNext(control)
+                    try {
+                        val entity = integrationRepository.getEntity(entityId)
+                        val domain = entity.entityId.split(".")[0]
+                        val control =
+                            domainToHaControl[domain]?.createControl(applicationContext, entity)
+                        updateSubscriber?.onNext(control)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to get entity information", e)
+                    }
                 }
             }
             handler.postDelayed(this, 5000)
@@ -53,14 +58,17 @@ class HaControlsProviderService : ControlsProviderService() {
     private var updateSubscriber: Flow.Subscriber<in Control>? = null
 
     private val domainToHaControl = mapOf(
+        "automation" to DefaultSwitchControl,
         "camera" to null,
         "climate" to ClimateControl,
         "cover" to CoverControl,
         "fan" to FanControl,
         "light" to LightControl,
+        "lock" to LockControl,
         "media_player" to null,
         "remote" to null,
         "scene" to SceneControl,
+        "script" to SceneControl,
         "switch" to DefaultSwitchControl,
         "input_boolean" to DefaultSwitchControl,
         "input_number" to DefaultSliderControl
@@ -78,16 +86,23 @@ class HaControlsProviderService : ControlsProviderService() {
     override fun createPublisherForAllAvailable(): Flow.Publisher<Control> {
         return Flow.Publisher { subscriber ->
             ioScope.launch {
-                integrationRepository
-                    .getEntities()
-                    .mapNotNull {
-                        val domain = it.entityId.split(".")[0]
-                        domainToHaControl[domain]?.createControl(applicationContext, it as Entity<Map<String, Any>>)
-                    }
-                    .forEach {
-                        subscriber.onNext(it)
-                    }
-                subscriber.onComplete()
+                try {
+                    integrationRepository
+                        .getEntities()
+                        .mapNotNull {
+                            val domain = it.entityId.split(".")[0]
+                            domainToHaControl[domain]?.createControl(
+                                applicationContext,
+                                it as Entity<Map<String, Any>>
+                            )
+                        }
+                        .forEach {
+                            subscriber.onNext(it)
+                        }
+                    subscriber.onComplete()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error getting list of entities", e)
+                }
             }
         }
     }
@@ -124,14 +139,23 @@ class HaControlsProviderService : ControlsProviderService() {
         var actionSuccess = false
         if (haControl != null) {
             runBlocking {
-                actionSuccess = haControl.performAction(integrationRepository, action)
+                try {
+                    actionSuccess = haControl.performAction(integrationRepository, action)
 
-                val entity = integrationRepository.getEntity(controlId)
-                updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))
-                handler.postDelayed(750) {
-                    // This is here because the state isn't aways instantly updated.  This should
-                    // cause us to update a second time rapidly to ensure we display the correct state
+                    val entity = integrationRepository.getEntity(controlId)
                     updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))
+                    handler.postDelayed(750) {
+                        // This is here because the state isn't aways instantly updated.  This should
+                        // cause us to update a second time rapidly to ensure we display the correct state
+                        updateSubscriber?.onNext(
+                            haControl.createControl(
+                                applicationContext,
+                                entity
+                            )
+                        )
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to control or get entity information", e)
                 }
             }
         }

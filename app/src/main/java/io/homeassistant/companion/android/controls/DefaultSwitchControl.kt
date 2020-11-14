@@ -11,6 +11,7 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -32,15 +33,23 @@ class DefaultSwitchControl {
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
-            control.setTitle(entity.attributes["friendly_name"].toString())
+            control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(
                 when (entity.entityId.split(".")[0]) {
                     "switch" -> DeviceTypes.TYPE_SWITCH
                     else -> DeviceTypes.TYPE_GENERIC_ON_OFF
                 }
             )
+            control.setZone(
+                when (entity.entityId.split(".")[0]) {
+                    "automation" -> context.getString(R.string.domain_automation)
+                    "input_boolean" -> context.getString(R.string.domain_input_boolean)
+                    "switch" -> context.getString(R.string.domain_switch)
+                    else -> entity.entityId.split(".")[0].capitalize()
+                }
+            )
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText(if (entity.state == "off") "Off" else "On")
+            control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(R.string.state_on))
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,

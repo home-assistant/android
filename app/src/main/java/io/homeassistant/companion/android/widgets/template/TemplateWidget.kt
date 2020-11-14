@@ -5,9 +5,11 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.RemoteViews
+import android.widget.Toast
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -83,11 +85,13 @@ class TemplateWidget : AppWidgetProvider() {
         ensureInjected(context)
 
         templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
+        val templateWidgetList = templateWidgetDao.getAll()
 
         super.onReceive(context, intent)
         when (action) {
             UPDATE_VIEW -> updateView(context, appWidgetId)
             RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, templateWidgetList)
         }
     }
 
@@ -121,6 +125,7 @@ class TemplateWidget : AppWidgetProvider() {
                     renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
+                    Toast.makeText(context, R.string.widget_template_error, Toast.LENGTH_LONG).show()
                 }
                 setTextViewText(
                     R.id.widgetTemplateText,
@@ -135,10 +140,27 @@ class TemplateWidget : AppWidgetProvider() {
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
+        if (!isConnectionActive(context)) {
+            Log.d(TAG, "Skipping widget update since network connection is not active")
+            return
+        }
+
         Log.d(TAG, "Updating Template Widget View: $appWidgetId")
         mainScope.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)
             appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+
+    private fun updateAllWidgets(
+        context: Context,
+        templateWidgetList: Array<TemplateWidgetEntity>?
+    ) {
+        if (templateWidgetList != null) {
+            Log.d(TAG, "Updating all widgets")
+            for (item in templateWidgetList) {
+                updateView(context, item.id)
+            }
         }
     }
 
@@ -172,5 +194,11 @@ class TemplateWidget : AppWidgetProvider() {
         } else {
             throw Exception("Application Context passed is not of our application!")
         }
+    }
+
+    private fun isConnectionActive(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        return activeNetworkInfo?.isConnected ?: false
     }
 }

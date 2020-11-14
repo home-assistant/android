@@ -26,6 +26,7 @@ class SensorReceiver : BroadcastReceiver() {
         const val TAG = "SensorReceiver"
         val MANAGERS = listOf(
             ActivitySensorManager(),
+            AppSensorManager(),
             AudioSensorManager(),
             BatterySensorManager(),
             BluetoothSensorManager(),
@@ -33,6 +34,7 @@ class SensorReceiver : BroadcastReceiver() {
             GeocodeSensorManager(),
             KeyguardSensorManager(),
             LastRebootSensorManager(),
+            LastUpdateManager(),
             LightSensorManager(),
             LocationSensorManager(),
             NetworkSensorManager(),
@@ -44,6 +46,7 @@ class SensorReceiver : BroadcastReceiver() {
             ProximitySensorManager(),
             StepsSensorManager(),
             StorageSensorManager(),
+            TimeZoneManager(),
             TrafficStatsManager()
         )
 
@@ -95,6 +98,9 @@ class SensorReceiver : BroadcastReceiver() {
                 return
             }
         }
+
+        if (isSensorEnabled(context, LastUpdateManager.lastUpdate.id))
+            LastUpdateManager().sendLastUpdate(context, intent.action)
 
         ioScope.launch {
             updateSensors(context, integrationUseCase)

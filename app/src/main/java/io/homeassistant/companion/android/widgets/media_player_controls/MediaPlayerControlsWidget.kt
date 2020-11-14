@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -80,9 +81,25 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
+        if (!isConnectionActive(context)) {
+            Log.d(TAG, "Skipping widget update since network connection is not active")
+            return
+        }
         mainScope.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)
             appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+
+    private fun updateAllWidgets(
+        context: Context,
+        mediaPlayerWidgetList: Array<MediaPlayerControlsWidgetEntity>?
+    ) {
+        if (mediaPlayerWidgetList != null) {
+            Log.d(TAG, "Updating all widgets")
+            for (item in mediaPlayerWidgetList) {
+                updateAppWidget(context, item.id)
+            }
         }
     }
 
@@ -210,6 +227,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                             PendingIntent.FLAG_UPDATE_CURRENT
                         )
                     )
+                    setViewVisibility(R.id.widgetPrevTrackButton, View.VISIBLE)
+                    setViewVisibility(R.id.widgetNextTrackButton, View.VISIBLE)
                 } else {
                     setViewVisibility(R.id.widgetPrevTrackButton, View.GONE)
                     setViewVisibility(R.id.widgetNextTrackButton, View.GONE)
@@ -234,6 +253,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                             PendingIntent.FLAG_UPDATE_CURRENT
                         )
                     )
+                    setViewVisibility(R.id.widgetRewindButton, View.VISIBLE)
+                    setViewVisibility(R.id.widgetFastForwardButton, View.VISIBLE)
                 } else {
                     setViewVisibility(R.id.widgetRewindButton, View.GONE)
                     setViewVisibility(R.id.widgetFastForwardButton, View.GONE)
@@ -268,6 +289,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         ensureInjected(context)
 
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
+        val mediaPlayerWidgetList = mediaPlayCtrlWidgetDao.getAll()
 
         super.onReceive(context, intent)
         when (action) {
@@ -278,6 +300,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             CALL_PLAYPAUSE -> callPlayPauseService(appWidgetId)
             CALL_FASTFORWARD -> callFastForwardService(context, appWidgetId)
             CALL_NEXT_TRACK -> callNextTrackService(appWidgetId)
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, mediaPlayerWidgetList)
         }
     }
 
@@ -498,5 +521,11 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         } else {
             throw Exception("Application Context passed is not of our application!")
         }
+    }
+
+    private fun isConnectionActive(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        return activeNetworkInfo?.isConnected ?: false
     }
 }

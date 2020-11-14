@@ -108,6 +108,7 @@ interface SensorManager {
             val valueType = when (item.value) {
                 is Boolean -> "boolean"
                 is Int -> "int"
+                is Long -> "long"
                 is Number -> "float"
                 else -> "string" // Always default to String for attributes
             }

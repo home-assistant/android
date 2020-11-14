@@ -5,12 +5,15 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
 import android.widget.RemoteViews
+import android.widget.Toast
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -67,9 +70,26 @@ class EntityWidget : AppWidgetProvider() {
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
     ) {
+        if (!isConnectionActive(context)) {
+            Log.d(TAG, "Skipping widget update since network connection is not active")
+            return
+        }
+
         mainScope.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)
             appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+
+    private fun updateAllWidgets(
+        context: Context,
+        staticWidgetEntityList: Array<StaticWidgetEntity>?
+    ) {
+        if (staticWidgetEntityList != null) {
+            Log.d(TAG, "Updating all widgets")
+            for (item in staticWidgetEntityList) {
+                updateAppWidget(context, item.id)
+            }
         }
     }
 
@@ -95,7 +115,7 @@ class EntityWidget : AppWidgetProvider() {
                 )
                 setTextViewText(
                     R.id.widgetText,
-                    resolveTextToShow(entityId, attributeIds, stateSeparator, attributeSeparator)
+                    resolveTextToShow(context, entityId, attributeIds, stateSeparator, attributeSeparator)
                 )
                 setTextViewText(
                     R.id.widgetLabel,
@@ -117,13 +137,19 @@ class EntityWidget : AppWidgetProvider() {
     }
 
     private suspend fun resolveTextToShow(
+        context: Context,
         entityId: String?,
         attributeIds: String?,
         stateSeparator: String,
         attributeSeparator: String
     ): CharSequence? {
-        val entity = integrationUseCase.getEntities().find { e -> e.entityId.equals(entityId) }
-
+        var entity: Entity<Map<String, Any>>? = null
+        try {
+            entity = entityId?.let { integrationUseCase.getEntity(it) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to fetch entity", e)
+            Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+        }
         if (attributeIds == null) return entity?.state
 
         var fetchedAttributes: Map<*, *>
@@ -133,7 +159,8 @@ class EntityWidget : AppWidgetProvider() {
             attributeValues = attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
             return entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
         } catch (e: Exception) {
-            Log.d(TAG, "Unable to fetch entity state and attributes", e)
+            Log.e(TAG, "Unable to fetch entity state and attributes", e)
+            Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
         return null
     }
@@ -151,12 +178,14 @@ class EntityWidget : AppWidgetProvider() {
         ensureInjected(context)
 
         staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
+        val staticWidgetList = staticWidgetDao.getAll()
 
         super.onReceive(context, intent)
 
         when (action) {
             RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
             UPDATE_ENTITY -> updateAppWidget(context, appWidgetId)
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, staticWidgetList)
         }
     }
 
@@ -211,5 +240,11 @@ class EntityWidget : AppWidgetProvider() {
         appWidgetIds.forEach { appWidgetId ->
             staticWidgetDao.delete(appWidgetId)
         }
+    }
+
+    private fun isConnectionActive(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        return activeNetworkInfo?.isConnected ?: false
     }
 }

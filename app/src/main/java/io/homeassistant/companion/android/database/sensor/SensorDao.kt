@@ -41,4 +41,7 @@ interface SensorDao {
 
     @Query("UPDATE sensors SET last_sent_state = :state WHERE id = :sensorId")
     fun updateLastSendState(sensorId: String, state: String)
+
+    @Query("SELECT COUNT(id) FROM sensors WHERE enabled = 1")
+    fun getEnabledCount(): Int?
 }

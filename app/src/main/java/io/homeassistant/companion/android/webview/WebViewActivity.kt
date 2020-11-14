@@ -37,7 +37,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -48,6 +47,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import eightbitlab.com.blurview.RenderScriptBlur
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -60,6 +60,7 @@ import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
@@ -67,7 +68,7 @@ import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_playback_control_view.*
 import org.json.JSONObject
 
-class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.webview.WebView {
+class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
 
     companion object {
         const val EXTRA_PATH = "path"
@@ -93,12 +94,16 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
     @Inject
     lateinit var themesManager: ThemesManager
 
+    @Inject
+    lateinit var languagesManager: LanguagesManager
+
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
     private lateinit var myCustomView: View
     private lateinit var authenticator: Authenticator
     private lateinit var exoPlayerView: PlayerView
+    private lateinit var currentLang: String
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
     private var isConnected = false
@@ -422,10 +427,14 @@ class WebViewActivity : AppCompatActivity(), io.homeassistant.companion.android.
                 if (presenter.isFullScreen())
                     hideSystemUI()
         }
+
+        currentLang = languagesManager.getCurrentLang()
     }
 
     override fun onResume() {
         super.onResume()
+        if (currentLang != languagesManager.getCurrentLang())
+            recreate()
         if (!unlocked && !presenter.isLockEnabled())
             unlocked = true
     }

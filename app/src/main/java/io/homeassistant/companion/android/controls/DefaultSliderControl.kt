@@ -10,6 +10,7 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
 import android.service.controls.templates.RangeTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -31,16 +32,17 @@ class DefaultSliderControl {
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
-            control.setTitle(entity.attributes["friendly_name"].toString())
+            control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_UNKNOWN)
+            control.setZone(context.getString(R.string.domain_input_number))
             control.setStatus(Control.STATUS_OK)
             control.setControlTemplate(
                 RangeTemplate(
                     entity.entityId,
                     (entity.attributes["min"] as? Number)?.toFloat() ?: 0f,
-                    (entity.attributes["max"] as? Number)?.toFloat() ?: 0f,
+                    (entity.attributes["max"] as? Number)?.toFloat() ?: 1f,
                     entity.state.toFloatOrNull() ?: 0f,
-                    (entity.attributes["step"] as? Number)?.toFloat() ?: 0f,
+                    (entity.attributes["step"] as? Number)?.toFloat() ?: 1f,
                     null
                 )
             )

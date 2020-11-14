@@ -11,6 +11,7 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -31,7 +32,7 @@ class CoverControl {
                 PendingIntent.FLAG_CANCEL_CURRENT
             )
         )
-        control.setTitle(entity.attributes["friendly_name"].toString())
+        control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
         control.setDeviceType(
             when (entity.attributes["device_class"]) {
                 "awning" -> DeviceTypes.TYPE_AWNING
@@ -45,13 +46,14 @@ class CoverControl {
                 else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
             }
         )
+        control.setZone(context.getString(R.string.domain_cover))
         control.setStatus(Control.STATUS_OK)
         control.setStatusText(
             when (entity.state) {
-                "closed" -> "Closed"
-                "closing" -> "Closing"
-                "open" -> "Open"
-                "opening" -> "Opening"
+                "closed" -> context.getString(R.string.state_closed)
+                "closing" -> context.getString(R.string.state_closing)
+                "open" -> context.getString(R.string.state_open)
+                "opening" -> context.getString(R.string.state_opening)
                 else -> entity.state
             })
         control.setControlTemplate(

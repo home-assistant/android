@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.webview
 import android.net.Uri
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.themes.ThemesRepository
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.mockk.coEvery
 import io.mockk.every
@@ -34,7 +34,7 @@ object WebViewPresenterImplSpec : Spek({
         val urlUseCase by memoized { mockk<UrlRepository>(relaxUnitFun = true) }
         val authenticationUseCase by memoized { mockk<AuthenticationRepository>(relaxUnitFun = true) }
         val integrationUseCase by memoized { mockk<IntegrationRepository>(relaxUnitFun = true) }
-        val themesUseCase by memoized { mockk<ThemesRepository>(relaxUnitFun = true) }
+        val themesUseCase by memoized { mockk<PrefsRepository>(relaxUnitFun = true) }
         val view by memoized { mockk<WebView>(relaxUnitFun = true) }
         val presenter by memoized { WebViewPresenterImpl(view, urlUseCase, authenticationUseCase, integrationUseCase) }
 

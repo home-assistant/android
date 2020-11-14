@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.notification
 
 import android.app.AlertDialog
 import android.os.Bundle
+import android.text.Html.fromHtml
 import androidx.preference.DropDownPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -121,7 +122,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 cal.timeInMillis = item.received
                 pref.key = item.id.toString()
                 pref.title = cal.time.toString()
-                pref.summary = item.message
+                pref.summary = fromHtml(item.message)
                 pref.isIconSpaceReserved = false
 
                 pref.setOnPreferenceClickListener {

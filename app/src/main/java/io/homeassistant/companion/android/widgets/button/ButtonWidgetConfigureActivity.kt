@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.widgets.button
 
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -9,27 +10,30 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
+import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.maltaisn.icondialog.IconDialog
 import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.data.Icon
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -42,7 +46,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
+class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
         private const val ICON_DIALOG_TAG = "icon-dialog"
@@ -63,6 +67,11 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
+
+    private var onDeleteWidget = View.OnClickListener {
+        val context = this@ButtonWidgetConfigureActivity
+        deleteConfirmation(context)
+    }
 
     private var onAddWidget = View.OnClickListener {
         try {
@@ -233,6 +242,17 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             .build()
             .inject(this)
 
+        val buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
+        val buttonWidget = buttonWidgetDao.get(appWidgetId)
+        var serviceText = ""
+        if (buttonWidget != null) {
+            serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
+            widget_text_config_service.setText(serviceText)
+            label.setText(buttonWidget.label)
+            add_button.setText(R.string.update_widget)
+            delete_button.visibility = VISIBLE
+            delete_button.setOnClickListener(onDeleteWidget)
+        }
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
 
@@ -248,7 +268,37 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 integrationUseCase.getServices().forEach {
                     services[getServiceString(it)] = it
                 }
-                serviceAdapter.addAll(services.values)
+                if (buttonWidget != null) {
+                    serviceAdapter.add(services[serviceText])
+                    val fields = services[serviceText]!!.serviceData.fields
+                    val fieldKeys = fields.keys
+                    Log.d(TAG, "Fields applicable to this service: $fields")
+                    val serviceDataMap: HashMap<String, Any> =
+                        jacksonObjectMapper().readValue(buttonWidget.serviceData)
+                    for (item in serviceDataMap) {
+                        val value: String = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
+                        dynamicFields.add(ServiceFieldBinder(serviceText, item.key, value))
+
+                        fieldKeys.sorted().forEach { fieldKey ->
+                            Log.d(TAG, "Creating a text input box for $fieldKey")
+
+                            // Insert a dynamic layout
+                            // IDs get priority and go at the top, since the other fields
+                            // are usually optional but the ID is required
+                            if (fieldKey != item.key) {
+                                if (fieldKey.contains("_id"))
+                                    dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
+                                else
+                                    dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
+                            }
+                        }
+                    }
+                    integrationUseCase.getEntities().forEach {
+                        entities[it.entityId] = it
+                    }
+                    dynamicFieldAdapter.notifyDataSetChanged()
+                } else
+                    serviceAdapter.addAll(services.values)
                 serviceAdapter.sort()
 
                 // Update service adapter
@@ -290,7 +340,8 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 searchVisibility = IconDialog.SearchVisibility.ALWAYS
             }
             val iconDialog = IconDialog.newInstance(settings)
-            onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[62017]!!))
+            val iconId = buttonWidget?.iconId ?: 62017
+            onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[iconId]!!))
             widget_config_icon_selector.setOnClickListener {
                 iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
             }
@@ -319,5 +370,31 @@ class ButtonWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                 widget_config_icon_selector.setImageBitmap(icon.toBitmap())
             }
         }
+    }
+
+    private fun deleteConfirmation(context: Context) {
+        val buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
+
+        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
+
+        builder.setTitle(R.string.confirm_delete_this_widget_title)
+        builder.setMessage(R.string.confirm_delete_this_widget_message)
+
+        builder.setPositiveButton(
+            R.string.confirm_positive
+        ) { dialog, _ ->
+            buttonWidgetDao.delete(appWidgetId)
+            dialog.dismiss()
+            finish()
+        }
+
+        builder.setNegativeButton(
+            R.string.confirm_negative
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert: android.app.AlertDialog? = builder.create()
+        alert?.show()
     }
 }
