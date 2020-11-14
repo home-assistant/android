@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
+import android.view.ViewGroup
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.graphics.drawable.DrawableCompat
@@ -156,6 +157,9 @@ class MultiWidget : AppWidgetProvider() {
         val widget = multiWidgetDao.get(appWidgetId)
         val widgetView = RemoteViews(context.packageName, R.layout.widget_multi)
 
+        // Clear the widget before re-adding elements
+        widgetView.removeAllViews(R.id.widget_multi_element_layout)
+
         // Analyze each element in the widget and add it to the view
         widget?.elements?.forEachIndexed { index, element ->
             val elementView: RemoteViews
@@ -251,6 +255,7 @@ class MultiWidget : AppWidgetProvider() {
                             templateElement.templateData,
                             mapOf()
                         )
+                        Log.d(TAG, "Template rendering returned: '$renderedTemplate'")
                     } catch (e: Exception) {
                         Log.e(TAG, "Cannot render template: ${templateElement.templateData}", e)
                     }
@@ -337,7 +342,7 @@ class MultiWidget : AppWidgetProvider() {
                     )
                 MultiWidgetElementType.TYPE_TEMPLATE ->
                     elements.add(
-                        MultiWidgetPlaintextEntity(
+                        MultiWidgetTemplateEntity(
                             appWidgetId,
                             index,
                             extras.getString(EXTRA_TEMPLATE + index)!!,

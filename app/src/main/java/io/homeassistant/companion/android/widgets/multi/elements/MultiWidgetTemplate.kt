@@ -27,6 +27,10 @@ class MultiWidgetTemplate : MultiWidgetElement {
             context.resources.getString(R.string.widget_font_size_large) -> MultiWidget.LABEL_TEXT_LARGE
             else -> MultiWidget.LABEL_TEXT_MED
         }
+
         textLines = layout.widget_element_template_text_lines.text.toString().toInt()
+
+        // If textLines is 0, we actually want no limit on the number of lines
+        if (textLines == 0) textLines = Integer.MAX_VALUE
     }
 }
