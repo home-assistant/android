@@ -114,8 +114,11 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
 
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
         widget_config_entity_id_text.setAdapter(entityAdapter)
-        widget_config_entity_id_text.onFocusChangeListener = dropDownOnFocus
         widget_config_entity_id_text.doAfterTextChanged { updateServiceAdaptor() }
+        widget_config_entity_id_text.setOnFocusChangeListener { view, hasFocus ->
+            if (hasFocus && view is AutoCompleteTextView)
+                view.showDropDown()
+        }
 
         serviceAdapter = SingleItemArrayAdapter(this) {
             if (it != null) getServiceString(it) else ""
@@ -133,9 +136,15 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
         widget_config_element_layout.adapter = dynamicElementAdapter
         widget_config_element_layout.layoutManager = LinearLayoutManager(this)
 
-        widget_config_add_button_button.setOnClickListener(onAddButtonElementListener)
-        widget_config_add_plaintext_button.setOnClickListener(onAddPlaintextElementListener)
-        widget_config_add_template_button.setOnClickListener(onAddTemplateElementListener)
+        widget_config_add_button_button.setOnClickListener {
+            dynamicElementAdapter.addButton(iconDialog)
+        }
+        widget_config_add_plaintext_button.setOnClickListener {
+            dynamicElementAdapter.addPlaintext()
+        }
+        widget_config_add_template_button.setOnClickListener {
+            dynamicElementAdapter.addTemplate(::getTemplateTextAsync)
+        }
 
         widget_config_finalize_button.setOnClickListener(addWidgetClickListener)
 
@@ -336,24 +345,6 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
         }
-    }
-
-    private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
-        if (hasFocus && view is AutoCompleteTextView) {
-            view.showDropDown()
-        }
-    }
-
-    private val onAddButtonElementListener = View.OnClickListener {
-        dynamicElementAdapter.addButton(iconDialog)
-    }
-
-    private val onAddPlaintextElementListener = View.OnClickListener {
-        dynamicElementAdapter.addPlaintext()
-    }
-
-    private val onAddTemplateElementListener = View.OnClickListener {
-        dynamicElementAdapter.addTemplate(::getTemplateTextAsync)
     }
 
     private val widgetEntityModeCheckboxListener =
