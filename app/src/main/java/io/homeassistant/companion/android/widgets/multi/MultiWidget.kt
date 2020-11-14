@@ -8,7 +8,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
-import android.view.ViewGroup
 import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.core.graphics.drawable.DrawableCompat
