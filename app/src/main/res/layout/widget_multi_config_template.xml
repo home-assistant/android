@@ -1,11 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
     android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/TextAppearance.HomeAssistant.Headline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:text="Template" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/widget_element_remove_button"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical|end"
+            android:layout_margin="5dp"
+            android:src="@drawable/ic_clear_black"
+            android:background="?android:selectableItemBackground"
+            android:tint="@color/colorIcon"
+            tools:ignore="UseAppTint"
+            android:contentDescription="Remove template" />
+    </FrameLayout>
 
     <LinearLayout
         android:id="@+id/widget_element_template_layout"
@@ -17,6 +45,7 @@
             android:id="@+id/widget_element_template_edit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="5dp"
             android:gravity="top"
             android:inputType="textMultiLine"
             android:minLines="4"
@@ -26,6 +55,9 @@
             android:id="@+id/widget_element_template_render"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="5dp"
+            android:gravity="center_horizontal"
+            android:textSize="16sp"
             android:text="@string/template_widget_default" />
     </LinearLayout>
 

@@ -17,7 +17,7 @@ class MultiWidgetTemplate : MultiWidgetElement {
     var textLines: Int = 2
 
     //  Create variable to store layout views
-    lateinit var layout: View
+    override lateinit var layout: View
 
     override fun retrieveFinalValues(context: Context) {
         templateData = layout.widget_element_template_edit.text.toString()

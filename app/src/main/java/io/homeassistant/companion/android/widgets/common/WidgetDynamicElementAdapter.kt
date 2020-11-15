@@ -11,6 +11,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatCheckBox
+import androidx.appcompat.widget.AppCompatImageButton
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -67,17 +68,32 @@ class WidgetDynamicElementAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        // Bind type-agnostic views
+        val elementView = holder.itemView
+
+        // Store layout views so the element can finalize its own values
+        elements[position].layout = elementView
+
+        // Set up remove element button
+        elementView.findViewById<AppCompatImageButton>(
+            R.id.widget_element_remove_button
+        ).setOnClickListener {
+            elements.removeAt(position)
+            notifyItemRemoved(position)
+        }
+
+        // Bind type-specific views
         when (elements[position].type) {
             MultiWidgetElement.Type.BUTTON -> bindButtonViews(
-                holder.itemView,
+                elementView,
                 elements[position] as MultiWidgetButton
             )
             MultiWidgetElement.Type.PLAINTEXT -> bindPlaintextViews(
-                holder.itemView,
+                elementView,
                 elements[position] as MultiWidgetPlaintext
             )
             MultiWidgetElement.Type.TEMPLATE -> bindTemplateViews(
-                holder.itemView,
+                elementView,
                 elements[position] as MultiWidgetTemplate
             )
         }
@@ -105,8 +121,7 @@ class WidgetDynamicElementAdapter(
         val dynamicFields = ArrayList<ServiceFieldBinder>()
         val dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
 
-        // Store layout views for icon update purposes
-        element.layout = dynamicElementLayout
+        // Store dynamic fields for later processing
         element.dynamicFields = dynamicFields
 
         // Set up service edit text field
@@ -144,9 +159,6 @@ class WidgetDynamicElementAdapter(
     }
 
     private fun bindPlaintextViews(dynamicElementLayout: View, element: MultiWidgetPlaintext) {
-        // Store layout views so the element can finalize its own values
-        element.layout = dynamicElementLayout
-
         // Set up the text size spinner
         dynamicElementLayout.widget_element_label_text_size.adapter =
             ArrayAdapter.createFromResource(
@@ -159,9 +171,6 @@ class WidgetDynamicElementAdapter(
     }
 
     private fun bindTemplateViews(dynamicElementLayout: View, element: MultiWidgetTemplate) {
-        // Store layout views so the element can finalize its own values
-        element.layout = dynamicElementLayout
-
         // Have the user-edited template text get passed back to the main activity so it can
         // render in a coroutine and the rendered text can be updated asynchronously
         val templateTextEdit = dynamicElementLayout.widget_element_template_edit

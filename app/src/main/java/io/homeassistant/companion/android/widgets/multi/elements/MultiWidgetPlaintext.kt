@@ -17,7 +17,7 @@ class MultiWidgetPlaintext : MultiWidgetElement {
     var textLines: Int = 2
 
     //  Create variable to store layout views
-    lateinit var layout: View
+    override lateinit var layout: View
 
     override fun retrieveFinalValues(context: Context) {
         text = layout.widget_element_label.text.toString()

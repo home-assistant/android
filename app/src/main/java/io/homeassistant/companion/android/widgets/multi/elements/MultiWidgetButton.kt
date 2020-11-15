@@ -26,7 +26,7 @@ class MultiWidgetButton(
     var iconId: Int = 62017
 
     //  Create variable to store layout views
-    lateinit var layout: View
+    override lateinit var layout: View
     lateinit var dynamicFields: ArrayList<ServiceFieldBinder>
 
     override fun retrieveFinalValues(context: Context) {
