@@ -8,8 +8,8 @@ import kotlinx.android.synthetic.main.widget_multi_config_plaintext.view.*
 
 class MultiWidgetPlaintext : MultiWidgetElement {
     // Define the type of the element
-    override val type: MultiWidgetElementType
-        get() = MultiWidgetElementType.TYPE_PLAINTEXT
+    override val type: MultiWidgetElement.Type
+        get() = MultiWidgetElement.Type.PLAINTEXT
 
     // Create a variable for storing the text and layout info
     lateinit var text: String

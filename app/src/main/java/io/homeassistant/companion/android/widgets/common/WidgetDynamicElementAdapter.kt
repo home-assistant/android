@@ -22,7 +22,6 @@ import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.widgets.multi.MultiWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetButton
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElement
-import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementType
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetPlaintext
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetTemplate
 import kotlinx.android.synthetic.main.widget_multi_config_button.view.*
@@ -53,9 +52,9 @@ class WidgetDynamicElementAdapter(
 
     override fun getItemViewType(position: Int): Int {
         return when (elements[position].type) {
-            MultiWidgetElementType.TYPE_BUTTON -> R.layout.widget_multi_config_button
-            MultiWidgetElementType.TYPE_PLAINTEXT -> R.layout.widget_multi_config_plaintext
-            MultiWidgetElementType.TYPE_TEMPLATE -> R.layout.widget_multi_config_template
+            MultiWidgetElement.Type.BUTTON -> R.layout.widget_multi_config_button
+            MultiWidgetElement.Type.PLAINTEXT -> R.layout.widget_multi_config_plaintext
+            MultiWidgetElement.Type.TEMPLATE -> R.layout.widget_multi_config_template
         }
     }
 
@@ -69,15 +68,15 @@ class WidgetDynamicElementAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         when (elements[position].type) {
-            MultiWidgetElementType.TYPE_BUTTON -> bindButtonViews(
+            MultiWidgetElement.Type.BUTTON -> bindButtonViews(
                 holder.itemView,
                 elements[position] as MultiWidgetButton
             )
-            MultiWidgetElementType.TYPE_PLAINTEXT -> bindPlaintextViews(
+            MultiWidgetElement.Type.PLAINTEXT -> bindPlaintextViews(
                 holder.itemView,
                 elements[position] as MultiWidgetPlaintext
             )
-            MultiWidgetElementType.TYPE_TEMPLATE -> bindTemplateViews(
+            MultiWidgetElement.Type.TEMPLATE -> bindTemplateViews(
                 holder.itemView,
                 elements[position] as MultiWidgetTemplate
             )

@@ -11,8 +11,8 @@ class MultiWidgetButton(
     private val services: HashMap<String, Service>?
 ) : MultiWidgetElement {
     // Define the type of the element
-    override val type: MultiWidgetElementType
-        get() = MultiWidgetElementType.TYPE_BUTTON
+    override val type: MultiWidgetElement.Type
+        get() = MultiWidgetElement.Type.BUTTON
 
     // Create a random tag for identifying the icon dialog
     val tag: String = java.util.UUID.randomUUID().toString()

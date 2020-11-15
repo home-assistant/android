@@ -6,5 +6,5 @@ data class MultiWidgetPlaintextEntity(
     val text: String,
     val textSize: Int,
     val maxLines: Int,
-    override val type: MultiWidgetElementType = MultiWidgetElementType.TYPE_PLAINTEXT
+    override val type: MultiWidgetElement.Type = MultiWidgetElement.Type.PLAINTEXT
 ) : MultiWidgetElementEntity

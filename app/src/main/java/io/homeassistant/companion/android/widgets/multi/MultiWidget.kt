@@ -26,8 +26,8 @@ import io.homeassistant.companion.android.database.widget.MultiWidgetDao
 import io.homeassistant.companion.android.database.widget.MultiWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetButtonEntity
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElement
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementEntity
-import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementType
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetPlaintextEntity
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetTemplateEntity
 import java.util.regex.Pattern
@@ -73,6 +73,12 @@ class MultiWidget : AppWidgetProvider() {
         internal const val LABEL_TEXT_SMALL = 12
         internal const val LABEL_TEXT_MED = 16
         internal const val LABEL_TEXT_LARGE = 24
+    }
+
+    enum class Orientation {
+        // Currently only vertical is supported
+        // Orientation is included for future-proofing
+        HORIZONTAL, VERTICAL
     }
 
     @Inject
@@ -166,7 +172,7 @@ class MultiWidget : AppWidgetProvider() {
             val elementView: RemoteViews
 
             when (element.type) {
-                MultiWidgetElementType.TYPE_BUTTON -> {
+                MultiWidgetElement.Type.BUTTON -> {
                     val buttonElement = element as MultiWidgetButtonEntity
 
                     // Create an icon pack and load all drawables if not already loaded
@@ -210,7 +216,7 @@ class MultiWidget : AppWidgetProvider() {
                         }
                     }
                 }
-                MultiWidgetElementType.TYPE_PLAINTEXT -> {
+                MultiWidgetElement.Type.PLAINTEXT -> {
                     val plaintextElement = element as MultiWidgetPlaintextEntity
 
                     // Create an intent to update the widget on tap
@@ -249,7 +255,7 @@ class MultiWidget : AppWidgetProvider() {
                         )
                     }
                 }
-                MultiWidgetElementType.TYPE_TEMPLATE -> {
+                MultiWidgetElement.Type.TEMPLATE -> {
                     val templateElement = element as MultiWidgetTemplateEntity
 
                     var renderedTemplate = "Loading..."
@@ -314,8 +320,8 @@ class MultiWidget : AppWidgetProvider() {
 
         // Retrieve element type array from extras bundle
         @Suppress("UNCHECKED_CAST")
-        val elementTypes: Array<MultiWidgetElementType> =
-            extras.getSerializable(EXTRA_ELEMENT_TYPES) as Array<MultiWidgetElementType>
+        val elementTypes: Array<MultiWidgetElement.Type> =
+            extras.getSerializable(EXTRA_ELEMENT_TYPES) as Array<MultiWidgetElement.Type>
 
         // Set up variables for elements from extras
         val elements = ArrayList<MultiWidgetElementEntity>()
@@ -323,7 +329,7 @@ class MultiWidget : AppWidgetProvider() {
         Log.d(TAG, "Saving multi widget config data:")
         elementTypes.forEachIndexed { index, elementType ->
             when (elementType) {
-                MultiWidgetElementType.TYPE_BUTTON -> {
+                MultiWidgetElement.Type.BUTTON -> {
                     elements.add(
                         MultiWidgetButtonEntity(
                             appWidgetId,
@@ -342,7 +348,7 @@ class MultiWidget : AppWidgetProvider() {
                                 extras.getInt(EXTRA_ICON_ID + index)
                     )
                 }
-                MultiWidgetElementType.TYPE_PLAINTEXT -> {
+                MultiWidgetElement.Type.PLAINTEXT -> {
                     elements.add(
                         MultiWidgetPlaintextEntity(
                             appWidgetId,
@@ -359,7 +365,7 @@ class MultiWidget : AppWidgetProvider() {
                                 extras.getInt(EXTRA_LABEL_MAX_LINES + index)
                     )
                 }
-                MultiWidgetElementType.TYPE_TEMPLATE -> {
+                MultiWidgetElement.Type.TEMPLATE -> {
                     elements.add(
                         MultiWidgetTemplateEntity(
                             appWidgetId,
@@ -381,7 +387,7 @@ class MultiWidget : AppWidgetProvider() {
         }
 
         mainScope.launch {
-            multiWidgetDao.add(MultiWidgetEntity(appWidgetId, elements))
+            multiWidgetDao.add(MultiWidgetEntity(appWidgetId, elements, Orientation.VERTICAL))
 
             Log.d(TAG, "Saved multi widget config data.")
 

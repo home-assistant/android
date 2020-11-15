@@ -32,7 +32,6 @@ import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicElementAdapter
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetButton
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElement
-import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementType
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetPlaintext
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetTemplate
 import javax.inject.Inject
@@ -288,7 +287,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
             // Set up an array to store the element types
-            val elementTypes = mutableListOf<MultiWidgetElementType>()
+            val elementTypes = mutableListOf<MultiWidgetElement.Type>()
 
             // Iterate through each element and create an intent for the correct type of data
             elements.forEachIndexed { index, elem ->
@@ -300,7 +299,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
 
                 // Create an appropriate intent based on the element type
                 when (elem.type) {
-                    MultiWidgetElementType.TYPE_BUTTON -> (elem as MultiWidgetButton).let {
+                    MultiWidgetElement.Type.BUTTON -> (elem as MultiWidgetButton).let {
                         // Pass service call data as extras
                         intent.apply {
                             putExtra(MultiWidget.EXTRA_DOMAIN + index, elem.domain)
@@ -309,7 +308,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                             putExtra(MultiWidget.EXTRA_ICON_ID + index, elem.iconId)
                         }
                     }
-                    MultiWidgetElementType.TYPE_PLAINTEXT -> (elem as MultiWidgetPlaintext).let {
+                    MultiWidgetElement.Type.PLAINTEXT -> (elem as MultiWidgetPlaintext).let {
                         // Pass plaintext label and layout data as extras
                         intent.apply {
                             putExtra(MultiWidget.EXTRA_LABEL + index, elem.text)
@@ -317,7 +316,7 @@ class MultiWidgetConfigureActivity : AppCompatActivity(), IconDialog.Callback {
                             putExtra(MultiWidget.EXTRA_LABEL_MAX_LINES + index, elem.textLines)
                         }
                     }
-                    MultiWidgetElementType.TYPE_TEMPLATE -> (elem as MultiWidgetTemplate).let {
+                    MultiWidgetElement.Type.TEMPLATE -> (elem as MultiWidgetTemplate).let {
                         // Pass template string and layout data as extras
                         intent.apply {
                             putExtra(MultiWidget.EXTRA_TEMPLATE + index, elem.templateData)

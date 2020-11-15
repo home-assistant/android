@@ -7,5 +7,5 @@ data class MultiWidgetButtonEntity(
     val service: String,
     val serviceData: String,
     val iconId: Int,
-    override val type: MultiWidgetElementType = MultiWidgetElementType.TYPE_BUTTON
+    override val type: MultiWidgetElement.Type = MultiWidgetElement.Type.BUTTON
 ) : MultiWidgetElementEntity

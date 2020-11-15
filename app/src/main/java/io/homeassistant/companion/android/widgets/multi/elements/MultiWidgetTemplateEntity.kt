@@ -6,5 +6,5 @@ data class MultiWidgetTemplateEntity(
     val templateData: String,
     val textSize: Int,
     val maxLines: Int,
-    override val type: MultiWidgetElementType = MultiWidgetElementType.TYPE_TEMPLATE
+    override val type: MultiWidgetElement.Type = MultiWidgetElement.Type.TEMPLATE
 ) : MultiWidgetElementEntity

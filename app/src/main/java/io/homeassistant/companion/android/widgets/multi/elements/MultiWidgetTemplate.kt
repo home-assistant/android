@@ -8,8 +8,8 @@ import kotlinx.android.synthetic.main.widget_multi_config_template.view.*
 
 class MultiWidgetTemplate : MultiWidgetElement {
     // Define the type of the element
-    override val type: MultiWidgetElementType
-        get() = MultiWidgetElementType.TYPE_TEMPLATE
+    override val type: MultiWidgetElement.Type
+        get() = MultiWidgetElement.Type.TEMPLATE
 
     // Create a variable for storing the template data and layout info
     lateinit var templateData: String

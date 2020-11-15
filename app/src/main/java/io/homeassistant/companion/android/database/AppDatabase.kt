@@ -292,7 +292,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_13_14 = object : Migration(13, 14) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `multi_widgets` (`id` INTEGER NOT NULL, `elements` TEXT NOT NULL, PRIMARY KEY(`id`))")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `multi_widgets` (`id` INTEGER NOT NULL, `elements` TEXT NOT NULL, `orientation` INTEGER NOT NULL, PRIMARY KEY(`id`))")
             }
         }
 
