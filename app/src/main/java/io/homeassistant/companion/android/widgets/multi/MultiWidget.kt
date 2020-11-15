@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
@@ -25,6 +26,7 @@ import io.homeassistant.companion.android.database.widget.MultiWidgetDao
 import io.homeassistant.companion.android.database.widget.MultiWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetButtonEntity
+import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementEntity
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementType
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetPlaintextEntity
 import io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetTemplateEntity
@@ -178,8 +180,11 @@ class MultiWidget : AppWidgetProvider() {
                     val serviceIntent = Intent(context, MultiWidget::class.java).apply {
                         action = CALL_SERVICE
                         putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                        // Data must be different for each intent or only one intent is created
+                        data = Uri.parse("hasssvc:element$index")
                         putExtra(ELEMENT_ID, index)
                     }
+                    Log.d(TAG, "Service call intent created for element $index.")
 
                     // Create new button view
                     elementView = RemoteViews(
@@ -198,11 +203,10 @@ class MultiWidget : AppWidgetProvider() {
                                 PendingIntent.FLAG_UPDATE_CURRENT
                             )
                         )
-                        val iconId = buttonElement.iconId
-                        val iconDrawable = iconPack?.icons?.get(iconId)?.drawable
+                        val iconDrawable = iconPack?.icons?.get(buttonElement.iconId)?.drawable
                         if (iconDrawable != null) {
                             val icon = DrawableCompat.wrap(iconDrawable)
-                            setImageViewBitmap(R.id.widgetImageButton, icon.toBitmap())
+                            setImageViewBitmap(R.id.widget_multi_element_button, icon.toBitmap())
                         }
                     }
                 }
@@ -314,11 +318,12 @@ class MultiWidget : AppWidgetProvider() {
             extras.getSerializable(EXTRA_ELEMENT_TYPES) as Array<MultiWidgetElementType>
 
         // Set up variables for elements from extras
-        val elements = ArrayList<io.homeassistant.companion.android.widgets.multi.elements.MultiWidgetElementEntity>()
+        val elements = ArrayList<MultiWidgetElementEntity>()
 
+        Log.d(TAG, "Saving multi widget config data:")
         elementTypes.forEachIndexed { index, elementType ->
             when (elementType) {
-                MultiWidgetElementType.TYPE_BUTTON ->
+                MultiWidgetElementType.TYPE_BUTTON -> {
                     elements.add(
                         MultiWidgetButtonEntity(
                             appWidgetId,
@@ -329,7 +334,15 @@ class MultiWidget : AppWidgetProvider() {
                             extras.getInt(EXTRA_ICON_ID + index)
                         )
                     )
-                MultiWidgetElementType.TYPE_PLAINTEXT ->
+                    Log.d(
+                        TAG, "Element $index, $elementType:" + System.lineSeparator() +
+                                extras.getString(EXTRA_DOMAIN + index)!! + System.lineSeparator() +
+                                extras.getString(EXTRA_SERVICE + index)!! + System.lineSeparator() +
+                                extras.getString(EXTRA_SERVICE_DATA + index)!! + System.lineSeparator() +
+                                extras.getInt(EXTRA_ICON_ID + index)
+                    )
+                }
+                MultiWidgetElementType.TYPE_PLAINTEXT -> {
                     elements.add(
                         MultiWidgetPlaintextEntity(
                             appWidgetId,
@@ -339,7 +352,14 @@ class MultiWidget : AppWidgetProvider() {
                             extras.getInt(EXTRA_LABEL_MAX_LINES + index)
                         )
                     )
-                MultiWidgetElementType.TYPE_TEMPLATE ->
+                    Log.d(
+                        TAG, "Element $index, $elementType:" + System.lineSeparator() +
+                                extras.getString(EXTRA_LABEL + index)!! + System.lineSeparator() +
+                                extras.getInt(EXTRA_LABEL_TEXT_SIZE + index) + System.lineSeparator() +
+                                extras.getInt(EXTRA_LABEL_MAX_LINES + index)
+                    )
+                }
+                MultiWidgetElementType.TYPE_TEMPLATE -> {
                     elements.add(
                         MultiWidgetTemplateEntity(
                             appWidgetId,
@@ -349,13 +369,21 @@ class MultiWidget : AppWidgetProvider() {
                             extras.getInt(EXTRA_TEMPLATE_MAX_LINES + index)
                         )
                     )
+                    Log.d(
+                        TAG,
+                        "Element $index, $elementType:" + System.lineSeparator() +
+                                extras.getString(EXTRA_TEMPLATE + index)!! + System.lineSeparator() +
+                                extras.getInt(EXTRA_TEMPLATE_TEXT_SIZE + index) + System.lineSeparator() +
+                                extras.getInt(EXTRA_TEMPLATE_MAX_LINES + index)
+                    )
+                }
             }
         }
 
         mainScope.launch {
-            Log.d(TAG, "Saving multi widget config data.")
-
             multiWidgetDao.add(MultiWidgetEntity(appWidgetId, elements))
+
+            Log.d(TAG, "Saved multi widget config data.")
 
             // It is the responsibility of the configuration activity to update the app widget
             // This method is only called during the initial setup of the widget,
@@ -388,7 +416,7 @@ class MultiWidget : AppWidgetProvider() {
             val serviceDataJson = buttonEntity.serviceData
 
             Log.d(
-                TAG, "Service Call Data loaded:" + System.lineSeparator() +
+                TAG, "Service Call Data loaded for element $elementId:" + System.lineSeparator() +
                         "domain: " + domain + System.lineSeparator() +
                         "service: " + service + System.lineSeparator() +
                         "service_data: " + serviceDataJson

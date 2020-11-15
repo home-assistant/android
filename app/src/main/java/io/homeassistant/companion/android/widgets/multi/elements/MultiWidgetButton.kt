@@ -43,7 +43,6 @@ class MultiWidgetButton(
         service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
         serviceData = jacksonObjectMapper().writeValueAsString(serviceDataMap)
 
-        // Fetch icon ID from selector
-        iconId = layout.widget_element_icon_selector.tag as Int? ?: iconId
+        // Icon ID is assigned when selector is used and does not need to be finalized
     }
 }
