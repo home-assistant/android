@@ -433,8 +433,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onResume() {
         super.onResume()
-        webView.onResume()
-        webView.resumeTimers()
         if (currentLang != languagesManager.getCurrentLang())
             recreate()
         if (!unlocked && !presenter.isLockEnabled())
@@ -886,11 +884,5 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 showError()
             }
         }, CONNECTION_DELAY)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        webView.onPause()
-        webView.pauseTimers()
     }
 }
