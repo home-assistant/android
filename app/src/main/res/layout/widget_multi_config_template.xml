@@ -20,7 +20,7 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:textSize="18sp"
-            android:text="Template" />
+            android:text="@string/widget_template_title" />
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/widget_element_remove_button"
@@ -32,7 +32,7 @@
             android:background="?android:selectableItemBackground"
             android:tint="@color/colorIcon"
             tools:ignore="UseAppTint"
-            android:contentDescription="Remove template" />
+            android:contentDescription="@string/widget_remove_template_desc" />
     </FrameLayout>
 
     <LinearLayout
@@ -73,7 +73,7 @@
             android:layout_height="wrap_content"
             android:labelFor="@id/widget_element_template_text_size"
             android:padding="5dp"
-            android:text="Template text size:" />
+            android:text="@string/widget_template_text_size" />
 
         <Space
             android:layout_width="0dp"
@@ -98,7 +98,7 @@
             android:layout_height="wrap_content"
             android:labelFor="@id/widget_element_template_text_lines"
             android:padding="5dp"
-            android:text="Maximum lines for label (0 for unlimited):" />
+            android:text="@string/widget_max_lines" />
 
         <Space
             android:layout_width="0dp"
@@ -111,9 +111,11 @@
             android:layout_height="wrap_content"
             android:imeOptions="actionNext"
             android:textAlignment="center"
-            android:hint="0"
-            android:text="0"
+            android:hint="@string/widget_template_max_lines_default"
+            android:text="@string/widget_template_max_lines_default"
             android:inputType="number"
-            android:maxLength="2" />
+            android:maxLength="2"
+            android:importantForAutofill="no"
+            tools:ignore="LabelFor" />
     </LinearLayout>
 </LinearLayout>

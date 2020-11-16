@@ -20,7 +20,7 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:textSize="18sp"
-            android:text="Label" />
+            android:text="@string/widget_plaintext_title" />
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/widget_element_remove_button"
@@ -32,7 +32,7 @@
             android:background="?android:selectableItemBackground"
             android:tint="@color/colorIcon"
             tools:ignore="UseAppTint"
-            android:contentDescription="Remove label" />
+            android:contentDescription="@string/widget_remove_plaintext_desc" />
     </FrameLayout>
 
     <LinearLayout
@@ -71,7 +71,7 @@
             android:layout_height="wrap_content"
             android:labelFor="@id/widget_element_label_text_size"
             android:padding="5dp"
-            android:text="Label text size:" />
+            android:text="@string/widget_label_text_size" />
 
         <Space
             android:layout_width="0dp"
@@ -96,7 +96,7 @@
             android:layout_height="wrap_content"
             android:labelFor="@id/widget_element_label_text_lines"
             android:padding="5dp"
-            android:text="Maximum lines for label (0 for unlimited):" />
+            android:text="@string/widget_max_lines" />
 
         <Space
             android:layout_width="0dp"
@@ -109,9 +109,11 @@
             android:layout_height="wrap_content"
             android:imeOptions="actionNext"
             android:textAlignment="center"
-            android:hint="2"
-            android:text="2"
+            android:hint="@string/widget_label_max_lines_default"
+            android:text="@string/widget_label_max_lines_default"
             android:inputType="number"
-            android:maxLength="2" />
+            android:maxLength="2"
+            android:importantForAutofill="no"
+            tools:ignore="LabelFor" />
     </LinearLayout>
 </LinearLayout>

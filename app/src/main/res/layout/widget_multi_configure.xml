@@ -23,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:text="Filter widget actions for single entity" />
+            android:text="@string/widget_filter_for_single_entity" />
 
         <LinearLayout
             android:id="@+id/widget_config_entity_id_layout"
@@ -64,21 +64,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:text="Add button" />
+            android:text="@string/widget_multi_add_button" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/widget_config_add_plaintext_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:text="Add label" />
+            android:text="@string/widget_multi_add_label" />
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/widget_config_add_template_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:text="Add template" />
+            android:text="@string/widget_multi_add_template" />
         </LinearLayout>
 
         <androidx.appcompat.widget.AppCompatButton

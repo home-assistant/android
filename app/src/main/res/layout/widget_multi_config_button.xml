@@ -21,7 +21,7 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:textSize="18sp"
-            android:text="Button" />
+            android:text="@string/widget_button_title" />
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/widget_element_remove_button"
@@ -33,7 +33,7 @@
             android:background="?android:selectableItemBackground"
             android:tint="@color/colorIcon"
             tools:ignore="UseAppTint"
-            android:contentDescription="Remove button" />
+            android:contentDescription="@string/widget_remove_button_desc" />
     </FrameLayout>
 
     <LinearLayout
