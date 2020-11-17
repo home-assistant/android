@@ -52,6 +52,8 @@
   <string name="basic_sensor_name_location_accurate">Single Accurate Location</string>
   <string name="basic_sensor_name_location_background">Background Location</string>
   <string name="basic_sensor_name_location_zone">Location Zone</string>
+  <string name="basic_sensor_name_app_rx_gb">App Rx GB</string>
+  <string name="basic_sensor_name_app_tx_gb">App Tx GB</string>
   <string name="basic_sensor_name_mobile_rx_gb">Mobile Rx GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Mobile Tx GB</string>
   <string name="basic_sensor_name_phone">Phone State</string>
@@ -311,6 +313,10 @@ like to connect to:</string>
   <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
   <string name="sensor_description_total_rx_gb">Total Rx GB since last device reboot</string>
   <string name="sensor_description_total_tx_gb">Total Tx GB since last device reboot</string>
+  <string name="basic_sensor_name_app_memory">App Memory</string>
+  <string name="sensor_description_app_memory">Total used and available memory for the app</string>
+  <string name="sensor_description_app_rx_gb">App Rx GB since last device reboot</string>
+  <string name="sensor_description_app_tx_gb">App Tx GB since last device reboot</string>
   <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
   <string name="sensor_description_volume_call">Volume level for calls on the device</string>
   <string name="sensor_description_volume_music">Volume level for music on the device</string>
