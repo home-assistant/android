@@ -665,7 +665,7 @@ class MessagingService : FirebaseMessagingService() {
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        val timeout = data[TIMEOUT]?.toLong()?.times(1000) ?: -1
+        val timeout = data[TIMEOUT]?.toLongOrNull()?.times(1000) ?: -1
         if (timeout >= 0) builder.setTimeoutAfter(timeout)
     }
 
