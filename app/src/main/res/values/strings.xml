@@ -313,6 +313,8 @@ like to connect to:</string>
   <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
   <string name="sensor_description_total_rx_gb">Total Rx GB since last device reboot</string>
   <string name="sensor_description_total_tx_gb">Total Tx GB since last device reboot</string>
+  <string name="basic_sensor_name_app_memory">App Memory</string>
+  <string name="sensor_description_app_memory">Total used and available memory for the app</string>
   <string name="sensor_description_app_rx_gb">App Rx GB since last device reboot</string>
   <string name="sensor_description_app_tx_gb">App Tx GB since last device reboot</string>
   <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
