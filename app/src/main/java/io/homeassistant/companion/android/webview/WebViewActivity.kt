@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.webview
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -249,10 +248,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     }
                     return false
                 }
-
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    super.onPageFinished(view, url)
-                }
             }
 
             webChromeClient = object : WebChromeClient() {
@@ -450,31 +445,31 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun checkAndWarnForDisabledLocation() {
         var showLocationDisabledWarning = false
-        var options = ""
 
+        var settingsWithLocationPermissions = mutableListOf<String>()
         if (!DisabledLocationHandler.isLocationEnabled(this, false) && presenter.isSsidUsed()) {
             showLocationDisabledWarning = true
-            options += "- " + getString(R.string.pref_connection_wifi) + "\n"
+            settingsWithLocationPermissions.add(getString(R.string.pref_connection_wifi))
         }
         for (manager in SensorReceiver.MANAGERS) {
             for (basicSensor in manager.availableSensors) {
                 if (manager.isEnabled(this, basicSensor.id)) {
                     var permissions = manager.requiredPermissions(basicSensor.id)
 
-                    val fineLocation = DisabledLocationHandler.containsFineLocationPermission(permissions)
-                    val coarseLocation = DisabledLocationHandler.containsCoarseLocationPermission(permissions)
+                    val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
+                    val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
 
                     if ((fineLocation || coarseLocation)) {
-                        if (DisabledLocationHandler.isLocationEnabled(this, fineLocation))
+                        if (!DisabledLocationHandler.isLocationEnabled(this, fineLocation))
                         showLocationDisabledWarning = true
-                        options += "- " + getString(basicSensor.name) + "\n"
+                        settingsWithLocationPermissions.add(getString(basicSensor.name))
                     }
                 }
             }
         }
 
         if (showLocationDisabledWarning) {
-            DisabledLocationHandler.showLocationDisabledWarnDialog(this@WebViewActivity, this, getString(R.string.location_disabled_general_message, options))
+            DisabledLocationHandler.showLocationDisabledWarnDialog(this@WebViewActivity, settingsWithLocationPermissions.toTypedArray())
         }
     }
 

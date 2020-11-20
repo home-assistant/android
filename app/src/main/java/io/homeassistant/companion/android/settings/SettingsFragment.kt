@@ -255,7 +255,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 permissionsToCheck = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
             }
 
-            val fineLocation = DisabledLocationHandler.containsFineLocationPermission(permissionsToCheck)
+            val fineLocation = DisabledLocationHandler.containsLocationPermission(permissionsToCheck, true)
 
             if (DisabledLocationHandler.isLocationEnabled(requireContext(), fineLocation)) {
                 var permissionsToRequest: Array<String>? = null
@@ -269,14 +269,13 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                     openSsidDialog()
                 }
             } else {
-                val context = requireContext()
                 if (presenter.isSsidUsed()) {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_ssid_used_message), true) {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)), true) {
                         presenter.clearSsids()
                         preference.setSsids(emptySet())
                     }
                 } else {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)))
                 }
             }
         } else {

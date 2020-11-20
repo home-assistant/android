@@ -22,24 +22,31 @@ object DisabledLocationHandler {
         }
     }
 
-    fun containsFineLocationPermission(permissions: Array<String>): Boolean {
-        return permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION)
+    fun containsLocationPermission(permissions: Array<String>, fineLocation: Boolean? = null): Boolean {
+        val containsFineLocation = permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION)
+        val containsCoarseLocation = permissions.contains(Manifest.permission.ACCESS_COARSE_LOCATION)
+
+        return if (fineLocation == null) {
+            containsFineLocation && containsCoarseLocation
+        } else {
+            if (fineLocation) containsFineLocation
+            else containsCoarseLocation
+        }
     }
 
-    fun containsCoarseLocationPermission(permissions: Array<String>): Boolean {
-        return permissions.contains(Manifest.permission.ACCESS_COARSE_LOCATION)
-    }
-
-    fun showLocationDisabledWarnDialog(activity: Activity, context: Context, message: String, withDisableOption: Boolean = false, callback: (() -> Unit)? = null) {
+    fun showLocationDisabledWarnDialog(activity: Activity, settings: Array<String>, withDisableOption: Boolean = false, callback: (() -> Unit)? = null) {
         var positionTextId = R.string.confirm_positive
         var negativeTextId = R.string.confirm_negative
         if (withDisableOption && callback != null) {
-            positionTextId = R.string.settings
             negativeTextId = R.string.location_disabled_option_disable
         }
+
+        var parameters = ""
+        for (setting in settings)
+            parameters += "- $setting\n"
         AlertDialog.Builder(activity)
             .setTitle(R.string.location_disabled_title)
-            .setMessage(message)
+            .setMessage(activity.applicationContext.getString(R.string.location_disabled_message, parameters))
             .setPositiveButton(positionTextId) { _, _ ->
                 val intent = Intent(
                     Settings.ACTION_LOCATION_SOURCE_SETTINGS
@@ -47,7 +54,7 @@ object DisabledLocationHandler {
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
                 intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                context.startActivity(intent)
+                activity.applicationContext.startActivity(intent)
             }
             .setNegativeButton(negativeTextId) { _, _ ->
                 if (withDisableOption && callback != null) {

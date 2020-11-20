@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -67,10 +68,6 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     it.summary = getString(R.string.enable_all_sensors_summary)
                     it.isChecked = false
                 }
-                if (!permissionsAllGranted) {
-                    it.title = getString(R.string.enable_all_sensors)
-                    it.summary = getString(R.string.enable_all_sensors_summary)
-                }
             }
 
             handler.postDelayed(this, 10000)
@@ -81,6 +78,9 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         private var totalEnabledSensors = 0
         private var totalDisabledSensors = 0
         private var permissionsAllGranted = true
+        private var settingsWithLocation = mutableListOf<String>()
+        private var enableAllSensors = false
+
         fun newInstance(): SensorsSettingsFragment {
             return SensorsSettingsFragment()
         }
@@ -97,49 +97,58 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         findPreference<SwitchPreference>("enable_disable_sensors")?.let {
 
-            var permArray: Array<String> = arrayOf()
             it.setOnPreferenceChangeListener { _, newState ->
-                val context = requireContext()
-                val enabledAll = newState as Boolean
 
-                if (!DisabledLocationHandler.isLocationEnabled(context, true)) {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
-                    return@setOnPreferenceChangeListener false
+                settingsWithLocation.clear()
+                var permArray: Array<String> = arrayOf()
+                val context = requireContext()
+                enableAllSensors = newState as Boolean
+
+                val locationEnabledFine = DisabledLocationHandler.isLocationEnabled(context, true)
+                val locationEnabledCoarse = DisabledLocationHandler.isLocationEnabled(context, false)
+
+                SensorReceiver.MANAGERS.forEach { managers ->
+                    managers.availableSensors.forEach { basicSensor ->
+                        val requiredPermissions = managers.requiredPermissions(basicSensor.id)
+
+                        val locationPermissionCoarse = DisabledLocationHandler.containsLocationPermission(requiredPermissions, false)
+                        val locationPermissionFine = DisabledLocationHandler.containsLocationPermission(requiredPermissions, true)
+                        val locationPermission = locationPermissionCoarse || locationPermissionFine
+
+                        var enableSensor = false
+                        // Only if one of the options is true, enable the sensor
+                        if (!enableAllSensors || // All Sensors switch is disabled
+                            !locationPermission || // No location permission used for sensor
+                            (locationEnabledCoarse && locationPermissionCoarse) || // Coarse location used for sensor and location coarse is enabled in settings
+                            (locationEnabledFine && locationPermissionFine) // Fine location used for sensor and location fine is enabled in settings
+                        ) {
+                            enableSensor = enableAllSensors
+                        } else {
+                            settingsWithLocation.add(getString(basicSensor.name))
+                        }
+
+                        if (enableSensor && !managers.checkPermission(requireContext(), basicSensor.id))
+                            permArray += requiredPermissions.asList()
+                    }
+                }
+                if (permArray.isNotEmpty()) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                        requestPermissions(
+                            permArray.toSet()
+                                .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                                .toTypedArray(), 0
+                        )
+                    } else {
+                        requestPermissions(permArray, 0)
+                    }
                 } else {
 
-                    val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
-
-                    SensorReceiver.MANAGERS.forEach { managers ->
-                        managers.availableSensors.forEach { basicSensor ->
-                            var sensorEntity = sensorDao.get(basicSensor.id)
-
-                            if (!managers.checkPermission(requireContext(), basicSensor.id))
-                                permArray += managers.requiredPermissions(basicSensor.id).asList()
-
-                            if (sensorEntity != null) {
-                                sensorEntity.enabled = enabledAll
-                                sensorEntity.lastSentState = ""
-                                sensorDao.update(sensorEntity)
-                            } else {
-                                sensorEntity = Sensor(basicSensor.id, enabledAll, false, "")
-                                sensorDao.add(sensorEntity)
-                            }
-                        }
+                    if (showAdditionalDialogsIfNeeded()) {
+                        return@setOnPreferenceChangeListener false
                     }
-
-                    if (!permArray.isNullOrEmpty()) {
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                            requestPermissions(
-                                permArray.toSet()
-                                    .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                                    .toTypedArray(), 0
-                            )
-                        } else {
-                            requestPermissions(permArray, 0)
-                        }
-                    }
-                    return@setOnPreferenceChangeListener true
                 }
+
+                return@setOnPreferenceChangeListener true
             }
         }
 
@@ -184,6 +193,15 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         handler.removeCallbacks(refresh)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == 0) {
+            enableDisableSensorBasedOnPermission()
+            showDisabledLocationWarningIfNeeded()
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -197,12 +215,55 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             return
         }
 
-        if (permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE })
-            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+        showAdditionalDialogsIfNeeded()
 
         findPreference<SwitchPreference>("enable_disable_sensors")?.run {
             permissionsAllGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
             this.isChecked = permissionsAllGranted
+        }
+    }
+
+    private fun showAdditionalDialogsIfNeeded(): Boolean {
+        return if (!showNotificationListenerDialogIfNeeded()) {
+            enableDisableSensorBasedOnPermission()
+            showDisabledLocationWarningIfNeeded()
+        } else true
+    }
+
+    private fun showNotificationListenerDialogIfNeeded(): Boolean {
+        val context = requireContext()
+        return if (!NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)) {
+            startActivityForResult(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS), 0)
+            true
+        } else false
+    }
+
+    private fun showDisabledLocationWarningIfNeeded(): Boolean {
+        return if (settingsWithLocation.isNotEmpty()) {
+            DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), settingsWithLocation.toTypedArray())
+            true
+        } else false
+    }
+
+    private fun enableDisableSensorBasedOnPermission() {
+        val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
+
+        SensorReceiver.MANAGERS.forEach { managers ->
+            managers.availableSensors.forEach { basicSensor ->
+                var enableSensor = false
+                if (enableAllSensors) {
+                    enableSensor = managers.checkPermission(requireContext(), basicSensor.id)
+                }
+                var sensorEntity = sensorDao.get(basicSensor.id)
+                if (sensorEntity != null) {
+                    sensorEntity.enabled = enableSensor
+                    sensorEntity.lastSentState = ""
+                    sensorDao.update(sensorEntity)
+                } else {
+                    sensorEntity = Sensor(basicSensor.id, enableSensor, false, "")
+                    sensorDao.add(sensorEntity)
+                }
+            }
         }
     }
 }

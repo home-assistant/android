@@ -74,26 +74,28 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                 val sensorId = LocationSensorManager.backgroundLocation.id
                 it.isChecked = DisabledLocationHandler.isLocationEnabled(context, true) && LocationSensorManager().checkPermission(context, sensorId)
                 it.setOnCheckedChangeListener { _, isChecked ->
-                    var checked = false
+                    var checked = isChecked
                     if (isChecked) {
-                        if (!DisabledLocationHandler.isLocationEnabled(context, true)) {
-                            DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), context, context.getString(R.string.location_disabled_option_message))
-                        } else {
-                            if (!LocationSensorManager().checkPermission(requireContext(), sensorId)) {
-                                dialog = AlertDialog.Builder(requireContext())
-                                    .setTitle(R.string.enable_location_tracking)
-                                    .setMessage(R.string.enable_location_tracking_prompt)
-                                    .setPositiveButton(android.R.string.ok) { _, _ ->
-                                        requestPermissions(
-                                            sensorId
-                                        )
-                                    }
-                                    .setNegativeButton(android.R.string.cancel) { _, _ -> }
-                                    .create()
-                                dialog?.show()
-                            } else {
-                                checked = true
-                            }
+
+                        val locationEnabled = DisabledLocationHandler.isLocationEnabled(context, true)
+                        val permissionOk = LocationSensorManager().checkPermission(requireContext(), sensorId)
+
+                        if (!locationEnabled) {
+                            DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(LocationSensorManager.backgroundLocation.name)))
+                            checked = false
+                        } else if (!permissionOk) {
+                            dialog = AlertDialog.Builder(requireContext())
+                                .setTitle(R.string.enable_location_tracking)
+                                .setMessage(R.string.enable_location_tracking_prompt)
+                                .setPositiveButton(android.R.string.ok) { _, _ ->
+                                    requestPermissions(
+                                        sensorId
+                                    )
+                                }
+                                .setNegativeButton(android.R.string.cancel) { _, _ -> }
+                                .create()
+                            dialog?.show()
+                            checked = false
                         }
                     }
 
