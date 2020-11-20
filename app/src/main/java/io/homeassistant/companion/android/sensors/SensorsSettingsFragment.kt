@@ -132,7 +132,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     }
                 }
                 if (permArray.isNotEmpty()) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
                         requestPermissions(
                             permArray.toSet()
                                 .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
@@ -210,7 +210,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
             return
         }

@@ -146,7 +146,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     private fun requestPermissions(sensorId: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             this@MobileAppIntegrationFragment.requestPermissions(
                 LocationSensorManager().requiredPermissions(sensorId)
                     .toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
@@ -171,7 +171,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         dialog?.dismiss()
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), LOCATION_REQUEST_CODE)
         }
 

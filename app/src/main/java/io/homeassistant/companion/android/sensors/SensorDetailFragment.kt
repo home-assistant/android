@@ -86,7 +86,7 @@ class SensorDetailFragment(
                             when {
                                 permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
                                     startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q ->
+                                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
                                     requestPermissions(
                                         permissions.toSet()
                                             .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0
@@ -299,7 +299,7 @@ class SensorDetailFragment(
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
         }
 

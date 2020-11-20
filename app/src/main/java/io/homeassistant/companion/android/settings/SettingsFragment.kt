@@ -261,7 +261,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 var permissionsToRequest: Array<String>? = null
                 if (!permissionsToCheck.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions
-                    // as for Android 11 the background location rquest needs to be done separately
+                    // as for Android 11 the background location request needs to be done separately
                     // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
                     permissionsToRequest = permissionsToCheck.toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
                 }
@@ -386,7 +386,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 if (isGreaterR) {
                     // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions
-                    // as for Android 11 the background location rquest needs to be done separately
+                    // as for Android 11 the background location request needs to be done separately
                     // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
                     // The separate request of background location is done here
                     requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), BACKGROUND_LOCATION_REQUEST_CODE)
