@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.util.DisabledLocationHandler
+import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import javax.inject.Inject
 
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
@@ -131,15 +132,17 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                             permArray += requiredPermissions.asList()
                     }
                 }
+
                 if (permArray.isNotEmpty()) {
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                        requestPermissions(
-                            permArray.toSet()
-                                .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                                .toTypedArray(), 0
-                        )
-                    } else {
-                        requestPermissions(permArray, 0)
+
+                    if (enableAllSensors) {
+                        val locationPermissionCoarse = DisabledLocationHandler.containsLocationPermission(permArray, false)
+                        val locationPermissionFine = DisabledLocationHandler.containsLocationPermission(permArray, true)
+                        if (locationPermissionCoarse || locationPermissionFine) {
+                            LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(context, permArray, continueYesCallback = {
+                                requestPermission(permArray)
+                            })
+                        } else requestPermission(permArray)
                     }
                 } else {
 
@@ -199,6 +202,18 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         if (requestCode == 0) {
             enableDisableSensorBasedOnPermission()
             showDisabledLocationWarningIfNeeded()
+        }
+    }
+
+    private fun requestPermission(permissions: Array<String>) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            requestPermissions(
+                permissions.toSet()
+                    .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                    .toTypedArray(), 0
+            )
+        } else {
+            requestPermissions(permissions, 0)
         }
     }
 

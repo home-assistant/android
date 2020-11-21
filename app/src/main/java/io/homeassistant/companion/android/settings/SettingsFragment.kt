@@ -36,6 +36,7 @@ import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.DisabledLocationHandler
+import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -265,9 +266,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                     // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
                     permissionsToRequest = permissionsToCheck.toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
                 }
-                if (permissionsToCheck.isNullOrEmpty() || checkPermission(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest)) {
-                    openSsidDialog()
-                }
+
+                val hasPermission = checkPermission(permissionsToCheck)
+                if (permissionsToCheck.isNotEmpty() && !hasPermission) {
+                    LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(requireContext(), permissionsToCheck, continueYesCallback = {
+                        checkAndRequestPermissions(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest, true)
+                        // openSsidDialog() will be called in onRequestPermissionsResult if permission is granted
+                    })
+                } else openSsidDialog()
             } else {
                 if (presenter.isSsidUsed()) {
                     DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)), true) {
@@ -338,10 +344,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
-    fun checkPermission(permissions: Array<String>, requestCode: Int, requestPermissions: Array<String>? = null): Boolean {
+    private fun checkAndRequestPermissions(permissions: Array<String>, requestCode: Int, requestPermissions: Array<String>? = null, forceRequest: Boolean = false): Boolean {
         val permissionsNeeded = mutableListOf<String>()
         for (permission in permissions) {
-            if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+            if (forceRequest || ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
                 if (requestPermissions.isNullOrEmpty() || requestPermissions.contains(permission)) {
                     permissionsNeeded.add(permission)
                 }
@@ -351,6 +357,17 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             requestPermissions(permissionsNeeded.toTypedArray(), requestCode)
             false
         } else true
+    }
+
+    fun checkPermission(permissions: Array<String>?): Boolean {
+        if (!permissions.isNullOrEmpty()) {
+            for (permission in permissions) {
+                if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+                    return false
+                }
+            }
+        }
+        return true
     }
 
     private fun openSsidDialog() {
