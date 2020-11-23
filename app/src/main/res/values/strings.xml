@@ -315,6 +315,10 @@ like to connect to:</string>
   <string name="sensor_description_total_tx_gb">Total Tx GB since last device reboot</string>
   <string name="basic_sensor_name_app_memory">App Memory</string>
   <string name="sensor_description_app_memory">Total used and available memory for the app</string>
+  <string name="basic_sensor_name_app_inactive">App Inactive</string>
+  <string name="sensor_description_app_inactive">Whether or not the app is currently considered inactive by the system</string>
+  <string name="basic_sensor_name_app_standby">App Standby Bucket</string>
+  <string name="sensor_description_app_standby">The apps current standby bucket. Standby buckets determine how much an app will be restricted from running background tasks such as jobs and alarms.</string>
   <string name="sensor_description_app_rx_gb">App Rx GB since last device reboot</string>
   <string name="sensor_description_app_tx_gb">App Tx GB since last device reboot</string>
   <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
