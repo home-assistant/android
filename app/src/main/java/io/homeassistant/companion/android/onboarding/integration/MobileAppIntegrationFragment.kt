@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 
@@ -71,23 +72,35 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             findViewById<SwitchMaterial>(R.id.locationTracking)?.let {
                 val sensorId = LocationSensorManager.backgroundLocation.id
-                it.isChecked = LocationSensorManager().checkPermission(context, sensorId)
+                it.isChecked = DisabledLocationHandler.isLocationEnabled(context, true) && LocationSensorManager().checkPermission(context, sensorId)
                 it.setOnCheckedChangeListener { _, isChecked ->
-                    setLocationTracking(isChecked)
-                    if (isChecked && !LocationSensorManager().checkPermission(requireContext(), sensorId)) {
-                        dialog = AlertDialog.Builder(requireContext())
-                            .setTitle(R.string.enable_location_tracking)
-                            .setMessage(R.string.enable_location_tracking_prompt)
-                            .setPositiveButton(android.R.string.ok) { _, _ ->
-                                requestPermissions(
-                                    sensorId
-                                )
-                            }
-                            .setNegativeButton(android.R.string.cancel) { _, _ -> }
-                            .setOnDismissListener { _ -> it.isChecked = LocationSensorManager().checkPermission(requireContext(), sensorId) }
-                            .create()
-                        dialog?.show()
+                    var checked = isChecked
+                    if (isChecked) {
+
+                        val locationEnabled = DisabledLocationHandler.isLocationEnabled(context, true)
+                        val permissionOk = LocationSensorManager().checkPermission(requireContext(), sensorId)
+
+                        if (!locationEnabled) {
+                            DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(LocationSensorManager.backgroundLocation.name)))
+                            checked = false
+                        } else if (!permissionOk) {
+                            dialog = AlertDialog.Builder(requireContext())
+                                .setTitle(R.string.enable_location_tracking)
+                                .setMessage(R.string.enable_location_tracking_prompt)
+                                .setPositiveButton(android.R.string.ok) { _, _ ->
+                                    requestPermissions(
+                                        sensorId
+                                    )
+                                }
+                                .setNegativeButton(android.R.string.cancel) { _, _ -> }
+                                .create()
+                            dialog?.show()
+                            checked = false
+                        }
                     }
+
+                    setLocationTracking(checked)
+                    it.isChecked = checked
                 }
             }
 
@@ -133,7 +146,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     }
 
     private fun requestPermissions(sensorId: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             this@MobileAppIntegrationFragment.requestPermissions(
                 LocationSensorManager().requiredPermissions(sensorId)
                     .toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
@@ -158,7 +171,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         dialog?.dismiss()
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), LOCATION_REQUEST_CODE)
         }
 

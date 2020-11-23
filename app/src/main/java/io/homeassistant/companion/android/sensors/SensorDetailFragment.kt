@@ -21,6 +21,8 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.util.DisabledLocationHandler
+import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 
 class SensorDetailFragment(
     private val sensorManager: SensorManager,
@@ -70,17 +72,27 @@ class SensorDetailFragment(
             it.setOnPreferenceChangeListener { _, newState ->
                 val isEnabled = newState as Boolean
 
-                if (isEnabled && !sensorManager.checkPermission(requireContext(), basicSensor.id)) {
+                if (isEnabled) {
                     val permissions = sensorManager.requiredPermissions(basicSensor.id)
-                    when {
-                        permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
-                            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q ->
-                            requestPermissions(permissions.toSet()
-                                .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0)
-                        else -> requestPermissions(permissions, 0)
+                    val context = requireContext()
+                    val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
+                    val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
+
+                    if ((fineLocation || coarseLocation) &&
+                        !DisabledLocationHandler.isLocationEnabled(context, fineLocation)) {
+                        DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(basicSensor.name)))
+                        return@setOnPreferenceChangeListener false
+                    } else {
+                        if (!sensorManager.checkPermission(context, basicSensor.id)) {
+                            if (sensorManager is NetworkSensorManager) {
+                                LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(context, permissions, continueYesCallback = {
+                                    requestPermissions(permissions)
+                                })
+                            } else requestPermissions(permissions)
+
+                            return@setOnPreferenceChangeListener false
+                        }
                     }
-                    return@setOnPreferenceChangeListener false
                 }
 
                 updateSensorEntity(isEnabled)
@@ -276,6 +288,19 @@ class SensorDetailFragment(
         refreshSensorData()
     }
 
+    private fun requestPermissions(permissions: Array<String>) {
+        when {
+            permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
+                requestPermissions(
+                    permissions.toSet()
+                        .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0
+                )
+            else -> requestPermissions(permissions, 0)
+        }
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -284,7 +309,7 @@ class SensorDetailFragment(
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
         }
 

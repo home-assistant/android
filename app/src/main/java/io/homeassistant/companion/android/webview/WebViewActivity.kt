@@ -58,10 +58,12 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
+import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
@@ -437,6 +439,38 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             recreate()
         if (!unlocked && !presenter.isLockEnabled())
             unlocked = true
+
+        checkAndWarnForDisabledLocation()
+    }
+
+    private fun checkAndWarnForDisabledLocation() {
+        var showLocationDisabledWarning = false
+
+        var settingsWithLocationPermissions = mutableListOf<String>()
+        if (!DisabledLocationHandler.isLocationEnabled(this, false) && presenter.isSsidUsed()) {
+            showLocationDisabledWarning = true
+            settingsWithLocationPermissions.add(getString(R.string.pref_connection_wifi))
+        }
+        for (manager in SensorReceiver.MANAGERS) {
+            for (basicSensor in manager.availableSensors) {
+                if (manager.isEnabled(this, basicSensor.id)) {
+                    var permissions = manager.requiredPermissions(basicSensor.id)
+
+                    val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
+                    val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
+
+                    if ((fineLocation || coarseLocation)) {
+                        if (!DisabledLocationHandler.isLocationEnabled(this, fineLocation))
+                        showLocationDisabledWarning = true
+                        settingsWithLocationPermissions.add(getString(basicSensor.name))
+                    }
+                }
+            }
+        }
+
+        if (showLocationDisabledWarning) {
+            DisabledLocationHandler.showLocationDisabledWarnDialog(this@WebViewActivity, settingsWithLocationPermissions.toTypedArray())
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

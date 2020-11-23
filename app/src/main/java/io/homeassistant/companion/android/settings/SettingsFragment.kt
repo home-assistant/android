@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -14,6 +15,7 @@ import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
+import androidx.core.content.ContextCompat
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -33,6 +35,8 @@ import io.homeassistant.companion.android.settings.notification.NotificationHist
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
+import io.homeassistant.companion.android.util.DisabledLocationHandler
+import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -40,12 +44,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
-
+        private const val LOCATION_REQUEST_CODE = 0
+        private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
         fun newInstance() = SettingsFragment()
     }
 
     @Inject
     lateinit var presenter: SettingsPresenter
+
     @Inject
     lateinit var langProvider: LanguagesProvider
     private lateinit var authenticator: Authenticator
@@ -243,14 +249,41 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
         if (preference is SsidPreference) {
-            // check if dialog is already showing
-            val fm = parentFragmentManager
-            if (fm.findFragmentByTag(SSID_DIALOG_TAG) != null) {
-                return
+            lateinit var permissionsToCheck: Array<String>
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                permissionsToCheck = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                permissionsToCheck = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
             }
-            val ssidDialog = SsidDialogFragment.newInstance("connection_internal_ssids")
-            ssidDialog.setTargetFragment(this, 0)
-            ssidDialog.show(fm, SSID_DIALOG_TAG)
+
+            val fineLocation = DisabledLocationHandler.containsLocationPermission(permissionsToCheck, true)
+
+            if (DisabledLocationHandler.isLocationEnabled(requireContext(), fineLocation)) {
+                var permissionsToRequest: Array<String>? = null
+                if (!permissionsToCheck.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions
+                    // as for Android 11 the background location request needs to be done separately
+                    // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
+                    permissionsToRequest = permissionsToCheck.toList().minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray()
+                }
+
+                val hasPermission = checkPermission(permissionsToCheck)
+                if (permissionsToCheck.isNotEmpty() && !hasPermission) {
+                    LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(requireContext(), permissionsToCheck, continueYesCallback = {
+                        checkAndRequestPermissions(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest, true)
+                        // openSsidDialog() will be called in onRequestPermissionsResult if permission is granted
+                    })
+                } else openSsidDialog()
+            } else {
+                if (presenter.isSsidUsed()) {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)), true) {
+                        presenter.clearSsids()
+                        preference.setSsids(emptySet())
+                    }
+                } else {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)))
+                }
+            }
         } else {
             super.onDisplayPreferenceDialog(preference)
         }
@@ -311,6 +344,44 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         }
     }
 
+    private fun checkAndRequestPermissions(permissions: Array<String>, requestCode: Int, requestPermissions: Array<String>? = null, forceRequest: Boolean = false): Boolean {
+        val permissionsNeeded = mutableListOf<String>()
+        for (permission in permissions) {
+            if (forceRequest || ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+                if (requestPermissions.isNullOrEmpty() || requestPermissions.contains(permission)) {
+                    permissionsNeeded.add(permission)
+                }
+            }
+        }
+        return if (permissionsNeeded.isNotEmpty()) {
+            requestPermissions(permissionsNeeded.toTypedArray(), requestCode)
+            false
+        } else true
+    }
+
+    fun checkPermission(permissions: Array<String>?): Boolean {
+        if (!permissions.isNullOrEmpty()) {
+            for (permission in permissions) {
+                if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    private fun openSsidDialog() {
+        // check if dialog is already showing
+        val fm = parentFragmentManager
+        if (fm.findFragmentByTag(SSID_DIALOG_TAG) != null) {
+            return
+        }
+
+        val ssidDialog = SsidDialogFragment.newInstance("connection_internal_ssids")
+        ssidDialog.setTargetFragment(this, 0)
+        ssidDialog.show(fm, SSID_DIALOG_TAG)
+    }
+
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
                 context?.getSystemService(PowerManager::class.java)
@@ -325,5 +396,24 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         updateBackgroundAccessPref()
+
+        val isGreaterR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+
+        if (requestCode == LOCATION_REQUEST_CODE && grantResults.isNotEmpty()) {
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                if (isGreaterR) {
+                    // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions
+                    // as for Android 11 the background location request needs to be done separately
+                    // See here: https://developer.android.com/about/versions/11/privacy/location#request-background-location-separately
+                    // The separate request of background location is done here
+                    requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), BACKGROUND_LOCATION_REQUEST_CODE)
+                }
+            }
+        }
+        if ((requestCode == LOCATION_REQUEST_CODE && !isGreaterR || requestCode == BACKGROUND_LOCATION_REQUEST_CODE && isGreaterR) && grantResults.isNotEmpty()) {
+            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                openSsidDialog()
+            }
+        }
     }
 }
