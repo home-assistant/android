@@ -49,12 +49,21 @@ class ClimateControl {
                     else -> entity.state
                 }
             )
+            val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
+            val maxValue = (entity.attributes["max_temp"] as? Number)?.toFloat() ?: 100f
+            var currentValue = (entity.attributes["temperature"] as? Number)?.toFloat() ?: (
+                    entity.attributes["current_temperature"] as? Number)?.toFloat() ?: 0f
+            // Ensure the current value is never lower than the minimum or higher than the maximum
+            if (currentValue < minValue)
+                currentValue = minValue
+            if (currentValue > maxValue)
+                currentValue = maxValue
             control.setControlTemplate(
                 RangeTemplate(
                     entity.entityId,
-                    0f,
-                    100f,
-                    (entity.attributes["temperature"] as? Number)?.toFloat() ?: 0f,
+                    minValue,
+                    maxValue,
+                    currentValue,
                     .5f,
                     "%.0f"
                 )
