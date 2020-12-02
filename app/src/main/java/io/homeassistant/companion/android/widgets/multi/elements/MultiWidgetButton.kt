@@ -23,7 +23,7 @@ class MultiWidgetButton(
     lateinit var serviceData: String
 
     // Create variable to store icon ID
-    var iconId: Int = 62017
+    var iconId: Int = 62017 // Lightning bolt (ic_flash_on_24dp drawable)
 
     //  Create variable to store layout views
     override lateinit var layout: View

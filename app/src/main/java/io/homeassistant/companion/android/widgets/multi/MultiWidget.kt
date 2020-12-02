@@ -169,143 +169,13 @@ class MultiWidget : AppWidgetProvider() {
 
         // Analyze each element in the widget and add it to the view
         widget?.elements?.forEachIndexed { index, element ->
-            val elementView: RemoteViews
-
-            when (element.type) {
-                MultiWidgetElement.Type.BUTTON -> {
-                    val buttonElement = element as MultiWidgetButtonEntity
-
-                    // Create an icon pack and load all drawables if not already loaded
-                    if (iconPack == null) {
-                        val loader = IconPackLoader(context)
-                        iconPack = createMaterialDesignIconPack(loader)
-                        iconPack!!.loadDrawables(loader.drawableLoader)
-                    }
-
-                    // Create an intent for the button press
-                    val serviceIntent = Intent(context, MultiWidget::class.java).apply {
-                        action = CALL_SERVICE
-                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                        // Data must be different for each intent or only one intent is created
-                        data = Uri.parse("hasssvc:element$index")
-                        putExtra(ELEMENT_ID, index)
-                    }
-                    Log.d(TAG, "Service call intent created for element $index.")
-
-                    // Create new button view
-                    elementView = RemoteViews(
-                        context.packageName,
-                        R.layout.widget_multi_element_button
-                    )
-
-                    // Tie the service call intent and set button icon
-                    elementView.apply {
-                        setOnClickPendingIntent(
-                            R.id.widget_multi_element_button,
-                            PendingIntent.getBroadcast(
-                                context,
-                                appWidgetId,
-                                serviceIntent,
-                                PendingIntent.FLAG_UPDATE_CURRENT
-                            )
-                        )
-                        val iconDrawable = iconPack?.icons?.get(buttonElement.iconId)?.drawable
-                        if (iconDrawable != null) {
-                            val icon = DrawableCompat.wrap(iconDrawable)
-                            setImageViewBitmap(R.id.widget_multi_element_button, icon.toBitmap())
-                        }
-                    }
-                }
-                MultiWidgetElement.Type.PLAINTEXT -> {
-                    val plaintextElement = element as MultiWidgetPlaintextEntity
-
-                    // Create an intent to update the widget on tap
-                    val updateIntent = Intent(context, MultiWidget::class.java).apply {
-                        action = UPDATE_WIDGET
-                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                    }
-
-                    // Create new label view
-                    elementView = RemoteViews(
-                        context.packageName,
-                        R.layout.widget_multi_element_label
-                    )
-
-                    // Tie the update intent and set the text of the label
-                    elementView.apply {
-                        setOnClickPendingIntent(
-                            R.id.widget_multi_element_label,
-                            PendingIntent.getBroadcast(
-                                context,
-                                appWidgetId,
-                                updateIntent,
-                                PendingIntent.FLAG_UPDATE_CURRENT
-                            )
-                        )
-                        setTextViewText(R.id.widget_multi_element_label, plaintextElement.text)
-                        setTextViewTextSize(
-                            R.id.widget_multi_element_label,
-                            TypedValue.COMPLEX_UNIT_SP,
-                            plaintextElement.textSize.toFloat()
-                        )
-                        setInt(
-                            R.id.widget_multi_element_label,
-                            "setMaxLines",
-                            plaintextElement.maxLines
-                        )
-                    }
-                }
-                MultiWidgetElement.Type.TEMPLATE -> {
-                    val templateElement = element as MultiWidgetTemplateEntity
-
-                    var renderedTemplate = "Loading..."
-                    try {
-                        renderedTemplate = integrationUseCase.renderTemplate(
-                            templateElement.templateData,
-                            mapOf()
-                        )
-                        Log.d(TAG, "Template rendering returned: '$renderedTemplate'")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Cannot render template: ${templateElement.templateData}", e)
-                    }
-
-                    // Create an intent to update the widget on tap
-                    val updateIntent = Intent(context, MultiWidget::class.java).apply {
-                        action = UPDATE_WIDGET
-                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                    }
-
-                    // Create new label view
-                    elementView = RemoteViews(
-                        context.packageName,
-                        R.layout.widget_multi_element_label
-                    )
-
-                    // Tie the update intent and set the text of the label
-                    elementView.apply {
-                        setOnClickPendingIntent(
-                            R.id.widget_multi_element_label,
-                            PendingIntent.getBroadcast(
-                                context,
-                                appWidgetId,
-                                updateIntent,
-                                PendingIntent.FLAG_UPDATE_CURRENT
-                            )
-                        )
-
-                        setTextViewText(R.id.widget_multi_element_label, renderedTemplate)
-                        setTextViewTextSize(
-                            R.id.widget_multi_element_label,
-                            TypedValue.COMPLEX_UNIT_SP,
-                            templateElement.textSize.toFloat()
-                        )
-                        setInt(
-                            R.id.widget_multi_element_label,
-                            "setMaxLines",
-                            templateElement.maxLines
-                        )
-                    }
-                }
+            val elementView: RemoteViews = when (element.type) {
+                MultiWidgetElement.Type.BUTTON ->
+                    getWidgetButtonRemoteViews(context, appWidgetId, element, index)
+                MultiWidgetElement.Type.PLAINTEXT ->
+                    getWidgetPlaintextRemoteViews(context, appWidgetId, element)
+                MultiWidgetElement.Type.TEMPLATE ->
+                    getWidgetTemplateRemoteViews(context, appWidgetId, element)
             }
 
             // Add the element view to the main widget remote view
@@ -313,6 +183,150 @@ class MultiWidget : AppWidgetProvider() {
         }
 
         return widgetView
+    }
+
+    private fun getWidgetButtonRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        element: MultiWidgetElementEntity,
+        index: Int
+    ): RemoteViews {
+        val buttonElement = element as MultiWidgetButtonEntity
+
+        // Create an icon pack and load all drawables if not already loaded
+        if (iconPack == null) {
+            val loader = IconPackLoader(context)
+            iconPack = createMaterialDesignIconPack(loader)
+            iconPack!!.loadDrawables(loader.drawableLoader)
+        }
+
+        // Create an intent for the button press
+        val serviceIntent = Intent(context, MultiWidget::class.java).apply {
+            action = CALL_SERVICE
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            // Data must be different for each intent or only one intent is created
+            data = Uri.parse("hasssvc:element$index")
+            putExtra(ELEMENT_ID, index)
+        }
+        Log.d(TAG, "Service call intent created for element $index.")
+
+        // Create new button view
+        return RemoteViews(
+            context.packageName,
+            R.layout.widget_multi_element_button
+        ).apply {
+            // Tie the service call intent and set button icon
+            setOnClickPendingIntent(
+                R.id.widget_multi_element_button,
+                PendingIntent.getBroadcast(
+                    context,
+                    appWidgetId,
+                    serviceIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            )
+            val iconDrawable = iconPack?.icons?.get(buttonElement.iconId)?.drawable
+            if (iconDrawable != null) {
+                val icon = DrawableCompat.wrap(iconDrawable)
+                setImageViewBitmap(R.id.widget_multi_element_button, icon.toBitmap())
+            }
+        }
+    }
+
+    private fun getWidgetPlaintextRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        element: MultiWidgetElementEntity
+    ): RemoteViews {
+        val plaintextElement = element as MultiWidgetPlaintextEntity
+
+        // Create an intent to update the widget on tap
+        val updateIntent = Intent(context, MultiWidget::class.java).apply {
+            action = UPDATE_WIDGET
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+
+        // Create new label view
+        return RemoteViews(
+            context.packageName,
+            R.layout.widget_multi_element_label
+        ).apply {
+            // Tie the update intent and set the text of the label
+            setOnClickPendingIntent(
+                R.id.widget_multi_element_label,
+                PendingIntent.getBroadcast(
+                    context,
+                    appWidgetId,
+                    updateIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            )
+            setTextViewText(R.id.widget_multi_element_label, plaintextElement.text)
+            setTextViewTextSize(
+                R.id.widget_multi_element_label,
+                TypedValue.COMPLEX_UNIT_SP,
+                plaintextElement.textSize.toFloat()
+            )
+            setInt(
+                R.id.widget_multi_element_label,
+                "setMaxLines",
+                plaintextElement.maxLines
+            )
+        }
+    }
+
+    private suspend fun getWidgetTemplateRemoteViews(
+        context: Context,
+        appWidgetId: Int,
+        element: MultiWidgetElementEntity
+    ): RemoteViews {
+        val templateElement = element as MultiWidgetTemplateEntity
+
+        var renderedTemplate = "Loading..."
+        try {
+            renderedTemplate = integrationUseCase.renderTemplate(
+                templateElement.templateData,
+                mapOf()
+            )
+            Log.d(TAG, "Template rendering returned: '$renderedTemplate'")
+        } catch (e: Exception) {
+            Log.e(TAG, "Cannot render template: ${templateElement.templateData}", e)
+        }
+
+        // Create an intent to update the widget on tap
+        val updateIntent = Intent(context, MultiWidget::class.java).apply {
+            action = UPDATE_WIDGET
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+
+        // Create new label view
+        return RemoteViews(
+            context.packageName,
+            R.layout.widget_multi_element_label
+        ).apply {
+            // Tie the update intent and set the text of the label
+            setOnClickPendingIntent(
+                R.id.widget_multi_element_label,
+                PendingIntent.getBroadcast(
+                    context,
+                    appWidgetId,
+                    updateIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            )
+
+            setTextViewText(R.id.widget_multi_element_label, renderedTemplate)
+            setTextViewTextSize(
+                R.id.widget_multi_element_label,
+                TypedValue.COMPLEX_UNIT_SP,
+                templateElement.textSize.toFloat()
+            )
+            setInt(
+                R.id.widget_multi_element_label,
+                "setMaxLines",
+                templateElement.maxLines
+            )
+        }
     }
 
     private fun saveConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
