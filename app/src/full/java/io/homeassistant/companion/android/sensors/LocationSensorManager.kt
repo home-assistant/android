@@ -315,8 +315,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val now = System.currentTimeMillis()
 
         Log.d(TAG, "Begin evaluating if location update should be skipped")
-        if (now < location.time) {
-            Log.d(TAG, "Skipping location update that came from the future. $now should always be greater than ${location.time}")
+        if (now + 5000 < location.time) {
+            Log.d(TAG, "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}")
             return
         }
 
