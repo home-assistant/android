@@ -51,6 +51,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_SHOW_SKIP = "EXTRA_INCLUDE_SKIP"
         internal const val EXTRA_SHOW_SEEK = "EXTRA_INCLUDE_SEEK"
+        private var lastIntent = ""
     }
 
     @Inject
@@ -269,7 +270,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             entity = integrationUseCase.getEntity(entityId)
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
-            Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            if (lastIntent != Intent.ACTION_SCREEN_ON)
+                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             return null
         }
 
@@ -277,12 +279,12 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action
+        lastIntent = intent.action.toString()
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
             TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + action + System.lineSeparator() +
+                    "Broadcast action: " + lastIntent + System.lineSeparator() +
                     "AppWidgetId: " + appWidgetId
         )
 
@@ -292,7 +294,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val mediaPlayerWidgetList = mediaPlayCtrlWidgetDao.getAll()
 
         super.onReceive(context, intent)
-        when (action) {
+        when (lastIntent) {
             RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
             UPDATE_MEDIA_IMAGE -> updateAppWidget(context, appWidgetId)
             CALL_PREV_TRACK -> callPreviousTrackService(appWidgetId)
@@ -380,7 +382,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
-                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                if (lastIntent != Intent.ACTION_SCREEN_ON)
+                    Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 return@launch
             }
 
@@ -448,7 +451,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
-                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                if (lastIntent != Intent.ACTION_SCREEN_ON)
+                    Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 return@launch
             }
 

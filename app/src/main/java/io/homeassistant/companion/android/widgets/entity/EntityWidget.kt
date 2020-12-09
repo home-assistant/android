@@ -40,6 +40,8 @@ class EntityWidget : AppWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
+
+        private var lastIntent = ""
     }
 
     @Inject
@@ -148,7 +150,8 @@ class EntityWidget : AppWidgetProvider() {
             entity = entityId?.let { integrationUseCase.getEntity(it) }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
-            Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            if (lastIntent != Intent.ACTION_SCREEN_ON)
+                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
         if (attributeIds == null) return entity?.state
 
@@ -160,18 +163,19 @@ class EntityWidget : AppWidgetProvider() {
             return entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
-            Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            if (lastIntent != Intent.ACTION_SCREEN_ON)
+                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
         return null
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.action
+        lastIntent = intent.action.toString()
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
             TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + action + System.lineSeparator() +
+                    "Broadcast action: " + lastIntent + System.lineSeparator() +
                     "AppWidgetId: " + appWidgetId
         )
 
@@ -182,7 +186,7 @@ class EntityWidget : AppWidgetProvider() {
 
         super.onReceive(context, intent)
 
-        when (action) {
+        when (lastIntent) {
             RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
             UPDATE_ENTITY -> updateAppWidget(context, appWidgetId)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, staticWidgetList)
