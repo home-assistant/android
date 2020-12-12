@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 <!-- READ THIS FIRST:
-- Make sure you've checked existing feature requests to make sure you aren't opening a duplicate. If you do open a duplicate issue because you didn't check existing requests, we will close your issue and laugh at you privately.
+- Make sure you've checked existing feature requests to make sure you aren't opening a duplicate. If you do open a duplicate issue because you didn't check existing requests, we will have some work for nothing. Putting this work into more features (maybe even yours!) just feels better.
   DO NOT DELETE ANY TEXT from this template! All requested information is important.
 -->
 
