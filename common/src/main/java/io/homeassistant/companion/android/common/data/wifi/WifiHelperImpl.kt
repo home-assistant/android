@@ -7,6 +7,6 @@ class WifiHelperImpl @Inject constructor(
     private val wifiManager: WifiManager
 ) : WifiHelper {
     override fun getWifiSsid(): String {
-        return wifiManager.connectionInfo.ssid
+        return wifiManager.connectionInfo?.ssid.toString()
     }
 }
