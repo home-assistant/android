@@ -249,13 +249,17 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     override fun onDisplayPreferenceDialog(preference: Preference) {
         if (preference is SsidPreference) {
-            lateinit var permissionsToCheck: Array<String>
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                permissionsToCheck = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                permissionsToCheck = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
+            val permissionsToCheck: Array<String> = when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                }
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
+                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
+                }
+                else -> {
+                    arrayOf()
+                }
             }
-
             val fineLocation = DisabledLocationHandler.containsLocationPermission(permissionsToCheck, true)
 
             if (DisabledLocationHandler.isLocationEnabled(requireContext(), fineLocation)) {
