@@ -1,7 +1,7 @@
 object Config {
 
     object Plugin {
-        const val android = "com.android.tools.build:gradle:4.1.0"
+        const val android = "com.android.tools.build:gradle:4.1.1"
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
         const val google = "com.google.gms:google-services:4.3.4"
         const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:2.0.1"
@@ -17,19 +17,19 @@ object Config {
 
     object Dependency {
         object Kotlin {
-            const val version = "1.4.10"
+            const val version = "1.4.21"
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
             const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${version}"
 
-            private const val coroutinesVersion = "1.3.9"
+            private const val coroutinesVersion = "1.4.1"
             const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}"
-            const val coroutinesPlayServices = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.3.9"
+            const val coroutinesPlayServices = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.4.1"
             const val coroutinesAndroid = "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}"
             const val coroutinesTest = "org.jetbrains.kotlinx:kotlinx-coroutines-test:${coroutinesVersion}"
         }
 
         object Google {
-            private const val daggerVersion = "2.29.1"
+            private const val daggerVersion = "2.30.1"
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
@@ -94,7 +94,7 @@ object Config {
         }
 
         object Misc {
-            const val sentry = "io.sentry:sentry-android:3.1.0"
+            const val sentry = "io.sentry:sentry-android:3.2.0"
             const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.3"
             const val blurView = "com.eightbitlab:blurview:1.6.3"
             const val iconDialog = "com.maltaisn:icondialog:3.3.0"
