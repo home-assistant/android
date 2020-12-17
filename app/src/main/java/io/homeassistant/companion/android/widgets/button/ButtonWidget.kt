@@ -211,7 +211,9 @@ class ButtonWidget : AppWidgetProvider() {
                         }
                     }
 
+                    Log.d(TAG, "Sending service call to Home Assistant")
                     integrationUseCase.callService(domain, service, serviceDataMap)
+                    Log.d(TAG, "Service call sent successfully")
 
                     // If service call does not throw an exception, send positive feedback
                     feedbackColor = R.drawable.widget_button_background_green
