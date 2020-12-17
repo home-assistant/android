@@ -27,7 +27,7 @@ assignees: ''
 
 **Description of problem:**
 
-**Traceback (if applicable):**
+**Traceback (if applicable, to get the logs you may refer to: https://companion.home-assistant.io/docs/troubleshooting/faqs/#android-crash-logs):**
 
 ```
 
