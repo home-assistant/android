@@ -72,6 +72,29 @@ class ButtonWidget : AppWidgetProvider() {
         }
     }
 
+    private fun updateAllWidgets(
+        context: Context,
+        buttonWidgetEntityList: Array<ButtonWidgetEntity>?
+    ) {
+        if (buttonWidgetEntityList != null) {
+            Log.d(TAG, "Updating all widgets")
+            val appWidgetManager = AppWidgetManager.getInstance(context)
+            for (item in buttonWidgetEntityList) {
+                val views = getWidgetRemoteViews(context, item.id)
+
+                views.setViewVisibility(R.id.widgetProgressBar, View.INVISIBLE)
+                views.setViewVisibility(R.id.widgetImageButtonLayout, View.VISIBLE)
+                views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
+                views.setInt(
+                    R.id.widgetLayout,
+                    "setBackgroundResource",
+                    R.drawable.widget_button_background
+                )
+                appWidgetManager.updateAppWidget(item.id, views)
+            }
+        }
+    }
+
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
@@ -101,11 +124,13 @@ class ButtonWidget : AppWidgetProvider() {
         ensureInjected(context)
 
         buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
+        val buttonWidgetList = buttonWidgetDao.getAll()
 
         super.onReceive(context, intent)
         when (action) {
             CALL_SERVICE -> callConfiguredService(context, appWidgetId)
             RECEIVE_DATA -> saveServiceCallConfiguration(context, intent.extras, appWidgetId)
+            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, buttonWidgetList)
         }
     }
 
