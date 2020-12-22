@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -78,6 +79,7 @@ class MessagingService : FirebaseMessagingService() {
         const val COMMAND_RINGER_MODE = "command_ringer_mode"
         const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
+        const val COMMAND_BLUETOOTH = "command_bluetooth"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -97,11 +99,17 @@ class MessagingService : FirebaseMessagingService() {
         const val NOTIFICATION_STREAM = "notification_stream"
         const val RING_STREAM = "ring_stream"
 
+        // Enable/Disable Commands
+        const val TURN_ON = "turn_on"
+        const val TURN_OFF = "turn_off"
+
         // Command groups
-        val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT, COMMAND_VOLUME_LEVEL)
+        val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
+            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
+        val ENABLE_COMMANDS = listOf(TURN_OFF, TURN_ON)
     }
 
     @Inject
@@ -198,6 +206,16 @@ class MessagingService : FirebaseMessagingService() {
                             else {
                                 mainScope.launch {
                                     Log.d(TAG, "Invalid volume command received, posting notification to device")
+                                    sendNotification(it)
+                                }
+                            }
+                        }
+                        COMMAND_BLUETOOTH -> {
+                            if (!it[TITLE].isNullOrEmpty() && it[TITLE] in ENABLE_COMMANDS)
+                                handleDeviceCommands(it)
+                            else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid bluetooth command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
@@ -367,6 +385,13 @@ class MessagingService : FirebaseMessagingService() {
                         title!!.toInt()
                     )
                 }
+            }
+            COMMAND_BLUETOOTH -> {
+                val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+                if (title == TURN_OFF)
+                    bluetoothAdapter.disable()
+                if (title == TURN_ON)
+                    bluetoothAdapter.enable()
             }
             else -> Log.d(TAG, "No command received")
         }

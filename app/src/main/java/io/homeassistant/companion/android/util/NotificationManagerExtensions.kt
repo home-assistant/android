@@ -53,8 +53,10 @@ fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolea
             if (isGroupSummary && groupNotifications.size == 1 ||
                 !isGroupSummary && groupNotifications.size == 2) {
                 val group = groupNotifications[0].notification.group
-                val groupId = group.hashCode()
-                this.cancel(group, groupId)
+                if (group != null) {
+                    val groupId = group.hashCode()
+                    this.cancel(group, groupId)
+                }
                 return true
             }
         }
