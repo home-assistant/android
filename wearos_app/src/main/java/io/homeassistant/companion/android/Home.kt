@@ -1,4 +1,4 @@
-package io.homeassistant.companion.wearos
+package io.homeassistant.companion.android
 
 import android.os.Bundle
 import android.support.wearable.activity.WearableActivity

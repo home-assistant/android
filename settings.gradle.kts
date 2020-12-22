@@ -1,7 +1,6 @@
 import org.gradle.kotlin.dsl.support.serviceOf
 
-include(":common", ":wearos_app")
-include(":common", ":app")
+include(":common", ":app", ":wearos_app")
 
 rootProject.name = "home-assistant-android"
 

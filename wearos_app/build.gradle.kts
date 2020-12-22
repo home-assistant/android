@@ -9,11 +9,12 @@ android {
     compileSdkVersion(Config.Android.compileSdk)
 
     defaultConfig {
-        applicationId = "io.homeassistant.companion.wearos"
+        applicationId = "io.homeassistant.companion.android"
         minSdkVersion(Config.Android.minSdkWear)
         targetSdkVersion(Config.Android.targetSdk)
-        versionCode = 1
-        versionName = "1.0"
+
+        versionName = System.getenv("VERSION") ?: "LOCAL"
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
         javaCompileOptions {
             annotationProcessorOptions {
