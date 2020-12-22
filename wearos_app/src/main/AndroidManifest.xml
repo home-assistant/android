@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.homeassistantwearos">
+    package="io.homeassistant.companion.wearos">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
