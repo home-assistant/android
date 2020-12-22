@@ -11,6 +11,7 @@ object Config {
     object Android {
         const val compileSdk = 30
         const val minSdk = 21
+        const val minSdkWear = 23
         const val targetSdk = 30
         const val ndk = "21.3.6528147"
     }
@@ -34,6 +35,9 @@ object Config {
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
             const val material = "com.google.android.material:material:1.2.1"
+
+            const val wearableSupport = "com.google.android.support:wearable:2.8.1"
+            const val wearable = "com.google.android.wearable:wearable:2.8.1"
         }
 
         object AndroidX {
@@ -44,6 +48,8 @@ object Config {
             const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"
             const val constraintlayout = "androidx.constraintlayout:constraintlayout:1.1.3"
             const val preference = "androidx.preference:preference-ktx:1.1.1"
+
+            const val wear = "androidx.wear:wear:1.1.0"
 
             const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.0"
             const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.0"
