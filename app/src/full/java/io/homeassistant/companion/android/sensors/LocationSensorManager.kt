@@ -139,7 +139,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
             ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
-            ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
@@ -173,7 +172,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     isZoneLocationSetup = false
                 }
                 if (!zoneEnabled && isZoneLocationSetup) {
-                    removeGeofenceUpdateRequests()
                     isZoneLocationSetup = false
                     Log.d(TAG, "Removing geofence update requests")
                 }
@@ -199,22 +197,12 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private fun removeAllLocationUpdateRequests() {
         Log.d(TAG, "Removing all location requests.")
         removeBackgroundUpdateRequests()
-        removeGeofenceUpdateRequests()
     }
 
     private fun removeBackgroundUpdateRequests() {
-//        val fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(
-//            latestContext
-//        )
-
-        // fusedLocationProviderClient.removeLocationUpdates(backgroundIntent)
+        mLocationClient!!.stopLocation()
     }
 
-    private fun removeGeofenceUpdateRequests() {
-        //val geofencingClient = LocationServices.getGeofencingClient(latestContext)
-        //geofencingClient.removeGeofences(zoneIntent)
-        geofenceRegistered = false
-    }
 
     private fun requestLocationUpdates() {
         if (!checkPermission(latestContext, backgroundLocation.id)) {
@@ -249,78 +237,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         requestLocationUpdates()
 
     }
-
-    private fun handleGeoUpdate(intent: Intent) {
-
-//        Log.d(TAG, "Received geofence update.")
-//        if (!isEnabled(latestContext, zoneLocation.id)) {
-//            isZoneLocationSetup = false
-//            Log.w(
-//                TAG,
-//                "Unregistering geofences as zone tracking is disabled and intent was received"
-//            )
-//            removeGeofenceUpdateRequests()
-//            return
-//        }
-//        val geofencingEvent = GeofencingEvent.fromIntent(intent)
-//        if (geofencingEvent.hasError()) {
-//            Log.e(TAG, "Error getting geofence broadcast status code: ${geofencingEvent.errorCode}")
-//            return
-//        }
-//
-//        val validGeofencingEvents = listOf(
-//            Geofence.GEOFENCE_TRANSITION_ENTER,
-//            Geofence.GEOFENCE_TRANSITION_EXIT
-//        )
-//        if (geofencingEvent.geofenceTransition in validGeofencingEvents) {
-//            val zoneStatusEvent = when (geofencingEvent.geofenceTransition) {
-//                Geofence.GEOFENCE_TRANSITION_ENTER -> "android.zone_entered"
-//                Geofence.GEOFENCE_TRANSITION_EXIT -> "android.zone_exited"
-//                else -> ""
-//            }
-//            val zoneAttr = mapOf(
-//                "accuracy" to geofencingEvent.triggeringLocation.accuracy,
-//                "altitude" to geofencingEvent.triggeringLocation.altitude,
-//                "bearing" to geofencingEvent.triggeringLocation.bearing,
-//                "latitude" to geofencingEvent.triggeringLocation.latitude,
-//                "longitude" to geofencingEvent.triggeringLocation.longitude,
-//                "provider" to geofencingEvent.triggeringLocation.provider,
-//                "time" to geofencingEvent.triggeringLocation.time,
-//                "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation.verticalAccuracyMeters.toInt() else 0,
-//                "zone" to geofencingEvent.triggeringGeofences[0].requestId
-//            )
-//            runBlocking {
-//                try {
-//                    integrationUseCase.fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
-//                    Log.d(TAG, "Event sent to Home Assistant")
-//                } catch (e: Exception) {
-//                    Log.e(TAG, "Unable to send event to Home Assistant", e)
-//                    Toast.makeText(latestContext, R.string.zone_event_failure, Toast.LENGTH_LONG)
-//                        .show()
-//                }
-//            }
-//        }
-//
-//        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-//        val sensorSettings = sensorDao.getSettings(zoneLocation.id)
-//        val minAccuracy = sensorSettings
-//            .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-//            ?: DEFAULT_MINIMUM_ACCURACY
-//        sensorDao.add(Setting(zoneLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
-//
-//        if (geofencingEvent.triggeringLocation.accuracy > minAccuracy) {
-//            Log.w(
-//                TAG,
-//                "Geofence location accuracy didn't meet requirements, requesting new location."
-//            )
-//            requestSingleAccurateLocation()
-//        } else {
-//            sendLocationUpdate(geofencingEvent.triggeringLocation, "", true)
-//        }
-    }
-
     private fun sendLocationUpdate(
-        location: Location,
+        location: Location?,
         name: String = "",
         geofenceUpdate: Boolean = false
     ) {
@@ -467,7 +385,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     "HomeAssistant::AccurateLocation"
                 )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
 
-        runBlocking { sendLocationUpdate(amapLocation!!) }
+        runBlocking { sendLocationUpdate(amapLocation) }
         if (wakeLock?.isHeld == true) wakeLock.release()
 
         requestLocationUpdates()
@@ -581,7 +499,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     "Postal Code" to it.cityCode,
                     "Thoroughfare" to it.street
                 )
-            }.orEmpty()
+            }
         }
         if (TextUtils.isEmpty(addressStr)) {
             addressStr =
