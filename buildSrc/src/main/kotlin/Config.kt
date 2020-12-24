@@ -104,6 +104,10 @@ object Config {
             const val exoHls = "com.google.android.exoplayer:exoplayer-hls:2.11.7"
             const val exoUi = "com.google.android.exoplayer:exoplayer-ui:2.11.7"
         }
+
+        object Amap{
+            const val location =  "com.amap.api:location:latest.integration"
+        }
     }
 
 }

@@ -17,7 +17,7 @@ android {
     ndkVersion = Config.Android.ndk
 
     defaultConfig {
-        applicationId = "io.homeassistant.companion.android"
+        applicationId = "io.homeassistant.companion.android.amap"
         minSdkVersion(Config.Android.minSdk)
         targetSdkVersion(Config.Android.targetSdk)
 
@@ -50,10 +50,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(System.getenv("KEYSTORE_PATH") ?: "release_keystore.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
-            keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
-            keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
+            storeFile = file(System.getProperty("NESTOR_KEYSTORE") ?: "/Users/nestor/Documents/nestor.keystore")
+            storePassword = System.getProperty("NESTOR_KEYSTORE_PASSWORD") ?: "QQqq2898"
+            keyAlias = System.getProperty("NESTOR_KEYSTORE_ALIAS") ?: "nestor"
+            keyPassword = System.getProperty("NESTOR_KEYSTORE_PASSWORD") ?: "QQqq2898"
             isV1SigningEnabled = true
             isV2SigningEnabled = true
         }
@@ -62,6 +62,7 @@ android {
     buildTypes {
         named("debug").configure {
             applicationIdSuffix = ".debug"
+            //signingConfig = signingConfigs.getByName("release")
         }
         named("release").configure {
             isDebuggable = false
@@ -164,6 +165,8 @@ dependencies {
     implementation(Config.Dependency.Misc.exoCore)
     implementation(Config.Dependency.Misc.exoHls)
     implementation(Config.Dependency.Misc.exoUi)
+
+    implementation(Config.Dependency.Amap.location)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

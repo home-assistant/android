@@ -31,12 +31,21 @@
             </intent-filter>
         </service>
 
+        <service android:name="com.amap.api.location.APSService" />
+
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_stat_ic_notification" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/colorPrimary" />
+
+
+<!--        io.homeassistant.companion.android.amap-->
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="1f975a125b109301dcd2a3c2ebb5b557"/>
+
     </application>
 
 </manifest>

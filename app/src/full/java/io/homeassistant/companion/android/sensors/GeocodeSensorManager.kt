@@ -4,9 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.location.Address
 import android.location.Geocoder
+import android.location.Location
 import android.os.Build
 import android.util.Log
-import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
@@ -15,8 +15,8 @@ import java.lang.Exception
 class GeocodeSensorManager : SensorManager {
 
     companion object {
-        private const val SETTING_ACCURACY = "Minimum Accuracy"
-        private const val DEFAULT_MINIMUM_ACCURACY = 200
+        const val SETTING_ACCURACY = "Minimum Accuracy"
+        const val DEFAULT_MINIMUM_ACCURACY = 200
         private const val TAG = "GeocodeSM"
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
@@ -53,52 +53,64 @@ class GeocodeSensorManager : SensorManager {
     private fun updateGeocodedLocation(context: Context) {
         if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context, geocodedLocation.id))
             return
-        val locApi = LocationServices.getFusedLocationProviderClient(context)
-        locApi.lastLocation.addOnSuccessListener { location ->
-            var address: Address? = null
-            try {
-                if (location == null) {
-                    Log.e(TAG, "Somehow location is null even though it was successful")
-                    return@addOnSuccessListener
-                }
+//        val locApi = LocationServices.getFusedLocationProviderClient(context)
+//        locApi.lastLocation.addOnSuccessListener { location ->
+//            addressUpdata(context)
+//        }
+    }
 
-                val sensorDao = AppDatabase.getInstance(context).sensorDao()
-                val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
-                val minAccuracy = sensorSettings
-                    .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
-                    ?: DEFAULT_MINIMUM_ACCURACY
-                sensorDao.add(Setting(geocodedLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
-
-                if (location.accuracy <= minAccuracy)
-                    address = Geocoder(context)
-                        .getFromLocation(location.latitude, location.longitude, 1)
-                        .firstOrNull()
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to get geocoded location", e)
+    private fun addressUpdata(context: Context,location: Location) {
+        var address: Address? = null
+        try {
+            if (location == null) {
+                Log.e(TAG, "Somehow location is null even though it was successful")
+                return
             }
-            val attributes = address?.let {
-                mapOf(
-                    "Administrative Area" to it.adminArea,
-                    "Country" to it.countryName,
-                    "ISO Country Code" to it.countryCode,
-                    "Locality" to it.locality,
-                    "Latitude" to it.latitude,
-                    "Longitude" to it.longitude,
-                    "Postal Code" to it.postalCode,
-                    "Sub Administrative Area" to it.subAdminArea,
-                    "Sub Locality" to it.subLocality,
-                    "Sub Thoroughfare" to it.subThoroughfare,
-                    "Thoroughfare" to it.thoroughfare
-                )
-            }.orEmpty()
 
-            onSensorUpdated(
-                context,
-                geocodedLocation,
-                address?.getAddressLine(0) ?: "Unknown",
-                "mdi:map",
-                attributes
+            val sensorDao = AppDatabase.getInstance(context).sensorDao()
+            val sensorSettings = sensorDao.getSettings(geocodedLocation.id)
+            val minAccuracy = sensorSettings
+                .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
+                ?: DEFAULT_MINIMUM_ACCURACY
+            sensorDao.add(
+                Setting(
+                    geocodedLocation.id,
+                    SETTING_ACCURACY,
+                    minAccuracy.toString(),
+                    "number"
+                )
             )
+
+            if (location.accuracy <= minAccuracy)
+                address = Geocoder(context)
+                    .getFromLocation(location.latitude, location.longitude, 1)
+                    .firstOrNull()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get geocoded location", e)
         }
+        val attributes = address?.let {
+            mapOf(
+                "Administrative Area" to it.adminArea,
+                "Country" to it.countryName,
+                "ISO Country Code" to it.countryCode,
+                "Locality" to it.locality,
+                "Latitude" to it.latitude,
+                "Longitude" to it.longitude,
+                "Postal Code" to it.postalCode,
+                "Sub Administrative Area" to it.subAdminArea,
+                "Sub Locality" to it.subLocality,
+                "Sub Thoroughfare" to it.subThoroughfare,
+                "Thoroughfare" to it.thoroughfare
+            )
+        }.orEmpty()
+
+
+        onSensorUpdated(
+            context,
+            geocodedLocation,
+            address?.getAddressLine(0) ?: "Unknown",
+            "mdi:map",
+            attributes
+        )
     }
 }
