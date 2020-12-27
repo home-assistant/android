@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
+import android.text.Html.fromHtml
 import android.util.Log
 import android.widget.RemoteViews
 import android.widget.Toast
@@ -131,7 +132,7 @@ class TemplateWidget : AppWidgetProvider() {
                 }
                 setTextViewText(
                     R.id.widgetTemplateText,
-                    renderedTemplate
+                    fromHtml(renderedTemplate)
                 )
             }
         }
