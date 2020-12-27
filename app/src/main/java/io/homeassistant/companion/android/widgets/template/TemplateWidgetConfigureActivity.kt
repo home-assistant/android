@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.Html.fromHtml
 import android.view.View
 import android.view.View.VISIBLE
 import androidx.core.widget.doAfterTextChanged
@@ -117,7 +118,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
                 enabled = false
             }
             runOnUiThread {
-                renderedTemplate.text = templateText
+                renderedTemplate.text = fromHtml(templateText)
                 add_button.isEnabled = enabled
             }
         }
