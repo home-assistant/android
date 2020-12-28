@@ -40,6 +40,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
@@ -1201,9 +1202,11 @@ class MessagingService : FirebaseMessagingService() {
                         pushToken = token
                     )
                 )
+                IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 // TODO: Store for update later
                 Log.e(TAG, "Issue updating token", e)
+                IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
             }
         }
     }

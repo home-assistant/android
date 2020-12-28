@@ -12,6 +12,7 @@ import android.util.Log
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.database.AppDatabase
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -164,6 +165,7 @@ class SensorReceiver : BroadcastReceiver() {
                         integrationUseCase.registerSensor(reg)
                         sensor.registered = true
                         sensorDao.update(sensor)
+                        Log.d("IntegrationRepository", "${sensor.id} registered")
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue registering sensor: ${reg.uniqueId}", e)
                     }
@@ -180,9 +182,12 @@ class SensorReceiver : BroadcastReceiver() {
                 success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
                 enabledRegistrations.forEach {
                     sensorDao.updateLastSendState(it.uniqueId, it.state.toString())
+                    Log.d("IntegrationRepository", "${it.name} updated")
                 }
+                IntegrationRepositoryImpl.removeFailedNotification(context)
             } catch (e: Exception) {
                 Log.e(TAG, "Exception while updating sensors.", e)
+                IntegrationRepositoryImpl.notifyFailedToConnect(context)
             }
 
             // We failed to update a sensor, we should re register next time

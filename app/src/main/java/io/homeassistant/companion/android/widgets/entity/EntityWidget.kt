@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
@@ -149,8 +150,10 @@ class EntityWidget : AppWidgetProvider() {
         var entity: Entity<Map<String, Any>>? = null
         try {
             entity = entityId?.let { integrationUseCase.getEntity(it) }
+            IntegrationRepositoryImpl.removeFailedNotification(context)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
+            IntegrationRepositoryImpl.notifyFailedToConnect(context)
             if (lastIntent != Intent.ACTION_SCREEN_ON)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
@@ -169,6 +172,7 @@ class EntityWidget : AppWidgetProvider() {
             return lastUpdate
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
+            IntegrationRepositoryImpl.notifyFailedToConnect(context)
             if (lastIntent != Intent.ACTION_SCREEN_ON)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }

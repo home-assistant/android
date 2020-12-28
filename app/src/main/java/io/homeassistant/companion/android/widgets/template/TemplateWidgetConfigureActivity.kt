@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import javax.inject.Inject
@@ -113,9 +114,11 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             try {
                 templateText = integrationUseCase.renderTemplate(template, mapOf())
                 enabled = true
+                IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 templateText = "Error in template"
                 enabled = false
+                IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
             }
             runOnUiThread {
                 renderedTemplate.text = fromHtml(templateText)

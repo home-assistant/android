@@ -117,7 +117,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("nfc_tags")?.let {
             val pm: PackageManager = requireContext().packageManager
             if (pm.hasSystemFeature(PackageManager.FEATURE_NFC))
-                it.isVisible = presenter.nfcEnabled()
+                it.isVisible = presenter.nfcEnabled(requireContext())
             else
                 it.isVisible = false
             it.onPreferenceClickListener = Preference.OnPreferenceClickListener {

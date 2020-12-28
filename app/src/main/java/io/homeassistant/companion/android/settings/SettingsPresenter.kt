@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings
 
+import android.content.Context
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 
@@ -7,7 +8,7 @@ interface SettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onCreate()
     fun onFinish()
-    fun nfcEnabled(): Boolean
+    fun nfcEnabled(context: Context): Boolean
     fun isLockEnabled(): Boolean
     fun sessionTimeOut(): Int
     fun getNotificationRateLimits(): RateLimitResponse?

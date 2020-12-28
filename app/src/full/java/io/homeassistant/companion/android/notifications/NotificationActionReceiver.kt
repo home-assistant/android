@@ -11,6 +11,7 @@ import androidx.core.app.RemoteInput
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.util.NotificationActionContentHandler
 import io.homeassistant.companion.android.util.cancel
 import javax.inject.Inject
@@ -73,7 +74,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
 
         when (intent.action) {
-            FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
+            FIRE_EVENT -> fireEvent(notificationAction, context, onComplete, onFailure)
             OPEN_URI -> NotificationActionContentHandler.openUri(context, notificationAction.uri, onComplete)
         }
 
@@ -83,6 +84,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
     private fun fireEvent(
         action: NotificationAction,
+        context: Context,
         onComplete: () -> Unit,
         onFailure: () -> Unit
     ) {
@@ -92,9 +94,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     "mobile_app_notification_action",
                     action.data.plus(Pair("action", action.key))
                 )
+                IntegrationRepositoryImpl.removeFailedNotification(context)
                 onComplete()
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to fire event.", e)
+                IntegrationRepositoryImpl.notifyFailedToConnect(context)
                 onFailure()
             }
         }

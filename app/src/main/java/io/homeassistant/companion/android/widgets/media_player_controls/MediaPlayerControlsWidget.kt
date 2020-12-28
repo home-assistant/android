@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
@@ -268,10 +269,12 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val entity: Entity<Map<String, Any>>
         try {
             entity = integrationUseCase.getEntity(entityId)
+            IntegrationRepositoryImpl.removeFailedNotification(context)
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent != Intent.ACTION_SCREEN_ON)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            IntegrationRepositoryImpl.notifyFailedToConnect(context)
             return null
         }
 
@@ -380,8 +383,10 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             val currentEntityInfo: Entity<Map<String, Any>>
             try {
                 currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+                IntegrationRepositoryImpl.removeFailedNotification(context)
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
+                IntegrationRepositoryImpl.notifyFailedToConnect(context)
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
                     Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 return@launch
@@ -449,8 +454,10 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             val currentEntityInfo: Entity<Map<String, Any>>
             try {
                 currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+                IntegrationRepositoryImpl.removeFailedNotification(context)
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
+                IntegrationRepositoryImpl.notifyFailedToConnect(context)
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
                     Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 return@launch

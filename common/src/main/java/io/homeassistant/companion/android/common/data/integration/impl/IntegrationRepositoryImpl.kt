@@ -1,7 +1,14 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import io.homeassistant.companion.android.common.BuildConfig
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
@@ -60,6 +67,68 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
+
+        private var connectionCount = 0
+        var notifyFailed = false
+        private const val maxTries = 5
+        private const val channelId = "Failed Connection"
+        private const val NOTIFICATION_ID = 47
+
+        fun notifyFailedToConnect(appContext: Context) {
+            connectionCount += 1
+            Log.d(TAG, "Increasing failed connection to $connectionCount")
+            if (connectionCount >= maxTries && !notifyFailed) {
+                Log.d(TAG, "Unable to connect for maximum of $maxTries tries, posting notification")
+                notifyFailed = true
+                createNotificationChannel(appContext)
+                val notification = NotificationCompat.Builder(appContext, channelId)
+                    .setSmallIcon(R.drawable.ic_stat_ic_notification)
+                    .setContentTitle(appContext.getString(R.string.unable_to_connect))
+                    .setContentText(appContext.getString(R.string.unable_connect_body))
+                    .setStyle(NotificationCompat.BigTextStyle().bigText(appContext.getString(R.string.unable_connect_body)))
+                    .setUsesChronometer(true)
+                    .setWhen(System.currentTimeMillis())
+                    .setOngoing(true)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .build()
+                with(NotificationManagerCompat.from(appContext)) {
+                    notify(NOTIFICATION_ID, notification)
+                }
+                Log.d(TAG, "Notification posted")
+            }
+        }
+
+        fun removeFailedNotification(appContext: Context) {
+            if (connectionCount > 0) {
+                Log.d(TAG, "Resetting connection count back to 0")
+                connectionCount = 0
+                if (notifyFailed) {
+                    Log.d(
+                        TAG,
+                        "Removing notification as connection to Home Assistant has been restored"
+                    )
+                    val notificationManager =
+                        appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    notificationManager.cancel(NOTIFICATION_ID)
+                    notifyFailed = false
+                }
+            }
+        }
+
+        private fun createNotificationChannel(appContext: Context) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+                var notificationChannel =
+                    notificationManager.getNotificationChannel(channelId)
+                if (notificationChannel == null) {
+                    notificationChannel = NotificationChannel(
+                        channelId, channelId, NotificationManager.IMPORTANCE_HIGH
+                    )
+                    notificationManager.createNotificationChannel(notificationChannel)
+                }
+            }
+        }
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {

@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.settings
 
+import android.content.Context
 import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -186,14 +188,16 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     // Make sure Core is above 0.114.0 because that's the first time NFC is available.
-    override fun nfcEnabled(): Boolean {
+    override fun nfcEnabled(context: Context): Boolean {
         return runBlocking {
             var splitVersion = listOf<String>()
 
             try {
                 splitVersion = integrationUseCase.getHomeAssistantVersion().split(".")
+                IntegrationRepositoryImpl.removeFailedNotification(context)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to get core version.", e)
+                IntegrationRepositoryImpl.notifyFailedToConnect(context)
             }
 
             return@runBlocking splitVersion.size > 2 &&

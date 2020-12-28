@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <string name="unable_to_connect">Unable to connect to Home Assistant.</string>
+    <string name="unable_connect_body">The last 5 attempts have failed to connect to Home Assistant. This notification will automatically clear once connection has been restored.</string>
+</resources>

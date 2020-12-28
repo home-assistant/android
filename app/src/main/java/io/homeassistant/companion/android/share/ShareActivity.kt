@@ -9,6 +9,7 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -54,8 +55,10 @@ class ShareActivity : BaseActivity() {
                     R.string.share_success,
                     Toast.LENGTH_SHORT
                 ).show()
+                IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 Log.e(TAG, "Issue sharing with Home Assistant", e)
+                IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
                 Toast.makeText(
                     applicationContext,
                     R.string.share_failed,

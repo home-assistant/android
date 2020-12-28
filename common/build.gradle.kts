@@ -26,6 +26,7 @@ dependencies {
     implementation(Config.Dependency.Kotlin.coroutines)
 
     implementation(Config.Dependency.Google.dagger)
+    implementation(Config.Dependency.AndroidX.core)
     kapt(Config.Dependency.Google.daggerCompiler)
 
     implementation(Config.Dependency.Square.retrofit)

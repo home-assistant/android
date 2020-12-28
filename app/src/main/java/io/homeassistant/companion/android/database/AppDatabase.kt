@@ -19,6 +19,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.notification.NotificationDao
@@ -323,8 +324,10 @@ abstract class AppDatabase : RoomDatabase() {
                 try {
                     integrationRepository.fireEvent("mobile_app.migration_failed", mapOf())
                     Log.d(TAG, "Event sent to Home Assistant")
+                    IntegrationRepositoryImpl.removeFailedNotification(appContext)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to send event to Home Assistant", e)
+                    IntegrationRepositoryImpl.notifyFailedToConnect(appContext)
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(
                             appContext,
