@@ -32,7 +32,6 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.CheckBox
-import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
@@ -46,6 +45,7 @@ import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.google.android.material.textfield.TextInputEditText
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
@@ -819,8 +819,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         val inflater = layoutInflater
         val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
-        val username = dialogLayout.findViewById<EditText>(R.id.username)
-        val password = dialogLayout.findViewById<EditText>(R.id.password)
+        val username = dialogLayout.findViewById<TextInputEditText>(R.id.username)
+        val password = dialogLayout.findViewById<TextInputEditText>(R.id.password)
         val remember = dialogLayout.findViewById<CheckBox>(R.id.checkBox)
         val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
         var autoAuth = false
@@ -829,11 +829,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             if (password.transformationMethod == PasswordTransformationMethod.getInstance()) {
                 password.transformationMethod = HideReturnsTransformationMethod.getInstance()
                 viewPassword.setImageResource(R.drawable.ic_visibility_off)
-                password.setSelection(password.text.length)
+                password.text?.let { it1 -> password.setSelection(it1.length) }
             } else {
                 password.transformationMethod = PasswordTransformationMethod.getInstance()
                 viewPassword.setImageResource(R.drawable.ic_visibility)
-                password.setSelection(password.text.length)
+                password.text?.let { it1 -> password.setSelection(it1.length) }
             }
         }
 
