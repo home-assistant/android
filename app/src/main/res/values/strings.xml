@@ -460,6 +460,8 @@ like to connect to:</string>
   <string name="widget_text_size_label">Widget text size:</string>
   <string name="widgets">Widgets</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
+  <string name="remember">Remember</string>
+  <string name="view_password">View Password</string>
   <string name="basic_sensor_name_last_removed_notification">Last Removed Notification</string>
   <string name="sensor_description_last_removed_notification">The details of the last removed notification. This can be any notification either cleared by the user or removed by an application.</string>
   <string name="basic_sensor_name_active_notification_count">Active Notification Count</string>
