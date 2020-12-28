@@ -28,7 +28,7 @@ runs:
         KEYSTORE: ${{ inputs.keystore }}
       run: | 
         echo $KEYSTORE | base64 --decode > app/release_keystore.keystore
-        echo $KEYSTORE | base64 --decode > wearos_app/release_keystore.keystore
+        echo $KEYSTORE | base64 --decode > wear/release_keystore.keystore
 
     - name: Inflate google-services.json
       shell: bash
@@ -36,7 +36,7 @@ runs:
         GOOGLE_SERVICES: ${{ inputs.google-services }}
       run: |
         echo $GOOGLE_SERVICES > app/google-services.json
-        echo $GOOGLE_SERVICES > wearos_app/google-services.json
+        echo $GOOGLE_SERVICES > wear/google-services.json
 
     - name: Inflate firebaseAppDistributionServiceCredentialsFile.json
       shell: bash
@@ -51,4 +51,4 @@ runs:
         CREDS: ${{ inputs.playstore-creds }}
       run: |
         echo $CREDS > app/playStorePublishServiceCredentialsFile.json
-        echo $CREDS > wearos_app/playStorePublishServiceCredentialsFile.json
+        echo $CREDS > wear/playStorePublishServiceCredentialsFile.json
