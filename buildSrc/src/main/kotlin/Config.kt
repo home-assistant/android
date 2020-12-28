@@ -42,7 +42,7 @@ object Config {
 
         object AndroidX {
 
-            const val webKit = "androidx.webkit:webkit:1.3.0"
+            const val webKit = "androidx.webkit:webkit:1.4.0"
             const val appcompat = "androidx.appcompat:appcompat:1.2.0"
             const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
             const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"

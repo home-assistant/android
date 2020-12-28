@@ -85,6 +85,16 @@ jobs:
           asset_name: home-assistant-minimal-${{steps.rel_number.outputs.version}}.apk
           asset_content_type: application/zip
 
+      - name: Upload Wear APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./wear/build/outputs/apk/release/wear-release.apk
+          asset_name: home-assistant-wear-${{steps.rel_number.outputs.version}}.apk
+          asset_content_type: application/zip
+
       - name: Deploy to Firebase
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ORIGINAL_KEYSTORE_FILE_PASSWORD }}

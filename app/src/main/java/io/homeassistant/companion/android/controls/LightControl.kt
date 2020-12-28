@@ -44,6 +44,13 @@ class LightControl {
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(
                 R.string.state_on))
+            val minValue = 0f
+            val maxValue = 100f
+            var currentValue = (entity.attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100) ?: 0f
+            if (currentValue < minValue)
+                currentValue = minValue
+            if (currentValue > maxValue)
+                currentValue = maxValue
             control.setControlTemplate(
                     if ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS)
                         ToggleRangeTemplate(
@@ -52,12 +59,9 @@ class LightControl {
                                 "",
                                 RangeTemplate(
                                         entity.entityId,
-                                        0f,
-                                        100f,
-                                        (entity.attributes["brightness"] as? Number)
-                                                ?.toFloat()
-                                                ?.div(255f)
-                                                ?.times(100) ?: 0f,
+                                        minValue,
+                                        maxValue,
+                                        currentValue,
                                         1f,
                                         "%.0f%%"
                                 )

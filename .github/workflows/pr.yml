@@ -24,7 +24,9 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Mock google-services.json
-        run: mv .github/mock-google-services.json app/google-services.json
+        run: |
+          cp .github/mock-google-services.json app/google-services.json
+          cp .github/mock-google-services.json wear/google-services.json
 
       - name: Validate ktlint
         run: ./gradlew ktlintCheck
@@ -48,7 +50,9 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Mock google-services.json
-        run: mv .github/mock-google-services.json app/google-services.json
+        run: |
+          cp .github/mock-google-services.json app/google-services.json
+          cp .github/mock-google-services.json wear/google-services.json
 
       - name: Validate Lint
         run: ./gradlew lint
@@ -72,7 +76,9 @@ jobs:
             ${{ runner.os }}-gradle-
 
       - name: Mock google-services.json
-        run: mv .github/mock-google-services.json app/google-services.json
+        run: |
+          cp .github/mock-google-services.json app/google-services.json
+          cp .github/mock-google-services.json wear/google-services.json
 
       - name: Validate Tests
         run: ./gradlew test
@@ -96,7 +102,9 @@ jobs:
           ${{ runner.os }}-gradle-
 
     - name: Mock google-services.json
-      run: mv .github/mock-google-services.json app/google-services.json
+      run: |
+        cp .github/mock-google-services.json app/google-services.json
+        cp .github/mock-google-services.json wear/google-services.json
     
     - name: Build Debug APK
       run: ./gradlew assembleDebug
@@ -104,5 +112,4 @@ jobs:
     - name: Archive Debug Build
       uses: kittaakos/upload-artifact-as-is@v0
       with:
-        path: ./app/build/outputs/apk/*/debug/*-debug.apk
-
+        path: ./**/*.apk
