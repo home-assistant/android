@@ -112,4 +112,4 @@ jobs:
     - name: Archive Debug Build
       uses: kittaakos/upload-artifact-as-is@v0
       with:
-        path: ./*/build/outputs/apk/*/debug/*-debug.apk
+        path: ./**/*.apk
