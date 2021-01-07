@@ -846,11 +846,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         var message = host + " " + getString(R.string.required_fields)
-        if (resourceURL.subSequence(0, 5).toString() == "http:")
-            message = "http://" + message + " " + getString(R.string.not_private)
-        else
-            message = "https://" + message
-
+        if (resourceURL.length >= 5) {
+            message = if (resourceURL.subSequence(0, 5).toString() == "http:")
+                "http://" + message + " " + getString(R.string.not_private)
+            else
+                "https://$message"
+        }
         if (!autoAuth || authError) {
             AlertDialog.Builder(this, R.style.Authentication_Dialog)
                 .setTitle(R.string.auth_request)
