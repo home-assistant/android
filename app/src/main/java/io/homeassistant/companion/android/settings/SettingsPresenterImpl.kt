@@ -6,7 +6,6 @@ import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -194,10 +193,10 @@ class SettingsPresenterImpl @Inject constructor(
 
             try {
                 splitVersion = integrationUseCase.getHomeAssistantVersion().split(".")
-                IntegrationRepositoryImpl.removeFailedNotification(context)
+                integrationUseCase.removeFailedNotification(context)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to get core version.", e)
-                IntegrationRepositoryImpl.notifyFailedToConnect(context)
+                integrationUseCase.notifyFailedToConnect(context)
             }
 
             return@runBlocking splitVersion.size > 2 &&

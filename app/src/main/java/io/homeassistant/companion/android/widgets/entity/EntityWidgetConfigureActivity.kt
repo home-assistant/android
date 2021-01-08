@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -93,10 +92,10 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             val entity = runBlocking {
                 try {
                     integrationUseCase.getEntity(staticWidget.entityId)
-                    IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
+                    integrationUseCase.removeFailedNotification(applicationContext)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
-                    IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
+                    integrationUseCase.notifyFailedToConnect(applicationContext)
                     Toast.makeText(applicationContext, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
                         .show()
                     null
@@ -150,12 +149,12 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                 runOnUiThread {
                     entityAdapter.notifyDataSetChanged()
                 }
-                IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
+                integrationUseCase.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 // If entities fail to load, it's okay to pass
                 // an empty map to the dynamicFieldAdapter
                 Log.e(TAG, "Failed to query entities", e)
-                IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
+                integrationUseCase.notifyFailedToConnect(applicationContext)
             }
         }
     }
@@ -247,13 +246,17 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                 RESULT_OK,
                 Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             )
-            IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
+            runBlocking {
+                integrationUseCase.removeFailedNotification(applicationContext)
+            }
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
             Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
-            IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
+            runBlocking {
+                integrationUseCase.notifyFailedToConnect(applicationContext)
+            }
         }
     }
 

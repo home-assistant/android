@@ -9,7 +9,6 @@ import androidx.core.app.NotificationManagerCompat
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
@@ -47,10 +46,10 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
             try {
                 integrationRepository.fireEvent("mobile_app_notification_cleared", hashData)
                 Log.d(TAG, "Notification cleared event successful!")
-                IntegrationRepositoryImpl.removeFailedNotification(context)
+                integrationRepository.removeFailedNotification(context)
             } catch (e: Exception) {
                 Log.e(TAG, "Issue sending event to Home Assistant", e)
-                IntegrationRepositoryImpl.notifyFailedToConnect(context)
+                integrationRepository.notifyFailedToConnect(context)
                 Toast.makeText(
                     context,
                     R.string.notification_clear_failure,

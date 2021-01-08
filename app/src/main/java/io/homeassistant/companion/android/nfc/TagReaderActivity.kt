@@ -10,7 +10,6 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.util.UrlHandler
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -80,10 +79,10 @@ class TagReaderActivity : BaseActivity() {
         Log.d(TAG, "nfcTagId: $nfcTagId")
         if (nfcTagId != null) {
             integrationUseCase.scanTag(hashMapOf("tag_id" to nfcTagId))
-            IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
+            integrationUseCase.removeFailedNotification(applicationContext)
             Log.d(TAG, "Tag scanned to HA successfully")
         } else {
-            IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
+            integrationUseCase.notifyFailedToConnect(applicationContext)
             Toast.makeText(this, R.string.nfc_processing_tag_error, Toast.LENGTH_LONG).show()
         }
         finish()

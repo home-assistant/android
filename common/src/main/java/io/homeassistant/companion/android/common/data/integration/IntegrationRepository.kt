@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration
 
+import android.content.Context
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 
 interface IntegrationRepository {
@@ -10,6 +11,8 @@ interface IntegrationRepository {
 
     suspend fun isRegistered(): Boolean
 
+    suspend fun notifyFailedToConnect(context: Context)
+    suspend fun removeFailedNotification(context: Context)
     suspend fun getNotificationRateLimits(): RateLimitResponse
     suspend fun renderTemplate(template: String, variables: Map<String, String>): String
 

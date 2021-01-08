@@ -74,47 +74,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val channelId = "Failed Connection"
         private const val NOTIFICATION_ID = 47
 
-        fun notifyFailedToConnect(appContext: Context) {
-            connectionCount += 1
-            Log.d(TAG, "Increasing failed connection to $connectionCount")
-            if (connectionCount >= maxTries && !notifyFailed) {
-                Log.d(TAG, "Unable to connect for maximum of $maxTries tries, posting notification")
-                notifyFailed = true
-                createNotificationChannel(appContext)
-                val notification = NotificationCompat.Builder(appContext, channelId)
-                    .setSmallIcon(R.drawable.ic_stat_ic_notification)
-                    .setContentTitle(appContext.getString(R.string.unable_to_connect))
-                    .setContentText(appContext.getString(R.string.unable_connect_body))
-                    .setStyle(NotificationCompat.BigTextStyle().bigText(appContext.getString(R.string.unable_connect_body)))
-                    .setUsesChronometer(true)
-                    .setWhen(System.currentTimeMillis())
-                    .setOngoing(true)
-                    .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .build()
-                with(NotificationManagerCompat.from(appContext)) {
-                    notify(NOTIFICATION_ID, notification)
-                }
-                Log.d(TAG, "Notification posted")
-            }
-        }
-
-        fun removeFailedNotification(appContext: Context) {
-            if (connectionCount > 0) {
-                Log.d(TAG, "Resetting connection count back to 0")
-                connectionCount = 0
-                if (notifyFailed) {
-                    Log.d(
-                        TAG,
-                        "Removing notification as connection to Home Assistant has been restored"
-                    )
-                    val notificationManager =
-                        appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                    notificationManager.cancel(NOTIFICATION_ID)
-                    notifyFailed = false
-                }
-            }
-        }
-
         private fun createNotificationChannel(appContext: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -127,6 +86,47 @@ class IntegrationRepositoryImpl @Inject constructor(
                     )
                     notificationManager.createNotificationChannel(notificationChannel)
                 }
+            }
+        }
+    }
+
+    override suspend fun notifyFailedToConnect(context: Context) {
+        connectionCount += 1
+        Log.d(TAG, "Increasing failed connection to $connectionCount")
+        if (connectionCount >= maxTries && !notifyFailed) {
+            Log.d(TAG, "Unable to connect for maximum of $maxTries tries, posting notification")
+            notifyFailed = true
+            createNotificationChannel(context)
+            val notification = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.drawable.ic_stat_ic_notification)
+                .setContentTitle(context.getString(R.string.unable_to_connect))
+                .setContentText(context.getString(R.string.unable_connect_body))
+                .setStyle(NotificationCompat.BigTextStyle().bigText(context.getString(R.string.unable_connect_body)))
+                .setUsesChronometer(true)
+                .setWhen(System.currentTimeMillis())
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .build()
+            with(NotificationManagerCompat.from(context)) {
+                notify(NOTIFICATION_ID, notification)
+            }
+            Log.d(TAG, "Notification posted")
+        }
+    }
+
+    override suspend fun removeFailedNotification(context: Context) {
+        if (connectionCount > 0) {
+            Log.d(TAG, "Resetting connection count back to 0")
+            connectionCount = 0
+            if (notifyFailed) {
+                Log.d(
+                    TAG,
+                    "Removing notification as connection to Home Assistant has been restored"
+                )
+                val notificationManager =
+                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                notificationManager.cancel(NOTIFICATION_ID)
+                notifyFailed = false
             }
         }
     }

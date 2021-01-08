@@ -12,7 +12,6 @@ import androidx.core.os.postDelayed
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import java.util.concurrent.Flow
 import java.util.function.Consumer
 import javax.inject.Inject
@@ -43,14 +42,14 @@ class HaControlsProviderService : ControlsProviderService() {
                 ioScope.launch {
                     try {
                         val entity = integrationRepository.getEntity(entityId)
-                        IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
+                        integrationRepository.removeFailedNotification(applicationContext)
                         val domain = entity.entityId.split(".")[0]
                         val control =
                             domainToHaControl[domain]?.createControl(applicationContext, entity)
                         updateSubscriber?.onNext(control)
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to get entity information", e)
-                        IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
+                        integrationRepository.notifyFailedToConnect(applicationContext)
                     }
                 }
             }
@@ -103,11 +102,11 @@ class HaControlsProviderService : ControlsProviderService() {
                         .forEach {
                             subscriber.onNext(it)
                         }
-                    IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
+                    integrationRepository.removeFailedNotification(applicationContext)
                     subscriber.onComplete()
                 } catch (e: Exception) {
                     Log.e(TAG, "Error getting list of entities", e)
-                    IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
+                    integrationRepository.notifyFailedToConnect(applicationContext)
                 }
             }
         }
@@ -160,10 +159,10 @@ class HaControlsProviderService : ControlsProviderService() {
                             )
                         )
                     }
-                    IntegrationRepositoryImpl.removeFailedNotification(applicationContext)
+                    integrationRepository.removeFailedNotification(applicationContext)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to control or get entity information", e)
-                    IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
+                    integrationRepository.notifyFailedToConnect(applicationContext)
                 }
             }
         }

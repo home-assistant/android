@@ -22,7 +22,6 @@ import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
@@ -244,11 +243,11 @@ class ButtonWidget : AppWidgetProvider() {
                     // If service call does not throw an exception, send positive feedback
                     feedbackColor = R.drawable.widget_button_background_green
                     feedbackIcon = R.drawable.ic_check_black_24dp
-                    IntegrationRepositoryImpl.removeFailedNotification(context)
+                    integrationUseCase.removeFailedNotification(context)
                 } catch (e: Exception) {
                     Log.e(TAG, "Could not send service call.", e)
                     Toast.makeText(context, R.string.widget_service_call_failure, Toast.LENGTH_LONG).show()
-                    IntegrationRepositoryImpl.notifyFailedToConnect(context)
+                    integrationUseCase.notifyFailedToConnect(context)
                 }
             }
 

@@ -14,7 +14,6 @@ import android.widget.Toast
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
@@ -127,10 +126,10 @@ class TemplateWidget : AppWidgetProvider() {
                 try {
                     renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
                     templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
-                    IntegrationRepositoryImpl.removeFailedNotification(context)
+                    integrationUseCase.removeFailedNotification(context)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
-                    IntegrationRepositoryImpl.notifyFailedToConnect(context)
+                    integrationUseCase.notifyFailedToConnect(context)
                     if (lastIntent != Intent.ACTION_SCREEN_ON)
                         Toast.makeText(context, R.string.widget_template_error, Toast.LENGTH_LONG).show()
                 }

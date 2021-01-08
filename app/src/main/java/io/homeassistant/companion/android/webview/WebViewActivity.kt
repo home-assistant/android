@@ -59,7 +59,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
@@ -111,6 +111,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     @Inject
     lateinit var urlRepository: UrlRepository
+
+    @Inject
+    lateinit var integrationRepository: IntegrationRepository
 
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
@@ -436,11 +439,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 isConnected = json.getJSONObject("payload")
                                     .getString("event") == "connected"
                                 if (isConnected) {
-                                    IntegrationRepositoryImpl.removeFailedNotification(context)
+                                    runBlocking {
+                                        integrationRepository.removeFailedNotification(context)
+                                    }
                                     alertDialog?.cancel()
                                     presenter.checkSecurityVersion()
                                 } else {
-                                    IntegrationRepositoryImpl.notifyFailedToConnect(context)
+                                    runBlocking {
+                                        integrationRepository.notifyFailedToConnect(context)
+                                    }
                                 }
                             }
                             "config/get" -> {
@@ -1082,7 +1089,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private fun waitForConnection() {
         Handler(Looper.getMainLooper()).postDelayed({
             if (!isConnected) {
-                IntegrationRepositoryImpl.notifyFailedToConnect(applicationContext)
+                runBlocking {
+                    integrationRepository.notifyFailedToConnect(applicationContext)
+                }
                 showError()
             }
         }, CONNECTION_DELAY)

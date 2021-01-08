@@ -27,7 +27,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
-import io.homeassistant.companion.android.common.data.integration.impl.IntegrationRepositoryImpl
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Setting
@@ -604,10 +603,10 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         ioScope.launch {
             try {
                 integrationUseCase.updateLocation(updateLocation)
-                IntegrationRepositoryImpl.removeFailedNotification(latestContext)
+                integrationUseCase.removeFailedNotification(latestContext)
                 Log.d(TAG, "Location update sent successfully")
             } catch (e: Exception) {
-                IntegrationRepositoryImpl.notifyFailedToConnect(latestContext)
+                integrationUseCase.notifyFailedToConnect(latestContext)
                 Log.e(TAG, "Could not update location.", e)
             }
         }
