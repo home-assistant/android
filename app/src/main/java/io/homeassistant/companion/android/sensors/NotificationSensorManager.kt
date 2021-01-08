@@ -4,11 +4,14 @@ import android.Manifest
 import android.content.Context
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import io.homeassistant.companion.android.R
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
     companion object {
+        private const val TAG = "NotificationManager"
+        private var listenerConnected = false
         val lastNotification = SensorManager.BasicSensor(
             "last_notification",
             "sensor",
@@ -48,6 +51,16 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
 
     override fun requestSensorUpdate(context: Context) {
         // Noop
+    }
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        listenerConnected = true
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        listenerConnected = false
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -139,24 +152,28 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
 
     private fun updateActiveNotificationCount() {
-        if (!isEnabled(applicationContext, activeNotificationCount.id))
+        if (!isEnabled(applicationContext, activeNotificationCount.id) || !listenerConnected)
             return
 
-        val attr: MutableMap<String, Any?> = mutableMapOf()
-        for (item in activeNotifications) {
-            attr += item.notification.extras.keySet()
-                .map { it + "_" + item.packageName to item.notification.extras.get(it) }
-                .toMap()
-                .plus(item.packageName + "_" + item.id + "_post_time" to item.postTime)
-                .plus(item.packageName + "_" + item.id + "_is_ongoing" to item.isOngoing)
-                .plus(item.packageName + "_" + item.id + "_is_clearable" to item.isClearable)
+        try {
+            val attr: MutableMap<String, Any?> = mutableMapOf()
+            for (item in activeNotifications) {
+                attr += item.notification.extras.keySet()
+                    .map { it + "_" + item.packageName to item.notification.extras.get(it) }
+                    .toMap()
+                    .plus(item.packageName + "_" + item.id + "_post_time" to item.postTime)
+                    .plus(item.packageName + "_" + item.id + "_is_ongoing" to item.isOngoing)
+                    .plus(item.packageName + "_" + item.id + "_is_clearable" to item.isClearable)
+            }
+            onSensorUpdated(
+                applicationContext,
+                activeNotificationCount,
+                activeNotifications.size,
+                "mdi:bell-ring",
+                attr
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to update active notifications", e)
         }
-        onSensorUpdated(
-            applicationContext,
-            activeNotificationCount,
-            activeNotifications.size,
-            "mdi:bell-ring",
-            attr
-        )
     }
 }
