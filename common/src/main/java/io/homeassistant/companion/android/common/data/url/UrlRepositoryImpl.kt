@@ -76,7 +76,7 @@ class UrlRepositoryImpl @Inject constructor(
         val internal = localStorage.getString(PREF_LOCAL_URL)?.toHttpUrlOrNull()?.toUrl()
         val external = localStorage.getString(PREF_REMOTE_URL)?.toHttpUrlOrNull()?.toUrl()
 
-        return if (isInternal ?: isInternal()) {
+        return if (isInternal ?: isInternal() && internal != null) {
             internal
         } else {
             external

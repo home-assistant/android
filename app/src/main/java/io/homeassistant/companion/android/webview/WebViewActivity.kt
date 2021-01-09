@@ -59,6 +59,7 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
@@ -73,6 +74,7 @@ import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_playback_control_view.*
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -107,6 +109,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @Inject
     lateinit var languagesManager: LanguagesManager
 
+    @Inject
+    lateinit var urlRepository: UrlRepository
+
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
@@ -131,6 +136,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoRight: Int = 0
     private var exoBottom: Int = 0
     private var exoMute: Boolean = true
+    private var failedConnection = "external"
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -912,7 +918,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 startActivity(SettingsActivity.newInstance(this))
             }
             alert.setNegativeButton(R.string.refresh) { _, _ ->
-                webView.reload()
+                runBlocking {
+                    failedConnection = if (failedConnection == "external") {
+                        webView.loadUrl(urlRepository.getUrl(true).toString())
+                        "internal"
+                    } else {
+                        webView.loadUrl(urlRepository.getUrl(false).toString())
+                        "external"
+                    }
+                }
                 waitForConnection()
             }
             alert.setNeutralButton(R.string.wait) { _, _ ->
