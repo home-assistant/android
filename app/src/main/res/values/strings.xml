@@ -466,4 +466,6 @@ like to connect to:</string>
   <string name="sensor_description_last_removed_notification">The details of the last removed notification. This can be any notification either cleared by the user or removed by an application.</string>
   <string name="basic_sensor_name_active_notification_count">Active Notification Count</string>
   <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
+    <string name="basic_sensor_name_app_importance">App Importance</string>
+  <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be.</string>
 </resources>
