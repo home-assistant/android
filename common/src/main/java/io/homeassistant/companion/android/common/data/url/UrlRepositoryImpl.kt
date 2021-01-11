@@ -32,20 +32,23 @@ class UrlRepositoryImpl @Inject constructor(
             return arrayOf()
         }
 
+        // If we are local then add the local URL in the first position, otherwise no reason to try
+        if (isInternal()) {
+            localStorage.getString(PREF_LOCAL_URL)?.let {
+                retVal.add(
+                    it.toHttpUrl().newBuilder()
+                        .addPathSegments("api/webhook/$webhook")
+                        .build()
+                        .toUrl()
+                )
+            }
+        }
+
         localStorage.getString(PREF_CLOUDHOOK_URL)?.let {
             retVal.add(it.toHttpUrl().toUrl())
         }
 
         localStorage.getString(PREF_REMOTE_URL)?.let {
-            retVal.add(
-                it.toHttpUrl().newBuilder()
-                    .addPathSegments("api/webhook/$webhook")
-                    .build()
-                    .toUrl()
-            )
-        }
-
-        localStorage.getString(PREF_LOCAL_URL)?.let {
             retVal.add(
                 it.toHttpUrl().newBuilder()
                     .addPathSegments("api/webhook/$webhook")
