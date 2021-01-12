@@ -18,6 +18,7 @@ jobs:
       - name: Build with Gradle
         run: chmod +x gradlew &&./gradlew aR
         env:
+          AMAP_KEY: ${{ secrets.AMAP_KEY }}
           NESTOR_KEYSTORE_ALIAS: ${{ secrets.KEY_ALIAS }}
           NESTOR_KEYSTORE_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       - name: Release apk

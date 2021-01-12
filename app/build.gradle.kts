@@ -61,7 +61,7 @@ android {
 
     buildTypes {
         named("debug").configure {
-            applicationIdSuffix = ".debug"
+            //applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.getByName("release")
             manifestPlaceholders["amapkey"] = System.getenv("AMAP_KEY")
         }
