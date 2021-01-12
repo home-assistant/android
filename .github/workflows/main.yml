@@ -24,5 +24,5 @@ jobs:
       - name: Release apk
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "app/build/outputs/apk/full/release/*.apk"
+          artifacts: "**/release/*.apk"
           token: ${{ secrets.MY_GITHUB_ACCESSE }}
