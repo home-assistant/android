@@ -1,0 +1,27 @@
+name: Build and Release apk
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  process:
+    name: all process
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Java JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Build with Gradle
+        run: chmod +x gradlew &&./gradlew aR
+        env:
+          NESTOR_KEYSTORE_ALIAS: ${{ secrets.KEY_ALIAS }}
+          NESTOR_KEYSTORE_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      - name: Release apk
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "app/build/outputs/apk/full/release/*.apk"
+          token: ${{ secrets.MY_GITHUB_ACCESSE }}

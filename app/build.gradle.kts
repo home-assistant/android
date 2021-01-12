@@ -17,7 +17,7 @@ android {
     ndkVersion = Config.Android.ndk
 
     defaultConfig {
-        applicationId = "io.homeassistant.companion.android.amap"
+        applicationId = "io.homeassistant.companion.android"
         minSdkVersion(Config.Android.minSdk)
         targetSdkVersion(Config.Android.targetSdk)
 
@@ -50,10 +50,10 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(System.getProperty("NESTOR_KEYSTORE") ?: "/Users/nestor/Documents/nestor.keystore")
-            storePassword = System.getProperty("NESTOR_KEYSTORE_PASSWORD") ?: "QQqq2898"
-            keyAlias = System.getProperty("NESTOR_KEYSTORE_ALIAS") ?: "nestor"
-            keyPassword = System.getProperty("NESTOR_KEYSTORE_PASSWORD") ?: "QQqq2898"
+            storeFile = file("../nestor.keystore")
+            storePassword = System.getenv("NESTOR_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("NESTOR_KEYSTORE_ALIAS")
+            keyPassword = System.getenv("NESTOR_KEYSTORE_PASSWORD")
             isV1SigningEnabled = true
             isV2SigningEnabled = true
         }
@@ -62,13 +62,15 @@ android {
     buildTypes {
         named("debug").configure {
             applicationIdSuffix = ".debug"
-            //signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName("release")
+            manifestPlaceholders["amapkey"] = System.getenv("AMAP_KEY")
         }
         named("release").configure {
             isDebuggable = false
             isJniDebuggable = false
             isZipAlignEnabled = true
             signingConfig = signingConfigs.getByName("release")
+            manifestPlaceholders["amapkey"] = System.getenv("AMAP_KEY")
         }
     }
     flavorDimensions("version")

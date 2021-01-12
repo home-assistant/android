@@ -16,6 +16,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             R.string.sensor_description_last_notification
         )
     }
+
     override val name: Int
         get() = R.string.sensor_name_last_notification
     override val availableSensors: List<SensorManager.BasicSensor>
@@ -43,6 +44,16 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         if (!isEnabled(applicationContext, lastNotification.id))
             return
 
+        if(sbn.packageName == "com.huawei.systemmanager"){
+            cancelNotification(sbn.key)
+            return
+        }
+
+//        if(sbn.packageName == "com.xiaomi.smarthome"){
+//            cancelNotification(sbn.key)
+//            return
+//        }
+
         val allowPackages = getSetting(
             applicationContext,
             lastNotification,
@@ -52,7 +63,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         ).split(", ").filter { it.isNotBlank() }
 
         if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)) {
+            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)
+        ) {
             return
         }
 
@@ -62,12 +74,12 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             .plus("package" to sbn.packageName)
 
         // Attempt to use the text of the notification but fallback to package name if all else fails.
-        val state = attr["android.text"] ?: attr["android.title"] ?: sbn.packageName
+        val state = attr["android.title"].toString() + "-" + attr["android.text"].toString()
 
         onSensorUpdated(
             applicationContext,
             lastNotification,
-            state.toString().take(255),
+            state.take(255),
             "mdi:bell-ring",
             attr
         )

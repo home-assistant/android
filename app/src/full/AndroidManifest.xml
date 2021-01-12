@@ -3,10 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="io.homeassistant.companion.android">
 
-    <application
-        android:name=".HomeAssistantApplication" >
-        <meta-data android:name="io.sentry.auto-init" android:value="false" />
-        <meta-data android:name="io.sentry.release" android:value="${sentryRelease}" />
+    <application android:name=".HomeAssistantApplication">
+        <meta-data
+            android:name="io.sentry.auto-init"
+            android:value="false" />
+        <meta-data
+            android:name="io.sentry.release"
+            android:value="${sentryRelease}" />
 
         <receiver
             android:name=".notifications.NotificationActionReceiver"
@@ -40,11 +43,11 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/colorPrimary" />
 
-
-<!--        io.homeassistant.companion.android.amap-->
+        <!--        io.homeassistant.companion.android-->
         <meta-data
             android:name="com.amap.api.v2.apikey"
-            android:value="1f975a125b109301dcd2a3c2ebb5b557"/>
+            android:value="${amapkey}" />
+
 
     </application>
 
