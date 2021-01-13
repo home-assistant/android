@@ -163,7 +163,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         val backgroundEnabled = isEnabled(latestContext, backgroundLocation.id)
         val zoneEnabled = isEnabled(latestContext, zoneLocation.id)
-        requestLocationUpdates()
         ioScope.launch {
             try {
                 if (!backgroundEnabled && !zoneEnabled) {
@@ -182,7 +181,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 }
                 if (backgroundEnabled && !isBackgroundLocationSetup) {
                     isBackgroundLocationSetup = true
-
+                    requestLocationUpdates()
                 }
                 if (zoneEnabled && !isZoneLocationSetup) {
                     isZoneLocationSetup = true
@@ -209,12 +208,20 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             Log.w(TAG, "Not registering for location updates because of permissions.")
             return
         }
-        Log.d(TAG, "Registering for location updates.")
+//        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+//        val sensorSettings = sensorDao.getSettings(singleAccurateLocation.id)
+//        val minTimeBetweenUpdates = sensorSettings
+//            .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
+//            ?: 1000 * 60 * 5
+//        Log.d(TAG, "Registering for location updates.")
         mLocationClient = AMapLocationClient(latestContext)
         mLocationClient!!.setLocationListener(mLocationListener)
-        mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy;
-        mLocationOption.interval = 1000 * 60 * 5
-        mLocationClient!!.setLocationOption(mLocationOption);
+        mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
+        //mLocationOption.interval = minTimeBetweenUpdates.toLong()
+        mLocationOption.isOnceLocation = true
+        mLocationOption.isOnceLocationLatest = true
+
+        mLocationClient!!.setLocationOption(mLocationOption)
         mLocationClient!!.startLocation()
     }
 
@@ -353,7 +360,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         )
         val minTimeBetweenUpdates = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
-            ?: 60000
+            ?: 1000 * 60 * 5
         sensorDao.add(
             Setting(
                 singleAccurateLocation.id,
@@ -377,7 +384,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             )
         )
 
-        if (amapLocation == null) return
         val wakeLock: PowerManager.WakeLock? =
             getSystemService(latestContext, PowerManager::class.java)
                 ?.newWakeLock(
