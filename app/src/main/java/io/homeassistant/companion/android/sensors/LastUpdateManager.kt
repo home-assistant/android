@@ -3,10 +3,13 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Setting
 
 class LastUpdateManager : SensorManager {
     companion object {
         private const val TAG = "LastUpdate"
+        private const val ADD_NEW_INTENT = "Add New Intent"
 
         val lastUpdate = SensorManager.BasicSensor(
             "last_update",
@@ -52,5 +55,21 @@ class LastUpdateManager : SensorManager {
             icon,
             mapOf()
         )
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val allSettings = sensorDao.getSettings(lastUpdate.id)
+        val addNewIntent = allSettings.firstOrNull { it.name == ADD_NEW_INTENT }?.value ?: "false"
+        val intentSetting = allSettings.firstOrNull { it.name == "intent" + allSettings.size }?.value ?: ""
+        if (addNewIntent == "true") {
+            if (intentSetting == "") {
+                sensorDao.add(Setting(lastUpdate.id, ADD_NEW_INTENT, "false", "toggle"))
+                sensorDao.add(Setting(lastUpdate.id, "intent" + allSettings.size, intentAction, "string"))
+            }
+        } else {
+            sensorDao.add(Setting(lastUpdate.id, ADD_NEW_INTENT, "false", "toggle"))
+        }
+        for (setting in allSettings) {
+            if (setting.value == "")
+                sensorDao.removeSetting(lastUpdate.id, setting.name)
+        }
     }
 }

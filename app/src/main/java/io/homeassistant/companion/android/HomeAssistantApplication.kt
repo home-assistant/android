@@ -13,6 +13,8 @@ import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.sensors.LastUpdateManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -114,6 +116,18 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
                 sensorReceiver,
                 IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
             )
+        }
+
+        // Register for all saved user intents
+        val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
+        val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
+        for (setting in allSettings) {
+            if (setting.value != "" && setting.value != "SensorWorker") {
+                registerReceiver(
+                    sensorReceiver,
+                    IntentFilter(setting.value)
+                )
+            }
         }
 
         // Update widgets when the screen turns on, updates are skipped if widgets were not added
