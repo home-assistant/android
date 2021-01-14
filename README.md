@@ -1,4 +1,4 @@
-# :iphone: Home Assistant Companion for Android  ![Beta Deploy](https://github.com/home-assistant/android/workflows/Beta%20Deploy/badge.svg)
+# 官方app高德定位版（适合没有gms服务或谷歌服务受限的用）![Deploy](https://github.com/nesror/android/workflows/Build%20and%20Release%20apk/badge.svg)
 
 ## Documentation
 If you are looking for documentation around the companion applications check out the [Home Assistant Companion Documentation](https://companion.home-assistant.io/).  This will provide you instructions on using the applications.
