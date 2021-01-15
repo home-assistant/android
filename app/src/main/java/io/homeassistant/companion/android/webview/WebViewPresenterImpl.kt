@@ -84,15 +84,15 @@ class WebViewPresenterImpl @Inject constructor(
 
             try {
                 val version = integrationUseCase.getHomeAssistantVersion().split(".")
-                if (version.size >= 3){
+                if (version.size >= 3) {
                     val year = Integer.parseInt(version[0])
                     val month = Integer.parseInt(version[1])
                     val release = Integer.parseInt(version[2])
-                    if(year <= 2021 || month <= 1 || release <= 3){
+                    if (year <= 2021 || month <= 1 || release <= 3) {
                         view.showError(WebView.ErrorType.SECURITY_WARNING)
                     }
                 }
-            } catch (e: Exception){
+            } catch (e: Exception) {
                 Log.e(TAG, "Issue getting version/notifying of security issue.", e)
             }
         }
@@ -106,7 +106,7 @@ class WebViewPresenterImpl @Inject constructor(
                 Log.e(TAG, "Unable to retrieve external auth", e)
                 view.setExternalAuth("$callback(false)")
                 view.showError(
-                    if(authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
+                    if (authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
                         WebView.ErrorType.AUTHENTICATION
                     else
                         WebView.ErrorType.TIMEOUT
