@@ -14,8 +14,14 @@
   <string name="background_access_enabled">Home Assistant har tilgang til å kjøre i bakgrunnen</string>
   <string name="background_access_title">Bakgrunnstilgang</string>
   <string name="basic_sensor_lullaby">Vuggesang</string>
+  <string name="basic_sensor_name_active_notification_count">Antall aktive varsler</string>
   <string name="basic_sensor_name_activity">Oppdaget aktivitet</string>
   <string name="basic_sensor_name_alarm">Neste alarm</string>
+  <string name="basic_sensor_name_app_inactive">App inaktiv</string>
+  <string name="basic_sensor_name_app_memory">Appminne</string>
+  <string name="basic_sensor_name_app_rx_gb"></string>
+  <string name="basic_sensor_name_app_standby">App standby-bøtte</string>
+  <string name="basic_sensor_name_app_tx_gb"></string>
   <string name="basic_sensor_name_battery_health">Batterihelse</string>
   <string name="basic_sensor_name_battery_level">Batterinivå</string>
   <string name="basic_sensor_name_battery_state">Batteritilstand</string>
@@ -24,6 +30,7 @@
   <string name="basic_sensor_name_call_number">Telefonnummer</string>
   <string name="basic_sensor_name_charger_type">Lader type</string>
   <string name="basic_sensor_name_charging">Lader</string>
+  <string name="basic_sensor_name_current_time_zone">Gjeldende tidssone</string>
   <string name="basic_sensor_name_current_version">Gjeldende versjon</string>
   <string name="basic_sensor_name_device_locked">Enhet låst</string>
   <string name="basic_sensor_name_device_secure">Enhet sikker</string>
@@ -36,6 +43,7 @@
   <string name="basic_sensor_name_keyguard_secure">Tastelås sikker</string>
   <string name="basic_sensor_name_last_notification">Siste varsel</string>
   <string name="basic_sensor_name_last_reboot">Siste omstart</string>
+  <string name="basic_sensor_name_last_removed_notification">Siste fjernede varsel</string>
   <string name="basic_sensor_name_last_update">Siste oppdatering utløser</string>
   <string name="basic_sensor_name_location_accurate">Enkelt nøyaktig posisjon</string>
   <string name="basic_sensor_name_location_background">Bakgrunnsposisjon</string>
@@ -156,6 +164,11 @@ Home Assistant forekomst</string>
   <string name="list_media_player_widgets">Liste over mediaspillermoduler</string>
   <string name="list_template_widgets">Liste over mal moduler</string>
   <string name="location">Posisjon</string>
+  <string name="location_disabled_message">Posisjonen er deaktivert. Følgende aktiverte alternativ(er) krever at du aktiverer posisjon. Hvis du ikke aktiverer posisjonen, vil ikke sensoren(e)/innstillingen(e) fungere!\n\n%1$s\nVil du aktivere posisjon?</string>
+  <string name="location_disabled_option_disable">Deaktiver alternativ</string>
+  <string name="location_disabled_title">Posisjon er deaktivert</string>
+  <string name="location_perm_info_message">Android setter opp begrensninger for apper som vil bruke Wifi, fordi Wifi teoretisk kan brukes til å bestemme posisjonen din.\n\nFor å sikre at appen får tilgang til Wifi i bakgrunnen (beslutning om nettadresser, sensorer), må du tillate posisjonstilgang hele tiden.\n\nDerfor, for å bruke dette alternativet, trenger du posisjonstilgang hele tiden.\n\nFortsette å gi posisjonstilgang?</string>
+  <string name="location_perm_info_title">Tilgang til posisjon</string>
   <string name="lock_summary">Bruk biometrisk legitimasjon eller skjermlåsfor å låse opp appen</string>
   <string name="lock_title">Lås app</string>
   <string name="lockscreen_message">Trykk for å låse opp:</string>
@@ -237,6 +250,7 @@ Tagger fungerer på alle enheter med Home Assistant installert som har maskinvar
   <string name="rate_limit_summary">Frekvensbegrensning data</string>
   <string name="rate_limit_title">Grense for varslingsfrekvens</string>
   <string name="refresh">Oppdater</string>
+  <string name="remember">Husk</string>
   <string name="required_fields">krever brukernavn og passord.</string>
   <string name="retry">Prøv på nytt</string>
   <string name="save">Lagre</string>
@@ -249,6 +263,12 @@ for Home Assistant</string>
 ønsker å koble til:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Beskrivelse</string>
+  <string name="sensor_description_active_notification_count">Totalt antall aktive varsler som er synlige for brukeren, inkludert lydløse, vedvarende og sensorarbeidervarsler.</string>
+  <string name="sensor_description_app_inactive">Hvorvidt appen for øyeblikket anses å være inaktiv av systemet</string>
+  <string name="sensor_description_app_memory">Totalt brukt og tilgjengelig minne for appen</string>
+  <string name="sensor_description_app_rx_gb">App Rx GB siden siste omstart av enheten</string>
+  <string name="sensor_description_app_standby">Appens nåværende standby-bøtte. Standby-bøtter bestemmer hvor mye en app skal begrenses fra å kjøre bakgrunnsoppgaver som jobber og alarmer.</string>
+  <string name="sensor_description_app_tx_gb">App Tx GB siden siste omstart av enheten</string>
   <string name="sensor_description_audio_mode">Enhetens lydmodus tilstand</string>
   <string name="sensor_description_audio_sensor">Tilstanden til enhetene ringemodus</string>
   <string name="sensor_description_battery_health">Batteriets helse</string>
@@ -259,6 +279,7 @@ for Home Assistant</string>
   <string name="sensor_description_call_number">Telefonnummeret til den innkommende eller utgående samtalen</string>
   <string name="sensor_description_charger_type">Type lader som er tilkoblet enheten for øyeblikket</string>
   <string name="sensor_description_charging">Hvorvidt enheten lades aktivt</string>
+  <string name="sensor_description_current_time_zone">Enhetens gjeldende tidssone er i</string>
   <string name="sensor_description_current_version">Gjeldende installerte applikasjonsversjonen</string>
   <string name="sensor_description_detected_activity">Gjeldende aktivitetstype som beregnes av Googles API for aktivitetsgjenkjenning</string>
   <string name="sensor_description_device_locked">Hvorvidt enheten for øyeblikket er låst og krever PIN-kode, mønster eller passord for å låse opp</string>
@@ -274,6 +295,7 @@ for Home Assistant</string>
   <string name="sensor_description_keyguard_secure">Hvorvidt tastelåsen er sikret med en PIN-kode, mønster eller passord eller et SIM-kort er for øyeblikket låst</string>
   <string name="sensor_description_last_notification">Detaljene for det siste varselet</string>
   <string name="sensor_description_last_reboot">Datoen og klokkeslettet for enhetene startet på nytt. Innstillingen nedenfor lar deg justere dødbåndet i millisekunder, hvis du fremdeles finner verdien til å hoppe feil. Standardverdien er 60000 (1 minutt).</string>
+  <string name="sensor_description_last_removed_notification">Detaljene for det siste fjernede varselet. Dette kan være et hvilket som helst varsel, enten fjernet av brukeren eller fjernet av en applikasjon.</string>
   <string name="sensor_description_last_update">Intensjonen for den siste oppdateringen som ble sendt, vil periodiske oppdateringer vises som \"SensorWorker\".</string>
   <string name="sensor_description_light_sensor">Gjeldende nivå av belysningsstyrke</string>
   <string name="sensor_description_location_accurate">La Home Assistant sende et varsel for å be om en nøyaktig posisjon sammen med appen som regelmessig ber om en nøyaktig posisjon. Med innstillingen minimumnøyaktighet kan du bestemme hvor nøyaktig enhetsposisjonen (i meter) må være for å kunne sendes til Home Assistant. Minimumstiden mellom oppdateringer (i millisekunder) hindrer at enheten sender den nøyaktige posisjonen for ofte.</string>
@@ -339,6 +361,7 @@ for Home Assistant</string>
   <string name="sensor_name_speakerphone">Høyttalertelefon</string>
   <string name="sensor_name_steps">Trinnsensor</string>
   <string name="sensor_name_storage">Lagringssensor</string>
+  <string name="sensor_name_time_zone">Tidssone sensor</string>
   <string name="sensor_name_traffic_stats">Trafikkstatistikk sensorer</string>
   <string name="sensor_name_volume_alarm">Volumnivå alarm</string>
   <string name="sensor_name_volume_call">Volumnivå samtale</string>
@@ -391,6 +414,7 @@ for Home Assistant</string>
   <string name="url_invalid">Ugyldig URL</string>
   <string name="url_parse_error">Kan ikke koble til nettadressen til Home Assistant, det skal se ut som https://eksempel.no</string>
   <string name="username">Brukernavn</string>
+  <string name="view_password">Vis passord</string>
   <string name="wait">Vent</string>
   <string name="webview_error">Det oppstod en feil under lasting av Home Assistant, vennligst se gjennom tilkoblingsinnstillingene og prøv på nytt</string>
   <string name="webview_error_description">Oppstått feil:</string>

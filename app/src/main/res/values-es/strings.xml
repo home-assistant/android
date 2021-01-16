@@ -14,8 +14,15 @@
   <string name="background_access_enabled">Home Assistant tiene acceso para ejecutarse en segundo plano.</string>
   <string name="background_access_title">Acceso en segundo plano</string>
   <string name="basic_sensor_lullaby">Canción de cuna</string>
+  <string name="basic_sensor_name_active_notification_count">Activar el contador de notificaciones</string>
   <string name="basic_sensor_name_activity">Actividad detectada</string>
   <string name="basic_sensor_name_alarm">Próxima alarma</string>
+  <string name="basic_sensor_name_app_importance">Importancia de la aplicación</string>
+  <string name="basic_sensor_name_app_inactive">Aplicación inactiva</string>
+  <string name="basic_sensor_name_app_memory">Memoria de la aplicación</string>
+  <string name="basic_sensor_name_app_rx_gb">GB recibidos por la aplicación</string>
+  <string name="basic_sensor_name_app_standby">Intervalo de Standby de la aplicación</string>
+  <string name="basic_sensor_name_app_tx_gb">GB enviados por la aplicación</string>
   <string name="basic_sensor_name_battery_health">Salud de la batería</string>
   <string name="basic_sensor_name_battery_level">Nivel de la batería</string>
   <string name="basic_sensor_name_battery_state">Estado de la batería</string>
@@ -24,6 +31,7 @@
   <string name="basic_sensor_name_call_number">Número de la llamada</string>
   <string name="basic_sensor_name_charger_type">Tipo de cargador</string>
   <string name="basic_sensor_name_charging">Está cargando</string>
+  <string name="basic_sensor_name_current_time_zone">Zona horaria actual</string>
   <string name="basic_sensor_name_current_version">Versión actual</string>
   <string name="basic_sensor_name_device_locked">Dispositivo bloqueado</string>
   <string name="basic_sensor_name_device_secure">Dispositivo seguro</string>
@@ -36,6 +44,7 @@
   <string name="basic_sensor_name_keyguard_secure">Bloqueo seguro</string>
   <string name="basic_sensor_name_last_notification">Última notificación</string>
   <string name="basic_sensor_name_last_reboot">Último reinicio</string>
+  <string name="basic_sensor_name_last_removed_notification">Última notificación eliminada</string>
   <string name="basic_sensor_name_last_update">Disparador de la última actualización</string>
   <string name="basic_sensor_name_location_accurate">Localización precisa única</string>
   <string name="basic_sensor_name_location_background">Ubicación en segundo plano</string>
@@ -154,6 +163,11 @@ instancia de Home Assistant</string>
   <string name="list_media_player_widgets">Lista de widgets de reproductor multimedia</string>
   <string name="list_template_widgets">Lista de widgets de plantilla</string>
   <string name="location">Ubicación</string>
+  <string name="location_disabled_message">La ubicación está desactivada. Las siguientes opciones activadas requieren que actives la ubicación. ¡Si no activas la ubicación, los sensores/configuraciones no funcionarán!\n\n%1$s\n¿Quieres activar la ubicación?</string>
+  <string name="location_disabled_option_disable">Desactivar opción</string>
+  <string name="location_disabled_title">La ubicación está desactivada</string>
+  <string name="location_perm_info_message">Android estableció restricciones para las aplicaciones que desean usar tu Wifi, porque en teoría, el Wifi puede utilizarse para determinar tu ubicación.\n\nAdemás, para garantizar que la aplicación puede acceder a Wifi en segundo plano (toma de decisiones de URL, sensores) debes permitir el acceso a la ubicación todo el tiempo.\n\nPor lo tanto, para utilizar esta opción es necesario acceder a la ubicación todo el tiempo.\n\n¿Continuar otorgando acceso a la ubicación?</string>
+  <string name="location_perm_info_title">Acceso a la ubicación</string>
   <string name="lock_summary">Usar credenciales biométricas o de bloqueo de pantalla para desbloquear la aplicación</string>
   <string name="lock_title">Bloquear aplicación</string>
   <string name="lockscreen_message">Pulsa para desbloquear:</string>
@@ -233,6 +247,7 @@ instancia de Home Assistant</string>
   <string name="rate_limit_summary">Tasa límite de datos</string>
   <string name="rate_limit_title">Límite de tasa de notificación</string>
   <string name="refresh">Actualizar</string>
+  <string name="remember">Recordar</string>
   <string name="required_fields">Se requiere un nombre de usuario y contraseña.</string>
   <string name="retry">Reintentar</string>
   <string name="save">Guardar</string>
@@ -243,6 +258,13 @@ instancia de Home Assistant</string>
   <string name="select_instance">Selecciona la instancia a la que te gustaría conectar:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Descripción</string>
+  <string name="sensor_description_active_notification_count">Recuento total de notificaciones activas que son visibles para el usuario, incluidas las silenciosas, las persistentes y las notificaciones del Sensor.</string>
+  <string name="sensor_description_app_importance">Si la aplicación está en primer plano, en segundo plano o en cualquier otro estado que pueda estar.</string>
+  <string name="sensor_description_app_inactive">Si el sistema considera que la aplicación está inactiva actualmente o no</string>
+  <string name="sensor_description_app_memory">Memoria total utilizada y disponible para la aplicación</string>
+  <string name="sensor_description_app_rx_gb">GB recibidos por la aplicación desde el último reinicio del dispositivo</string>
+  <string name="sensor_description_app_standby">El estado actual del Intervalo Standby de la aplicación. Los Intervalos de Standby determinan como de restringida estará la aplicación para ejecutar tareas y alarmas en segundo plano.</string>
+  <string name="sensor_description_app_tx_gb">GB enviados por la aplicación desde el último reinicio del dispositivo</string>
   <string name="sensor_description_audio_mode">El estado del modo de audio de los dispositivos</string>
   <string name="sensor_description_audio_sensor">El estado del modo de timbre del dispositivo, así como otros atributos relacionados con el audio</string>
   <string name="sensor_description_battery_health">La salud de la batería</string>
@@ -253,6 +275,7 @@ instancia de Home Assistant</string>
   <string name="sensor_description_call_number">El número de móvil de la llamada entrante o saliente</string>
   <string name="sensor_description_charger_type">El tipo de cargador conectado al dispositivo actualmente</string>
   <string name="sensor_description_charging">Si el dispositivo se está cargando activamente o no</string>
+  <string name="sensor_description_current_time_zone">La zona horaria actual en la que se encuentra el dispositivo</string>
   <string name="sensor_description_current_version">La versión actual de la aplicación instalada</string>
   <string name="sensor_description_detected_activity">El tipo de actividad actual calculado por la API de reconocimiento de actividad de Google</string>
   <string name="sensor_description_device_locked">Si el dispositivo está bloqueado actualmente y requiere un PIN, patrón o contraseña para desbloquearse.</string>
@@ -268,9 +291,10 @@ instancia de Home Assistant</string>
   <string name="sensor_description_keyguard_secure">Si el bloqueo está protegido por un PIN, patrón o contraseña o si la tarjeta SIM está bloqueada actualmente.</string>
   <string name="sensor_description_last_notification">Los detalles de la última notificación.</string>
   <string name="sensor_description_last_reboot">La fecha y hora del último reinicio del dispositivo. La siguiente configuración le permitirá ajustar la banda muerta en milisegundos, si aún encuentra el valor para saltar incorrectamente.  El valor predeterminado es 60000 (1 minuto).</string>
+  <string name="sensor_description_last_removed_notification">Detalles de la última notificación eliminada. Esto puede ser cualquier notificación borrada por el usuario o eliminada por una aplicación.</string>
   <string name="sensor_description_last_update">El intento para la última actualización que se envió, las actualizaciones periódicas se mostrarán como \"SensorWorker\".</string>
   <string name="sensor_description_light_sensor">El nivel actual de luminosidad</string>
-  <string name="sensor_description_location_accurate">Permite a Home Assistant enviar una notificación solicitando una ubicación precisa junto con la aplicación periódicamente solicitando una ubicación precisa. El ajuste de Precisión mínima te permite decidir como de precisa (en metros) tiene que ser la ubicación del dispositivo para mandarla a Home Assistant. El Tiempo mínimo entre actualizaciones (en milisegundos) evita que el dispositivo envíe la ubicación precisa demasiado frecuentemente.</string>
+  <string name="sensor_description_location_accurate">Permita que Home Assistant envíe una notificación para solicitar una ubicación precisa junto con la aplicación que solicita periódicamente una ubicación precisa. La configuración de Precisión mínima le permitirá decidir qué tan precisa debe ser la ubicación del dispositivo (en metros) para enviar a Home Assistant. El tiempo mínimo entre actualizaciones (en milisegundos) evita que el dispositivo envíe la ubicación exacta con demasiada frecuencia. La configuración Incluida en la actualización del sensor realizará una solicitud de ubicación con cada actualización del sensor.</string>
   <string name="sensor_description_location_background">Actualiza tu ubicación en segundo plano, periódicamente. El ajuste de Precisión mínima te permite decidir como de precisa (en metros) tiene que ser la ubicación del dispositivo para mandarla a Home Assistant</string>
   <string name="sensor_description_location_zone">Importar zonas de Home Assistant como geocercas para el seguimiento basado en zonas. El ajuste de Precisión mínima te permite decidir como de precisa (en metros) tiene que ser la ubicación del dispositivo para mandarla a Home Assistant</string>
   <string name="sensor_description_lullaby">Si una canción de cuna está sonando</string>
@@ -333,6 +357,7 @@ instancia de Home Assistant</string>
   <string name="sensor_name_speakerphone">Altavoz</string>
   <string name="sensor_name_steps">Sensor de pasos</string>
   <string name="sensor_name_storage">Sensores de almacenamiento</string>
+  <string name="sensor_name_time_zone">Sensor de zona horaria</string>
   <string name="sensor_name_traffic_stats">Sensores de estado de tráfico</string>
   <string name="sensor_name_volume_alarm">Nivel de volumen de alarma</string>
   <string name="sensor_name_volume_call">Nivel de volumen de llamada</string>
@@ -385,6 +410,7 @@ instancia de Home Assistant</string>
   <string name="url_invalid">URL no válida</string>
   <string name="url_parse_error">No se ha podido procesar tu URL de Home Assistant. La URL debería parecerse a https://ejemplo.com</string>
   <string name="username">Nombre de usuario</string>
+  <string name="view_password">Ver Contraseña</string>
   <string name="wait">Esperar</string>
   <string name="webview_error">Ha ocurrido un error cargando Home Assistant, por favor, revisa los ajustes de conexión y vuelve a intentarlo.</string>
   <string name="webview_error_description">Error encontrado:</string>

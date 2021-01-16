@@ -16,6 +16,11 @@
   <string name="basic_sensor_lullaby">摇篮曲</string>
   <string name="basic_sensor_name_activity">检测到的活动</string>
   <string name="basic_sensor_name_alarm">下一个警报</string>
+  <string name="basic_sensor_name_app_inactive">应用无效</string>
+  <string name="basic_sensor_name_app_memory">应用占用内存</string>
+  <string name="basic_sensor_name_app_rx_gb">应用下载流量</string>
+  <string name="basic_sensor_name_app_standby">应用待机群组</string>
+  <string name="basic_sensor_name_app_tx_gb">应用上传流量</string>
   <string name="basic_sensor_name_battery_health">电池运行状况</string>
   <string name="basic_sensor_name_battery_level">电池电量</string>
   <string name="basic_sensor_name_battery_state">电池状态</string>
@@ -24,6 +29,7 @@
   <string name="basic_sensor_name_call_number">电话号码</string>
   <string name="basic_sensor_name_charger_type">充电类型</string>
   <string name="basic_sensor_name_charging">正在充电</string>
+  <string name="basic_sensor_name_current_time_zone">当前时区</string>
   <string name="basic_sensor_name_current_version">当前版本</string>
   <string name="basic_sensor_name_device_locked">设备已锁定</string>
   <string name="basic_sensor_name_device_secure">设备安全</string>
@@ -97,6 +103,17 @@
   <string name="dialog_add_panel_shortcut_title">添加快捷方式</string>
   <string name="disable_all_sensors">禁用所有%1$d传感器</string>
   <string name="documentation">文档</string>
+  <string name="domain_automation">Automation</string>
+  <string name="domain_climate">Climate</string>
+  <string name="domain_cover">Cover</string>
+  <string name="domain_fan">Fan</string>
+  <string name="domain_input_boolean">Input Boolean</string>
+  <string name="domain_input_number">Input Number</string>
+  <string name="domain_light">Light</string>
+  <string name="domain_lock">Lock</string>
+  <string name="domain_scene">Scene</string>
+  <string name="domain_script">Script</string>
+  <string name="domain_switch">Switch</string>
   <string name="enable_all_sensors">启用所有传感器</string>
   <string name="enable_all_sensors_summary">启用后将要求所有必需的权限</string>
   <string name="enable_location_tracking">启用位置跟踪</string>
@@ -144,6 +161,11 @@ Home Assistant实例</string>
   <string name="list_media_player_widgets">媒体播放器小部件列表</string>
   <string name="list_template_widgets">模板小部件列表</string>
   <string name="location">位置</string>
+  <string name="location_disabled_message">该位置被禁用。以下启用的选项要求您启用位置。如果未启用该位置，则传感器/设置将不起作用！ \n \n %1$s \n是否要启用位置信息？</string>
+  <string name="location_disabled_option_disable">禁用选项</string>
+  <string name="location_disabled_title">位置已禁用</string>
+  <string name="location_perm_info_message">Android对要使用Wifi的应用设置了限制，因为从理论上讲Wifi可以用来确定您的位置。 \n \n另外，要确保该应用可以在后台访问Wifi（URL决策，传感器），您需要始终允许位置访问。 \n \n因此，要始终使用此选项进行位置访问。 \n \n继续授予位置访问权限？</string>
+  <string name="location_perm_info_title">位置访问</string>
   <string name="lock_summary">使用生物识别或屏幕锁凭据来解锁应用</string>
   <string name="lock_title">锁定应用</string>
   <string name="lockscreen_message">点击解锁 ：</string>
@@ -234,6 +256,9 @@ Home Assistant实例</string>
   <string name="select_instance">选择你想要连接的实例:</string>
   <string name="sensor">传感器</string>
   <string name="sensor_description">描述</string>
+  <string name="sensor_description_app_memory">该应用程序已使用和可用的总内存</string>
+  <string name="sensor_description_app_rx_gb">自上次设备重启以来应用的下载流量</string>
+  <string name="sensor_description_app_tx_gb">自上次重启设备以来应用的上传流量</string>
   <string name="sensor_description_audio_mode">设备音频模式的状态</string>
   <string name="sensor_description_audio_sensor">设备震动模式的状态以及其他音频相关属性</string>
   <string name="sensor_description_battery_health">电池的运行状况</string>
@@ -244,6 +269,7 @@ Home Assistant实例</string>
   <string name="sensor_description_call_number">来电或去电的手机号码</string>
   <string name="sensor_description_charger_type">当前插入设备的充电器类型</string>
   <string name="sensor_description_charging">设备是否正在充电</string>
+  <string name="sensor_description_current_time_zone">设备当前所在的时区</string>
   <string name="sensor_description_current_version">当前安装的应用程序版本</string>
   <string name="sensor_description_detected_activity">由Google的Activity Recognition API计算出的当前活动类型</string>
   <string name="sensor_description_device_locked">是否锁定当前设备，并且需要PIN，图案或密码才能解锁。</string>
@@ -324,6 +350,7 @@ Home Assistant实例</string>
   <string name="sensor_name_speakerphone">免提</string>
   <string name="sensor_name_steps">步数传感器</string>
   <string name="sensor_name_storage">存储传感器</string>
+  <string name="sensor_name_time_zone">时区传感器</string>
   <string name="sensor_name_traffic_stats">流量统计传感器</string>
   <string name="sensor_name_volume_alarm">警报音量</string>
   <string name="sensor_name_volume_call">通话音量</string>

@@ -10,8 +10,14 @@
   <string name="auth_error">Ошибка аутентификации</string>
   <string name="auth_error_message">Поля \'Имя пользователя\' и \'Пароль\' должны быть заполнены</string>
   <string name="auth_request">Требуется аутентификация</string>
+  <string name="background_access_enabled">Home Asssitant имеет доступ для работы в фоновом режиме.</string>
+  <string name="background_access_title">Доступ в фоновом режиме</string>
   <string name="basic_sensor_name_activity">Обнаруженная активность</string>
   <string name="basic_sensor_name_alarm">Следующий будильник</string>
+  <string name="basic_sensor_name_app_inactive">Приложение неактивно</string>
+  <string name="basic_sensor_name_app_memory">Память приложения</string>
+  <string name="basic_sensor_name_app_rx_gb">Трафик приема</string>
+  <string name="basic_sensor_name_app_tx_gb">Трафик передачи</string>
   <string name="basic_sensor_name_battery_health">Работоспособность аккумулятора</string>
   <string name="basic_sensor_name_battery_level">Уровень заряда аккумулятора</string>
   <string name="basic_sensor_name_battery_state">Состояние аккумулятора</string>
@@ -20,6 +26,8 @@
   <string name="basic_sensor_name_call_number">Номер телефона</string>
   <string name="basic_sensor_name_charger_type">Тип зарядного устройства</string>
   <string name="basic_sensor_name_charging">Зарядка устройства</string>
+  <string name="basic_sensor_name_current_time_zone">Текущий часовой пояс</string>
+  <string name="basic_sensor_name_current_version">Версия</string>
   <string name="basic_sensor_name_device_locked">Устройство заблокировано</string>
   <string name="basic_sensor_name_device_secure">Безопасность устройства</string>
   <string name="basic_sensor_name_doze">Режим ожидания</string>
@@ -31,6 +39,7 @@
   <string name="basic_sensor_name_keyguard_secure">Безопасность клавиатуры</string>
   <string name="basic_sensor_name_last_notification">Последнее уведомление</string>
   <string name="basic_sensor_name_last_reboot">Последняя перезагрузка</string>
+  <string name="basic_sensor_name_location_accurate">Одно точное местоположение</string>
   <string name="basic_sensor_name_location_background">Отслеживание в фоновом режиме</string>
   <string name="basic_sensor_name_location_zone">Отслеживание на основе зон</string>
   <string name="basic_sensor_name_mobile_rx_gb">Мобильный трафик Rx (Гб)</string>
@@ -49,6 +58,7 @@
   <string name="basic_sensor_name_wifi_link_speed">Скорость соединения WiFi</string>
   <string name="basic_sensor_name_wifi_signal">Мощность сигнала WiFi</string>
   <string name="basic_sensor_name_wifi_state">Состояние WiFi</string>
+  <string name="basic_sensor_sleep_tracking">Отслеживание сна</string>
   <string name="biometric_message">Используйте биометрические данные или учетные данные для блокировки экрана, чтобы разблокировать приложение</string>
   <string name="biometric_set_title">Подтвердите, чтобы продолжить</string>
   <string name="biometric_title">Home Assistant заблокирован</string>
@@ -66,15 +76,18 @@
   <string name="confirm_delete_this_widget_title">Подтвердите удаление этого виджета</string>
   <string name="confirm_negative">НЕТ</string>
   <string name="confirm_positive">ДА</string>
-  <string name="connect_to_home_assistant">Подключиться к Home Assistant</string>
+  <string name="connect_to_home_assistant">Подключение к Home Assistant</string>
   <string name="connect_to_home_internet">Убедитесь, что Ваш телефон подключен 
 к домашней сети.</string>
   <string name="connected_to_home_assistant">Подключено к Home Assistant</string>
+  <string name="crash_reporting">Отчет о сбое</string>
+  <string name="crash_reporting_summary">Помогите разработчикам исправить ошибки и сбои, оставив эту опцию включенной. Если приложение выйдет из строя, оно автоматически сгенерирует и отправит отчет. Если вы заметили сбой, создайте запись о проблеме на Github!</string>
   <string name="create_template">Создать шаблон</string>
   <string name="database_event_failure">Не удалось отправить событие сбоя миграции в Home Assistant</string>
   <string name="database_migration_failed">Ошибка переноса базы данных, все настройки датчиков и виджетов сброшены. Пожалуйста, повторно включите свои датчики и добавьте виджеты.</string>
   <string name="delete_all_notifications">Удалить все уведомления из истории</string>
   <string name="delete_this_notification">Удалить это уведомление из истории</string>
+  <string name="delete_widget">Удалить виджет</string>
   <string name="developer_tools">Инструменты разработчика</string>
   <string name="device_class">Класс устройства</string>
   <string name="device_name">Название устройства</string>
@@ -83,6 +96,12 @@
   <string name="dialog_add_panel_shortcut_title">Добавить Ярлык</string>
   <string name="disable_all_sensors">Отключить все %1$d сенсоров</string>
   <string name="documentation">Документация</string>
+  <string name="domain_automation">Автоматизация</string>
+  <string name="domain_cover">Обложка</string>
+  <string name="domain_light">Свет</string>
+  <string name="domain_scene">Сцена</string>
+  <string name="domain_script">Скрипт</string>
+  <string name="domain_switch">Переключатель</string>
   <string name="enable_all_sensors">Включить все сенсоры</string>
   <string name="enable_all_sensors_summary">При включении будут запрошены необходимые разрешения</string>
   <string name="enable_location_tracking">Включить отслеживание местоположения</string>
@@ -118,6 +137,10 @@
   <string name="label_icon">Значок:</string>
   <string name="label_label">Название:</string>
   <string name="label_service">Служба:</string>
+  <string name="lang_option_label_default">Язык устройства</string>
+  <string name="lang_option_value_default">По умолчанию</string>
+  <string name="lang_summary_settings">Изменение языка по умолчанию может повлиять на именование объектов устройства</string>
+  <string name="lang_title_settings">Язык</string>
   <string name="last_25_notifications">Последние 25 уведомлений</string>
   <string name="last_num_notifications">Последние %1$d уведомлений</string>
   <string name="list_button_widgets">Список виджетов кнопок</string>
@@ -125,6 +148,10 @@
   <string name="list_media_player_widgets">Список виджетов медиаплеера</string>
   <string name="list_template_widgets">Список виджетов шаблонов</string>
   <string name="location">Местоположение</string>
+  <string name="location_disabled_message">Определение местоположения отключено. Следующие включенные опции требуют, чтобы вы включили опцию определения местоположения. Если Вы не включите эту опцию, датчик(и) /устройства(и) не будут работать!\n\n%1$s\nDo Вы хотите включить опцию определения местоположения?</string>
+  <string name="location_disabled_option_disable">Отключить опцию</string>
+  <string name="location_disabled_title">Определениe местоположения отключено</string>
+  <string name="location_perm_info_title">Разрешить доступ к геопозиции?</string>
   <string name="lock_summary">Использовать биометрические данные или другие варианты блокировки экрана, чтобы разблокировать приложение</string>
   <string name="lock_title">Блокировка приложения</string>
   <string name="lockscreen_message">Нажмите, чтобы разблокировать:</string>
@@ -212,6 +239,9 @@
   <string name="select_instance">Выберите сервер, к которому хотели бы подключиться:</string>
   <string name="sensor">Сенсор</string>
   <string name="sensor_description">Описание</string>
+  <string name="sensor_description_app_memory">Общий объем используемой и доступной памяти для приложения</string>
+  <string name="sensor_description_app_rx_gb">Принято данных с момента перезагрузки. В GB.</string>
+  <string name="sensor_description_app_tx_gb">Передано данных с момента перезагрузки. В GB. </string>
   <string name="sensor_description_audio_mode">Состояние режима аудио устройства</string>
   <string name="sensor_description_audio_sensor">Режима звонка</string>
   <string name="sensor_description_battery_health">Работоспособность аккумулятора устройства</string>
@@ -222,6 +252,8 @@
   <string name="sensor_description_call_number">Номер мобильного телефона входящего или исходящего вызова</string>
   <string name="sensor_description_charger_type">Тип зарядного устройства, подключенного к устройству</string>
   <string name="sensor_description_charging">Заряжается ли устройство</string>
+  <string name="sensor_description_current_time_zone">Текущий часовой пояс, в котором находится устройство</string>
+  <string name="sensor_description_current_version">Текущая версия приложения.</string>
   <string name="sensor_description_detected_activity">Текущий тип активности, вычисляемый с помощью API Google Activity Recognition</string>
   <string name="sensor_description_device_locked">Заблокировано ли устройство в данный момент и требуется ли для его разблокировки PIN-код, графический ключ или пароль.</string>
   <string name="sensor_description_device_secure">Защищено ли устройство PIN-кодом, рисунком или паролем.</string>
@@ -269,6 +301,7 @@
   <string name="sensor_description_wifi_state">Включен ли Wi-Fi на устройстве</string>
   <string name="sensor_name_activity">Активность</string>
   <string name="sensor_name_alarm">Будильник</string>
+  <string name="sensor_name_app_sensor">Датчики</string>
   <string name="sensor_name_audio">Аудио</string>
   <string name="sensor_name_audio_mode">Режим аудио</string>
   <string name="sensor_name_battery">Аккумулятор</string>
@@ -276,8 +309,10 @@
   <string name="sensor_name_dnd">Режим \"Не беспокоить\"</string>
   <string name="sensor_name_geolocation">Геолокация</string>
   <string name="sensor_name_headphone">Наушники</string>
+  <string name="sensor_name_keyguard">Датчик хранилища паролей</string>
   <string name="sensor_name_last_notification">Датчики уведомлений</string>
   <string name="sensor_name_last_reboot">Последняя перезагрузка</string>
+  <string name="sensor_name_last_update">Последне обновление</string>
   <string name="sensor_name_light">Датчик освещённости</string>
   <string name="sensor_name_location">Местоположение</string>
   <string name="sensor_name_mic_muted">Микрофон отключен</string>
@@ -291,6 +326,7 @@
   <string name="sensor_name_speakerphone">Громкая связь</string>
   <string name="sensor_name_steps">Сенсор пройденных шагов</string>
   <string name="sensor_name_storage">Хранилище</string>
+  <string name="sensor_name_time_zone">Датчик часового пояса</string>
   <string name="sensor_name_traffic_stats">Статистика трафика</string>
   <string name="sensor_name_volume_alarm">Уровень громкости будильника</string>
   <string name="sensor_name_volume_call">Уровень громкости разговора</string>
@@ -335,6 +371,7 @@
   <string name="themes_option_label_system">По умолчанию</string>
   <string name="themes_title_settings">Тема</string>
   <string name="tts_error">Не удалось преобразовать уведомление \"%1$s\" из текста в речь.</string>
+  <string name="tts_no_title">Пожалуйста установите заголовок для передачи текста в речь для обработки</string>
   <string name="unable_to_register">Не удалось зарегистрировать приложение</string>
   <string name="unique_id">Уникальный ID</string>
   <string name="update_widget">Обновить виджет</string>
