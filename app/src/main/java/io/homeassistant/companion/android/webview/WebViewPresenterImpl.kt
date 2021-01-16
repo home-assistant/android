@@ -89,7 +89,11 @@ class WebViewPresenterImpl @Inject constructor(
                     val month = Integer.parseInt(version[1])
                     val release = Integer.parseInt(version[2])
                     if (year < 2021 || (year == 2021 && month == 1 && release < 3)) {
-                        view.showError(WebView.ErrorType.SECURITY_WARNING)
+                        if (integrationUseCase.shouldNotifySecurityWarning()) {
+                            view.showError(WebView.ErrorType.SECURITY_WARNING)
+                        } else {
+                            Log.w(TAG, "Still not updated but have already notified.")
+                        }
                     }
                 }
             } catch (e: Exception) {
