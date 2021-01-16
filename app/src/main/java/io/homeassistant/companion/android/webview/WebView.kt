@@ -3,6 +3,12 @@ package io.homeassistant.companion.android.webview
 import android.net.http.SslError
 
 interface WebView {
+    enum class ErrorType {
+        AUTHENTICATION,
+        SSL,
+        SECURITY_WARNING,
+        TIMEOUT
+    }
 
     fun loadUrl(url: String)
 
@@ -12,5 +18,5 @@ interface WebView {
 
     fun openOnBoarding()
 
-    fun showError(isAuthenticationError: Boolean = false, error: SslError? = null, description: String? = null)
+    fun showError(errorType: ErrorType = ErrorType.TIMEOUT, error: SslError? = null, description: String? = null)
 }

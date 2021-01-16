@@ -45,4 +45,6 @@ interface IntegrationRepository {
 
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
     suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
+
+    suspend fun shouldNotifySecurityWarning(): Boolean
 }

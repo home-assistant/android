@@ -57,6 +57,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
+        private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
     }
@@ -478,6 +479,17 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
         throw IntegrationException()
+    }
+
+    override suspend fun shouldNotifySecurityWarning(): Boolean {
+        val current = System.currentTimeMillis()
+        val next = localStorage.getLong(PREF_SEC_WARNING_NEXT) ?: 0
+        return if (current > next) {
+            localStorage.putLong(PREF_SEC_WARNING_NEXT, current + (86400000)) // 24 hours
+            true
+        } else {
+            false
+        }
     }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
