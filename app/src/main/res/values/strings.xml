@@ -468,4 +468,8 @@ like to connect to:</string>
   <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
     <string name="basic_sensor_name_app_importance">App Importance</string>
   <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be.</string>
+    <string name="security_vulnerably_title">Security Vulnerably Warning</string>
+  <string name="security_vulnerably_message">Your Home Assistant is out of date and contains a known security vulnerably.  Please view the details via the bulletin and update as soon as possible.</string>
+  <string name="security_vulnerably_view">View Bulletin</string>
+  <string name="security_vulnerably_understand">I Understand</string>
 </resources>

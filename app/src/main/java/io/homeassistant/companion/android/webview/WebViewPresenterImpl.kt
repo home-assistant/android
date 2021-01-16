@@ -79,6 +79,25 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun checkSecurityVersion() {
+        mainScope.launch {
+
+            try {
+                val version = integrationUseCase.getHomeAssistantVersion().split(".")
+                if (version.size >= 3) {
+                    val year = Integer.parseInt(version[0])
+                    val month = Integer.parseInt(version[1])
+                    val release = Integer.parseInt(version[2])
+                    if (year < 2021 || (year == 2021 && month == 1 && release < 3)) {
+                        view.showError(WebView.ErrorType.SECURITY_WARNING)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Issue getting version/notifying of security issue.", e)
+            }
+        }
+    }
+
     override fun onGetExternalAuth(callback: String, force: Boolean) {
         mainScope.launch {
             try {
@@ -86,7 +105,12 @@ class WebViewPresenterImpl @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to retrieve external auth", e)
                 view.setExternalAuth("$callback(false)")
-                view.showError(isAuthenticationError = authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
+                view.showError(
+                    if (authenticationUseCase.getSessionState() == SessionState.ANONYMOUS)
+                        WebView.ErrorType.AUTHENTICATION
+                    else
+                        WebView.ErrorType.TIMEOUT
+                )
             }
         }
     }

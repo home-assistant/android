@@ -6,6 +6,8 @@ interface WebViewPresenter {
 
     fun onGetExternalAuth(callback: String, force: Boolean)
 
+    fun checkSecurityVersion()
+
     fun onRevokeExternalAuth(callback: String)
 
     fun clearKnownUrls()
