@@ -14,8 +14,14 @@
   <string name="background_access_enabled">Home Assistant heeft toegang om op de achtergrond te draaien.</string>
   <string name="background_access_title">Achtergrondtoegang</string>
   <string name="basic_sensor_lullaby">Slaapliedje</string>
+  <string name="basic_sensor_name_active_notification_count">Aantal actieve meldingen</string>
   <string name="basic_sensor_name_activity">Gedetecteerde activiteit</string>
   <string name="basic_sensor_name_alarm">Volgende alarm</string>
+  <string name="basic_sensor_name_app_inactive">Applicatie Inactief</string>
+  <string name="basic_sensor_name_app_memory">App-geheugen</string>
+  <string name="basic_sensor_name_app_rx_gb">App Rx GB</string>
+  <string name="basic_sensor_name_app_standby">App standbybucket</string>
+  <string name="basic_sensor_name_app_tx_gb">App Tx GB</string>
   <string name="basic_sensor_name_battery_health">Batterijstatus</string>
   <string name="basic_sensor_name_battery_level">Batterijniveau</string>
   <string name="basic_sensor_name_battery_state">Batterij laadstatus</string>
@@ -37,6 +43,7 @@
   <string name="basic_sensor_name_keyguard_secure">Toetsenblokkering vergrendeld veilig</string>
   <string name="basic_sensor_name_last_notification">Laatste notificatie</string>
   <string name="basic_sensor_name_last_reboot">Laatste herstart</string>
+  <string name="basic_sensor_name_last_removed_notification">Laatste verwijderde melding</string>
   <string name="basic_sensor_name_last_update">Trigger laatste update</string>
   <string name="basic_sensor_name_location_accurate">Enkele nauwkeurige locatie</string>
   <string name="basic_sensor_name_location_background">Achtergrondlocatie</string>
@@ -62,7 +69,7 @@
   <string name="biometric_message">Ontgrendel met uw biometrische of schermvergrendeling-inloggegevens</string>
   <string name="biometric_set_title">Bevestig om door te gaan</string>
   <string name="biometric_title">Home Assistant is vergrendeld</string>
-  <string name="broadcast_intent_error">Kan de uitzendingsintentie niet verzenden. Controleer het opdrachtformaat</string>
+  <string name="broadcast_intent_error">Kan de uitzendingsintentie niet verzenden, controleer het opdrachtformaat</string>
   <string name="calendar">Kalender</string>
   <string name="cancel">Annuleren</string>
   <string name="changelog">Logboek</string>
@@ -101,7 +108,7 @@
   <string name="domain_climate">Klimaat</string>
   <string name="domain_cover">Zonnewering</string>
   <string name="domain_fan">Ventilator</string>
-  <string name="domain_input_boolean">Boolean invoer</string>
+  <string name="domain_input_boolean">Booleaanse invoer</string>
   <string name="domain_input_number">Nummerinvoer</string>
   <string name="domain_light">Licht</string>
   <string name="domain_lock">Slot</string>
@@ -154,6 +161,11 @@
   <string name="list_media_player_widgets">Lijst van Media Player Widgets</string>
   <string name="list_template_widgets">Lijst met sjabloonwidgets</string>
   <string name="location">Locatie</string>
+  <string name="location_disabled_message">De locatie is uitgeschakeld. Voor de volgende ingeschakelde optie(s) moet u de locatie inschakelen. Als u de locatie niet inschakelt, werken de sensor(en)/instellingen niet!\n\n%1$s\n Wilt u locatie inschakelen?</string>
+  <string name="location_disabled_option_disable">Schakel optie uit</string>
+  <string name="location_disabled_title">Locatie is uitgeschakeld</string>
+  <string name="location_perm_info_message">Android heeft beperkingen ingesteld voor apps die je WiFi willen gebruiken, omdat WiFi theoretisch kan worden gebruikt om je locatie te bepalen.\n\n Om ervoor te zorgen dat de app toegang heeft tot WiFi op de achtergrond (URL-besluitvorming, sensoren), moet je locatietoegang altijd toestaan.\n\n Om deze optie te gebruiken, is locatietoegang altijd nodig.\n\n Doorgaan met het verlenen van locatietoegang?</string>
+  <string name="location_perm_info_title">Locatietoegang</string>
   <string name="lock_summary">Gebruik biometrische of schermvergrendeling-inloggegevens om de app te ontgrendelen.</string>
   <string name="lock_title">App vergrendelen</string>
   <string name="lockscreen_message">Tik om te ontgrendelen:</string>
@@ -235,6 +247,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="rate_limit_summary">Gegevens snelheidslimiet</string>
   <string name="rate_limit_title">Notificatie snelheidslimiet</string>
   <string name="refresh">Opnieuw laden</string>
+  <string name="remember">Onthouden</string>
   <string name="required_fields">Vereist een gebruikersnaam en wachtwoord.</string>
   <string name="retry">Opnieuw</string>
   <string name="save">Opslaan</string>
@@ -245,6 +258,12 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="select_instance">Selecteer de instantie waarmee je verbinding wilt maken:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Beschrijving</string>
+  <string name="sensor_description_active_notification_count">Het totale aantal actieve meldingen dat zichtbaar is voor de gebruiker, inclusief stille, permanente en de Sensor Worker-meldingen.</string>
+  <string name="sensor_description_app_inactive">Of de app momenteel door het systeem als inactief wordt beschouwd</string>
+  <string name="sensor_description_app_memory">Totaal gebruikt en beschikbaar geheugen voor de app</string>
+  <string name="sensor_description_app_rx_gb">App Rx GB sinds de laatste keer dat het apparaat opnieuw is opgestart</string>
+  <string name="sensor_description_app_standby">De huidige standbybucket van de apps. Standbybuckets bepalen in hoeverre een app wordt beperkt in het uitvoeren van achtergrondtaken zoals taken en alarmen.</string>
+  <string name="sensor_description_app_tx_gb">App Tx GB sinds de laatste keer dat het apparaat opnieuw is opgestart</string>
   <string name="sensor_description_audio_mode">De status van de audiomodus van het apparaat</string>
   <string name="sensor_description_audio_sensor">De status van de belmodus van het apparaat</string>
   <string name="sensor_description_battery_health">De conditie van de batterij</string>
@@ -255,7 +274,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="sensor_description_call_number">Het nummer van de inkomende of uitgaande oproep</string>
   <string name="sensor_description_charger_type">Het type oplader dat momenteel op het apparaat is aangesloten</string>
   <string name="sensor_description_charging">Of het apparaat actief wordt opgeladen of niet</string>
-  <string name="sensor_description_current_time_zone">De huidige tijdzone waarin het apparaat zich bevindt is</string>
+  <string name="sensor_description_current_time_zone">De huidige tijdzone waarin het apparaat zich bevindt</string>
   <string name="sensor_description_current_version">De huidige geïnstalleerde applicatieversie</string>
   <string name="sensor_description_detected_activity">Het huidige activiteitstype zoals bepaald door de Google Activity Recognition API</string>
   <string name="sensor_description_device_locked">Of het apparaat is momenteel vergrendeld en een een pincode, patroon of wachtwoord vereist om te ontgrendelen.</string>
@@ -271,6 +290,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="sensor_description_keyguard_secure">Of de toetsenblokkering nu is beveiligd met een pincode, patroon of wachtwoord, of dat een simkaart momenteel is vergrendeld.</string>
   <string name="sensor_description_last_notification">De details van de laatste melding.</string>
   <string name="sensor_description_last_reboot">De datum en tijd waarop het apparaat voor het laatst opnieuw is opgestart. Met de onderstaande instelling kunt u de dode zone in milliseconden aanpassen, indien u nog steeds merkt dat de waarde incorrect verspringt. De standaardwaarde is 60000 (1 minuut).</string>
+  <string name="sensor_description_last_removed_notification">De details van de laatst verwijderde melding. Dit kan elke melding zijn die door de gebruiker is gewist of door een toepassing is verwijderd.</string>
   <string name="sensor_description_last_update">De bedoeling van de laatste update die is verzonden, periodieke updates, worden weergegeven als \"SensorWorker\".</string>
   <string name="sensor_description_light_sensor">De huidige omgevingslichtintensiteit</string>
   <string name="sensor_description_location_accurate">Sta Home Assistant toe om een melding te sturen om een nauwkeurige locatie op te vragen, terwijl de applicatie periodiek ook om een nauwkeurige locatie vraagt. Met de instelling Minimale nauwkeurigheid kunt u beslissen hoe nauwkeurig de locatie van het apparaat (in meters) moet zijn om naar Home Assistant te kunnen verzenden. De minimale tijd tussen updates (in milliseconden) zorgt ervoor dat het apparaat niet te vaak de juiste locatie stuurt.</string>
@@ -389,6 +409,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="url_invalid">URL ongeldig</string>
   <string name="url_parse_error">Je Home Assistant URL lijkt niet te kloppen. Het zou ongeveer overeen moeten komen met https://example.com</string>
   <string name="username">Gebruikersnaam</string>
+  <string name="view_password">Bekijk wachtwoord</string>
   <string name="wait">Wachten</string>
   <string name="webview_error">Er is een fout opgetreden bij het laden van Home Assistant. Controleer de verbindingsinstellingen en probeer het opnieuw.</string>
   <string name="webview_error_description">Er is een fout opgetreden:</string>

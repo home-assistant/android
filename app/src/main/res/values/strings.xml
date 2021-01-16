@@ -25,8 +25,15 @@
   <string name="background_access_enabled">Home Assistant has access to run in the background.</string>
   <string name="background_access_title">Background Access</string>
   <string name="basic_sensor_lullaby">Lullaby</string>
+  <string name="basic_sensor_name_active_notification_count">Active Notification Count</string>
   <string name="basic_sensor_name_activity">Detected Activity</string>
   <string name="basic_sensor_name_alarm">Next Alarm</string>
+  <string name="basic_sensor_name_app_importance">App Importance</string>
+  <string name="basic_sensor_name_app_inactive">App Inactive</string>
+  <string name="basic_sensor_name_app_memory">App Memory</string>
+  <string name="basic_sensor_name_app_rx_gb">App Rx GB</string>
+  <string name="basic_sensor_name_app_standby">App Standby Bucket</string>
+  <string name="basic_sensor_name_app_tx_gb">App Tx GB</string>
   <string name="basic_sensor_name_battery_health">Battery Health</string>
   <string name="basic_sensor_name_battery_level">Battery Level</string>
   <string name="basic_sensor_name_battery_state">Battery State</string>
@@ -48,12 +55,11 @@
   <string name="basic_sensor_name_keyguard_secure">Keyguard Secure</string>
   <string name="basic_sensor_name_last_notification">Last Notification</string>
   <string name="basic_sensor_name_last_reboot">Last Reboot</string>
+  <string name="basic_sensor_name_last_removed_notification">Last Removed Notification</string>
   <string name="basic_sensor_name_last_update">Last Update Trigger</string>
   <string name="basic_sensor_name_location_accurate">Single Accurate Location</string>
   <string name="basic_sensor_name_location_background">Background Location</string>
   <string name="basic_sensor_name_location_zone">Location Zone</string>
-  <string name="basic_sensor_name_app_rx_gb">App Rx GB</string>
-  <string name="basic_sensor_name_app_tx_gb">App Tx GB</string>
   <string name="basic_sensor_name_mobile_rx_gb">Mobile Rx GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Mobile Tx GB</string>
   <string name="basic_sensor_name_phone">Phone State</string>
@@ -170,6 +176,11 @@ Home Assistant instance</string>
   <string name="list_media_player_widgets">List of Media Player Widgets</string>
   <string name="list_template_widgets">List of Template Widgets</string>
   <string name="location">Location</string>
+  <string name="location_disabled_message">The location is disabled. The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nDo you want to enable location?</string>
+  <string name="location_disabled_option_disable">Disable option</string>
+  <string name="location_disabled_title">Location is disabled</string>
+  <string name="location_perm_info_message">Android set up restrictions for apps which want to use your Wifi, because Wifi can be theoretically used to determine your location.\n\nAlso to ensure the app can access Wifi in background (URL decision making, sensors) you need to allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
+  <string name="location_perm_info_title">Location access</string>
   <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
   <string name="lock_title">Lock app</string>
   <string name="lockscreen_message">Tap to unlock :</string>
@@ -249,6 +260,7 @@ Home Assistant instance</string>
   <string name="rate_limit_summary">Rate limit data</string>
   <string name="rate_limit_title">Notification Rate Limit</string>
   <string name="refresh">Refresh</string>
+  <string name="remember">Remember</string>
   <string name="required_fields">requires a username and password.</string>
   <string name="retry">Retry</string>
   <string name="save">Save</string>
@@ -256,11 +268,22 @@ Home Assistant instance</string>
   <string name="scanning_network">Scanning the network 
 for Home Assistant</string>
   <string name="security">Security</string>
+  <string name="security_vulnerably_message">Your version of Home Assistant does not protect for recently discovered security vulnerabilities in custom components. Please view the details via the bulletin and update as soon as possible.</string>
+  <string name="security_vulnerably_title">Security Vulnerably Warning</string>
+  <string name="security_vulnerably_understand">I Understand</string>
+  <string name="security_vulnerably_view">View Bulletin</string>
   <string name="select_entity_to_display">Select Entity to display</string>
   <string name="select_instance">Select the instance you would 
 like to connect to:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Description</string>
+  <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
+  <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be.</string>
+  <string name="sensor_description_app_inactive">Whether or not the app is currently considered inactive by the system</string>
+  <string name="sensor_description_app_memory">Total used and available memory for the app</string>
+  <string name="sensor_description_app_rx_gb">App Rx GB since last device reboot</string>
+  <string name="sensor_description_app_standby">The apps current standby bucket. Standby buckets determine how much an app will be restricted from running background tasks such as jobs and alarms.</string>
+  <string name="sensor_description_app_tx_gb">App Tx GB since last device reboot</string>
   <string name="sensor_description_audio_mode">The state of the devices audio mode</string>
   <string name="sensor_description_audio_sensor">The state of the devices ringer mode</string>
   <string name="sensor_description_battery_health">The health of the battery</string>
@@ -287,6 +310,7 @@ like to connect to:</string>
   <string name="sensor_description_keyguard_secure">Whether the keyguard is secured by a PIN, pattern or password or a SIM card is currently locked.</string>
   <string name="sensor_description_last_notification">The details of the last notification.</string>
   <string name="sensor_description_last_reboot">The date and time of the devices last reboot. The setting below will allow you to adjust the deadband in milliseconds, if you still find the value to jump incorrectly. The default value is 60000 (1 minute).</string>
+  <string name="sensor_description_last_removed_notification">The details of the last removed notification. This can be any notification either cleared by the user or removed by an application.</string>
   <string name="sensor_description_last_update">The intent for the last update that was sent, periodic updates will show as \"SensorWorker\".</string>
   <string name="sensor_description_light_sensor">The current level of illuminance</string>
   <string name="sensor_description_location_accurate">Allow Home Assistant to send a notification to request an accurate location along with the application periodically requesting an accurate location.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.  The Minimum time between updates (in milliseconds) keeps the device from sending the accurate location too often. The Include in sensor update setting will make a location request with each sensor update.</string>
@@ -313,14 +337,6 @@ like to connect to:</string>
   <string name="sensor_description_storage_sensor">Information about the total and available storage space internally and externally</string>
   <string name="sensor_description_total_rx_gb">Total Rx GB since last device reboot</string>
   <string name="sensor_description_total_tx_gb">Total Tx GB since last device reboot</string>
-  <string name="basic_sensor_name_app_memory">App Memory</string>
-  <string name="sensor_description_app_memory">Total used and available memory for the app</string>
-  <string name="basic_sensor_name_app_inactive">App Inactive</string>
-  <string name="sensor_description_app_inactive">Whether or not the app is currently considered inactive by the system</string>
-  <string name="basic_sensor_name_app_standby">App Standby Bucket</string>
-  <string name="sensor_description_app_standby">The apps current standby bucket. Standby buckets determine how much an app will be restricted from running background tasks such as jobs and alarms.</string>
-  <string name="sensor_description_app_rx_gb">App Rx GB since last device reboot</string>
-  <string name="sensor_description_app_tx_gb">App Tx GB since last device reboot</string>
   <string name="sensor_description_volume_alarm">Volume level for alarms on the device</string>
   <string name="sensor_description_volume_call">Volume level for calls on the device</string>
   <string name="sensor_description_volume_music">Volume level for music on the device</string>
@@ -374,11 +390,6 @@ like to connect to:</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
   <string name="set_lock_title">App Locking Error</string>
-  <string name="location_perm_info_title">Location access</string>
-  <string name="location_perm_info_message">Android set up restrictions for apps which want to use your Wifi, because Wifi can be theoretically used to determine your location.\n\nAlso to ensure the app can access Wifi in background (URL decision making, sensors) you need to allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
-  <string name="location_disabled_title">Location is disabled</string>
-  <string name="location_disabled_option_disable">Disable option</string>
-  <string name="location_disabled_message">The location is disabled. The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nDo you want to enable location?</string>
   <string name="settings">Settings</string>
   <string name="share_failed">Sharing with Home Assistant Failed!</string>
   <string name="share_success">Shared with Home Assistant</string>
@@ -421,6 +432,7 @@ like to connect to:</string>
   <string name="url_invalid">Url Invalid</string>
   <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
   <string name="username">Username</string>
+  <string name="view_password">View Password</string>
   <string name="wait">Wait</string>
   <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again.</string>
   <string name="webview_error_description">Encountered error :</string>
@@ -460,16 +472,4 @@ like to connect to:</string>
   <string name="widget_text_size_label">Widget text size:</string>
   <string name="widgets">Widgets</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
-  <string name="remember">Remember</string>
-  <string name="view_password">View Password</string>
-  <string name="basic_sensor_name_last_removed_notification">Last Removed Notification</string>
-  <string name="sensor_description_last_removed_notification">The details of the last removed notification. This can be any notification either cleared by the user or removed by an application.</string>
-  <string name="basic_sensor_name_active_notification_count">Active Notification Count</string>
-  <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
-    <string name="basic_sensor_name_app_importance">App Importance</string>
-  <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be.</string>
-    <string name="security_vulnerably_title">Security Vulnerably Warning</string>
-  <string name="security_vulnerably_message">Your version of Home Assistant does not protect for recently discovered security vulnerabilities in custom components. Please view the details via the bulletin and update as soon as possible.</string>
-  <string name="security_vulnerably_view">View Bulletin</string>
-  <string name="security_vulnerably_understand">I Understand</string>
 </resources>
