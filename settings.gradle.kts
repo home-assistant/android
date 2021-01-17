@@ -22,3 +22,11 @@ gradleEnterprise {
         isUploadInBackground = !isCI
     }
 }
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        google()
+        jcenter()
+    }
+}

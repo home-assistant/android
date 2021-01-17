@@ -21,11 +21,6 @@ buildscript {
 }
 
 allprojects {
-    repositories {
-        google()
-        jcenter()
-    }
-
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     tasks.withType<KotlinCompile>().configureEach {
