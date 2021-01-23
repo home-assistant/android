@@ -800,7 +800,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setMessage(R.string.security_vulnerably_message)
             alert.setPositiveButton(R.string.security_vulnerably_view) { _, _ ->
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.setData(Uri.parse("https://www.home-assistant.io/blog/2021/01/14/security-bulletin/"))
+                intent.setData(Uri.parse("https://www.home-assistant.io/latest-security-alert/"))
                 startActivity(intent)
             }
             alert.setNegativeButton(R.string.security_vulnerably_understand) { _, _ ->

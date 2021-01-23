@@ -88,7 +88,7 @@ class WebViewPresenterImpl @Inject constructor(
                     val year = Integer.parseInt(version[0])
                     val month = Integer.parseInt(version[1])
                     val release = Integer.parseInt(version[2])
-                    if (year < 2021 || (year == 2021 && month == 1 && release < 3)) {
+                    if (year < 2021 || (year == 2021 && month == 1 && release < 5)) {
                         if (integrationUseCase.shouldNotifySecurityWarning()) {
                             view.showError(WebView.ErrorType.SECURITY_WARNING)
                         } else {
