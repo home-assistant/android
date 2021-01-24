@@ -48,8 +48,6 @@
   <string name="basic_sensor_name_location_accurate">Einzelne genaue Position</string>
   <string name="basic_sensor_name_location_background">Hintergrund Standort</string>
   <string name="basic_sensor_name_location_zone">Standortzone</string>
-  <string name="basic_sensor_name_mobile_data">Mobile Daten</string>
-  <string name="basic_sensor_name_mobile_data_roaming">Mobile Daten Roaming</string>
   <string name="basic_sensor_name_mobile_rx_gb">Empfangene Daten über Mobilfunk (GB)</string>
   <string name="basic_sensor_name_mobile_tx_gb">Gesendete Daten über Mobilfunk (GB)</string>
   <string name="basic_sensor_name_phone">Telefonstatus</string>
@@ -298,8 +296,6 @@
   <string name="sensor_description_location_zone">Importiert die vorhandene Home Assistant-Zonen als Geofences für die zonenbasierte Standorterkennung.</string>
   <string name="sensor_description_lullaby">Wenn ein Schlaflied gespielt wird</string>
   <string name="sensor_description_mic_muted">Gibt an, ob das Mikrofon am Gerät stummgeschaltet ist</string>
-  <string name="sensor_description_mobile_data">Gibt an, ob mobile Daten auf dem Gerät aktiviert sind</string>
-  <string name="sensor_description_mobile_data_roaming">Gibt an, ob das Roaming für mobile Daten auf dem Gerät aktiviert ist</string>
   <string name="sensor_description_mobile_rx_gb">Insgesamt über Mobilfunk gesendete Daten seit dem letzten Neustart (GB)</string>
   <string name="sensor_description_mobile_tx_gb">Insgesamt über Mobilfunk empfangene Daten seit dem letzten Neustart (GB)</string>
   <string name="sensor_description_music_active">Gibt an, ob auf dem Gerät aktiv Musik abgespielt wird</string>
@@ -347,7 +343,6 @@
   <string name="sensor_name_light">Helligkeitssensor</string>
   <string name="sensor_name_location">Standortsensoren</string>
   <string name="sensor_name_mic_muted">Mikrofon stummgeschaltet</string>
-  <string name="sensor_name_mobile_data">Mobile Daten Sensoren</string>
   <string name="sensor_name_music_active">Musik wird abgespielt</string>
   <string name="sensor_name_network">Netzwerksensoren</string>
   <string name="sensor_name_phone">Telefonsensoren</string>
