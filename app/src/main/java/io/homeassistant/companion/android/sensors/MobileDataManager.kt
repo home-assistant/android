@@ -57,12 +57,10 @@ class MobileDataManager : SensorManager {
             return
 
         var enabled = false
-        if (checkPermission(context, sensor.id)) {
-            val telephonyManager =
-                (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
-            if (telephonyManager.simState == TelephonyManager.SIM_STATE_READY) {
-                enabled = getInt(context.contentResolver, settingKey, 0) == 1
-            }
+        val telephonyManager =
+            (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
+        if (telephonyManager.simState == TelephonyManager.SIM_STATE_READY) {
+            enabled = getInt(context.contentResolver, settingKey, 0) == 1
         }
         onSensorUpdated(
             context,
