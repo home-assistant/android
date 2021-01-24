@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.provider.Settings
 import android.provider.Settings.Global.getInt
 import android.telephony.TelephonyManager
@@ -33,6 +34,10 @@ class MobileDataManager : SensorManager {
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf()
+    }
+
+    override fun hasSensor(context: Context): Boolean {
+        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
 
     override fun requestSensorUpdate(
