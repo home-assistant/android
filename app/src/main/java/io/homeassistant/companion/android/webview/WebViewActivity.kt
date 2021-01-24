@@ -460,8 +460,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
 
                     if ((fineLocation || coarseLocation)) {
-                        if (!DisabledLocationHandler.isLocationEnabled(this, fineLocation))
-                            showLocationDisabledWarning = true
+                        if (!DisabledLocationHandler.isLocationEnabled(this, fineLocation)) showLocationDisabledWarning = true
                         settingsWithLocationPermissions.add(getString(basicSensor.name))
                     }
                 }

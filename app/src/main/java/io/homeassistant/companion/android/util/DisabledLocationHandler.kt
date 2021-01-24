@@ -46,16 +46,10 @@ object DisabledLocationHandler {
         NotificationManagerCompat.from(activity).cancel(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode())
     }
 
-    fun showLocationDisabledWarnDialog(
-        activity: Activity,
-        settings: Array<String>,
-        showAsNotification: Boolean = false,
-        withDisableOption: Boolean = false,
-        negativeCallback: (() -> Unit)? = null
-    ) {
+    fun showLocationDisabledWarnDialog(activity: Activity, settings: Array<String>, showAsNotification: Boolean = false, withDisableOption: Boolean = false, callback: (() -> Unit)? = null) {
         var positionTextId = R.string.confirm_positive
         var negativeTextId = R.string.confirm_negative
-        if (withDisableOption && negativeCallback != null) {
+        if (withDisableOption && callback != null) {
             negativeTextId = R.string.location_disabled_option_disable
         }
 
@@ -70,7 +64,7 @@ object DisabledLocationHandler {
         for (setting in settings)
             parameters += "- $setting\n"
 
-        if ((!withDisableOption || negativeCallback == null) && showAsNotification) {
+        if ((!withDisableOption || callback == null) && showAsNotification) {
             val notificationManager = NotificationManagerCompat.from(activity)
             if (notificationManager.getActiveNotification(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode()) == null) {
                 var channelID = "Location disabled"
@@ -107,8 +101,8 @@ object DisabledLocationHandler {
                     activity.applicationContext.startActivity(intent)
                 }
                 .setNegativeButton(negativeTextId) { _, _ ->
-                    if (withDisableOption && negativeCallback != null) {
-                        negativeCallback()
+                    if (withDisableOption && callback != null) {
+                        callback()
                     }
                 }.show()
         }
