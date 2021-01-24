@@ -275,10 +275,16 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 } else openSsidDialog()
             } else {
                 if (presenter.isSsidUsed()) {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)), true) {
-                        presenter.clearSsids()
-                        preference.setSsids(emptySet())
-                    }
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(
+                        requireActivity(),
+                        arrayOf(getString(R.string.pref_connection_wifi)),
+                        showAsNotification = false,
+                        withDisableOption = true,
+                        negativeCallback = fun() {
+                            presenter.clearSsids()
+                            preference.setSsids(emptySet())
+                        }
+                    )
                 } else {
                     DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)))
                 }

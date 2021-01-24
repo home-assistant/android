@@ -446,7 +446,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun checkAndWarnForDisabledLocation() {
         var showLocationDisabledWarning = false
-
         var settingsWithLocationPermissions = mutableListOf<String>()
         if (!DisabledLocationHandler.isLocationEnabled(this, false) && presenter.isSsidUsed()) {
             showLocationDisabledWarning = true
@@ -462,7 +461,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
                     if ((fineLocation || coarseLocation)) {
                         if (!DisabledLocationHandler.isLocationEnabled(this, fineLocation))
-                        showLocationDisabledWarning = true
+                            showLocationDisabledWarning = true
                         settingsWithLocationPermissions.add(getString(basicSensor.name))
                     }
                 }
@@ -470,7 +469,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         if (showLocationDisabledWarning) {
-            DisabledLocationHandler.showLocationDisabledWarnDialog(this@WebViewActivity, settingsWithLocationPermissions.toTypedArray())
+            DisabledLocationHandler.showLocationDisabledWarnDialog(this@WebViewActivity, settingsWithLocationPermissions.toTypedArray(), true)
+        } else {
+            DisabledLocationHandler.removeLocationDisabledWarning(this@WebViewActivity)
         }
     }
 
