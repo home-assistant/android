@@ -60,6 +60,8 @@
   <string name="basic_sensor_name_location_accurate">Single Accurate Location</string>
   <string name="basic_sensor_name_location_background">Background Location</string>
   <string name="basic_sensor_name_location_zone">Location Zone</string>
+  <string name="basic_sensor_name_mobile_data">Mobile Data</string>
+  <string name="basic_sensor_name_mobile_data_roaming">Mobile Data Roaming</string>
   <string name="basic_sensor_name_mobile_rx_gb">Mobile Rx GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Mobile Tx GB</string>
   <string name="basic_sensor_name_phone">Phone State</string>
@@ -321,6 +323,8 @@ like to connect to:</string>
   <string name="sensor_description_location_zone">Import existing Home Assistant zones as geofences for zone based tracking.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.</string>
   <string name="sensor_description_lullaby">If a lullaby is playing</string>
   <string name="sensor_description_mic_muted">Whether or not the microphone is muted on the device</string>
+  <string name="sensor_description_mobile_data">Whether or not mobile data is enabled on the device</string>
+  <string name="sensor_description_mobile_data_roaming">Whether or not mobile data roaming is enabled on the device</string>
   <string name="sensor_description_mobile_rx_gb">Total Rx GB on cellular data since last device reboot</string>
   <string name="sensor_description_mobile_tx_gb">Total Tx GB on cellular data since last device reboot</string>
   <string name="sensor_description_music_active">Whether or not music is actively playing on the device</string>
@@ -368,6 +372,7 @@ like to connect to:</string>
   <string name="sensor_name_light">Light Sensor</string>
   <string name="sensor_name_location">Location Sensors</string>
   <string name="sensor_name_mic_muted">Mic Muted</string>
+  <string name="sensor_name_mobile_data">Mobile Data Sensors</string>
   <string name="sensor_name_music_active">Music Active</string>
   <string name="sensor_name_network">Network Sensors</string>
   <string name="sensor_name_phone">Phone Sensors</string>
