@@ -10,6 +10,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
@@ -21,6 +22,8 @@ import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import java.util.Calendar
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 class HighAccuracyLocationService : Service() {
 
@@ -51,7 +54,40 @@ class HighAccuracyLocationService : Service() {
             alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, restartServicePI)
         }
 
-        fun updateNotificationContentText(context: Context, text: String) {
+        fun updateNotificationAddress(context: Context, location: Location, geocodedAddress: String = "") {
+            var locationReadable = geocodedAddress
+            if (locationReadable.isNullOrEmpty()) {
+                locationReadable = getFormattedLocationInDegree(location.latitude, location.longitude)
+            }
+            locationReadable = "$locationReadable (~${location.accuracy}m)"
+
+            updateNotificationContentText(context, locationReadable)
+        }
+
+        private fun getFormattedLocationInDegree(latitude: Double, longitude: Double): String {
+            return try {
+                var latSeconds = (latitude * 3600).roundToInt()
+                val latDegrees = latSeconds / 3600
+                latSeconds = abs(latSeconds % 3600)
+                val latMinutes = latSeconds / 60
+                latSeconds %= 60
+                var longSeconds = (longitude * 3600).roundToInt()
+                val longDegrees = longSeconds / 3600
+                longSeconds = abs(longSeconds % 3600)
+                val longMinutes = longSeconds / 60
+                longSeconds %= 60
+                val latDegree = if (latDegrees >= 0) "N" else "S"
+                val lonDegrees = if (longDegrees >= 0) "E" else "W"
+                (abs(latDegrees).toString() + "°" + latMinutes + "'" + latSeconds +
+                        "\"" + latDegree + " " + abs(longDegrees) + "°" + longMinutes +
+                        "'" + longSeconds + "\"" + lonDegrees)
+            } catch (e: java.lang.Exception) {
+                ("" + String.format("%8.5f", latitude) + "  " +
+                        String.format("%8.5f", longitude))
+            }
+        }
+
+        private fun updateNotificationContentText(context: Context, text: String) {
             if (isRunning) {
                 val notificationManager = NotificationManagerCompat.from(context)
                 val notificationId = HIGH_ACCURACY_LOCATION_NOTIFICATION_ID.hashCode()
@@ -68,9 +104,16 @@ class HighAccuracyLocationService : Service() {
             var channelID = "High accuracy location"
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(channelID, context.getString(R.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_NONE)
+                val channel = NotificationChannel(channelID, context.getString(R.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_HIGH)
                 notificationManager.createNotificationChannel(channel)
             }
+
+            val disableIntent = Intent(context, HighAccuracyLocationReceiver::class.java)
+            disableIntent.apply {
+                action = HighAccuracyLocationReceiver.HIGH_ACCURACY_LOCATION_DISABLE
+            }
+
+            val disablePendingIntent = PendingIntent.getBroadcast(context, 0, disableIntent, 0)
 
             notificationBuilder = NotificationCompat.Builder(context, channelID)
                 .setSmallIcon(R.drawable.ic_stat_ic_notification)
@@ -78,7 +121,9 @@ class HighAccuracyLocationService : Service() {
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setContentTitle(context.getString(R.string.high_accuracy_mode_notification_title))
+                .setVisibility(NotificationCompat.VISIBILITY_SECRET) // This hides the notification from lock screen
                 .setCategory(Notification.CATEGORY_SERVICE)
+                .addAction(0, context.getString(R.string.disable), disablePendingIntent)
         }
 
         private var isRunning = false

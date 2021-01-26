@@ -94,7 +94,7 @@ class GeocodeSensorManager : SensorManager {
 
             val prettyAddress = address?.getAddressLine(0) ?: "Unknown"
 
-            HighAccuracyLocationService.updateNotificationContentText(context, "$prettyAddress (~${location.accuracy}m)")
+            HighAccuracyLocationService.updateNotificationAddress(context, location, prettyAddress)
 
             onSensorUpdated(
                 context,

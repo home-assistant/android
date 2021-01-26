@@ -39,7 +39,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         private const val SETTING_ACCURACY = "Minimum Accuracy"
         private const val SETTING_ACCURATE_UPDATE_TIME = "Minimum time between updates"
         private const val SETTING_INCLUDE_SENSOR_UPDATE = "Include in sensor update"
-        private const val SETTING_HIGH_ACCURACY_MODE = "High accuracy mode (May drain battery fast)"
+        const val SETTING_HIGH_ACCURACY_MODE = "High accuracy mode (May drain battery fast)"
         private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL = "High accuracy mode update interval (seconds)"
         private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES = "High accuracy mode only when connected to BT devices"
 
@@ -207,7 +207,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             LocationSensorManager.backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
             "number",
-            DEFAULT_UPDATE_INTERVAL_HA_SECONDS.toString())
+            DEFAULT_UPDATE_INTERVAL_HA_SECONDS.toString()
+        )
 
         return updateIntervalHighAccuracySeconds.toInt()
     }
@@ -219,24 +220,23 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             LocationSensorManager.backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES,
             "list-bluetooth",
-            "")
+            ""
+        )
 
-        var lastHighAccuracyMode = getSetting(
+        var highAccuracyMode = getSetting(
             latestContext,
             LocationSensorManager.backgroundLocation,
             SETTING_HIGH_ACCURACY_MODE,
             "toggle",
-            "false").toBoolean()
+            "false"
+        ).toBoolean()
 
-        var highAccuracyMode = lastHighAccuracyMode
-        if (!highAccuracyModeBTDevices.isNullOrEmpty()) {
-            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
-            val highAccuracyBtDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.name) }
+        if (highAccuracyMode) {
+            if (!highAccuracyModeBTDevices.isNullOrEmpty()) {
+                val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
+                val highAccuracyBtDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.name) }
 
-            highAccuracyMode = highAccuracyBtDevConnected
-            if (highAccuracyMode != lastHighAccuracyMode) {
-                val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-                sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, highAccuracyMode.toString(), "toggle"))
+                highAccuracyMode = highAccuracyBtDevConnected
             }
         }
         return highAccuracyMode
@@ -317,7 +317,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
                 // Update GeoLocation Sensor (if enabled) with new Location
-                SensorReceiver.MANAGERS.firstOrNull { it.availableSensors.any { s -> s.name == R.string.basic_sensor_name_geolocation } }?.requestSensorUpdate(latestContext)
+                val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.availableSensors.any { s -> s.name == R.string.basic_sensor_name_geolocation } }
+                if (geoSensorManager != null) {
+                    if (geoSensorManager.isEnabled(latestContext, "geocoded_location")) {
+                        geoSensorManager.requestSensorUpdate(latestContext)
+                    } else {
+                        HighAccuracyLocationService.updateNotificationAddress(latestContext, location)
+                    }
+                }
 
                 // Send new location to Home Assistant
                 sendLocationUpdate(location)
@@ -605,8 +612,10 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 Manifest.permission.BLUETOOTH
             )
         } else {
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.BLUETOOTH)
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.BLUETOOTH
+            )
         }
     }
 
