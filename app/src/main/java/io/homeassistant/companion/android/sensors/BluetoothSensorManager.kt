@@ -1,12 +1,9 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
-import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothManager
-import android.bluetooth.BluetoothProfile.GATT
 import android.content.Context
 import io.homeassistant.companion.android.R
-import java.lang.reflect.Method
+import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 
 class BluetoothSensorManager : SensorManager {
     companion object {
@@ -50,43 +47,17 @@ class BluetoothSensorManager : SensorManager {
 
         var totalConnectedDevices = 0
         val icon = "mdi:bluetooth"
-        val connectedPairedDevices: MutableList<String> = ArrayList()
-        val connectedNotPairedDevices: MutableList<String> = ArrayList()
+        var connectedPairedDevices: List<String> = ArrayList()
+        var connectedNotPairedDevices: List<String> = ArrayList()
         var bondedString = ""
 
         if (checkPermission(context, bluetoothConnection.id)) {
 
-            val bluetoothManager =
-                (context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
-
-            if (bluetoothManager.adapter != null) {
-                val btConnectedDevices = bluetoothManager.getConnectedDevices(GATT)
-                var connectedAddress = ""
-
-                val adapter = bluetoothManager.adapter
-                val isBtOn = adapter.isEnabled
-
-                if (isBtOn) {
-                    val bondedDevices = adapter.bondedDevices
-                    bondedString = bondedDevices.toString()
-                    for (BluetoothDevice in bondedDevices) {
-                        if (isConnected(BluetoothDevice)) {
-                            connectedAddress = BluetoothDevice.address
-                            connectedPairedDevices.add(connectedAddress)
-                            totalConnectedDevices += 1
-                        }
-                    }
-                    for (BluetoothDevice in btConnectedDevices) {
-                        if (isConnected(BluetoothDevice)) {
-                            val connectedNotPairedAddress = BluetoothDevice.address
-                            connectedNotPairedDevices.add(connectedNotPairedAddress)
-                            if (connectedNotPairedAddress != connectedAddress) {
-                                totalConnectedDevices += 1
-                            }
-                        }
-                    }
-                }
-            }
+            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(context)
+            bondedString = bluetoothDevices.filter { b -> b.paired }.map { it.address }.toString()
+            connectedPairedDevices = bluetoothDevices.filter { b -> b.paired && b.connected }.map { it.address }
+            connectedNotPairedDevices = bluetoothDevices.filter { b -> !b.paired && b.connected }.map { it.address }
+            totalConnectedDevices = bluetoothDevices.filter { b -> b.connected }.count()
         }
         onSensorUpdated(
             context,
@@ -108,14 +79,7 @@ class BluetoothSensorManager : SensorManager {
         var isBtOn = false
 
         if (checkPermission(context, bluetoothState.id)) {
-
-            val bluetoothManager =
-                (context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
-
-            if (bluetoothManager.adapter != null) {
-                val adapter = bluetoothManager.adapter
-                isBtOn = adapter.isEnabled
-            }
+            isBtOn = BluetoothUtils.isOn(context)
         }
         val icon = if (isBtOn) "mdi:bluetooth" else "mdi:bluetooth-off"
 
@@ -126,14 +90,5 @@ class BluetoothSensorManager : SensorManager {
             icon,
             mapOf()
         )
-    }
-
-    private fun isConnected(device: BluetoothDevice): Boolean {
-        return try {
-            val m: Method = device.javaClass.getMethod("isConnected")
-            m.invoke(device) as Boolean
-        } catch (e: Exception) {
-            throw IllegalStateException(e)
-        }
     }
 }
