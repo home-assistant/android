@@ -104,7 +104,7 @@ class HighAccuracyLocationService : Service() {
             var channelID = "High accuracy location"
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(channelID, context.getString(R.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_HIGH)
+                val channel = NotificationChannel(channelID, context.getString(R.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
                 notificationManager.createNotificationChannel(channel)
             }
 
