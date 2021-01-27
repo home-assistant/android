@@ -39,7 +39,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         private const val SETTING_ACCURACY = "Minimum Accuracy"
         private const val SETTING_ACCURATE_UPDATE_TIME = "Minimum time between updates"
         private const val SETTING_INCLUDE_SENSOR_UPDATE = "Include in sensor update"
-        const val SETTING_HIGH_ACCURACY_MODE = "High accuracy mode (May drain battery fast)"
+        private const val SETTING_HIGH_ACCURACY_MODE = "High accuracy mode (May drain battery fast)"
         private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL = "High accuracy mode update interval (seconds)"
         private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES = "High accuracy mode only when connected to BT devices"
 
@@ -85,6 +85,17 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         private var lastHighAccuracyMode = false
         private var lastHighAccuracyUpdateInterval = DEFAULT_MINIMUM_ACCURACY
+
+        fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
+            val sensorDao = AppDatabase.getInstance(context).sensorDao()
+            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), "toogle"))
+        }
+
+        fun getHighAccuracyModeIntervalSetting(context: Context): Int {
+            val sensorDao = AppDatabase.getInstance(context).sensorDao()
+            val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
+            return sensorSettings.firstOrNull { it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL }?.value?.toIntOrNull() ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
+        }
     }
 
     @Inject

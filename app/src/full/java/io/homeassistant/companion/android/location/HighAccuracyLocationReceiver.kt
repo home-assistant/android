@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.location
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Setting
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 
 class HighAccuracyLocationReceiver : BroadcastReceiver() {
@@ -18,8 +16,7 @@ class HighAccuracyLocationReceiver : BroadcastReceiver() {
             HIGH_ACCURACY_LOCATION_DISABLE ->
             {
                 HighAccuracyLocationService.stopService(context)
-                val sensorDao = AppDatabase.getInstance(context).sensorDao()
-                sensorDao.add(Setting(LocationSensorManager.backgroundLocation.id, LocationSensorManager.SETTING_HIGH_ACCURACY_MODE, "false", "toggle"))
+                LocationSensorManager.setHighAccuracyModeSetting(context, false)
             }
         }
     }

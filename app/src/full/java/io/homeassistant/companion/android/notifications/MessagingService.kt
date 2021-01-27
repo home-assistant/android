@@ -39,6 +39,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
@@ -80,6 +81,7 @@ class MessagingService : FirebaseMessagingService() {
         const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
+        const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -105,7 +107,7 @@ class MessagingService : FirebaseMessagingService() {
 
         // Command groups
         val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
-            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH)
+            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_HIGH_ACCURACY_MODE)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
@@ -216,6 +218,16 @@ class MessagingService : FirebaseMessagingService() {
                             else {
                                 mainScope.launch {
                                     Log.d(TAG, "Invalid bluetooth command received, posting notification to device")
+                                    sendNotification(it)
+                                }
+                            }
+                        }
+                        COMMAND_HIGH_ACCURACY_MODE -> {
+                            if (!it[TITLE].isNullOrEmpty() && it[TITLE] in ENABLE_COMMANDS)
+                                handleDeviceCommands(it)
+                            else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid high accuracy mode command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
@@ -392,6 +404,16 @@ class MessagingService : FirebaseMessagingService() {
                     bluetoothAdapter.disable()
                 if (title == TURN_ON)
                     bluetoothAdapter.enable()
+            }
+            COMMAND_HIGH_ACCURACY_MODE -> {
+                if (title == TURN_OFF) {
+                    HighAccuracyLocationService.stopService(applicationContext)
+                    LocationSensorManager.setHighAccuracyModeSetting(applicationContext, false)
+                }
+                if (title == TURN_ON) {
+                    HighAccuracyLocationService.startService(applicationContext, LocationSensorManager.getHighAccuracyModeIntervalSetting(applicationContext))
+                    LocationSensorManager.setHighAccuracyModeSetting(applicationContext, true)
+                }
             }
             else -> Log.d(TAG, "No command received")
         }
