@@ -210,7 +210,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             DEFAULT_UPDATE_INTERVAL_HA_SECONDS.toString()
         )
 
-        return updateIntervalHighAccuracySeconds.toInt()
+        var updateIntervalHighAccuracySecondsInt = updateIntervalHighAccuracySeconds.toInt()
+        if (updateIntervalHighAccuracySecondsInt < 5) {
+            updateIntervalHighAccuracySecondsInt = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
+
+            val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
+            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, updateIntervalHighAccuracySecondsInt.toString(), "number"))
+        }
+        return updateIntervalHighAccuracySecondsInt
     }
 
     private fun getHighAccuracyMode(): Boolean {

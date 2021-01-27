@@ -210,6 +210,8 @@ class SensorDetailFragment(
                             pref.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
                         else {
                             pref.summary = setting.value
+                        }
+                        if (pref.text != setting.value) {
                             pref.text = setting.value
                         }
                         pref.isIconSpaceReserved = false
