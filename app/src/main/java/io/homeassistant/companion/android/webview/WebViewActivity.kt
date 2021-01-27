@@ -438,7 +438,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         super.onResume()
         if (currentLang != languagesManager.getCurrentLang())
             recreate()
-        if (!unlocked && !presenter.isLockEnabled())
+        if ((!unlocked && !presenter.isLockEnabled()) ||
+            (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis()))
             unlocked = true
 
         checkAndWarnForDisabledLocation()
