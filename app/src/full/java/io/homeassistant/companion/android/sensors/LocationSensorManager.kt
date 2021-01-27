@@ -88,7 +88,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), "toogle"))
+            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), "toggle"))
         }
 
         fun getHighAccuracyModeIntervalSetting(context: Context): Int {
