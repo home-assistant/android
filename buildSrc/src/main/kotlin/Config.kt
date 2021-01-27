@@ -1,7 +1,7 @@
 object Config {
 
     object Plugin {
-        const val android = "com.android.tools.build:gradle:4.1.1"
+        const val android = "com.android.tools.build:gradle:4.1.2"
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
         const val google = "com.google.gms:google-services:4.3.4"
         const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:2.0.1"
@@ -22,15 +22,15 @@ object Config {
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
             const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${version}"
 
-            private const val coroutinesVersion = "1.4.1"
+            private const val coroutinesVersion = "1.4.2"
             const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}"
-            const val coroutinesPlayServices = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.4.1"
+            const val coroutinesPlayServices = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:${coroutinesVersion}"
             const val coroutinesAndroid = "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}"
             const val coroutinesTest = "org.jetbrains.kotlinx:kotlinx-coroutines-test:${coroutinesVersion}"
         }
 
         object Google {
-            private const val daggerVersion = "2.30.1"
+            private const val daggerVersion = "2.31.2"
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
@@ -51,13 +51,13 @@ object Config {
 
             const val wear = "androidx.wear:wear:1.1.0"
 
-            const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.0"
-            const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.0"
+            const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.2"
+            const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.2"
 
             const val workManager = "androidx.work:work-runtime-ktx:2.4.0"
             const val biometric = "androidx.biometric:biometric:1.0.1"
 
-            private const val roomVersion = "2.2.5"
+            private const val roomVersion = "2.2.6"
             const val roomRuntime = "androidx.room:room-runtime:${roomVersion}"
             const val roomKtx = "androidx.room:room-ktx:${roomVersion}"
             const val roomCompiler = "androidx.room:room-compiler:${roomVersion}"
@@ -100,9 +100,9 @@ object Config {
         }
 
         object Misc {
-            const val sentry = "io.sentry:sentry-android:3.2.0"
-            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.3"
-            const val blurView = "com.eightbitlab:blurview:1.6.3"
+            const val sentry = "io.sentry:sentry-android:3.2.1"
+            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.1"
+            const val blurView = "com.eightbitlab:blurview:1.6.5"
             const val iconDialog = "com.maltaisn:icondialog:3.3.0"
             const val iconDialogMaterial = "com.maltaisn:iconpack-community-material:5.3.45"
             const val emoji = "com.vdurmont:emoji-java:5.1.1"
