@@ -483,4 +483,5 @@ like to connect to:</string>
   <string name="widget_text_size_label">Widget text size:</string>
   <string name="widgets">Widgets</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
+  <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
 </resources>
