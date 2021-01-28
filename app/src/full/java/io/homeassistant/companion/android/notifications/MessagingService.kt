@@ -237,7 +237,7 @@ class MessagingService : FirebaseMessagingService() {
                             }
                         }
                         COMMAND_ACTIVITY -> {
-                            if (!it[TITLE].isNullOrEmpty())
+                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty())
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
