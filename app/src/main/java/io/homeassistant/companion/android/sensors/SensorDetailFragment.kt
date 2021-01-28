@@ -16,6 +16,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import androidx.preference.contains
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -189,6 +190,7 @@ class SensorDetailFragment(
                         pref.title = setting.name
                         pref.isChecked = setting.value == "true"
                         pref.isIconSpaceReserved = false
+                        pref.isSingleLineTitle = false
                         pref.setOnPreferenceChangeListener { _, newState ->
                             val isEnabled = newState as Boolean
 
@@ -203,10 +205,13 @@ class SensorDetailFragment(
                         pref.key = key
                         pref.title = setting.name
                         pref.dialogTitle = setting.name
+                        pref.isSingleLineTitle = false
                         if (pref.text != null)
                             pref.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
                         else {
                             pref.summary = setting.value
+                        }
+                        if (pref.text != setting.value) {
                             pref.text = setting.value
                         }
                         pref.isIconSpaceReserved = false
@@ -247,6 +252,7 @@ class SensorDetailFragment(
                         pref.entryValues = packageName.toTypedArray()
                         pref.dialogTitle = setting.name
                         pref.isIconSpaceReserved = false
+                        pref.isSingleLineTitle = false
                         pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
                                 Setting(
@@ -254,6 +260,35 @@ class SensorDetailFragment(
                                     setting.name,
                                     newValue.toString().replace("[", "").replace("]", ""),
                                     "list-apps"
+                                )
+                            )
+                            sensorManager.requestSensorUpdate(requireContext())
+                            return@setOnPreferenceChangeListener true
+                        }
+                        if (pref.values != null)
+                            pref.summary = pref.values.toString()
+                        else
+                            pref.summary = setting.value
+                        if (!it.contains(pref))
+                            it.addPreference(pref)
+                    } else if (setting.valueType == "list-bluetooth") {
+                        val btDevices = BluetoothUtils.getBluetoothDevices(requireContext()).map { b -> b.name }
+
+                        val pref = findPreference(key) ?: MultiSelectListPreference(requireContext())
+                        pref.key = key
+                        pref.title = setting.name
+                        pref.entries = btDevices.toTypedArray()
+                        pref.entryValues = btDevices.toTypedArray()
+                        pref.dialogTitle = setting.name
+                        pref.isIconSpaceReserved = false
+                        pref.isSingleLineTitle = false
+                        pref.setOnPreferenceChangeListener { _, newValue ->
+                            sensorDao.add(
+                                Setting(
+                                    basicSensor.id,
+                                    setting.name,
+                                    newValue.toString().replace("[", "").replace("]", ""),
+                                    "list-bluetooth"
                                 )
                             )
                             sensorManager.requestSensorUpdate(requireContext())
