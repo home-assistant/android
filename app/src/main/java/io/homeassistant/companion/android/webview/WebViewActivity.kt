@@ -442,7 +442,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis()))
             unlocked = true
 
+        SensorWorker.start(this)
         checkAndWarnForDisabledLocation()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        SensorWorker.start(this)
     }
 
     private fun checkAndWarnForDisabledLocation() {
