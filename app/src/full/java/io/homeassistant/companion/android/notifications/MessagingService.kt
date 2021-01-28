@@ -237,7 +237,7 @@ class MessagingService : FirebaseMessagingService() {
                             }
                         }
                         COMMAND_ACTIVITY -> {
-                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty())
+                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty() && !it["group"].isNullOrEmpty())
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
@@ -446,8 +446,9 @@ class MessagingService : FirebaseMessagingService() {
             COMMAND_ACTIVITY -> {
                 try {
                     val packageName = data["channel"]
+                    val action = data["group"]
                     val mapsIntentUri = Uri.parse(title)
-                    val mapIntent = Intent(Intent.ACTION_VIEW, mapsIntentUri)
+                    val mapIntent = Intent(action, mapsIntentUri)
                     mapIntent.setPackage(packageName)
                     mapIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     startActivity(mapIntent)
