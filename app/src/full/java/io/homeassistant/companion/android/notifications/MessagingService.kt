@@ -367,6 +367,14 @@ class MessagingService : FirebaseMessagingService() {
                 try {
                     val packageName = data["channel"]
                     val intent = Intent(title)
+                    val extras = data["group"]
+                    if (!extras.isNullOrEmpty()) {
+                        val items = extras.split(',')
+                        for (item in items) {
+                            val pair = item.split(":")
+                            intent.putExtra(pair[0], pair[1])
+                        }
+                    }
                     intent.`package` = packageName
                     Log.d(TAG, "Sending broadcast intent")
                     applicationContext.sendBroadcast(intent)
