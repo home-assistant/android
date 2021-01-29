@@ -13,6 +13,7 @@ import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -82,6 +83,7 @@ class MessagingService : FirebaseMessagingService() {
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
+        const val COMMAND_ACTIVITY = "command_activity"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -107,7 +109,7 @@ class MessagingService : FirebaseMessagingService() {
 
         // Command groups
         val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
-            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_HIGH_ACCURACY_MODE)
+            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
@@ -227,7 +229,19 @@ class MessagingService : FirebaseMessagingService() {
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
-                                    Log.d(TAG, "Invalid high accuracy mode command received, posting notification to device")
+                                    Log.d(
+                                        TAG,
+                                        "Invalid high accuracy mode command received, posting notification to device"
+                                    )
+                                }
+                            }
+                        }
+                        COMMAND_ACTIVITY -> {
+                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty() && !it["group"].isNullOrEmpty())
+                                handleDeviceCommands(it)
+                            else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid navigation command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
@@ -380,7 +394,13 @@ class MessagingService : FirebaseMessagingService() {
                     applicationContext.sendBroadcast(intent)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to send broadcast intent please check command format", e)
-                    Toast.makeText(applicationContext, R.string.broadcast_intent_error, Toast.LENGTH_LONG).show()
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            applicationContext,
+                            R.string.broadcast_intent_error,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
             COMMAND_VOLUME_LEVEL -> {
@@ -421,6 +441,26 @@ class MessagingService : FirebaseMessagingService() {
                 if (title == TURN_ON) {
                     HighAccuracyLocationService.startService(applicationContext, LocationSensorManager.getHighAccuracyModeIntervalSetting(applicationContext))
                     LocationSensorManager.setHighAccuracyModeSetting(applicationContext, true)
+                }
+            }
+            COMMAND_ACTIVITY -> {
+                try {
+                    val packageName = data["channel"]
+                    val action = data["group"]
+                    val intentUri = Uri.parse(title)
+                    val intent = Intent(action, intentUri)
+                    intent.setPackage(packageName)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to send activity intent please check command format", e)
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            applicationContext,
+                            R.string.activity_intent_error,
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
             else -> Log.d(TAG, "No command received")
