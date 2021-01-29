@@ -28,6 +28,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
+import androidx.core.text.isDigitsOnly
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.vdurmont.emoji.EmojiParser
@@ -237,7 +238,7 @@ class MessagingService : FirebaseMessagingService() {
                             }
                         }
                         COMMAND_ACTIVITY -> {
-                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty() && !it["group"].isNullOrEmpty())
+                            if (!it["group"].isNullOrEmpty())
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
@@ -386,7 +387,7 @@ class MessagingService : FirebaseMessagingService() {
                         val items = extras.split(',')
                         for (item in items) {
                             val pair = item.split(":")
-                            intent.putExtra(pair[0], pair[1])
+                            intent.putExtra(pair[0], if (pair[1].isDigitsOnly()) pair[1].toInt() else pair[1])
                         }
                     }
                     intent.`package` = packageName
@@ -447,11 +448,30 @@ class MessagingService : FirebaseMessagingService() {
                 try {
                     val packageName = data["channel"]
                     val action = data["group"]
-                    val intentUri = Uri.parse(title)
-                    val intent = Intent(action, intentUri)
-                    intent.setPackage(packageName)
+                    val intentUri = if (!title.isNullOrEmpty()) Uri.parse(title) else null
+                    val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
+                    val type = data["subject"]
+                    if (!type.isNullOrEmpty())
+                        intent.type = type
+                    val extras = data["tag"]
+                    if (!extras.isNullOrEmpty()) {
+                        val items = extras.split(',')
+                        for (item in items) {
+                            val pair = item.split(":")
+                            intent.putExtra(pair[0], if (pair[1].isDigitsOnly()) pair[1].toInt() else pair[1])
+                        }
+                    }
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
+                    if (!packageName.isNullOrEmpty()) {
+                        intent.setPackage(packageName)
+                        startActivity(intent)
+                    } else if (intent.resolveActivity(applicationContext.packageManager) != null)
+                        startActivity(intent)
+                    else
+                        mainScope.launch {
+                            Log.d(TAG, "Posting notification as we do not have enough data to start the activity")
+                            sendNotification(data)
+                        }
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to send activity intent please check command format", e)
                     Handler(Looper.getMainLooper()).post {
