@@ -447,11 +447,11 @@ class MessagingService : FirebaseMessagingService() {
                 try {
                     val packageName = data["channel"]
                     val action = data["group"]
-                    val mapsIntentUri = Uri.parse(title)
-                    val mapIntent = Intent(action, mapsIntentUri)
-                    mapIntent.setPackage(packageName)
-                    mapIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(mapIntent)
+                    val intentUri = Uri.parse(title)
+                    val intent = Intent(action, intentUri)
+                    intent.setPackage(packageName)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to send activity intent please check command format", e)
                     Handler(Looper.getMainLooper()).post {
