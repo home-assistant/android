@@ -491,4 +491,5 @@ like to connect to:</string>
   <string name="state_paused">Paused</string>
   <string name="state_returning">Returning</string>
   <string name="state_unavailable">Unavailable</string>
+  <string name="state_unknown">Unknown</string>
 </resources>

@@ -53,7 +53,7 @@ class VacuumControl {
                             "paused" -> context.getString(R.string.state_paused)
                             "returning" -> context.getString(R.string.state_returning)
                             "unavailable" -> context.getString(R.string.state_unavailable)
-                            else -> "unknown"
+                            else -> context.getString(R.string.state_unknown)
                         }
                     )
             control.setControlTemplate(
