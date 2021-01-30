@@ -106,13 +106,13 @@ class SensorReceiver : BroadcastReceiver() {
             val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
             for (setting in allSettings) {
                 if (setting.value != "" && intent.action == setting.value) {
+                    val eventData = intent.extras?.keySet()?.map { it to intent.extras?.get(it) }?.toMap()?.plus("intent" to intent.action.toString())
+                        ?: mapOf("intent" to intent.action.toString())
                     ioScope.launch {
                         try {
                             integrationUseCase.fireEvent(
                                 "android.intent_received",
-                                mapOf(
-                                    "intent" to intent.action.toString()
-                                )
+                                eventData as Map<String, Any>
                             )
                             Log.d(TAG, "Event successfully sent to Home Assistant")
                         } catch (e: Exception) {
