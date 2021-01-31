@@ -239,7 +239,7 @@ class MessagingService : FirebaseMessagingService() {
                             }
                         }
                         COMMAND_ACTIVITY -> {
-                            if (!it["group"].isNullOrEmpty())
+                            if (!it["tag"].isNullOrEmpty())
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
@@ -1057,13 +1057,13 @@ class MessagingService : FirebaseMessagingService() {
     private fun processActivityCommand(data: Map<String, String>) {
         try {
             val packageName = data["channel"]
-            val action = data["group"]
+            val action = data["tag"]
             val intentUri = if (!data[TITLE].isNullOrEmpty()) Uri.parse(data[TITLE]) else null
             val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
             val type = data["subject"]
             if (!type.isNullOrEmpty())
                 intent.type = type
-            val extras = data["tag"]
+            val extras = data["group"]
             if (!extras.isNullOrEmpty()) {
                 val items = extras.split(',')
                 for (item in items) {
