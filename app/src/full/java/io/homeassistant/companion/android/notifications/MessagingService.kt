@@ -243,7 +243,7 @@ class MessagingService : FirebaseMessagingService() {
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
-                                    Log.d(TAG, "Invalid navigation command received, posting notification to device")
+                                    Log.d(TAG, "Invalid activity command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
