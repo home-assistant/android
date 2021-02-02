@@ -59,7 +59,7 @@ object TransmitterManager {
                         haTransmitter.id1 = ""
                         haTransmitter.id2 = ""
                         haTransmitter.id3 = ""
-                        haTransmitter.state = "Error transmitting beacon"
+                        haTransmitter.state = "Unable to transmit"
                         haTransmitter.transmitting = false
                     } else {
                         haTransmitter.transmitting = true

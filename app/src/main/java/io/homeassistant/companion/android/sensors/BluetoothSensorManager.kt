@@ -111,20 +111,20 @@ class BluetoothSensorManager : SensorManager {
 
     private fun updatedBLEDevice(context: Context): Boolean {
         var result = false
-        var id1  = getSetting(context, bleTransmitter, BLE_ID1, "string", DEFAULT_BLE_ID1)
+        var id1 = getSetting(context, bleTransmitter, BLE_ID1, "string", DEFAULT_BLE_ID1)
         var id2 = getSetting(context, bleTransmitter, BLE_ID2, "string", DEFAULT_BLE_ID2)
         var id3 = getSetting(context, bleTransmitter, BLE_ID3, "string", DEFAULT_BLE_ID3)
         if (bleTransmitterDevice.id1 != id1 || bleTransmitterDevice.id2 != id2 || bleTransmitterDevice.id3 != id3) {
             result = true
+            bleTransmitterDevice.id1 = id1
+            bleTransmitterDevice.id2 = id2
+            bleTransmitterDevice.id3 = id3
         }
-        bleTransmitterDevice.id1 = id1
-        bleTransmitterDevice.id2 = id2
-        bleTransmitterDevice.id3 = id3
         return result
     }
 
     private fun updateBLEtrasnmitter(context: Context) {
-        if (!isEnabled(context, bleTransmitter.id) && bleTransmitterDevice.transmitting)               // sensor has been turned off, stop transmitting
+        if (!isEnabled(context, bleTransmitter.id) && bleTransmitterDevice.transmitting) // sensor has been turned off, stop transmitting
             TransmitterManager.stopTransmitting(bleTransmitterDevice)
         else if ((isEnabled(context, bleTransmitter.id) && !bleTransmitterDevice.transmitting) || updatedBLEDevice(context)) // sensor is on, start transmitting (which only start is not already running, or details have changed
             TransmitterManager.startTransmitting(context, bleTransmitterDevice)

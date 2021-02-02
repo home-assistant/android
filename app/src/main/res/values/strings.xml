@@ -424,6 +424,7 @@ like to connect to:</string>
   <string name="state_on">On</string>
   <string name="state_transmitting">Transmitting</string>
   <string name="state_not_transmitting">Unable to transmit</string>
+  <string name="state_stopped">Stopped</string>
   <string name="state_open">Open</string>
   <string name="state_opening">Opening</string>
   <string name="state_unlocked">Unlocked</string>
