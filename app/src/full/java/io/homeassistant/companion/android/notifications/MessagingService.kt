@@ -18,6 +18,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
@@ -238,11 +239,11 @@ class MessagingService : FirebaseMessagingService() {
                             }
                         }
                         COMMAND_ACTIVITY -> {
-                            if (!it["group"].isNullOrEmpty())
+                            if (!it["tag"].isNullOrEmpty())
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
-                                    Log.d(TAG, "Invalid navigation command received, posting notification to device")
+                                    Log.d(TAG, "Invalid activity command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
@@ -445,43 +446,13 @@ class MessagingService : FirebaseMessagingService() {
                 }
             }
             COMMAND_ACTIVITY -> {
-                try {
-                    val packageName = data["channel"]
-                    val action = data["group"]
-                    val intentUri = if (!title.isNullOrEmpty()) Uri.parse(title) else null
-                    val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
-                    val type = data["subject"]
-                    if (!type.isNullOrEmpty())
-                        intent.type = type
-                    val extras = data["tag"]
-                    if (!extras.isNullOrEmpty()) {
-                        val items = extras.split(',')
-                        for (item in items) {
-                            val pair = item.split(":")
-                            intent.putExtra(pair[0], if (pair[1].isDigitsOnly()) pair[1].toInt() else pair[1])
-                        }
-                    }
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    if (!packageName.isNullOrEmpty()) {
-                        intent.setPackage(packageName)
-                        startActivity(intent)
-                    } else if (intent.resolveActivity(applicationContext.packageManager) != null)
-                        startActivity(intent)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!Settings.canDrawOverlays(applicationContext))
+                        requestSystemAlertPermission()
                     else
-                        mainScope.launch {
-                            Log.d(TAG, "Posting notification as we do not have enough data to start the activity")
-                            sendNotification(data)
-                        }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send activity intent please check command format", e)
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(
-                            applicationContext,
-                            R.string.activity_intent_error,
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
+                        processActivityCommand(data)
+                } else
+                    processActivityCommand(data)
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -1025,7 +996,16 @@ class MessagingService : FirebaseMessagingService() {
     @RequiresApi(Build.VERSION_CODES.M)
     private fun requestDNDPermission() {
         val intent =
-            Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+            Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun requestSystemAlertPermission() {
+        val intent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:$packageName"))
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
     }
@@ -1071,6 +1051,46 @@ class MessagingService : FirebaseMessagingService() {
                 audioManager.setStreamVolume(AudioManager.STREAM_RING, volumeLevel, AudioManager.FLAG_SHOW_UI)
             }
             else -> Log.d(TAG, "Skipping command due to invalid channel stream")
+        }
+    }
+
+    private fun processActivityCommand(data: Map<String, String>) {
+        try {
+            val packageName = data["channel"]
+            val action = data["tag"]
+            val intentUri = if (!data[TITLE].isNullOrEmpty()) Uri.parse(data[TITLE]) else null
+            val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
+            val type = data["subject"]
+            if (!type.isNullOrEmpty())
+                intent.type = type
+            val extras = data["group"]
+            if (!extras.isNullOrEmpty()) {
+                val items = extras.split(',')
+                for (item in items) {
+                    val pair = item.split(":")
+                    intent.putExtra(pair[0], if (pair[1].isDigitsOnly()) pair[1].toInt() else pair[1])
+                }
+            }
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            if (!packageName.isNullOrEmpty()) {
+                intent.setPackage(packageName)
+                startActivity(intent)
+            } else if (intent.resolveActivity(applicationContext.packageManager) != null)
+                startActivity(intent)
+            else
+                mainScope.launch {
+                    Log.d(TAG, "Posting notification as we do not have enough data to start the activity")
+                    sendNotification(data)
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to send activity intent please check command format", e)
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(
+                    applicationContext,
+                    R.string.activity_intent_error,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 
