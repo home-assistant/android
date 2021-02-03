@@ -41,6 +41,7 @@ import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
+import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
@@ -82,6 +83,8 @@ class MessagingService : FirebaseMessagingService() {
         const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
+        const val COMMAND_BLE_TRANSMITTER = "command_ble_transmitter"
+
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
 
@@ -109,7 +112,7 @@ class MessagingService : FirebaseMessagingService() {
 
         // Command groups
         val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
-            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY)
+            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_BLE_TRANSMITTER, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
@@ -220,6 +223,16 @@ class MessagingService : FirebaseMessagingService() {
                             else {
                                 mainScope.launch {
                                     Log.d(TAG, "Invalid bluetooth command received, posting notification to device")
+                                    sendNotification(it)
+                                }
+                            }
+                        }
+                        COMMAND_BLE_TRANSMITTER -> {
+                            if (!it[TITLE].isNullOrEmpty() && it[TITLE] in ENABLE_COMMANDS)
+                                handleDeviceCommands(it)
+                            else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid ble transmitter command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
@@ -432,6 +445,12 @@ class MessagingService : FirebaseMessagingService() {
                     bluetoothAdapter.disable()
                 if (title == TURN_ON)
                     bluetoothAdapter.enable()
+            }
+            COMMAND_BLE_TRANSMITTER -> {
+                if (title == TURN_OFF)
+                    BluetoothSensorManager.enableDisableBLETransmitter(applicationContext, false)
+                if (title == TURN_ON)
+                    BluetoothSensorManager.enableDisableBLETransmitter(applicationContext, true)
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 if (title == TURN_OFF) {
