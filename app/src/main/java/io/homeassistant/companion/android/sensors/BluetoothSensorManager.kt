@@ -38,6 +38,7 @@ class BluetoothSensorManager : SensorManager {
                 R.string.basic_sensor_name_bluetooth_ble_emitter,
                 R.string.sensor_description_bluetooth_ble_emitter
         )
+
         fun enableDisableBLETransmitter(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             var sensorEntity = sensorDao.get(bleTransmitter.id)
@@ -68,7 +69,7 @@ class BluetoothSensorManager : SensorManager {
     }
 
     override fun requestSensorUpdate(
-        context: Context
+            context: Context
     ) {
         updateBluetoothConnectionSensor(context)
         updateBluetoothState(context)
@@ -142,9 +143,12 @@ class BluetoothSensorManager : SensorManager {
     }
 
     private fun updateBLEtransmitter(context: Context) {
-        if (!isEnabled(context, bleTransmitter.id) && bleTransmitterDevice.transmitting) // sensor has been turned off, stop transmitting
-            TransmitterManager.stopTransmitting(bleTransmitterDevice)
-        else if ((isEnabled(context, bleTransmitter.id) && !bleTransmitterDevice.transmitting) || isEnabled(context, bleTransmitter.id) && updatedBLEDevice(context)) // sensor is on, start transmitting (which only start is not already running, or details have changed
+        if (!isEnabled(context, bleTransmitter.id)) {
+            if (bleTransmitterDevice.transmitting) // sensor has been turned off, stop transmitting
+                TransmitterManager.stopTransmitting(bleTransmitterDevice)
+            return
+        }
+        if ((isEnabled(context, bleTransmitter.id) && !bleTransmitterDevice.transmitting) || isEnabled(context, bleTransmitter.id) && updatedBLEDevice(context)) // sensor is on, start transmitting (which only start is not already running, or details have changed
             TransmitterManager.startTransmitting(context, bleTransmitterDevice)
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
