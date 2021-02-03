@@ -69,7 +69,7 @@ class BluetoothSensorManager : SensorManager {
     }
 
     override fun requestSensorUpdate(
-            context: Context
+        context: Context
     ) {
         updateBluetoothConnectionSensor(context)
         updateBluetoothState(context)
