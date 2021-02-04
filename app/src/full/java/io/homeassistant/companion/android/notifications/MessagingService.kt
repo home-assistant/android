@@ -388,7 +388,15 @@ class MessagingService : FirebaseMessagingService() {
                         val items = extras.split(',')
                         for (item in items) {
                             val pair = item.split(":")
-                            intent.putExtra(pair[0], if (pair[1].isDigitsOnly()) pair[1].toInt() else pair[1])
+                            intent.putExtra(
+                                pair[0],
+                                if (pair[1].isDigitsOnly())
+                                    pair[1].toInt()
+                                else if ((pair[1].toLowerCase() == "true") ||
+                                    (pair[1].toLowerCase() == "false"))
+                                    pair[1].toBoolean()
+                                else pair[1]
+                            )
                         }
                     }
                     intent.`package` = packageName
@@ -1068,7 +1076,15 @@ class MessagingService : FirebaseMessagingService() {
                 val items = extras.split(',')
                 for (item in items) {
                     val pair = item.split(":")
-                    intent.putExtra(pair[0], if (pair[1].isDigitsOnly()) pair[1].toInt() else pair[1])
+                    intent.putExtra(
+                        pair[0],
+                        if (pair[1].isDigitsOnly())
+                            pair[1].toInt()
+                        else if ((pair[1].toLowerCase() == "true") ||
+                            (pair[1].toLowerCase() == "false"))
+                            pair[1].toBoolean()
+                        else pair[1]
+                    )
                 }
             }
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
