@@ -147,13 +147,18 @@ class BluetoothSensorManager : SensorManager {
                 TransmitterManager.stopTransmitting(bleTransmitterDevice)
             return
         }
-        if ((isEnabled(context, bleTransmitter.id) && !bleTransmitterDevice.transmitting) || isEnabled(context, bleTransmitter.id) && updatedBLEDevice(context)) // sensor is on, start transmitting (which only start is not already running, or details have changed
-            TransmitterManager.startTransmitting(context, bleTransmitterDevice)
+        // transmit when BT is on, if we are not already transmitting, or details have changed
+        if (isBtOn(context) &&
+                ((isEnabled(context, bleTransmitter.id) && !bleTransmitterDevice.transmitting) || isEnabled(context, bleTransmitter.id) && updatedBLEDevice(context))) {
+                TransmitterManager.startTransmitting(context, bleTransmitterDevice)
+        }
+
+        val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
                 context,
                 bleTransmitter,
-                bleTransmitterDevice.state,
+                state,
                 icon,
                 mapOf(
                         "Id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor
