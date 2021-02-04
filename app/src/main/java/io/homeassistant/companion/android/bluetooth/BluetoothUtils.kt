@@ -20,11 +20,13 @@ object BluetoothUtils {
             if (isBtOn) {
                 val bondedDevices = adapter.bondedDevices
                 for (btDev in bondedDevices) {
-                    devices.add(BluetoothDevice(btDev.address, btDev.name, true, isConnected(btDev)))
+                    val name = btDev.name ?: btDev.address
+                    devices.add(BluetoothDevice(btDev.address, name, true, isConnected(btDev)))
                 }
                 val btConnectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
                 for (btDev in btConnectedDevices) {
-                    devices.add(BluetoothDevice(btDev.address, btDev.name, false, isConnected(btDev)))
+                    val name = btDev.name ?: btDev.address
+                    devices.add(BluetoothDevice(btDev.address, name, false, isConnected(btDev)))
                 }
             }
         }
