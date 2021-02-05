@@ -14,10 +14,13 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
+import android.view.HapticFeedbackConstants
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
@@ -457,6 +460,47 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             "exoplayer/play_hls" -> exoPlayHls(json)
                             "exoplayer/stop" -> exoStopHls()
                             "exoplayer/resize" -> exoResizeHls(json)
+                            "haptic" -> {
+                                val vm = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                                val hapticType = json.getJSONObject("payload")
+                                    .getString("hapticType")
+                                Log.d(TAG, "Processing haptic tag for $hapticType")
+                                when (hapticType) {
+                                    "success" -> {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                                            webView.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                                        else
+                                            vm.vibrate(500)
+                                    }
+                                    "warning" -> {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                                            vm.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.EFFECT_HEAVY_CLICK))
+                                        else
+                                            vm.vibrate(1500)
+                                    }
+                                    "failure" -> {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                                            webView.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                                        else
+                                            vm.vibrate(1000)
+                                    }
+                                    "light" -> {
+                                        webView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                                    }
+                                    "medium" -> {
+                                        webView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                    }
+                                    "heavy" -> {
+                                        webView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                    }
+                                    "selection" -> {
+                                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                                            webView.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
+                                        else
+                                            vm.vibrate(50)
+                                    }
+                                }
+                            }
                         }
                     }
                 }
