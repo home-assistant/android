@@ -48,6 +48,7 @@ import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.util.getActiveNotification
+import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URL
 import java.util.Locale
 import javax.inject.Inject
@@ -86,6 +87,7 @@ class MessagingService : FirebaseMessagingService() {
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
+        const val COMMAND_WEBVIEW = "command_webview"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -111,7 +113,8 @@ class MessagingService : FirebaseMessagingService() {
 
         // Command groups
         val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
-            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY)
+            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY,
+            COMMAND_WEBVIEW)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
@@ -247,6 +250,9 @@ class MessagingService : FirebaseMessagingService() {
                                     sendNotification(it)
                                 }
                             }
+                        }
+                        COMMAND_WEBVIEW -> {
+                            handleDeviceCommands(it)
                         }
                         else -> Log.d(TAG, "No command received")
                     }
@@ -461,6 +467,15 @@ class MessagingService : FirebaseMessagingService() {
                         processActivityCommand(data)
                 } else
                     processActivityCommand(data)
+            }
+            COMMAND_WEBVIEW -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!Settings.canDrawOverlays(applicationContext))
+                        requestSystemAlertPermission()
+                    else
+                        openWebview(title)
+                } else
+                    openWebview(title)
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -1110,6 +1125,18 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
+    private fun openWebview(title: String?) {
+        try {
+            val intent = if (title.isNullOrEmpty())
+                WebViewActivity.newInstance(applicationContext)
+            else
+                WebViewActivity.newInstance(applicationContext, title)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to open webview", e)
+        }
+    }
     /**
      * Called if InstanceID token is updated. This may occur if the security of
      * the previous token had been compromised. Note that this is called when the InstanceID token
