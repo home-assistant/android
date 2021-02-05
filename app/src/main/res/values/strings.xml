@@ -493,4 +493,5 @@ like to connect to:</string>
   <string name="state_unavailable">Unavailable</string>
   <string name="state_unknown">Unknown</string>
   <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
+  <string name="action_reply">Reply</string>
 </resources>
