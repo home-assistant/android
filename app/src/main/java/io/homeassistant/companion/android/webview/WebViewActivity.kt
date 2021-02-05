@@ -80,6 +80,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         private const val AUDIO_REQUEST_CODE = 42
         private const val NFC_COMPLETE = 1
         private const val FILE_CHOOSER_RESULT_CODE = 15
+        private const val APP_PREFIX = "app://"
+        private const val INTENT_PREFIX = "intent://"
+        private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
 
         fun newInstance(context: Context, path: String? = null): Intent {
             return Intent(context, WebViewActivity::class.java).apply {
@@ -240,10 +243,51 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     request: WebResourceRequest?
                 ): Boolean {
                     request?.url?.let {
-                        if (!webView.url.toString().contains(it.toString())) {
-                            val browserIntent = Intent(Intent.ACTION_VIEW, it)
-                            startActivity(browserIntent)
-                            return true
+                        try {
+                            if (it.toString().startsWith(APP_PREFIX)) {
+                                Log.d(TAG, "Launching the app")
+                                val intent = packageManager.getLaunchIntentForPackage(
+                                    it.toString().substringAfter(APP_PREFIX)
+                                )
+                                if (intent != null) {
+                                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    startActivity(intent)
+                                } else {
+                                    Log.w(TAG, "No intent to launch app found, opening app store")
+                                    val marketIntent = Intent(Intent.ACTION_VIEW)
+                                    marketIntent.data = Uri.parse(
+                                        MARKET_PREFIX + it.toString().substringAfter(APP_PREFIX)
+                                    )
+                                    startActivity(marketIntent)
+                                }
+                                return true
+                            } else if (it.toString().startsWith(INTENT_PREFIX)) {
+                                Log.d(TAG, "Launching the intent")
+                                val intent =
+                                    Intent.parseUri(it.toString(), Intent.URI_INTENT_SCHEME)
+                                val intentPackage = intent.`package`?.let { it1 ->
+                                    packageManager.getLaunchIntentForPackage(
+                                        it1
+                                    )
+                                }
+                                if (intentPackage != null)
+                                    startActivity(intent)
+                                else {
+                                    Log.w(TAG, "No app found for intent prefix, opening app store")
+                                    val marketIntent = Intent(Intent.ACTION_VIEW)
+                                    marketIntent.data =
+                                        Uri.parse(MARKET_PREFIX + intent.`package`.toString())
+                                    startActivity(marketIntent)
+                                }
+                                return true
+                            } else if (!webView.url.toString().contains(it.toString())) {
+                                val browserIntent = Intent(Intent.ACTION_VIEW, it)
+                                startActivity(browserIntent)
+                                return true
+                            } else
+                                Log.d(TAG, "No unique cases found to override")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Unable to override the URL", e)
                         }
                     }
                     return false
