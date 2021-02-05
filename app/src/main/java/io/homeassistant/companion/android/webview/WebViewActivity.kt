@@ -285,7 +285,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 startActivity(browserIntent)
                                 return true
                             } else
-                                Log.w(TAG, "No unique cases found to override")
+                                Log.d(TAG, "No unique cases found to override")
                         } catch (e: Exception) {
                             Log.e(TAG, "Unable to override the URL", e)
                         }
