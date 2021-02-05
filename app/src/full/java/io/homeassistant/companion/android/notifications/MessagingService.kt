@@ -27,6 +27,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
 import androidx.core.text.isDigitsOnly
@@ -74,6 +75,7 @@ class MessagingService : FirebaseMessagingService() {
         const val CHRONOMETER = "chronometer"
         const val WHEN = "when"
         const val GROUP_PREFIX = "group_"
+        const val KEY_TEXT_REPLY = "key_text_reply"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -906,14 +908,31 @@ class MessagingService : FirebaseMessagingService() {
                         notificationAction
                     )
                 }
-                val actionPendingIntent = PendingIntent.getBroadcast(
-                    this,
-                    (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
-                    actionIntent,
-                    0
-                )
+                if (notificationAction.key != "REPLY") {
+                    val actionPendingIntent = PendingIntent.getBroadcast(
+                        this,
+                        (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
+                        actionIntent,
+                        0
+                    )
 
-                builder.addAction(0, notificationAction.title, actionPendingIntent)
+                    builder.addAction(0, notificationAction.title, actionPendingIntent)
+                } else {
+                    val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
+                        setLabel(getString(R.string.action_reply))
+                        build()
+                    }
+                    val replyPendingIntent = PendingIntent.getBroadcast(
+                        this,
+                        0,
+                        actionIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                    val action: NotificationCompat.Action = NotificationCompat.Action.Builder(0, "reply", replyPendingIntent)
+                        .addRemoteInput(remoteInput)
+                        .build()
+                    builder.addAction(action)
+                }
             }
         }
     }
