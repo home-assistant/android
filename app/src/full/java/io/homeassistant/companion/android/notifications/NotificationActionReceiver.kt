@@ -64,13 +64,16 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 Toast.makeText(context, R.string.event_error, Toast.LENGTH_LONG).show()
             }
         }
-        val replyText = if (notificationAction.key == "REPLY")
-            RemoteInput.getResultsFromIntent(intent).getCharSequence(MessagingService.KEY_TEXT_REPLY).toString()
-        else
-            "no reply"
+        if (notificationAction.key == "REPLY") {
+            notificationAction.data += Pair(
+                "reply_text",
+                RemoteInput.getResultsFromIntent(intent)
+                    .getCharSequence(MessagingService.KEY_TEXT_REPLY).toString()
+            )
+        }
 
         when (intent.action) {
-            FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure, replyText)
+            FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
             OPEN_URI -> NotificationActionContentHandler.openUri(context, notificationAction.uri, onComplete)
         }
 
@@ -81,15 +84,13 @@ class NotificationActionReceiver : BroadcastReceiver() {
     private fun fireEvent(
         action: NotificationAction,
         onComplete: () -> Unit,
-        onFailure: () -> Unit,
-        replyText: String
+        onFailure: () -> Unit
     ) {
         ioScope.launch {
             try {
                 integrationUseCase.fireEvent(
                     "mobile_app_notification_action",
                     action.data.plus(Pair("action", action.key))
-                        .plus(Pair("reply_text", replyText))
                 )
                 onComplete()
             } catch (e: Exception) {
