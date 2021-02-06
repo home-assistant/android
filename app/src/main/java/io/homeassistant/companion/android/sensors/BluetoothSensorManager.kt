@@ -8,17 +8,22 @@ import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
+import java.util.UUID
+import kotlin.collections.ArrayList
 
 class BluetoothSensorManager : SensorManager {
     companion object {
+
         private const val BLE_ID1 = "UUID"
         private const val BLE_ID2 = "Major"
         private const val BLE_ID3 = "Minor"
-        private const val DEFAULT_BLE_ID1 = "2F234454-CF6D-4A0F-ADF2-F4911BA9FFA6"
+        private const val BLE_TRANSMIT_POWER = "transmit_power"
+        private const val ENABLE_TOGGLE_ALL = "Include when enabling all sensors"
+        private const val DEFAULT_BLE_TRANSMIT_POWER = "ultraLow"
         private const val DEFAULT_BLE_ID2 = "100"
         private const val DEFAULT_BLE_ID3 = "1"
-        private const val TAG = "BluetoothSM"
-        private var bleTransmitterDevice = IBeaconTransmitter("", "", "", false, "")
+        // private const val TAG = "BluetoothSM"
+        private var bleTransmitterDevice = IBeaconTransmitter("", "", "", transmitPower = "", transmitting = false, state = "")
         val bluetoothConnection = SensorManager.BasicSensor(
                 "bluetooth_connection",
                 "sensor",
@@ -51,6 +56,7 @@ class BluetoothSensorManager : SensorManager {
             }
             TransmitterManager.stopTransmitting(bleTransmitterDevice) // stop in all instances, clean up state if start required
             if (enabled) {
+                TransmitterManager.startTransmitting(context, bleTransmitterDevice)
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
             }
         }
@@ -127,17 +133,28 @@ class BluetoothSensorManager : SensorManager {
         )
     }
 
+    override fun enableToggleAll(context: Context, sensorId: String): Boolean {
+        if (sensorId == bleTransmitter.id) {
+            return getSetting(context, bleTransmitter, ENABLE_TOGGLE_ALL, "toggle", "false").toBoolean()
+        }
+        return super.enableToggleAll(context, sensorId)
+    }
+
     private fun updatedBLEDevice(context: Context): Boolean {
+        addSettingIfNotPresent(context, bleTransmitter, ENABLE_TOGGLE_ALL, "toggle", "false")
         var result = false
-        var id1 = getSetting(context, bleTransmitter, BLE_ID1, "string", DEFAULT_BLE_ID1)
+        var id1 = getSetting(context, bleTransmitter, BLE_ID1, "string", UUID.randomUUID().toString())
         var id2 = getSetting(context, bleTransmitter, BLE_ID2, "string", DEFAULT_BLE_ID2)
         var id3 = getSetting(context, bleTransmitter, BLE_ID3, "string", DEFAULT_BLE_ID3)
-        if (bleTransmitterDevice.uuid != id1 || bleTransmitterDevice.major != id2 || bleTransmitterDevice.minor != id3) {
+        var transmitPower = getSetting(context, bleTransmitter, BLE_TRANSMIT_POWER, "list", DEFAULT_BLE_TRANSMIT_POWER)
+        if (bleTransmitterDevice.uuid != id1 || bleTransmitterDevice.major != id2 || bleTransmitterDevice.minor != id3 || bleTransmitterDevice.transmitPower != transmitPower)
             result = true
-            bleTransmitterDevice.uuid = id1
-            bleTransmitterDevice.major = id2
-            bleTransmitterDevice.minor = id3
-        }
+
+        bleTransmitterDevice.uuid = id1
+        bleTransmitterDevice.major = id2
+        bleTransmitterDevice.minor = id3
+        bleTransmitterDevice.transmitPower = transmitPower
+
         return result
     }
 
@@ -148,8 +165,9 @@ class BluetoothSensorManager : SensorManager {
             return
         }
         // transmit when BT is on, if we are not already transmitting, or details have changed
+        val updatedDeviceDetails = updatedBLEDevice(context)
         if (isBtOn(context) &&
-                ((isEnabled(context, bleTransmitter.id) && !bleTransmitterDevice.transmitting) || isEnabled(context, bleTransmitter.id) && updatedBLEDevice(context))) {
+                ((isEnabled(context, bleTransmitter.id) && !bleTransmitterDevice.transmitting) || isEnabled(context, bleTransmitter.id) && updatedDeviceDetails)) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
         }
 
@@ -161,7 +179,8 @@ class BluetoothSensorManager : SensorManager {
                 state,
                 icon,
                 mapOf(
-                        "Id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor
+                        "Id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
+                        "Transmitting power" to bleTransmitterDevice.transmitPower
                 )
         )
     }

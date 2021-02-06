@@ -265,8 +265,12 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         SensorReceiver.MANAGERS.forEach { managers ->
             managers.availableSensors.forEach { basicSensor ->
+                val sensorTurnsOnWithGroupToggle = managers.enableToggleAll(requireContext(), basicSensor.id)
+                if (!sensorTurnsOnWithGroupToggle) {
+                    return@forEach
+                }
                 var enableSensor = false
-                if (enableAllSensors) {
+                if (enableAllSensors && sensorTurnsOnWithGroupToggle) {
                     enableSensor = managers.checkPermission(requireContext(), basicSensor.id)
                 }
                 var sensorEntity = sensorDao.get(basicSensor.id)

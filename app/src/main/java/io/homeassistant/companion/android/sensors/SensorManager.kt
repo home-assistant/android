@@ -45,10 +45,10 @@ interface SensorManager {
         }
 
         // If we don't have permission but we are still enabled then we aren't really enabled.
-            if (sensor.enabled && !permission) {
-                sensor.enabled = false
-                sensorDao.update(sensor)
-            }
+        if (sensor.enabled && !permission) {
+            sensor.enabled = false
+            sensorDao.update(sensor)
+        }
 
         return sensor.enabled
     }
@@ -57,6 +57,20 @@ interface SensorManager {
 
     fun hasSensor(context: Context): Boolean {
         return true
+    }
+
+    fun enableToggleAll(context: Context, sensorId: String): Boolean {
+        return true
+    }
+
+    fun addSettingIfNotPresent(
+        context: Context,
+        sensor: BasicSensor,
+        settingName: String,
+        settingType: String,
+        default: String
+    ) {
+        getSetting(context, sensor, settingName, settingType, default)
     }
 
     fun getSetting(
@@ -68,9 +82,9 @@ interface SensorManager {
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
-            .getSettings(sensor.id)
-            .firstOrNull { it.name == settingName }
-            ?.value
+                .getSettings(sensor.id)
+                .firstOrNull { it.name == settingName }
+                ?.value
         if (setting == null)
             sensorDao.add(Setting(sensor.id, settingName, default, settingType))
 
@@ -114,12 +128,12 @@ interface SensorManager {
             }
 
             sensorDao.add(
-                Attribute(
-                    basicSensor.id,
-                    item.key,
-                    item.value.toString(),
-                    valueType
-                )
+                    Attribute(
+                            basicSensor.id,
+                            item.key,
+                            item.value.toString(),
+                            valueType
+                    )
             )
         }
     }
