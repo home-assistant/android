@@ -179,7 +179,7 @@ class BluetoothSensorManager : SensorManager {
                 state,
                 icon,
                 mapOf(
-                        "Id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
+                        "id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor
                         "Transmitting power" to bleTransmitterDevice.transmitPower
                 )
         )
