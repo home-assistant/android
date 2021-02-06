@@ -496,6 +496,7 @@ like to connect to:</string>
   <string name="state_unavailable">Unavailable</string>
   <string name="state_unknown">Unknown</string>
   <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
+  <string name="action_reply">Reply</string>
   <string name="ble_transmit_power_label_high">High</string>
   <string name="ble_transmit_power_label_medium">Medium</string>
   <string name="ble_transmit_power_label_low">Low</string>

@@ -18,6 +18,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
@@ -26,8 +27,10 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.text.HtmlCompat
+import androidx.core.text.isDigitsOnly
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.vdurmont.emoji.EmojiParser
@@ -47,6 +50,7 @@ import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.util.getActiveNotification
+import io.homeassistant.companion.android.webview.WebViewActivity
 import java.net.URL
 import java.util.Locale
 import javax.inject.Inject
@@ -72,6 +76,7 @@ class MessagingService : FirebaseMessagingService() {
         const val CHRONOMETER = "chronometer"
         const val WHEN = "when"
         const val GROUP_PREFIX = "group_"
+        const val KEY_TEXT_REPLY = "key_text_reply"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -87,6 +92,7 @@ class MessagingService : FirebaseMessagingService() {
 
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
+        const val COMMAND_WEBVIEW = "command_webview"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -112,7 +118,8 @@ class MessagingService : FirebaseMessagingService() {
 
         // Command groups
         val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
-            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_BLE_TRANSMITTER, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY)
+            COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_BLE_TRANSMITTER, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY,
+            COMMAND_WEBVIEW)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
@@ -250,14 +257,17 @@ class MessagingService : FirebaseMessagingService() {
                             }
                         }
                         COMMAND_ACTIVITY -> {
-                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty() && !it["group"].isNullOrEmpty())
+                            if (!it["tag"].isNullOrEmpty())
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
-                                    Log.d(TAG, "Invalid navigation command received, posting notification to device")
+                                    Log.d(TAG, "Invalid activity command received, posting notification to device")
                                     sendNotification(it)
                                 }
                             }
+                        }
+                        COMMAND_WEBVIEW -> {
+                            handleDeviceCommands(it)
                         }
                         else -> Log.d(TAG, "No command received")
                     }
@@ -399,7 +409,15 @@ class MessagingService : FirebaseMessagingService() {
                         val items = extras.split(',')
                         for (item in items) {
                             val pair = item.split(":")
-                            intent.putExtra(pair[0], pair[1])
+                            intent.putExtra(
+                                pair[0],
+                                if (pair[1].isDigitsOnly())
+                                    pair[1].toInt()
+                                else if ((pair[1].toLowerCase() == "true") ||
+                                    (pair[1].toLowerCase() == "false"))
+                                    pair[1].toBoolean()
+                                else pair[1]
+                            )
                         }
                     }
                     intent.`package` = packageName
@@ -463,24 +481,22 @@ class MessagingService : FirebaseMessagingService() {
                 }
             }
             COMMAND_ACTIVITY -> {
-                try {
-                    val packageName = data["channel"]
-                    val action = data["group"]
-                    val intentUri = Uri.parse(title)
-                    val intent = Intent(action, intentUri)
-                    intent.setPackage(packageName)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to send activity intent please check command format", e)
-                    Handler(Looper.getMainLooper()).post {
-                        Toast.makeText(
-                            applicationContext,
-                            R.string.activity_intent_error,
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!Settings.canDrawOverlays(applicationContext))
+                        requestSystemAlertPermission()
+                    else
+                        processActivityCommand(data)
+                } else
+                    processActivityCommand(data)
+            }
+            COMMAND_WEBVIEW -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!Settings.canDrawOverlays(applicationContext))
+                        requestSystemAlertPermission()
+                    else
+                        openWebview(title)
+                } else
+                    openWebview(title)
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -911,14 +927,31 @@ class MessagingService : FirebaseMessagingService() {
                         notificationAction
                     )
                 }
-                val actionPendingIntent = PendingIntent.getBroadcast(
-                    this,
-                    (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
-                    actionIntent,
-                    0
-                )
+                if (notificationAction.key != "REPLY") {
+                    val actionPendingIntent = PendingIntent.getBroadcast(
+                        this,
+                        (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
+                        actionIntent,
+                        0
+                    )
 
-                builder.addAction(0, notificationAction.title, actionPendingIntent)
+                    builder.addAction(0, notificationAction.title, actionPendingIntent)
+                } else {
+                    val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
+                        setLabel(getString(R.string.action_reply))
+                        build()
+                    }
+                    val replyPendingIntent = PendingIntent.getBroadcast(
+                        this,
+                        0,
+                        actionIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                    val action: NotificationCompat.Action = NotificationCompat.Action.Builder(0, "reply", replyPendingIntent)
+                        .addRemoteInput(remoteInput)
+                        .build()
+                    builder.addAction(action)
+                }
             }
         }
     }
@@ -1024,7 +1057,16 @@ class MessagingService : FirebaseMessagingService() {
     @RequiresApi(Build.VERSION_CODES.M)
     private fun requestDNDPermission() {
         val intent =
-            Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+            Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun requestSystemAlertPermission() {
+        val intent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:$packageName"))
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
     }
@@ -1073,6 +1115,66 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
+    private fun processActivityCommand(data: Map<String, String>) {
+        try {
+            val packageName = data["channel"]
+            val action = data["tag"]
+            val intentUri = if (!data[TITLE].isNullOrEmpty()) Uri.parse(data[TITLE]) else null
+            val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
+            val type = data["subject"]
+            if (!type.isNullOrEmpty())
+                intent.type = type
+            val extras = data["group"]
+            if (!extras.isNullOrEmpty()) {
+                val items = extras.split(',')
+                for (item in items) {
+                    val pair = item.split(":")
+                    intent.putExtra(
+                        pair[0],
+                        if (pair[1].isDigitsOnly())
+                            pair[1].toInt()
+                        else if ((pair[1].toLowerCase() == "true") ||
+                            (pair[1].toLowerCase() == "false"))
+                            pair[1].toBoolean()
+                        else pair[1]
+                    )
+                }
+            }
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            if (!packageName.isNullOrEmpty()) {
+                intent.setPackage(packageName)
+                startActivity(intent)
+            } else if (intent.resolveActivity(applicationContext.packageManager) != null)
+                startActivity(intent)
+            else
+                mainScope.launch {
+                    Log.d(TAG, "Posting notification as we do not have enough data to start the activity")
+                    sendNotification(data)
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to send activity intent please check command format", e)
+            Handler(Looper.getMainLooper()).post {
+                Toast.makeText(
+                    applicationContext,
+                    R.string.activity_intent_error,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+    }
+
+    private fun openWebview(title: String?) {
+        try {
+            val intent = if (title.isNullOrEmpty())
+                WebViewActivity.newInstance(applicationContext)
+            else
+                WebViewActivity.newInstance(applicationContext, title)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to open webview", e)
+        }
+    }
     /**
      * Called if InstanceID token is updated. This may occur if the security of
      * the previous token had been compromised. Note that this is called when the InstanceID token

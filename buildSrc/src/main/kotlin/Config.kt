@@ -3,7 +3,7 @@ object Config {
     object Plugin {
         const val android = "com.android.tools.build:gradle:4.1.2"
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
-        const val google = "com.google.gms:google-services:4.3.4"
+        const val google = "com.google.gms:google-services:4.3.5"
         const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:2.0.1"
         const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
     }
@@ -46,16 +46,16 @@ object Config {
             const val appcompat = "androidx.appcompat:appcompat:1.2.0"
             const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
             const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"
-            const val constraintlayout = "androidx.constraintlayout:constraintlayout:1.1.3"
+            const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.0.4"
             const val preference = "androidx.preference:preference-ktx:1.1.1"
 
             const val wear = "androidx.wear:wear:1.1.0"
 
-            const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.2"
-            const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.2"
+            const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.3"
+            const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.3"
 
-            const val workManager = "androidx.work:work-runtime-ktx:2.4.0"
-            const val biometric = "androidx.biometric:biometric:1.0.1"
+            const val workManager = "androidx.work:work-runtime-ktx:2.5.0"
+            const val biometric = "androidx.biometric:biometric:1.1.0"
 
             private const val roomVersion = "2.2.6"
             const val roomRuntime = "androidx.room:room-runtime:${roomVersion}"
