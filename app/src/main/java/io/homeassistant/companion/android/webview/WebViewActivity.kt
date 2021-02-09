@@ -184,7 +184,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         webView.apply {
             setOnTouchListener { _, motionEvent ->
                 if (motionEvent.pointerCount == 3 && motionEvent.action == MotionEvent.ACTION_POINTER_3_DOWN) {
-                    Log.d(TAG, "3 fingers down")
                     dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
                 }
                 return@setOnTouchListener !unlocked
