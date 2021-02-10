@@ -21,6 +21,8 @@ import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
 import android.view.HapticFeedbackConstants
+import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
@@ -183,7 +185,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         webView = findViewById(R.id.webview)
         webView.apply {
-            setOnTouchListener { _, _ ->
+            setOnTouchListener { _, motionEvent ->
+                if (motionEvent.pointerCount == 3 && motionEvent.action == MotionEvent.ACTION_POINTER_3_DOWN) {
+                    dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                }
                 return@setOnTouchListener !unlocked
             }
 
