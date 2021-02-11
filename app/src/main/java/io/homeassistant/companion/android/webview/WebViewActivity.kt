@@ -917,8 +917,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setPositiveButton(R.string.settings) { _, _ ->
                 startActivity(SettingsActivity.newInstance(this))
             }
+            val isInternal = runBlocking {
+                urlRepository.isInternal()
+            }
             alert.setNegativeButton(
-                if (failedConnection == "external")
+                if (failedConnection == "external" && isInternal)
                     R.string.refresh_internal
                 else
                     R.string.refresh_external

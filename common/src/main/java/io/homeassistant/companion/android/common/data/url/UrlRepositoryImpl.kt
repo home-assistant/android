@@ -107,7 +107,7 @@ class UrlRepositoryImpl @Inject constructor(
         localStorage.putStringSet(PREF_WIFI_SSIDS, ssid)
     }
 
-    private suspend fun isInternal(): Boolean {
+    override suspend fun isInternal(): Boolean {
         val formattedSsid = wifiHelper.getWifiSsid().removeSurrounding("\"")
         val wifiSsids = getHomeWifiSsids()
         val usesInternalSsid = formattedSsid in wifiSsids
