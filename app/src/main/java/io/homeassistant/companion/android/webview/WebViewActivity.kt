@@ -44,6 +44,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
@@ -485,6 +486,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         currentLang = languagesManager.getCurrentLang()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
+            Log.d(TAG, "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
+        }
     }
 
     override fun onResume() {
