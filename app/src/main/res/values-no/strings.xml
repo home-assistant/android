@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Svar</string>
+  <string name="activity_intent_error">Kan ikke sende aktivitetshensikt, vennligst sjekk kommandoformat</string>
   <string name="add_service_data_field">Legg til felt</string>
   <string name="add_widget">Legg til modul</string>
   <string name="app_version_info">Appversjonsinfo</string>
@@ -17,6 +19,7 @@
   <string name="basic_sensor_name_active_notification_count">Antall aktive varsler</string>
   <string name="basic_sensor_name_activity">Oppdaget aktivitet</string>
   <string name="basic_sensor_name_alarm">Neste alarm</string>
+  <string name="basic_sensor_name_app_importance">App viktighet</string>
   <string name="basic_sensor_name_app_inactive">App inaktiv</string>
   <string name="basic_sensor_name_app_memory">Appminne</string>
   <string name="basic_sensor_name_app_rx_gb"></string>
@@ -48,6 +51,8 @@
   <string name="basic_sensor_name_location_accurate">Enkelt nøyaktig posisjon</string>
   <string name="basic_sensor_name_location_background">Bakgrunnsposisjon</string>
   <string name="basic_sensor_name_location_zone">Lokasjonssone</string>
+  <string name="basic_sensor_name_mobile_data">Mobildata</string>
+  <string name="basic_sensor_name_mobile_data_roaming">Roaming av mobildata</string>
   <string name="basic_sensor_name_mobile_rx_gb">Mobil Rx GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Mobil Tx GB</string>
   <string name="basic_sensor_name_phone">Telefonstatus</string>
@@ -103,6 +108,7 @@ ditt hjemmenettverk</string>
   <string name="device_registration">Enhetsregistrering</string>
   <string name="dialog_add_panel_shortcut_content">Vil du lage en snarvei til dette elementet?</string>
   <string name="dialog_add_panel_shortcut_title">Legg til snarvei</string>
+  <string name="disable">Deaktiver</string>
   <string name="disable_all_sensors">Deaktiver alle %1$d sensorer</string>
   <string name="documentation">Dokumentasjon</string>
   <string name="domain_automation">Automasjon</string>
@@ -116,6 +122,7 @@ ditt hjemmenettverk</string>
   <string name="domain_scene">Scene</string>
   <string name="domain_script">Skript</string>
   <string name="domain_switch">Bryter</string>
+  <string name="domain_vacuum">Støvsuger</string>
   <string name="enable_all_sensors">Aktiver alle sensorer</string>
   <string name="enable_all_sensors_summary">Alle nødvendige tillatelser vil bli forespurt ved aktivering</string>
   <string name="enable_location_tracking">Aktiver posisjonssporing</string>
@@ -141,6 +148,8 @@ integrasjonen aktivert på din Home Assistant forekomst</string>
   <string name="fullscreen">Fullskjerm</string>
   <string name="fullscreen_def">Sett applikasjonen i fullskjerm</string>
   <string name="grant_permission">Gi tillatelse</string>
+  <string name="high_accuracy_mode_channel_name">Posisjon med høy nøyaktighet</string>
+  <string name="high_accuracy_mode_notification_title">Høy nøyaktighet (GPS)-modus aktivert</string>
   <string name="history">Historie</string>
   <string name="home_assistant_not_discover">Kan ikke finne din 
 Home Assistant forekomst</string>
@@ -165,10 +174,13 @@ Home Assistant forekomst</string>
   <string name="list_template_widgets">Liste over mal moduler</string>
   <string name="location">Posisjon</string>
   <string name="location_disabled_message">Posisjonen er deaktivert. Følgende aktiverte alternativ(er) krever at du aktiverer posisjon. Hvis du ikke aktiverer posisjonen, vil ikke sensoren(e)/innstillingen(e) fungere!\n\n%1$s\nVil du aktivere posisjon?</string>
+  <string name="location_disabled_notification_message">Følgende aktivert(e) alternativ(er) krever at du aktiverer posisjon. Hvis du ikke aktiverer posisjonen, vil ikke sensoren)e=/innstillingen(e) fungere!\n\n%1$s\nKlikk for å aktivere posisjon.</string>
+  <string name="location_disabled_notification_short_message">Noen innstillinger fungerer ikke. Klikk for å aktivere posisjon.</string>
   <string name="location_disabled_option_disable">Deaktiver alternativ</string>
   <string name="location_disabled_title">Posisjon er deaktivert</string>
   <string name="location_perm_info_message">Android setter opp begrensninger for apper som vil bruke Wifi, fordi Wifi teoretisk kan brukes til å bestemme posisjonen din.\n\nFor å sikre at appen får tilgang til Wifi i bakgrunnen (beslutning om nettadresser, sensorer), må du tillate posisjonstilgang hele tiden.\n\nDerfor, for å bruke dette alternativet, trenger du posisjonstilgang hele tiden.\n\nFortsette å gi posisjonstilgang?</string>
   <string name="location_perm_info_title">Tilgang til posisjon</string>
+  <string name="location_warn_channel">Posisjon deaktivert</string>
   <string name="lock_summary">Bruk biometrisk legitimasjon eller skjermlåsfor å låse opp appen</string>
   <string name="lock_title">Lås app</string>
   <string name="lockscreen_message">Trykk for å låse opp:</string>
@@ -258,12 +270,17 @@ Tagger fungerer på alle enheter med Home Assistant installert som har maskinvar
   <string name="scanning_network">Skanner nettverket
 for Home Assistant</string>
   <string name="security">Sikkerhet</string>
+  <string name="security_vulnerably_message">Din versjon av Home Assistant beskytter ikke for nylig oppdagede sikkerhetsproblemer i egendefinerte komponenter. Vennligst se detaljene via bulletinen og oppdater så snart som mulig.</string>
+  <string name="security_vulnerably_title">Sikkerhetssårbart advarsel</string>
+  <string name="security_vulnerably_understand">Jeg forstår</string>
+  <string name="security_vulnerably_view">Se bulletin</string>
   <string name="select_entity_to_display">Velg entitet som skal vises</string>
   <string name="select_instance">Velg forekomsten du
 ønsker å koble til:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Beskrivelse</string>
   <string name="sensor_description_active_notification_count">Totalt antall aktive varsler som er synlige for brukeren, inkludert lydløse, vedvarende og sensorarbeidervarsler.</string>
+  <string name="sensor_description_app_importance">Hvis appen er i forgrunnen, bakgrunnen eller en annen tilstand den kan være</string>
   <string name="sensor_description_app_inactive">Hvorvidt appen for øyeblikket anses å være inaktiv av systemet</string>
   <string name="sensor_description_app_memory">Totalt brukt og tilgjengelig minne for appen</string>
   <string name="sensor_description_app_rx_gb">App Rx GB siden siste omstart av enheten</string>
@@ -303,6 +320,8 @@ for Home Assistant</string>
   <string name="sensor_description_location_zone">Importer eksisterende Home Assistant soner som geofences for sonebasert sporing. Med minimumnøyaktighet instillingen kan du bestemme hvor nøyaktig enhetsposisjonen (i meter) må være for å kunne sendes til Home Assistant.</string>
   <string name="sensor_description_lullaby">Hvis en vuggesang spiller</string>
   <string name="sensor_description_mic_muted">Hvorvidt mikrofonen er dempet på enheten</string>
+  <string name="sensor_description_mobile_data">Hvorvidt mobildata er aktivert på enheten</string>
+  <string name="sensor_description_mobile_data_roaming">Hvorvidt roaming for mobildata er aktivert på enheten</string>
   <string name="sensor_description_mobile_rx_gb">Totalt Rx GB på mobildata siden siste omstart av enheten</string>
   <string name="sensor_description_mobile_tx_gb">Totalt Tx GB på mobildata siden siste omstart av enheten</string>
   <string name="sensor_description_music_active">Hvorvidt musikk spilles aktivt av på enheten</string>
@@ -350,6 +369,7 @@ for Home Assistant</string>
   <string name="sensor_name_light">Lyssensor</string>
   <string name="sensor_name_location">Posisjonssensorer</string>
   <string name="sensor_name_mic_muted">Mikrofon dempet</string>
+  <string name="sensor_name_mobile_data">Mobil datasensorer</string>
   <string name="sensor_name_music_active">Musikk aktiv</string>
   <string name="sensor_name_network">Nettverkssensorer</string>
   <string name="sensor_name_phone">Telefon sensorer</string>
@@ -384,18 +404,26 @@ for Home Assistant</string>
   <string name="skip">Hopp over</string>
   <string name="state">Tilstand</string>
   <string name="state_auto">Auto</string>
+  <string name="state_cleaning">Rengjør</string>
   <string name="state_closed">Lukket</string>
   <string name="state_closing">Lukker</string>
   <string name="state_cool">Kjøle</string>
+  <string name="state_docked">Dokket</string>
   <string name="state_dry">Tørke</string>
+  <string name="state_error">Feil</string>
   <string name="state_fan_only">Kun vifte</string>
   <string name="state_heat">Varme</string>
   <string name="state_heat_cool">Varme kjøle</string>
+  <string name="state_idle">Inaktiv</string>
   <string name="state_locked">Låst</string>
   <string name="state_off">Av</string>
   <string name="state_on">På</string>
   <string name="state_open">Åpen</string>
   <string name="state_opening">Åpner</string>
+  <string name="state_paused">Pauset</string>
+  <string name="state_returning">Returnerer</string>
+  <string name="state_unavailable">Utilgjengelig</string>
+  <string name="state_unknown">Ukjent</string>
   <string name="state_unlocked">Ulåst</string>
   <string name="states">Oversikt</string>
   <string name="status_of_mobile_app_integration">Status for mobile_app integrasjonen:</string>

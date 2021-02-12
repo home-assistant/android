@@ -10,6 +10,8 @@
     <item>@string/themes_option_value_dark</item>
     <item>@string/themes_option_value_system</item>
   </string-array>
+  <string name="action_reply">Reply</string>
+  <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
   <string name="add_service_data_field">Add Field</string>
   <string name="add_widget">Add widget</string>
   <string name="app_name">Home Assistant</string>
@@ -131,6 +133,7 @@ to your home internet.</string>
   <string name="domain_scene">Scene</string>
   <string name="domain_script">Script</string>
   <string name="domain_switch">Switch</string>
+  <string name="domain_vacuum">Vacuum</string>
   <string name="enable_all_sensors">Enable All Sensors</string>
   <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
   <string name="enable_location_tracking">Enable Location Tracking</string>
@@ -156,8 +159,8 @@ integration enabled on your home assistant instance.</string>
   <string name="fullscreen">Fullscreen</string>
   <string name="fullscreen_def">Put application in full screen</string>
   <string name="grant_permission">Grant Permission</string>
-  <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
   <string name="high_accuracy_mode_channel_name">High accuracy location</string>
+  <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
   <string name="history">History</string>
   <string name="home_assistant_not_discover">Unable to find your 
 Home Assistant instance</string>
@@ -181,14 +184,14 @@ Home Assistant instance</string>
   <string name="list_media_player_widgets">List of Media Player Widgets</string>
   <string name="list_template_widgets">List of Template Widgets</string>
   <string name="location">Location</string>
-  <string name="location_warn_channel">Location disabled</string>
-  <string name="location_perm_info_title">Location access</string>
-  <string name="location_perm_info_message">Android set up restrictions for apps which want to use your Wifi, because Wifi can be theoretically used to determine your location.\n\nAlso to ensure the app can access Wifi in background (URL decision making, sensors) you need to allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
+  <string name="location_disabled_message">The location is disabled. The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nDo you want to enable location?</string>
+  <string name="location_disabled_notification_message">The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nClick to enable location.</string>
+  <string name="location_disabled_notification_short_message">Some setting(s) do not work. Click to enable location.</string>
   <string name="location_disabled_option_disable">Disable option</string>
   <string name="location_disabled_title">Location is disabled</string>
-  <string name="location_disabled_notification_short_message">Some setting(s) do not work. Click to enable location.</string>
-  <string name="location_disabled_notification_message">The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nClick to enable location.</string>
-  <string name="location_disabled_message">The location is disabled. The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nDo you want to enable location?</string>
+  <string name="location_perm_info_message">Android set up restrictions for apps which want to use your Wifi, because Wifi can be theoretically used to determine your location.\n\nAlso to ensure the app can access Wifi in background (URL decision making, sensors) you need to allow location access all the time.\n\nTherefore, to use this option location access all the time is needed.\n\nContinue granting location access?</string>
+  <string name="location_perm_info_title">Location access</string>
+  <string name="location_warn_channel">Location disabled</string>
   <string name="lock_summary">Use biometric or screenlock credential to unlock app</string>
   <string name="lock_title">Lock app</string>
   <string name="lockscreen_message">Tap to unlock :</string>
@@ -268,6 +271,8 @@ Home Assistant instance</string>
   <string name="rate_limit_summary">Rate limit data</string>
   <string name="rate_limit_title">Notification Rate Limit</string>
   <string name="refresh">Refresh</string>
+  <string name="refresh_external">Refresh External URL</string>
+  <string name="refresh_internal">Refresh Internal URL</string>
   <string name="remember">Remember</string>
   <string name="required_fields">requires a username and password.</string>
   <string name="retry">Retry</string>
@@ -318,8 +323,8 @@ like to connect to:</string>
   <string name="sensor_description_keyguard_secure">Whether the keyguard is secured by a PIN, pattern or password or a SIM card is currently locked.</string>
   <string name="sensor_description_last_notification">The details of the last notification.</string>
   <string name="sensor_description_last_reboot">The date and time of the devices last reboot. The setting below will allow you to adjust the deadband in milliseconds, if you still find the value to jump incorrectly. The default value is 60000 (1 minute).</string>
-  <string name="sensor_description_last_update">The intent for the last update that was sent, periodic updates will show as \"SensorWorker\". Enabling the \"Add New Intent\" toggle will create 1 setting to allow you to register for a broadcast intent. The toggle will switch back to off once a new setting is created so you will need to turn it back on to save more intents. You can also clear out the setting value to remove the setting in the next update. You must restart the application after making changes to these settings to take effect.</string>
   <string name="sensor_description_last_removed_notification">The details of the last removed notification. This can be any notification either cleared by the user or removed by an application.</string>
+  <string name="sensor_description_last_update">The intent for the last update that was sent, periodic updates will show as \"SensorWorker\". Enabling the \"Add New Intent\" toggle will create 1 setting to allow you to register for a broadcast intent. The toggle will switch back to off once a new setting is created so you will need to turn it back on to save more intents. You can also clear out the setting value to remove the setting in the next update. You must restart the application after making changes to these settings to take effect.</string>
   <string name="sensor_description_light_sensor">The current level of illuminance</string>
   <string name="sensor_description_location_accurate">Allow Home Assistant to send a notification to request an accurate location along with the application periodically requesting an accurate location.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.  The Minimum time between updates (in milliseconds) keeps the device from sending the accurate location too often. The Include in sensor update setting will make a location request with each sensor update.</string>
   <string name="sensor_description_location_background">Update your location behind the scenes, periodically.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.</string>
@@ -410,18 +415,26 @@ like to connect to:</string>
   <string name="skip">Skip</string>
   <string name="state">State</string>
   <string name="state_auto">Auto</string>
+  <string name="state_cleaning">Cleaning</string>
   <string name="state_closed">Closed</string>
   <string name="state_closing">Closing</string>
   <string name="state_cool">Cool</string>
+  <string name="state_docked">Docked</string>
   <string name="state_dry">Dry</string>
+  <string name="state_error">Error</string>
   <string name="state_fan_only">Fan Only</string>
   <string name="state_heat">Heat</string>
   <string name="state_heat_cool">Heat Cool</string>
+  <string name="state_idle">Idle</string>
   <string name="state_locked">Locked</string>
   <string name="state_off">Off</string>
   <string name="state_on">On</string>
   <string name="state_open">Open</string>
   <string name="state_opening">Opening</string>
+  <string name="state_paused">Paused</string>
+  <string name="state_returning">Returning</string>
+  <string name="state_unavailable">Unavailable</string>
+  <string name="state_unknown">Unknown</string>
   <string name="state_unlocked">Unlocked</string>
   <string name="states">Overview</string>
   <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
@@ -483,17 +496,4 @@ like to connect to:</string>
   <string name="widget_text_size_label">Widget text size:</string>
   <string name="widgets">Widgets</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
-  <string name="domain_vacuum">Vacuum</string>
-  <string name="state_cleaning">Cleaning</string>
-  <string name="state_docked">Docked</string>
-  <string name="state_error">Error</string>
-  <string name="state_idle">Idle</string>
-  <string name="state_paused">Paused</string>
-  <string name="state_returning">Returning</string>
-  <string name="state_unavailable">Unavailable</string>
-  <string name="state_unknown">Unknown</string>
-  <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
-  <string name="action_reply">Reply</string>
-  <string name="refresh_internal">Refresh Internal URL</string>
-  <string name="refresh_external">Refresh External URL</string>
 </resources>

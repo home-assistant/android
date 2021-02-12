@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Odpovědět</string>
+  <string name="activity_intent_error">Nelze odeslat záměr aktivity, zkontrolujte formát příkazu</string>
   <string name="add_service_data_field">Přidat pole</string>
   <string name="add_widget">Přidat widget</string>
   <string name="app_version_info">Informace o verzi aplikace</string>
@@ -20,9 +22,9 @@
   <string name="basic_sensor_name_app_importance">Důležitost aplikace</string>
   <string name="basic_sensor_name_app_inactive">Aplikace neaktivní</string>
   <string name="basic_sensor_name_app_memory">Paměť aplikace</string>
-  <string name="basic_sensor_name_app_rx_gb">Přijatých dat Aplikací</string>
+  <string name="basic_sensor_name_app_rx_gb">Přijatých dat aplikací</string>
   <string name="basic_sensor_name_app_standby">Kategorie pohotovosti (StandbyBucket)</string>
-  <string name="basic_sensor_name_app_tx_gb">Odeslaných dat Aplikací</string>
+  <string name="basic_sensor_name_app_tx_gb">Odeslaných dat aplikací</string>
   <string name="basic_sensor_name_battery_health">Zdraví baterie</string>
   <string name="basic_sensor_name_battery_level">Úroveň baterie</string>
   <string name="basic_sensor_name_battery_state">Stav baterie</string>
@@ -49,6 +51,8 @@
   <string name="basic_sensor_name_location_accurate">Jedno přesné umístění</string>
   <string name="basic_sensor_name_location_background">Poloha na pozadí</string>
   <string name="basic_sensor_name_location_zone">Poloha zón</string>
+  <string name="basic_sensor_name_mobile_data">Mobilní data</string>
+  <string name="basic_sensor_name_mobile_data_roaming">Mobilní datový roaming</string>
   <string name="basic_sensor_name_mobile_rx_gb">Přijatých mobilních dat</string>
   <string name="basic_sensor_name_mobile_tx_gb">Odeslaných mobilních dat</string>
   <string name="basic_sensor_name_phone">Stav telefonu</string>
@@ -103,6 +107,7 @@
   <string name="device_registration">Registrace zařízení</string>
   <string name="dialog_add_panel_shortcut_content">Vytvořit zástupce této položky?</string>
   <string name="dialog_add_panel_shortcut_title">Přidat zástupce</string>
+  <string name="disable">Zakázat</string>
   <string name="disable_all_sensors">Deaktivovat všech %1$d senzorů</string>
   <string name="documentation">Dokumentace</string>
   <string name="domain_automation">Automatizace</string>
@@ -116,6 +121,7 @@
   <string name="domain_scene">Scéna</string>
   <string name="domain_script">Skript</string>
   <string name="domain_switch">Přepínač</string>
+  <string name="domain_vacuum">Vysavač</string>
   <string name="enable_all_sensors">Povolit všechny senzory</string>
   <string name="enable_all_sensors_summary">Všechna požadovaná oprávnění budou vyžádána po povolení</string>
   <string name="enable_location_tracking">Povolit sledování polohy</string>
@@ -141,6 +147,8 @@ integraci povolenou v Home Assistant.</string>
   <string name="fullscreen">Celá obrazovka</string>
   <string name="fullscreen_def">Nastavit aplikaci na celou obrazovku</string>
   <string name="grant_permission">Udělení oprávnění</string>
+  <string name="high_accuracy_mode_channel_name">Vysoká přesnost polohy</string>
+  <string name="high_accuracy_mode_notification_title">Režim vysoké přesnosti (GPS) povolen</string>
   <string name="history">Historie</string>
   <string name="home_assistant_not_discover">Nelze najít Home Assistant</string>
   <string name="icon">Ikona</string>
@@ -164,10 +172,13 @@ integraci povolenou v Home Assistant.</string>
   <string name="list_template_widgets">Seznam widgetů šablon</string>
   <string name="location">Poloha</string>
   <string name="location_disabled_message">Sledování polohy je deaktivováno. Následující povolené možnosti vyžadují aktivování polohy. Pokud sledování neumožníte, nebudou senzory/nastavení fungovat!\n\n%1$s\nChcete sledování polohy aktivovat?</string>
+  <string name="location_disabled_notification_message">Následující povolené možnosti vyžadují aktivování polohy. Pokud sledování neumožníte, nebudou senzory/nastavení fungovat!\n\n%1$s\nKliknutím povolíte umístění.</string>
+  <string name="location_disabled_notification_short_message">Některá nastavení nefungují. Kliknutím povolíte umístění.</string>
   <string name="location_disabled_option_disable">Deaktivovat možnost</string>
   <string name="location_disabled_title">Poloha je deaktivována</string>
   <string name="location_perm_info_message">Android nastavuje omezení pro aplikace, které chtějí používat vaši Wifi, protože ji k určení vaší polohy lze teoreticky použít rovněž.\n\nPřístup k poloze vždy je potřeba také, aby bylo zajištěno, že aplikace může přistupovat k Wifi i na pozadí (rozhodování o použitém URL, senzory).\n\nProto, pro použití této možnosti, je třeba mít přístup k poloze vždy.\n\nPokračovat v udělení přístupu k poloze?</string>
   <string name="location_perm_info_title">Přístup k poloze</string>
+  <string name="location_warn_channel">Poloha deaktivována</string>
   <string name="lock_summary">Odemkněte aplikaci pomocí biometrických údajů nebo zámku obrazovky</string>
   <string name="lock_title">Zamknout aplikaci</string>
   <string name="lockscreen_message">Kliknutím odemkněte :</string>
@@ -254,7 +265,7 @@ integraci povolenou v Home Assistant.</string>
   <string name="scan_again">znovu prohledat</string>
   <string name="scanning_network">Prohledávání sítě pro Home Assistanta</string>
   <string name="security">Zabezpečení</string>
-  <string name="security_vulnerably_message">Váš Home Assistant je zastaralý a obsahuje známé bezpečnostní zranitelnosti. Prohlédněte si prosím podrobnosti v přehledu zpráv a proveďte aktualizaci co nejdříve.</string>
+  <string name="security_vulnerably_message">Vaše verze Home Assistanta nechrání proti nedávno objeveným bezpečnostním zranitelnostem ve Vlastních integracích. Prohlédněte si prosím podrobnosti v přehledu zpráv a proveďte aktualizaci co nejdříve.</string>
   <string name="security_vulnerably_title">Varování týkající se zabezpečení</string>
   <string name="security_vulnerably_understand">Rozumím</string>
   <string name="security_vulnerably_view">Zobrazit Bulletin</string>
@@ -263,12 +274,12 @@ integraci povolenou v Home Assistant.</string>
   <string name="sensor">Senzor</string>
   <string name="sensor_description">Popis</string>
   <string name="sensor_description_active_notification_count">Celkový počet aktivních notifikací, které jsou uživateli viditelné, včetně tichých, trvalých a SensorWorker notifikací.</string>
-  <string name="sensor_description_app_importance">Pokud je aplikace v popředí, v pozadí nebo v jakémkoli jiném stavu, ve kterém by mohla být.</string>
+  <string name="sensor_description_app_importance">Zda-li je aplikace v popředí, na pozadí nebo v jakémkoli jiném stavu, ve kterém by mohla být.</string>
   <string name="sensor_description_app_inactive">Zda-li je aplikace aktuálně považována systémem za neaktivní</string>
   <string name="sensor_description_app_memory">Celková využitá a dostupná paměť pro aplikaci</string>
-  <string name="sensor_description_app_rx_gb">Přijatých dat Aplikací od posledního restartování zařízení</string>
+  <string name="sensor_description_app_rx_gb">Přijatých dat aplikací od posledního restartování zařízení</string>
   <string name="sensor_description_app_standby">Aktuální kategorie pohotovosti (StandbyBucket) aplikace. Kategorie pohotovosti určuje jak moc budou omezeny její procesy, jako jsou úkoly a alarmy.</string>
-  <string name="sensor_description_app_tx_gb">Odeslaných dat Aplikací od posledního restartování zařízení</string>
+  <string name="sensor_description_app_tx_gb">Odeslaných dat aplikací od posledního restartování zařízení</string>
   <string name="sensor_description_audio_mode">Stav režimu zvuku zařízení</string>
   <string name="sensor_description_audio_sensor">Stav režimu vyzvánění zařízení</string>
   <string name="sensor_description_battery_health">Zdraví baterie</string>
@@ -303,6 +314,8 @@ integraci povolenou v Home Assistant.</string>
   <string name="sensor_description_location_zone">Importovat existující zóny Home Assistanta pro sledování na základě zón. Nastavení Minimum Accuracy vám umožňuje rozhodnout, jak přesné určení umístění (v metrech) musí být, aby bylo odesláno do Home Assistanta.</string>
   <string name="sensor_description_lullaby">Pokud hraje ukolébavka</string>
   <string name="sensor_description_mic_muted">Zda-li je v zařízení ztlumen mikrofon</string>
+  <string name="sensor_description_mobile_data">Zda-li jsou v zařízení povolena mobilní data</string>
+  <string name="sensor_description_mobile_data_roaming">Zda-li je v zařízení povolen mobilní datový roaming</string>
   <string name="sensor_description_mobile_rx_gb">Celkem přijatých mobilních dat od posledního restartování zařízení</string>
   <string name="sensor_description_mobile_tx_gb">Celkem odeslaných mobilních dat od posledního restartování zařízení</string>
   <string name="sensor_description_music_active">Zda-li zařízení aktivně přehrává hudbu</string>
@@ -350,6 +363,7 @@ integraci povolenou v Home Assistant.</string>
   <string name="sensor_name_light">Senzor Světla</string>
   <string name="sensor_name_location">Senzory Polohy</string>
   <string name="sensor_name_mic_muted">Ztlumený mikrofon</string>
+  <string name="sensor_name_mobile_data">Senzory mobilních dat</string>
   <string name="sensor_name_music_active">Aktivní hudba</string>
   <string name="sensor_name_network">Senzory Sítě</string>
   <string name="sensor_name_phone">Senzory Telefonu</string>
@@ -384,18 +398,26 @@ integraci povolenou v Home Assistant.</string>
   <string name="skip">Přeskočit</string>
   <string name="state">Stav</string>
   <string name="state_auto">Auto</string>
+  <string name="state_cleaning">Čištění</string>
   <string name="state_closed">Zavřeno</string>
   <string name="state_closing">Zavírání</string>
   <string name="state_cool">Chlazení</string>
+  <string name="state_docked">Ve stanici</string>
   <string name="state_dry">Vysoušení</string>
+  <string name="state_error">Chyba</string>
   <string name="state_fan_only">Pouze ventilátor</string>
   <string name="state_heat">Topení</string>
   <string name="state_heat_cool">Topení/Chlazení</string>
+  <string name="state_idle">Nečinný</string>
   <string name="state_locked">Zamčeno</string>
   <string name="state_off">Vypnuto</string>
   <string name="state_on">Zapnuto</string>
   <string name="state_open">Otevřeno</string>
   <string name="state_opening">Otevírání</string>
+  <string name="state_paused">Pozastaveno</string>
+  <string name="state_returning">Vracející se</string>
+  <string name="state_unavailable">Nedostupný</string>
+  <string name="state_unknown">Neznámý</string>
   <string name="state_unlocked">Odemčeno</string>
   <string name="states">Přehled</string>
   <string name="status_of_mobile_app_integration">Stav integrace mobilní aplikace:</string>

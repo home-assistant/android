@@ -14,6 +14,7 @@
   <string name="basic_sensor_name_device_locked">Dispositivo bloqueado</string>
   <string name="basic_sensor_name_device_secure">Dispositivo seguro</string>
   <string name="basic_sensor_name_last_reboot">Última Reinicialização</string>
+  <string name="basic_sensor_name_last_removed_notification">Última Notificação Removida</string>
   <string name="basic_sensor_name_location_zone">Zona de Localização</string>
   <string name="basic_sensor_name_phone">Estado do telemóvel</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
@@ -27,6 +28,9 @@
   <string name="checking_with_home_assistant">A verificar com o Home Assistant</string>
   <string name="config">Configuração</string>
   <string name="configure_service_call">Configurar chamada de serviço</string>
+  <string name="confirm_delete_all_notification_title">Confirme a exclusão de todas as notificações</string>
+  <string name="confirm_negative">NÃO</string>
+  <string name="confirm_positive">SIM</string>
   <string name="connect_to_home_internet">Certifique-se de que o seu telemóvel está ligado
 à sua rede de internet.</string>
   <string name="connected_to_home_assistant">Ligado ao Home Assistant</string>
@@ -35,6 +39,7 @@
   <string name="device_name">Nome do dispositivo</string>
   <string name="device_registration">Registo do Dispositivo</string>
   <string name="dialog_add_panel_shortcut_content">Criar um atalho para este item?</string>
+  <string name="disable">Desativar</string>
   <string name="documentation">Documentação</string>
   <string name="enabled_title">Ativado</string>
   <string name="error_connection_failed">Não foi possível ligar-se ao Home Assistant.</string>
@@ -47,6 +52,8 @@
   <string name="fullscreen">Ecrã completo</string>
   <string name="fullscreen_def">Coloque a aplicação em ecrã completo</string>
   <string name="grant_permission">Conceder Permissão</string>
+  <string name="high_accuracy_mode_channel_name">Localização de alta precisão</string>
+  <string name="high_accuracy_mode_notification_title">Modo de alta precisão (GPS) habilitado</string>
   <string name="history">Histórico</string>
   <string name="home_assistant_not_discover">Não foi possível encontrar a sua instancia Home Assistant.</string>
   <string name="icon">Ícone</string>
@@ -56,6 +63,7 @@
   <string name="label_icon">Ícone:</string>
   <string name="label_label">Etiqueta:</string>
   <string name="label_service">Serviço:</string>
+  <string name="lang_option_label_default">Idioma do dispositivo</string>
   <string name="last_25_notifications">Últimas 25 notificações</string>
   <string name="location">Localização</string>
   <string name="lock_title">Bloquear aplicação</string>
@@ -89,10 +97,12 @@
   <string name="pref_location_zone_title">Rastreamento baseado em zonas</string>
   <string name="profile">Perfil</string>
   <string name="refresh">Atualizar</string>
+  <string name="remember">Lembrar</string>
   <string name="retry">Tentar novamente</string>
   <string name="save">Guardar</string>
   <string name="scan_again">voltar a pesquisar</string>
   <string name="security">Segurança</string>
+  <string name="security_vulnerably_understand">Eu entendo</string>
   <string name="sensor_description">Descrição</string>
   <string name="sensor_description_audio_sensor">O estado dos dispositivos em modo de campainha</string>
   <string name="sensor_description_battery_level">O nível atual da bateria do dispositivo</string>
@@ -116,6 +126,11 @@
   <string name="shortcuts_summary">Adicionar atalhos ao launcher</string>
   <string name="skip">Saltar</string>
   <string name="state">Estado</string>
+  <string name="state_error">Erro</string>
+  <string name="state_idle">Ocioso</string>
+  <string name="state_paused">Pausado</string>
+  <string name="state_unavailable">Indisponível</string>
+  <string name="state_unknown">Desconhecido</string>
   <string name="states">Visão Geral</string>
   <string name="status_of_mobile_app_integration">Status da integração da app:</string>
   <string name="themes_option_label_dark">Escuro</string>
