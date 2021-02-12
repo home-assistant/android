@@ -445,7 +445,7 @@ like to connect to:</string>
   <string name="username">Username</string>
   <string name="view_password">View Password</string>
   <string name="wait">Wait</string>
-  <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again.</string>
+  <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you click on Refresh.</string>
   <string name="webview_error_description">Encountered error :</string>
   <string name="webview_error_SSL_DATE_INVALID">The date of the Home Assistant certificate is invalid, please review the Home Assistant certificate or the connection settings and try again.</string>
   <string name="webview_error_SSL_EXPIRED">The Home Assistant certificate has expired, please review the Home Assistant certificate or the connection settings and try again.</string>
@@ -494,4 +494,6 @@ like to connect to:</string>
   <string name="state_unknown">Unknown</string>
   <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
   <string name="action_reply">Reply</string>
+  <string name="refresh_internal">Refresh Internal URL</string>
+  <string name="refresh_external">Refresh External URL</string>
 </resources>
