@@ -1064,4 +1064,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
         }, CONNECTION_DELAY)
     }
+
+    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+        // Temporary workaround to sideload on Android TV and use a remote for basic navigation in WebView
+        if (event?.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
+            dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB))
+            return true
+        }
+
+        return super.dispatchKeyEvent(event)
+    }
 }

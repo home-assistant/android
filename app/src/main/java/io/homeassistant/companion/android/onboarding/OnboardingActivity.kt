@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.onboarding
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.KeyEvent
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
@@ -20,6 +21,7 @@ class OnboardingActivity : BaseActivity(), DiscoveryListener, ManualSetupListene
 
     companion object {
         const val SESSION_CONNECTED = "is_registered"
+        private const val AUTHENTICATION_FRAGMENT = "authentication_fragment"
         private const val TAG = "OnboardingActivity"
 
         fun newInstance(context: Context): Intent {
@@ -73,7 +75,7 @@ class OnboardingActivity : BaseActivity(), DiscoveryListener, ManualSetupListene
         authenticationFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, authenticationFragment)
+            .replace(R.id.content, authenticationFragment, AUTHENTICATION_FRAGMENT)
             .addToBackStack(null)
             .commit()
     }
@@ -83,7 +85,7 @@ class OnboardingActivity : BaseActivity(), DiscoveryListener, ManualSetupListene
         authenticationFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, authenticationFragment)
+            .replace(R.id.content, authenticationFragment, AUTHENTICATION_FRAGMENT)
             .addToBackStack(null)
             .commit()
     }
@@ -105,5 +107,17 @@ class OnboardingActivity : BaseActivity(), DiscoveryListener, ManualSetupListene
     private fun startWebView() {
         startActivity(WebViewActivity.newInstance(this))
         finish()
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+        // Temporary workaround to sideload on Android TV and use a remote for basic navigation in WebView
+        val fragmentManager = supportFragmentManager.findFragmentByTag(AUTHENTICATION_FRAGMENT)
+        if (event?.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN &&
+            fragmentManager != null && fragmentManager.isVisible) {
+            dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB))
+            return true
+        }
+
+        return super.dispatchKeyEvent(event)
     }
 }
