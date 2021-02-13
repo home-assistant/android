@@ -105,6 +105,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 .setUsesChronometer(true)
                 .setWhen(System.currentTimeMillis())
                 .setOngoing(true)
+                .setOnlyAlertOnce(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build()
             with(NotificationManagerCompat.from(context)) {
