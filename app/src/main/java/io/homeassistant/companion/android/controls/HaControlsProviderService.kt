@@ -42,14 +42,12 @@ class HaControlsProviderService : ControlsProviderService() {
                 ioScope.launch {
                     try {
                         val entity = integrationRepository.getEntity(entityId)
-                        integrationRepository.removeFailedNotification(applicationContext)
                         val domain = entity.entityId.split(".")[0]
                         val control =
                             domainToHaControl[domain]?.createControl(applicationContext, entity)
                         updateSubscriber?.onNext(control)
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to get entity information", e)
-                        integrationRepository.notifyFailedToConnect(applicationContext)
                     }
                 }
             }
@@ -102,11 +100,9 @@ class HaControlsProviderService : ControlsProviderService() {
                         .forEach {
                             subscriber.onNext(it)
                         }
-                    integrationRepository.removeFailedNotification(applicationContext)
                     subscriber.onComplete()
                 } catch (e: Exception) {
                     Log.e(TAG, "Error getting list of entities", e)
-                    integrationRepository.notifyFailedToConnect(applicationContext)
                 }
             }
         }
@@ -145,7 +141,7 @@ class HaControlsProviderService : ControlsProviderService() {
         if (haControl != null) {
             runBlocking {
                 try {
-                    actionSuccess = haControl.performAction(integrationRepository, action)
+                    actionSuccess = haControl.performAction(integrationRepository, action, applicationContext)
 
                     val entity = integrationRepository.getEntity(controlId)
                     updateSubscriber?.onNext(haControl.createControl(applicationContext, entity))
@@ -159,10 +155,8 @@ class HaControlsProviderService : ControlsProviderService() {
                             )
                         )
                     }
-                    integrationRepository.removeFailedNotification(applicationContext)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to control or get entity information", e)
-                    integrationRepository.notifyFailedToConnect(applicationContext)
                 }
             }
         }

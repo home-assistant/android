@@ -504,7 +504,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 )
                 runBlocking {
                     try {
-                        integrationUseCase.fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>)
+                        integrationUseCase.fireEvent(zoneStatusEvent, zoneAttr as Map<String, Any>, latestContext)
                         Log.d(TAG, "Event sent to Home Assistant")
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to send event to Home Assistant", e)
@@ -602,11 +602,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         ioScope.launch {
             try {
-                integrationUseCase.updateLocation(updateLocation)
-                integrationUseCase.removeFailedNotification(latestContext)
+                integrationUseCase.updateLocation(updateLocation, latestContext)
                 Log.d(TAG, "Location update sent successfully")
             } catch (e: Exception) {
-                integrationUseCase.notifyFailedToConnect(latestContext)
                 Log.e(TAG, "Could not update location.", e)
             }
         }
@@ -637,7 +635,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         // TODO cache the zones on device so we don't need to reach out each time
         var configuredZones: Array<Entity<ZoneAttributes>> = emptyArray()
         try {
-            configuredZones = integrationUseCase.getZones()
+            configuredZones = integrationUseCase.getZones(latestContext)
         } catch (e: Exception) {
             Log.e(TAG, "Error receiving zones from Home Assistant", e)
         }

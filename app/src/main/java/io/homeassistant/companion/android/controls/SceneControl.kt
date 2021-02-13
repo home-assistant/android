@@ -52,13 +52,15 @@ class SceneControl {
 
         override fun performAction(
             integrationRepository: IntegrationRepository,
-            action: ControlAction
+            action: ControlAction,
+            context: Context
         ): Boolean {
             return runBlocking {
                 integrationRepository.callService(
                     action.templateId.split(".")[0],
                     "turn_on",
-                    hashMapOf("entity_id" to action.templateId)
+                    hashMapOf("entity_id" to action.templateId),
+                    context
                 )
                 return@runBlocking true
             }

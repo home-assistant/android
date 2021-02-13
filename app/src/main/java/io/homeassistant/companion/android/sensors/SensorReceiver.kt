@@ -113,7 +113,8 @@ class SensorReceiver : BroadcastReceiver() {
                         try {
                             integrationUseCase.fireEvent(
                                 "android.intent_received",
-                                eventData as Map<String, Any>
+                                eventData as Map<String, Any>,
+                                context
                             )
                             Log.d(TAG, "Event successfully sent to Home Assistant")
                         } catch (e: Exception) {
@@ -177,14 +178,12 @@ class SensorReceiver : BroadcastReceiver() {
         if (enabledRegistrations.isNotEmpty()) {
             var success = false
             try {
-                success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
+                success = integrationUseCase.updateSensors(context, enabledRegistrations.toTypedArray())
                 enabledRegistrations.forEach {
                     sensorDao.updateLastSendState(it.uniqueId, it.state.toString())
                 }
-                integrationUseCase.removeFailedNotification(context)
             } catch (e: Exception) {
                 Log.e(TAG, "Exception while updating sensors.", e)
-                integrationUseCase.notifyFailedToConnect(context)
             }
 
             // We failed to update a sensor, we should re register next time

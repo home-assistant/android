@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.webview
 
+import android.content.Context
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
@@ -61,11 +62,11 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun checkSecurityVersion() {
+    override fun checkSecurityVersion(context: Context) {
         mainScope.launch {
 
             try {
-                val version = integrationUseCase.getHomeAssistantVersion().split(".")
+                val version = integrationUseCase.getHomeAssistantVersion(context).split(".")
                 if (version.size >= 3) {
                     val year = Integer.parseInt(version[0])
                     val month = Integer.parseInt(version[1])

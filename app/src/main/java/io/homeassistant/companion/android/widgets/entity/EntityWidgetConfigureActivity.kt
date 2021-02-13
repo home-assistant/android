@@ -92,10 +92,8 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             val entity = runBlocking {
                 try {
                     integrationUseCase.getEntity(staticWidget.entityId)
-                    integrationUseCase.removeFailedNotification(applicationContext)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
-                    integrationUseCase.notifyFailedToConnect(applicationContext)
                     Toast.makeText(applicationContext, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
                         .show()
                     null
@@ -149,12 +147,10 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                 runOnUiThread {
                     entityAdapter.notifyDataSetChanged()
                 }
-                integrationUseCase.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 // If entities fail to load, it's okay to pass
                 // an empty map to the dynamicFieldAdapter
                 Log.e(TAG, "Failed to query entities", e)
-                integrationUseCase.notifyFailedToConnect(applicationContext)
             }
         }
     }
@@ -246,17 +242,11 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                 RESULT_OK,
                 Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             )
-            runBlocking {
-                integrationUseCase.removeFailedNotification(applicationContext)
-            }
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
             Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
-            runBlocking {
-                integrationUseCase.notifyFailedToConnect(applicationContext)
-            }
         }
     }
 

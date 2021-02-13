@@ -45,7 +45,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     companion object {
@@ -128,17 +127,11 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 RESULT_OK,
                 Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
             )
-            runBlocking {
-                integrationUseCase.removeFailedNotification(applicationContext)
-            }
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
             Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
-            runBlocking {
-                integrationUseCase.notifyFailedToConnect(applicationContext)
-            }
         }
     }
 
@@ -326,7 +319,6 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 runOnUiThread {
                     serviceAdapter.notifyDataSetChanged()
                 }
-                integrationUseCase.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 // Custom components can cause services to not load
                 // Display error text
@@ -340,11 +332,9 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 integrationUseCase.getEntities().forEach {
                     entities[it.entityId] = it
                 }
-                integrationUseCase.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 // If entities fail to load, it's okay to pass
                 // an empty map to the dynamicFieldAdapter
-                integrationUseCase.notifyFailedToConnect(applicationContext)
             }
         }
 

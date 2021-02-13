@@ -208,11 +208,12 @@ class IntegrationRepositoryImpl @Inject constructor(
         return urlRepository.getApiUrls().isNotEmpty()
     }
 
-    override suspend fun renderTemplate(template: String, variables: Map<String, String>): String {
+    override suspend fun renderTemplate(template: String, variables: Map<String, String>, context: Context): String {
         var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
+            var wasSuccess = ""
             try {
-                return integrationService.getTemplate(
+                wasSuccess = integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
                     IntegrationRequest(
                         "render_template",
@@ -223,13 +224,19 @@ class IntegrationRepositoryImpl @Inject constructor(
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
+            if (wasSuccess != "") {
+                removeFailedNotification(context)
+                return wasSuccess
+            }
         }
+
+        notifyFailedToConnect(context)
 
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request render_template")
     }
 
-    override suspend fun updateLocation(updateLocation: UpdateLocation) {
+    override suspend fun updateLocation(updateLocation: UpdateLocation, context: Context) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
 
         var causeException: Exception? = null
@@ -246,10 +253,13 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
+                removeFailedNotification(context)
                 return
+            }
         }
 
+        notifyFailedToConnect(context)
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request update_location")
     }
@@ -257,7 +267,8 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun callService(
         domain: String,
         service: String,
-        serviceData: HashMap<String, Any>
+        serviceData: HashMap<String, Any>,
+        context: Context
     ) {
         var wasSuccess = false
 
@@ -284,15 +295,19 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
+                removeFailedNotification(context)
                 return
+            }
         }
 
+
+        notifyFailedToConnect(context)
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request call_service")
     }
 
-    override suspend fun scanTag(data: HashMap<String, Any>) {
+    override suspend fun scanTag(data: HashMap<String, Any>, context: Context) {
         var wasSuccess = false
 
         var causeException: Exception? = null
@@ -311,15 +326,18 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
+                removeFailedNotification(context)
                 return
+            }
         }
 
+        notifyFailedToConnect(context)
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request scan_tag")
     }
 
-    override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
+    override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>, context: Context) {
         var wasSuccess = false
 
         val fireEventRequest = FireEventRequest(
@@ -343,15 +361,18 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
-            if (wasSuccess)
+            if (wasSuccess) {
+                removeFailedNotification(context)
                 return
+            }
         }
 
+        notifyFailedToConnect(context)
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request fire_event")
     }
 
-    override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
+    override suspend fun getZones(context: Context): Array<Entity<ZoneAttributes>> {
         val getZonesRequest =
             IntegrationRequest(
                 "get_zones",
@@ -368,10 +389,12 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
 
             if (zones != null) {
+                removeFailedNotification(context)
                 return createZonesResponse(zones)
             }
         }
 
+        notifyFailedToConnect(context)
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request get_zones")
     }
@@ -446,7 +469,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         else throw IntegrationException("Error calling integration request get_config/themeColor")
     }
 
-    override suspend fun getHomeAssistantVersion(): String {
+    override suspend fun getHomeAssistantVersion(context: Context): String {
         val getConfigRequest =
             IntegrationRequest(
                 "get_config",
@@ -463,10 +486,13 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
 
-            if (response != null)
+            if (response != null) {
+                removeFailedNotification(context)
                 return response.version
+            }
         }
 
+        notifyFailedToConnect(context)
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request get_config/version")
     }
@@ -559,7 +585,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         else throw IntegrationException("Error calling integration request register_sensor")
     }
 
-    override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
+    override suspend fun updateSensors(context: Context, sensors: Array<SensorRegistration<Any>>): Boolean {
         val integrationRequest = IntegrationRequest(
             "update_sensor_states",
             sensors.map {
@@ -583,6 +609,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                             return false
                         }
                     }
+                    removeFailedNotification(context)
                     return true
                 }
             } catch (e: Exception) {
@@ -591,6 +618,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
+        notifyFailedToConnect(context)
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration update_sensor_states")
     }

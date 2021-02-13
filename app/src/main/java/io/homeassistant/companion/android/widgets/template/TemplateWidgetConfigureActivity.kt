@@ -111,13 +111,11 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             var templateText: String?
             var enabled: Boolean
             try {
-                templateText = integrationUseCase.renderTemplate(template, mapOf())
+                templateText = integrationUseCase.renderTemplate(template, mapOf(), applicationContext)
                 enabled = true
-                integrationUseCase.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 templateText = "Error in template"
                 enabled = false
-                integrationUseCase.notifyFailedToConnect(applicationContext)
             }
             runOnUiThread {
                 renderedTemplate.text = fromHtml(templateText)

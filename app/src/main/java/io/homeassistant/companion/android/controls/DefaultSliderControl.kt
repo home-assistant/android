@@ -51,7 +51,8 @@ class DefaultSliderControl {
 
         override fun performAction(
             integrationRepository: IntegrationRepository,
-            action: ControlAction
+            action: ControlAction,
+            context: Context
         ): Boolean {
             return runBlocking {
                 integrationRepository.callService(
@@ -60,7 +61,8 @@ class DefaultSliderControl {
                     hashMapOf(
                         "entity_id" to action.templateId,
                         "value" to (action as? FloatAction)?.newValue.toString()
-                    )
+                    ),
+                    context
                 )
                 return@runBlocking true
             }

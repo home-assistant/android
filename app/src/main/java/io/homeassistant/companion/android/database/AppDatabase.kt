@@ -321,12 +321,10 @@ abstract class AppDatabase : RoomDatabase() {
             }
             runBlocking {
                 try {
-                    integrationRepository.fireEvent("mobile_app.migration_failed", mapOf())
+                    integrationRepository.fireEvent("mobile_app.migration_failed", mapOf(), appContext)
                     Log.d(TAG, "Event sent to Home Assistant")
-                    integrationRepository.removeFailedNotification(appContext)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to send event to Home Assistant", e)
-                    integrationRepository.notifyFailedToConnect(appContext)
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(
                             appContext,

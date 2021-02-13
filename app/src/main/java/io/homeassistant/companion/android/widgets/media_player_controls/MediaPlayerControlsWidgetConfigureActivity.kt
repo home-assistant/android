@@ -89,12 +89,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             val entity = runBlocking {
                 try {
                     integrationUseCase.getEntity(mediaPlayerWidget.entityId)
-                    integrationUseCase.removeFailedNotification(applicationContext)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
                     Toast.makeText(applicationContext, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
                         .show()
-                    integrationUseCase.notifyFailedToConnect(applicationContext)
                     null
                 }
             }
@@ -129,12 +127,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
                 runOnUiThread {
                     entityAdapter.notifyDataSetChanged()
                 }
-                integrationUseCase.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 // If entities fail to load, it's okay to pass
                 // an empty map to the dynamicFieldAdapter
                 Log.e(TAG, "Failed to query entities", e)
-                integrationUseCase.notifyFailedToConnect(applicationContext)
             }
         }
     }

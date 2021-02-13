@@ -237,17 +237,15 @@ class ButtonWidget : AppWidgetProvider() {
                     }
 
                     Log.d(TAG, "Sending service call to Home Assistant")
-                    integrationUseCase.callService(domain, service, serviceDataMap)
+                    integrationUseCase.callService(domain, service, serviceDataMap, context)
                     Log.d(TAG, "Service call sent successfully")
 
                     // If service call does not throw an exception, send positive feedback
                     feedbackColor = R.drawable.widget_button_background_green
                     feedbackIcon = R.drawable.ic_check_black_24dp
-                    integrationUseCase.removeFailedNotification(context)
                 } catch (e: Exception) {
                     Log.e(TAG, "Could not send service call.", e)
                     Toast.makeText(context, R.string.widget_service_call_failure, Toast.LENGTH_LONG).show()
-                    integrationUseCase.notifyFailedToConnect(context)
                 }
             }
 

@@ -79,7 +79,8 @@ class NfcEditFragment : Fragment() {
                 val uuid: String = viewModel.nfcReadEvent.value.toString()
                 try {
                     integrationUseCase.scanTag(
-                        hashMapOf("tag_id" to uuid)
+                        hashMapOf("tag_id" to uuid),
+                        requireContext()
                     )
                     Toast.makeText(activity, R.string.nfc_event_fired_success, Toast.LENGTH_SHORT)
                         .show()

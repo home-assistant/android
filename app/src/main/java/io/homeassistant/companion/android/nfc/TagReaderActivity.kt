@@ -78,7 +78,7 @@ class TagReaderActivity : BaseActivity() {
         val nfcTagId = UrlHandler.splitNfcTagId(url)
         Log.d(TAG, "nfcTagId: $nfcTagId")
         if (nfcTagId != null) {
-            integrationUseCase.scanTag(hashMapOf("tag_id" to nfcTagId))
+            integrationUseCase.scanTag(hashMapOf("tag_id" to nfcTagId), applicationContext)
             integrationUseCase.removeFailedNotification(applicationContext)
             Log.d(TAG, "Tag scanned to HA successfully")
         } else {

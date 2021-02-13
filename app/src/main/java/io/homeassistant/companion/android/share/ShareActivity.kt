@@ -47,17 +47,15 @@ class ShareActivity : BaseActivity() {
         }
         runBlocking {
             try {
-                integrationRepository.fireEvent("mobile_app.share", data)
+                integrationRepository.fireEvent("mobile_app.share", data, applicationContext)
                 Log.d(TAG, "Share successful!")
                 Toast.makeText(
                     applicationContext,
                     R.string.share_success,
                     Toast.LENGTH_SHORT
                 ).show()
-                integrationRepository.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 Log.e(TAG, "Issue sharing with Home Assistant", e)
-                integrationRepository.notifyFailedToConnect(applicationContext)
                 Toast.makeText(
                     applicationContext,
                     R.string.share_failed,

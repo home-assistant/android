@@ -192,11 +192,9 @@ class SettingsPresenterImpl @Inject constructor(
             var splitVersion = listOf<String>()
 
             try {
-                splitVersion = integrationUseCase.getHomeAssistantVersion().split(".")
-                integrationUseCase.removeFailedNotification(context)
+                splitVersion = integrationUseCase.getHomeAssistantVersion(context).split(".")
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to get core version.", e)
-                integrationUseCase.notifyFailedToConnect(context)
             }
 
             return@runBlocking splitVersion.size > 2 &&

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
+import android.content.Context
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
@@ -38,6 +39,7 @@ object IntegrationRepositoryImplSpec : Spek({
         val integrationService by memoized { mockk<IntegrationService>(relaxUnitFun = true) }
         val authenticationRepository by memoized { mockk<AuthenticationRepository>(relaxUnitFun = true) }
         val urlRepository by memoized { mockk<UrlRepository>(relaxUnitFun = true) }
+        val context = memoized { mockk<Context>(relaxUnitFun = true) }
 
         val repository by memoized {
             IntegrationRepositoryImpl(
@@ -324,7 +326,7 @@ object IntegrationRepositoryImplSpec : Spek({
                             any() // integrationRequest
                         )
                     } returns Response.success(null)
-                    runBlocking { repository.updateLocation(location) }
+                    runBlocking { repository.updateLocation(location, context as Context) }
                 }
 
                 it("should call the service.") {
@@ -371,7 +373,7 @@ object IntegrationRepositoryImplSpec : Spek({
                             any() // integrationRequest
                         )
                     } returns Response.success(null)
-                    runBlocking { repository.updateLocation(location) }
+                    runBlocking { repository.updateLocation(location, context as Context) }
                 }
 
                 it("should call the service.") {
@@ -417,7 +419,7 @@ object IntegrationRepositoryImplSpec : Spek({
                             any() // integrationRequest
                         )
                     } returns Response.success(null)
-                    runBlocking { repository.updateLocation(location) }
+                    runBlocking { repository.updateLocation(location, context as Context) }
                 }
 
                 it("should call the service.") {
@@ -475,7 +477,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         )
                     } returns Response.success(null)
 
-                    runBlocking { repository.updateLocation(location) }
+                    runBlocking { repository.updateLocation(location, context as Context) }
                 }
 
                 it("should call service 2 times") {
@@ -536,7 +538,7 @@ object IntegrationRepositoryImplSpec : Spek({
                         every { isSuccessful } returns false
                     }
 
-                    thrown = catchThrowable { runBlocking { repository.updateLocation(location) } }
+                    thrown = catchThrowable { runBlocking { repository.updateLocation(location, context as Context) } }
                 }
 
                 it("should throw an exception") {
@@ -577,7 +579,7 @@ object IntegrationRepositoryImplSpec : Spek({
                             any() // integrationRequest
                         )
                     } returns Response.success(null)
-                    runBlocking { repository.callService(domain, service, serviceDataMap) }
+                    runBlocking { repository.callService(domain, service, serviceDataMap, context as Context) }
                 }
 
                 it("should call the service.") {
@@ -619,7 +621,7 @@ object IntegrationRepositoryImplSpec : Spek({
                             any() // integrationRequest
                         )
                     } returns Response.success(null)
-                    runBlocking { repository.callService(domain, service, serviceDataMap) }
+                    runBlocking { repository.callService(domain, service, serviceDataMap, context as Context) }
                 }
 
                 it("should call the service.") {
@@ -660,7 +662,7 @@ object IntegrationRepositoryImplSpec : Spek({
                             any() // integrationRequest
                         )
                     } returns Response.success(null)
-                    runBlocking { repository.callService(domain, service, serviceDataMap) }
+                    runBlocking { repository.callService(domain, service, serviceDataMap, context as Context) }
                 }
 
                 it("should call the service.") {
@@ -711,7 +713,7 @@ object IntegrationRepositoryImplSpec : Spek({
                             any() // integrationRequest
                         )
                     } returns Response.success(null)
-                    runBlocking { repository.callService(domain, service, serviceDataMap) }
+                    runBlocking { repository.callService(domain, service, serviceDataMap, context as Context) }
                 }
 
                 it("should call service 2 times") {
@@ -771,7 +773,8 @@ object IntegrationRepositoryImplSpec : Spek({
                             repository.callService(
                                 domain,
                                 service,
-                                serviceDataMap
+                                serviceDataMap,
+                                context as Context
                             )
                         }
                     }
@@ -812,7 +815,7 @@ object IntegrationRepositoryImplSpec : Spek({
                 var zones: Array<Entity<ZoneAttributes>>? = null
                 beforeEachTest {
                     coEvery { integrationService.getZones(any(), any()) } returns arrayOf(entities)
-                    runBlocking { zones = repository.getZones() }
+                    runBlocking { zones = repository.getZones(context as Context) }
                 }
                 it("should return true when webhook has a value") {
                     assertThat(zones).isNotNull

@@ -91,13 +91,12 @@ class NotificationActionReceiver : BroadcastReceiver() {
             try {
                 integrationUseCase.fireEvent(
                     "mobile_app_notification_action",
-                    action.data.plus(Pair("action", action.key))
+                    action.data.plus(Pair("action", action.key)),
+                    context
                 )
-                integrationUseCase.removeFailedNotification(context)
                 onComplete()
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to fire event.", e)
-                integrationUseCase.notifyFailedToConnect(context)
                 onFailure()
             }
         }

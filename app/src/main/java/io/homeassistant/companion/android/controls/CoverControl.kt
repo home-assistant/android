@@ -100,7 +100,8 @@ class CoverControl {
         }
         override fun performAction(
             integrationRepository: IntegrationRepository,
-            action: ControlAction
+            action: ControlAction,
+            context: Context
         ): Boolean {
             return runBlocking {
                 return@runBlocking when (action) {
@@ -110,7 +111,8 @@ class CoverControl {
                                 if ((action as? BooleanAction)?.newState == true) "open_cover" else "close_cover",
                                 hashMapOf(
                                         "entity_id" to action.templateId
-                                )
+                                ),
+                                context
                         )
                         true
                     }
@@ -122,7 +124,8 @@ class CoverControl {
                                 hashMapOf(
                                         "entity_id" to action.templateId,
                                         "position" to convertPosition.toInt()
-                                )
+                                ),
+                                context
                         )
                         true
                     }

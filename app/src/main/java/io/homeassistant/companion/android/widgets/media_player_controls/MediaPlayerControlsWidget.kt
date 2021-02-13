@@ -299,11 +299,11 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         when (lastIntent) {
             RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
             UPDATE_MEDIA_IMAGE -> updateAppWidget(context, appWidgetId)
-            CALL_PREV_TRACK -> callPreviousTrackService(appWidgetId)
+            CALL_PREV_TRACK -> callPreviousTrackService(context, appWidgetId)
             CALL_REWIND -> callRewindService(context, appWidgetId)
-            CALL_PLAYPAUSE -> callPlayPauseService(appWidgetId)
+            CALL_PLAYPAUSE -> callPlayPauseService(context, appWidgetId)
             CALL_FASTFORWARD -> callFastForwardService(context, appWidgetId)
-            CALL_NEXT_TRACK -> callNextTrackService(appWidgetId)
+            CALL_NEXT_TRACK -> callNextTrackService(context, appWidgetId)
             Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, mediaPlayerWidgetList)
         }
     }
@@ -340,7 +340,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private fun callPreviousTrackService(appWidgetId: Int) {
+    private fun callPreviousTrackService(context: Context, appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -360,7 +360,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
             val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
 
-            integrationUseCase.callService(domain, service, serviceDataMap)
+            integrationUseCase.callService(domain, service, serviceDataMap, context)
         }
     }
 
@@ -407,11 +407,11 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 "seek_position" to currentTime - 10
             )
 
-            integrationUseCase.callService(domain, service, serviceDataMap)
+            integrationUseCase.callService(domain, service, serviceDataMap, context)
         }
     }
 
-    private fun callPlayPauseService(appWidgetId: Int) {
+    private fun callPlayPauseService(context: Context, appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -431,7 +431,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
             val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
 
-            integrationUseCase.callService(domain, service, serviceDataMap)
+            integrationUseCase.callService(domain, service, serviceDataMap, context)
         }
     }
 
@@ -478,11 +478,11 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 "seek_position" to currentTime + 10
             )
 
-            integrationUseCase.callService(domain, service, serviceDataMap)
+            integrationUseCase.callService(domain, service, serviceDataMap, context)
         }
     }
 
-    private fun callNextTrackService(appWidgetId: Int) {
+    private fun callNextTrackService(context: Context, appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
             val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
@@ -502,7 +502,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
             val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
 
-            integrationUseCase.callService(domain, service, serviceDataMap)
+            integrationUseCase.callService(domain, service, serviceDataMap, context)
         }
     }
 

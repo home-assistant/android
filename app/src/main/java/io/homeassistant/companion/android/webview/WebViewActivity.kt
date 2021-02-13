@@ -58,8 +58,8 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
@@ -443,7 +443,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         integrationRepository.removeFailedNotification(context)
                                     }
                                     alertDialog?.cancel()
-                                    presenter.checkSecurityVersion()
+                                    presenter.checkSecurityVersion(context)
                                 } else {
                                     runBlocking {
                                         integrationRepository.notifyFailedToConnect(context)

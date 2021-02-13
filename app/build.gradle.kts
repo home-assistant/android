@@ -136,6 +136,7 @@ dependencies {
     implementation(Config.Dependency.AndroidX.preference)
     implementation(Config.Dependency.AndroidX.navigationFragment)
     implementation(Config.Dependency.AndroidX.navigationUi)
+    implementation(Config.Dependency.AndroidX.core)
     implementation(Config.Dependency.Google.material)
 
     implementation(Config.Dependency.AndroidX.roomRuntime)

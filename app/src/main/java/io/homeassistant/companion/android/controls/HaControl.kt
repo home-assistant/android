@@ -10,5 +10,5 @@ interface HaControl {
 
     fun createControl(context: Context, entity: Entity<Map<String, Any>>): Control
 
-    fun performAction(integrationRepository: IntegrationRepository, action: ControlAction): Boolean
+    fun performAction(integrationRepository: IntegrationRepository, action: ControlAction, context: Context): Boolean
 }

@@ -124,12 +124,11 @@ class TemplateWidget : AppWidgetProvider() {
             if (widget != null) {
                 var renderedTemplate = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
                 try {
-                    renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
+                    renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf(), context)
                     templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
                     integrationUseCase.removeFailedNotification(context)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
-                    integrationUseCase.notifyFailedToConnect(context)
                     if (lastIntent != Intent.ACTION_SCREEN_ON)
                         Toast.makeText(context, R.string.widget_template_error, Toast.LENGTH_LONG).show()
                 }

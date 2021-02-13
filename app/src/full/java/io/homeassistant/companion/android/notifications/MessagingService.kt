@@ -1201,11 +1201,9 @@ class MessagingService : FirebaseMessagingService() {
                         pushToken = token
                     )
                 )
-                integrationUseCase.removeFailedNotification(applicationContext)
             } catch (e: Exception) {
                 // TODO: Store for update later
                 Log.e(TAG, "Issue updating token", e)
-                integrationUseCase.notifyFailedToConnect(applicationContext)
             }
         }
     }

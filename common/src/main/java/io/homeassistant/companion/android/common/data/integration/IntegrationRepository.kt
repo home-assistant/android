@@ -14,11 +14,11 @@ interface IntegrationRepository {
     suspend fun notifyFailedToConnect(context: Context)
     suspend fun removeFailedNotification(context: Context)
     suspend fun getNotificationRateLimits(): RateLimitResponse
-    suspend fun renderTemplate(template: String, variables: Map<String, String>): String
+    suspend fun renderTemplate(template: String, variables: Map<String, String>, context: Context): String
 
-    suspend fun updateLocation(updateLocation: UpdateLocation)
+    suspend fun updateLocation(updateLocation: UpdateLocation, context: Context)
 
-    suspend fun getZones(): Array<Entity<ZoneAttributes>>
+    suspend fun getZones(context: Context): Array<Entity<ZoneAttributes>>
 
     suspend fun setFullScreenEnabled(enabled: Boolean)
     suspend fun isFullScreenEnabled(): Boolean
@@ -31,7 +31,7 @@ interface IntegrationRepository {
 
     suspend fun getThemeColor(): String
 
-    suspend fun getHomeAssistantVersion(): String
+    suspend fun getHomeAssistantVersion(context: Context): String
 
     suspend fun getPanels(): Array<Panel>
 
@@ -40,14 +40,14 @@ interface IntegrationRepository {
     suspend fun getEntities(): Array<Entity<Any>>
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>
 
-    suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
+    suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>, context: Context)
 
-    suspend fun scanTag(data: HashMap<String, Any>)
+    suspend fun scanTag(data: HashMap<String, Any>, context: Context)
 
-    suspend fun fireEvent(eventType: String, eventData: Map<String, Any>)
+    suspend fun fireEvent(eventType: String, eventData: Map<String, Any>, context: Context)
 
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
-    suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
+    suspend fun updateSensors(context: Context, sensors: Array<SensorRegistration<Any>>): Boolean
 
     suspend fun shouldNotifySecurityWarning(): Boolean
 }

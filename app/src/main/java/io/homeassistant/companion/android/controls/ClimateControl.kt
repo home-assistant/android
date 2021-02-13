@@ -74,7 +74,8 @@ class ClimateControl {
 
         override fun performAction(
             integrationRepository: IntegrationRepository,
-            action: ControlAction
+            action: ControlAction,
+            context: Context
         ): Boolean {
             return runBlocking {
                 integrationRepository.callService(
@@ -83,7 +84,8 @@ class ClimateControl {
                     hashMapOf(
                         "entity_id" to action.templateId,
                         "temperature" to (action as? FloatAction)?.newValue.toString()
-                    )
+                    ),
+                    context
                 )
                 return@runBlocking true
             }

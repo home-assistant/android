@@ -73,7 +73,8 @@ class VacuumControl {
 
         override fun performAction(
             integrationRepository: IntegrationRepository,
-            action: ControlAction
+            action: ControlAction,
+            context: Context
         ): Boolean {
             return runBlocking {
                 integrationRepository.callService(
@@ -83,7 +84,8 @@ class VacuumControl {
                     else if ((action as? BooleanAction)?.newState == true) "start" else "return_to_base",
                     hashMapOf(
                         "entity_id" to action.templateId
-                    )
+                    ),
+                    context
                 )
                 true
             }

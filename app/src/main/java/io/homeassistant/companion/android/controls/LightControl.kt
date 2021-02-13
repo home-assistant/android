@@ -80,7 +80,8 @@ class LightControl {
 
         override fun performAction(
             integrationRepository: IntegrationRepository,
-            action: ControlAction
+            action: ControlAction,
+            context: Context
         ): Boolean {
             return runBlocking {
                 return@runBlocking when (action) {
@@ -90,7 +91,8 @@ class LightControl {
                             if (action.newState) "turn_on" else "turn_off",
                             hashMapOf(
                                 "entity_id" to action.templateId
-                            )
+                            ),
+                            context
                         )
                         true
                     }
@@ -102,7 +104,8 @@ class LightControl {
                             hashMapOf(
                                 "entity_id" to action.templateId,
                                 "brightness" to convertBrightness.toInt()
-                            )
+                            ),
+                            context
                         )
                         true
                     }
