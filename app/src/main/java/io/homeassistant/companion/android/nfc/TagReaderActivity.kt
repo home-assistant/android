@@ -79,10 +79,8 @@ class TagReaderActivity : BaseActivity() {
         Log.d(TAG, "nfcTagId: $nfcTagId")
         if (nfcTagId != null) {
             integrationUseCase.scanTag(hashMapOf("tag_id" to nfcTagId), applicationContext)
-            integrationUseCase.removeFailedNotification(applicationContext)
             Log.d(TAG, "Tag scanned to HA successfully")
         } else {
-            integrationUseCase.notifyFailedToConnect(applicationContext)
             Toast.makeText(this, R.string.nfc_processing_tag_error, Toast.LENGTH_LONG).show()
         }
         finish()
