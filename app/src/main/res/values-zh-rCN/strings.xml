@@ -14,8 +14,10 @@
   <string name="background_access_enabled">Home Assistant 可以在后台运行。</string>
   <string name="background_access_title">后台访问</string>
   <string name="basic_sensor_lullaby">摇篮曲</string>
+  <string name="basic_sensor_name_active_notification_count">活动通知计数</string>
   <string name="basic_sensor_name_activity">检测到的活动</string>
   <string name="basic_sensor_name_alarm">下一个警报</string>
+  <string name="basic_sensor_name_app_importance">应用重要性</string>
   <string name="basic_sensor_name_app_inactive">应用无效</string>
   <string name="basic_sensor_name_app_memory">应用占用内存</string>
   <string name="basic_sensor_name_app_rx_gb">应用下载流量</string>
@@ -42,10 +44,13 @@
   <string name="basic_sensor_name_keyguard_secure">键盘锁安全</string>
   <string name="basic_sensor_name_last_notification">最后通知</string>
   <string name="basic_sensor_name_last_reboot">上次重启</string>
+  <string name="basic_sensor_name_last_removed_notification">上次删除的通知</string>
   <string name="basic_sensor_name_last_update">最后更新触发</string>
   <string name="basic_sensor_name_location_accurate">单一准确位置</string>
   <string name="basic_sensor_name_location_background">后台位置</string>
   <string name="basic_sensor_name_location_zone">地理围栏</string>
+  <string name="basic_sensor_name_mobile_data">移动网络</string>
+  <string name="basic_sensor_name_mobile_data_roaming">移动网络漫游</string>
   <string name="basic_sensor_name_mobile_rx_gb">移动下载流量</string>
   <string name="basic_sensor_name_mobile_tx_gb">移动上传流量</string>
   <string name="basic_sensor_name_phone">电话状态</string>
@@ -162,10 +167,13 @@ Home Assistant实例</string>
   <string name="list_template_widgets">模板小部件列表</string>
   <string name="location">位置</string>
   <string name="location_disabled_message">该位置被禁用。以下启用的选项要求您启用位置。如果未启用该位置，则传感器/设置将不起作用！ \n \n %1$s \n是否要启用位置信息？</string>
+  <string name="location_disabled_notification_message">以下启用的选项要求您启用位置。如果未启用该位置，则传感器/设置将不起作用！ \n \n %1$s \n单击以启用位置。</string>
+  <string name="location_disabled_notification_short_message">某些设置不起作用。单击以启用位置。</string>
   <string name="location_disabled_option_disable">禁用选项</string>
   <string name="location_disabled_title">位置已禁用</string>
   <string name="location_perm_info_message">Android对要使用Wifi的应用设置了限制，因为从理论上讲Wifi可以用来确定您的位置。 \n \n另外，要确保该应用可以在后台访问Wifi（URL决策，传感器），您需要始终允许位置访问。 \n \n因此，要始终使用此选项进行位置访问。 \n \n继续授予位置访问权限？</string>
   <string name="location_perm_info_title">位置访问</string>
+  <string name="location_warn_channel">位置已禁用</string>
   <string name="lock_summary">使用生物识别或屏幕锁凭据来解锁应用</string>
   <string name="lock_title">锁定应用</string>
   <string name="lockscreen_message">点击解锁 ：</string>
@@ -245,6 +253,7 @@ Home Assistant实例</string>
   <string name="rate_limit_summary">速率限制数据</string>
   <string name="rate_limit_title">通知速率限制</string>
   <string name="refresh">刷新</string>
+  <string name="remember">记住</string>
   <string name="required_fields">需要用户名和密码。</string>
   <string name="retry">重试</string>
   <string name="save">保存</string>
@@ -252,12 +261,20 @@ Home Assistant实例</string>
   <string name="scanning_network">为Home Assistant
 扫描网络</string>
   <string name="security">安全</string>
+  <string name="security_vulnerably_message">您的Home Assistant版本无法保护自定义组件中最近发现的安全漏洞。请通过公告查看详细信息，并尽快进行更新。</string>
+  <string name="security_vulnerably_title">安全漏洞警告</string>
+  <string name="security_vulnerably_understand">懂了</string>
+  <string name="security_vulnerably_view">查看公告</string>
   <string name="select_entity_to_display">选择要显示的实体</string>
   <string name="select_instance">选择你想要连接的实例:</string>
   <string name="sensor">传感器</string>
   <string name="sensor_description">描述</string>
+  <string name="sensor_description_active_notification_count">用户可见的活动通知（包括静默、持久通知和传感器辅助设备通知）的总数。</string>
+  <string name="sensor_description_app_importance">如果应用处于前台，后台或其他任何状态。</string>
+  <string name="sensor_description_app_inactive">系统当前是否认为该应用程序处于非活动状态</string>
   <string name="sensor_description_app_memory">该应用程序已使用和可用的总内存</string>
   <string name="sensor_description_app_rx_gb">自上次设备重启以来应用的下载流量</string>
+  <string name="sensor_description_app_standby">应用程序当前的备用存储桶。备用存储桶确定应用程序在运行后台任务（如作业和警报）时将受到的限制。</string>
   <string name="sensor_description_app_tx_gb">自上次重启设备以来应用的上传流量</string>
   <string name="sensor_description_audio_mode">设备音频模式的状态</string>
   <string name="sensor_description_audio_sensor">设备震动模式的状态以及其他音频相关属性</string>
@@ -285,6 +302,7 @@ Home Assistant实例</string>
   <string name="sensor_description_keyguard_secure">当前键盘锁是通过PIN，图案或密码保护的或SIM卡处于锁定状态。</string>
   <string name="sensor_description_last_notification">最后通知的详细信息。</string>
   <string name="sensor_description_last_reboot">上次重新启动设备的日期和时间。下面的设置将允许您调整中性区（以毫秒为单位）（如果您仍然发现该值跳转不正确）。默认值为 60000（1 分钟）。</string>
+  <string name="sensor_description_last_removed_notification">最后删除的通知的详细信息。这可以是由用户清除或由应用程序删除的任何通知。</string>
   <string name="sensor_description_last_update">发送最后一次更新的意图，定期更新将显示为“ SensorWorker”。</string>
   <string name="sensor_description_light_sensor">当前照度级别</string>
   <string name="sensor_description_location_accurate">允许Home Assistant发送通知以请求准确的位置以及应用程序定期请求准确的位置。最低精度设置可让您决定设备位置的精度（以米为单位）才能发送到家庭助理。更新之间的最短时间（以毫秒为单位）可防止设备过于频繁地发送准确的位置。</string>
@@ -292,6 +310,8 @@ Home Assistant实例</string>
   <string name="sensor_description_location_zone">导入现有的Home Assistant区域作为地理围栏，以进行基于区域的跟踪。最低精度设置可让您决定设备位置的精度（以米为单位）才能发送到家庭助理。</string>
   <string name="sensor_description_lullaby">如果正在播放摇篮曲</string>
   <string name="sensor_description_mic_muted">麦克风是否在设备上静音</string>
+  <string name="sensor_description_mobile_data">设备上是否启用了移动网络</string>
+  <string name="sensor_description_mobile_data_roaming">设备上是否启用了移动数据漫游</string>
   <string name="sensor_description_mobile_rx_gb">自上次设备重启以来，移动数据上的总下载流量</string>
   <string name="sensor_description_mobile_tx_gb">自上次设备重启以来，移动数据上的总上传流量</string>
   <string name="sensor_description_music_active">音乐是否正在设备上播放</string>
@@ -339,6 +359,7 @@ Home Assistant实例</string>
   <string name="sensor_name_light">光传感器</string>
   <string name="sensor_name_location">位置传感器</string>
   <string name="sensor_name_mic_muted">麦克风静音</string>
+  <string name="sensor_name_mobile_data">移动网络传感器</string>
   <string name="sensor_name_music_active">音乐开启</string>
   <string name="sensor_name_network">网络传感器</string>
   <string name="sensor_name_phone">电话感应器</string>
@@ -403,6 +424,7 @@ Home Assistant实例</string>
   <string name="url_invalid">Url 无效</string>
   <string name="url_parse_error">无法解析您的Home Assistant URL地址。它看起来应该像https://example.com</string>
   <string name="username">用户名</string>
+  <string name="view_password">查看密码</string>
   <string name="wait">等待</string>
   <string name="webview_error">加载Home Assistant时出错或超时，请检查连接设置，然后重试。</string>
   <string name="webview_error_description">遇到错误：</string>

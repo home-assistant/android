@@ -94,6 +94,7 @@ a l\'internet de casa teva.</string>
   <string name="device_registration">Registre del dispositiu</string>
   <string name="dialog_add_panel_shortcut_content">Voleu crear una drecera a aquest element?</string>
   <string name="dialog_add_panel_shortcut_title">Afegeix una drecera</string>
+  <string name="disable">Desactiva</string>
   <string name="disable_all_sensors">Desactivar tots els %1$d sensors</string>
   <string name="documentation">Documentació</string>
   <string name="domain_automation">Automatització</string>
@@ -101,12 +102,13 @@ a l\'internet de casa teva.</string>
   <string name="domain_cover">Coberta</string>
   <string name="domain_fan">Ventilador</string>
   <string name="domain_input_boolean">Entrada booleana</string>
-  <string name="domain_input_number">Número d\'entrada</string>
+  <string name="domain_input_number">Entrada numèrica</string>
   <string name="domain_light">Llum</string>
   <string name="domain_lock">Bloqueig</string>
   <string name="domain_scene">Escena</string>
   <string name="domain_script">Programa (script)</string>
   <string name="domain_switch">Interruptor</string>
+  <string name="domain_vacuum">Aspiradora</string>
   <string name="enable_all_sensors">Activa tots els sensors</string>
   <string name="enable_all_sensors_summary">Tots els permisos necessaris se sol·licitaran en habilitar</string>
   <string name="enable_location_tracking">Activar el seguiment d\'ubicació</string>
@@ -130,6 +132,8 @@ en la teva instància de Home Assistant.</string>
   <string name="fullscreen">Pantalla completa</string>
   <string name="fullscreen_def">Posa l\'aplicació en pantalla completa</string>
   <string name="grant_permission">Concedir permís</string>
+  <string name="high_accuracy_mode_channel_name">Ubicació d\'alta precisió</string>
+  <string name="high_accuracy_mode_notification_title">Mode d\'alta precisió (GPS) habilitat</string>
   <string name="history">Historial</string>
   <string name="home_assistant_not_discover">No s\'ha pogut trobar la teva
 instància de Home Assistant</string>
@@ -234,6 +238,10 @@ instància de Home Assistant</string>
   <string name="scanning_network">Escanejant la xarxa 
 buscant Home Assistant</string>
   <string name="security">Seguretat</string>
+  <string name="security_vulnerably_message">La teva versió de Home Assistant no et protegeix contra les vulnerabilitats de seguretat descobertes recentment en components personalitzats. Consulta els detalls en el butlletí i actualitza l\'aplicació el més aviat possible.</string>
+  <string name="security_vulnerably_title">Alerta de vulnerabilitat de seguretat</string>
+  <string name="security_vulnerably_understand">Ho entenc</string>
+  <string name="security_vulnerably_view">Mostra el butlletí</string>
   <string name="select_entity_to_display">Seleccioneu Entitat a mostrar</string>
   <string name="select_instance">Seleccioneu la instància amb la qual us voleu connectar</string>
   <string name="sensor">Sensor</string>
@@ -326,18 +334,26 @@ buscant Home Assistant</string>
   <string name="skip">Omet</string>
   <string name="state">Estat</string>
   <string name="state_auto">Automàtic</string>
+  <string name="state_cleaning">Netejant</string>
   <string name="state_closed">Tancat</string>
   <string name="state_closing">Tancant</string>
   <string name="state_cool">Refredar</string>
+  <string name="state_docked">Aparcat</string>
   <string name="state_dry">Asseca</string>
+  <string name="state_error">Error</string>
   <string name="state_fan_only">Només ventilador</string>
   <string name="state_heat">Escalfar</string>
   <string name="state_heat_cool">Calor Fred</string>
+  <string name="state_idle">Inactiu</string>
   <string name="state_locked">Bloquejat</string>
   <string name="state_off">Apagat</string>
   <string name="state_on">Encès</string>
   <string name="state_open">Obert</string>
   <string name="state_opening">Obertura</string>
+  <string name="state_paused">Pausat/ada</string>
+  <string name="state_returning">Tornant</string>
+  <string name="state_unavailable">No disponible/s</string>
+  <string name="state_unknown">Desconegut</string>
   <string name="state_unlocked">Desbloquejat</string>
   <string name="states">Visió general</string>
   <string name="status_of_mobile_app_integration">Estat de la integració de l\'aplicació mòbil:</string>

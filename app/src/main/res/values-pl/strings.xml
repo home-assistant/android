@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Odpowiedz</string>
+  <string name="activity_intent_error">Nie można wysłać intentu działania, sprawdź format polecenia</string>
   <string name="add_service_data_field">Dodaj pole</string>
   <string name="add_widget">Dodaj widget</string>
   <string name="app_version_info">Informacje o wersji aplikacji</string>
@@ -17,10 +19,11 @@
   <string name="basic_sensor_name_active_notification_count">Liczba aktywnych powiadomień</string>
   <string name="basic_sensor_name_activity">Wykryta aktywność</string>
   <string name="basic_sensor_name_alarm">Następny alarm</string>
+  <string name="basic_sensor_name_app_importance">Ważność aplikacji</string>
   <string name="basic_sensor_name_app_inactive">Aplikacja nieaktywna</string>
   <string name="basic_sensor_name_app_memory">Pamięć aplikacji</string>
   <string name="basic_sensor_name_app_rx_gb">Odebrane dane przez aplikację (w GB)</string>
-  <string name="basic_sensor_name_app_standby">Priorytet aplikacji (Standby Bucket)</string>
+  <string name="basic_sensor_name_app_standby">Zasobnik gotowości aplikacji</string>
   <string name="basic_sensor_name_app_tx_gb">Wysłane dane przez aplikację (w GB)</string>
   <string name="basic_sensor_name_battery_health">Zdrowie baterii</string>
   <string name="basic_sensor_name_battery_level">Poziom baterii</string>
@@ -48,6 +51,8 @@
   <string name="basic_sensor_name_location_accurate">Jednorazowa dokładna lokalizacja</string>
   <string name="basic_sensor_name_location_background">Lokalizacja w tle</string>
   <string name="basic_sensor_name_location_zone">Strefa lokalizacji</string>
+  <string name="basic_sensor_name_mobile_data">Dane mobilne</string>
+  <string name="basic_sensor_name_mobile_data_roaming">Roaming dla danych mobilnych</string>
   <string name="basic_sensor_name_mobile_rx_gb">Odebrane dane komórkowe (GB)</string>
   <string name="basic_sensor_name_mobile_tx_gb">Wysłane dane komórkowe (GB)</string>
   <string name="basic_sensor_name_phone">Stan telefonu</string>
@@ -69,7 +74,7 @@
   <string name="biometric_message">Odblokuj przy użyciu danych biometrycznych lub blokady ekranu</string>
   <string name="biometric_set_title">Potwierdź, aby kontynuować</string>
   <string name="biometric_title">Home Assistant musi być odblokowany</string>
-  <string name="broadcast_intent_error">Nie można wysłać zawartości transmisji. Sprawdź format polecenia.</string>
+  <string name="broadcast_intent_error">Nie można wysłać zawartości transmisji, sprawdź format polecenia.</string>
   <string name="calendar">Kalendarz</string>
   <string name="cancel">Anuluj</string>
   <string name="changelog">Dziennik zmian</string>
@@ -102,6 +107,7 @@
   <string name="device_registration">Rejestracja urządzenia</string>
   <string name="dialog_add_panel_shortcut_content">Czy utworzyć skrót do tego elementu?</string>
   <string name="dialog_add_panel_shortcut_title">Dodaj skrót</string>
+  <string name="disable">Wyłącz</string>
   <string name="disable_all_sensors">Wyłącz wszystkie %1$d sensory(-ów)</string>
   <string name="documentation">Dokumentacja</string>
   <string name="domain_automation">Automatyzacja</string>
@@ -115,6 +121,7 @@
   <string name="domain_scene">Scena</string>
   <string name="domain_script">Skrypt</string>
   <string name="domain_switch">Przełącznik</string>
+  <string name="domain_vacuum">Odkurzacz</string>
   <string name="enable_all_sensors">Włącz wszystkie sensory</string>
   <string name="enable_all_sensors_summary">Wszystkie potrzebne uprawnienia będą wymagane po włączeniu sensorów</string>
   <string name="enable_location_tracking">Włącz śledzenie lokalizacji</string>
@@ -139,6 +146,8 @@
   <string name="fullscreen">Pełny ekran</string>
   <string name="fullscreen_def">Umieść aplikację na pełnym ekranie</string>
   <string name="grant_permission">Przyznaj</string>
+  <string name="high_accuracy_mode_channel_name">Wysoka dokładność lokalizacji</string>
+  <string name="high_accuracy_mode_notification_title">Włączony tryb wysokiej dokładności (GPS)</string>
   <string name="history">Historia</string>
   <string name="home_assistant_not_discover">Nie można znaleźć Twojego Home Assistanta</string>
   <string name="icon">Ikona</string>
@@ -162,10 +171,13 @@
   <string name="list_template_widgets">Widgety szablonów</string>
   <string name="location">Lokalizacja</string>
   <string name="location_disabled_message">Lokalizacja jest wyłączona. Następujące włączone opcje wymagają włączenia lokalizacji. Jeśli nie włączysz lokalizacji, sensor(y)/ustawienia nie będą działać!\n\n%1$s\nCzy chcesz włączyć lokalizację?</string>
+  <string name="location_disabled_notification_message">Następujące włączone opcje wymagają włączenia lokalizacji. Jeśli nie włączysz lokalizacji, sensor(y)/ustawienie(a) nie będą działać!\n\n%1$s\nKliknij, aby włączyć lokalizację.</string>
+  <string name="location_disabled_notification_short_message">Niektóre ustawienia nie działają. Kliknij, aby włączyć lokalizację.</string>
   <string name="location_disabled_option_disable">Wyłącz opcję</string>
   <string name="location_disabled_title">Lokalizacja jest wyłączona</string>
   <string name="location_perm_info_message">Android ustawił ograniczenia dla aplikacji, które chcą korzystać z Wi-Fi, ponieważ Wi-Fi może teoretycznie służyć do określania Twojej lokalizacji.\n\nAby aplikacja miała dostęp do Wi-Fi w tle (niektóre adresy URL, sensory), musisz zezwolić na dostęp do lokalizacji przez cały czas.\n\nWięc aby korzystać z tej opcji, dostęp do lokalizacji potrzebny jest przez cały czas.\n\nNadal udzielać dostępu do lokalizacji?</string>
   <string name="location_perm_info_title">Dostęp do lokalizacji</string>
+  <string name="location_warn_channel">Lokalizacja wyłączona</string>
   <string name="lock_summary">Użyj danych biometrycznych lub blokady ekranu, aby odblokować aplikację</string>
   <string name="lock_title">Zablokuj aplikację</string>
   <string name="lockscreen_message">Stuknij, aby odblokować:</string>
@@ -254,20 +266,20 @@ Tagi będą działać na każdym urządzeniu z zainstalowaną aplikacją Home As
   <string name="scan_again">skanuj ponownie</string>
   <string name="scanning_network">Skanowanie sieci w poszukiwaniu Home Assistanta</string>
   <string name="security">Bezpieczeństwo</string>
+  <string name="security_vulnerably_message">Twoja wersja Home Assistanta nie chroni przed niedawno odkrytymi lukami bezpieczeństwa w niestandardowych komponentach. Zapoznaj się ze szczegółami za pośrednictwem biuletynu i zaktualizuj jak najszybciej.</string>
+  <string name="security_vulnerably_title">Ostrzeżenie dotyczące bezpieczeństwa</string>
+  <string name="security_vulnerably_understand">Rozumiem</string>
+  <string name="security_vulnerably_view">Wyświetl biuletyn</string>
   <string name="select_entity_to_display">Wybierz encję do wyświetlenia</string>
   <string name="select_instance">Wybierz instancję, z którą chcesz się połączyć:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Opis</string>
   <string name="sensor_description_active_notification_count">Całkowita liczba aktywnych powiadomień, które są widoczne dla użytkownika, w tym cichych, trwałych i powiadomień Workera sensorów.</string>
+  <string name="sensor_description_app_importance">Jeśli aplikacja jest na pierwszym planie, w tle lub w jakimkolwiek innym stanie, w którym może być.</string>
   <string name="sensor_description_app_inactive">Czy aplikacja jest obecnie uznawana przez system za nieaktywną</string>
   <string name="sensor_description_app_memory">Użyta oraz dostępna pamięć dla aplikacji</string>
   <string name="sensor_description_app_rx_gb">Odebrane dane przez aplikację (w GB) od ostatniego restartu urządzenia</string>
-  <string name="sensor_description_app_standby">Aktualny priorytet aplikacji. Priorytet określa, jak bardzo aplikacja jest ograniczona do wykonywania zadań w tle, takich jak alarmy lub powiadomienia.
-1. Active (aktywna)
-2. Working set (uruchomiona)
-3. Frequent (często)
-4. Rare (rzadko)
-5. Never (nigdy)</string>
+  <string name="sensor_description_app_standby">Bieżący zasobnik gotowości aplikacji. Zasobniki gotowości określają, w jakim stopniu aplikacja będzie miała ograniczone możliwość pracy w tle, takich jak wykonywanie zadań i dodawanie alarmów.</string>
   <string name="sensor_description_app_tx_gb">Wysłane dane przez aplikację (w GB) od ostatniego restartu urządzenia</string>
   <string name="sensor_description_audio_mode">Stan trybu audio urządzeń</string>
   <string name="sensor_description_audio_sensor">Stan trybu dzwonka urządzenia, a także inne atrybuty związane z dźwiękiem</string>
@@ -303,6 +315,8 @@ Tagi będą działać na każdym urządzeniu z zainstalowaną aplikacją Home As
   <string name="sensor_description_location_zone">Importuj istniejące strefy Home Assistanta do śledzenia lokalizacji opartego na strefach. \"Minimalna dokładność\" pozwala zdecydować, jak dokładna musi być lokalizacja urządzenia (w metrach), aby aplikacja wysłała ją do HA.</string>
   <string name="sensor_description_lullaby">Czy kołysanka aktualnie gra</string>
   <string name="sensor_description_mic_muted">Czy mikrofon w urządzeniu jest wyciszony</string>
+  <string name="sensor_description_mobile_data">Czy dane mobilne są włączone na urządzeniu</string>
+  <string name="sensor_description_mobile_data_roaming">Czy na urządzeniu jest włączony roaming dla danych mobilnych</string>
   <string name="sensor_description_mobile_rx_gb">Całkowita wartość odebranych danych komórkowych (w GB) od ostatniego restartu urządzenia</string>
   <string name="sensor_description_mobile_tx_gb">Całkowita wartość wysłanych danych komórkowych (w GB) od ostatniego restartu urządzenia</string>
   <string name="sensor_description_music_active">Czy muzyka jest aktywnie odtwarzana na urządzeniu</string>
@@ -350,6 +364,7 @@ Tagi będą działać na każdym urządzeniu z zainstalowaną aplikacją Home As
   <string name="sensor_name_light">Sensor światła</string>
   <string name="sensor_name_location">Sensory lokalizacji</string>
   <string name="sensor_name_mic_muted">Wyciszony mikrofon</string>
+  <string name="sensor_name_mobile_data">Sensory danych mobilnych</string>
   <string name="sensor_name_music_active">Muzyka aktywna</string>
   <string name="sensor_name_network">Sensory sieci</string>
   <string name="sensor_name_phone">Sensory stanu telefonu</string>
@@ -384,18 +399,26 @@ Tagi będą działać na każdym urządzeniu z zainstalowaną aplikacją Home As
   <string name="skip">Pomiń</string>
   <string name="state">Stan</string>
   <string name="state_auto">auto</string>
+  <string name="state_cleaning">Sprzątanie</string>
   <string name="state_closed">zamknięte</string>
   <string name="state_closing">zamykanie</string>
   <string name="state_cool">chłodzenie</string>
+  <string name="state_docked">Zadokowany</string>
   <string name="state_dry">osuszanie</string>
+  <string name="state_error">Błąd</string>
   <string name="state_fan_only">tylko wentylator</string>
   <string name="state_heat">grzanie</string>
   <string name="state_heat_cool">grzanie/chłodzenie</string>
+  <string name="state_idle">Bezczynny</string>
   <string name="state_locked">zamknięty</string>
   <string name="state_off">wył.</string>
   <string name="state_on">wł.</string>
   <string name="state_open">otwarte</string>
   <string name="state_opening">otwieranie</string>
+  <string name="state_paused">wstrzymany</string>
+  <string name="state_returning">Powrót do stacji dokującej</string>
+  <string name="state_unavailable">Niedostępny</string>
+  <string name="state_unknown">Nieznany</string>
   <string name="state_unlocked">otwarty</string>
   <string name="states">Przegląd</string>
   <string name="status_of_mobile_app_integration">Status integracji mobile_app:</string>
