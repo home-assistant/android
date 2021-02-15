@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.data.integration.impl
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.graphics.Color
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -106,30 +107,23 @@ class IntegrationRepositoryImpl @Inject constructor(
                 .setWhen(System.currentTimeMillis())
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
+                .setColor(Color.RED)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build()
             with(NotificationManagerCompat.from(context)) {
-                notify(NOTIFICATION_ID, notification)
+                notify(channelId, NOTIFICATION_ID, notification)
             }
             Log.d(TAG, "Notification posted")
         }
     }
 
     override suspend fun removeFailedNotification(context: Context) {
-        if (connectionCount > 0) {
-            Log.d(TAG, "Resetting connection count back to 0")
-            connectionCount = 0
-            if (notifyFailed) {
-                Log.d(
-                    TAG,
-                    "Removing notification as connection to Home Assistant has been restored"
-                )
-                val notificationManager =
-                    context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                notificationManager.cancel(NOTIFICATION_ID)
-                notifyFailed = false
-            }
-        }
+        Log.d(TAG, "Resetting failed connection count back to 0 as connection to Home Assistant has been restored, removing any posted notification")
+        connectionCount = 0
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(channelId, NOTIFICATION_ID)
+        notifyFailed = false
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
