@@ -106,6 +106,9 @@ jobs:
         cp .github/mock-google-services.json app/google-services.json
         cp .github/mock-google-services.json wear/google-services.json
     
+    - uses: ./.github/actions/create-release-notes
+      name: Create Release Notes
+
     - name: Build Debug APK
       run: ./gradlew assembleDebug
     
