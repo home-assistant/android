@@ -30,7 +30,7 @@ object Config {
         }
 
         object Google {
-            private const val daggerVersion = "2.31.2"
+            private const val daggerVersion = "2.32"
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
@@ -64,7 +64,7 @@ object Config {
         }
 
         object Play {
-            const val location = "com.google.android.gms:play-services-location:17.1.0"
+            const val location = "com.google.android.gms:play-services-location:18.0.0"
         }
 
         object Firebase {
