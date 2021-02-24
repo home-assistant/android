@@ -29,7 +29,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    lateinit var integrationRepository: IntegrationRepository
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -111,7 +111,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             var templateText: String?
             var enabled: Boolean
             try {
-                templateText = integrationUseCase.renderTemplate(template, mapOf())
+                templateText = integrationRepository.renderTemplate(template, mapOf())
                 enabled = true
             } catch (e: Exception) {
                 templateText = "Error in template"
