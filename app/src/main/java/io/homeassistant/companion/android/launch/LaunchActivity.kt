@@ -29,6 +29,7 @@ class LaunchActivity : BaseActivity(), LaunchView {
 
     override fun displayWebview() {
         presenter.setSessionExpireMillis(0)
+
         startActivity(WebViewActivity.newInstance(this))
         finish()
     }
