@@ -16,6 +16,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
@@ -34,6 +35,9 @@ class HighAccuracyLocationService : Service() {
         private var restartInProcess = false
         private var isRunning = false
         private lateinit var notificationBuilder: NotificationCompat.Builder
+        private lateinit var notification: Notification
+        private lateinit var notificationManagerCompat: NotificationManagerCompat
+        private var notificationId: Int = 0
 
         private const val DEFAULT_UPDATE_INTERVAL_SECONDS = 5
         const val HIGH_ACCURACY_LOCATION_NOTIFICATION_ID = "HighAccuracyLocationNotification"
@@ -129,13 +133,11 @@ class HighAccuracyLocationService : Service() {
         }
 
         private fun createNotificationBuilder(context: Context) {
-            val notificationManager = NotificationManagerCompat.from(context)
-
             var channelID = "High accuracy location"
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val channel = NotificationChannel(channelID, context.getString(R.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
-                notificationManager.createNotificationChannel(channel)
+                notificationManagerCompat.createNotificationChannel(channel)
             }
 
             val disableIntent = Intent(context, HighAccuracyLocationReceiver::class.java)
@@ -159,6 +161,18 @@ class HighAccuracyLocationService : Service() {
 
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
+    override fun onCreate() {
+        notificationId = HIGH_ACCURACY_LOCATION_NOTIFICATION_ID.hashCode()
+
+        notificationManagerCompat = NotificationManagerCompat.from(this)
+
+        // Create notification
+        createNotificationBuilder(this)
+        notification = notificationBuilder.build()
+
+        super.onCreate()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
@@ -166,18 +180,21 @@ class HighAccuracyLocationService : Service() {
         isRunning = true
         val intervalInSeconds = intent?.getIntExtra("intervalInSeconds", DEFAULT_UPDATE_INTERVAL_SECONDS) ?: DEFAULT_UPDATE_INTERVAL_SECONDS
         requestLocationUpdates(intervalInSeconds)
-        val notificationId = HIGH_ACCURACY_LOCATION_NOTIFICATION_ID.hashCode()
-        createNotificationBuilder(this)
-        startForeground(notificationId, notificationBuilder.build())
+
+        // Start service in foreground
+        startForeground(notificationId, notification)
         Log.d(TAG, "High accuracy location service (Interval: ${intervalInSeconds}s) started")
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
         fusedLocationProviderClient.removeLocationUpdates(getLocationUpdateIntent())
-        stopForeground(true)
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         isRunning = false
         Log.d(TAG, "High accuracy location service stopped")
+
+        // Remove notification again. Sometimes stopForeground(true) is not enough. Just to be sure
+        notificationManagerCompat.cancel(notificationId)
 
         super.onDestroy()
     }
