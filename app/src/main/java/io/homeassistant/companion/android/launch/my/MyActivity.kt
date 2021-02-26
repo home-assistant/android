@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -14,7 +13,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.android.synthetic.main.activity_webview.webview
 
-class MyActivity: BaseActivity() {
+class MyActivity : BaseActivity() {
     companion object {
         val EXTRA_URI = "EXTRA_URI"
 
@@ -30,8 +29,8 @@ class MyActivity: BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_my)
 
-        if(Intent.ACTION_VIEW == intent?.action && intent.data != null){
-            if(intent.data?.getQueryParameter("mobile")?.equals("1") == true){
+        if (Intent.ACTION_VIEW == intent?.action && intent.data != null) {
+            if (intent.data?.getQueryParameter("mobile")?.equals("1") == true) {
                 finish()
                 return
             }
@@ -46,7 +45,7 @@ class MyActivity: BaseActivity() {
                         request: WebResourceRequest?
                     ): Boolean {
                         val url = request?.url.toString()
-                        if(url.startsWith("homeassistant://navigate/")) {
+                        if (url.startsWith("homeassistant://navigate/")) {
                             startActivity(WebViewActivity.newInstance(context, url.removePrefix("homeassistant://navigate/")))
                             finish()
                             return true
