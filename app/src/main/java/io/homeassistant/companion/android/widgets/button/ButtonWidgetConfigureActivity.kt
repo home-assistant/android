@@ -179,9 +179,16 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
                 // We only call this if servicesAvailable was fetched and is not null,
                 // so we can safely assume that it is not null here
-                val fields = services[serviceText]!!.serviceData.fields
+                val serviceData = services[serviceText]!!.serviceData
+                val target = serviceData.target
+                val fields = serviceData.fields
+
                 val fieldKeys = fields.keys
                 Log.d(TAG, "Fields applicable to this service: $fields")
+
+                if (target !== false) {
+                    dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id"))
+                }
 
                 fieldKeys.sorted().forEach { fieldKey ->
                     Log.d(TAG, "Creating a text input box for $fieldKey")
@@ -270,27 +277,33 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 }
                 if (buttonWidget != null) {
                     serviceAdapter.add(services[serviceText])
-                    val fields = services[serviceText]!!.serviceData.fields
+                    val serviceData = services[serviceText]!!.serviceData
+                    val target = serviceData.target
+                    val fields = serviceData.fields
                     val fieldKeys = fields.keys
                     Log.d(TAG, "Fields applicable to this service: $fields")
                     val serviceDataMap: HashMap<String, Any> =
                         jacksonObjectMapper().readValue(buttonWidget.serviceData)
+                    val addedFields = mutableSetOf<String>()
                     for (item in serviceDataMap) {
                         val value: String = item.value.toString().replace("[", "").replace("]", "") + if (item.key == "entity_id") ", " else ""
                         dynamicFields.add(ServiceFieldBinder(serviceText, item.key, value))
+                        addedFields.add(item.key)
+                    }
+                    if (target !== false && !addedFields.contains("entity_id")) {
+                        dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id"))
+                    }
+                    fieldKeys.sorted().forEach { fieldKey ->
+                        Log.d(TAG, "Creating a text input box for $fieldKey")
 
-                        fieldKeys.sorted().forEach { fieldKey ->
-                            Log.d(TAG, "Creating a text input box for $fieldKey")
-
-                            // Insert a dynamic layout
-                            // IDs get priority and go at the top, since the other fields
-                            // are usually optional but the ID is required
-                            if (fieldKey != item.key) {
-                                if (fieldKey.contains("_id"))
-                                    dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
-                                else
-                                    dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
-                            }
+                        // Insert a dynamic layout
+                        // IDs get priority and go at the top, since the other fields
+                        // are usually optional but the ID is required
+                        if (!addedFields.contains(fieldKey)) {
+                            if (fieldKey.contains("_id"))
+                                dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
+                            else
+                                dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
                         }
                     }
                     integrationUseCase.getEntities().forEach {
