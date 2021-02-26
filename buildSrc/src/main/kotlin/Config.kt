@@ -109,6 +109,7 @@ object Config {
             const val exoCore = "com.google.android.exoplayer:exoplayer-core:2.11.7"
             const val exoHls = "com.google.android.exoplayer:exoplayer-hls:2.11.7"
             const val exoUi = "com.google.android.exoplayer:exoplayer-ui:2.11.7"
+            const val altBeacon =  "org.altbeacon:android-beacon-library:2+"
         }
     }
 

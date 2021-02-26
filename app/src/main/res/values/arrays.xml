@@ -10,4 +10,16 @@
         <item>last50</item>
         <item>last100</item>
     </string-array>
+    <string-array name="setting_ble_emitter_transmit_power_labels">
+        <item>@string/ble_transmit_power_label_high</item>
+        <item>@string/ble_transmit_power_label_medium</item>
+        <item>@string/ble_transmit_power_label_low</item>
+        <item>@string/ble_transmit_power_label_ultra_low</item>
+    </string-array>
+    <string-array name="setting_ble_emitter_transmit_power_values">
+        <item>@string/ble_transmit_power_value_high</item>
+        <item>@string/ble_transmit_power_value_medium</item>
+        <item>@string/ble_transmit_power_value_low</item>
+        <item>@string/ble_transmit_power_value_ultra_low</item>
+    </string-array>
 </resources>

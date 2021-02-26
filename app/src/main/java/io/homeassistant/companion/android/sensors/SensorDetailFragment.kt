@@ -9,6 +9,7 @@ import android.os.Looper
 import android.provider.Settings
 import android.text.InputType
 import androidx.preference.EditTextPreference
+import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
@@ -29,7 +30,7 @@ class SensorDetailFragment(
     private val sensorManager: SensorManager,
     private val basicSensor: SensorManager.BasicSensor
 ) :
-    PreferenceFragmentCompat() {
+        PreferenceFragmentCompat() {
 
     companion object {
         fun newInstance(
@@ -51,10 +52,10 @@ class SensorDetailFragment(
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerSensorComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
+                .builder()
+                .appComponent((activity?.application as GraphComponentAccessor).appComponent)
+                .build()
+                .inject(this)
         sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
         addPreferencesFromResource(R.xml.sensor_detail)
@@ -80,7 +81,7 @@ class SensorDetailFragment(
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
 
                     if ((fineLocation || coarseLocation) &&
-                        !DisabledLocationHandler.isLocationEnabled(context, fineLocation)) {
+                            !DisabledLocationHandler.isLocationEnabled(context, fineLocation)) {
                         DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(basicSensor.name)))
                         return@setOnPreferenceChangeListener false
                     } else {
@@ -200,6 +201,27 @@ class SensorDetailFragment(
                         }
                         if (!it.contains(pref))
                             it.addPreference(pref)
+                    } else if (setting.valueType == "list") {
+                        val pref = findPreference(key) ?: ListPreference(requireContext())
+                        pref.key = key
+                        val titleId = resources.getIdentifier(key + "_title", "string", requireContext().packageName)
+                        pref.title = resources.getString(titleId)
+                        pref.dialogTitle = resources.getString(titleId)
+                        val entriesResourceId = resources.getIdentifier(key + "_labels", "array", requireContext().packageName)
+                        pref.entries = requireContext().resources.getStringArray(entriesResourceId)
+                        val entryValuesResourceId = resources.getIdentifier(key + "_values", "array", requireContext().packageName)
+                        pref.entryValues = requireContext().resources.getStringArray(entryValuesResourceId)
+                        pref.value = setting.value
+                        pref.summary = setting.value
+                        pref.isIconSpaceReserved = false
+                        pref.isSingleLineTitle = false
+                        pref.setOnPreferenceChangeListener { _, newState ->
+                            sensorDao.add(Setting(basicSensor.id, setting.name, newState as String, "list"))
+                            sensorManager.requestSensorUpdate(requireContext())
+                            return@setOnPreferenceChangeListener true
+                        }
+                        if (!it.contains(pref))
+                            it.addPreference(pref)
                     } else if (setting.valueType == "string" || setting.valueType == "number") {
                         val pref = findPreference(key) ?: EditTextPreference(requireContext())
                         pref.key = key
@@ -223,18 +245,18 @@ class SensorDetailFragment(
 
                         pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
-                                Setting(
-                                    basicSensor.id,
-                                    setting.name,
-                                    newValue as String,
-                                    setting.valueType
-                                )
+                                    Setting(
+                                            basicSensor.id,
+                                            setting.name,
+                                            newValue as String,
+                                            setting.valueType
+                                    )
                             )
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
-                    if (!it.contains(pref))
-                        it.addPreference(pref)
+                        if (!it.contains(pref))
+                            it.addPreference(pref)
                     } else if (setting.valueType == "list-apps") {
                         val packageManager: PackageManager? = context?.packageManager
                         val packages = packageManager?.getInstalledApplications(PackageManager.GET_META_DATA)
@@ -245,7 +267,8 @@ class SensorDetailFragment(
                             }
                             packageName.sort()
                         }
-                        val pref = findPreference(key) ?: MultiSelectListPreference(requireContext())
+                        val pref = findPreference(key)
+                                ?: MultiSelectListPreference(requireContext())
                         pref.key = key
                         pref.title = setting.name
                         pref.entries = packageName.toTypedArray()
@@ -255,12 +278,12 @@ class SensorDetailFragment(
                         pref.isSingleLineTitle = false
                         pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
-                                Setting(
-                                    basicSensor.id,
-                                    setting.name,
-                                    newValue.toString().replace("[", "").replace("]", ""),
-                                    "list-apps"
-                                )
+                                    Setting(
+                                            basicSensor.id,
+                                            setting.name,
+                                            newValue.toString().replace("[", "").replace("]", ""),
+                                            "list-apps"
+                                    )
                             )
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
@@ -274,7 +297,8 @@ class SensorDetailFragment(
                     } else if (setting.valueType == "list-bluetooth") {
                         val btDevices = BluetoothUtils.getBluetoothDevices(requireContext()).map { b -> b.name }
 
-                        val pref = findPreference(key) ?: MultiSelectListPreference(requireContext())
+                        val pref = findPreference(key)
+                                ?: MultiSelectListPreference(requireContext())
                         pref.key = key
                         pref.title = setting.name
                         pref.entries = btDevices.toTypedArray()
@@ -284,12 +308,12 @@ class SensorDetailFragment(
                         pref.isSingleLineTitle = false
                         pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
-                                Setting(
-                                    basicSensor.id,
-                                    setting.name,
-                                    newValue.toString().replace("[", "").replace("]", ""),
-                                    "list-bluetooth"
-                                )
+                                    Setting(
+                                            basicSensor.id,
+                                            setting.name,
+                                            newValue.toString().replace("[", "").replace("]", ""),
+                                            "list-bluetooth"
+                                    )
                             )
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
@@ -329,8 +353,8 @@ class SensorDetailFragment(
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
                 requestPermissions(
-                    permissions.toSet()
-                        .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0
+                        permissions.toSet()
+                                .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0
                 )
             else -> requestPermissions(permissions, 0)
         }
@@ -344,7 +368,7 @@ class SensorDetailFragment(
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
         }
 

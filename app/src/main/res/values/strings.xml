@@ -40,6 +40,7 @@
   <string name="basic_sensor_name_battery_level">Battery Level</string>
   <string name="basic_sensor_name_battery_state">Battery State</string>
   <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
+  <string name="basic_sensor_name_bluetooth_ble_emitter">Ble Transmitter</string>
   <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
   <string name="basic_sensor_name_call_number">Call Number</string>
   <string name="basic_sensor_name_charger_type">Charger Type</string>
@@ -303,6 +304,7 @@ like to connect to:</string>
   <string name="sensor_description_battery_level">The current battery level of the device</string>
   <string name="sensor_description_battery_state">The current charging state of the battery</string>
   <string name="sensor_description_bluetooth_connection">Information about currently connected bluetooth devices</string>
+  <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon message every second, used to track presence  around house, e.g. together with roomassistant or esp32-mqtt-home projects. Warning, this can affect battery life, particularly if the Transmit Power setting is set to High. Settings allow specifying UUID (standard UUID format), Major and Minor (should be 0 - 65535), to tailor identifiers and groups. By default this sensor is not turned on with the Enable all toggle, to avoid battery drain, there is a setting to enable this.  There is also a Transmitter Power setting to help preserve battery life, use the minimum as required. </string>
   <string name="sensor_description_bluetooth_state">Whether or not bluetooth is enabled on the device</string>
   <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
   <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
@@ -496,4 +498,13 @@ like to connect to:</string>
   <string name="widget_text_size_label">Widget text size:</string>
   <string name="widgets">Widgets</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
+  <string name="ble_transmit_power_label_high">High</string>
+  <string name="ble_transmit_power_label_medium">Medium</string>
+  <string name="ble_transmit_power_label_low">Low</string>
+  <string name="ble_transmit_power_label_ultra_low">Ultra Low</string>
+  <string name="ble_transmit_power_value_high">high</string>
+  <string name="ble_transmit_power_value_medium">medium</string>
+  <string name="ble_transmit_power_value_low">low</string>
+  <string name="ble_transmit_power_value_ultra_low">ultraLow</string>
+  <string name="setting_ble_emitter_transmit_power_title">Transmitter power</string>
 </resources>

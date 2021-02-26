@@ -114,6 +114,7 @@ dependencies {
     implementation(project(":common"))
 
     implementation(Config.Dependency.Misc.blurView)
+    implementation(Config.Dependency.Misc.altBeacon)
     implementation(Config.Dependency.Misc.iconDialog)
     implementation(Config.Dependency.Misc.iconDialogMaterial)
     implementation(Config.Dependency.Misc.emoji) {
@@ -161,6 +162,7 @@ dependencies {
     testImplementation(Config.Dependency.Testing.assertJ)
     testImplementation(Config.Dependency.Testing.mockk)
     testImplementation(Config.Dependency.Kotlin.coroutinesTest)
+    testImplementation(Config.Dependency.Misc.altBeacon)
 
     implementation(Config.Dependency.Misc.exoCore)
     implementation(Config.Dependency.Misc.exoHls)
