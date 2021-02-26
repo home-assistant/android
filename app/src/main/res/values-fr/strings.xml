@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="activity_intent_error">Impossible d\'envoyer l\'intention d\'activité, veuillez vérifier le format de la commande</string>
   <string name="add_service_data_field">Ajouter un champ</string>
   <string name="add_widget">Ajouter un widget</string>
   <string name="app_version_info">Informations sur la version de l\'application</string>
@@ -17,6 +18,7 @@
   <string name="basic_sensor_name_active_notification_count">Nombre de notifications actives</string>
   <string name="basic_sensor_name_activity">Activité détectée</string>
   <string name="basic_sensor_name_alarm">Prochaine alarme</string>
+  <string name="basic_sensor_name_app_importance">Importance de l\'application</string>
   <string name="basic_sensor_name_app_inactive">Application inactive</string>
   <string name="basic_sensor_name_app_memory">Mémoire de l’application</string>
   <string name="basic_sensor_name_app_rx_gb">Données reçues par l\'application (GB)</string>
@@ -48,6 +50,7 @@
   <string name="basic_sensor_name_location_accurate">Emplacement précis unique</string>
   <string name="basic_sensor_name_location_background">Localisation d\'arrière-plan</string>
   <string name="basic_sensor_name_location_zone">Zone de localisation</string>
+  <string name="basic_sensor_name_mobile_data">Données mobiles</string>
   <string name="basic_sensor_name_mobile_rx_gb">Reçu mobile en GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Transmis mobile en GB</string>
   <string name="basic_sensor_name_phone">État du téléphone</string>
@@ -140,6 +143,7 @@
   <string name="fullscreen">Plein écran</string>
   <string name="fullscreen_def">Mettre l\'application en plein écran</string>
   <string name="grant_permission">Donner la permission</string>
+  <string name="high_accuracy_mode_channel_name">Localisation de haute précision</string>
   <string name="history">Historique</string>
   <string name="home_assistant_not_discover">Impossible de trouver votre instance Home Assistant</string>
   <string name="icon">Icône</string>
@@ -253,11 +257,14 @@
   <string name="scan_again">Rechercher à nouveau</string>
   <string name="scanning_network">Recherche de  Home Assistant sur le réseau</string>
   <string name="security">Sécurité</string>
+  <string name="security_vulnerably_title">Avertissement de sécurité vulnérable</string>
+  <string name="security_vulnerably_understand">Je comprends</string>
   <string name="select_entity_to_display">Sélectionnez l\'entité à afficher</string>
   <string name="select_instance">Sélectionnez l\'instance à laquelle vous souhaitez vous connecter :</string>
   <string name="sensor">Capteur</string>
   <string name="sensor_description">Description</string>
   <string name="sensor_description_active_notification_count">Nombre total de notifications actives visibles par l\'utilisateur, y compris les notifications silencieuses, persistantes et les notifications de Sensor Worker.</string>
+  <string name="sensor_description_app_importance">Si l\'application est au premier plan, en arrière-plan ou dans tout autre état, cela peut être.</string>
   <string name="sensor_description_app_inactive">Si oui ou non l’application est actuellement considérée comme inactive par le système</string>
   <string name="sensor_description_app_memory">Mémoire totale utilisée et disponible pour l\'application</string>
   <string name="sensor_description_app_rx_gb">Données reçues par l\'application depuis le dernier redémarrage de l\'appareil (GB)</string>
@@ -344,6 +351,7 @@
   <string name="sensor_name_light">Capteur de luminosité</string>
   <string name="sensor_name_location">Capteurs de localisation</string>
   <string name="sensor_name_mic_muted">Micro en sourdine</string>
+  <string name="sensor_name_mobile_data">Capteurs de données mobiles</string>
   <string name="sensor_name_music_active">Musique active</string>
   <string name="sensor_name_network">Capteurs réseau</string>
   <string name="sensor_name_phone">Capteurs de téléphonie</string>
@@ -381,6 +389,7 @@
   <string name="state_closed">Fermé</string>
   <string name="state_closing">Fermeture</string>
   <string name="state_cool">Frais</string>
+  <string name="state_docked">Sur la base</string>
   <string name="state_dry">Sec</string>
   <string name="state_fan_only">Ventilateur seul</string>
   <string name="state_heat">Chauffe</string>
@@ -390,6 +399,9 @@
   <string name="state_on">On</string>
   <string name="state_open">Ouvert</string>
   <string name="state_opening">Ouverture</string>
+  <string name="state_paused">En pause</string>
+  <string name="state_unavailable">Indisponible</string>
+  <string name="state_unknown">Inconnu</string>
   <string name="state_unlocked">Déverrouillé</string>
   <string name="states">Vue d’ensemble</string>
   <string name="status_of_mobile_app_integration">Statut de l\'intégration de l\'application mobile:</string>

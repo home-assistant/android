@@ -8,15 +8,19 @@ runs:
       shell: bash
       run: |
         mkdir -p ./app/build/outputs/
+        
+        echo "Previous Release Commit:"
+        git tag -l --sort=-creatordate | grep -v beta- | head -n 1
         previous=`git tag -l --sort=-creatordate | grep -v beta- | head -n 1`
+        
         echo "# Changes:" > ./app/build/outputs/changelogGithub
+        echo "Changlog:"
+        git log --format="* %s" ${previous}..HEAD
         git log --format="* %s" ${previous}..HEAD >> ./app/build/outputs/changelogGithub
 
+        echo "Beta Changelog"
+        git log --format="* %s" HEAD^..HEAD
         git log --format="* %s" HEAD^..HEAD > ./app/build/outputs/changelogBeta
 
         mkdir -p app/src/main/play/release-notes/en-US/
-        current=`git tag -l --sort=-creatordate | head -n 1`
-        echo "Full release change log: https://github.com/home-assistant/android/releases/tag/${current}" > app/src/main/play/release-notes/en-US/default.txt
-
-        echo Github Changelog:
-        cat ./app/build/outputs/changelogGithub
+        echo "Full release change log: https://github.com/home-assistant/android/releases/latest" > app/src/main/play/release-notes/en-US/default.txt

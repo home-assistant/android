@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Respuesta</string>
+  <string name="activity_intent_error">No se puede enviar el intento de la actividad, verifica el formato del comando</string>
   <string name="add_service_data_field">Añadir campo</string>
   <string name="add_widget">Añadir widget</string>
   <string name="app_version_info">Información sobre la app</string>
@@ -49,6 +51,8 @@
   <string name="basic_sensor_name_location_accurate">Localización precisa única</string>
   <string name="basic_sensor_name_location_background">Ubicación en segundo plano</string>
   <string name="basic_sensor_name_location_zone">Zona de ubicación</string>
+  <string name="basic_sensor_name_mobile_data">Datos móviles</string>
+  <string name="basic_sensor_name_mobile_data_roaming">Datos móviles en roaming</string>
   <string name="basic_sensor_name_mobile_rx_gb">Rx en GB móviles</string>
   <string name="basic_sensor_name_mobile_tx_gb">Tx en GB móviles</string>
   <string name="basic_sensor_name_phone">Estado del teléfono</string>
@@ -103,6 +107,7 @@
   <string name="device_registration">Registro de dispositivo</string>
   <string name="dialog_add_panel_shortcut_content">¿Crear un acceso directo a este elemento?</string>
   <string name="dialog_add_panel_shortcut_title">Añadir acceso directo</string>
+  <string name="disable">Desactivar</string>
   <string name="disable_all_sensors">Desactivar los %1$d sensores</string>
   <string name="documentation">Documentación</string>
   <string name="domain_automation">Automatización</string>
@@ -116,6 +121,7 @@
   <string name="domain_scene">Escena</string>
   <string name="domain_script">Script</string>
   <string name="domain_switch">Interruptor</string>
+  <string name="domain_vacuum">Aspiradora</string>
   <string name="enable_all_sensors">Activar todos los sensores</string>
   <string name="enable_all_sensors_summary">Al activar se solicitarán todos los permisos necesarios</string>
   <string name="enable_location_tracking">Habilitar seguimiento de ubicación</string>
@@ -140,6 +146,8 @@
   <string name="fullscreen">Pantalla completa</string>
   <string name="fullscreen_def">Poner la aplicación en pantalla completa</string>
   <string name="grant_permission">Conceder permiso</string>
+  <string name="high_accuracy_mode_channel_name">Ubicación de alta precisión</string>
+  <string name="high_accuracy_mode_notification_title">Modo de alta precisión (GPS) activado</string>
   <string name="history">Historial</string>
   <string name="home_assistant_not_discover">No se encuentra tu 
 instancia de Home Assistant</string>
@@ -164,10 +172,13 @@ instancia de Home Assistant</string>
   <string name="list_template_widgets">Lista de widgets de plantilla</string>
   <string name="location">Ubicación</string>
   <string name="location_disabled_message">La ubicación está desactivada. Las siguientes opciones activadas requieren que actives la ubicación. ¡Si no activas la ubicación, los sensores/configuraciones no funcionarán!\n\n%1$s\n¿Quieres activar la ubicación?</string>
+  <string name="location_disabled_notification_message">Las siguientes opciones requieren que tengas activada la ubicación. ¡Si no activas la ubicación, los sensores/ajustes no funcionarán!\n\n%1$s\nPulsa para activar la ubicación.</string>
+  <string name="location_disabled_notification_short_message">Algunos ajustes no funcionan. Pulsa para activar la ubicación.</string>
   <string name="location_disabled_option_disable">Desactivar opción</string>
   <string name="location_disabled_title">La ubicación está desactivada</string>
   <string name="location_perm_info_message">Android estableció restricciones para las aplicaciones que desean usar tu Wifi, porque en teoría, el Wifi puede utilizarse para determinar tu ubicación.\n\nAdemás, para garantizar que la aplicación puede acceder a Wifi en segundo plano (toma de decisiones de URL, sensores) debes permitir el acceso a la ubicación todo el tiempo.\n\nPor lo tanto, para utilizar esta opción es necesario acceder a la ubicación todo el tiempo.\n\n¿Continuar otorgando acceso a la ubicación?</string>
   <string name="location_perm_info_title">Acceso a la ubicación</string>
+  <string name="location_warn_channel">Ubicación desactivada</string>
   <string name="lock_summary">Usar credenciales biométricas o de bloqueo de pantalla para desbloquear la aplicación</string>
   <string name="lock_title">Bloquear aplicación</string>
   <string name="lockscreen_message">Pulsa para desbloquear:</string>
@@ -182,7 +193,7 @@ instancia de Home Assistant</string>
   <string name="manage_ssids_input_exists">Este SSID ya existe.</string>
   <string name="manage_this_notification">Administrar esta notificación</string>
   <string name="manage_widgets">Administrar widgets</string>
-  <string name="manage_widgets_summary">Edita tus widgets, añadir/eliminar sólo se puede hacer desde la pantalla de inicio</string>
+  <string name="manage_widgets_summary">Edita tus widgets, añadir/eliminar solo se puede hacer desde la pantalla de inicio</string>
   <string name="manual_setup">Introducir la dirección manualmente</string>
   <string name="map">Mapa</string>
   <string name="need_help">¿Necesitas ayuda?</string>
@@ -254,6 +265,10 @@ instancia de Home Assistant</string>
   <string name="scan_again">escanear de nuevo</string>
   <string name="scanning_network">Escaneando la red para Home Assistant</string>
   <string name="security">Seguridad</string>
+  <string name="security_vulnerably_message">Su versión de Home Assistant no protege las vulnerabilidades de seguridad descubiertas recientemente en componentes personalizados. Consulte los detalles a través del boletín y actualice lo antes posible.</string>
+  <string name="security_vulnerably_title">Advertencia de seguridad de vulnerabilidad</string>
+  <string name="security_vulnerably_understand">Entiendo</string>
+  <string name="security_vulnerably_view">Ver boletín</string>
   <string name="select_entity_to_display">Selecciona la entidad a mostrar</string>
   <string name="select_instance">Selecciona la instancia a la que te gustaría conectar:</string>
   <string name="sensor">Sensor</string>
@@ -299,6 +314,8 @@ instancia de Home Assistant</string>
   <string name="sensor_description_location_zone">Importar zonas de Home Assistant como geocercas para el seguimiento basado en zonas. El ajuste de Precisión mínima te permite decidir como de precisa (en metros) tiene que ser la ubicación del dispositivo para mandarla a Home Assistant</string>
   <string name="sensor_description_lullaby">Si una canción de cuna está sonando</string>
   <string name="sensor_description_mic_muted">Si el micrófono está silenciado o no en el dispositivo</string>
+  <string name="sensor_description_mobile_data">Si los datos móviles están habilitados o no en el dispositivo</string>
+  <string name="sensor_description_mobile_data_roaming">Si los datos móviles en roaming están habilitados o no en el dispositivo</string>
   <string name="sensor_description_mobile_rx_gb">Rx en GB totales en datos móviles desde el último reinicio del dispositivo</string>
   <string name="sensor_description_mobile_tx_gb">Tx en GB totales en datos móviles desde el último reinicio del dispositivo</string>
   <string name="sensor_description_music_active">Si se está reproduciendo música activamente en el dispositivo o no</string>
@@ -346,6 +363,7 @@ instancia de Home Assistant</string>
   <string name="sensor_name_light">Sensor de luz</string>
   <string name="sensor_name_location">Sensores de ubicación</string>
   <string name="sensor_name_mic_muted">Micrófono silenciado</string>
+  <string name="sensor_name_mobile_data">Sensores de datos móviles</string>
   <string name="sensor_name_music_active">Música activa</string>
   <string name="sensor_name_network">Sensores de red</string>
   <string name="sensor_name_phone">Sensores de teléfono</string>
@@ -380,18 +398,26 @@ instancia de Home Assistant</string>
   <string name="skip">Omitir</string>
   <string name="state">Estado</string>
   <string name="state_auto">Automático</string>
+  <string name="state_cleaning">Limpiando</string>
   <string name="state_closed">Cerrado</string>
   <string name="state_closing">Cerrando</string>
   <string name="state_cool">Frío</string>
+  <string name="state_docked">Acoplado</string>
   <string name="state_dry">Deshumidificador</string>
-  <string name="state_fan_only">Sólo ventilador</string>
+  <string name="state_error">Error</string>
+  <string name="state_fan_only">Solo ventilador</string>
   <string name="state_heat">Calor</string>
   <string name="state_heat_cool">Calor Frío</string>
+  <string name="state_idle">Inactivo</string>
   <string name="state_locked">Bloqueado</string>
   <string name="state_off">Apagado</string>
   <string name="state_on">Encendido</string>
   <string name="state_open">Abierto</string>
   <string name="state_opening">Abriendo</string>
+  <string name="state_paused">Pausado</string>
+  <string name="state_returning">Volviendo</string>
+  <string name="state_unavailable">No disponible</string>
+  <string name="state_unknown">Desconocido</string>
   <string name="state_unlocked">Desbloqueado</string>
   <string name="states">Resumen</string>
   <string name="status_of_mobile_app_integration">Estado de la integración de la aplicación para móvil:</string>
@@ -410,7 +436,7 @@ instancia de Home Assistant</string>
   <string name="url_invalid">URL no válida</string>
   <string name="url_parse_error">No se ha podido procesar tu URL de Home Assistant. La URL debería parecerse a https://ejemplo.com</string>
   <string name="username">Nombre de usuario</string>
-  <string name="view_password">Ver Contraseña</string>
+  <string name="view_password">Ver contraseña</string>
   <string name="wait">Esperar</string>
   <string name="webview_error">Ha ocurrido un error cargando Home Assistant, por favor, revisa los ajustes de conexión y vuelve a intentarlo.</string>
   <string name="webview_error_description">Error encontrado:</string>

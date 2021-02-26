@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Odpovedať</string>
+  <string name="activity_intent_error">Nie je možné odoslať zámer aktivity, skontrolujte formát príkazu</string>
   <string name="add_service_data_field">Pridať pole</string>
   <string name="add_widget">Pridať miniaplikáciu</string>
   <string name="app_version_info">Informácie o verzii aplikácie</string>
@@ -48,6 +50,8 @@
   <string name="basic_sensor_name_location_accurate">Jedno presné umiestnenie</string>
   <string name="basic_sensor_name_location_background">Umiestnenie na pozadí</string>
   <string name="basic_sensor_name_location_zone">Zóna umiestnenia</string>
+  <string name="basic_sensor_name_mobile_data">Mobilné dáta</string>
+  <string name="basic_sensor_name_mobile_data_roaming">Mobilný dátový roaming</string>
   <string name="basic_sensor_name_mobile_rx_gb">Mobilné Rx GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Mobilné Tx GB</string>
   <string name="basic_sensor_name_phone">Stav telefónu</string>
@@ -103,6 +107,7 @@ na váš domáci Internet.</string>
   <string name="device_registration">Registrácia zariadenia</string>
   <string name="dialog_add_panel_shortcut_content">Vytvoriť odkaz na túto položku?</string>
   <string name="dialog_add_panel_shortcut_title">Pridať odkaz</string>
+  <string name="disable">Zakázať</string>
   <string name="disable_all_sensors">Zakázať všetkých %1$d </string>
   <string name="documentation">Dokumentácia</string>
   <string name="domain_automation">Automatizácia</string>
@@ -116,6 +121,7 @@ na váš domáci Internet.</string>
   <string name="domain_scene">Scéna</string>
   <string name="domain_script">Skript</string>
   <string name="domain_switch">Prepínač</string>
+  <string name="domain_vacuum">Vysávač</string>
   <string name="enable_all_sensors">Povoliť všetky senzory</string>
   <string name="enable_all_sensors_summary">Všetky požadované povolenia sa budú vyžiadané pri aktivovaní</string>
   <string name="enable_location_tracking">Povoliť sledovanie polohy</string>
@@ -141,6 +147,8 @@ integráciu v Home Assistant.</string>
   <string name="fullscreen">Celá obrazovka</string>
   <string name="fullscreen_def">Zobraziť aplikáciu na celú obrazovku</string>
   <string name="grant_permission">Udeliť povolenie</string>
+  <string name="high_accuracy_mode_channel_name">Vysoká presnosť polohy</string>
+  <string name="high_accuracy_mode_notification_title">Režim vysokej presnosti (GPS) je povolený</string>
   <string name="history">História</string>
   <string name="home_assistant_not_discover">Nepodarilo sa nájsť váš Home Assistant</string>
   <string name="icon">Ikona</string>
@@ -163,9 +171,14 @@ integráciu v Home Assistant.</string>
   <string name="list_media_player_widgets">Zoznam widgetov prehrávača médií</string>
   <string name="list_template_widgets">Zoznam šablón pre Widgety</string>
   <string name="location">Poloha</string>
+  <string name="location_disabled_message">Poloha je zakázaná. Nasledujúce povolené možnosti vyžadujú povolenie polohy. Ak nepovolíte umiestnenie, senzory/nastavenia nebudú fungovať!\n\n%1$s\nChcete povoliť polohu?</string>
+  <string name="location_disabled_notification_message">Nasledujúce povolené možnosti vyžadujú povolenie polohy. Ak nepovolíte umiestnenie, senzory/nastavenia nebudú fungovať!\n\n%1$s\nKliknutím povolíte polohu.</string>
+  <string name="location_disabled_notification_short_message">Niektoré nastavenia nefungujú. Kliknutím povolíte umiestnenie.</string>
   <string name="location_disabled_option_disable">Zakázať možnosť</string>
   <string name="location_disabled_title">Poloha je zakázaná</string>
+  <string name="location_perm_info_message">Android nastavil obmedzenia pre aplikácie, ktoré chcú používať vašu Wifi, pretože na zistenie vašej polohy sa dá teoreticky použiť Wifi.\n\nAby ste zaistili, že aplikácia bude mať prístup k sieti Wifi na pozadí (rozhodovanie o URL, senzory), musíte povoliť neustály prístup k polohe.\n\nPreto, ak chcete použiť túto možnosť, je potrebný neustály prístup k polohe.\n\nPokračovať v udeľovaní prístupu k polohe?</string>
   <string name="location_perm_info_title">Prístup k polohe</string>
+  <string name="location_warn_channel">Poloha zakázaná</string>
   <string name="lock_summary">Na odomknutie aplikácie použite biometrický údaj alebo zámok obrazovky</string>
   <string name="lock_title">Uzamknúť aplikáciu</string>
   <string name="lockscreen_message">Klepnutím odomknete :</string>
@@ -252,11 +265,16 @@ integráciu v Home Assistant.</string>
   <string name="scan_again">skenovať znova</string>
   <string name="scanning_network">Skenovanie siete pre Home Assistant</string>
   <string name="security">Bezpečnosť</string>
+  <string name="security_vulnerably_message">Vaša verzia Home Assistant nechráni nedávno objavené chyby zabezpečenia vo vlastných komponentoch. Podrobnosti si pozrite prostredníctvom bulletinu a aktualizujte ich čo najskôr.</string>
+  <string name="security_vulnerably_title">Bezpečnostné varovanie</string>
+  <string name="security_vulnerably_understand">Rozumiem</string>
+  <string name="security_vulnerably_view">Zobraziť bulletin</string>
   <string name="select_entity_to_display">Vyberte Entitu, ktorú chcete zobraziť</string>
   <string name="select_instance">Vyberte inštanciu, ku ktorej
 sa chcete pripojiť:</string>
   <string name="sensor">Senzor</string>
   <string name="sensor_description">Popis</string>
+  <string name="sensor_description_active_notification_count">Celkový počet aktívnych upozornení, ktoré sú používateľovi viditeľné, vrátane tichých, trvalých upozornení a upozornení Sensor Worker.</string>
   <string name="sensor_description_app_importance">Či je aplikácia v popredí, na pozadí alebo v akomkoľvek inom stave, akom môže byť.</string>
   <string name="sensor_description_app_inactive">Či je aplikácia v súčasnosti systémom považovaná za neaktívnu</string>
   <string name="sensor_description_app_memory">Celková využitá a dostupná pamäť pre aplikáciu</string>
@@ -288,13 +306,16 @@ sa chcete pripojiť:</string>
   <string name="sensor_description_keyguard_secure">Či je keyguard zabezpečený PIN kódom, vzorom alebo heslom alebo SIM karta je momentálne uzamknutá.</string>
   <string name="sensor_description_last_notification">Podrobnosti o poslednom upozornení.</string>
   <string name="sensor_description_last_reboot">Dátum a čas posledného reštartu zariadenia. Nižšie uvedené nastavenie vám umožní upraviť pásmo necitlivosti v milisekundách, ak stále nájdete nesprávnu skokovú hodnotu. Predvolená hodnota je 60000 (1 minúta).</string>
-  <string name="sensor_description_last_update">Zámer poslednej odoslanej aktualizácie sa bude v pravidelných aktualizáciách zobrazovať, ako \"SensorWorker\".</string>
+  <string name="sensor_description_last_removed_notification">Podrobnosti o poslednom odstránenom oznámení. Môže to byť akékoľvek upozornenie buď vymazané používateľom, alebo odstránené aplikáciou.</string>
+  <string name="sensor_description_last_update">Zámer poslednej odoslanej aktualizácie sa bude v pravidelných aktualizáciách zobrazovať, ako „SensorWorker“. Aktivovaním prepínača „Pridať nový zámer“ vytvoríte 1 nastavenie, ktoré vám umožní zaregistrovať sa pre zámer vysielania. Po vytvorení nového nastavenia sa prepínač znova vypne, takže ho budete musieť znova zapnúť, aby ste vytvorili viac zámerov. Hodnotu nastavenia môžete tiež vyčistiť a odstrániť tak nastavenie v nasledujúcej aktualizácii. Po vykonaní zmien v týchto nastaveniach musíte reštartovať aplikáciu, aby sa zmeny prejavili.</string>
   <string name="sensor_description_light_sensor">Aktuálna úroveň osvetlenia</string>
   <string name="sensor_description_location_accurate">Umožnite Home Assistant poslať upozornenie na vyžiadanie presného umiestnenia spolu s aplikáciou, ktorá pravidelne požaduje presnú polohu. Nastavenie minimálnej presnosti vám umožní rozhodnúť sa, aké presné musí byť umiestnenie zariadenia (v metroch), aby bolo možné ho odoslať do Home Assistant. Minimálny čas medzi aktualizáciami (v milisekundách) zabráni zariadeniu príliš často odosielať presné polohy. Nastavenie Zahrnúť do aktualizácie snímača vytvorí požiadavku na polohu pri každej aktualizácii snímača.</string>
   <string name="sensor_description_location_background">Pravidelne aktualizujte svoju polohu na pozadí. Nastavenie minimálnej presnosti vám umožní rozhodnúť sa, aké presné musí byť umiestnenie zariadenia (v metroch), aby bolo možné ho odoslať Home Assistant.</string>
   <string name="sensor_description_location_zone">Importujte existujúce zóny Home Assistant ako geofences pre sledovanie na základe zón. Nastavenie minimálnej presnosti vám umožní rozhodnúť sa, aké presné musí byť umiestnenie zariadenia (v metroch), aby bolo možné ho odoslať Home Assistant.</string>
   <string name="sensor_description_lullaby">Ak hrá uspávanka</string>
   <string name="sensor_description_mic_muted">Či je alebo nie je mikrofón v zariadení stlmený</string>
+  <string name="sensor_description_mobile_data">Či sú v zariadení povolené mobilné dáta</string>
+  <string name="sensor_description_mobile_data_roaming">Či je v zariadení povolený mobilný dátový roaming</string>
   <string name="sensor_description_mobile_rx_gb">Celkové Rx GB na celulárnych dátach od posledného reštartu zariadenia</string>
   <string name="sensor_description_mobile_tx_gb">Celkové Tx GB na celulárnych dátach od posledného reštartu zariadenia</string>
   <string name="sensor_description_music_active">Či sa na zariadení aktívne prehráva hudba</string>
@@ -342,6 +363,7 @@ sa chcete pripojiť:</string>
   <string name="sensor_name_light">Snímač svetla</string>
   <string name="sensor_name_location">Senzory polohy</string>
   <string name="sensor_name_mic_muted">Mikrofón je stlmený</string>
+  <string name="sensor_name_mobile_data">Senzory mobilných dát</string>
   <string name="sensor_name_music_active">Hudba aktívna</string>
   <string name="sensor_name_network">Sieťové senzory</string>
   <string name="sensor_name_phone">Senzory telefónu</string>
@@ -376,18 +398,26 @@ sa chcete pripojiť:</string>
   <string name="skip">Preskočiť</string>
   <string name="state">Stav</string>
   <string name="state_auto">Auto</string>
+  <string name="state_cleaning">Čistenie</string>
   <string name="state_closed">Zatvorené</string>
   <string name="state_closing">Zatvára sa</string>
   <string name="state_cool">Chladenie</string>
+  <string name="state_docked">V doku</string>
   <string name="state_dry">Sušenie</string>
+  <string name="state_error">Chyba</string>
   <string name="state_fan_only">Iba ventilátor</string>
   <string name="state_heat">Kúrenie</string>
   <string name="state_heat_cool">Vykurovanie / Chladenie</string>
+  <string name="state_idle">Nečinný</string>
   <string name="state_locked">Zamknuté</string>
   <string name="state_off">Vypnutý</string>
   <string name="state_on">Zapnutý</string>
   <string name="state_open">Otvorené</string>
   <string name="state_opening">Otvára sa</string>
+  <string name="state_paused">Pozastavený</string>
+  <string name="state_returning">Vracia sa</string>
+  <string name="state_unavailable">Nedostupný</string>
+  <string name="state_unknown">Neznámy</string>
   <string name="state_unlocked">Odomknuté</string>
   <string name="states">Prehľad</string>
   <string name="status_of_mobile_app_integration">Stav integrácie mobilnej aplikácie:</string>

@@ -14,10 +14,15 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.Log
 import android.util.Rational
+import android.view.HapticFeedbackConstants
+import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
@@ -39,6 +44,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.hls.HlsMediaSource
@@ -54,6 +60,7 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
@@ -68,6 +75,7 @@ import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_playback_control_view.*
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -102,6 +110,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @Inject
     lateinit var languagesManager: LanguagesManager
 
+    @Inject
+    lateinit var urlRepository: UrlRepository
+
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
@@ -126,6 +137,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoRight: Int = 0
     private var exoBottom: Int = 0
     private var exoMute: Boolean = true
+    private var failedConnection = "external"
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -180,7 +192,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         webView = findViewById(R.id.webview)
         webView.apply {
-            setOnTouchListener { _, _ ->
+            setOnTouchListener { _, motionEvent ->
+                if (motionEvent.pointerCount == 3 && motionEvent.action == MotionEvent.ACTION_POINTER_3_DOWN) {
+                    dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
+                }
                 return@setOnTouchListener !unlocked
             }
 
@@ -457,6 +472,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                             "exoplayer/play_hls" -> exoPlayHls(json)
                             "exoplayer/stop" -> exoStopHls()
                             "exoplayer/resize" -> exoResizeHls(json)
+                            "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
                         }
                     }
                 }
@@ -476,6 +492,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         currentLang = languagesManager.getCurrentLang()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
+            Log.d(TAG, "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
+        }
     }
 
     override fun onResume() {
@@ -663,6 +684,46 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoPlayerView.requestLayout()
     }
 
+    fun processHaptic(hapticType: String) {
+        val vm = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
+        Log.d(TAG, "Processing haptic tag for $hapticType")
+        when (hapticType) {
+            "success" -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                    webView.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                else
+                    vm.vibrate(500)
+            }
+            "warning" -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    vm.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.EFFECT_HEAVY_CLICK))
+                else
+                    vm.vibrate(1500)
+            }
+            "failure" -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                    webView.performHapticFeedback(HapticFeedbackConstants.REJECT)
+                else
+                    vm.vibrate(1000)
+            }
+            "light" -> {
+                webView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            }
+            "medium" -> {
+                webView.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+            }
+            "heavy" -> {
+                webView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            }
+            "selection" -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                    webView.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
+                else
+                    vm.vibrate(50)
+            }
+        }
+    }
     private fun authenticationResult(result: Int) {
         if (result == Authenticator.SUCCESS) {
             unlocked = true
@@ -862,8 +923,24 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setPositiveButton(R.string.settings) { _, _ ->
                 startActivity(SettingsActivity.newInstance(this))
             }
-            alert.setNegativeButton(R.string.refresh) { _, _ ->
-                webView.reload()
+            val isInternal = runBlocking {
+                urlRepository.isInternal()
+            }
+            alert.setNegativeButton(
+                if (failedConnection == "external" && isInternal)
+                    R.string.refresh_internal
+                else
+                    R.string.refresh_external
+                    ) { _, _ ->
+                runBlocking {
+                    failedConnection = if (failedConnection == "external") {
+                        webView.loadUrl(urlRepository.getUrl(true).toString())
+                        "internal"
+                    } else {
+                        webView.loadUrl(urlRepository.getUrl(false).toString())
+                        "external"
+                    }
+                }
                 waitForConnection()
             }
             alert.setNeutralButton(R.string.wait) { _, _ ->
@@ -986,5 +1063,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 showError()
             }
         }, CONNECTION_DELAY)
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+        // Temporary workaround to sideload on Android TV and use a remote for basic navigation in WebView
+        if (event?.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
+            dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB))
+            return true
+        }
+
+        return super.dispatchKeyEvent(event)
     }
 }

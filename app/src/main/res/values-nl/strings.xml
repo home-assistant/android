@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Antwoord</string>
   <string name="add_service_data_field">Veld toevoegen</string>
   <string name="add_widget">Widget toevoegen</string>
   <string name="app_version_info">Applicatie versie informatie</string>
@@ -17,6 +18,7 @@
   <string name="basic_sensor_name_active_notification_count">Aantal actieve meldingen</string>
   <string name="basic_sensor_name_activity">Gedetecteerde activiteit</string>
   <string name="basic_sensor_name_alarm">Volgende alarm</string>
+  <string name="basic_sensor_name_app_importance">App belangrijkheid</string>
   <string name="basic_sensor_name_app_inactive">Applicatie Inactief</string>
   <string name="basic_sensor_name_app_memory">App-geheugen</string>
   <string name="basic_sensor_name_app_rx_gb">App Rx GB</string>
@@ -48,6 +50,7 @@
   <string name="basic_sensor_name_location_accurate">Enkele nauwkeurige locatie</string>
   <string name="basic_sensor_name_location_background">Achtergrondlocatie</string>
   <string name="basic_sensor_name_location_zone">Locatie zone</string>
+  <string name="basic_sensor_name_mobile_data">Mobiele data</string>
   <string name="basic_sensor_name_mobile_rx_gb">Mobiel Rx GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Mobiel Tx GB</string>
   <string name="basic_sensor_name_phone">Telefoon Status</string>
@@ -102,6 +105,7 @@
   <string name="device_registration">Apparaatregistratie</string>
   <string name="dialog_add_panel_shortcut_content">Snelkoppeling maken naar dit item?</string>
   <string name="dialog_add_panel_shortcut_title">Voeg snelkoppeling toe</string>
+  <string name="disable">Uitschakelen</string>
   <string name="disable_all_sensors">Schakel alle %1$d sensoren uit</string>
   <string name="documentation">Documentatie</string>
   <string name="domain_automation">Automatisering</string>
@@ -115,6 +119,7 @@
   <string name="domain_scene">Scène</string>
   <string name="domain_script">Script</string>
   <string name="domain_switch">Schakelaar</string>
+  <string name="domain_vacuum">Stofzuigen</string>
   <string name="enable_all_sensors">Schakel alle sensoren in</string>
   <string name="enable_all_sensors_summary">Bij het inschakelen worden alle vereiste toestemmingen gevraagd</string>
   <string name="enable_location_tracking">Locatiebepaling inschakelen</string>
@@ -162,10 +167,12 @@
   <string name="list_template_widgets">Lijst met sjabloonwidgets</string>
   <string name="location">Locatie</string>
   <string name="location_disabled_message">De locatie is uitgeschakeld. Voor de volgende ingeschakelde optie(s) moet u de locatie inschakelen. Als u de locatie niet inschakelt, werken de sensor(en)/instellingen niet!\n\n%1$s\n Wilt u locatie inschakelen?</string>
+  <string name="location_disabled_notification_short_message">Sommige instelling(en) werken niet. Klik om locatie in te schakelen.</string>
   <string name="location_disabled_option_disable">Schakel optie uit</string>
   <string name="location_disabled_title">Locatie is uitgeschakeld</string>
   <string name="location_perm_info_message">Android heeft beperkingen ingesteld voor apps die je WiFi willen gebruiken, omdat WiFi theoretisch kan worden gebruikt om je locatie te bepalen.\n\n Om ervoor te zorgen dat de app toegang heeft tot WiFi op de achtergrond (URL-besluitvorming, sensoren), moet je locatietoegang altijd toestaan.\n\n Om deze optie te gebruiken, is locatietoegang altijd nodig.\n\n Doorgaan met het verlenen van locatietoegang?</string>
   <string name="location_perm_info_title">Locatietoegang</string>
+  <string name="location_warn_channel">Locatie uitgeschakeld</string>
   <string name="lock_summary">Gebruik biometrische of schermvergrendeling-inloggegevens om de app te ontgrendelen.</string>
   <string name="lock_title">App vergrendelen</string>
   <string name="lockscreen_message">Tik om te ontgrendelen:</string>
@@ -254,6 +261,10 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="scan_again">opnieuw scannen</string>
   <string name="scanning_network">Netwerk scannen naar Home Assistant</string>
   <string name="security">Beveiliging</string>
+  <string name="security_vulnerably_message">Uw versie van Home Assistant biedt geen bescherming tegen recent ontdekte beveiligingslekken in aangepaste onderdelen. Bekijk de details via het bulletin en werk zo snel mogelijk bij.</string>
+  <string name="security_vulnerably_title">Waarschuwing voor kwetsbare beveiliging</string>
+  <string name="security_vulnerably_understand">Ik begrijp het</string>
+  <string name="security_vulnerably_view">Bekijk nieuwsbrief</string>
   <string name="select_entity_to_display">Selecteer entiteit om weer te geven</string>
   <string name="select_instance">Selecteer de instantie waarmee je verbinding wilt maken:</string>
   <string name="sensor">Sensor</string>
@@ -379,18 +390,26 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="skip">Overslaan</string>
   <string name="state">Staat</string>
   <string name="state_auto">Auto</string>
+  <string name="state_cleaning">Reinigen</string>
   <string name="state_closed">Gesloten</string>
   <string name="state_closing">Aan het sluiten</string>
   <string name="state_cool">Koel</string>
+  <string name="state_docked">Gedockt</string>
   <string name="state_dry">Droog</string>
+  <string name="state_error">Fout</string>
   <string name="state_fan_only">Alleen ventilator</string>
   <string name="state_heat">Verwarmen</string>
   <string name="state_heat_cool">Verwarm koel</string>
+  <string name="state_idle">Inactief</string>
   <string name="state_locked">Vergrendeld</string>
   <string name="state_off">Uit</string>
   <string name="state_on">Aan</string>
   <string name="state_open">Open</string>
   <string name="state_opening">Aan het openen</string>
+  <string name="state_paused">Gepauzeerd</string>
+  <string name="state_returning">Terugkeren</string>
+  <string name="state_unavailable">Onbeschikbaar</string>
+  <string name="state_unknown">Onbekend</string>
   <string name="state_unlocked">Ontgrendeld</string>
   <string name="states">Overzicht</string>
   <string name="status_of_mobile_app_integration">Status van mobiele app integratie:</string>

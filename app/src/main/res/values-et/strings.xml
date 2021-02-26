@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Vasta</string>
+  <string name="activity_intent_error">Tegevuse kavatsust ei saa saata, palun kontrolli käsuvormingut</string>
   <string name="add_service_data_field">Lisa väli</string>
   <string name="add_widget">Vidina lisamine</string>
   <string name="app_version_info">Rakenduse versiooniteave</string>
@@ -49,6 +51,8 @@
   <string name="basic_sensor_name_location_accurate">Ühekordne täpne asukoht</string>
   <string name="basic_sensor_name_location_background">Asukoht taustaandmetest</string>
   <string name="basic_sensor_name_location_zone">Asukoha tsoon</string>
+  <string name="basic_sensor_name_mobile_data">Mobiilne andmeside</string>
+  <string name="basic_sensor_name_mobile_data_roaming">Mobiilse andmeside rändlus</string>
   <string name="basic_sensor_name_mobile_rx_gb">Vastuvõetud mobiilse andmeside maht kokku (GB)</string>
   <string name="basic_sensor_name_mobile_tx_gb">Saadetud mobiilse andmeside maht kokku (GB)</string>
   <string name="basic_sensor_name_phone">Telefoni olek</string>
@@ -103,6 +107,7 @@
   <string name="device_registration">Seadme lisamine</string>
   <string name="dialog_add_panel_shortcut_content">Kas luua selle üksuse otsetee?</string>
   <string name="dialog_add_panel_shortcut_title">Lisa otsetee</string>
+  <string name="disable">Keela</string>
   <string name="disable_all_sensors">Keela kõik %1$d andurit</string>
   <string name="documentation">Dokumentatsioon</string>
   <string name="domain_automation">Automatiseering</string>
@@ -116,6 +121,7 @@
   <string name="domain_scene">Stseen</string>
   <string name="domain_script">Skript</string>
   <string name="domain_switch">Lüliti</string>
+  <string name="domain_vacuum">Imeb tolmu</string>
   <string name="enable_all_sensors">Luba kõik andurid</string>
   <string name="enable_all_sensors_summary">Lubamisel küsitakse kõiki nõutavaid lube</string>
   <string name="enable_location_tracking">Luba asukoha jälgimine</string>
@@ -140,6 +146,8 @@
   <string name="fullscreen">Täisekraan</string>
   <string name="fullscreen_def">Kuva täisekraanil</string>
   <string name="grant_permission">Anna luba</string>
+  <string name="high_accuracy_mode_channel_name">Suure täpsusega asukoht</string>
+  <string name="high_accuracy_mode_notification_title">Suure täpsusega (GPS) režiim on lubatud</string>
   <string name="history">Ajalugu</string>
   <string name="home_assistant_not_discover">Home Assistanti serverit ei leitud</string>
   <string name="icon">Ikoon</string>
@@ -163,10 +171,13 @@
   <string name="list_template_widgets">Mallividinate loend</string>
   <string name="location">Asukoht</string>
   <string name="location_disabled_message">Asukoht on keelatud. Järgmised lubatud suvand(id) nõuavad asukoha lubamist. Kui asukohta ei luba siis andur(id)/seadistus(ed) ei tööta!\n\n%1$s\nKas soovid asukoha lubada?</string>
+  <string name="location_disabled_notification_message">Järgmised valikud nõuavad asukoha lubamist. Mittelubamisel ei tööta andur(id) / seade! \n \n %1$s \n Klõpsa asukoha lubamiseks.</string>
+  <string name="location_disabled_notification_short_message">Mõned sätted ei ole saadaval. Klõpsa asukoha lubamiseks.</string>
   <string name="location_disabled_option_disable">Keela suvand</string>
   <string name="location_disabled_title">Juurdepääs asukohale on keelatud</string>
   <string name="location_perm_info_message">Android seadis piirangud rakendustele mis soovivad Wifi-d kasutada kuna teoreetiliselt saab Wifi-t kasutadaasukoha määramiseks. \n \n Samuti pead lubama asukohale juurdepääsu kogu aeg, et tagada rakenduse juurdepääs WiFi-le taustal (URL-i otsustamine, andurid). \n \n Seetõttu on selle valiku kasutamiseks vaja kogu aeg juurdepääsu asukohale. \n \n Kas jätkata asukohale juurdepääsu lubamist?</string>
   <string name="location_perm_info_title">Juurdepääs asukohale</string>
+  <string name="location_warn_channel">Asukoha määramine keelatud</string>
   <string name="lock_summary">Rakenduse avamiseks kasutage biomeetriat või ekraanilukku</string>
   <string name="lock_title">Lukusta rakendus</string>
   <string name="lockscreen_message">Avamiseks toksa:</string>
@@ -253,7 +264,7 @@
   <string name="scan_again">otsi uuesti</string>
   <string name="scanning_network">Otsin koduvõrgust Home Assistanti serverit</string>
   <string name="security">Turvalisus</string>
-  <string name="security_vulnerably_message">Home Assistanti paigaldus on aegunud ja sisaldab teadaolevat turvaauku. Vaata üksikasju lisateabest ja värskenda niipea kui võimalik.</string>
+  <string name="security_vulnerably_message">Home Assistanti versioon on aegunud ja ei ole kaitstud lisandmoodulite turvaaukude eest. Vaata üksikasju lisateabest ja värskenda niipea kui võimalik.</string>
   <string name="security_vulnerably_title">Turvalisuse hoiatus</string>
   <string name="security_vulnerably_understand">Sain aru</string>
   <string name="security_vulnerably_view">Kuva oluline lisateave</string>
@@ -295,13 +306,15 @@
   <string name="sensor_description_last_notification">Viimatise teavituse üksikasjad.</string>
   <string name="sensor_description_last_reboot">Seadmete viimase taaskäivitamise kuupäev ja kellaaeg. Allpool olev säte võimaldab valida ootevahemikku millisekundites  kuii väärtused ei tundu tõesed. Vaikeväärtus on 60000 (1 minut).</string>
   <string name="sensor_description_last_removed_notification">Viimase eemaldatud teavituse üksikasjad. See võib olla mis tahes teade, mille kasutaja on kustutanud või on rakendus selle eemaldanud.</string>
-  <string name="sensor_description_last_update">Viimase värskenduse, mis saadeti, perioodilisi värskendusi kuvatakse kui \"SensorWorker\".</string>
+  <string name="sensor_description_last_update">Viimase saadetud värskenduse eesmärk, perioodilisi värskendusi kuvatakse kui \"SensorWorker\". Lülita lülitiga \"Lisa uus kavatsus\" sisse 1 säte, mis võimaldab registreerida teavituse kavatsuse saamiseks. Lülitub uue sätte loomisel uuesti välja nii, et pead selle uuesti sisse lülitama, et salvestada rohkem kavatsusi. Järgmise värskenduse sätte eemaldamiseks võid ka sätte väärtuse tühjendada. Pärast nende sätete muutmist pead rakenduse taaskäivitama.</string>
   <string name="sensor_description_light_sensor">Valgustugevuse lugem</string>
   <string name="sensor_description_location_accurate">Lubab Home Assistandil saata täpse asukoha taotlemiseks teatise koos rakenduse teabega mis nõuab perioodiliselt täpset asukohta. Minimaalse täpsuse seade võimaldab otsustada kui täpne peab olema seadme asukoht (meetrites), et see Home Assistandile saata. Minimaalne ajavahemik värskenduste vahel (millisekundites) hoiab seadet liiga tihti täpse asukoha saatmisest.</string>
   <string name="sensor_description_location_background">Värskendab taustal regulaarselt asukohtateavet. Minimaalse täpsuse seade võimaldab otsustada  kui täpne peab olema seadme asukoht (meetrites), et see Home Assistantile saata.</string>
   <string name="sensor_description_location_zone">Impordi olemasolevad Home Assistanti tsoonid tsoonipõhise jälgimise radadeks. Minimaalse täpsuse seade võimaldab teil otsustada kui täpne peab olema seadme asukoht (meetrites), et see Home Assistanti saata.</string>
   <string name="sensor_description_lullaby">Kas hällilaul mängib</string>
   <string name="sensor_description_mic_muted">Kas mikrofon on vaigistatud või mitte</string>
+  <string name="sensor_description_mobile_data">Kas mobiilne andmeside on seadmes lubatud või mitte</string>
+  <string name="sensor_description_mobile_data_roaming">Kas mobiilandmeside rändlus on seadmes lubatud või mitte</string>
   <string name="sensor_description_mobile_rx_gb">Vastuvõetud mobiilse andmeside maht (GB) seadme taaskäivitamisest</string>
   <string name="sensor_description_mobile_tx_gb">Saadetud mobiilse andmeside maht (GB) seadme taaskäivitamisest</string>
   <string name="sensor_description_music_active">Kas muusikat mängib või mitte</string>
@@ -349,6 +362,7 @@
   <string name="sensor_name_light">Valgusandur</string>
   <string name="sensor_name_location">Asukohaandurid</string>
   <string name="sensor_name_mic_muted">Mikrofon on summutatud</string>
+  <string name="sensor_name_mobile_data">Mobiilse andmeside andurid</string>
   <string name="sensor_name_music_active">Muusika mängib</string>
   <string name="sensor_name_network">Võrguside andurid</string>
   <string name="sensor_name_phone">Telefoni andurid</string>
@@ -383,18 +397,26 @@
   <string name="skip">Jäta vahele</string>
   <string name="state">Olek</string>
   <string name="state_auto">Automaatne</string>
+  <string name="state_cleaning">Puhastab</string>
   <string name="state_closed">Suletud</string>
   <string name="state_closing">Sulgub</string>
   <string name="state_cool">Jahutamine</string>
+  <string name="state_docked">Dokitud</string>
   <string name="state_dry">Kuivatus</string>
+  <string name="state_error">Viga</string>
   <string name="state_fan_only">Ainult ventilaator</string>
   <string name="state_heat">Küte</string>
   <string name="state_heat_cool">Küte ja jahutus</string>
+  <string name="state_idle">Jõude</string>
   <string name="state_locked">Lukus</string>
   <string name="state_off">Väljas</string>
   <string name="state_on">Sees</string>
   <string name="state_open">Avatud</string>
   <string name="state_opening">Avaneb</string>
+  <string name="state_paused">Peatatud</string>
+  <string name="state_returning">Naasev</string>
+  <string name="state_unavailable">Pole saadaval</string>
+  <string name="state_unknown">Teadmata</string>
   <string name="state_unlocked">Avatud</string>
   <string name="states">Ülevaade</string>
   <string name="status_of_mobile_app_integration">Mobiilirakenduse sidumise olek:</string>

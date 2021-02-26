@@ -10,8 +10,12 @@
   <string name="auth_error">Godkendelsesfejl</string>
   <string name="auth_error_message">Felterne \'Brugernavn\' og \'Adgangskode\' skal udfyldes</string>
   <string name="auth_request">Godkendelse anmodet:</string>
+  <string name="basic_sensor_name_active_notification_count">Antal aktive meddelelser</string>
   <string name="basic_sensor_name_activity">Registreret aktivitet</string>
   <string name="basic_sensor_name_alarm">Næste alarm</string>
+  <string name="basic_sensor_name_app_memory">App hukommelse</string>
+  <string name="basic_sensor_name_app_rx_gb">App Rx GB</string>
+  <string name="basic_sensor_name_app_tx_gb">App Tx GB</string>
   <string name="basic_sensor_name_battery_health">Batteriets sundhed</string>
   <string name="basic_sensor_name_battery_level">Batteriniveau</string>
   <string name="basic_sensor_name_battery_state">Batteritilstand</string>
@@ -25,6 +29,7 @@
   <string name="basic_sensor_name_interactive">Interaktiv</string>
   <string name="basic_sensor_name_internal_storage">Interne lager</string>
   <string name="basic_sensor_name_last_reboot">Sidste genstart</string>
+  <string name="basic_sensor_name_last_removed_notification">Sidste fjernet besked</string>
   <string name="basic_sensor_name_location_accurate">Enkelt nøjagtig placering</string>
   <string name="basic_sensor_name_location_background">Baggrundsplacering</string>
   <string name="basic_sensor_name_location_zone">Placeringszone</string>
@@ -64,6 +69,10 @@ dit hjemmeinternet.</string>
   <string name="dialog_add_panel_shortcut_content">Opret en genvej til dette punkt?</string>
   <string name="dialog_add_panel_shortcut_title">Tilføj genvej</string>
   <string name="documentation">Dokumentation</string>
+  <string name="domain_climate">Klima</string>
+  <string name="domain_scene">Scene</string>
+  <string name="domain_script">Script</string>
+  <string name="enable_location_tracking_description">Aktivering af denne sensor gør det muligt for Home Assistant-applikationen at spore din placering og rapportere den tilbage til din forekomst af Home Assistant. Sørg for, at du aktiverer baggrundsadgang til placering, ellers kan vi ikke aktivere placeringssporing. Dine placeringsdata sendes direkte til din Home Assistant-instans og sendes aldrig til en tredjepart.</string>
   <string name="enabled_summary">Når aktiverede værdier sendes til Home Assistant</string>
   <string name="enabled_title">Aktiveret</string>
   <string name="entity_attribute_checkbox">Tilføj attributværdi</string>
@@ -95,6 +104,7 @@ Home Assistant-instans</string>
   <string name="label_label">Etiket:</string>
   <string name="label_service">Tjeneste:</string>
   <string name="location">Lokalitet</string>
+  <string name="location_perm_info_title">Adgang til placering</string>
   <string name="lock_summary">Brug biometrisk eller skærmlåsoplysninger til at låse op for appen</string>
   <string name="lock_title">Lås app</string>
   <string name="lockscreen_message">Tryk for at låse op:</string>
@@ -151,12 +161,17 @@ Home Assistant-instans</string>
   <string name="rate_limit_notification.body">Du har nu sendt mere end %s underretninger i dag. Du modtager ikke nye meddelelser før midnat UTC.</string>
   <string name="rate_limit_notification.title">Antal notifikationer begrænset</string>
   <string name="refresh">Opdater</string>
+  <string name="remember">Husk</string>
   <string name="required_fields">kræver et brugernavn og en adgangskode.</string>
   <string name="retry">Prøv igen</string>
   <string name="save">Gem</string>
   <string name="scan_again">scan igen</string>
   <string name="scanning_network">Scanner netværket efter Home Assistant</string>
   <string name="security">Sikkerhed</string>
+  <string name="security_vulnerably_message">Din version af Home Assistant beskytter ikke for nyligt opdagede sikkerhedssårbarheder i brugerdefinerede komponenter. Se detaljerne via bulletin og opdater så hurtigt som muligt.</string>
+  <string name="security_vulnerably_title">Sikkerhedsadvarsel</string>
+  <string name="security_vulnerably_understand">Forstået</string>
+  <string name="security_vulnerably_view">Se Bulletin</string>
   <string name="select_entity_to_display">Vælg den entitet, der skal vises</string>
   <string name="select_instance">Vælg den instans, du gerne
 vil forbinde til:</string>
@@ -171,6 +186,7 @@ vil forbinde til:</string>
   <string name="sensor_description_bluetooth_state">Uanset om Bluetooth er aktiveret på enheden eller ej</string>
   <string name="sensor_description_charger_type">Den type oplader, der er tilsluttet enheden i øjeblikket</string>
   <string name="sensor_description_charging">Uanset om enheden oplades aktivt eller ej</string>
+  <string name="sensor_description_current_time_zone">Den aktuelle tidszone, enheden er i</string>
   <string name="sensor_description_detected_activity">Den aktuelle aktivitetstype beregnet af Googles Activity Recognition API</string>
   <string name="sensor_description_dnd_sensor">Den aktuelle tilstand af Forstyr ikke</string>
   <string name="sensor_description_doze">Uanset om enheden er i slumretilstand eller ej</string>
@@ -180,6 +196,7 @@ vil forbinde til:</string>
   <string name="sensor_description_interactive">Uanset om enheden er i en interaktiv tilstand eller ej</string>
   <string name="sensor_description_internal_storage">Oplysninger om det samlede og tilgængelige lagerplads internt</string>
   <string name="sensor_description_last_reboot">Datoen og klokkeslættet for enhederne sidder genstart. Indstillingen nedenfor giver dig mulighed for at justere dødbåndet i millisekunder, hvis du stadig finder værdien til at springe forkert. Standardværdien er 60000 (1 minut).</string>
+  <string name="sensor_description_last_removed_notification">Detaljerne i den sidst fjernede meddelelse. Dette kan være enhver meddelelse, der enten ryddes af brugeren eller fjernes af en applikation.</string>
   <string name="sensor_description_light_sensor">Det aktuelle belysningsniveau</string>
   <string name="sensor_description_location_accurate">Tillad hjemmeassistent at sende en underretning for at anmode om en nøjagtig placering sammen med applikationen, der regelmæssigt anmoder om en nøjagtig placering. Indstillingen Minimumnøjagtighed giver dig mulighed for at bestemme, hvor nøjagtig enhedens placering (i meter) skal være for at kunne sendes til Home Assistant. Minimumstiden mellem opdateringer (i millisekunder) forhindrer enheden i at sende den nøjagtige placering for ofte.</string>
   <string name="sensor_description_location_background">Opdater din placering bag kulisserne med jævne mellemrum. Indstillingen Minimumnøjagtighed giver dig mulighed for at bestemme, hvor nøjagtig enhedens placering (i meter) skal være for at kunne sendes til Home Assistant.</string>
@@ -236,6 +253,7 @@ vil forbinde til:</string>
   <string name="sensor_name_speakerphone">Højttalertelefon</string>
   <string name="sensor_name_steps">Trin sensor</string>
   <string name="sensor_name_storage">Opbevaringssensorer</string>
+  <string name="sensor_name_time_zone">Tidszonesensor</string>
   <string name="sensor_name_traffic_stats">Trafikstatistik sensorer</string>
   <string name="sensor_name_volume_alarm">Lydstyrkeniveau alarm</string>
   <string name="sensor_name_volume_call">Lydstyrkeniveau opkald</string>
@@ -270,6 +288,7 @@ vil forbinde til:</string>
   <string name="url_invalid">Ugyldig webadresse</string>
   <string name="url_parse_error">Kan ikke fortolke din Home Assistant-webadresse. Det skal ligne https://eksempel.com</string>
   <string name="username">Brugernavn</string>
+  <string name="view_password">Se adgangskode</string>
   <string name="wait">Vent</string>
   <string name="webview_error">Der opstod en fejl under indlæsning af Home Assistant. Gennemgå forbindelsesindstillingerne og prøv igen.</string>
   <string name="webview_error_description">Der opstod en fejl :</string>
