@@ -24,22 +24,8 @@ object TransmitterManager {
         return beacon
     }
 
-    private fun trasnmissionDetailsChanged(haTransmitter: IBeaconTransmitter): Boolean {
-        return this::beacon.isInitialized && (haTransmitter.uuid != beacon.id1.toString() ||
-                haTransmitter.major != beacon.id2.toString() ||
-                haTransmitter.minor != beacon.id3.toString() ||
-                transmitPowerHasChanged(haTransmitter))
-    }
-
-    private fun transmitPowerHasChanged(haTransmitter: IBeaconTransmitter): Boolean {
-        return (haTransmitter.transmitPower == "ultraLow" && physicalTransmitter.advertiseTxPowerLevel != AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW) ||
-                (haTransmitter.transmitPower == "low" && physicalTransmitter.advertiseTxPowerLevel != AdvertiseSettings.ADVERTISE_TX_POWER_LOW) ||
-                (haTransmitter.transmitPower == "medium" && physicalTransmitter.advertiseTxPowerLevel != AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM) ||
-                (haTransmitter.transmitPower == "high" && physicalTransmitter.advertiseTxPowerLevel != AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
-    }
-
     private fun shouldStartTransmitting(haTransmitter: IBeaconTransmitter): Boolean {
-        return validateInputs(haTransmitter) && (!this::physicalTransmitter.isInitialized || !physicalTransmitter.isStarted || trasnmissionDetailsChanged(haTransmitter))
+        return validateInputs(haTransmitter) && (!this::physicalTransmitter.isInitialized || !physicalTransmitter.isStarted || haTransmitter.restartRequired)
     }
 
     private fun validateInputs(haTransmitter: IBeaconTransmitter): Boolean {
@@ -60,7 +46,7 @@ object TransmitterManager {
         if (!shouldStartTransmitting(haTransmitter)) {
             return
         }
-        if (trasnmissionDetailsChanged(haTransmitter) && this::physicalTransmitter.isInitialized) {
+        if (haTransmitter.restartRequired && this::physicalTransmitter.isInitialized) {
             stopTransmitting(haTransmitter)
         }
         if (!this::physicalTransmitter.isInitialized) {
@@ -106,12 +92,12 @@ object TransmitterManager {
         return AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
     }
 
-    fun stopTransmitting(haTransmitterI: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter) {
-        if (haTransmitterI.transmitting && this::physicalTransmitter.isInitialized) {
+    fun stopTransmitting(haTransmitter: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter) {
+        if (haTransmitter.transmitting && this::physicalTransmitter.isInitialized) {
             if (physicalTransmitter.isStarted)
                 physicalTransmitter.stopAdvertising()
         }
-        haTransmitterI.transmitting = false
-        haTransmitterI.state = "Stopped"
+        haTransmitter.transmitting = false
+        haTransmitter.state = "Stopped"
     }
 }
