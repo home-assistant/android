@@ -9,6 +9,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.android.synthetic.main.activity_webview.webview
@@ -36,7 +37,10 @@ class MyActivity : BaseActivity() {
             }
             val newUri = intent.data!!.buildUpon().appendQueryParameter("mobile", "1").build()
 
-            WebView.setWebContentsDebuggingEnabled(true)
+            if (BuildConfig.DEBUG) {
+                WebView.setWebContentsDebuggingEnabled(true)
+            }
+
             webview.apply {
                 settings.javaScriptEnabled = true
                 webViewClient = object : WebViewClient() {
