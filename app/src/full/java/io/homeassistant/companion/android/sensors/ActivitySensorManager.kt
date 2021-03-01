@@ -10,6 +10,9 @@ import android.util.Log
 import com.google.android.gms.location.ActivityRecognition
 import com.google.android.gms.location.ActivityRecognitionResult
 import com.google.android.gms.location.DetectedActivity
+import com.google.android.gms.location.SleepClassifyEvent
+import com.google.android.gms.location.SleepSegmentEvent
+import com.google.android.gms.location.SleepSegmentRequest
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -24,11 +27,27 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         const val ACTION_UPDATE_ACTIVITY =
             "io.homeassistant.companion.android.background.UPDATE_ACTIVITY"
 
+        const val ACTION_SLEEP_ACTIVITY = "io.homeassistant.companion.android.background.SLEEP_ACTIVITY"
+
         private val activity = SensorManager.BasicSensor(
             "detected_activity",
             "sensor",
             R.string.basic_sensor_name_activity,
             R.string.sensor_description_detected_activity
+        )
+
+        private val sleepConfidence = SensorManager.BasicSensor(
+            "sleep_confidence",
+            "sensor",
+            R.string.basic_sensor_name_sleep_confidence,
+            R.string.sensor_description_sleep_confidence
+        )
+
+        private val sleepSegment = SensorManager.BasicSensor(
+            "sleep_segment",
+            "sensor",
+            R.string.basic_sensor_name_sleep_segment,
+            R.string.sensor_description_sleep_segment
         )
     }
 
@@ -40,6 +59,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
 
         when (intent.action) {
             ACTION_UPDATE_ACTIVITY -> handleActivityUpdate(intent, context)
+            ACTION_SLEEP_ACTIVITY -> handleSleepUpdate(intent, context)
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
     }
@@ -61,6 +81,12 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
+    private fun getSleepPendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, ActivitySensorManager::class.java)
+        intent.action = ACTION_SLEEP_ACTIVITY
+        return PendingIntent.getBroadcast(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+    }
+
     private fun handleActivityUpdate(intent: Intent, context: Context) {
         Log.d(TAG, "Received activity update.")
         if (ActivityRecognitionResult.hasResult(intent)) {
@@ -77,6 +103,42 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                 getSensorIcon(probActivity),
                 result.probableActivities.map { typeToString(it) to it.confidence }.toMap()
             )
+        }
+    }
+
+    private fun handleSleepUpdate(intent: Intent, context: Context) {
+        Log.d(TAG, "Received sleep update")
+        if (SleepClassifyEvent.hasEvents(intent) && isEnabled(context, sleepConfidence.id)) {
+            val sleepClassifyEvent = SleepClassifyEvent.extractEvents(intent)
+            if (sleepClassifyEvent.size > 0) {
+                onSensorUpdated(
+                    context,
+                    sleepConfidence,
+                    sleepClassifyEvent[0].confidence,
+                    "mdi:sleep",
+                    mapOf(
+                        "light" to sleepClassifyEvent[0].light,
+                        "motion" to sleepClassifyEvent[0].motion,
+                        "timestamp" to sleepClassifyEvent[0].timestampMillis
+                    )
+                )
+            }
+        }
+        if (SleepSegmentEvent.hasEvents(intent) && isEnabled(context, sleepSegment.id)) {
+            val sleepSegmentEvent = SleepSegmentEvent.extractEvents(intent)
+            if (sleepSegmentEvent.size > 0) {
+                onSensorUpdated(
+                    context,
+                    sleepSegment,
+                    sleepSegmentEvent[0].segmentDurationMillis,
+                    "mdi:sleep",
+                    mapOf(
+                        "start" to sleepSegmentEvent[0].startTimeMillis,
+                        "end" to sleepSegmentEvent[0].endTimeMillis,
+                        "status" to getSleepSegmentStatus(sleepSegmentEvent[0].status)
+                    )
+                )
+            }
         }
     }
 
@@ -100,13 +162,22 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         return "on_foot"
     }
 
+    private fun getSleepSegmentStatus(int: Int): String {
+        return when (int) {
+            SleepSegmentEvent.STATUS_SUCCESSFUL -> "successful"
+            SleepSegmentEvent.STATUS_MISSING_DATA -> "missing data"
+            SleepSegmentEvent.STATUS_NOT_DETECTED -> "not detected"
+            else -> "unknown"
+        }
+    }
+
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_activity
 
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(activity)
+        get() = listOf(activity, sleepConfidence, sleepSegment)
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -119,16 +190,32 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     }
 
     override fun requestSensorUpdate(context: Context) {
-        if (!isEnabled(context, activity.id))
-            return
+        if (isEnabled(context, activity.id)) {
+            val actReg = ActivityRecognition.getClient(context)
+            val pendingIntent = getPendingIntent(context)
+            Log.d(TAG, "Unregistering for activity updates.")
+            actReg.removeActivityUpdates(pendingIntent)
 
-        val actReg = ActivityRecognition.getClient(context)
-        val pendingIntent = getPendingIntent(context)
-        Log.d(TAG, "Unregistering for activity updates.")
-        actReg.removeActivityUpdates(pendingIntent)
-
-        Log.d(TAG, "Registering for activity updates.")
-        actReg.requestActivityUpdates(120000, pendingIntent)
+            Log.d(TAG, "Registering for activity updates.")
+            actReg.requestActivityUpdates(120000, pendingIntent)
+        }
+        if (isEnabled(context, sleepConfidence.id) || isEnabled(context, sleepSegment.id)) {
+            val pendingIntent = getSleepPendingIntent(context)
+            Log.d(TAG, "Unregistering for sleep updates")
+            ActivityRecognition.getClient(context).removeSleepSegmentUpdates(pendingIntent)
+            Log.d(TAG, "Registering for sleep updates")
+            val task = ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
+                pendingIntent,
+                SleepSegmentRequest.getDefaultSleepSegmentRequest()
+            )
+            task.addOnSuccessListener {
+                Log.d(TAG, "Successfully registered for sleep updates")
+            }
+            task.addOnFailureListener {
+                Log.e(TAG, "Failed to register for sleep updates", it)
+                ActivityRecognition.getClient(context).removeSleepSegmentUpdates(pendingIntent)
+            }
+        }
     }
 
     private fun getSensorIcon(activity: String): String {

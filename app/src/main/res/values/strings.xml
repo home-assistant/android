@@ -507,4 +507,8 @@ like to connect to:</string>
   <string name="ble_transmit_power_value_low">low</string>
   <string name="ble_transmit_power_value_ultra_low">ultraLow</string>
   <string name="setting_ble_emitter_transmit_power_title">Transmitter power</string>
+  <string name="basic_sensor_name_sleep_confidence">Sleep Confidence</string>
+  <string name="sensor_description_sleep_confidence">The confidence rating the user is asleep including attributing factors</string>
+  <string name="basic_sensor_name_sleep_segment">Sleep Segment</string>
+  <string name="sensor_description_sleep_segment">Details about the last sleep session</string>
 </resources>
