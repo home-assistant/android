@@ -110,8 +110,10 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     private fun handleSleepUpdate(intent: Intent, context: Context) {
         Log.d(TAG, "Received sleep update")
         if (SleepClassifyEvent.hasEvents(intent) && isEnabled(context, sleepConfidence.id)) {
+            Log.d(TAG, "Sleep classify event detected")
             val sleepClassifyEvent = SleepClassifyEvent.extractEvents(intent)
             if (sleepClassifyEvent.size > 0) {
+                Log.d(TAG, "Sleep classify has an actual event")
                 onSensorUpdated(
                     context,
                     sleepConfidence,
@@ -126,8 +128,10 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             }
         }
         if (SleepSegmentEvent.hasEvents(intent) && isEnabled(context, sleepSegment.id)) {
+            Log.d(TAG, "Sleep segment event detected")
             val sleepSegmentEvent = SleepSegmentEvent.extractEvents(intent)
             if (sleepSegmentEvent.size > 0) {
+                Log.d(TAG, "Sleep segment has an actual event")
                 onSensorUpdated(
                     context,
                     sleepSegment,
@@ -200,32 +204,31 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             Log.d(TAG, "Registering for activity updates.")
             actReg.requestActivityUpdates(120000, pendingIntent)
         }
-        if (isEnabled(context, sleepConfidence.id) || isEnabled(context, sleepSegment.id)) {
+        if ((isEnabled(context, sleepConfidence.id) || isEnabled(context, sleepSegment.id)) && !sleepRegistration) {
             val pendingIntent = getSleepPendingIntent(context)
             Log.d(TAG, "Registering for sleep updates")
             val task = when {
-                (isEnabled(context, sleepConfidence.id) && isEnabled(context, sleepSegment.id) && !sleepRegistration) -> {
-                    Log.d(TAG, "Registering for both sleep confidence and segment updates")
-                    ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
-                        pendingIntent,
-                        SleepSegmentRequest.getDefaultSleepSegmentRequest()
-                    )
-                }
-                (isEnabled(context, sleepConfidence.id) && !isEnabled(context, sleepSegment.id) && !sleepRegistration) -> {
+                (isEnabled(context, sleepConfidence.id) && !isEnabled(context, sleepSegment.id)) -> {
                     Log.d(TAG, "Registering for sleep confidence updates only")
                     ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
                         pendingIntent,
                         SleepSegmentRequest(SleepSegmentRequest.CLASSIFY_EVENTS_ONLY)
                     )
                 }
-                (!isEnabled(context, sleepConfidence.id) && isEnabled(context, sleepSegment.id) && !sleepRegistration) -> {
+                (!isEnabled(context, sleepConfidence.id) && isEnabled(context, sleepSegment.id)) -> {
                     Log.d(TAG, "Registering for sleep segment updates only")
                     ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
                         pendingIntent,
                         SleepSegmentRequest(SleepSegmentRequest.SEGMENT_EVENTS_ONLY)
                     )
                 }
-                else -> ActivityRecognition.getClient(context).removeSleepSegmentUpdates(pendingIntent)
+                else -> {
+                    Log.d(TAG, "Registering for both sleep confidence and segment updates")
+                    ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
+                        pendingIntent,
+                        SleepSegmentRequest.getDefaultSleepSegmentRequest()
+                    )
+                }
             }
             task.addOnSuccessListener {
                 Log.d(TAG, "Successfully registered for sleep updates")
