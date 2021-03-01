@@ -204,10 +204,30 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             Log.d(TAG, "Unregistering for sleep updates")
             ActivityRecognition.getClient(context).removeSleepSegmentUpdates(pendingIntent)
             Log.d(TAG, "Registering for sleep updates")
-            val task = ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
-                pendingIntent,
-                SleepSegmentRequest.getDefaultSleepSegmentRequest()
-            )
+            val task = when {
+                (isEnabled(context, sleepConfidence.id) && isEnabled(context, sleepSegment.id)) -> {
+                    Log.d(TAG, "Registering for both sleep confidence and segment updates")
+                    ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
+                        pendingIntent,
+                        SleepSegmentRequest.getDefaultSleepSegmentRequest()
+                    )
+                }
+                (isEnabled(context, sleepConfidence.id) && !isEnabled(context, sleepSegment.id)) -> {
+                    Log.d(TAG, "Registering for sleep confidence updates only")
+                    ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
+                        pendingIntent,
+                        SleepSegmentRequest(SleepSegmentRequest.CLASSIFY_EVENTS_ONLY)
+                    )
+                }
+                (!isEnabled(context, sleepConfidence.id) && isEnabled(context, sleepSegment.id)) -> {
+                    Log.d(TAG, "Registering for sleep segment updates only")
+                    ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
+                        pendingIntent,
+                        SleepSegmentRequest(SleepSegmentRequest.SEGMENT_EVENTS_ONLY)
+                    )
+                }
+                else -> ActivityRecognition.getClient(context).removeSleepSegmentUpdates(pendingIntent)
+            }
             task.addOnSuccessListener {
                 Log.d(TAG, "Successfully registered for sleep updates")
             }
