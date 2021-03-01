@@ -125,6 +125,9 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
                         "timestamp" to sleepClassifyEvent.last().timestampMillis
                     )
                 )
+
+                // Send the update immediately
+                SensorWorker.start(context)
             }
         }
         if (SleepSegmentEvent.hasEvents(intent) && isEnabled(context, sleepSegment.id)) {
