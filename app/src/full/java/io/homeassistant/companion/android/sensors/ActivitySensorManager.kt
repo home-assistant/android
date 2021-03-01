@@ -41,14 +41,16 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             "sleep_confidence",
             "sensor",
             R.string.basic_sensor_name_sleep_confidence,
-            R.string.sensor_description_sleep_confidence
+            R.string.sensor_description_sleep_confidence,
+            unitOfMeasurement = "%"
         )
 
         private val sleepSegment = SensorManager.BasicSensor(
             "sleep_segment",
             "sensor",
             R.string.basic_sensor_name_sleep_segment,
-            R.string.sensor_description_sleep_segment
+            R.string.sensor_description_sleep_segment,
+            unitOfMeasurement = "ms"
         )
     }
 
