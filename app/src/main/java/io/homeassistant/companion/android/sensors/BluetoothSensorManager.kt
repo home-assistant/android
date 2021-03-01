@@ -22,8 +22,10 @@ class BluetoothSensorManager : SensorManager {
         private const val DEFAULT_BLE_TRANSMIT_POWER = "ultraLow"
         private const val DEFAULT_BLE_ID2 = "100"
         private const val DEFAULT_BLE_ID3 = "1"
+        private var priorBluetoothStateEnabled = false
+
         // private const val TAG = "BluetoothSM"
-        private var bleTransmitterDevice = IBeaconTransmitter("", "", "", transmitPower = "", transmitting = false, state = "")
+        private var bleTransmitterDevice = IBeaconTransmitter("", "", "", transmitPower = "", transmitting = false, state = "", restartRequired = false)
         val bluetoothConnection = SensorManager.BasicSensor(
                 "bluetooth_connection",
                 "sensor",
@@ -57,7 +59,6 @@ class BluetoothSensorManager : SensorManager {
             TransmitterManager.stopTransmitting(bleTransmitterDevice) // stop in all instances, clean up state if start required
             if (enabled) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
-                TransmitterManager.startTransmitting(context, bleTransmitterDevice)
             }
         }
     }
@@ -78,7 +79,7 @@ class BluetoothSensorManager : SensorManager {
     ) {
         updateBluetoothConnectionSensor(context)
         updateBluetoothState(context)
-        updateBLEtransmitter(context)
+        updateBLETransmitter(context)
     }
 
     private fun updateBluetoothConnectionSensor(context: Context) {
@@ -140,35 +141,43 @@ class BluetoothSensorManager : SensorManager {
         return super.enableToggleAll(context, sensorId)
     }
 
-    private fun updatedBLEDevice(context: Context): Boolean {
+    private fun updateBLEDevice(context: Context) {
         addSettingIfNotPresent(context, bleTransmitter, ENABLE_TOGGLE_ALL, "toggle", "false")
-        var result = false
+
         var id1 = getSetting(context, bleTransmitter, BLE_ID1, "string", UUID.randomUUID().toString())
         var id2 = getSetting(context, bleTransmitter, BLE_ID2, "string", DEFAULT_BLE_ID2)
         var id3 = getSetting(context, bleTransmitter, BLE_ID3, "string", DEFAULT_BLE_ID3)
         var transmitPower = getSetting(context, bleTransmitter, BLE_TRANSMIT_POWER, "list", DEFAULT_BLE_TRANSMIT_POWER)
-        if (bleTransmitterDevice.uuid != id1 || bleTransmitterDevice.major != id2 || bleTransmitterDevice.minor != id3 || bleTransmitterDevice.transmitPower != transmitPower)
-            result = true
+        bleTransmitterDevice.restartRequired = false
+        if (bleTransmitterDevice.uuid != id1 || bleTransmitterDevice.major != id2 ||
+                bleTransmitterDevice.minor != id3 || bleTransmitterDevice.transmitPower != transmitPower ||
+                isBtOn(context) != priorBluetoothStateEnabled) {
+            bleTransmitterDevice.restartRequired = true
+        }
+        // stash the current BT state to help us know if we need to restart if BT state turns from off to on
+        priorBluetoothStateEnabled = isBtOn(context)
 
         bleTransmitterDevice.uuid = id1
         bleTransmitterDevice.major = id2
         bleTransmitterDevice.minor = id3
         bleTransmitterDevice.transmitPower = transmitPower
-
-        return result
     }
 
-    private fun updateBLEtransmitter(context: Context) {
+    private fun updateBLETransmitter(context: Context) {
+        // sensor disabled, stop transmitting if we have been
         if (!isEnabled(context, bleTransmitter.id)) {
-            if (bleTransmitterDevice.transmitting) // sensor has been turned off, stop transmitting
                 TransmitterManager.stopTransmitting(bleTransmitterDevice)
             return
         }
         // transmit when BT is on, if we are not already transmitting, or details have changed
-        val updatedDeviceDetails = updatedBLEDevice(context)
-        if (isBtOn(context) &&
-                ((isEnabled(context, bleTransmitter.id) && !bleTransmitterDevice.transmitting) || isEnabled(context, bleTransmitter.id) && updatedDeviceDetails)) {
+        updateBLEDevice(context)
+        if (isBtOn(context)) {
+            if (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
+            }
+        } else {
+            // BT off, stop transmitting if we have been
+            TransmitterManager.stopTransmitting(bleTransmitterDevice)
         }
 
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
