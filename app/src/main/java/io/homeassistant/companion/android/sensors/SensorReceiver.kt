@@ -106,8 +106,9 @@ class SensorReceiver : BroadcastReceiver() {
             val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
             for (setting in allSettings) {
                 if (setting.value != "" && intent.action == setting.value) {
-                    val eventData = intent.extras?.keySet()?.map { it to intent.extras?.get(it) }?.toMap()?.plus("intent" to intent.action.toString())
+                    val eventData = intent.extras?.keySet()?.map { it.toString() to intent.extras?.get(it).toString() }?.toMap()?.plus("intent" to intent.action.toString())
                         ?: mapOf("intent" to intent.action.toString())
+                    Log.d(TAG, "Event data: $eventData")
                     ioScope.launch {
                         try {
                             integrationUseCase.fireEvent(
