@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">回复</string>
   <string name="add_service_data_field">添加字段</string>
   <string name="add_widget">添加小部件</string>
   <string name="app_version_info">应用版本信息</string>
@@ -106,6 +107,7 @@
   <string name="device_registration">设备注册</string>
   <string name="dialog_add_panel_shortcut_content">创建此项目的快捷方式？</string>
   <string name="dialog_add_panel_shortcut_title">添加快捷方式</string>
+  <string name="disable">禁用</string>
   <string name="disable_all_sensors">禁用所有%1$d传感器</string>
   <string name="documentation">文档</string>
   <string name="domain_automation">Automation</string>
@@ -119,6 +121,7 @@
   <string name="domain_scene">Scene</string>
   <string name="domain_script">Script</string>
   <string name="domain_switch">Switch</string>
+  <string name="domain_vacuum">扫地机</string>
   <string name="enable_all_sensors">启用所有传感器</string>
   <string name="enable_all_sensors_summary">启用后将要求所有必需的权限</string>
   <string name="enable_location_tracking">启用位置跟踪</string>
@@ -143,6 +146,8 @@
   <string name="fullscreen">全屏</string>
   <string name="fullscreen_def">全屏显示应用程序</string>
   <string name="grant_permission">授予权限</string>
+  <string name="high_accuracy_mode_channel_name">高精度定位</string>
+  <string name="high_accuracy_mode_notification_title">启用高精度（GPS）模式</string>
   <string name="history">历史</string>
   <string name="home_assistant_not_discover">无法找到你的 
 Home Assistant实例</string>
@@ -253,6 +258,8 @@ Home Assistant实例</string>
   <string name="rate_limit_summary">速率限制数据</string>
   <string name="rate_limit_title">通知速率限制</string>
   <string name="refresh">刷新</string>
+  <string name="refresh_external">刷新外部URL</string>
+  <string name="refresh_internal">刷新内部URL</string>
   <string name="remember">记住</string>
   <string name="required_fields">需要用户名和密码。</string>
   <string name="retry">重试</string>
@@ -394,18 +401,26 @@ Home Assistant实例</string>
   <string name="skip">跳过</string>
   <string name="state">状态</string>
   <string name="state_auto">自动</string>
+  <string name="state_cleaning">打扫</string>
   <string name="state_closed">关闭</string>
   <string name="state_closing">关闭中</string>
   <string name="state_cool">制冷</string>
+  <string name="state_docked">停靠</string>
   <string name="state_dry">除湿</string>
+  <string name="state_error">错误</string>
   <string name="state_fan_only">仅送风</string>
   <string name="state_heat">制热</string>
   <string name="state_heat_cool">热冷</string>
+  <string name="state_idle">闲置</string>
   <string name="state_locked">已锁定</string>
   <string name="state_off">关</string>
   <string name="state_on">开</string>
   <string name="state_open">打开</string>
   <string name="state_opening">打开中</string>
+  <string name="state_paused">暂停</string>
+  <string name="state_returning">返回</string>
+  <string name="state_unavailable">不可用</string>
+  <string name="state_unknown">未知</string>
   <string name="state_unlocked">已解锁</string>
   <string name="states">概述</string>
   <string name="status_of_mobile_app_integration">mobile app集成的状态：</string>

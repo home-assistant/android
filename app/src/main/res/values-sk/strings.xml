@@ -258,6 +258,8 @@ integráciu v Home Assistant.</string>
   <string name="rate_limit_summary">Údaje o limite rýchlosti</string>
   <string name="rate_limit_title">Limit rýchlosti upozornení</string>
   <string name="refresh">Obnoviť</string>
+  <string name="refresh_external">Obnoviť externú adresu URL</string>
+  <string name="refresh_internal">Obnoviť internú adresu URL</string>
   <string name="remember">Zapamätať</string>
   <string name="required_fields">vyžaduje používateľské meno a heslo.</string>
   <string name="retry">Skúsiť znova</string>
@@ -438,7 +440,7 @@ sa chcete pripojiť:</string>
   <string name="username">Užívateľské meno</string>
   <string name="view_password">Zobraziť heslo</string>
   <string name="wait">Čakať</string>
-  <string name="webview_error">Pri načítaní Home Assistant sa vyskytla chyba. Skontrolujte nastavenia pripojenia a skúste to znova.</string>
+  <string name="webview_error">Pri načítavaní Home Assistant sa vyskytla chyba, skontrolujte nastavenia pripojenia a skúste to znova. Keď kliknete na obnoviť, pokúsime sa vyskúšať inú zadanú URL adresu.</string>
   <string name="webview_error_description">Vyskytla sa chyba:</string>
   <string name="webview_error_SSL_DATE_INVALID">Dátum certifikátu Home Assistant je neplatný. Skontrolujte certifikát Home Assistant alebo nastavenia pripojenia a skúste to znova.</string>
   <string name="webview_error_SSL_EXPIRED">Platnosť certifikátu Home Assistant vypršala. Skontrolujte certifikát Home Assistant alebo nastavenia pripojenia a skúste to znova.</string>

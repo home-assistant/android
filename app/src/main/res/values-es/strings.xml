@@ -258,6 +258,8 @@ instancia de Home Assistant</string>
   <string name="rate_limit_summary">Tasa límite de datos</string>
   <string name="rate_limit_title">Límite de tasa de notificación</string>
   <string name="refresh">Actualizar</string>
+  <string name="refresh_external">Actualizar URL externa</string>
+  <string name="refresh_internal">Actualizar URL interna</string>
   <string name="remember">Recordar</string>
   <string name="required_fields">Se requiere un nombre de usuario y contraseña.</string>
   <string name="retry">Reintentar</string>

@@ -29,6 +29,7 @@
   <string name="basic_sensor_name_battery_level">Aku tase</string>
   <string name="basic_sensor_name_battery_state">Aku olek</string>
   <string name="basic_sensor_name_bluetooth">Bluetooth ühendus</string>
+  <string name="basic_sensor_name_bluetooth_ble_emitter">BLE saatja</string>
   <string name="basic_sensor_name_bluetooth_state">Bluetoothi olek</string>
   <string name="basic_sensor_name_call_number">Numbrinäit</string>
   <string name="basic_sensor_name_charger_type">Laadija tüüp</string>
@@ -60,6 +61,8 @@
   <string name="basic_sensor_name_public_ip">Avalik IP-aadress</string>
   <string name="basic_sensor_name_sim1">SIM kaart 1</string>
   <string name="basic_sensor_name_sim2">SIM kaart 2</string>
+  <string name="basic_sensor_name_sleep_confidence">Unerežiimi kinnitus</string>
+  <string name="basic_sensor_name_sleep_segment">Unesegment</string>
   <string name="basic_sensor_name_total_rx_gb">Vastuvõetud andmed kokku (GB)</string>
   <string name="basic_sensor_name_total_tx_gb">Saadetud andmed kokku (GB)</string>
   <string name="basic_sensor_name_wifi">WiFi ühendus</string>
@@ -74,6 +77,14 @@
   <string name="biometric_message">Ava biomeetria või ekraaniluku abil</string>
   <string name="biometric_set_title">Jätkamiseks nõustu</string>
   <string name="biometric_title">Home Assistant on lukustatud</string>
+  <string name="ble_transmit_power_label_high">Suur</string>
+  <string name="ble_transmit_power_label_low">Madal</string>
+  <string name="ble_transmit_power_label_medium">Keskmine</string>
+  <string name="ble_transmit_power_label_ultra_low">Ülimadal</string>
+  <string name="ble_transmit_power_value_high">suur</string>
+  <string name="ble_transmit_power_value_low">madal</string>
+  <string name="ble_transmit_power_value_medium">keskmine</string>
+  <string name="ble_transmit_power_value_ultra_low">ülimadal</string>
   <string name="broadcast_intent_error">Hõiget ei saa saata, palun kontrolli käsuvormingut</string>
   <string name="calendar">Kalender</string>
   <string name="cancel">Loobu</string>
@@ -257,6 +268,8 @@
   <string name="rate_limit_summary">Määra piirmäära väärtused</string>
   <string name="rate_limit_title">Teatavituste arvu piirmäär</string>
   <string name="refresh">Värskenda</string>
+  <string name="refresh_external">Värskenda välist URL-i</string>
+  <string name="refresh_internal">Värskenda sisemist URL-i</string>
   <string name="remember">Pea meeles</string>
   <string name="required_fields">nõuab kasutajanime ja salasõna.</string>
   <string name="retry">Proovi uuesti</string>
@@ -284,6 +297,7 @@
   <string name="sensor_description_battery_health">Aku seisund</string>
   <string name="sensor_description_battery_level">Aku laetus</string>
   <string name="sensor_description_battery_state">Aku laadimise olek</string>
+  <string name="sensor_description_bluetooth_ble_emitter">Saada BLE iBeacon sõnum iga sekund, seda kasutatakse majas kohaloleku jälgimiseks, nt. koos ruumianduri või esp32-mqtt-home projektidega. Hoiatus: see võib mõjutada aku kasutusaega, eriti kui seadme saatja võimsus on seatud väärtusele Suur. Seaded võimaldavad identifikaatorite ja rühmade kohandamiseks määrata UUID (standardne UUID vorming)  Major ja Minor (peaksid olema 0 - 65535). Vaikimisi pole see andur sisse lülitatud valikuga Luba kõik. Aku tühjenemise vältimiseks on selle lubamiseks eraldi säte. Samuti on olemas saatja toite seade, mis aitab pikendada aku kasutusaega. Kasuta vastavalt vajadusele miinimumi.</string>
   <string name="sensor_description_bluetooth_connection">Teave ühendatud Bluetooth seadmete kohta</string>
   <string name="sensor_description_bluetooth_state">Kas bluetooth on lubatud või mitte</string>
   <string name="sensor_description_call_number">Sissetuleva või väljuva kõne numbrinäit</string>
@@ -327,7 +341,9 @@
   <string name="sensor_description_public_ip">Seadme avalik IP-aadress. Selle lubamisel nõustud kasutama IP-aadressi määramiseks välist teenust https://ipify.org.</string>
   <string name="sensor_description_sim_1">SIM 1 teenusepakkuja</string>
   <string name="sensor_description_sim_2">SIM 2 teenusepakkuja</string>
+  <string name="sensor_description_sleep_confidence">Usaldusreiting kasutaja unerežiimile, sealhulgas omistamistegurid</string>
   <string name="sensor_description_sleep_events">Täiendav ühekordsed sündmus  unejälgimisest</string>
+  <string name="sensor_description_sleep_segment">Viimase uneseansi üksikasjad</string>
   <string name="sensor_description_sleep_tracking">Unejälgimise olek Androidi teabest</string>
   <string name="sensor_description_speakerphone">Kas valjuhääldi on lubatud või mitte</string>
   <string name="sensor_description_steps_sensor">Sammude koguarv pärast seadme viimast taaskäivitust</string>
@@ -388,6 +404,7 @@
   <string name="session_timeout_title">Seansi ajalõpp (sekundites)</string>
   <string name="set_lock_message">Biomeetrilist andurit ega ekraanilukku pole saadaval</string>
   <string name="set_lock_title">Rakenduse lukustamise tõrge</string>
+  <string name="setting_ble_emitter_transmit_power_title">Saatja võimsus</string>
   <string name="settings">Seaded</string>
   <string name="share_failed">Jagamine Home Assistantiga nurjus!</string>
   <string name="share_success">Jagatud Home Assistantiga</string>
@@ -437,7 +454,7 @@
   <string name="username">Kasutajanimi</string>
   <string name="view_password">Kuva salasõna</string>
   <string name="wait">Oota</string>
-  <string name="webview_error">Home Assistanti laadimisel ilmnes viga. Vaata ühenduse seaded üle ja proovi uuesti.</string>
+  <string name="webview_error">Home Assistanti laadimisel ilmnes viga. Vaata ühenduse seaded üle ja proovi uuesti. Kui vajutad Värskenda proovime ühenduda teise sisestatud URLi abil.</string>
   <string name="webview_error_description">Ilmnes tõrge:</string>
   <string name="webview_error_SSL_DATE_INVALID">Home Assistanti sertifikaadi kuupäev on vigane. Palun kontrolli Home Assistanti sertifikaati või ühenduse seadeid ja proovi uuesti.</string>
   <string name="webview_error_SSL_EXPIRED">Home Assistanti sertifikaat on aegunud. Palun kontrolli Home Assistanti sertifikaati või ühenduse seadeid ja proovi uuesti.</string>

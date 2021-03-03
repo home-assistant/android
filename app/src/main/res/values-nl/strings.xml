@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
   <string name="action_reply">Antwoord</string>
+  <string name="activity_intent_error">Kan activiteitsintentie niet verzenden, controleer de opdrachtindeling</string>
   <string name="add_service_data_field">Veld toevoegen</string>
   <string name="add_widget">Widget toevoegen</string>
   <string name="app_version_info">Applicatie versie informatie</string>
@@ -28,6 +29,7 @@
   <string name="basic_sensor_name_battery_level">Batterijniveau</string>
   <string name="basic_sensor_name_battery_state">Batterij laadstatus</string>
   <string name="basic_sensor_name_bluetooth">Bluetooth-verbinding</string>
+  <string name="basic_sensor_name_bluetooth_ble_emitter">Ble Zender</string>
   <string name="basic_sensor_name_bluetooth_state">Bluetooth-status</string>
   <string name="basic_sensor_name_call_number">Bel nummer</string>
   <string name="basic_sensor_name_charger_type">Type oplader</string>
@@ -51,6 +53,7 @@
   <string name="basic_sensor_name_location_background">Achtergrondlocatie</string>
   <string name="basic_sensor_name_location_zone">Locatie zone</string>
   <string name="basic_sensor_name_mobile_data">Mobiele data</string>
+  <string name="basic_sensor_name_mobile_data_roaming">Mobiele dataroaming</string>
   <string name="basic_sensor_name_mobile_rx_gb">Mobiel Rx GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Mobiel Tx GB</string>
   <string name="basic_sensor_name_phone">Telefoon Status</string>
@@ -72,6 +75,12 @@
   <string name="biometric_message">Ontgrendel met uw biometrische of schermvergrendeling-inloggegevens</string>
   <string name="biometric_set_title">Bevestig om door te gaan</string>
   <string name="biometric_title">Home Assistant is vergrendeld</string>
+  <string name="ble_transmit_power_label_high">Hoog</string>
+  <string name="ble_transmit_power_label_low">Laag</string>
+  <string name="ble_transmit_power_label_medium">Medium</string>
+  <string name="ble_transmit_power_value_high">hoog</string>
+  <string name="ble_transmit_power_value_low">laag</string>
+  <string name="ble_transmit_power_value_medium">medium</string>
   <string name="broadcast_intent_error">Kan de uitzendingsintentie niet verzenden, controleer het opdrachtformaat</string>
   <string name="calendar">Kalender</string>
   <string name="cancel">Annuleren</string>
@@ -144,6 +153,8 @@
   <string name="fullscreen">Volledig scherm</string>
   <string name="fullscreen_def">Applicatie in volledig scherm weergeven</string>
   <string name="grant_permission">Toestemming verlenen</string>
+  <string name="high_accuracy_mode_channel_name">Locatie met hoge nauwkeurigheid</string>
+  <string name="high_accuracy_mode_notification_title">Hoge nauwkeurigheid (GPS) modus ingeschakeld</string>
   <string name="history">Geschiedenis</string>
   <string name="home_assistant_not_discover">Home Assistant instantie niet gevonden</string>
   <string name="icon">Icoon</string>
@@ -254,6 +265,8 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="rate_limit_summary">Gegevens snelheidslimiet</string>
   <string name="rate_limit_title">Notificatie snelheidslimiet</string>
   <string name="refresh">Opnieuw laden</string>
+  <string name="refresh_external">Vernieuw Externe URL</string>
+  <string name="refresh_internal">Vernieuw Interne URL</string>
   <string name="remember">Onthouden</string>
   <string name="required_fields">Vereist een gebruikersnaam en wachtwoord.</string>
   <string name="retry">Opnieuw</string>
@@ -270,6 +283,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Beschrijving</string>
   <string name="sensor_description_active_notification_count">Het totale aantal actieve meldingen dat zichtbaar is voor de gebruiker, inclusief stille, permanente en de Sensor Worker-meldingen.</string>
+  <string name="sensor_description_app_importance">Als de app zich op de voorgrond, achtergrond of in een andere toestand bevindt.</string>
   <string name="sensor_description_app_inactive">Of de app momenteel door het systeem als inactief wordt beschouwd</string>
   <string name="sensor_description_app_memory">Totaal gebruikt en beschikbaar geheugen voor de app</string>
   <string name="sensor_description_app_rx_gb">App Rx GB sinds de laatste keer dat het apparaat opnieuw is opgestart</string>
@@ -309,6 +323,8 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="sensor_description_location_zone">Importeer bestaande Home Assistant-zones als geofences voor op zones gebaseerde tracking. Met de instelling Minimale nauwkeurigheid kunt u beslissen hoe nauwkeurig de locatie van het apparaat (in meters) moet zijn om naar Home Assistant te kunnen verzenden.</string>
   <string name="sensor_description_lullaby">Als er een slaapliedje wordt afgespeeld</string>
   <string name="sensor_description_mic_muted">Of de microfoon is gedempt op het apparaat</string>
+  <string name="sensor_description_mobile_data">Of mobiele data al dan niet is ingeschakeld op het apparaat</string>
+  <string name="sensor_description_mobile_data_roaming">Of mobiele dataroaming al dan niet is ingeschakeld op het apparaat</string>
   <string name="sensor_description_mobile_rx_gb">Totaal Rx GB aan mobiele gegevens sinds de laatste keer dat het apparaat opnieuw is opgestart</string>
   <string name="sensor_description_mobile_tx_gb">Totale Tx GB aan mobiele data sinds de laatste keer dat het apparaat opnieuw is opgestart</string>
   <string name="sensor_description_music_active">Of er muziek actief wordt afgespeeld op het apparaat</string>
@@ -356,6 +372,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="sensor_name_light">Licht Sensor</string>
   <string name="sensor_name_location">Locatie Sensoren</string>
   <string name="sensor_name_mic_muted">Microfoon gedempt</string>
+  <string name="sensor_name_mobile_data">Mobiele datasensoren</string>
   <string name="sensor_name_music_active">Muziek actief</string>
   <string name="sensor_name_network">Netwerk sensors</string>
   <string name="sensor_name_phone">Telefoonsensors</string>
@@ -381,6 +398,7 @@ Tags werken op elk apparaat waarop Home Assistant is geïnstalleerd en die hardw
   <string name="session_timeout_title">Sessie time-out (in seconden)</string>
   <string name="set_lock_message">Geen biometrische of schermvergrendeling-inloggegevens beschikbaar.</string>
   <string name="set_lock_title">Fout bij het vergrendelen van de app.</string>
+  <string name="setting_ble_emitter_transmit_power_title">Zendervermogen</string>
   <string name="settings">Instellingen</string>
   <string name="share_failed">Delen met Home Assistant mislukt!</string>
   <string name="share_success">Gedeeld met Home Assistant</string>
