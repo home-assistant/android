@@ -10,18 +10,10 @@ object UrlHandler {
                 URL(input)
             }
             input.startsWith("homeassistant://navigate/") -> {
-                base?.toHttpUrlOrNull()
-                    ?.newBuilder()
-                    ?.addPathSegments(input.removePrefix("homeassistant://navigate/"))
-                    ?.build()
-                    ?.toUrl()
+                (base.toString() + input.removePrefix("homeassistant://navigate")).toHttpUrlOrNull()?.toUrl()
             }
             else -> {
-                base?.toHttpUrlOrNull()
-                    ?.newBuilder()
-                    ?.addPathSegments(input.trimStart('/'))
-                    ?.build()
-                    ?.toUrl()
+                (base.toString() + input).toHttpUrlOrNull()?.toUrl()
             }
         }
     }
