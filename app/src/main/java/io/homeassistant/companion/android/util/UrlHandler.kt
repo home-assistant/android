@@ -10,7 +10,7 @@ object UrlHandler {
                 URL(input)
             }
             input.startsWith("homeassistant://navigate/") -> {
-                (base.toString() + input.removePrefix("homeassistant://navigate")).toHttpUrlOrNull()?.toUrl()
+                (base.toString() + input.removePrefix("homeassistant://navigate/")).toHttpUrlOrNull()?.toUrl()
             }
             else -> {
                 (base.toString() + input).toHttpUrlOrNull()?.toUrl()
