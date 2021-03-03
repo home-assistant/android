@@ -29,6 +29,7 @@
   <string name="basic_sensor_name_battery_level">Livello della batteria</string>
   <string name="basic_sensor_name_battery_state">Stato della batteria</string>
   <string name="basic_sensor_name_bluetooth">Connessione Bluetooth</string>
+  <string name="basic_sensor_name_bluetooth_ble_emitter">Trasmettitore BLE</string>
   <string name="basic_sensor_name_bluetooth_state">Stato Bluetooth</string>
   <string name="basic_sensor_name_call_number">Chiama il numero</string>
   <string name="basic_sensor_name_charger_type">Tipo di caricabatterie</string>
@@ -74,6 +75,14 @@
   <string name="biometric_message">Sbloccare usando le credenziali biometriche o del blocca schermo</string>
   <string name="biometric_set_title">Conferma per continuare</string>
   <string name="biometric_title">Home Assistant è bloccato</string>
+  <string name="ble_transmit_power_label_high">Alta</string>
+  <string name="ble_transmit_power_label_low">Bassa</string>
+  <string name="ble_transmit_power_label_medium">Media</string>
+  <string name="ble_transmit_power_label_ultra_low">Molto bassa</string>
+  <string name="ble_transmit_power_value_high">alta</string>
+  <string name="ble_transmit_power_value_low">bassa</string>
+  <string name="ble_transmit_power_value_medium">media</string>
+  <string name="ble_transmit_power_value_ultra_low">molto bassa</string>
   <string name="broadcast_intent_error">Impossibile inviare l\'intento di trasmissione, si prega di controllare il formato del comando</string>
   <string name="calendar">Calendario</string>
   <string name="cancel">Annulla</string>
@@ -260,6 +269,8 @@ istanza di Home Assistant</string>
   <string name="rate_limit_summary">Dati limite di frequenza</string>
   <string name="rate_limit_title">Limite frequenza di notifica</string>
   <string name="refresh">Aggiorna</string>
+  <string name="refresh_external">Aggiorna URL esterno</string>
+  <string name="refresh_internal">Aggiorna URL interno</string>
   <string name="remember">Ricorda</string>
   <string name="required_fields">richiede un nome utente e una password.</string>
   <string name="retry">Riprova</string>
@@ -288,6 +299,7 @@ Scansione della rete</string>
   <string name="sensor_description_battery_health">La salute della batteria</string>
   <string name="sensor_description_battery_level">Il livello attuale della batteria del dispositivo</string>
   <string name="sensor_description_battery_state">Lo stato di carica attuale della batteria</string>
+  <string name="sensor_description_bluetooth_ble_emitter">Invia un messaggio iBeacon BLE ogni secondo, utilizzato per monitorare la presenza in casa, ad esempio insieme ai progetti roomassistant o esp32-mqtt-home. Attenzione, questo può influire sulla durata della batteria, in particolare se l\'impostazione Potenza del trasmettitore è impostata su Alta. Le impostazioni permettono di specificare UUID (formato UUID standard), Maggiore e Minore (dovrebbe essere 0 - 65535), per personalizzare identificatori e gruppi. Per impostazione predefinita questo sensore non è acceso con l\'interruttore Abilita tutto, per evitare il consumo della batteria, c\'è un\'impostazione apposita per abilitarlo.  C\'è anche un\'impostazione della Potenza del trasmettitore per aiutare a preservare la durata della batteria, che usa il minimo come richiesto. </string>
   <string name="sensor_description_bluetooth_connection">Informazioni sui dispositivi Bluetooth attualmente collegati</string>
   <string name="sensor_description_bluetooth_state">Indica se il Bluetooth è abilitato o meno sul dispositivo</string>
   <string name="sensor_description_call_number">Il numero di cellulare della chiamata in entrata o in uscita</string>
@@ -392,6 +404,7 @@ Scansione della rete</string>
   <string name="session_timeout_title">Tempo di scadenza della sessione (in secondi)</string>
   <string name="set_lock_message">Nessun sensore biometrico o credenziali del blocca schermo disponibili</string>
   <string name="set_lock_title">Errore di blocco dell\'app</string>
+  <string name="setting_ble_emitter_transmit_power_title">Potenza del trasmettitore</string>
   <string name="settings">Impostazioni</string>
   <string name="share_failed">Condivisione con Home Assistant non riuscita!</string>
   <string name="share_success">Condiviso con Home Assistant</string>
@@ -441,7 +454,7 @@ Scansione della rete</string>
   <string name="username">Nome utente</string>
   <string name="view_password">Visualizza password</string>
   <string name="wait">Attendere</string>
-  <string name="webview_error">Si è verificato un errore durante il caricamento di Home Assistant, rivedere le impostazioni di connessione e riprovare.</string>
+  <string name="webview_error">Si è verificato un errore nel caricamento di Home Assistant, si prega di rivedere le impostazioni di connessione e riprovare. Tenteremo di provare un altro URL fornito quando cliccherai su Aggiorna.</string>
   <string name="webview_error_description">Errore riscontrato:</string>
   <string name="webview_error_SSL_DATE_INVALID">La data del certificato di Home Assistant non è valida, rivedere il certificato di Home Assistant o le impostazioni di connessione e riprovare.</string>
   <string name="webview_error_SSL_EXPIRED">Il certificato di Home Assistant è scaduto, rivedere il certificato di Home Assistant o le impostazioni di connessione e riprovare.</string>

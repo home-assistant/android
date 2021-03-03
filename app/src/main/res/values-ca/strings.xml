@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Respon</string>
   <string name="add_service_data_field">Afegeix un camp</string>
   <string name="add_widget">Afegeix un widget</string>
   <string name="app_version_info">Informació de la versió de l\'aplicació</string>
@@ -25,6 +26,7 @@
   <string name="basic_sensor_name_battery_level">Nivell de la bateria</string>
   <string name="basic_sensor_name_battery_state">Estat de la bateria</string>
   <string name="basic_sensor_name_bluetooth">Connexió Bluetooth</string>
+  <string name="basic_sensor_name_bluetooth_ble_emitter">Transmissor Ble</string>
   <string name="basic_sensor_name_bluetooth_state">Estat Bluetooth</string>
   <string name="basic_sensor_name_call_number">Número de trucada</string>
   <string name="basic_sensor_name_charger_type">Tipus de carregador</string>
@@ -45,6 +47,7 @@
   <string name="basic_sensor_name_location_accurate">Ubicació precisa única</string>
   <string name="basic_sensor_name_location_background">Ubicació en segon pla</string>
   <string name="basic_sensor_name_location_zone">Zona d\'ubicació</string>
+  <string name="basic_sensor_name_mobile_data">Dades mòbils</string>
   <string name="basic_sensor_name_mobile_rx_gb">Mòbil Rx GB</string>
   <string name="basic_sensor_name_mobile_tx_gb">Mòbil Tx GB</string>
   <string name="basic_sensor_name_phone">Estat del telèfon</string>
@@ -64,6 +67,14 @@
   <string name="basic_sensor_sleep_tracking">Seguiment del son</string>
   <string name="biometric_set_title">Confirmeu que voleu continuar</string>
   <string name="biometric_title">El Home Assistant està bloquejat</string>
+  <string name="ble_transmit_power_label_high">Alta</string>
+  <string name="ble_transmit_power_label_low">Baixa</string>
+  <string name="ble_transmit_power_label_medium">Mitjana</string>
+  <string name="ble_transmit_power_label_ultra_low">Molt baixa</string>
+  <string name="ble_transmit_power_value_high">alta</string>
+  <string name="ble_transmit_power_value_low">baixa</string>
+  <string name="ble_transmit_power_value_medium">mitjana</string>
+  <string name="ble_transmit_power_value_ultra_low">moltBaixa</string>
   <string name="broadcast_intent_error">No s\'ha pogut enviar l\'intent de difusió, comprova el format de la comanda</string>
   <string name="calendar">Calendari</string>
   <string name="cancel">Cancel·lar</string>
@@ -118,8 +129,8 @@ a l\'internet de casa teva.</string>
   <string name="enabled_summary">Quan estigui activat, s\'enviaran valors al Home Assistant</string>
   <string name="enabled_title">Habilitat</string>
   <string name="entity_attribute_checkbox">Afegir valor de atribut</string>
-  <string name="error_connection_failed">No es pot connectar a l\'assistent d\'inici.</string>
-  <string name="error_onboarding_connection_failed">No es pot connectar a l\'assistent d\'inici.</string>
+  <string name="error_connection_failed">No es pot connectar amb Home Assistant.</string>
+  <string name="error_onboarding_connection_failed">No es pot connectar amb Home Assistant.</string>
   <string name="error_ssl">No es pot comunicar amb Home Assistant a causa d\'un error SSL. Assegureu-vos que el vostre certificat sigui vàlid.</string>
   <string name="error_with_registration">Comprova que tens activada la integració mobile_app 
 en la teva instància de Home Assistant.</string>
@@ -159,6 +170,7 @@ instància de Home Assistant</string>
   <string name="location_disabled_option_disable">Desactiva l\'opció</string>
   <string name="location_disabled_title">La ubicació està desactivada</string>
   <string name="location_perm_info_title">Accés a la ubicació</string>
+  <string name="location_warn_channel">Ubicació desactivada</string>
   <string name="lock_summary">Utilitzeu credencials biomètriques o de bloqueig de pantalla per desbloquejar l\'aplicació</string>
   <string name="lock_title">Bloquejar l\'aplicació</string>
   <string name="lockscreen_message">Toqueu per desbloquejar:</string>
@@ -230,6 +242,8 @@ instància de Home Assistant</string>
   <string name="rate_limit_summary">Límit de dades</string>
   <string name="rate_limit_title">Notificació del Límit de dades</string>
   <string name="refresh">Actualitzar</string>
+  <string name="refresh_external">Actualitza l\'URL extern</string>
+  <string name="refresh_internal">Actualitza l\'URL intern</string>
   <string name="remember">Recorda</string>
   <string name="required_fields">requereix un nom d\'usuari i una contrasenya.</string>
   <string name="retry">Reintentar</string>
@@ -325,6 +339,7 @@ buscant Home Assistant</string>
   <string name="sensors">Sensors</string>
   <string name="sensors_with_settings">Els sensors següents ofereixen una configuració personalitzada: %1$s</string>
   <string name="session_timeout_title">Temps d\'espera de la sessió (en segons)</string>
+  <string name="setting_ble_emitter_transmit_power_title">Potència del transmissor</string>
   <string name="settings">Configuració</string>
   <string name="share_failed">No s\'ha pogut compartir amb el Home Assitant</string>
   <string name="share_success">Compartit amb Home Assistant</string>

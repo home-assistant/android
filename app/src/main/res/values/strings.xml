@@ -72,6 +72,8 @@
   <string name="basic_sensor_name_public_ip">Public IP Address</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
   <string name="basic_sensor_name_sim2">SIM 2</string>
+  <string name="basic_sensor_name_sleep_confidence">Sleep Confidence</string>
+  <string name="basic_sensor_name_sleep_segment">Sleep Segment</string>
   <string name="basic_sensor_name_total_rx_gb">Total Rx GB</string>
   <string name="basic_sensor_name_total_tx_gb">Total Tx GB</string>
   <string name="basic_sensor_name_wifi">WiFi Connection</string>
@@ -86,6 +88,14 @@
   <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
   <string name="biometric_set_title">Confirm to continue</string>
   <string name="biometric_title">Home Assistant is locked</string>
+  <string name="ble_transmit_power_label_high">High</string>
+  <string name="ble_transmit_power_label_low">Low</string>
+  <string name="ble_transmit_power_label_medium">Medium</string>
+  <string name="ble_transmit_power_label_ultra_low">Ultra Low</string>
+  <string name="ble_transmit_power_value_high">high</string>
+  <string name="ble_transmit_power_value_low">low</string>
+  <string name="ble_transmit_power_value_medium">medium</string>
+  <string name="ble_transmit_power_value_ultra_low">ultraLow</string>
   <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
   <string name="calendar">Calendar</string>
   <string name="cancel">Cancel</string>
@@ -303,8 +313,8 @@ like to connect to:</string>
   <string name="sensor_description_battery_health">The health of the battery</string>
   <string name="sensor_description_battery_level">The current battery level of the device</string>
   <string name="sensor_description_battery_state">The current charging state of the battery</string>
-  <string name="sensor_description_bluetooth_connection">Information about currently connected bluetooth devices</string>
   <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon message every second, used to track presence  around house, e.g. together with roomassistant or esp32-mqtt-home projects. Warning, this can affect battery life, particularly if the Transmit Power setting is set to High. Settings allow specifying UUID (standard UUID format), Major and Minor (should be 0 - 65535), to tailor identifiers and groups. By default this sensor is not turned on with the Enable all toggle, to avoid battery drain, there is a setting to enable this.  There is also a Transmitter Power setting to help preserve battery life, use the minimum as required. </string>
+  <string name="sensor_description_bluetooth_connection">Information about currently connected bluetooth devices</string>
   <string name="sensor_description_bluetooth_state">Whether or not bluetooth is enabled on the device</string>
   <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
   <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
@@ -347,7 +357,9 @@ like to connect to:</string>
   <string name="sensor_description_public_ip">The public IP address of the device. Enabling this you agree to use external service https://ipify.org to determine IP address.</string>
   <string name="sensor_description_sim_1">Information about the current cellular provider in SIM slot 1</string>
   <string name="sensor_description_sim_2">Information about the current cellular provider in SIM slot 2</string>
+  <string name="sensor_description_sleep_confidence">The confidence rating the user is asleep including attributing factors</string>
   <string name="sensor_description_sleep_events">Additional one time events from Sleep as Android</string>
+  <string name="sensor_description_sleep_segment">Details about the last sleep session</string>
   <string name="sensor_description_sleep_tracking">Sleep tracking status from Sleep as Android</string>
   <string name="sensor_description_speakerphone">Whether or not speakerphone is enabled on the device</string>
   <string name="sensor_description_steps_sensor">The total number of steps since the last reboot of the device</string>
@@ -408,6 +420,7 @@ like to connect to:</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
   <string name="set_lock_title">App Locking Error</string>
+  <string name="setting_ble_emitter_transmit_power_title">Transmitter power</string>
   <string name="settings">Settings</string>
   <string name="share_failed">Sharing with Home Assistant Failed!</string>
   <string name="share_success">Shared with Home Assistant</string>
@@ -498,17 +511,4 @@ like to connect to:</string>
   <string name="widget_text_size_label">Widget text size:</string>
   <string name="widgets">Widgets</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
-  <string name="ble_transmit_power_label_high">High</string>
-  <string name="ble_transmit_power_label_medium">Medium</string>
-  <string name="ble_transmit_power_label_low">Low</string>
-  <string name="ble_transmit_power_label_ultra_low">Ultra Low</string>
-  <string name="ble_transmit_power_value_high">high</string>
-  <string name="ble_transmit_power_value_medium">medium</string>
-  <string name="ble_transmit_power_value_low">low</string>
-  <string name="ble_transmit_power_value_ultra_low">ultraLow</string>
-  <string name="setting_ble_emitter_transmit_power_title">Transmitter power</string>
-  <string name="basic_sensor_name_sleep_confidence">Sleep Confidence</string>
-  <string name="sensor_description_sleep_confidence">The confidence rating the user is asleep including attributing factors</string>
-  <string name="basic_sensor_name_sleep_segment">Sleep Segment</string>
-  <string name="sensor_description_sleep_segment">Details about the last sleep session</string>
 </resources>

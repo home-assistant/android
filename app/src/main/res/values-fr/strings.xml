@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Répondre</string>
   <string name="activity_intent_error">Impossible d\'envoyer l\'intention d\'activité, veuillez vérifier le format de la commande</string>
   <string name="add_service_data_field">Ajouter un champ</string>
   <string name="add_widget">Ajouter un widget</string>
@@ -21,9 +22,9 @@
   <string name="basic_sensor_name_app_importance">Importance de l\'application</string>
   <string name="basic_sensor_name_app_inactive">Application inactive</string>
   <string name="basic_sensor_name_app_memory">Mémoire de l’application</string>
-  <string name="basic_sensor_name_app_rx_gb">Données reçues par l\'application (GB)</string>
+  <string name="basic_sensor_name_app_rx_gb">Données reçues par l\'application (Go)</string>
   <string name="basic_sensor_name_app_standby">App Standby Bucket</string>
-  <string name="basic_sensor_name_app_tx_gb">Données transmises par l\'application (GB)</string>
+  <string name="basic_sensor_name_app_tx_gb">Données transmises par l\'application (Go)</string>
   <string name="basic_sensor_name_battery_health">Santé de la batterie</string>
   <string name="basic_sensor_name_battery_level">Niveau de batterie</string>
   <string name="basic_sensor_name_battery_state">État de la batterie</string>
@@ -51,8 +52,9 @@
   <string name="basic_sensor_name_location_background">Localisation d\'arrière-plan</string>
   <string name="basic_sensor_name_location_zone">Zone de localisation</string>
   <string name="basic_sensor_name_mobile_data">Données mobiles</string>
-  <string name="basic_sensor_name_mobile_rx_gb">Reçu mobile en GB</string>
-  <string name="basic_sensor_name_mobile_tx_gb">Transmis mobile en GB</string>
+  <string name="basic_sensor_name_mobile_data_roaming">Itinérance des données mobiles</string>
+  <string name="basic_sensor_name_mobile_rx_gb">Reçu mobile en Go</string>
+  <string name="basic_sensor_name_mobile_tx_gb">Transmis mobile en Go</string>
   <string name="basic_sensor_name_phone">État du téléphone</string>
   <string name="basic_sensor_name_power_save">Économie d\'énergie</string>
   <string name="basic_sensor_name_public_ip">Adresse IP publique</string>
@@ -93,7 +95,7 @@
  à votre Internet domestique.</string>
   <string name="connected_to_home_assistant">Connecté à Home Assistant</string>
   <string name="crash_reporting">Rapports d\'accident</string>
-  <string name="crash_reporting_summary">Aidez les développeurs à corriger les bugs et les pannes en laissant cette option activée. Si l\'application plante, un rapport sera automatiquement généré et envoyé. Si vous constatez un plantage, remontez également le problème sur Github !</string>
+  <string name="crash_reporting_summary">Aidez les développeurs à corriger les bogues et les pannes en laissant cette option activée. Si l\'application plante, un rapport sera automatiquement généré et envoyé. Si vous constatez un plantage, remontez également le problème sur Github !</string>
   <string name="create_template">Créer un modèle</string>
   <string name="database_event_failure">Impossible d\'envoyer l\'événement d\'échec de migration à Home Assistant</string>
   <string name="database_migration_failed">La migration de la base de données a échoué, toutes les données des capteurs et des widgets ont été réinitialisées. Veuillez réactiver vos capteurs et recréer vos widgets</string>
@@ -106,6 +108,7 @@
   <string name="device_registration">Enregistrement de l\'appareil</string>
   <string name="dialog_add_panel_shortcut_content">Créer un raccourci vers cet élément?</string>
   <string name="dialog_add_panel_shortcut_title">Ajouter Un Raccourci</string>
+  <string name="disable">Désactiver</string>
   <string name="disable_all_sensors">Désactiver tous les capteurs %1$d</string>
   <string name="documentation">Documentation</string>
   <string name="domain_automation">Automatisation</string>
@@ -119,6 +122,7 @@
   <string name="domain_scene">Scène</string>
   <string name="domain_script">Script</string>
   <string name="domain_switch">Interrupteur</string>
+  <string name="domain_vacuum">Aspirateur</string>
   <string name="enable_all_sensors">Activer tous les capteurs</string>
   <string name="enable_all_sensors_summary">Toutes les autorisations requises seront demandées lors de l\'activation</string>
   <string name="enable_location_tracking">Permettre le suivi de la localisation</string>
@@ -144,6 +148,7 @@
   <string name="fullscreen_def">Mettre l\'application en plein écran</string>
   <string name="grant_permission">Donner la permission</string>
   <string name="high_accuracy_mode_channel_name">Localisation de haute précision</string>
+  <string name="high_accuracy_mode_notification_title">Mode haute précision (GPS) activé</string>
   <string name="history">Historique</string>
   <string name="home_assistant_not_discover">Impossible de trouver votre instance Home Assistant</string>
   <string name="icon">Icône</string>
@@ -167,10 +172,13 @@
   <string name="list_template_widgets">Liste des widgets de modèle</string>
   <string name="location">Localisation</string>
   <string name="location_disabled_message">La localisation est désactivée. Les options activées suivantes nécessitent que vous activiez la localisation. Si vous n\'activez pas la localisation, le(s) capteur(s) / réglage(s) ne fonctionneront pas! \n \n %1$s \n Voulez-vous activer la localisation?</string>
+  <string name="location_disabled_notification_message">La ou les options activées suivantes vous obligent à activer la localisation. Si vous n\'activez pas la localisation, le(s) capteur(s)/réglage(s) ne fonctionneront pas ! Cliquez pour activer la localisation.</string>
+  <string name="location_disabled_notification_short_message">Certains réglages ne fonctionnent pas. Cliquez pour activer l’emplacement.</string>
   <string name="location_disabled_option_disable">Désactiver l\'option</string>
   <string name="location_disabled_title">La localisation est désactivée</string>
   <string name="location_perm_info_message">Android a mis en place des restrictions pour les applications qui souhaitent utiliser votre Wifi, car le Wifi peut théoriquement être utilisé pour déterminer votre position. \n\n Aussi pour vous assurer que l\'application peut accéder au Wifi en arrière-plan (prise de décision URL, capteurs), vous devez autoriser l\'accès à la localisation à tout moment. \n\n Par conséquent, pour utiliser cette option, l\'accès à la localisation est tout le temps nécessaire. \n\n Continuer d\'accorder l\'accès à la localisation?</string>
   <string name="location_perm_info_title">Accès à la localisation</string>
+  <string name="location_warn_channel">Localisation désactivée</string>
   <string name="lock_summary">Utilisez des données biométriques ou des codes de verrouillage pour déverrouiller l\'application</string>
   <string name="lock_title">Verrouiller l\'application</string>
   <string name="lockscreen_message">Appuyez pour déverrouiller :</string>
@@ -250,6 +258,8 @@
   <string name="rate_limit_summary">Taux limite de données</string>
   <string name="rate_limit_title">Limite du taux de notification</string>
   <string name="refresh">Rafraîchir</string>
+  <string name="refresh_external">Actualiser l\'URL externe</string>
+  <string name="refresh_internal">Actualiser l\'URL interne</string>
   <string name="remember">Se rappeler</string>
   <string name="required_fields">nécessite un nom d\'utilisateur et un mot de passe.</string>
   <string name="retry">Réessayer</string>
@@ -257,8 +267,10 @@
   <string name="scan_again">Rechercher à nouveau</string>
   <string name="scanning_network">Recherche de  Home Assistant sur le réseau</string>
   <string name="security">Sécurité</string>
+  <string name="security_vulnerably_message">Votre version de Home Assistant ne protège pas des vulnérabilités de sécurité récemment découvertes dans les composants personnalisés. Veuillez consulter les détails via le bulletin et mettre à jour dès que possible.</string>
   <string name="security_vulnerably_title">Avertissement de sécurité vulnérable</string>
   <string name="security_vulnerably_understand">Je comprends</string>
+  <string name="security_vulnerably_view">Voir le bulletin</string>
   <string name="select_entity_to_display">Sélectionnez l\'entité à afficher</string>
   <string name="select_instance">Sélectionnez l\'instance à laquelle vous souhaitez vous connecter :</string>
   <string name="sensor">Capteur</string>
@@ -267,9 +279,9 @@
   <string name="sensor_description_app_importance">Si l\'application est au premier plan, en arrière-plan ou dans tout autre état, cela peut être.</string>
   <string name="sensor_description_app_inactive">Si oui ou non l’application est actuellement considérée comme inactive par le système</string>
   <string name="sensor_description_app_memory">Mémoire totale utilisée et disponible pour l\'application</string>
-  <string name="sensor_description_app_rx_gb">Données reçues par l\'application depuis le dernier redémarrage de l\'appareil (GB)</string>
+  <string name="sensor_description_app_rx_gb">Données reçues par l\'application depuis le dernier redémarrage de l\'appareil (Go)</string>
   <string name="sensor_description_app_standby">App Standby Bucket actuel. Les classes Stanby Bucket déterminent dans quelle mesure une application sera empêchée d\'exécuter des tâches en arrière-plan telles que des tâches et des alarmes.</string>
-  <string name="sensor_description_app_tx_gb">Données transmises par l\'application depuis le dernier redémarrage de l\'appareil (GB)</string>
+  <string name="sensor_description_app_tx_gb">Données transmises par l\'application depuis le dernier redémarrage de l\'appareil (Go)</string>
   <string name="sensor_description_audio_mode">L\'état du mode audio des appareils</string>
   <string name="sensor_description_audio_sensor">L\'état du mode sonnerie des appareils</string>
   <string name="sensor_description_battery_health">La santé de la batterie</string>
@@ -297,13 +309,15 @@
   <string name="sensor_description_last_notification">Les détails de la dernière notification</string>
   <string name="sensor_description_last_reboot">La date et l\'heure du dernier redémarrage de l\'appareil</string>
   <string name="sensor_description_last_removed_notification">Les détails de la dernière notification supprimée. Il peut s\'agir de toute notification effacée par l\'utilisateur ou supprimée par une application.</string>
-  <string name="sensor_description_last_update">Le but de la dernière mise à jour envoyée, les mises à jour périodiques s\'afficheront comme \"SensorWorker\".</string>
+  <string name="sensor_description_last_update">Le but de la dernière mise à jour envoyée, les mises à jour périodiques s\'afficheront comme \"SensorWorker\". En activant le bouton \"Add New Intent\", vous créez un paramètre vous permettant de vous inscrire pour une intention de diffusion. Le commutateur basculant reviendra à la position \"off\" une fois qu\'un nouveau paramètre aura été créé, vous devrez donc le réactiver pour enregistrer d\'autres intentions. Vous pouvez également effacer la valeur du paramètre pour le supprimer lors de la prochaine mise à jour. Vous devez redémarrer l\'application après avoir apporté des modifications à ces paramètres pour qu\'elles prennent effet.</string>
   <string name="sensor_description_light_sensor">Le niveau d\'éclairement actuel</string>
   <string name="sensor_description_location_accurate">Autorisez Home Assistant à envoyer une notification pour demander un emplacement précis avec l\'application demandant périodiquement un emplacement précis. Le paramètre Précision minimale vous permettra de décider de la précision de l\'emplacement de l\'appareil (en mètres) pour l\'envoyer à Home Assistant. Le temps minimum entre les mises à jour (en millisecondes) empêche l\'appareil d\'envoyer trop souvent l\'emplacement précis. La mise à jour inclue au capteur demandera une mise à jour de l\'emplacement à chaque mise à jour du capteur.</string>
   <string name="sensor_description_location_background">Mettez régulièrement à jour votre position en arrière-plan. Le paramètre Précision minimale vous permettra de décider de la précision de l\'emplacement de l\'appareil (en mètres) pour l\'envoi à Home Assistant.</string>
   <string name="sensor_description_location_zone">Importez des zones Home Assistant existantes en tant que clôtures géographiques pour un suivi basé sur les zones. Le paramètre Précision minimale vous permettra de décider de la précision de l\'emplacement de l\'appareil (en mètres) pour l\'envoi à Home Assistant.</string>
-  <string name="sensor_description_lullaby">Si une berceuse joue</string>
+  <string name="sensor_description_lullaby">Si une mélodie est jouée</string>
   <string name="sensor_description_mic_muted">Si le micro est en sourdine ou non sur l\'appareil</string>
+  <string name="sensor_description_mobile_data">Si les données mobiles sont activées ou non sur l\'appareil</string>
+  <string name="sensor_description_mobile_data_roaming">Si l\'itinérance des données mobiles est activée ou non sur l\'appareil</string>
   <string name="sensor_description_mobile_rx_gb">Total reçu en Go sur les données cellulaires depuis le dernier redémarrage de l\'appareil</string>
   <string name="sensor_description_mobile_tx_gb">Total transmis en Go sur les données cellulaires depuis le dernier redémarrage de l\'appareil</string>
   <string name="sensor_description_music_active">Si de la musique est en cours de lecture ou non sur l\'appareil</string>
@@ -316,7 +330,7 @@
   <string name="sensor_description_public_ip">L\'adresse IP publique de l\'appareil. En activant cela, vous acceptez d\'utiliser le service externe https://ipify.org pour déterminer l\'adresse IP.</string>
   <string name="sensor_description_sim_1">Informations sur le fournisseur de service cellulaire actuel dans l\'emplacement SIM 1</string>
   <string name="sensor_description_sim_2">Informations sur le fournisseur de service cellulaire actuel dans l\'emplacement SIM 2</string>
-  <string name="sensor_description_sleep_events">Autres événements ponctuels de Sleep as Android</string>
+  <string name="sensor_description_sleep_events">Autres événements ponctuels de \"Sleep as Android\"</string>
   <string name="sensor_description_sleep_tracking">État du suivi du sommeil à partir de Sleep as Android</string>
   <string name="sensor_description_speakerphone">Si le haut-parleur est activé ou non sur l\'appareil</string>
   <string name="sensor_description_steps_sensor">Le nombre total de pas depuis le dernier redémarrage de l\'appareil</string>
@@ -386,20 +400,24 @@
   <string name="skip">Passer</string>
   <string name="state">État</string>
   <string name="state_auto">Auto</string>
+  <string name="state_cleaning">Nettoyage</string>
   <string name="state_closed">Fermé</string>
   <string name="state_closing">Fermeture</string>
   <string name="state_cool">Frais</string>
   <string name="state_docked">Sur la base</string>
   <string name="state_dry">Sec</string>
+  <string name="state_error">Erreur</string>
   <string name="state_fan_only">Ventilateur seul</string>
   <string name="state_heat">Chauffe</string>
   <string name="state_heat_cool">Chauffer Refroidir</string>
+  <string name="state_idle">Inactif</string>
   <string name="state_locked">Verrouillé</string>
   <string name="state_off">Off</string>
   <string name="state_on">On</string>
   <string name="state_open">Ouvert</string>
   <string name="state_opening">Ouverture</string>
   <string name="state_paused">En pause</string>
+  <string name="state_returning">Retour</string>
   <string name="state_unavailable">Indisponible</string>
   <string name="state_unknown">Inconnu</string>
   <string name="state_unlocked">Déverrouillé</string>

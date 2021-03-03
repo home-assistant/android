@@ -29,6 +29,7 @@
   <string name="basic_sensor_name_battery_level">Poziom baterii</string>
   <string name="basic_sensor_name_battery_state">Stan baterii</string>
   <string name="basic_sensor_name_bluetooth">Połączenie Bluetooth</string>
+  <string name="basic_sensor_name_bluetooth_ble_emitter">Nadajnik Ble</string>
   <string name="basic_sensor_name_bluetooth_state">Stan Bluetooth</string>
   <string name="basic_sensor_name_call_number">Numer telefonu</string>
   <string name="basic_sensor_name_charger_type">Typ ładowarki</string>
@@ -74,6 +75,14 @@
   <string name="biometric_message">Odblokuj przy użyciu danych biometrycznych lub blokady ekranu</string>
   <string name="biometric_set_title">Potwierdź, aby kontynuować</string>
   <string name="biometric_title">Home Assistant musi być odblokowany</string>
+  <string name="ble_transmit_power_label_high">Wysoka</string>
+  <string name="ble_transmit_power_label_low">Niska</string>
+  <string name="ble_transmit_power_label_medium">Średnia</string>
+  <string name="ble_transmit_power_label_ultra_low">Bardzo niska</string>
+  <string name="ble_transmit_power_value_high">wysoka</string>
+  <string name="ble_transmit_power_value_low">niska</string>
+  <string name="ble_transmit_power_value_medium">średnia</string>
+  <string name="ble_transmit_power_value_ultra_low">bardzo niska</string>
   <string name="broadcast_intent_error">Nie można wysłać zawartości transmisji, sprawdź format polecenia.</string>
   <string name="calendar">Kalendarz</string>
   <string name="cancel">Anuluj</string>
@@ -259,6 +268,8 @@ Tagi będą działać na każdym urządzeniu z zainstalowaną aplikacją Home As
   <string name="rate_limit_summary">Dane dotyczące limitu</string>
   <string name="rate_limit_title">Powiadomienia</string>
   <string name="refresh">Odśwież</string>
+  <string name="refresh_external">Odśwież publiczny adres URL</string>
+  <string name="refresh_internal">Odśwież lokalny adres URL</string>
   <string name="remember">Zapamiętaj</string>
   <string name="required_fields">wymaga nazwy użytkownika i hasła.</string>
   <string name="retry">Ponów próbę</string>
@@ -279,13 +290,14 @@ Tagi będą działać na każdym urządzeniu z zainstalowaną aplikacją Home As
   <string name="sensor_description_app_inactive">Czy aplikacja jest obecnie uznawana przez system za nieaktywną</string>
   <string name="sensor_description_app_memory">Użyta oraz dostępna pamięć dla aplikacji</string>
   <string name="sensor_description_app_rx_gb">Odebrane dane przez aplikację (w GB) od ostatniego restartu urządzenia</string>
-  <string name="sensor_description_app_standby">Bieżący zasobnik gotowości aplikacji. Zasobniki gotowości określają, w jakim stopniu aplikacja będzie miała ograniczone możliwość pracy w tle, takich jak wykonywanie zadań i dodawanie alarmów.</string>
+  <string name="sensor_description_app_standby">Bieżący zasobnik gotowości aplikacji. Zasobniki gotowości określają, w jakim stopniu aplikacja będzie miała ograniczone możliwości pracy w tle, takich jak wykonywanie zadań i dodawanie alarmów.</string>
   <string name="sensor_description_app_tx_gb">Wysłane dane przez aplikację (w GB) od ostatniego restartu urządzenia</string>
   <string name="sensor_description_audio_mode">Stan trybu audio urządzeń</string>
   <string name="sensor_description_audio_sensor">Stan trybu dzwonka urządzenia, a także inne atrybuty związane z dźwiękiem</string>
   <string name="sensor_description_battery_health">Stan zdrowia baterii</string>
   <string name="sensor_description_battery_level">Aktualny poziom naładowania baterii urządzenia</string>
   <string name="sensor_description_battery_state">Aktualny stan ładowania akumulatora</string>
+  <string name="sensor_description_bluetooth_ble_emitter">Wysyłaj co sekundę wiadomość BLE iBeacon. Używa się tego do śledzenia obecności w domu, np. wspólnie z projektami roomassistant lub esp32-mqtt-home. Ostrzeżenie: może to wpłynąć na żywotność baterii, szczególnie jeśli ustawienie mocy transmisji jest ustawione na wysoką. Ustawienia pozwalają na określenie UUID (standardowy format UUID), Major i Minor (w przedziale 0 - 65535), aby dostosować identyfikatory i grupy. Domyślnie czujnik ten ma wyłączone \"Włącz wszystkie\", aby uniknąć wyczerpania baterii, ale istnieje ustawienie, które to włącza. Istnieje również ustawienie mocy nadajnika, które pomaga przedłużyć żywotność baterii. W razie potrzeby używaj minimum.</string>
   <string name="sensor_description_bluetooth_connection">Informacje o aktualnie podłączonych urządzeniach Bluetooth</string>
   <string name="sensor_description_bluetooth_state">Czy w urządzeniu jest włączona funkcja Bluetooth</string>
   <string name="sensor_description_call_number">Numer telefonu przychodzącego lub wychodzącego połączenia</string>
@@ -308,7 +320,7 @@ Tagi będą działać na każdym urządzeniu z zainstalowaną aplikacją Home As
   <string name="sensor_description_last_notification">Szczegóły ostatniego powiadomienia.</string>
   <string name="sensor_description_last_reboot">Data i godzina ostatniego restartu urządzenia. Wartość \"deadband\" określa minimalny czas, w którym wartość stanu nie ulegnie zmianie. Domyślna wartość 60000 milisekund (1 minuta).</string>
   <string name="sensor_description_last_removed_notification">Szczegóły ostatniego usuniętego powiadomienia. Może to być dowolne powiadomienie usunięte przez użytkownika lub przez aplikację.</string>
-  <string name="sensor_description_last_update">Zawartość ostatnio wysłanej aktualizacji. Okresowe aktualizacje będą wyświetlane jako \"SensorWorker\".</string>
+  <string name="sensor_description_last_update">Zawartość ostatnio wysłanej aktualizacji. Okresowe aktualizacje będą wyświetlane jako \"SensorWorker\". Włączenie \"Dodaj nową zawartość\" utworzy 1 ustawienie umożliwiające zarejestrowanie rozpowszechniania zawartości. Ustawienie wyłączy się automatycznie po jego utworzeniu, więc będziesz musiał włączyć go ponownie, aby zapisać więcej zawartości. Można również wyczyścić wartość ustawienia, aby usunąć ustawienie przy kolejnej aktualizacji. Musisz ponownie uruchomić aplikację po wprowadzeniu zmian w tych ustawieniach, aby odniosły skutek.</string>
   <string name="sensor_description_light_sensor">Aktualny poziom natężenia oświetlenia</string>
   <string name="sensor_description_location_accurate">Zezwalaj HA na wysyłanie powiadomień z żądaniem dokładnej lokalizacji wraz z okresowym żądaniem dokładnej lokalizacji przez aplikację. Ustawienie \"Minimalna dokładność\" pozwala zdecydować, jak dokładna musi być lokalizacja urządzenia (w metrach), aby aplikacja wysłała ją do HA. \"Minimalny czas pomiędzy aktualizacjami (w milisekundach)\" uniemożliwia wysyłanie zbyt częstych dokładnych lokalizacji. Opcja \"Uwzględnij\" w ustawieniach aktualizacji sensora spowoduje wysłanie żądania lokalizacji przy każdej aktualizacji sensora.</string>
   <string name="sensor_description_location_background">Okresowo aktualizuj lokalizację w tle. \"Minimalna dokładność\" pozwala zdecydować, jak dokładna musi być lokalizacja urządzenia (w metrach), aby aplikacja wysłała ją do HA.</string>
@@ -390,6 +402,7 @@ Tagi będą działać na każdym urządzeniu z zainstalowaną aplikacją Home As
   <string name="session_timeout_title">Limit czasu sesji (w sekundach)</string>
   <string name="set_lock_message">Brak danych biometrycznych lub poświadczenia blokady ekranu</string>
   <string name="set_lock_title">Błąd blokowania aplikacji</string>
+  <string name="setting_ble_emitter_transmit_power_title">Moc nadajnika</string>
   <string name="settings">Ustawienia</string>
   <string name="share_failed">Udostępnianie do Home Assistanta nie powiodło się!</string>
   <string name="share_success">Udostępniono do Home Assistanta</string>
@@ -439,7 +452,7 @@ Tagi będą działać na każdym urządzeniu z zainstalowaną aplikacją Home As
   <string name="username">Nazwa użytkownika</string>
   <string name="view_password">Wyświetl hasło</string>
   <string name="wait">Czekaj</string>
-  <string name="webview_error">Wystąpił błąd podczas ładowania Home Assistanta, sprawdź ustawienia połączenia i spróbuj ponownie.</string>
+  <string name="webview_error">Wystąpił błąd podczas ładowania Home Assistanta, sprawdź ustawienia połączenia i spróbuj ponownie. Spróbujemy następny podany adres URL po kliknięciu przycisku Odśwież.</string>
   <string name="webview_error_description">Wystąpił błąd:</string>
   <string name="webview_error_SSL_DATE_INVALID">Data certyfikatu Home Assistanta jest nieprawidłowa, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>
   <string name="webview_error_SSL_EXPIRED">Certyfikat Home Assistanta wygasł, sprawdź certyfikat lub ustawienia połączenia i spróbuj ponownie.</string>

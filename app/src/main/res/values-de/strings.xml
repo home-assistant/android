@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
+  <string name="action_reply">Antworten</string>
   <string name="activity_intent_error">Aktivitätsintent kann nicht gesendet werden, bitte Befehlsformat prüfen</string>
   <string name="add_service_data_field">Feld hinzufügen</string>
   <string name="add_widget">Widget hinzufügen</string>
@@ -256,6 +257,8 @@
   <string name="rate_limit_summary">Daten zum Ratenlimit</string>
   <string name="rate_limit_title">Limit für Benachrichtigungsrate</string>
   <string name="refresh">Aktualisieren</string>
+  <string name="refresh_external">Externe URL aktualisieren</string>
+  <string name="refresh_internal">Interne URL aktualisieren</string>
   <string name="remember">Erinnern</string>
   <string name="required_fields">erfordert einen Benutzernamen und ein Passwort.</string>
   <string name="retry">Erneut versuchen</string>

@@ -22,9 +22,9 @@
   <string name="basic_sensor_name_app_importance">App viktighet</string>
   <string name="basic_sensor_name_app_inactive">App inaktiv</string>
   <string name="basic_sensor_name_app_memory">Appminne</string>
-  <string name="basic_sensor_name_app_rx_gb"></string>
+  <string name="basic_sensor_name_app_rx_gb">App Rx GB</string>
   <string name="basic_sensor_name_app_standby">App standby-bøtte</string>
-  <string name="basic_sensor_name_app_tx_gb"></string>
+  <string name="basic_sensor_name_app_tx_gb">App Tx GB</string>
   <string name="basic_sensor_name_battery_health">Batterihelse</string>
   <string name="basic_sensor_name_battery_level">Batterinivå</string>
   <string name="basic_sensor_name_battery_state">Batteritilstand</string>
@@ -254,7 +254,7 @@ Tagger fungerer på alle enheter med Home Assistant installert som har maskinvar
   <string name="pref_location_zone_summary">Importer eksisterende Home Assistant soner som geofences for sonebasert sporing</string>
   <string name="pref_location_zone_title">Sonebasert sporing</string>
   <string name="privacy_policy">Personvernregler</string>
-  <string name="privacy_url"></string>
+  <string name="privacy_url">https://www.home-assistant.io/privacy</string>
   <string name="profile">Profil</string>
   <string name="qrcode_processing_tag_error">Feil under behandling av QR kode</string>
   <string name="rate_limit_notification.body">Du har nå sendt mer enn %s varsler i dag, du vil ikke motta nye varsler før midnatt UTC</string>
@@ -262,6 +262,8 @@ Tagger fungerer på alle enheter med Home Assistant installert som har maskinvar
   <string name="rate_limit_summary">Frekvensbegrensning data</string>
   <string name="rate_limit_title">Grense for varslingsfrekvens</string>
   <string name="refresh">Oppdater</string>
+  <string name="refresh_external">Oppdater ekstern URL</string>
+  <string name="refresh_internal">Oppdater intern URL</string>
   <string name="remember">Husk</string>
   <string name="required_fields">krever brukernavn og passord.</string>
   <string name="retry">Prøv på nytt</string>

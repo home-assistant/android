@@ -29,6 +29,7 @@
   <string name="basic_sensor_name_battery_level">Úroveň baterie</string>
   <string name="basic_sensor_name_battery_state">Stav baterie</string>
   <string name="basic_sensor_name_bluetooth">Připojení Bluetooth</string>
+  <string name="basic_sensor_name_bluetooth_ble_emitter">BLE vysílač</string>
   <string name="basic_sensor_name_bluetooth_state">Stav Bluetooth</string>
   <string name="basic_sensor_name_call_number">Telefonní číslo</string>
   <string name="basic_sensor_name_charger_type">Typ nabíječky</string>
@@ -60,6 +61,8 @@
   <string name="basic_sensor_name_public_ip">Veřejná IP adresa</string>
   <string name="basic_sensor_name_sim1">SIM 1</string>
   <string name="basic_sensor_name_sim2">SIM 2</string>
+  <string name="basic_sensor_name_sleep_confidence">Jistota spánku</string>
+  <string name="basic_sensor_name_sleep_segment">Segment spánku</string>
   <string name="basic_sensor_name_total_rx_gb">Celkem přijatých dat</string>
   <string name="basic_sensor_name_total_tx_gb">Celkem odeslaných dat</string>
   <string name="basic_sensor_name_wifi">WiFi Připojení</string>
@@ -74,6 +77,14 @@
   <string name="biometric_message">Odemknout pomocí biometrických údajů nebo zámku obrazovky</string>
   <string name="biometric_set_title">Potvrdit pro pokračování</string>
   <string name="biometric_title">Home Assistant je uzamčen</string>
+  <string name="ble_transmit_power_label_high">Vysoký</string>
+  <string name="ble_transmit_power_label_low">Nízký</string>
+  <string name="ble_transmit_power_label_medium">Střední</string>
+  <string name="ble_transmit_power_label_ultra_low">Velmi nízký</string>
+  <string name="ble_transmit_power_value_high">vysoký</string>
+  <string name="ble_transmit_power_value_low">nízký</string>
+  <string name="ble_transmit_power_value_medium">střední</string>
+  <string name="ble_transmit_power_value_ultra_low">velmi nízký</string>
   <string name="broadcast_intent_error">Nelze odeslat záměr vysílání, zkontrolujte formát příkazu</string>
   <string name="calendar">Kalendář</string>
   <string name="cancel">Zrušit</string>
@@ -258,6 +269,8 @@ integraci povolenou v Home Assistant.</string>
   <string name="rate_limit_summary">Údaje o limitech</string>
   <string name="rate_limit_title">Omezení notifikací</string>
   <string name="refresh">Obnovit</string>
+  <string name="refresh_external">Obnovit vnější URL</string>
+  <string name="refresh_internal">Obnovit vnitřní URL</string>
   <string name="remember">Zapamatovat</string>
   <string name="required_fields">vyžaduje uživatelské jméno a heslo.</string>
   <string name="retry">Opakovat</string>
@@ -328,7 +341,9 @@ integraci povolenou v Home Assistant.</string>
   <string name="sensor_description_public_ip">Veřejná IP adresa zařízení. Povolením této možnosti souhlasíte s použitím externí služby https://ipify.org k určení adresy IP.</string>
   <string name="sensor_description_sim_1">Informace o aktuálním mobilním operátorovi ve slotu SIM 1</string>
   <string name="sensor_description_sim_2">Informace o aktuálním mobilním operátorovi ve slotu SIM 2</string>
+  <string name="sensor_description_sleep_confidence">Skóre jistoty, se kterou je uživatel spící, včetně souvisejících faktorů</string>
   <string name="sensor_description_sleep_events">Další jednorázové události ze Sleep as Android</string>
+  <string name="sensor_description_sleep_segment">Podrobnosti o poslední spánkové relaci</string>
   <string name="sensor_description_sleep_tracking">Stav sledování spánku ze Sleep as Android</string>
   <string name="sensor_description_speakerphone">Zda-li je v zařízení aktivní hlasitý odposlech</string>
   <string name="sensor_description_steps_sensor">Celkový počet kroků od posledního restartování zařízení</string>
@@ -389,6 +404,7 @@ integraci povolenou v Home Assistant.</string>
   <string name="session_timeout_title">Časový limit Relace (v sekundách)</string>
   <string name="set_lock_message">Nebyl nalezen žádný biometrický senzor ani údaje zámku obrazovky.</string>
   <string name="set_lock_title">Chyba zamykání aplikace</string>
+  <string name="setting_ble_emitter_transmit_power_title">Výkon vysílače</string>
   <string name="settings">Nastavení</string>
   <string name="share_failed">Sdílení s Home Assistantem selhalo!</string>
   <string name="share_success">Sdíleno s Home Assistantem</string>
@@ -438,7 +454,7 @@ integraci povolenou v Home Assistant.</string>
   <string name="username">Uživatelské jméno</string>
   <string name="view_password">Zobrazit heslo</string>
   <string name="wait">Vyčkat</string>
-  <string name="webview_error">Při načítání Home Assistanta došlo k chybě, zkontrolujte prosím nastavení připojení a akci opakujte.</string>
+  <string name="webview_error">Při načítání Home Assistanta došlo k chybě, zkontrolujte prosím nastavení připojení a akci opakujte. Kliknutím na Obnovit dojde k pokusu o připojení k další poskytnuté URL.</string>
   <string name="webview_error_description">Došlo k chybě :</string>
   <string name="webview_error_SSL_DATE_INVALID">Datum certifikátu Home Assistanta je neplatné, zkontrolujte prosím certifikát nebo nastavení připojení a zkuste to znovu.</string>
   <string name="webview_error_SSL_EXPIRED">Platnost certifikátu Home Assistanta vypršela, zkontrolujte prosím certifikát nebo nastavení připojení a zkuste to znovu.</string>
