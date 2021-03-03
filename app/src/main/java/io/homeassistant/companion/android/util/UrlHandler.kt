@@ -13,7 +13,7 @@ object UrlHandler {
                 (base.toString() + input.removePrefix("homeassistant://navigate/")).toHttpUrlOrNull()?.toUrl()
             }
             else -> {
-                (base.toString() + input).toHttpUrlOrNull()?.toUrl()
+                (base.toString() + input.removePrefix("/")).toHttpUrlOrNull()?.toUrl()
             }
         }
     }
