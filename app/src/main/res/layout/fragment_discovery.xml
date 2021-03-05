@@ -7,6 +7,15 @@
     android:orientation="vertical"
     android:padding="@dimen/activity_margin">
 
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/what_is_this"
+        style="@style/Widget.HomeAssistant.Button.Outlined"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:text="@string/what_is_this"
+        android:textAlignment="center" />
+
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/title"
         style="@style/TextAppearance.HomeAssistant.Title"
