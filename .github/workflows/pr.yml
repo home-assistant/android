@@ -112,12 +112,6 @@ jobs:
     - uses: ./.github/actions/create-release-notes
       name: Create Release Notes
 
-    - uses: ./.github/actions/download-translations
-      name: Download Translations
-      with:
-        lokalise-project: ${{ secrets.LOKALISE_PROJECT }}
-        lokalise-token: ${{ secrets.LOKALISE_TOKEN }}
-
     - name: Build Debug APK
       run: ./gradlew assembleDebug
     
