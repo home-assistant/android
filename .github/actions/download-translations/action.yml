@@ -14,7 +14,6 @@ runs:
       id: translations
       shell: bash
       run: |
-        PROJECT=
         ZIP=`\
           curl --location --request POST "https://api.lokalise.com/api2/projects/${{lokalise-project}}/files/download" \
             --header "X-Api-Token: ${{inputs.lokalise-token}}" \
