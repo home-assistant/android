@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.onboarding.discovery
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.net.nsd.NsdManager
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -23,6 +25,7 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
 
     companion object {
 
+        private const val HOME_ASSISTANT = "https://www.home-assistant.io"
         fun newInstance(): DiscoveryFragment {
             return DiscoveryFragment()
         }
@@ -80,7 +83,14 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
                 adapter = listViewAdapter
                 setOnItemClickListener { _, _, position, _ -> presenter.onUrlSelected(instances[position].url) }
             }
-
+            findViewById<Button>(R.id.what_is_this)?.apply {
+                setOnClickListener {
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = Uri.parse(HOME_ASSISTANT)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    startActivity(intent)
+                }
+            }
             this.findViewById<Button>(R.id.manual_setup)
                 .setOnClickListener { (activity as DiscoveryListener).onSelectManualSetup() }
         }
