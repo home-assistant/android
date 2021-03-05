@@ -30,8 +30,8 @@ runs:
 
         echo "Download Ready: $ZIP"
 
-        curl $ZIP -o --output strings.zip
+        curl $ZIP --output strings.zip
 
         echo "Download Complete, unzipping"
-        unzip strings.zip
+        unzip -n strings.zip
         echo "Complete"
