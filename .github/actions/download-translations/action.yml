@@ -7,7 +7,6 @@ inputs:
   lokalise-token:
     description: 'An API token that has read access to the desired project'
     required: true
-outputs:
 runs:
   using: 'composite'
   steps:
