@@ -1,5 +1,5 @@
-name: 'Create Release Numbers'
-description: 'Creates the current release number based on checked out code'
+name: 'Download Translations'
+description: 'Reaches out to Lokalise to download the latest translations.'
 inputs:
   lokalise-project:
     description: 'The project id in lokalise'
