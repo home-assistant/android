@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorDialogBackground">#111111</color>
+    <color name="colorDialogMessage">@android:color/white</color>
+    <color name="colorDialogTitle">@android:color/white</color>
+    <color name="colorActivityBackground">#1c1c1c</color>
+    <color name="colorPrimary">#03A9F4</color>
+    <color name="colorPrimaryDark">#111111</color>
+    <color name="colorAccent">#03A9F4</color>
+    <color name="colorOnPrimary">@android:color/white</color>
+    <color name="colorWarning">#D32F2F</color>
+    <color name="colorHeadline1">@android:color/white</color>
+    <color name="colorHeadline2">@android:color/white</color>
+    <color name="colorActionBar">#1c1c1c</color>
+    <color name="colorIcon">@android:color/white</color>
+    <color name="colorWidgetButtonBackground">#1c1c1c</color>
+    <color name="colorWidgetButtonLabel">#E6E6E6</color>
+</resources>
