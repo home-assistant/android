@@ -1,0 +1,37 @@
+name: 'Download Translations'
+description: 'Reaches out to Lokalise to download the latest translations.'
+inputs:
+  lokalise-project:
+    description: 'The project id in lokalise'
+    required: true
+  lokalise-token:
+    description: 'An API token that has read access to the desired project'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Get Translations
+      id: translations
+      shell: bash
+      run: |
+        ZIP=`\
+          curl --location --request POST "https://api.lokalise.com/api2/projects/${{inputs.lokalise-project}}/files/download" \
+            --header "X-Api-Token: ${{inputs.lokalise-token}}" \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
+                "format": "xml",
+                "original_filenames": false,
+                "bundle_structure": "app/src/main/res/values-%LANG_ISO%/strings.%FORMAT%",
+                "add_newline_eof": true,
+                "replace_breaks": true
+            }' \
+          | jq -r '.bundle_url' \
+        `
+
+        echo "Download Ready: $ZIP"
+
+        curl $ZIP --output strings.zip
+
+        echo "Download Complete, unzipping"
+        unzip -n strings.zip
+        echo "Complete"
