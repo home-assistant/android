@@ -3,8 +3,6 @@ name: Pull Request
 on:
   pull_request:
     branches: [ master ]
-  push:
-    branches: [ feature/lokaliseOnBuild ]
 
 jobs:
   ktlint:
