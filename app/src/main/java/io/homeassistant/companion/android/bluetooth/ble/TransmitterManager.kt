@@ -59,7 +59,7 @@ object TransmitterManager {
         if (bluetoothOn) {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {
-                physicalTransmitter.advertiseTxPowerLevel
+                physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
                 physicalTransmitter.startAdvertising(beacon, object : AdvertiseCallback() {
                     override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
                         haTransmitter.transmitting = true
