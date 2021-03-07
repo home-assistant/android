@@ -282,8 +282,8 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_13_14 = object : Migration(13, 14) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `static_widget` ADD `last_update` TEXT")
-                database.execSQL("ALTER TABLE `template_widgets` ADD `last_update` TEXT")
+                database.execSQL("ALTER TABLE `static_widget` ADD `last_update` TEXT NOT NULL DEFAULT ''")
+                database.execSQL("ALTER TABLE `template_widgets` ADD `last_update` TEXT NOT NULL DEFAULT ''")
             }
         }
 
