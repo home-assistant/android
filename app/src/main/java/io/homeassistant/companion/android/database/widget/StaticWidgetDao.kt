@@ -23,4 +23,7 @@ interface StaticWidgetDao {
 
     @Query("SELECT * FROM static_widget")
     fun getAll(): Array<StaticWidgetEntity>?
+
+    @Query("UPDATE static_widget SET last_update = :lastUpdate WHERE id = :widgetId")
+    fun updateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
 }
