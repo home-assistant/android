@@ -725,10 +725,18 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
     private fun authenticationResult(result: Int) {
-        if (result == Authenticator.SUCCESS) {
-            unlocked = true
-            blurView.setBlurEnabled(false)
-        } else finishAffinity()
+        when (result) {
+            Authenticator.SUCCESS -> {
+                Log.d(TAG, "Authentication successful, unlocking app")
+                unlocked = true
+                blurView.setBlurEnabled(false)
+            }
+            Authenticator.CANCELED -> {
+                Log.d(TAG, "Authentication canceled by user, closing activity")
+                finishAffinity()
+            }
+            else -> Log.d(TAG, "Authentication failed, retry attempts allowed")
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
