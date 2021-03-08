@@ -117,7 +117,7 @@ class EntityWidget : AppWidgetProvider() {
                 )
                 setTextViewText(
                     R.id.widgetText,
-                    resolveTextToShow(context, entityId, attributeIds, stateSeparator, attributeSeparator)
+                    resolveTextToShow(context, entityId, attributeIds, stateSeparator, attributeSeparator, appWidgetId)
                 )
                 setTextViewText(
                     R.id.widgetLabel,
@@ -143,7 +143,8 @@ class EntityWidget : AppWidgetProvider() {
         entityId: String?,
         attributeIds: String?,
         stateSeparator: String,
-        attributeSeparator: String
+        attributeSeparator: String,
+        appWidgetId: Int
     ): CharSequence? {
         var entity: Entity<Map<String, Any>>? = null
         try {
@@ -153,20 +154,25 @@ class EntityWidget : AppWidgetProvider() {
             if (lastIntent != Intent.ACTION_SCREEN_ON)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
-        if (attributeIds == null) return entity?.state
+        if (attributeIds == null) {
+            staticWidgetDao.updateWidgetLastUpdate(appWidgetId, entity?.state ?: staticWidgetDao.get(appWidgetId)?.lastUpdate ?: "")
+            return staticWidgetDao.get(appWidgetId)?.lastUpdate
+        }
 
         var fetchedAttributes: Map<*, *>
         var attributeValues: List<String?>
         try {
             fetchedAttributes = entity?.attributes as? Map<*, *> ?: mapOf<String, String>()
             attributeValues = attributeIds.split(",").map { id -> fetchedAttributes.get(id)?.toString() }
-            return entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
+            val lastUpdate = entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "").plus(attributeValues.joinToString(attributeSeparator))
+            staticWidgetDao.updateWidgetLastUpdate(appWidgetId, lastUpdate)
+            return lastUpdate
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
             if (lastIntent != Intent.ACTION_SCREEN_ON)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
-        return null
+        return staticWidgetDao.get(appWidgetId)?.lastUpdate
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -210,7 +216,7 @@ class EntityWidget : AppWidgetProvider() {
 
         mainScope.launch {
             Log.d(
-                TAG, "Saving service call config data:" + System.lineSeparator() +
+                TAG, "Saving entity state config data:" + System.lineSeparator() +
                 "entity id: " + entitySelection + System.lineSeparator() +
                 "attribute: " + (attributeSelection ?: "N/A")
             )
@@ -221,7 +227,8 @@ class EntityWidget : AppWidgetProvider() {
                 labelSelection,
                 textSizeSelection?.toFloatOrNull() ?: 30F,
                 stateSeparatorSelection ?: "",
-                attributeSeparatorSelection ?: ""
+                attributeSeparatorSelection ?: "",
+                staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
             ))
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))

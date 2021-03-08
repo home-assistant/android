@@ -23,4 +23,7 @@ interface TemplateWidgetDao {
 
     @Query("SELECT * FROM template_widgets")
     fun getAll(): Array<TemplateWidgetEntity>?
+
+    @Query("UPDATE template_widgets SET last_update = :lastUpdate WHERE id = :widgetId")
+    fun updateTemplateWidgetLastUpdate(widgetId: Int, lastUpdate: String)
 }
