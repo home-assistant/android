@@ -46,8 +46,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         private const val SETTING_HIGH_ACCURACY_MODE = "High accuracy mode (May drain battery fast)"
         private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL = "High accuracy mode update interval (seconds)"
         private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES = "High accuracy mode only when connected to BT devices"
-        private const val SETTING_HIGH_ACCURACY_MODE_GEOZONE = "High accuracy mode only when entering geozone"
-        private const val SETTING_HIGH_ACCURACY_MODE_EXP_GEOZONE_RADIUS = "High accuracy mode geozone expanded radius (meters)"
+        private const val SETTING_HIGH_ACCURACY_MODE_ZONE = "High accuracy mode only when entering zone"
+        private const val SETTING_HIGH_ACCURACY_MODE_EXP_ZONE_RADIUS = "High accuracy mode zone expanded radius (meters)"
 
         private const val DEFAULT_MINIMUM_ACCURACY = 200
         private const val DEFAULT_UPDATE_INTERVAL_HA_SECONDS = 5
@@ -99,8 +99,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         private var lastEnteredGeoZones: MutableList<String> = ArrayList()
         private var lastExitedGeoZones: MutableList<String> = ArrayList()
 
-        private var lastHighAccuracyExpandedGeozoneRadius: Int = 0
-        private var lastHighAccuracyGeozones: List<String> = ArrayList()
+        private var lastHighAccuracyExpandedZoneRadius: Int = 0
+        private var lastHighAccuracyZones: List<String> = ArrayList()
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
@@ -194,7 +194,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         if (isBackgroundEnabled) {
             val updateIntervalHighAccuracySeconds = getHighAccuracyModeUpdateInterval()
             val highAccuracyMode = getHighAccuracyMode()
-            val highAccuracyExpGeoRadius = getHighAccuracyModeExpandedGeozoneRadius()
+            val highAccuracyExpGeoRadius = getHighAccuracyModeExpandedZoneRadius()
             val highAccuracyZones = getHighAccuracyModeZones(false)
 
             if (!isBackgroundLocationSetup) {
@@ -224,8 +224,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     }
                 }
 
-                if (highAccuracyExpGeoRadius != lastHighAccuracyExpandedGeozoneRadius ||
-                    highAccuracyZones != lastHighAccuracyGeozones
+                if (highAccuracyExpGeoRadius != lastHighAccuracyExpandedZoneRadius ||
+                    highAccuracyZones != lastHighAccuracyZones
                 ) {
                     Log.d(TAG, "High accuracy mode geo parameters changed. Reconfigure zones.")
                     removeGeofenceUpdateRequests()
@@ -236,11 +236,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             val highAccuracyModeSettingEnabled = getHighAccuracyModeSetting()
             enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, highAccuracyModeSettingEnabled)
             enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES, highAccuracyModeSettingEnabled)
-            enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_GEOZONE, highAccuracyModeSettingEnabled && isZoneEnable)
-            enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_EXP_GEOZONE_RADIUS, highAccuracyModeSettingEnabled && isZoneEnable)
+            enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_ZONE, highAccuracyModeSettingEnabled && isZoneEnable)
+            enableDisableSetting(latestContext, backgroundLocation, SETTING_HIGH_ACCURACY_MODE_EXP_ZONE_RADIUS, highAccuracyModeSettingEnabled && isZoneEnable)
 
-            lastHighAccuracyGeozones = highAccuracyZones
-            lastHighAccuracyExpandedGeozoneRadius = highAccuracyExpGeoRadius
+            lastHighAccuracyZones = highAccuracyZones
+            lastHighAccuracyExpandedZoneRadius = highAccuracyExpGeoRadius
             lastHighAccuracyMode = highAccuracyMode
             lastHighAccuracyUpdateInterval = updateIntervalHighAccuracySeconds
         }
@@ -291,7 +291,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             ""
         )
 
-        val useExpendedZones = getHighAccuracyModeExpandedGeozoneRadius() > 0
+        val useExpendedZones = getHighAccuracyModeExpandedZoneRadius() > 0
         val highAccuracyZones = getHighAccuracyModeZones(false)
         var highAccuracyExpZones = highAccuracyZones
         if (useExpendedZones) {
@@ -609,7 +609,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         // TODO cache the zones on device so we don't need to reach out each time
         val configuredZones = integrationUseCase.getZones()
-        val highAccuracyExpGeoZoneRadius = getHighAccuracyModeExpandedGeozoneRadius()
+        val highAccuracyExpGeoZoneRadius = getHighAccuracyModeExpandedZoneRadius()
         val highAccuracyZones = getHighAccuracyModeZones(false)
         configuredZones.forEach {
             addGeofenceToBuilder(geofencingRequestBuilder, it)
@@ -643,28 +643,28 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             )
     }
 
-    private fun getHighAccuracyModeExpandedGeozoneRadius(): Int {
+    private fun getHighAccuracyModeExpandedZoneRadius(): Int {
         val enabled = isEnabled(latestContext, zoneLocation.id)
 
         if (!enabled) return 0
 
-        val highAccuracyExpandedGeozoneRadius = getSetting(
+        val highAccuracyExpandedZoneRadius = getSetting(
             latestContext,
             backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE_EXP_GEOZONE_RADIUS,
+            SETTING_HIGH_ACCURACY_MODE_EXP_ZONE_RADIUS,
             "number",
             DEFAULT_EXPANDED_RADIUS_METERS.toString()
         )
 
-        var highAccuracyExpandedGeozoneRadiusInt = highAccuracyExpandedGeozoneRadius.toInt()
-        if (highAccuracyExpandedGeozoneRadiusInt < 0) {
-            highAccuracyExpandedGeozoneRadiusInt = DEFAULT_EXPANDED_RADIUS_METERS
+        var highAccuracyExpandedZoneRadiusInt = highAccuracyExpandedZoneRadius.toInt()
+        if (highAccuracyExpandedZoneRadiusInt < 0) {
+            highAccuracyExpandedZoneRadiusInt = DEFAULT_EXPANDED_RADIUS_METERS
 
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_EXP_GEOZONE_RADIUS, highAccuracyExpandedGeozoneRadiusInt.toString(), "number"))
+            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_EXP_ZONE_RADIUS, highAccuracyExpandedZoneRadiusInt.toString(), "number"))
         }
 
-        return highAccuracyExpandedGeozoneRadius.toInt()
+        return highAccuracyExpandedZoneRadius.toInt()
     }
 
     private fun getHighAccuracyModeZones(expandedZones: Boolean): List<String> {
@@ -675,7 +675,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         val highAccuracyZones = getSetting(
             latestContext,
             backgroundLocation,
-            SETTING_HIGH_ACCURACY_MODE_GEOZONE,
+            SETTING_HIGH_ACCURACY_MODE_ZONE,
             "list-zones",
             ""
         )
