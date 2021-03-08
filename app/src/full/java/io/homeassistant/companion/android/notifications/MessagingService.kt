@@ -166,7 +166,7 @@ class MessagingService : FirebaseMessagingService() {
                     clearNotification(it["tag"]!!)
                 }
                 it[MESSAGE] == REMOVE_CHANNEL && !it["channel"].isNullOrBlank() -> {
-                    Log.d(TAG, "Removing Notification channel ${it["tag"]}")
+                    Log.d(TAG, "Removing Notification channel ${it["channel"]}")
                     removeNotificationChannel(it["channel"]!!)
                 }
                 it[MESSAGE] == TTS -> {
@@ -301,7 +301,7 @@ class MessagingService : FirebaseMessagingService() {
 
         val channelID: String = createChannelID(channelName)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && channelID != NotificationChannel.DEFAULT_CHANNEL_ID) {
             notificationManagerCompat.deleteNotificationChannel(channelID)
         }
     }
