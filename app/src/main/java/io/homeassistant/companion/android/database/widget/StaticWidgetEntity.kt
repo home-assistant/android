@@ -19,5 +19,7 @@ data class StaticWidgetEntity(
     @ColumnInfo(name = "state_separator")
     val stateSeparator: String = "",
     @ColumnInfo(name = "attribute_separator")
-    val attributeSeparator: String = ""
+    val attributeSeparator: String = "",
+    @ColumnInfo(name = "last_update")
+    val lastUpdate: String
 )
