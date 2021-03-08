@@ -5,7 +5,7 @@ include(":common", ":app", ":wear")
 rootProject.name = "home-assistant-android"
 
 plugins {
-    id("com.gradle.enterprise").version("3.4.1")
+    id("com.gradle.enterprise").version("3.5.2")
 }
 
 // It should be easier to read an environment variable here once github.com/gradle/configuration-cache/issues/211 is resolved.

@@ -18,7 +18,7 @@ object Config {
 
     object Dependency {
         object Kotlin {
-            const val version = "1.4.21"
+            const val version = "1.4.31"
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
             const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${version}"
 
