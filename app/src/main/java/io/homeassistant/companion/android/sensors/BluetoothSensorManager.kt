@@ -14,9 +14,9 @@ import kotlin.collections.ArrayList
 class BluetoothSensorManager : SensorManager {
     companion object {
 
-        private const val BLE_ID1 = "id UUID"
-        private const val BLE_ID2 = "id Major"
-        private const val BLE_ID3 = "id Minor"
+        private const val BLE_ID1 = "UUID"
+        private const val BLE_ID2 = "Major"
+        private const val BLE_ID3 = "Minor"
         private const val BLE_TRANSMIT_POWER = "transmit_power"
         private const val BLE_TRANSMIT_ACTIVE = "Enable Transmitter"
         private const val ENABLE_TOGGLE_ALL = "Include when enabling all sensors"
