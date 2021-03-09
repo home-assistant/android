@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import io.homeassistant.companion.android.R
 
 class Authenticator(context: Context, fragmentActivity: FragmentActivity, callback: (Int) -> Unit) {
     companion object {
@@ -13,8 +12,6 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
         const val SUCCESS = 1
         const val ERROR = 0
     }
-
-    var title = fragmentActivity.resources.getString(R.string.biometric_title)
 
     private val executor = ContextCompat.getMainExecutor(context)
     private val biometricPrompt = BiometricPrompt(fragmentActivity, executor,
@@ -39,7 +36,7 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
             }
         })
 
-    fun authenticate() {
+    fun authenticate(title: String) {
         val promptDialog = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
             .setConfirmationRequired(false)
