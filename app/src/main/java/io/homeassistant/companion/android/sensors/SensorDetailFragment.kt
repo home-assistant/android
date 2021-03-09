@@ -177,8 +177,7 @@ class SensorDetailFragment(
                     pref.summary = attribute.value
                     pref.isIconSpaceReserved = false
 
-                    if (!it.contains(pref))
-                        it.addPreference(pref)
+                    if (!it.contains(pref)) it.addPreference(pref)
                 }
                 it.isVisible = true
             } else
@@ -204,8 +203,7 @@ class SensorDetailFragment(
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
-                        if (!it.contains(pref))
-                            it.addPreference(pref)
+                        if (!it.contains(pref)) it.addPreference(pref)
                     } else if (setting.valueType == "list") {
                         val pref = findPreference(key) ?: ListPreference(requireContext())
                         pref.key = key
@@ -226,8 +224,7 @@ class SensorDetailFragment(
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
-                        if (!it.contains(pref))
-                            it.addPreference(pref)
+                        if (!it.contains(pref)) it.addPreference(pref)
                     } else if (setting.valueType == "string" || setting.valueType == "number") {
                         val pref = findPreference(key) ?: EditTextPreference(requireContext())
                         pref.key = key
@@ -263,8 +260,7 @@ class SensorDetailFragment(
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
-                        if (!it.contains(pref))
-                            it.addPreference(pref)
+                        if (!it.contains(pref)) it.addPreference(pref)
                     } else if (setting.valueType == "list-apps") {
                         val packageManager: PackageManager? = context?.packageManager
                         val packages = packageManager?.getInstalledApplications(PackageManager.GET_META_DATA)
@@ -277,14 +273,12 @@ class SensorDetailFragment(
                         }
 
                         val pref = createListPreference(key, setting, sensorDao, packageName)
-                        if (!it.contains(pref))
-                            it.addPreference(pref)
+                        if (!it.contains(pref)) it.addPreference(pref)
                     } else if (setting.valueType == "list-bluetooth") {
                         val btDevices = BluetoothUtils.getBluetoothDevices(requireContext()).map { b -> b.name }
 
                         val pref = createListPreference(key, setting, sensorDao, btDevices)
-                        if (!it.contains(pref))
-                            it.addPreference(pref)
+                        if (!it.contains(pref)) it.addPreference(pref)
                     } else if (setting.valueType == "list-zones") {
                         val zones: List<String>
                         runBlocking {
@@ -292,8 +286,7 @@ class SensorDetailFragment(
                         }
 
                         val pref = createListPreference(key, setting, sensorDao, zones)
-                        if (!it.contains(pref))
-                            it.addPreference(pref)
+                        if (!it.contains(pref)) it.addPreference(pref)
                     }
                 }
                 it.isVisible = true
