@@ -14,6 +14,9 @@ android {
         minSdkVersion(Config.Android.minSdk)
         buildConfigField("String", "PUSH_URL", "\"$homeAssistantAndroidPushUrl\"")
         buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
+        versionName = System.getenv("VERSION") ?: "LOCAL"
+        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        buildConfigField("String", "VERSION_NAME", "\"$versionName-$versionCode\"")
     }
 }
 

@@ -17,6 +17,8 @@ import retrofit2.converter.jackson.JacksonConverterFactory
 class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
     companion object {
         private const val LOCAL_HOST = "http://localhost/"
+        private const val USER_AGENT = "User-Agent"
+        private const val USER_AGENT_STRING = "HomeAssistant/Android"
     }
 
     val retrofit: Retrofit = Retrofit
@@ -41,6 +43,7 @@ class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
                         val newRequest = runBlocking {
                             it.request().newBuilder()
                                 .url(it.request().url.toString().replace(LOCAL_HOST, urlRepository.getUrl().toString()))
+                                .header(USER_AGENT, "$USER_AGENT_STRING ${BuildConfig.VERSION_NAME}")
                                 .build()
                         }
                         it.proceed(newRequest)
