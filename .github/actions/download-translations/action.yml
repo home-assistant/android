@@ -23,7 +23,8 @@ runs:
                 "original_filenames": false,
                 "bundle_structure": "app/src/main/res/values-%LANG_ISO%/strings.%FORMAT%",
                 "add_newline_eof": true,
-                "replace_breaks": true
+                "replace_breaks": true,
+                "export_empty_as": "skip"
             }' \
           | jq -r '.bundle_url' \
         `
