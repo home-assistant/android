@@ -92,8 +92,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 isValid = true
                 if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
                     setLock = true
-                    authenticator.title = getString(R.string.biometric_set_title)
-                    authenticator.authenticate()
+                    authenticator.authenticate(getString(R.string.biometric_set_title))
                 } else {
                     isValid = false
                     AlertDialog.Builder(requireActivity())
