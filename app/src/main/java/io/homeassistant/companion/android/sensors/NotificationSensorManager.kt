@@ -44,10 +44,10 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         if (!isEnabled(applicationContext, lastNotification.id))
             return
 
-//        if (sbn.packageName == "com.huawei.systemmanager") {
-//            cancelNotification(sbn.key)
-//            return
-//        }
+        if (sbn.packageName == "com.huawei.systemmanager") {
+            cancelNotification(sbn.key)
+            return
+        }
 
         val allowPackages = getSetting(
                 applicationContext,
