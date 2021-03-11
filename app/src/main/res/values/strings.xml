@@ -14,6 +14,7 @@
   <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
   <string name="add_service_data_field">Add Field</string>
   <string name="add_widget">Add widget</string>
+  <string name="all_sensors_shown">All sensors are shown</string>
   <string name="app_name">Home Assistant</string>
   <string name="app_version_info">App Version Info</string>
   <string name="application_version">Application Version</string>
@@ -131,6 +132,7 @@ to your home internet.</string>
   <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
   <string name="dialog_add_panel_shortcut_title">Add Shortcut</string>
   <string name="disable">Disable</string>
+  <string name="disabled">Disabled</string>
   <string name="disable_all_sensors">Disable All %1$d Sensors</string>
   <string name="documentation">Documentation</string>
   <string name="domain_automation">Automation</string>
@@ -153,6 +155,7 @@ to your home internet.</string>
   <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
   <string name="enabled_title">Enabled</string>
+  <string name="enabled">Enabled</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
   <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
   <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
@@ -258,6 +261,7 @@ Home Assistant instance</string>
   <string name="notification_message">Message</string>
   <string name="notification_received_at">Notification Received At</string>
   <string name="notifications">Notifications</string>
+  <string name="only_enabled_sensors_shown">Only enabled sensors are shown</string>
   <string name="other_settings">Other Settings</string>
   <string name="password">Password</string>
   <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
@@ -427,6 +431,7 @@ like to connect to:</string>
   <string name="shopping_list">Shopping List</string>
   <string name="shortcuts">Shortcuts</string>
   <string name="shortcuts_summary">Add shortcuts to launcher</string>
+  <string name="show_only_enabled_sensors">Show only enabled sensors</string>
   <string name="skip">Skip</string>
   <string name="state">State</string>
   <string name="state_auto">Auto</string>

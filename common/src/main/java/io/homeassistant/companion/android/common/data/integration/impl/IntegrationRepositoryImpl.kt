@@ -58,6 +58,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SENSORS_REGISTERED = "sensors_registered"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
+        private const val PREF_ONLY_SHOW_ENABLED_SENSORS = "only_show_enabled_sensors"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
     }
@@ -490,6 +491,14 @@ class IntegrationRepositoryImpl @Inject constructor(
         } else {
             false
         }
+    }
+
+    override suspend fun getShowOnlyEnabledSensors(): Boolean {
+        return localStorage.getBoolean(PREF_ONLY_SHOW_ENABLED_SENSORS)
+    }
+
+    override suspend fun setShowOnlyEnabledSensors(show: Boolean) {
+        localStorage.putBoolean(PREF_ONLY_SHOW_ENABLED_SENSORS, show)
     }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {

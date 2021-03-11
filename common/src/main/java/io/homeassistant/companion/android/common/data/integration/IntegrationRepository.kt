@@ -47,4 +47,7 @@ interface IntegrationRepository {
     suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
 
     suspend fun shouldNotifySecurityWarning(): Boolean
+
+    suspend fun getShowOnlyEnabledSensors(): Boolean
+    suspend fun setShowOnlyEnabledSensors(show: Boolean)
 }
