@@ -688,7 +688,10 @@ class MessagingService : FirebaseMessagingService() {
     ) {
         if (data["channel"] == ALARM_STREAM) {
             builder.setCategory(Notification.CATEGORY_ALARM)
-            builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), AudioManager.STREAM_ALARM)
+            builder.setSound(
+                RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_ALARM)
+                    ?: RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE),
+                AudioManager.STREAM_ALARM)
         } else {
             builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
         }
@@ -1023,7 +1026,9 @@ class MessagingService : FirebaseMessagingService() {
             .setLegacyStreamType(AudioManager.STREAM_ALARM)
             .setUsage(AudioAttributes.USAGE_ALARM)
             .build()
-        channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM), audioAttributes)
+        channel.setSound(RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_ALARM)
+            ?: RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE),
+            audioAttributes)
     }
 
     private fun parseVibrationPattern(
