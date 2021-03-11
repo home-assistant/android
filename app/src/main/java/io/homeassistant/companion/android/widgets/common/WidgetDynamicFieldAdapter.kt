@@ -1,13 +1,12 @@
 package io.homeassistant.companion.android.widgets.common
 
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AutoCompleteTextView
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.Service
@@ -137,19 +136,17 @@ class WidgetDynamicFieldAdapter(
         }
 
         // Have the text view store its text for later recall
-        autoCompleteTextView.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(p0: Editable?) {
+        autoCompleteTextView.doAfterTextChanged {
+            // Only attempt to store data if we are in bounds
+            if (serviceFieldList.size >= position) {
                 // Don't store data that's empty (or just whitespace)
-                if (!p0.isNullOrBlank()) {
-                    serviceFieldList[position].value = p0.toString().toJsonType()
-                } else {
+                if (it.isNullOrBlank()) {
                     serviceFieldList[position].value = null
+                } else {
+                    serviceFieldList[position].value = it.toString().toJsonType()
                 }
             }
-
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-        })
+        }
     }
 
     private fun String.toJsonType(): Any? {
