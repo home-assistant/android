@@ -81,7 +81,7 @@ class SensorDetailFragment(
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
 
                     if ((fineLocation || coarseLocation) &&
-                            !DisabledLocationHandler.isLocationEnabled(context, fineLocation)) {
+                            !DisabledLocationHandler.isLocationEnabled(context)) {
                         DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(basicSensor.name)))
                         return@setOnPreferenceChangeListener false
                     } else {

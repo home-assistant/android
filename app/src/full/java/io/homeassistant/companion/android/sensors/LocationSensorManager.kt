@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Setting
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -171,7 +172,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                         }
                     } else {
                         if (highAccuracyMode != lastHighAccuracyMode ||
-                            updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval) {
+                            updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval
+                        ) {
 
                             if (highAccuracyMode) {
                                 if (updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval) {
@@ -207,6 +209,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private fun startHighAccuracyService(intervalInSeconds: Int) {
         HighAccuracyLocationService.startService(latestContext, intervalInSeconds)
     }
+
     private fun stopHighAccuracyService() {
         HighAccuracyLocationService.stopService(latestContext)
     }
@@ -294,6 +297,12 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             createLocationRequest(),
             intent
         )
+    }
+
+    override fun hasSensor(context: Context, sensorId: String): Boolean {
+        return if (sensorId == singleAccurateLocation.id && !DisabledLocationHandler.hasGPS(context)) {
+            false
+        } else super.hasSensor(context, sensorId)
     }
 
     private suspend fun requestZoneUpdates() {
@@ -614,7 +623,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     override val enabledByDefault: Boolean
-        get() = true
+        get() = false
 
     override val name: Int
         get() = R.string.sensor_name_location

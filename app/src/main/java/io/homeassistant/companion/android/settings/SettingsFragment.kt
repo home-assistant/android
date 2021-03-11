@@ -254,9 +254,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
             }
 
-            val fineLocation = DisabledLocationHandler.containsLocationPermission(permissionsToCheck, true)
-
-            if (DisabledLocationHandler.isLocationEnabled(requireContext(), fineLocation)) {
+            if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
                 var permissionsToRequest: Array<String>? = null
                 if (!permissionsToCheck.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions

@@ -59,7 +59,7 @@ class TrafficStatsManager : SensorManager {
         return emptyArray()
     }
 
-    override fun hasSensor(context: Context): Boolean {
+    override fun hasSensor(context: Context, sensorId: String): Boolean {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val networkInfo = cm.allNetworks
         var networkCapabilities: NetworkCapabilities?

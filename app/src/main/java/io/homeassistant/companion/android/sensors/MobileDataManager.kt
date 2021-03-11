@@ -36,7 +36,7 @@ class MobileDataManager : SensorManager {
         return arrayOf()
     }
 
-    override fun hasSensor(context: Context): Boolean {
+    override fun hasSensor(context: Context, sensorId: String): Boolean {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
     }
 

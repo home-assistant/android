@@ -41,7 +41,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         return emptyArray()
     }
 
-    override fun hasSensor(context: Context): Boolean {
+    override fun hasSensor(context: Context, sensorId: String): Boolean {
         val packageManager: PackageManager = context.packageManager
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_PROXIMITY)
     }
