@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.webview
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
+import androidx.core.graphics.ColorUtils
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -57,24 +58,6 @@ class WebViewPresenterImpl @Inject constructor(
                         .build()
                         .toString()
                 )
-            }
-
-            try {
-                val colorString = integrationUseCase.getThemeColor()
-                // If color from theme found and if colorString is NOT #03A9F3.
-                // This means a custom theme is set and the theme has a app-header-background-color defined
-                // which we can use as navigation bar color and status bar color.
-                // Attention: This is kind of an hack, as there is no way to check if a custom theme is set
-                // or not in HA. Right now we check on the default color (#03A9F4), because
-                // this color is given back if no theme is set. Always.
-                // See here:
-                // https://github.com/home-assistant/core/blob/ee64aafc3932ea0a7a76a33d1827db0c78fc0ed3/homeassistant/components/frontend/__init__.py#L362
-                // TODO: Implement proper check for detecting if a custom theme is set or not in HA
-                if (!colorString.isNullOrEmpty() && colorString != "#03A9F4") { // HA is using a custom theme
-                    view.setStatusBarAndNavigationBarColor(parseColorWithRgb(colorString))
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Issue getting/setting theme", e)
             }
         }
     }
@@ -176,6 +159,38 @@ class WebViewPresenterImpl @Inject constructor(
     override fun isSsidUsed(): Boolean {
         return runBlocking {
             urlUseCase.getHomeWifiSsids().isNotEmpty()
+        }
+    }
+
+    override fun setStatusbarColor(colorString: String) {
+        var statusbarNavBarColor = 0
+        try {
+            statusbarNavBarColor = parseColorWithRgb(colorString)
+            statusbarNavBarColor = ColorUtils.blendARGB(statusbarNavBarColor, Color.BLACK, 0.2f)
+            view.setStatusBarAndNavigationBarColor(statusbarNavBarColor)
+            return
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue getting/setting theme from webview. Get/Set theme from HA", e)
+        }
+
+        mainScope.launch {
+            try {
+                val colorString = integrationUseCase.getThemeColor()
+                // If color from theme found and if colorString is NOT #03A9F3.
+                // This means a custom theme is set and the theme has a app-header-background-color defined
+                // which we can use as navigation bar color and status bar color.
+                // Attention: This is kind of an hack, as there is no way to check if a custom theme is set
+                // or not in HA. Right now we check on the default color (#03A9F4), because
+                // this color is given back if no theme is set. Always.
+                // See here:
+                // https://github.com/home-assistant/core/blob/ee64aafc3932ea0a7a76a33d1827db0c78fc0ed3/homeassistant/components/frontend/__init__.py#L362
+                // TODO: Implement proper check for detecting if a custom theme is set or not in HA
+                if (!colorString.isNullOrEmpty() && colorString != "#03A9F4") { // HA is using a custom theme
+                    view.setStatusBarAndNavigationBarColor(parseColorWithRgb(colorString))
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Issue getting/setting theme from HA", e)
+            }
         }
     }
 
