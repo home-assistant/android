@@ -512,4 +512,5 @@ like to connect to:</string>
   <string name="widgets">Widgets</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
   <string name="what_is_this">What is this?</string>
+  <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
 </resources>
