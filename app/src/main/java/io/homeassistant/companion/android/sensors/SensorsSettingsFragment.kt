@@ -154,9 +154,12 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        SensorReceiver.MANAGERS.sortedBy { getString(it.name) }.forEach { manager ->
-            var prefCategory: PreferenceCategory? = null
-            manager.availableSensors.sortedBy { getString(it.name) }.filter { sensor -> manager.hasSensor(requireContext(), sensor.id) }.forEach { basicSensor ->
+        SensorReceiver.MANAGERS.sortedBy { getString(it.name) }.filter { it.hasSensor(requireContext()) }.forEach { manager ->
+            val prefCategory = PreferenceCategory(preferenceScreen.context)
+            prefCategory.title = getString(manager.name)
+            preferenceScreen.addPreference(prefCategory)
+
+            manager.availableSensors.sortedBy { getString(it.name) }.forEach { basicSensor ->
 
                 val pref = Preference(preferenceScreen.context)
                 pref.key = basicSensor.id
@@ -177,13 +180,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     return@setOnPreferenceClickListener true
                 }
 
-                if (prefCategory == null) {
-                    prefCategory = PreferenceCategory(preferenceScreen.context)
-                    prefCategory!!.title = getString(manager.name)
-                    preferenceScreen.addPreference(prefCategory)
-                }
-
-                prefCategory?.addPreference(pref)
+                prefCategory.addPreference(pref)
             }
         }
     }

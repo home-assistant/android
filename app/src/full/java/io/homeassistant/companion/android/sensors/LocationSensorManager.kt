@@ -299,12 +299,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         )
     }
 
-    override fun hasSensor(context: Context, sensorId: String): Boolean {
-        return if (sensorId == singleAccurateLocation.id && !DisabledLocationHandler.hasGPS(context)) {
-            false
-        } else super.hasSensor(context, sensorId)
-    }
-
     private suspend fun requestZoneUpdates() {
         if (!checkPermission(latestContext, zoneLocation.id)) {
             Log.w(TAG, "Not registering for zone based updates because of permissions.")
@@ -629,7 +623,13 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         get() = R.string.sensor_name_location
 
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
+        get() {
+            return if(DisabledLocationHandler.hasGPS(latestContext)) {
+                listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
+            } else {
+                listOf(backgroundLocation, zoneLocation)
+            }
+        }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

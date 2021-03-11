@@ -39,7 +39,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
         return emptyArray()
     }
 
-    override fun hasSensor(context: Context, sensorId: String): Boolean {
+    override fun hasSensor(context: Context): Boolean {
         val packageManager: PackageManager = context.packageManager
         return packageManager.hasSystemFeature(PackageManager.FEATURE_SENSOR_LIGHT)
     }
