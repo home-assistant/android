@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
 import androidx.fragment.app.Fragment
+import androidx.preference.Preference
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
@@ -72,7 +73,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             findViewById<SwitchMaterial>(R.id.locationTracking)?.let {
                 val sensorId = LocationSensorManager.backgroundLocation.id
-                it.isChecked = DisabledLocationHandler.isLocationEnabled(context) && LocationSensorManager().checkPermission(context, sensorId)
+                setLocationTracking(it, DisabledLocationHandler.isLocationEnabled(context) && LocationSensorManager().checkPermission(context, sensorId))
                 it.setOnCheckedChangeListener { _, isChecked ->
                     var checked = isChecked
                     if (isChecked) {
@@ -99,8 +100,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                         }
                     }
 
-                    setLocationTracking(checked)
-                    it.isChecked = checked
+                    setLocationTracking(it, checked)
                 }
             }
 
@@ -177,13 +177,14 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
         if (requestCode == LOCATION_REQUEST_CODE) {
             val hasPermission = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            locationTracking.isChecked = hasPermission
-            setLocationTracking(hasPermission)
+            setLocationTracking(locationTracking, hasPermission)
             requestBackgroundAccess()
         }
     }
 
-    private fun setLocationTracking(enabled: Boolean) {
+    private fun setLocationTracking(locationTrackingSwitch: SwitchMaterial, enabled: Boolean) {
+        locationTrackingSwitch.isChecked = enabled
+
         val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
         arrayOf(
             LocationSensorManager.backgroundLocation,
