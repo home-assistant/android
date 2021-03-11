@@ -139,11 +139,14 @@ class WidgetDynamicFieldAdapter(
         // Have the text view store its text for later recall
         autoCompleteTextView.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(p0: Editable?) {
-                // Don't store data that's empty (or just whitespace)
-                if (!p0.isNullOrBlank()) {
-                    serviceFieldList[position].value = p0.toString().toJsonType()
-                } else {
-                    serviceFieldList[position].value = null
+                // Only attempt to store data if we are in bounds
+                if (serviceFieldList.size >= position) {
+                    // Don't store data that's empty (or just whitespace)
+                    if (!p0.isNullOrBlank()) {
+                        serviceFieldList[position].value = p0.toString().toJsonType()
+                    } else {
+                        serviceFieldList[position].value = null
+                    }
                 }
             }
 
