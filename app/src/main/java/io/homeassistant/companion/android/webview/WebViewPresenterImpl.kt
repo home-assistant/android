@@ -163,17 +163,16 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override fun setStatusbarColor(colorString: String) {
-        var statusbarNavBarColor = 0
-        try {
-            statusbarNavBarColor = parseColorWithRgb(colorString)
-            statusbarNavBarColor = ColorUtils.blendARGB(statusbarNavBarColor, Color.BLACK, 0.2f)
-            view.setStatusBarAndNavigationBarColor(statusbarNavBarColor)
-            return
-        } catch (e: Exception) {
-            Log.e(TAG, "Issue getting/setting theme from webview. Get/Set theme from HA", e)
-        }
-
         mainScope.launch {
+            try {
+                val statusbarNavBarColor = parseColorWithRgb(colorString)
+                view.setStatusBarAndNavigationBarColor(statusbarNavBarColor)
+                return@launch
+            } catch (e: Exception) {
+                Log.e(TAG, "Issue getting/setting theme from webview. Get/Set theme from HA", e)
+            }
+
+
             try {
                 val colorString = integrationUseCase.getThemeColor()
                 // If color from theme found and if colorString is NOT #03A9F3.
