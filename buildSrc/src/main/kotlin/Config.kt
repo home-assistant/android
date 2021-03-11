@@ -22,7 +22,7 @@ object Config {
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
             const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${version}"
 
-            private const val coroutinesVersion = "1.4.2"
+            private const val coroutinesVersion = "1.4.3"
             const val coroutines = "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutinesVersion}"
             const val coroutinesPlayServices = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:${coroutinesVersion}"
             const val coroutinesAndroid = "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutinesVersion}"
@@ -30,11 +30,11 @@ object Config {
         }
 
         object Google {
-            private const val daggerVersion = "2.32"
+            private const val daggerVersion = "2.33"
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
-            const val material = "com.google.android.material:material:1.2.1"
+            const val material = "com.google.android.material:material:1.3.0"
 
             const val wearableSupport = "com.google.android.support:wearable:2.8.1"
             const val wearable = "com.google.android.wearable:wearable:2.8.1"
@@ -78,7 +78,7 @@ object Config {
             const val retrofit = "com.squareup.retrofit2:retrofit:${retrofitVersion}"
             const val retrofitJacksonConverter = "com.squareup.retrofit2:converter-jackson:${retrofitVersion}"
 
-            private const val okhttpVersion = "4.9.0"
+            private const val okhttpVersion = "4.9.1"
             const val okhttp = "com.squareup.okhttp3:okhttp:$okhttpVersion"
             const val okhttpInterceptor = "com.squareup.okhttp3:logging-interceptor:$okhttpVersion"
             const val okhttpMockServer = "com.squareup.okhttp3:mockwebserver:$okhttpVersion"
@@ -100,9 +100,9 @@ object Config {
         }
 
         object Misc {
-            const val sentry = "io.sentry:sentry-android:3.2.1"
-            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.1"
-            const val blurView = "com.eightbitlab:blurview:1.6.5"
+            const val sentry = "io.sentry:sentry-android:4.3.0"
+            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.2"
+            const val blurView = "com.eightbitlab:blurview:1.6.6"
             const val iconDialog = "com.maltaisn:icondialog:3.3.0"
             const val iconDialogMaterial = "com.maltaisn:iconpack-community-material:5.3.45"
             const val emoji = "com.vdurmont:emoji-java:5.1.1"
