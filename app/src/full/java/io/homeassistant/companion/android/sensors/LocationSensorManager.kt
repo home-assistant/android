@@ -624,7 +624,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     override val availableSensors: List<SensorManager.BasicSensor>
         get() {
-            return if(DisabledLocationHandler.hasGPS(latestContext)) {
+            return if (DisabledLocationHandler.hasGPS(latestContext)) {
                 listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
             } else {
                 listOf(backgroundLocation, zoneLocation)
