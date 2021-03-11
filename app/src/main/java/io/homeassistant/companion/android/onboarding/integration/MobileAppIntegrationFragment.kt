@@ -15,7 +15,6 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
 import androidx.fragment.app.Fragment
-import androidx.preference.Preference
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputEditText
@@ -171,7 +170,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         dialog?.dismiss()
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        ) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), LOCATION_REQUEST_CODE)
         }
 
@@ -192,12 +192,16 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             LocationSensorManager.singleAccurateLocation
         ).forEach { basicSensor ->
             var sensorEntity = sensorDao.get(basicSensor.id)
+            var sensorEnabled = false
+            if (basicSensor.id == LocationSensorManager.singleAccurateLocation.id && DisabledLocationHandler.hasGPS(requireContext())) {
+                sensorEnabled = enabled
+            }
             if (sensorEntity != null) {
-                sensorEntity.enabled = enabled
+                sensorEntity.enabled = sensorEnabled
                 sensorEntity.lastSentState = ""
                 sensorDao.update(sensorEntity)
             } else {
-                sensorEntity = Sensor(basicSensor.id, enabled, false, "")
+                sensorEntity = Sensor(basicSensor.id, sensorEnabled, false, "")
                 sensorDao.add(sensorEntity)
             }
         }
