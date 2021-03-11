@@ -75,7 +75,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
-            if (event.sensor.type == Sensor.TYPE_PRESSURE) {
+            if (event.sensor.type == Sensor.TYPE_PRESSURE && !event.values[0].isNaN()) {
                 onSensorUpdated(
                     latestContext,
                     pressureSensor,
