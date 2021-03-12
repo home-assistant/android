@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.webview
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
-import androidx.core.graphics.ColorUtils
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -171,7 +170,6 @@ class WebViewPresenterImpl @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "Issue getting/setting theme from webview. Get/Set theme from HA", e)
             }
-
 
             try {
                 val colorString = integrationUseCase.getThemeColor()
