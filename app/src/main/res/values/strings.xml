@@ -154,7 +154,6 @@ to your home internet.</string>
   <string name="enable_location_tracking_prompt">This app collects location data to enable Location Tracking, Wifi Connection Status, and URL decision making even when the app is closed or not in use.</string>
   <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
-  <string name="enabled_title">Enabled</string>
   <string name="enabled">Enabled</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
   <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
