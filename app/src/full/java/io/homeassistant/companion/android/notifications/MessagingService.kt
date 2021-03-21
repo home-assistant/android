@@ -569,11 +569,14 @@ class MessagingService : FirebaseMessagingService() {
         }
 
         notificationManagerCompat.apply {
+            Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")
             notify(tag, messageId, notificationBuilder.build())
             if (group != null) {
+                Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
                 notify(group, groupId, getGroupNotificationBuilder(channelId, group, data).build())
             } else {
                 if (!previousGroup.isBlank()) {
+                    Log.d(TAG, "Remove group notification with tag \"$previousGroup\" and id \"$previousGroupId\"")
                     notificationManagerCompat.cancelGroupIfNeeded(previousGroup, previousGroupId)
                 }
             }
