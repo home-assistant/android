@@ -39,6 +39,9 @@ interface SensorDao {
     @Query("DELETE FROM sensor_attributes WHERE sensor_id = :sensorId")
     fun clearAttributes(sensorId: String)
 
+    @Query("UPDATE sensor_settings SET enabled = :enabled WHERE sensor_id = :sensorId AND name = :settingName")
+    fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean)
+
     @Query("UPDATE sensors SET last_sent_state = :state WHERE id = :sensorId")
     fun updateLastSendState(sensorId: String, state: String)
 
