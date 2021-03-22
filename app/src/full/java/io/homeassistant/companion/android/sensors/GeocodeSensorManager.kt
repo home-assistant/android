@@ -52,7 +52,11 @@ class GeocodeSensorManager : SensorManager {
     }
 
     private fun updateGeocodedLocation(context: Context) {
-        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(context, geocodedLocation.id))
+        if (!isEnabled(context, geocodedLocation.id) || !checkPermission(
+                context,
+                geocodedLocation.id
+            )
+        )
             return
 //        val locApi = LocationServices.getFusedLocationProviderClient(context)
 //        locApi.lastLocation.addOnSuccessListener { location ->
@@ -60,7 +64,7 @@ class GeocodeSensorManager : SensorManager {
 //        }
     }
 
-    private fun addressUpdata(context: Context,location: Location) {
+    private fun addressUpdata(context: Context, location: Location) {
         var address: Address? = null
         try {
             if (location == null) {
@@ -116,6 +120,5 @@ class GeocodeSensorManager : SensorManager {
             "mdi:map",
             attributes
         )
-        }
     }
 }
