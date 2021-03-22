@@ -13,7 +13,6 @@ import android.text.TextUtils
 import android.util.Log
 import androidx.core.content.ContextCompat.getSystemService
 import com.amap.api.location.*
-import com.amap.api.location.CoordinateConverter.CoordType
 import io.homeassistant.companion.android.GCJ2WGS
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.bluetooth.BluetoothUtils
@@ -23,7 +22,6 @@ import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Setting
-import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -77,8 +75,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         private var lastLocationSend = 0L
         private var lastUpdateLocation = ""
-
-        private var geofenceRegistered = false
 
         private var lastHighAccuracyMode = false
         private var lastHighAccuracyUpdateInterval = DEFAULT_MINIMUM_ACCURACY
@@ -196,7 +192,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 }
                 if (!backgroundEnabled && isBackgroundLocationSetup) {
                     removeBackgroundUpdateRequests()
-                    stopHighAccuracyService()
                     isBackgroundLocationSetup = false
                     Log.d(TAG, "Removing background update requests")
                 }
@@ -207,26 +202,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
                     if (!isBackgroundLocationSetup) {
                         isBackgroundLocationSetup = true
-                        if (highAccuracyMode) {
-                            startHighAccuracyService(updateIntervalHighAccuracySeconds)
-                        } else {
-                            requestLocationUpdates()
-                        }
+                        requestLocationUpdates()
                     } else {
                         if (highAccuracyMode != lastHighAccuracyMode ||
                             updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval) {
-
-                            if (highAccuracyMode) {
-                                if (updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval) {
-                                    restartHighAccuracyService(updateIntervalHighAccuracySeconds)
-                                } else {
-                                    removeBackgroundUpdateRequests()
-                                    startHighAccuracyService(updateIntervalHighAccuracySeconds)
-                                }
-                            } else {
-                                stopHighAccuracyService()
                                 requestLocationUpdates()
-                            }
                         }
                     }
 
@@ -235,23 +215,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 }
                 if (zoneEnabled && !isZoneLocationSetup) {
                     isZoneLocationSetup = true
-                    requestZoneUpdates()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Issue setting up location tracking", e)
             }
         }
-    }
-
-    private fun restartHighAccuracyService(intervalInSeconds: Int) {
-        HighAccuracyLocationService.restartService(latestContext, intervalInSeconds)
-    }
-
-    private fun startHighAccuracyService(intervalInSeconds: Int) {
-        HighAccuracyLocationService.startService(latestContext, intervalInSeconds)
-    }
-    private fun stopHighAccuracyService() {
-        HighAccuracyLocationService.stopService(latestContext)
     }
 
     private fun getHighAccuracyModeUpdateInterval(): Int {
@@ -326,28 +294,17 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 //        Log.d(TAG, "Registering for location updates.")
         mLocationClient = AMapLocationClient(latestContext)
         mLocationClient!!.setLocationListener(mLocationListener)
-        mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
+        if(getHighAccuracyMode()){
+            mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
+        }else{
+            mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Battery_Saving
+        }
         //mLocationOption.interval = minTimeBetweenUpdates.toLong()
         mLocationOption.isOnceLocation = true
         mLocationOption.isOnceLocationLatest = true
 
         mLocationClient!!.setLocationOption(mLocationOption)
         mLocationClient!!.startLocation()
-    }
-
-    private suspend fun requestZoneUpdates() {
-        if (!checkPermission(latestContext, zoneLocation.id)) {
-            Log.w(TAG, "Not registering for zone based updates because of permissions.")
-            return
-        }
-
-        if (geofenceRegistered) {
-            Log.w(TAG, "Not registering for zones as we already have")
-            return
-        }
-
-        Log.d(TAG, "Registering for zone based location updates")
-
     }
 
     private fun handleLocationUpdate(intent: Intent) {
