@@ -204,10 +204,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                         isBackgroundLocationSetup = true
                         requestLocationUpdates()
                     } else {
-                        if (highAccuracyMode != lastHighAccuracyMode ||
-                            updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval) {
-                                requestLocationUpdates()
-                        }
+                        requestLocationUpdates()
                     }
 
                     lastHighAccuracyMode = highAccuracyMode
@@ -294,7 +291,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 //        Log.d(TAG, "Registering for location updates.")
         mLocationClient = AMapLocationClient(latestContext)
         mLocationClient!!.setLocationListener(mLocationListener)
-        if(getHighAccuracyMode()){
+        if(lastHighAccuracyMode){
             mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
         }else{
             mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Battery_Saving
