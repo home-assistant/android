@@ -310,14 +310,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
 
             webChromeClient = object : WebChromeClient() {
-                override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                    if (newProgress == 100) {
-                        view?.loadUrl(
-                            "javascript:window.externalApp.getHeaderColor(" +
-                                    "document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0]);"
-                        )
-                    }
-                }
                 override fun onJsConfirm(
                     view: WebView,
                     url: String,
@@ -410,10 +402,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             addJavascriptInterface(object : Any() {
                 @JavascriptInterface
-                fun getHeaderColor(color: String) {
-                    presenter.setStatusbarColor(color)
-                }
-                @JavascriptInterface
                 fun getExternalAuth(payload: String) {
                     JSONObject(payload).let {
                         presenter.onGetExternalAuth(
@@ -466,6 +454,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 Log.d(TAG, script)
                                 webView.evaluateJavascript(script) {
                                     Log.d(TAG, "Callback $it")
+                                }
+
+                                //Set statusbar color
+                                webView.evaluateJavascript("document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0];")
+                                {
+                                    presenter.setStatusbarColor(it)
                                 }
                             }
                             "config_screen/show" ->
