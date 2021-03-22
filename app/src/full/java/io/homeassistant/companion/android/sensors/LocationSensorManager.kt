@@ -198,17 +198,17 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             val highAccuracyTriggerRange = getHighAccuracyModeTriggerRange()
             val highAccuracyZones = getHighAccuracyModeZones(false)
 
-                    if (!isBackgroundLocationSetup) {
-                        isBackgroundLocationSetup = true
-                        if (highAccuracyMode) {
-                            startHighAccuracyService(updateIntervalHighAccuracySeconds)
-                        } else {
-                            requestLocationUpdates()
-                        }
-                    } else {
-                        if (highAccuracyMode != lastHighAccuracyMode ||
-                            updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval
-                        ) {
+            if (!isBackgroundLocationSetup) {
+                isBackgroundLocationSetup = true
+                if (highAccuracyMode) {
+                    startHighAccuracyService(updateIntervalHighAccuracySeconds)
+                } else {
+                    requestLocationUpdates()
+                }
+            } else {
+                if (highAccuracyMode != lastHighAccuracyMode ||
+                    updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval
+                ) {
 
                     if (highAccuracyMode) {
                         Log.d(TAG, "High accuracy mode parameters changed. Enable high accuracy mode.")
