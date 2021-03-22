@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.net.nsd.NsdManager
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +26,7 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
 
     companion object {
 
+        private const val TAG = "DiscoveryFragment"
         private const val HOME_ASSISTANT = "https://www.home-assistant.io"
         fun newInstance(): DiscoveryFragment {
             return DiscoveryFragment()
@@ -88,7 +90,12 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
                     val intent = Intent(Intent.ACTION_VIEW)
                     intent.data = Uri.parse(HOME_ASSISTANT)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    startActivity(intent)
+                    try {
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Unable to load Home Assistant home page", e)
+                        Toast.makeText(context, R.string.what_is_this_crash, Toast.LENGTH_LONG).show()
+                    }
                 }
             }
             this.findViewById<Button>(R.id.manual_setup)

@@ -240,37 +240,39 @@ class AppSensorManager : SensorManager {
         val appManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val currentProcess = appManager.runningAppProcesses
         var importance = "not_running"
-        for (item in currentProcess) {
-            if (context.applicationInfo.processName == item.processName) {
-                importance = when (item.importance) {
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED -> {
-                        "cached"
+        if (currentProcess != null) {
+            for (item in currentProcess) {
+                if (context.applicationInfo.processName == item.processName) {
+                    importance = when (item.importance) {
+                        ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED -> {
+                            "cached"
+                        }
+                        ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE -> {
+                            "cant_save_state"
+                        }
+                        ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND -> {
+                            "foreground"
+                        }
+                        ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE -> {
+                            "foreground_service"
+                        }
+                        ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE -> {
+                            "gone"
+                        }
+                        ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE -> {
+                            "perceptible"
+                        }
+                        ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE -> {
+                            "service"
+                        }
+                        ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING -> {
+                            "top_sleeping"
+                        }
+                        ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> {
+                            "visible"
+                        }
+                        else -> "not_running"
                     }
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE -> {
-                        "cant_save_state"
-                    }
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND -> {
-                        "foreground"
-                    }
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE -> {
-                        "foreground_service"
-                    }
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE -> {
-                        "gone"
-                    }
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_PERCEPTIBLE -> {
-                        "perceptible"
-                    }
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE -> {
-                        "service"
-                    }
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING -> {
-                        "top_sleeping"
-                    }
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE -> {
-                        "visible"
-                    }
-                    else -> "not_running"
                 }
             }
         }

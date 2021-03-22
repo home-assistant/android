@@ -745,7 +745,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             if (presenter.isLockEnabled() && !unlocked)
                 if ((System.currentTimeMillis() > presenter.getSessionExpireMillis())) {
                     blurView.setBlurEnabled(true)
-                    authenticator.authenticate()
+                    authenticator.authenticate(getString(R.string.biometric_title))
                 } else {
                     blurView.setBlurEnabled(false)
                 }
