@@ -173,7 +173,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                             R.id.content,
                             SensorDetailFragment.newInstance(
                                 manager,
-                                basicSensor
+                                basicSensor,
+                                integrationUseCase
                             )
                         )
                         .addToBackStack("Sensor Detail")
