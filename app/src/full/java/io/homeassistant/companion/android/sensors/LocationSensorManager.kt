@@ -8,6 +8,8 @@ import android.location.Address
 import android.location.Geocoder
 import android.location.Location
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.text.TextUtils
 import android.util.Log
@@ -113,8 +115,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     var amapLocation: AMapLocation? = null
 
+
     //声明定位回调监听器
-    var mLocationListener = AMapLocationListener { location ->
+    private var mLocationListener = AMapLocationListener { location ->
         if (location.errorCode == 0) {
 
             amapLocation = location
@@ -160,7 +163,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
-            ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
+            ACTION_PROCESS_LOCATION -> handleLocationUpdate()
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
@@ -300,11 +303,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             return
         }
 
-        if (mLocationClient != null) {
-            mLocationClient!!.stopLocation()
-        } else {
-            mLocationClient = AMapLocationClient(latestContext)
-        }
+
+        mLocationClient = AMapLocationClient(latestContext)
+
 //        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
 //        val sensorSettings = sensorDao.getSettings(singleAccurateLocation.id)
 //        val minTimeBetweenUpdates = sensorSettings
@@ -316,6 +317,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         mLocationOption.isOnceLocation = true
         mLocationOption.isOnceLocationLatest = true
         if (lastHighAccuracyMode) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                requestLocationUpdates()
+            }, lastHighAccuracyUpdateInterval * 1000L)
             mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
         } else {
             mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Battery_Saving
@@ -324,7 +328,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         mLocationClient!!.startLocation()
     }
 
-    private fun handleLocationUpdate(intent: Intent) {
+    private fun handleLocationUpdate() {
         if (mLocationClient != null) {
             mLocationClient!!.startLocation()
         } else {
