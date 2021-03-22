@@ -35,8 +35,10 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         private const val SETTING_ACCURATE_UPDATE_TIME = "Minimum time between updates"
         private const val SETTING_INCLUDE_SENSOR_UPDATE = "Include in sensor update"
         private const val SETTING_HIGH_ACCURACY_MODE = "High accuracy mode (May drain battery fast)"
-        private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL = "High accuracy mode update interval (seconds)"
-        private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES = "High accuracy mode only when connected to BT devices"
+        private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL =
+            "High accuracy mode update interval (seconds)"
+        private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES =
+            "High accuracy mode only when connected to BT devices"
 
         private const val DEFAULT_MINIMUM_ACCURACY = 200
         private const val DEFAULT_UPDATE_INTERVAL_HA_SECONDS = 5
@@ -81,13 +83,21 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), "toggle"))
+            sensorDao.add(
+                Setting(
+                    backgroundLocation.id,
+                    SETTING_HIGH_ACCURACY_MODE,
+                    enabled.toString(),
+                    "toggle"
+                )
+            )
         }
 
         fun getHighAccuracyModeIntervalSetting(context: Context): Int {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
-            return sensorSettings.firstOrNull { it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL }?.value?.toIntOrNull() ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
+            return sensorSettings.firstOrNull { it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL }?.value?.toIntOrNull()
+                ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
         }
     }
 
@@ -127,7 +137,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             if (location.accuracy > minAccuracy) {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
-                val hm = GCJ2WGS.delta(location.latitude,location.longitude)
+                val hm = GCJ2WGS.delta(location.latitude, location.longitude)
                 location.latitude = hm["lat"]!!
                 location.longitude = hm["lon"]!!
                 sendLocationUpdate(location)
@@ -142,9 +152,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             )
         }
     }
-
-    //声明AMapLocationClientOption对象
-    var mLocationOption: AMapLocationClientOption = AMapLocationClientOption()
 
     override fun onReceive(context: Context, intent: Intent) {
         latestContext = context
@@ -171,6 +178,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun setupLocationTracking() {
+        Log.w(TAG, "setupLocationTracking")
         if (!checkPermission(latestContext, backgroundLocation.id)) {
             Log.w(TAG, "Not starting location reporting because of permissions.")
             return
@@ -234,7 +242,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             updateIntervalHighAccuracySecondsInt = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
 
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, updateIntervalHighAccuracySecondsInt.toString(), "number"))
+            sensorDao.add(
+                Setting(
+                    backgroundLocation.id,
+                    SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
+                    updateIntervalHighAccuracySecondsInt.toString(),
+                    "number"
+                )
+            )
         }
         return updateIntervalHighAccuracySecondsInt
     }
@@ -260,7 +275,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         if (highAccuracyMode) {
             if (!highAccuracyModeBTDevices.isNullOrEmpty()) {
                 val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
-                val highAccuracyBtDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.name) }
+                val highAccuracyBtDevConnected =
+                    bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.name) }
 
                 highAccuracyMode = highAccuracyBtDevConnected
             }
@@ -283,22 +299,34 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             Log.w(TAG, "Not registering for location updates because of permissions.")
             return
         }
+
+        if (mLocationClient != null) {
+            mLocationClient!!.stopLocation()
+        } else {
+            mLocationClient = AMapLocationClient(latestContext)
+        }
 //        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
 //        val sensorSettings = sensorDao.getSettings(singleAccurateLocation.id)
 //        val minTimeBetweenUpdates = sensorSettings
 //            .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
 //            ?: 1000 * 60 * 5
 //        Log.d(TAG, "Registering for location updates.")
-        mLocationClient = AMapLocationClient(latestContext)
         mLocationClient!!.setLocationListener(mLocationListener)
-        if(lastHighAccuracyMode){
+        val mLocationOption: AMapLocationClientOption
+
+        if (lastHighAccuracyMode) {
+            mLocationOption = AMapLocationClientOption()
             mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
-        }else{
+            mLocationOption.interval = lastHighAccuracyUpdateInterval * 1000L
+            mLocationOption.isOnceLocation = false
+            //mLocationOption.isOnceLocationLatest = true
+        } else {
+            mLocationOption = AMapLocationClientOption()
             mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Battery_Saving
+            mLocationOption.isOnceLocation = true
+            mLocationOption.isOnceLocationLatest = true
         }
-        //mLocationOption.interval = minTimeBetweenUpdates.toLong()
-        mLocationOption.isOnceLocation = true
-        mLocationOption.isOnceLocationLatest = true
+
 
         mLocationClient!!.setLocationOption(mLocationOption)
         mLocationClient!!.startLocation()
@@ -308,6 +336,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         requestLocationUpdates()
 
     }
+
     private fun sendLocationUpdate(
         location: Location?,
         name: String = "",
@@ -394,6 +423,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun requestSingleAccurateLocation() {
+        Log.w(TAG, "requestSingleAccurateLocation")
         if (!checkPermission(latestContext, singleAccurateLocation.id)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
@@ -579,8 +609,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             addressStr =
                 amapLocation!!.city + amapLocation!!.district + amapLocation!!.street + amapLocation!!.aoiName + amapLocation!!.floor
         }
-        if(TextUtils.isEmpty(addressStr)){
-            Log.d(TAG,"addressStr--"+amapLocation!!.locationDetail)
+        if (TextUtils.isEmpty(addressStr)) {
+            Log.d(TAG, "addressStr--" + amapLocation!!.locationDetail)
             return
         }
         onSensorUpdated(
