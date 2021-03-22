@@ -313,16 +313,18 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 //            ?: 1000 * 60 * 5
 //        Log.d(TAG, "Registering for location updates.")
         mLocationClient!!.setLocationListener(mLocationListener)
-        val mLocationOption = AMapLocationClientOption()
-        mLocationOption.isOnceLocation = true
-        mLocationOption.isOnceLocationLatest = true
+        val mLocationOption:AMapLocationClientOption
+
         if (lastHighAccuracyMode) {
-            Handler(Looper.getMainLooper()).postDelayed({
-                requestLocationUpdates()
-            }, lastHighAccuracyUpdateInterval * 1000L)
+            mLocationOption = AMapLocationClientOption()
             mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
+            mLocationOption.interval = lastHighAccuracyUpdateInterval * 1000L
+            mLocationOption.isOnceLocation = false
         } else {
+            mLocationOption = AMapLocationClientOption()
             mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Battery_Saving
+            mLocationOption.isOnceLocation = true
+            mLocationOption.isOnceLocationLatest = true
         }
         mLocationClient!!.setLocationOption(mLocationOption)
         mLocationClient!!.startLocation()
