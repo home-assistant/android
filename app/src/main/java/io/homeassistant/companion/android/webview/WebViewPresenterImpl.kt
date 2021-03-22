@@ -164,7 +164,7 @@ class WebViewPresenterImpl @Inject constructor(
     override fun setStatusbarColor(colorString: String) {
         mainScope.launch {
             Log.d(TAG, "Try setting statusbar color with color string $colorString from webview")
-            if(!colorString.isNullOrBlank() && colorString.length >= 2) {
+            if (!colorString.isNullOrBlank() && colorString.length >= 2) {
                 val trimmedColorString = colorString.substring(1, colorString.length - 1).trim()
 
                 try {

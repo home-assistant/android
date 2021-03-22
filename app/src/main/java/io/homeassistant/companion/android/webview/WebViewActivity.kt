@@ -456,9 +456,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     Log.d(TAG, "Callback $it")
                                 }
 
-                                //Set statusbar color
-                                webView.evaluateJavascript("document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0];")
-                                {
+                                // Set statusbar color
+                                webView.evaluateJavascript("document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0];") {
                                     presenter.setStatusbarColor(it)
                                 }
                             }
