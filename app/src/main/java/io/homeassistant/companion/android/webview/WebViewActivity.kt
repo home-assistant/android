@@ -504,8 +504,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (currentLang != languagesManager.getCurrentLang())
             recreate()
         if ((!unlocked && !presenter.isLockEnabled()) ||
-            (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis()))
+            (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis())) {
             unlocked = true
+            blurView.setBlurEnabled(false)
+        }
 
         SensorWorker.start(this)
         checkAndWarnForDisabledLocation()
