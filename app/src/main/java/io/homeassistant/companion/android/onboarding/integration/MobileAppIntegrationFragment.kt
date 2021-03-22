@@ -192,17 +192,12 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             LocationSensorManager.singleAccurateLocation
         ).forEach { basicSensor ->
             var sensorEntity = sensorDao.get(basicSensor.id)
-            var sensorEnabled = enabled
-            if (basicSensor.id == LocationSensorManager.singleAccurateLocation.id && !DisabledLocationHandler.hasGPS(requireContext())) {
-                sensorEnabled = false
-            }
-
             if (sensorEntity != null) {
-                sensorEntity.enabled = sensorEnabled
+                sensorEntity.enabled = enabled
                 sensorEntity.lastSentState = ""
                 sensorDao.update(sensorEntity)
             } else {
-                sensorEntity = Sensor(basicSensor.id, sensorEnabled, false, "")
+                sensorEntity = Sensor(basicSensor.id, enabled, false, "")
                 sensorDao.add(sensorEntity)
             }
         }
