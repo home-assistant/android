@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
+import android.text.Html.fromHtml
 import android.util.Log
 import android.widget.RemoteViews
 import android.widget.Toast
@@ -121,9 +122,10 @@ class TemplateWidget : AppWidgetProvider() {
                 )
             )
             if (widget != null) {
-                var renderedTemplate = "Loading"
+                var renderedTemplate = templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
                 try {
                     renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
+                    templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
                     if (lastIntent != Intent.ACTION_SCREEN_ON)
@@ -131,7 +133,7 @@ class TemplateWidget : AppWidgetProvider() {
                 }
                 setTextViewText(
                     R.id.widgetTemplateText,
-                    renderedTemplate
+                    fromHtml(renderedTemplate)
                 )
             }
         }
@@ -180,7 +182,8 @@ class TemplateWidget : AppWidgetProvider() {
             templateWidgetDao.add(
                 TemplateWidgetEntity(
                     appWidgetId,
-                    template
+                    template,
+                    templateWidgetDao.get(appWidgetId)?.lastUpdate ?: "Loading"
                 )
             )
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))

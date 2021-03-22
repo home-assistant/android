@@ -10,6 +10,7 @@ import android.util.Log
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import java.lang.Exception
 
 class GeocodeSensorManager : SensorManager {
@@ -104,13 +105,17 @@ class GeocodeSensorManager : SensorManager {
             )
         }.orEmpty()
 
+        val prettyAddress = address?.getAddressLine(0) ?: "Unknown"
+
+        HighAccuracyLocationService.updateNotificationAddress(context, location, prettyAddress)
 
         onSensorUpdated(
             context,
             geocodedLocation,
-            address?.getAddressLine(0) ?: "Unknown",
+            prettyAddress,
             "mdi:map",
             attributes
         )
+        }
     }
 }

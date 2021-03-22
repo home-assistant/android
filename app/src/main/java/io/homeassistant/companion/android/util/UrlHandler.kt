@@ -5,14 +5,16 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 object UrlHandler {
     fun handle(base: URL?, input: String): URL? {
-        return if (isAbsoluteUrl(input)) {
-            URL(input)
-        } else {
-            base?.toHttpUrlOrNull()
-                ?.newBuilder()
-                ?.addPathSegments(input.trimStart('/'))
-                ?.build()
-                ?.toUrl()
+        return when {
+            isAbsoluteUrl(input) -> {
+                URL(input)
+            }
+            input.startsWith("homeassistant://navigate/") -> {
+                (base.toString() + input.removePrefix("homeassistant://navigate/")).toHttpUrlOrNull()?.toUrl()
+            }
+            else -> {
+                (base.toString() + input.removePrefix("/")).toHttpUrlOrNull()?.toUrl()
+            }
         }
     }
 

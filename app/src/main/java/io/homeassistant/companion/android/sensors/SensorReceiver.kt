@@ -37,6 +37,7 @@ class SensorReceiver : BroadcastReceiver() {
             LastUpdateManager(),
             LightSensorManager(),
             LocationSensorManager(),
+            MobileDataManager(),
             NetworkSensorManager(),
             NextAlarmManager(),
             NotificationSensorManager(),
@@ -99,8 +100,29 @@ class SensorReceiver : BroadcastReceiver() {
             }
         }
 
-        if (isSensorEnabled(context, LastUpdateManager.lastUpdate.id))
+        if (isSensorEnabled(context, LastUpdateManager.lastUpdate.id)) {
             LastUpdateManager().sendLastUpdate(context, intent.action)
+            val sensorDao = AppDatabase.getInstance(context).sensorDao()
+            val allSettings = sensorDao.getSettings(LastUpdateManager.lastUpdate.id)
+            for (setting in allSettings) {
+                if (setting.value != "" && intent.action == setting.value) {
+                    val eventData = intent.extras?.keySet()?.map { it.toString() to intent.extras?.get(it).toString() }?.toMap()?.plus("intent" to intent.action.toString())
+                        ?: mapOf("intent" to intent.action.toString())
+                    Log.d(TAG, "Event data: $eventData")
+                    ioScope.launch {
+                        try {
+                            integrationUseCase.fireEvent(
+                                "android.intent_received",
+                                eventData as Map<String, Any>
+                            )
+                            Log.d(TAG, "Event successfully sent to Home Assistant")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Unable to send event data to Home Assistant", e)
+                        }
+                    }
+                }
+            }
+        }
 
         ioScope.launch {
             updateSensors(context, integrationUseCase)

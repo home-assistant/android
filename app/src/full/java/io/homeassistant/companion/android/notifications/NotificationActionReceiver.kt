@@ -7,6 +7,7 @@ import android.os.Handler
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.RemoteInput
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -63,6 +64,14 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 Toast.makeText(context, R.string.event_error, Toast.LENGTH_LONG).show()
             }
         }
+        if (notificationAction.key == "REPLY") {
+            notificationAction.data += Pair(
+                "reply_text",
+                RemoteInput.getResultsFromIntent(intent)
+                    .getCharSequence(MessagingService.KEY_TEXT_REPLY).toString()
+            )
+        }
+
         when (intent.action) {
             FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
             OPEN_URI -> NotificationActionContentHandler.openUri(context, notificationAction.uri, onComplete)

@@ -9,5 +9,7 @@ data class TemplateWidgetEntity(
     @PrimaryKey
     val id: Int,
     @ColumnInfo(name = "template")
-    val template: String
+    val template: String,
+    @ColumnInfo(name = "last_update")
+    val lastUpdate: String
 )

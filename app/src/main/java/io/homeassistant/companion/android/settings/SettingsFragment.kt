@@ -275,7 +275,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 } else openSsidDialog()
             } else {
                 if (presenter.isSsidUsed()) {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)), true) {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)), showAsNotification = false, withDisableOption = true) {
                         presenter.clearSsids()
                         preference.setSsids(emptySet())
                     }

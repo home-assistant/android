@@ -42,6 +42,7 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
     fun authenticate() {
         val promptDialog = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
+            .setConfirmationRequired(false)
             .setDeviceCredentialAllowed(true)
             .build()
 

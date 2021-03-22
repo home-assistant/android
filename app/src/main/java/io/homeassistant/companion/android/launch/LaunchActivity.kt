@@ -29,7 +29,8 @@ class LaunchActivity : BaseActivity(), LaunchView {
 
     override fun displayWebview() {
         presenter.setSessionExpireMillis(0)
-        startActivity(WebViewActivity.newInstance(this))
+
+        startActivity(WebViewActivity.newInstance(this, intent.data?.path))
         finish()
     }
 

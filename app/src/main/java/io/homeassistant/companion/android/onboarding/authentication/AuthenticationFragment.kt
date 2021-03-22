@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 
@@ -32,6 +33,10 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
 
     @Inject
     lateinit var presenter: AuthenticationPresenter
+
+    @Inject
+    lateinit var themesManager: ThemesManager
+
     private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +58,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     ): View? {
         return inflater.inflate(R.layout.fragment_authentication, container, false).apply {
             webView = findViewById(R.id.webview)
-
+            activity?.applicationContext?.let { themesManager.setThemeForWebView(it, webView.settings) }
             webView.apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true

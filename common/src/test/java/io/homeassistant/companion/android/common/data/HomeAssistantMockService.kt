@@ -34,6 +34,10 @@ class HomeAssistantMockService<T>(private val c: Class<T>) {
 
         override suspend fun saveHomeWifiSsids(ssid: Set<String>) {
         }
+
+        override suspend fun isInternal(): Boolean {
+            return true
+        }
     }).retrofit
 
     fun get(): T {

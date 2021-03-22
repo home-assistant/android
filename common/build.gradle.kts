@@ -30,7 +30,7 @@ dependencies {
     implementation(Config.Dependency.Square.okhttp)
     implementation(Config.Dependency.Square.okhttpInterceptor)
     implementation(Config.Dependency.Misc.jackson)
-
+    implementation(Config.Dependency.Misc.altBeacon)
     testImplementation(Config.Dependency.Square.okhttpMockServer)
     testImplementation(Config.Dependency.Testing.spek2Jvm)
     testRuntimeOnly(Config.Dependency.Testing.spek2JUnit)

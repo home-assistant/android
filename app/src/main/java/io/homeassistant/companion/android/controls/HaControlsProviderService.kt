@@ -63,6 +63,8 @@ class HaControlsProviderService : ControlsProviderService() {
         "climate" to ClimateControl,
         "cover" to CoverControl,
         "fan" to FanControl,
+        "input_boolean" to DefaultSwitchControl,
+        "input_number" to DefaultSliderControl,
         "light" to LightControl,
         "lock" to LockControl,
         "media_player" to null,
@@ -70,8 +72,7 @@ class HaControlsProviderService : ControlsProviderService() {
         "scene" to SceneControl,
         "script" to SceneControl,
         "switch" to DefaultSwitchControl,
-        "input_boolean" to DefaultSwitchControl,
-        "input_number" to DefaultSliderControl
+        "vacuum" to VacuumControl
     )
 
     override fun onCreate() {

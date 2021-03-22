@@ -32,20 +32,23 @@ class UrlRepositoryImpl @Inject constructor(
             return arrayOf()
         }
 
+        // If we are local then add the local URL in the first position, otherwise no reason to try
+        if (isInternal()) {
+            localStorage.getString(PREF_LOCAL_URL)?.let {
+                retVal.add(
+                    it.toHttpUrl().newBuilder()
+                        .addPathSegments("api/webhook/$webhook")
+                        .build()
+                        .toUrl()
+                )
+            }
+        }
+
         localStorage.getString(PREF_CLOUDHOOK_URL)?.let {
             retVal.add(it.toHttpUrl().toUrl())
         }
 
         localStorage.getString(PREF_REMOTE_URL)?.let {
-            retVal.add(
-                it.toHttpUrl().newBuilder()
-                    .addPathSegments("api/webhook/$webhook")
-                    .build()
-                    .toUrl()
-            )
-        }
-
-        localStorage.getString(PREF_LOCAL_URL)?.let {
             retVal.add(
                 it.toHttpUrl().newBuilder()
                     .addPathSegments("api/webhook/$webhook")
@@ -73,7 +76,7 @@ class UrlRepositoryImpl @Inject constructor(
         val internal = localStorage.getString(PREF_LOCAL_URL)?.toHttpUrlOrNull()?.toUrl()
         val external = localStorage.getString(PREF_REMOTE_URL)?.toHttpUrlOrNull()?.toUrl()
 
-        return if (isInternal ?: isInternal()) {
+        return if (isInternal ?: isInternal() && internal != null) {
             internal
         } else {
             external
@@ -104,7 +107,7 @@ class UrlRepositoryImpl @Inject constructor(
         localStorage.putStringSet(PREF_WIFI_SSIDS, ssid)
     }
 
-    private suspend fun isInternal(): Boolean {
+    override suspend fun isInternal(): Boolean {
         val formattedSsid = wifiHelper.getWifiSsid().removeSurrounding("\"")
         val wifiSsids = getHomeWifiSsids()
         val usesInternalSsid = formattedSsid in wifiSsids

@@ -2,13 +2,15 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
-    id("com.github.ben-manes.versions") version "0.33.0"
+    id("com.github.ben-manes.versions") version "0.38.0"
 }
 
 buildscript {
     repositories {
-        google()
-        jcenter()
+        maven { url = java.net.URI("https://maven.aliyun.com/repository/google") }
+        maven { url = java.net.URI("https://maven.aliyun.com/repository/jcenter") }
+        maven { url = java.net.URI("https://maven.aliyun.com/repository/public") }
+        maven { url = java.net.URI("https://maven.aliyun.com/repository/gradle-plugin") }
         gradlePluginPortal()
     }
     dependencies {
@@ -21,11 +23,6 @@ buildscript {
 }
 
 allprojects {
-    repositories {
-        google()
-        jcenter()
-    }
-
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     tasks.withType<KotlinCompile>().configureEach {
