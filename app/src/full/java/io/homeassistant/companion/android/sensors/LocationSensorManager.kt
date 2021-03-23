@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.location.Address
+import android.location.Geocoder
 import android.location.Location
 import android.os.Build
 import android.os.PowerManager
@@ -117,7 +119,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         if (location.errorCode == 0) {
 
             amapLocation = location
-            Log.w(TAG, "Amap Location -- ${location.latitude}")
+            Log.d(TAG, "Amap Location -- ${location.latitude}")
 
             addressUpdata(latestContext)
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
@@ -134,7 +136,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 )
             )
             if (location.accuracy > minAccuracy) {
-                Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
+                Log.d(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
                 val hm = GCJ2WGS.delta(location.latitude, location.longitude)
                 location.latitude = hm["lat"]!!
@@ -300,7 +302,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             return
         }
 
-
         mLocationClient = AMapLocationClient(latestContext)
 
 //        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
@@ -317,13 +318,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         } else {
             mLocationOption.locationMode = AMapLocationClientOption.AMapLocationMode.Battery_Saving
         }
-
-        if (lastHighAccuracyUpdateInterval >= 9999999) {
+        if (lastHighAccuracyUpdateInterval > 999999) {
             mLocationOption.isOnceLocation = true
             mLocationOption.isOnceLocationLatest = true
         } else {
+            if (lastHighAccuracyUpdateInterval < 10) lastHighAccuracyUpdateInterval = 10
             mLocationOption.interval = lastHighAccuracyUpdateInterval * 1000L
             mLocationOption.isOnceLocation = false
+
         }
         mLocationClient!!.setLocationOption(mLocationOption)
         mLocationClient!!.startLocation()
@@ -424,7 +426,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun requestSingleAccurateLocation() {
-        Log.w(TAG, "requestSingleAccurateLocation")
+        Log.d(TAG, "requestSingleAccurateLocation")
         if (!checkPermission(latestContext, singleAccurateLocation.id)) {
             Log.w(TAG, "Not getting single accurate location because of permissions.")
             return
@@ -553,7 +555,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun addressUpdata(context: Context) {
-//        var address: Address? = null
+        //var address: Address? = null
 //        try {
 //            if (amapLocation == null) {
 //                Log.e(TAG, "Somehow location is null even though it was successful")
@@ -597,6 +599,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 //            )
 //        }.orEmpty()
         var addressStr = amapLocation!!.address
+        // if (attributes.isEmpty()) {
         val attributes = amapLocation.let {
             mapOf(
                 "Administrative Area" to it!!.district,
@@ -609,6 +612,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 "Thoroughfare" to it.street
             )
         }
+        // }
         if (TextUtils.isEmpty(addressStr)) {
             addressStr =
                 amapLocation!!.city + amapLocation!!.district + amapLocation!!.street + amapLocation!!.aoiName + amapLocation!!.floor
