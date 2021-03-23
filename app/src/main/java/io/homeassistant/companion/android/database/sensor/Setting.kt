@@ -12,5 +12,7 @@ data class Setting(
     @ColumnInfo(name = "value")
     var value: String,
     @ColumnInfo(name = "value_type")
-    var valueType: String
+    var valueType: String,
+    @ColumnInfo(name = "enabled")
+    var enabled: Boolean = true
 )

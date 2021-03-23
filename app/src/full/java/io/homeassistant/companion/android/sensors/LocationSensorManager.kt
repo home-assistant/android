@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.location.Address
-import android.location.Geocoder
 import android.location.Location
 import android.os.Build
 import android.os.PowerManager
