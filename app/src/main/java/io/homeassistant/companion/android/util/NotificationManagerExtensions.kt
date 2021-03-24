@@ -44,7 +44,7 @@ fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolea
             Log.d(TAG, "Notification is in a group ($groupKey). Get all notifications for this group...")
 
             // Check if the group is the auto group of android ("ranker_group")
-            if (!groupKey.contains("ranker_group")) {
+            if (!groupKey.endsWith("|g:ranker_group")) {
 
                 // Nope it is a custom group. Get notifications of the group...
                 val groupNotifications =
