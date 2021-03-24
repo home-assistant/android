@@ -87,8 +87,7 @@ class NextAlarmManager : SensorManager {
                 val sdf = SimpleDateFormat(dateFormat)
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
-            }
-            else
+            } else
                 Log.d(TAG, "No alarm is scheduled, sending unavailable")
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)
