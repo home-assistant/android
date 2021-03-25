@@ -10,8 +10,8 @@
         android:layout_gravity="center">
         <ProgressBar
             android:id="@+id/exo_buffering"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="center"
             android:indeterminate="true"
         />

@@ -34,7 +34,7 @@
         <View android:id="@+id/exo_progress_placeholder"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="26dp"/>
+            android:layout_height="24dp"/>
         <TextView android:id="@+id/exo_duration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -46,21 +46,21 @@
             android:textColor="#FFBEBEBE"/>
         <Space
             android:layout_width="16dp"
-            android:layout_height="1dp"/>
+            android:layout_height="4dp"/>
         <ImageView
             android:id="@+id/exo_mute_icon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_baseline_volume_up_24"/>
         <Space
             android:layout_width="16dp"
-            android:layout_height="1dp"/>
+            android:layout_height="4dp"/>
         <ImageView
             android:id="@+id/exo_fullscreen_icon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_baseline_fullscreen_24"/>
