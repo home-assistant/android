@@ -48,7 +48,6 @@ import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.Util
@@ -571,19 +570,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoMute = payload.optBoolean("muted")
         val dataSourceFactory = DefaultHttpDataSource.Factory().setUserAgent(
             Util.getUserAgent(applicationContext, getString(R.string.app_name)))
-        val hlsMediaSource = HlsMediaSource.Factory(dataSourceFactory)
-            .setAllowChunklessPreparation(true).createMediaSource(MediaItem.fromUri(uri))
         val loadControl = DefaultLoadControl.Builder().setBufferDurationsMs(
             DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
             DefaultLoadControl.DEFAULT_MAX_BUFFER_MS, 500,
             2500).build()
         runOnUiThread {
             exoPlayer =
-                SimpleExoPlayer.Builder(applicationContext).setLoadControl(loadControl)
-                    .build()
-            exoPlayer?.setMediaSource(hlsMediaSource)
-            exoPlayer?.prepare()
+                SimpleExoPlayer.Builder(applicationContext).setLoadControl(loadControl).build()
+            exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
             exoPlayer?.playWhenReady = true
+            exoPlayer?.prepare()
             exoMute = !exoMute
             exoToggleMute()
             exoPlayerView.setPlayer(exoPlayer)
