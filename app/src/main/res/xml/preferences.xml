@@ -80,7 +80,7 @@
             app:useSimpleSummaryProvider="true"/>
         <Preference
             android:key="background"
-            android:title="Background Access"/>
+            android:title="@string/background_access_title"/>
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/need_help">
@@ -113,8 +113,18 @@
             android:summary="@string/rate_limit_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="shortcuts"
+        android:title="@string/shortcuts"
+        app:isPreferenceVisible="false">
+        <Preference
+            android:key="manage_shortcuts"
+            android:icon="@drawable/ic_shortcut"
+            android:title="@string/manage_shortcuts"
+            android:summary="@string/manage_shortcuts_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:key="widgets"
-        android:title="Widgets">
+        android:title="@string/widgets">
         <Preference
             android:key="manage_widgets"
             android:icon="@drawable/ic_widget"
