@@ -68,9 +68,27 @@ interface SensorManager {
         sensor: BasicSensor,
         settingName: String,
         settingType: String,
-        default: String
+        default: String,
+        enabled: Boolean = true
     ) {
-        getSetting(context, sensor, settingName, settingType, default)
+        getSetting(context, sensor, settingName, settingType, default, enabled)
+    }
+
+    fun isSettingEnabled(context: Context, sensor: BasicSensor, settingName: String): Boolean {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val setting = sensorDao
+            .getSettings(sensor.id)
+            .firstOrNull { it.name == settingName }
+        return setting?.enabled ?: false
+    }
+
+    fun enableDisableSetting(context: Context, sensor: BasicSensor, settingName: String, enabled: Boolean) {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val settingEnabled = isSettingEnabled(context, sensor, settingName)
+        if (enabled && !settingEnabled ||
+            !enabled && settingEnabled) {
+            sensorDao.updateSettingEnabled(sensor.id, settingName, enabled)
+        }
     }
 
     fun getSetting(
@@ -78,7 +96,8 @@ interface SensorManager {
         sensor: BasicSensor,
         settingName: String,
         settingType: String,
-        default: String
+        default: String,
+        enabled: Boolean = true
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
@@ -86,7 +105,7 @@ interface SensorManager {
                 .firstOrNull { it.name == settingName }
                 ?.value
         if (setting == null)
-            sensorDao.add(Setting(sensor.id, settingName, default, settingType))
+            sensorDao.add(Setting(sensor.id, settingName, default, settingType, enabled))
 
         return setting ?: default
     }
