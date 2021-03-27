@@ -7,7 +7,11 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.SearchView
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.view.MenuItemCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -87,6 +91,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         private var permissionsAllGranted = true
         private var settingsWithLocation = mutableListOf<String>()
         private var enableAllSensors = false
+        private var showOnlyEnabledSensors = false
 
         fun newInstance(): SensorsSettingsFragment {
             return SensorsSettingsFragment()
@@ -102,22 +107,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         setPreferencesFromResource(R.xml.sensors, rootKey)
 
-        findPreference<SwitchPreference>("show_only_enabled_sensors")?.let {
-
-            it.summary = getShowOnlyEnabledSensorsSummary(getShowOnlyEnabledSensors())
-
-            it.setOnPreferenceChangeListener { _, newState ->
-                val newShowOnlyEnabledSensors = newState as Boolean
-
-                getShowOnlyEnabledSensors(newShowOnlyEnabledSensors)
-
-                it.summary = getShowOnlyEnabledSensorsSummary(newShowOnlyEnabledSensors)
-
-                showHideSensorsIfNeeded(newShowOnlyEnabledSensors)
-
-                return@setOnPreferenceChangeListener true
-            }
-        }
+        showOnlyEnabledSensors = getShowOnlyEnabledSensors()
 
         findPreference<SwitchPreference>("enable_disable_sensors")?.let {
 
@@ -178,10 +168,9 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        val showOnlyEnabledSensors = getShowOnlyEnabledSensors()
         SensorReceiver.MANAGERS.sortedBy { getString(it.name) }.filter { it.hasSensor(requireContext()) }.forEach { manager ->
             val prefCategory = PreferenceCategory(preferenceScreen.context)
-            prefCategory!!.title = getString(manager.name)
+            prefCategory.title = getString(manager.name)
             preferenceScreen.addPreference(prefCategory)
 
             manager.availableSensors.sortedBy { getString(it.name) }.forEach { basicSensor ->
@@ -212,11 +201,52 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         if (showOnlyEnabledSensors) showHideGroupsIfNeeded()
     }
 
-    private fun getShowOnlyEnabledSensors(showOnlyEnabledSensors: Boolean) {
-        runBlocking {
-            integrationUseCase.setShowOnlyEnabledSensors(showOnlyEnabledSensors)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Needed to call onPrepareOptionsMenu
+        setHasOptionsMenu(true)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+
+        menu.setGroupVisible(R.id.toolbar_group, true)
+
+        val searchViewItem = menu.findItem(R.id.action_search)
+        val searchView: SearchView = MenuItemCompat.getActionView(searchViewItem) as SearchView
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
+
+                return false
+            }
+
+            override fun onQueryTextChange(query: String?): Boolean {
+                filterSensors(query)
+                return false
+            }
+        })
+
+        if (showOnlyEnabledSensors) {
+            val checkable = menu.findItem(R.id.action_show_only_enabled_sensors)
+            checkable.isChecked = true
         }
     }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_show_only_enabled_sensors -> {
+                item.isChecked = !item.isChecked
+                setShowOnlyEnabledSensors(item.isChecked)
+
+                filterSensors()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun getShowOnlyEnabledSensors(): Boolean {
         var showOnlyEnabledSensors = false
         runBlocking {
@@ -225,42 +255,36 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         return showOnlyEnabledSensors
     }
 
-    private fun showHideSensorsIfNeeded(showOnlyEnabledSensors: Boolean) {
+    private fun setShowOnlyEnabledSensors(showOnlyEnabledSensors: Boolean) {
+        runBlocking {
+            integrationUseCase.setShowOnlyEnabledSensors(showOnlyEnabledSensors)
+        }
+        SensorsSettingsFragment.showOnlyEnabledSensors = showOnlyEnabledSensors
+    }
+
+    private fun filterSensors(searchQuery: String? = "") {
         SensorReceiver.MANAGERS.filter { m -> m.hasSensor(requireContext()) }.forEach { manager ->
             manager.availableSensors.forEach { sensor ->
                 val pref = findPreference<Preference>(sensor.id)
-                showHidePreference(pref, showOnlyEnabledSensors, manager, sensor.id)
+                if (pref != null) {
+                    pref.isVisible = true
+                    if (!searchQuery.isNullOrBlank()) {
+                        val found = pref.title.contains(searchQuery, true)
+                        pref.isVisible = found
+                    } else {
+                        if (showOnlyEnabledSensors) {
+                            pref.isVisible = manager.isEnabled(requireContext(), sensor.id)
+                        }
+                    }
+                }
             }
         }
         showHideGroupsIfNeeded()
     }
 
-    private fun showHidePreference(
-        pref: Preference?,
-        showOnlyEnabledSensors: Boolean,
-        manager: SensorManager,
-        sensorId: String
-    ) {
-        if (pref != null && pref.parent != null) {
-            if (showOnlyEnabledSensors) {
-                pref.isVisible = manager.isEnabled(requireContext(), sensorId)
-            } else {
-                pref.isVisible = true
-            }
-        }
-    }
-
-    private fun getShowOnlyEnabledSensorsSummary(showOnlyEnabledSensors: Boolean): String {
-        return if (showOnlyEnabledSensors) {
-            getString(R.string.only_enabled_sensors_shown)
-        } else {
-            getString(R.string.all_sensors_shown)
-        }
-    }
-
     private fun showHideGroupsIfNeeded() {
         for (pref in preferenceScreen) {
-            val prefGroup = pref as PreferenceGroup
+            val prefGroup = pref as? PreferenceGroup
             if (prefGroup != null) {
                 prefGroup.isVisible = false
 
@@ -276,7 +300,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
-        showHideSensorsIfNeeded(getShowOnlyEnabledSensors())
+        filterSensors()
         handler.postDelayed(refresh, 0)
     }
 
@@ -351,7 +375,6 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     private fun enableDisableSensorBasedOnPermission() {
         val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
-        val showOnlyEnabledSensors = getShowOnlyEnabledSensors()
 
         SensorReceiver.MANAGERS.forEach { managers ->
             managers.availableSensors.forEach { basicSensor ->
@@ -372,12 +395,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     sensorEntity = Sensor(basicSensor.id, enableSensor, false, "")
                     sensorDao.add(sensorEntity)
                 }
-
-                val pref = findPreference<Preference>(basicSensor.id)
-                showHidePreference(pref, showOnlyEnabledSensors, managers, basicSensor.id)
             }
         }
-
-        showHideGroupsIfNeeded()
+        filterSensors()
     }
 }

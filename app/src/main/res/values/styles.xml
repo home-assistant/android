@@ -7,6 +7,7 @@
         <item name="android:colorBackground">@color/colorActivityBackground</item>
         <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
+        <item name="actionBarPopupTheme">@style/ThemeOverlay.MaterialComponents.Dark</item>
     </style>
 
     <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.MaterialComponents.Headline1">
@@ -31,10 +32,15 @@
         <item name="android:textColor">@color/colorPrimary</item>
     </style>
 
-    <style name="ThemeOverlay.HomeAssistant.ActionBar" parent="@style/ThemeOverlay.MaterialComponents.ActionBar">
+    <style name="Theme.HomeAssistant.PopupTheme" parent="ThemeOverlay.MaterialComponents.Light">
+        <item name="android:background">@color/colorActionBarPopupBackground</item>
+    </style>
+
+    <style name="ThemeOverlay.HomeAssistant.ActionBar" parent="ThemeOverlay.MaterialComponents.ActionBar">
         <item name="android:background">@color/colorActionBar</item>
         <item name="android:textColorPrimary">@color/colorOnPrimary</item>
         <item name="colorControlNormal">@color/colorOnPrimary</item>
+        <item name="popupTheme">@style/Theme.HomeAssistant.PopupTheme</item>
     </style>
 
     <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.Light.Dialog.Alert">

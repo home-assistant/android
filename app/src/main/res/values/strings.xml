@@ -14,7 +14,6 @@
   <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
   <string name="add_service_data_field">Add Field</string>
   <string name="add_widget">Add widget</string>
-  <string name="all_sensors_shown">All sensors are shown</string>
   <string name="app_name">Home Assistant</string>
   <string name="app_version_info">App Version Info</string>
   <string name="application_version">Application Version</string>
@@ -166,6 +165,7 @@ integration enabled on your home assistant instance.</string>
   <string name="exit">Exit</string>
   <string name="failed_scan">Scanning for Home Assistant failed.</string>
   <string name="filter_notifications">Filter Notifications</string>
+  <string name="filter_sensors">Filter sensors</string>
   <string name="finish">Finish</string>
   <string name="firebase_error_message">By skipping/ignoring this error you will be unable to receive any push notifications.</string>
   <string name="firebase_error_title">Firebase Error</string>
@@ -260,7 +260,6 @@ Home Assistant instance</string>
   <string name="notification_message">Message</string>
   <string name="notification_received_at">Notification Received At</string>
   <string name="notifications">Notifications</string>
-  <string name="only_enabled_sensors_shown">Only enabled sensors are shown</string>
   <string name="other_settings">Other Settings</string>
   <string name="password">Password</string>
   <string name="permission_explanation">In order to use location tracking features or different connection urls based on WiFi SSID we need access to your location. If you want consistent background updates you will also need to allow background processing</string>
@@ -430,7 +429,6 @@ like to connect to:</string>
   <string name="shopping_list">Shopping List</string>
   <string name="shortcuts">Shortcuts</string>
   <string name="shortcuts_summary">Add shortcuts to launcher</string>
-  <string name="show_only_enabled_sensors">Show only enabled sensors</string>
   <string name="skip">Skip</string>
   <string name="state">State</string>
   <string name="state_auto">Auto</string>
@@ -517,4 +515,6 @@ like to connect to:</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
   <string name="what_is_this">What is this?</string>
   <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
+  <string name="search_sensors">Search sensors</string>
+  <string name="filter_show_only_enabled_sensors">Only enabled sensors</string>
 </resources>

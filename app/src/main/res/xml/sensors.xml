@@ -8,9 +8,6 @@
         app:title="@string/manage_all_sensors">
         <androidx.preference.SwitchPreference
             app:key="enable_disable_sensors"/>
-        <androidx.preference.SwitchPreference
-            app:key="show_only_enabled_sensors"
-            android:title="@string/show_only_enabled_sensors"/>
     </androidx.preference.PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>
