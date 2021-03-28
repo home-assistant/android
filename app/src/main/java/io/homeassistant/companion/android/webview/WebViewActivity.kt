@@ -46,11 +46,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.DefaultLoadControl
+import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
-import com.google.android.exoplayer2.util.Util
 import com.google.android.material.textfield.TextInputEditText
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
@@ -74,7 +72,7 @@ import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
-import kotlinx.android.synthetic.main.exo_playback_control_view.*
+import kotlinx.android.synthetic.main.exo_player_control_view.*
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
@@ -138,6 +136,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoBottom: Int = 0
     private var exoMute: Boolean = true
     private var failedConnection = "external"
+    private var moreInfoEntity = ""
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -163,7 +162,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             .setBlurRadius(5f)
             .setHasFixedTransformationMatrix(false)
 
-        exoPlayerView = findViewById(R.id.exoplayerView)
+        exoPlayerView = findViewById<PlayerView>(R.id.exoplayerView)
         exoPlayerView.visibility = View.GONE
         exoPlayerView.setBackgroundColor(Color.BLACK)
         exoPlayerView.alpha = 1f
@@ -212,6 +211,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     if (failingUrl == loadedUrl) {
                         showError()
                     }
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    if (moreInfoEntity != "") {
+                        Log.d(TAG, "More info entity: $moreInfoEntity")
+                        webView.evaluateJavascript("document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))", null)
+                    }
+                    moreInfoEntity = ""
                 }
 
                 override fun onReceivedHttpError(
@@ -455,6 +462,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 webView.evaluateJavascript(script) {
                                     Log.d(TAG, "Callback $it")
                                 }
+
+                                // Set statusbar color
+                                webView.evaluateJavascript("document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0];") {
+                                    presenter.setStatusbarColor(it)
+                                }
                             }
                             "config_screen/show" ->
                                 startActivity(
@@ -521,7 +533,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private fun checkAndWarnForDisabledLocation() {
         var showLocationDisabledWarning = false
         var settingsWithLocationPermissions = mutableListOf<String>()
-        if (!DisabledLocationHandler.isLocationEnabled(this, false) && presenter.isSsidUsed()) {
+        if (!DisabledLocationHandler.isLocationEnabled(this) && presenter.isSsidUsed()) {
             showLocationDisabledWarning = true
             settingsWithLocationPermissions.add(getString(R.string.pref_connection_wifi))
         }
@@ -534,7 +546,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
 
                     if ((fineLocation || coarseLocation)) {
-                        if (!DisabledLocationHandler.isLocationEnabled(this, fineLocation)) showLocationDisabledWarning = true
+                        if (!DisabledLocationHandler.isLocationEnabled(this)) showLocationDisabledWarning = true
                         settingsWithLocationPermissions.add(getString(basicSensor.name))
                     }
                 }
@@ -570,26 +582,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val payload = json.getJSONObject("payload")
         val uri = Uri.parse(payload.getString("url"))
         exoMute = payload.optBoolean("muted")
-        val dataSourceFactory = DefaultHttpDataSourceFactory(
-            Util.getUserAgent(
-                applicationContext,
-                getString(R.string.app_name)
-            )
-        )
-        val hlsMediaSource =
-            HlsMediaSource.Factory(dataSourceFactory).createMediaSource(uri)
         val loadControl = DefaultLoadControl.Builder().setBufferDurationsMs(
-            2500,
-            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
-            2500,
-            2500
-        ).createDefaultLoadControl()
+            DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
+            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS, 500,
+            2500).build()
         runOnUiThread {
             exoPlayer =
-                SimpleExoPlayer.Builder(applicationContext).setLoadControl(loadControl)
-                    .build()
-            exoPlayer?.prepare(hlsMediaSource)
+                SimpleExoPlayer.Builder(applicationContext).setLoadControl(loadControl).build()
+            exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
             exoPlayer?.playWhenReady = true
+            exoPlayer?.prepare()
             exoMute = !exoMute
             exoToggleMute()
             exoPlayerView.setPlayer(exoPlayer)
@@ -752,7 +754,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     blurView.setBlurEnabled(false)
                 }
 
-            presenter.onViewReady(intent.getStringExtra(EXTRA_PATH))
+            val path = intent.getStringExtra(EXTRA_PATH)
+            presenter.onViewReady(path)
+            if (path?.startsWith("entityId:") == true)
+                moreInfoEntity = path.substringAfter("entityId:")
             intent.removeExtra(EXTRA_PATH)
 
             if (presenter.isFullScreen())
@@ -851,15 +856,18 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun setStatusBarAndNavigationBarColor(color: Int) {
-        var flags = window.decorView.systemUiVisibility
-        flags = if (ColorUtils.calculateLuminance(color) < 0.5) { // If color is dark...
-            flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv() // Remove light flag
-        } else {
-            flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR // Add light flag
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            var flags = window.decorView.systemUiVisibility
+            flags = if (ColorUtils.calculateLuminance(color) < 0.5) { // If color is dark...
+                flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv() // Remove light flag
+            } else {
+                flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR // Add light flag
+            }
+
+            window.statusBarColor = color
+            window.navigationBarColor = color
+            window.decorView.systemUiVisibility = flags
         }
-        window.statusBarColor = color
-        window.navigationBarColor = color
-        window.decorView.systemUiVisibility = flags
     }
 
     override fun setExternalAuth(script: String) {

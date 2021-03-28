@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Setting
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -794,13 +795,19 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     override val enabledByDefault: Boolean
-        get() = true
+        get() = false
 
     override val name: Int
         get() = R.string.sensor_name_location
 
     override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
+        get() {
+            return if (DisabledLocationHandler.hasGPS(latestContext)) {
+                listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
+            } else {
+                listOf(backgroundLocation, zoneLocation)
+            }
+        }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

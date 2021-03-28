@@ -470,6 +470,7 @@ like to connect to:</string>
   <string name="unique_id">Unique Id</string>
   <string name="update_widget">Update Widget</string>
   <string name="updating_sensors">Updating Sensors</string>
+  <string name="unknown_address">Unknown address</string>
   <string name="url_invalid">Url Invalid</string>
   <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
   <string name="username">Username</string>
@@ -515,6 +516,8 @@ like to connect to:</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
   <string name="what_is_this">What is this?</string>
   <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
+  <string name="basic_sensor_name_battery_temperature">Battery Temperature</string>
+  <string name="sensor_description_battery_temperature">The current battery temperature</string>
   <string name="search_sensors">Search sensors</string>
   <string name="filter_show_only_enabled_sensors">Only enabled sensors</string>
 </resources>

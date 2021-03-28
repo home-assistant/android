@@ -275,6 +275,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 integrationUseCase.getServices().forEach {
                     services[getServiceString(it)] = it
                 }
+                Log.d(TAG, "Services found: $services")
                 if (buttonWidget != null) {
                     serviceAdapter.add(services[serviceText])
                     val serviceData = services[serviceText]!!.serviceData
@@ -321,7 +322,8 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             } catch (e: Exception) {
                 // Custom components can cause services to not load
                 // Display error text
-                widget_config_service_error.visibility = View.VISIBLE
+                Log.e(TAG, "Unable to load services from Home Assistant", e)
+                widget_config_service_error.visibility = VISIBLE
             }
 
             try {

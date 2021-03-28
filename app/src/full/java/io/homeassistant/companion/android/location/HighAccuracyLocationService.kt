@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.location
 
 import android.annotation.SuppressLint
-import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -16,14 +15,12 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.app.ServiceCompat
-import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.sensors.LocationSensorManager
-import java.util.Calendar
+import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -32,51 +29,35 @@ class HighAccuracyLocationService : Service() {
     companion object {
         internal const val TAG = "HighAccLocService"
 
-        private var restartInProcess = false
-        private var isRunning = false
         private lateinit var notificationBuilder: NotificationCompat.Builder
         private lateinit var notification: Notification
         private lateinit var notificationManagerCompat: NotificationManagerCompat
         private var notificationId: Int = 0
 
+        private val LAUNCHER = ForegroundServiceLauncher(HighAccuracyLocationService::class.java)
+
         private const val DEFAULT_UPDATE_INTERVAL_SECONDS = 5
         const val HIGH_ACCURACY_LOCATION_NOTIFICATION_ID = "HighAccuracyLocationNotification"
 
+        @Synchronized
         fun startService(context: Context, intervalInSeconds: Int) {
-            if (!isRunning && !restartInProcess) {
-                val startIntent = Intent(context, HighAccuracyLocationService::class.java)
-                startIntent.putExtra("intervalInSeconds", intervalInSeconds)
-                ContextCompat.startForegroundService(context, startIntent)
-                Log.d(TAG, "Starting high accuracy location service (Interval: ${intervalInSeconds}s)...")
+            Log.d(TAG, "Try starting high accuracy location service (Interval: ${intervalInSeconds}s)...")
+            LAUNCHER.startService(context) {
+                putExtra("intervalInSeconds", intervalInSeconds)
             }
         }
 
+        @Synchronized
         fun stopService(context: Context) {
-            stopService(context, false)
+
+            Log.d(TAG, "Try stopping high accuracy location service...")
+            LAUNCHER.stopService(context)
         }
 
         fun restartService(context: Context, intervalInSeconds: Int) {
-            if (!restartInProcess) {
-                restartInProcess = true
-                if (isRunning) {
-                    Log.d(TAG, "Restarting high accuracy location service (Interval: ${intervalInSeconds}s)...")
-
-                    stopService(context, true)
-
-                    // Restart service in 2 seconds
-                    val restartIntent = Intent(context, HighAccuracyLocationService::class.java)
-                    restartIntent.putExtra("intervalInSeconds", intervalInSeconds)
-                    val restartServicePI = PendingIntent.getService(context, 1, restartIntent, PendingIntent.FLAG_ONE_SHOT)
-
-                    val alarmManager: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                    val calendar: Calendar = Calendar.getInstance()
-                    calendar.timeInMillis = System.currentTimeMillis()
-                    calendar.add(Calendar.SECOND, 2)
-                    alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, restartServicePI)
-                } else {
-                    Log.d(TAG, "Restart (Service not started yet) high accuracy location service (Interval: ${intervalInSeconds}s)...")
-                    startService(context, intervalInSeconds)
-                }
+            Log.d(TAG, "Try restarting high accuracy location service (Interval: ${intervalInSeconds}s)...")
+            LAUNCHER.restartService(context) {
+                putExtra("intervalInSeconds", intervalInSeconds)
             }
         }
 
@@ -88,14 +69,6 @@ class HighAccuracyLocationService : Service() {
             locationReadable = "$locationReadable (~${location.accuracy}m)"
 
             updateNotificationContentText(context, locationReadable)
-        }
-
-        private fun stopService(context: Context, force: Boolean) {
-            if (isRunning && (!restartInProcess || force)) {
-                val stopIntent = Intent(context, HighAccuracyLocationService::class.java)
-                context.stopService(stopIntent)
-                Log.d(TAG, "Stopping high accuracy location service...")
-            }
         }
 
         private fun getFormattedLocationInDegree(latitude: Double, longitude: Double): String {
@@ -122,7 +95,7 @@ class HighAccuracyLocationService : Service() {
         }
 
         private fun updateNotificationContentText(context: Context, text: String) {
-            if (isRunning && !restartInProcess) {
+            if (LAUNCHER.isRunning()) {
                 val notificationManager = NotificationManagerCompat.from(context)
                 val notificationId = HIGH_ACCURACY_LOCATION_NOTIFICATION_ID.hashCode()
                 notificationBuilder
@@ -162,6 +135,8 @@ class HighAccuracyLocationService : Service() {
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
 
     override fun onCreate() {
+        super.onCreate()
+
         notificationId = HIGH_ACCURACY_LOCATION_NOTIFICATION_ID.hashCode()
 
         notificationManagerCompat = NotificationManagerCompat.from(this)
@@ -170,33 +145,29 @@ class HighAccuracyLocationService : Service() {
         createNotificationBuilder(this)
         notification = notificationBuilder.build()
 
-        super.onCreate()
+        LAUNCHER.onServiceCreated(this, notificationId, notification)
+
+        Log.d(TAG, "High accuracy location service created -> onCreate")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        restartInProcess = false
-        isRunning = true
         val intervalInSeconds = intent?.getIntExtra("intervalInSeconds", DEFAULT_UPDATE_INTERVAL_SECONDS) ?: DEFAULT_UPDATE_INTERVAL_SECONDS
         requestLocationUpdates(intervalInSeconds)
 
-        // Start service in foreground
-        startForeground(notificationId, notification)
-        Log.d(TAG, "High accuracy location service (Interval: ${intervalInSeconds}s) started")
+        Log.d(TAG, "High accuracy location service (Interval: ${intervalInSeconds}s) started -> onStartCommand")
         return START_NOT_STICKY
     }
 
     override fun onDestroy() {
-        fusedLocationProviderClient.removeLocationUpdates(getLocationUpdateIntent())
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-        isRunning = false
-        Log.d(TAG, "High accuracy location service stopped")
-
-        // Remove notification again. Sometimes stopForeground(true) is not enough. Just to be sure
-        notificationManagerCompat.cancel(notificationId)
-
         super.onDestroy()
+
+        fusedLocationProviderClient.removeLocationUpdates(getLocationUpdateIntent())
+
+        LAUNCHER.onServiceDestroy(this)
+
+        Log.d(TAG, "High accuracy location service stopped -> onDestroy")
     }
 
     override fun onBind(intent: Intent?): IBinder? {
