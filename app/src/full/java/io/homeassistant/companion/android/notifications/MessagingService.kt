@@ -953,7 +953,7 @@ class MessagingService : FirebaseMessagingService() {
                         actionIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT
                     )
-                    val action: NotificationCompat.Action = NotificationCompat.Action.Builder(0, "reply", replyPendingIntent)
+                    val action: NotificationCompat.Action = NotificationCompat.Action.Builder(0, notificationAction.title, replyPendingIntent)
                         .addRemoteInput(remoteInput)
                         .build()
                     builder.addAction(action)
