@@ -107,8 +107,6 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         setPreferencesFromResource(R.xml.sensors, rootKey)
 
-        showOnlyEnabledSensors = getShowOnlyEnabledSensors()
-
         findPreference<SwitchPreference>("enable_disable_sensors")?.let {
 
             it.setOnPreferenceChangeListener { _, newState ->
@@ -238,28 +236,13 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         when (item.itemId) {
             R.id.action_show_only_enabled_sensors -> {
                 item.isChecked = !item.isChecked
-                setShowOnlyEnabledSensors(item.isChecked)
+                showOnlyEnabledSensors = item.isChecked
 
                 filterSensors()
                 return true
             }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    private fun getShowOnlyEnabledSensors(): Boolean {
-        var showOnlyEnabledSensors = false
-        runBlocking {
-            showOnlyEnabledSensors = integrationUseCase.getShowOnlyEnabledSensors()
-        }
-        return showOnlyEnabledSensors
-    }
-
-    private fun setShowOnlyEnabledSensors(showOnlyEnabledSensors: Boolean) {
-        runBlocking {
-            integrationUseCase.setShowOnlyEnabledSensors(showOnlyEnabledSensors)
-        }
-        SensorsSettingsFragment.showOnlyEnabledSensors = showOnlyEnabledSensors
     }
 
     private fun filterSensors(searchQuery: String? = "") {
