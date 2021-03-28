@@ -3,20 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="bottom"
-    android:layoutDirection="ltr"
-    android:background="#00000000"
-    android:orientation="vertical"
-    tools:targetApi="28">
+    android:background="#00000000">
     <LinearLayout android:id="@+id/exo_play_pause_button"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:paddingTop="4dp"
         android:orientation="horizontal">
-        <ImageButton android:id="@+id/exo_play" android:layout_height="24dp" android:layout_width="24dp"
+        <ImageButton android:id="@+id/exo_play"
+            android:layout_height="24dp" android:layout_width="24dp"
             style="@style/ExoMediaButton.Play"/>
-        <ImageButton android:id="@+id/exo_pause" android:layout_height="24dp" android:layout_width="24dp"
+        <ImageButton android:id="@+id/exo_pause"
+            android:layout_height="24dp" android:layout_width="24dp"
             style="@style/ExoMediaButton.Pause"/>
     </LinearLayout>
     <LinearLayout
@@ -37,7 +34,7 @@
         <View android:id="@+id/exo_progress_placeholder"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:layout_height="26dp"/>
+            android:layout_height="24dp"/>
         <TextView android:id="@+id/exo_duration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -49,21 +46,21 @@
             android:textColor="#FFBEBEBE"/>
         <Space
             android:layout_width="16dp"
-            android:layout_height="1dp"/>
+            android:layout_height="4dp"/>
         <ImageView
             android:id="@+id/exo_mute_icon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_baseline_volume_up_24"/>
         <Space
             android:layout_width="16dp"
-            android:layout_height="1dp"/>
+            android:layout_height="4dp"/>
         <ImageView
             android:id="@+id/exo_fullscreen_icon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_baseline_fullscreen_24"/>

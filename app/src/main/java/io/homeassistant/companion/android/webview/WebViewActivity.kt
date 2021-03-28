@@ -46,11 +46,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.DefaultLoadControl
+import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
-import com.google.android.exoplayer2.util.Util
 import com.google.android.material.textfield.TextInputEditText
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
@@ -74,7 +72,7 @@ import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
-import kotlinx.android.synthetic.main.exo_playback_control_view.*
+import kotlinx.android.synthetic.main.exo_player_control_view.*
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 
@@ -164,7 +162,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             .setBlurRadius(5f)
             .setHasFixedTransformationMatrix(false)
 
-        exoPlayerView = findViewById(R.id.exoplayerView)
+        exoPlayerView = findViewById<PlayerView>(R.id.exoplayerView)
         exoPlayerView.visibility = View.GONE
         exoPlayerView.setBackgroundColor(Color.BLACK)
         exoPlayerView.alpha = 1f
@@ -584,26 +582,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val payload = json.getJSONObject("payload")
         val uri = Uri.parse(payload.getString("url"))
         exoMute = payload.optBoolean("muted")
-        val dataSourceFactory = DefaultHttpDataSourceFactory(
-            Util.getUserAgent(
-                applicationContext,
-                getString(R.string.app_name)
-            )
-        )
-        val hlsMediaSource =
-            HlsMediaSource.Factory(dataSourceFactory).createMediaSource(uri)
         val loadControl = DefaultLoadControl.Builder().setBufferDurationsMs(
-            2500,
-            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS,
-            2500,
-            2500
-        ).createDefaultLoadControl()
+            DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
+            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS, 500,
+            2500).build()
         runOnUiThread {
             exoPlayer =
-                SimpleExoPlayer.Builder(applicationContext).setLoadControl(loadControl)
-                    .build()
-            exoPlayer?.prepare(hlsMediaSource)
+                SimpleExoPlayer.Builder(applicationContext).setLoadControl(loadControl).build()
+            exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
             exoPlayer?.playWhenReady = true
+            exoPlayer?.prepare()
             exoMute = !exoMute
             exoToggleMute()
             exoPlayerView.setPlayer(exoPlayer)
