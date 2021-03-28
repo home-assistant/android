@@ -26,7 +26,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
         private const val PATH_SUFFIX = "_path"
         private const val UPDATE_SUFFIX = "_update"
         private const val CATEGORY_SUFFIX = "_category"
-        private const val PIN_SUFFIX = "_pin"
         private const val DELETE_SUFFIX = "_delete"
         private const val TAG = "ManageShortcutFrag"
         fun newInstance(): ManageShortcutsSettingsFragment {
@@ -62,18 +61,12 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             val deletePreference = findPreference<Preference>(SHORTCUT_PREFIX + i + DELETE_SUFFIX)
 
             addUpdatePreference?.isEnabled = !(shortcutLabel.isNullOrEmpty() || shortcutDesc.isNullOrEmpty() || shortcutPath.isNullOrEmpty())
-            val pinPreference = findPreference<Preference>(SHORTCUT_PREFIX + i + PIN_SUFFIX)
 
             for (item in dynamicShortcuts) {
                 if (item.id == SHORTCUT_PREFIX + i) {
                     addUpdatePreference?.title = getString(R.string.update_shortcut)
                     deletePreference?.isVisible = true
                 }
-            }
-
-            for (item in pinnedShortcuts) {
-                if (item.id == SHORTCUT_PREFIX + i)
-                    pinPreference?.title = getString(R.string.update_pinned_shortcut)
             }
 
             findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + LABEL_SUFFIX)?.let {
