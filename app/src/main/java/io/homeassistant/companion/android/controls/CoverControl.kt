@@ -8,8 +8,8 @@ import android.service.controls.Control
 import android.service.controls.DeviceTypes
 import android.service.controls.actions.BooleanAction
 import android.service.controls.actions.ControlAction
-import android.service.controls.templates.ControlButton
 import android.service.controls.actions.FloatAction
+import android.service.controls.templates.ControlButton
 import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
