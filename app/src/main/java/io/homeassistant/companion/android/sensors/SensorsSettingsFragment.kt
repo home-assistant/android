@@ -27,7 +27,6 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
 
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
