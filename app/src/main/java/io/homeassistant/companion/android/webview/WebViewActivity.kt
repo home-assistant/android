@@ -138,6 +138,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoBottom: Int = 0
     private var exoMute: Boolean = true
     private var failedConnection = "external"
+    private var moreInfoEntity = ""
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -212,6 +213,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     if (failingUrl == loadedUrl) {
                         showError()
                     }
+                }
+
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    if (moreInfoEntity != "") {
+                        Log.d(TAG, "More info entity: $moreInfoEntity")
+                        webView.evaluateJavascript("document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))", null)
+                    }
+                    moreInfoEntity = ""
                 }
 
                 override fun onReceivedHttpError(
@@ -757,7 +766,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     blurView.setBlurEnabled(false)
                 }
 
-            presenter.onViewReady(intent.getStringExtra(EXTRA_PATH))
+            val path = intent.getStringExtra(EXTRA_PATH)
+            presenter.onViewReady(path)
+            if (path?.startsWith("entityId:") == true)
+                moreInfoEntity = path.substringAfter("entityId:")
             intent.removeExtra(EXTRA_PATH)
 
             if (presenter.isFullScreen())

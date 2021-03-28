@@ -23,7 +23,7 @@ import kotlinx.coroutines.runBlocking
 @RequiresApi(Build.VERSION_CODES.R)
 class LightControl {
     companion object : HaControl {
-        const val SUPPORT_BRIGHTNESS = 1
+        private const val SUPPORT_BRIGHTNESS = 1
 
         override fun createControl(
             context: Context,
@@ -34,7 +34,7 @@ class LightControl {
                 PendingIntent.getActivity(
                     context,
                     0,
-                    WebViewActivity.newInstance(context.applicationContext).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )

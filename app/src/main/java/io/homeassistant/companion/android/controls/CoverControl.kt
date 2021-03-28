@@ -28,7 +28,7 @@ class CoverControl {
             PendingIntent.getActivity(
                 context,
                 0,
-                WebViewActivity.newInstance(context.applicationContext).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_CANCEL_CURRENT
             )
         )
