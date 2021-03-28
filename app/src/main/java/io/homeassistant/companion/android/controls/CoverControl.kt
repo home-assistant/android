@@ -9,10 +9,10 @@ import android.service.controls.DeviceTypes
 import android.service.controls.actions.BooleanAction
 import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
-import android.service.controls.templates.ToggleTemplate
 import android.service.controls.actions.FloatAction
 import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
+import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -24,10 +24,9 @@ import kotlinx.coroutines.runBlocking
 class CoverControl {
     companion object : HaControl {
         const val SUPPORT_SET_POSITION = 4
-
         override fun createControl(
-                context: Context,
-                entity: Entity<Map<String, Any>>
+            context: Context,
+            entity: Entity<Map<String, Any>>
         ): Control {
             val control = Control.StatefulBuilder(
                     entity.entityId,
@@ -69,7 +68,7 @@ class CoverControl {
             val minValue = 0f
             val maxValue = 100f
             var currentValue =
-                    (entity.attributes["current_position"] as? Number)?.toFloat()?: 0f
+                    (entity.attributes["current_position"] as? Number)?.toFloat() ?: 0f
             if (currentValue < minValue)
                 currentValue = minValue
             if (currentValue > maxValue)
@@ -78,7 +77,7 @@ class CoverControl {
                     if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_POSITION == SUPPORT_SET_POSITION)
                         ToggleRangeTemplate(
                                 entity.entityId,
-                                entity.state !in listOf("closed","closing"),
+                                entity.state !in listOf("closed", "closing"),
                                 "",
                                 RangeTemplate(
                                         entity.entityId,
@@ -93,7 +92,7 @@ class CoverControl {
                         ToggleTemplate(
                                 entity.entityId,
                                 ControlButton(
-                                        entity.state in listOf("open","opening"),
+                                        entity.state in listOf("open", "opening"),
                                         "Description"
                                 )
                         )
@@ -101,8 +100,8 @@ class CoverControl {
             return control.build()
         }
         override fun performAction(
-                integrationRepository: IntegrationRepository,
-                action: ControlAction
+            integrationRepository: IntegrationRepository,
+            action: ControlAction
         ): Boolean {
             return runBlocking {
                 return@runBlocking when (action) {
