@@ -105,8 +105,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 val context = requireContext()
                 enableAllSensors = newState as Boolean
 
-                val locationEnabledFine = DisabledLocationHandler.isLocationEnabled(context, true)
-                val locationEnabledCoarse = DisabledLocationHandler.isLocationEnabled(context, false)
+                val locationEnabled = DisabledLocationHandler.isLocationEnabled(context)
 
                 SensorReceiver.MANAGERS.forEach { managers ->
                     managers.availableSensors.forEach { basicSensor ->
@@ -120,8 +119,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                         // Only if one of the options is true, enable the sensor
                         if (!enableAllSensors || // All Sensors switch is disabled
                             !locationPermission || // No location permission used for sensor
-                            (locationEnabledCoarse && locationPermissionCoarse) || // Coarse location used for sensor and location coarse is enabled in settings
-                            (locationEnabledFine && locationPermissionFine) // Fine location used for sensor and location fine is enabled in settings
+                            (locationEnabled && locationPermissionCoarse) || // Coarse location used for sensor and location is enabled in settings
+                            (locationEnabled && locationPermissionFine) // Fine location used for sensor and location is enabled in settings
                         ) {
                             enableSensor = enableAllSensors
                         } else {
@@ -158,8 +157,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         SensorReceiver.MANAGERS.sortedBy { getString(it.name) }.filter { it.hasSensor(requireContext()) }.forEach { manager ->
             val prefCategory = PreferenceCategory(preferenceScreen.context)
             prefCategory.title = getString(manager.name)
-
             preferenceScreen.addPreference(prefCategory)
+
             manager.availableSensors.sortedBy { getString(it.name) }.forEach { basicSensor ->
 
                 val pref = Preference(preferenceScreen.context)
