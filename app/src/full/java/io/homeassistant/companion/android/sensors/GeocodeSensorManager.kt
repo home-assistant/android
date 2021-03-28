@@ -92,19 +92,14 @@ class GeocodeSensorManager : SensorManager {
                 )
             }.orEmpty()
 
-            var prettyAddressFound = true
             var prettyAddress = address?.getAddressLine(0)
-            if (prettyAddress == null) {
-                prettyAddressFound = false
-                prettyAddress = context.getString(R.string.unknown_address)
-            }
 
-            HighAccuracyLocationService.updateNotificationAddress(context, location, prettyAddress)
+            HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(R.string.unknown_address))
 
             onSensorUpdated(
                 context,
                 geocodedLocation,
-                if (prettyAddressFound) prettyAddress else "Unknown",
+                if (!prettyAddress.isNullOrEmpty()) prettyAddress else "Unknown",
                 "mdi:map",
                 attributes
             )
