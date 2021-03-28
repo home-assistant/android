@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.url
 
+import android.util.Log
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
@@ -21,6 +22,7 @@ class UrlRepositoryImpl @Inject constructor(
         private const val PREF_WEBHOOK_ID = "webhook_id"
         private const val PREF_LOCAL_URL = "local_url"
         private const val PREF_WIFI_SSIDS = "wifi_ssids"
+        private const val TAG = "UrlRepository"
     }
 
     override suspend fun getApiUrls(): Array<URL> {
@@ -77,8 +79,10 @@ class UrlRepositoryImpl @Inject constructor(
         val external = localStorage.getString(PREF_REMOTE_URL)?.toHttpUrlOrNull()?.toUrl()
 
         return if (isInternal ?: isInternal() && internal != null) {
+            Log.d(TAG, "Using internal URL")
             internal
         } else {
+            Log.d(TAG, "Using external URL")
             external
         }
     }
@@ -112,6 +116,7 @@ class UrlRepositoryImpl @Inject constructor(
         val wifiSsids = getHomeWifiSsids()
         val usesInternalSsid = formattedSsid in wifiSsids
         val localUrl = localStorage.getString(PREF_LOCAL_URL)
+        Log.d(TAG, "localUrl is: ${!localUrl.isNullOrBlank()} and usesInternalSsid is: $usesInternalSsid")
         return !localUrl.isNullOrBlank() && usesInternalSsid
     }
 }

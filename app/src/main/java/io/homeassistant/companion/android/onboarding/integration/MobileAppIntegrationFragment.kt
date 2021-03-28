@@ -72,12 +72,12 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
             findViewById<SwitchMaterial>(R.id.locationTracking)?.let {
                 val sensorId = LocationSensorManager.backgroundLocation.id
-                it.isChecked = DisabledLocationHandler.isLocationEnabled(context, true) && LocationSensorManager().checkPermission(context, sensorId)
+                setLocationTracking(it, DisabledLocationHandler.isLocationEnabled(context) && LocationSensorManager().checkPermission(context, sensorId))
                 it.setOnCheckedChangeListener { _, isChecked ->
                     var checked = isChecked
                     if (isChecked) {
 
-                        val locationEnabled = DisabledLocationHandler.isLocationEnabled(context, true)
+                        val locationEnabled = DisabledLocationHandler.isLocationEnabled(context)
                         val permissionOk = LocationSensorManager().checkPermission(requireContext(), sensorId)
 
                         if (!locationEnabled) {
@@ -99,8 +99,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
                         }
                     }
 
-                    setLocationTracking(checked)
-                    it.isChecked = checked
+                    setLocationTracking(it, checked)
                 }
             }
 
@@ -171,19 +170,21 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         dialog?.dismiss()
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+        ) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), LOCATION_REQUEST_CODE)
         }
 
         if (requestCode == LOCATION_REQUEST_CODE) {
             val hasPermission = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            locationTracking.isChecked = hasPermission
-            setLocationTracking(hasPermission)
+            setLocationTracking(locationTracking, hasPermission)
             requestBackgroundAccess()
         }
     }
 
-    private fun setLocationTracking(enabled: Boolean) {
+    private fun setLocationTracking(locationTrackingSwitch: SwitchMaterial, enabled: Boolean) {
+        locationTrackingSwitch.isChecked = enabled
+
         val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
         arrayOf(
             LocationSensorManager.backgroundLocation,

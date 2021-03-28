@@ -92,14 +92,14 @@ class GeocodeSensorManager : SensorManager {
                 )
             }.orEmpty()
 
-            val prettyAddress = address?.getAddressLine(0) ?: "Unknown"
+            var prettyAddress = address?.getAddressLine(0)
 
-            HighAccuracyLocationService.updateNotificationAddress(context, location, prettyAddress)
+            HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(R.string.unknown_address))
 
             onSensorUpdated(
                 context,
                 geocodedLocation,
-                prettyAddress,
+                if (!prettyAddress.isNullOrEmpty()) prettyAddress else "Unknown",
                 "mdi:map",
                 attributes
             )

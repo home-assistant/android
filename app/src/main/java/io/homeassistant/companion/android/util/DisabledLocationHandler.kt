@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.LocationManager
 import android.os.Build.VERSION
@@ -20,13 +21,18 @@ import io.homeassistant.companion.android.R
 object DisabledLocationHandler {
     private const val DISABLED_LOCATION_WARN_ID = "DisabledLocationWarning"
 
-    fun isLocationEnabled(context: Context, fineLocation: Boolean): Boolean {
+    fun hasGPS(context: Context): Boolean {
+        val pm = context.packageManager
+        return pm.hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS)
+    }
+
+    fun isLocationEnabled(context: Context): Boolean {
         val lm: LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         return if (VERSION.SDK_INT >= VERSION_CODES.P) {
             lm.isLocationEnabled
         } else {
-            (!fineLocation && lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || (fineLocation && lm.isProviderEnabled(LocationManager.GPS_PROVIDER)))
+            lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
         }
     }
 
@@ -59,6 +65,10 @@ object DisabledLocationHandler {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
         intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+
+        if (intent.resolveActivity(activity.packageManager) == null) {
+            intent.action = Settings.ACTION_SETTINGS
+        }
 
         var parameters = ""
         for (setting in settings)

@@ -66,15 +66,18 @@ class NextAlarmManager : SensorManager {
 
             if (alarmClockInfo != null) {
                 pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: "Unknown"
+                triggerTime = alarmClockInfo.triggerTime
 
+                Log.d(TAG, "Next alarm is scheduled by $pendingIntent with trigger time $triggerTime")
                 if (allowPackageList != "") {
                     val allowPackageListing = allowPackageList.split(", ")
-                    if (pendingIntent !in allowPackageListing)
+                    if (pendingIntent !in allowPackageListing) {
+                        Log.d(TAG, "Skipping update from $pendingIntent as it is not in the allow list")
                         return
+                    }
                 } else {
                     sensorDao.add(Setting(nextAlarm.id, ALLOW_LIST, allowPackageList, "list-apps"))
                 }
-                triggerTime = alarmClockInfo.triggerTime
 
                 val cal: Calendar = GregorianCalendar()
                 cal.timeInMillis = triggerTime
@@ -84,7 +87,8 @@ class NextAlarmManager : SensorManager {
                 val sdf = SimpleDateFormat(dateFormat)
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
-            }
+            } else
+                Log.d(TAG, "No alarm is scheduled, sending unavailable")
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)
         }
