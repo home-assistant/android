@@ -455,6 +455,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 webView.evaluateJavascript(script) {
                                     Log.d(TAG, "Callback $it")
                                 }
+
+                                // Set statusbar color
+                                webView.evaluateJavascript("document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0];") {
+                                    presenter.setStatusbarColor(it)
+                                }
                             }
                             "config_screen/show" ->
                                 startActivity(
@@ -851,15 +856,18 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun setStatusBarAndNavigationBarColor(color: Int) {
-        var flags = window.decorView.systemUiVisibility
-        flags = if (ColorUtils.calculateLuminance(color) < 0.5) { // If color is dark...
-            flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv() // Remove light flag
-        } else {
-            flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR // Add light flag
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            var flags = window.decorView.systemUiVisibility
+            flags = if (ColorUtils.calculateLuminance(color) < 0.5) { // If color is dark...
+                flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv() // Remove light flag
+            } else {
+                flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR // Add light flag
+            }
+
+            window.statusBarColor = color
+            window.navigationBarColor = color
+            window.decorView.systemUiVisibility = flags
         }
-        window.statusBarColor = color
-        window.navigationBarColor = color
-        window.decorView.systemUiVisibility = flags
     }
 
     override fun setExternalAuth(script: String) {
