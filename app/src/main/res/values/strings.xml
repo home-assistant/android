@@ -513,4 +513,6 @@ like to connect to:</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
   <string name="what_is_this">What is this?</string>
   <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
+  <string name="basic_sensor_name_battery_temperature">Battery Temperature</string>
+  <string name="sensor_description_battery_temperature">The current battery temperature</string>
 </resources>
