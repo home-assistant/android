@@ -26,7 +26,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
         private const val PATH_SUFFIX = "_path"
         private const val UPDATE_SUFFIX = "_update"
         private const val CATEGORY_SUFFIX = "_category"
-        private const val PIN_SUFFIX = "_pin"
         private const val DELETE_SUFFIX = "_delete"
         private const val TAG = "ManageShortcutFrag"
         fun newInstance(): ManageShortcutsSettingsFragment {
@@ -59,19 +58,9 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             var shortcutDesc = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + DESC_SUFFIX)?.text
             var shortcutPath = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + PATH_SUFFIX)?.text
             val addUpdatePreference = findPreference<Preference>(SHORTCUT_PREFIX + i + UPDATE_SUFFIX)
-            val pinPreference = findPreference<Preference>(SHORTCUT_PREFIX + i + PIN_SUFFIX)
             val deletePreference = findPreference<Preference>(SHORTCUT_PREFIX + i + DELETE_SUFFIX)
 
-            if (shortcutLabel.isNullOrEmpty() || shortcutDesc.isNullOrEmpty() || shortcutPath.isNullOrEmpty()) {
-                addUpdatePreference?.isEnabled = false
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported) {
-                    pinPreference?.isVisible = false
-                }
-            } else {
-                addUpdatePreference?.isEnabled = true
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported)
-                    pinPreference?.isVisible = true
-            }
+            addUpdatePreference?.isEnabled = !(shortcutLabel.isNullOrEmpty() || shortcutDesc.isNullOrEmpty() || shortcutPath.isNullOrEmpty())
 
             for (item in dynamicShortcuts) {
                 if (item.id == SHORTCUT_PREFIX + i) {
@@ -80,25 +69,12 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 }
             }
 
-            for (item in pinnedShortcuts) {
-                if (item.id == SHORTCUT_PREFIX + i)
-                    pinPreference?.title = getString(R.string.update_pinned_shortcut)
-            }
-
             findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + LABEL_SUFFIX)?.let {
                 it.title = "${getString(R.string.shortcut)} $i ${getString(R.string.label)}"
                 it.dialogTitle = "${getString(R.string.shortcut)} $i ${getString(R.string.label)}"
                 it.setOnPreferenceChangeListener { _, newValue ->
                     shortcutLabel = newValue.toString()
-                    if (!shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()) {
-                        addUpdatePreference?.isEnabled = true
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported)
-                            pinPreference?.isVisible = true
-                    } else {
-                        addUpdatePreference?.isEnabled = false
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported)
-                            pinPreference?.isVisible = false
-                    }
+                    addUpdatePreference?.isEnabled = !shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()
                     return@setOnPreferenceChangeListener true
                 }
             }
@@ -108,15 +84,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 it.dialogTitle = "${getString(R.string.shortcut)} $i ${getString(R.string.description)}"
                 it.setOnPreferenceChangeListener { _, newValue ->
                     shortcutDesc = newValue.toString()
-                    if (!shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()) {
-                        addUpdatePreference?.isEnabled = true
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported)
-                            pinPreference?.isVisible = true
-                    } else {
-                        addUpdatePreference?.isEnabled = false
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported)
-                            pinPreference?.isVisible = false
-                    }
+                    addUpdatePreference?.isEnabled = !shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()
                     return@setOnPreferenceChangeListener true
                 }
             }
@@ -124,15 +92,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + PATH_SUFFIX)?.let {
                 it.setOnPreferenceChangeListener { _, newValue ->
                     shortcutPath = newValue.toString()
-                    if (!shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()) {
-                        addUpdatePreference?.isEnabled = true
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported)
-                            pinPreference?.isVisible = true
-                    } else {
-                        addUpdatePreference?.isEnabled = false
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported)
-                            pinPreference?.isVisible = false
-                    }
+                    addUpdatePreference?.isEnabled = !shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()
                     return@setOnPreferenceChangeListener true
                 }
             }
@@ -157,30 +117,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 it.isVisible = false
                 return@setOnPreferenceClickListener true
             }
-
-            pinPreference?.setOnPreferenceClickListener {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported) {
-                    if (!shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()) {
-
-                        Log.d(TAG, "Starting to pin")
-                        val shortcut = createShortcut(SHORTCUT_PREFIX + i, shortcutLabel!!, shortcutDesc!!, shortcutPath!!)
-                        var isNewPinned = true
-                        for (item in pinnedShortcuts) {
-                            if (item.id == SHORTCUT_PREFIX + i) {
-                                isNewPinned = false
-                                Log.d(TAG, "Updating pinned shortcut #: $i")
-                                shortcutManager.updateShortcuts(listOf(shortcut))
-                            }
-                        }
-                        if (isNewPinned) {
-                            Log.d(TAG, "Requesting to pin shortcut #: $i")
-                            shortcutManager.requestPinShortcut(shortcut, null)
-                        }
-                    }
-                }
-                pinnedShortcuts = shortcutManager.pinnedShortcuts
-                return@setOnPreferenceClickListener true
-            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported) {
@@ -191,10 +127,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             var pinnedShortcutPath = findPreference<EditTextPreference>("pinned_shortcut_path")?.text
             val pinnedShortcutPref = findPreference<Preference>("pinned_shortcut_pin")
             val pinnedList = findPreference<ListPreference>("pinned_shortcut_list")
-            val pinnedShortcutIds = pinnedShortcuts.asSequence().map { it.id }
-                    .minus("shortcut1").minus("shortcut2")
-                    .minus("shortcut3").minus("shortcut4")
-                    .minus("shortcut5").toList()
+            val pinnedShortcutIds = pinnedShortcuts.asSequence().map { it.id }.toList()
 
             if (pinnedShortcutIds.isNotEmpty()) {
                 pinnedList?.isVisible = true

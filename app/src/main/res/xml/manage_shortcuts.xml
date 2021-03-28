@@ -33,10 +33,6 @@
             android:title="@string/delete_shortcut"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false" />
-        <Preference
-            android:key="shortcut1_pin"
-            android:title="@string/pin_shortcut"
-            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -63,10 +59,6 @@
             android:key="shortcut2_delete"
             android:title="@string/delete_shortcut"
             app:isPreferenceVisible="false"
-            app:iconSpaceReserved="false" />
-        <Preference
-            android:key="shortcut2_pin"
-            android:title="@string/pin_shortcut"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
@@ -95,10 +87,6 @@
             android:title="@string/delete_shortcut"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false" />
-        <Preference
-            android:key="shortcut3_pin"
-            android:title="@string/pin_shortcut"
-            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -125,10 +113,6 @@
             android:key="shortcut4_delete"
             android:title="@string/delete_shortcut"
             app:isPreferenceVisible="false"
-            app:iconSpaceReserved="false" />
-        <Preference
-            android:key="shortcut4_pin"
-            android:title="@string/pin_shortcut"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
@@ -162,10 +146,6 @@
             android:title="@string/delete_shortcut"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false" />
-        <Preference
-            android:key="shortcut5_pin"
-            android:title="@string/pin_shortcut"
-            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -181,6 +161,7 @@
         <ListPreference
             android:key="pinned_shortcut_list"
             android:title="@string/shortcut_pinned_list"
+            app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false"
             app:isPreferenceVisible="false" />
         <EditTextPreference

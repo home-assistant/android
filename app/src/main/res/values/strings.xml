@@ -434,7 +434,7 @@ like to connect to:</string>
   <string name="pin_shortcut">Pin Shortcut</string>
   <string name="update_pinned_shortcut">Update Pinned Shortcut Data</string>
   <string name="shortcut_instruction_title">Shortcut Instructions</string>
-  <string name="shortcut_instruction_desc">Use the below sections to create your shortcuts. Once you have added a shortcut you will need to drag it on your home screen after long pressing on the app icon. Although Android supports up to 5 dynamic shortcuts most launchers will only show 4 shortcuts. Supported devices can also pin an unlimited amount of shortcuts directly on the home screen.</string>
+  <string name="shortcut_instruction_desc">Use the below sections to create your shortcuts. Once you have added a shortcut you will need to drag it on your home screen after long pressing on the app icon. Although Android supports up to 5 dynamic shortcuts most launchers will only show 4 shortcuts.</string>
   <string name="shortcut5_note">Not all launchers support displaying 5 shortcuts, you may not see this shortcut if the above 4 are already added.</string>
   <string name="shortcuts">Shortcuts</string>
   <string name="shortcuts_summary">Add shortcuts to launcher</string>
