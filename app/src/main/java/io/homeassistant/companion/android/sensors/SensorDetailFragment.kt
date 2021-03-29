@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.text.InputType
+import android.util.Log
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
@@ -43,6 +44,8 @@ class SensorDetailFragment(
         ): SensorDetailFragment {
             return SensorDetailFragment(sensorManager, basicSensor, integrationUseCase)
         }
+
+        private const val TAG = "SensorDetailFragment"
     }
 
     private lateinit var sensorDao: SensorDao
@@ -280,9 +283,13 @@ class SensorDetailFragment(
                         val pref = createListPreference(key, setting, sensorDao, btDevices)
                         if (!it.contains(pref)) it.addPreference(pref)
                     } else if (setting.valueType == "list-zones") {
-                        val zones: List<String>
+                        var zones: List<String> = emptyList()
                         runBlocking {
-                            zones = integrationUseCase.getZones().map { z -> z.entityId }
+                            try {
+                                zones = integrationUseCase.getZones().map { z -> z.entityId }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error receiving zones from Home Assistant")
+                            }
                         }
 
                         val pref = createListPreference(key, setting, sensorDao, zones)
