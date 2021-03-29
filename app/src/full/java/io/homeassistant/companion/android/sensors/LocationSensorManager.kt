@@ -808,7 +808,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     override val name: Int
         get() = R.string.sensor_name_location
 
-
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             arrayOf(
