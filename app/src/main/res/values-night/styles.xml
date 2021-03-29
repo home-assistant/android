@@ -19,4 +19,12 @@
         <item name="windowMinWidthMinor">0dp</item>
         <item name="android:textColorPrimary">@color/colorDialogMessage</item>
     </style>
+
+    <style name="ThemeOverlay.HomeAssistant.ActionBar" parent="ThemeOverlay.MaterialComponents.ActionBar">
+        <item name="popupTheme">@style/Theme.HomeAssistant.PopupTheme</item>
+    </style>
+
+    <style name="Theme.HomeAssistant.PopupTheme" parent="ThemeOverlay.MaterialComponents.Dark">
+        <item name="android:background">@color/colorActionBarPopupBackground</item>
+    </style>
 </resources>

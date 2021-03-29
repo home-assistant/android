@@ -7,11 +7,18 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.SearchView
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.view.MenuItemCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceGroup
 import androidx.preference.SwitchPreference
+import androidx.preference.forEach
+import androidx.preference.iterator
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -39,14 +46,16 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                         val sensorEntity = sensorDao.get(basicSensor.id)
                         if (sensorEntity?.enabled == true) {
                             totalEnabledSensors += 1
-                            if (basicSensor.unitOfMeasurement.isNullOrBlank())
-                                it.summary = sensorEntity.state
-                            else
-                                it.summary = sensorEntity.state + " " + basicSensor.unitOfMeasurement
+                            if (!sensorEntity.state.isNullOrBlank()) {
+                                if (basicSensor.unitOfMeasurement.isNullOrBlank()) it.summary = sensorEntity.state
+                                else it.summary = sensorEntity.state + " " + basicSensor.unitOfMeasurement
+                            } else {
+                                it.summary = getString(R.string.enabled)
+                            }
                             // TODO: Add the icon from mdi:icon?
                         } else {
                             totalDisabledSensors += 1
-                            it.summary = "Disabled"
+                            it.summary = getString(R.string.disabled)
                         }
                     }
                 }
@@ -81,6 +90,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         private var permissionsAllGranted = true
         private var settingsWithLocation = mutableListOf<String>()
         private var enableAllSensors = false
+        private var showOnlyEnabledSensors = false
 
         fun newInstance(): SensorsSettingsFragment {
             return SensorsSettingsFragment()
@@ -160,11 +170,10 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             preferenceScreen.addPreference(prefCategory)
 
             manager.availableSensors.sortedBy { getString(it.name) }.forEach { basicSensor ->
-
                 val pref = Preference(preferenceScreen.context)
                 pref.key = basicSensor.id
                 pref.title = getString(basicSensor.name)
-
+                pref.isVisible = !showOnlyEnabledSensors || (showOnlyEnabledSensors && manager.isEnabled(requireContext(), basicSensor.id))
                 pref.setOnPreferenceClickListener {
                     parentFragmentManager
                         .beginTransaction()
@@ -184,10 +193,95 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 prefCategory.addPreference(pref)
             }
         }
+
+        if (showOnlyEnabledSensors) showHideGroupsIfNeeded()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Needed to call onPrepareOptionsMenu
+        setHasOptionsMenu(true)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+
+        menu.setGroupVisible(R.id.toolbar_group, true)
+
+        val searchViewItem = menu.findItem(R.id.action_search)
+        val searchView: SearchView = MenuItemCompat.getActionView(searchViewItem) as SearchView
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
+
+                return false
+            }
+
+            override fun onQueryTextChange(query: String?): Boolean {
+                filterSensors(query)
+                return false
+            }
+        })
+
+        if (showOnlyEnabledSensors) {
+            val checkable = menu.findItem(R.id.action_show_only_enabled_sensors)
+            checkable.isChecked = true
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_show_only_enabled_sensors -> {
+                item.isChecked = !item.isChecked
+                showOnlyEnabledSensors = item.isChecked
+
+                filterSensors()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun filterSensors(searchQuery: String? = "") {
+        SensorReceiver.MANAGERS.filter { m -> m.hasSensor(requireContext()) }.forEach { manager ->
+            manager.availableSensors.forEach { sensor ->
+                val pref = findPreference<Preference>(sensor.id)
+                if (pref != null) {
+                    pref.isVisible = true
+                    if (!searchQuery.isNullOrBlank()) {
+                        val found = pref.title.contains(searchQuery, true)
+                        pref.isVisible = found
+                    } else {
+                        if (showOnlyEnabledSensors) {
+                            pref.isVisible = manager.isEnabled(requireContext(), sensor.id)
+                        }
+                    }
+                }
+            }
+        }
+        showHideGroupsIfNeeded()
+    }
+
+    private fun showHideGroupsIfNeeded() {
+        for (pref in preferenceScreen) {
+            val prefGroup = pref as? PreferenceGroup
+            if (prefGroup != null) {
+                prefGroup.isVisible = false
+
+                prefGroup.forEach { pref ->
+                    if (pref.isVisible) {
+                        prefGroup.isVisible = true
+                        return@forEach
+                    }
+                }
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        filterSensors()
         handler.postDelayed(refresh, 0)
     }
 
@@ -284,5 +378,6 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 }
             }
         }
+        filterSensors()
     }
 }

@@ -15,4 +15,5 @@
     <color name="colorIcon">@android:color/white</color>
     <color name="colorWidgetButtonBackground">#1c1c1c</color>
     <color name="colorWidgetButtonLabel">#E6E6E6</color>
+    <color name="colorActionBarPopupBackground">#2B2B2B</color>
 </resources>
