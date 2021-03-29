@@ -629,7 +629,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         try {
             configuredZones = integrationUseCase.getZones()
         } catch (e: Exception) {
-            Log.e(TAG, "Error receiving zones from Home Assistant")
+            Log.e(TAG, "Error receiving zones from Home Assistant", e)
         }
 
         val highAccuracyTriggerRange = getHighAccuracyModeTriggerRange()

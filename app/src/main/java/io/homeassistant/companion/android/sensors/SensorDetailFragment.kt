@@ -288,7 +288,7 @@ class SensorDetailFragment(
                             try {
                                 zones = integrationUseCase.getZones().map { z -> z.entityId }
                             } catch (e: Exception) {
-                                Log.e(TAG, "Error receiving zones from Home Assistant")
+                                Log.e(TAG, "Error receiving zones from Home Assistant", e)
                             }
                         }
 
