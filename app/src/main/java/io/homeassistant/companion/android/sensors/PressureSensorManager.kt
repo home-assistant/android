@@ -35,8 +35,9 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     override val name: Int
         get() = R.string.sensor_name_pressure
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(pressureSensor)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(pressureSensor)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()

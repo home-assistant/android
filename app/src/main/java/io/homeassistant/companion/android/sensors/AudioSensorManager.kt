@@ -78,8 +78,9 @@ class AudioSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_audio
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(audioSensor, audioState, headphoneState, micMuted, speakerphoneState, musicActive, volAlarm, volCall, volMusic, volRing)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(audioSensor, audioState, headphoneState, micMuted, speakerphoneState, musicActive, volAlarm, volCall, volMusic, volRing)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()

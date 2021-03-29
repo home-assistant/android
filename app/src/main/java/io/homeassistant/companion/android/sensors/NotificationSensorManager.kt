@@ -34,8 +34,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     }
     override val name: Int
         get() = R.string.sensor_name_last_notification
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(lastNotification, lastRemovedNotification, activeNotificationCount)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(lastNotification, lastRemovedNotification, activeNotificationCount)
+    }
     override val enabledByDefault: Boolean
         get() = false
 

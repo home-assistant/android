@@ -23,8 +23,9 @@ class TimeZoneManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_time_zone
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(currentTimeZone)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(currentTimeZone)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()

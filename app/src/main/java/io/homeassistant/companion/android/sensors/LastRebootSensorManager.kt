@@ -35,8 +35,9 @@ class LastRebootSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_last_reboot
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(lastRebootSensor)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(lastRebootSensor)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
