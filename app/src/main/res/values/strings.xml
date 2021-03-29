@@ -131,6 +131,7 @@ to your home internet.</string>
   <string name="dialog_add_panel_shortcut_content">Create a shortcut to this item?</string>
   <string name="dialog_add_panel_shortcut_title">Add Shortcut</string>
   <string name="disable">Disable</string>
+  <string name="disabled">Disabled</string>
   <string name="disable_all_sensors">Disable All %1$d Sensors</string>
   <string name="documentation">Documentation</string>
   <string name="domain_automation">Automation</string>
@@ -152,7 +153,7 @@ to your home internet.</string>
   <string name="enable_location_tracking_prompt">This app collects location data to enable Location Tracking, Wifi Connection Status, and URL decision making even when the app is closed or not in use.</string>
   <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
-  <string name="enabled_title">Enabled</string>
+  <string name="enabled">Enabled</string>
   <string name="entity_attribute_checkbox">Append Attribute Value</string>
   <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
   <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
@@ -164,6 +165,7 @@ integration enabled on your home assistant instance.</string>
   <string name="exit">Exit</string>
   <string name="failed_scan">Scanning for Home Assistant failed.</string>
   <string name="filter_notifications">Filter Notifications</string>
+  <string name="filter_sensors">Filter sensors</string>
   <string name="finish">Finish</string>
   <string name="firebase_error_message">By skipping/ignoring this error you will be unable to receive any push notifications.</string>
   <string name="firebase_error_title">Firebase Error</string>
@@ -516,4 +518,6 @@ like to connect to:</string>
   <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
   <string name="basic_sensor_name_battery_temperature">Battery Temperature</string>
   <string name="sensor_description_battery_temperature">The current battery temperature</string>
+  <string name="search_sensors">Search sensors</string>
+  <string name="filter_show_only_enabled_sensors">Only enabled sensors</string>
 </resources>

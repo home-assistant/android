@@ -8,7 +8,7 @@
         app:iconSpaceReserved="false"
         app:key="enabled"
         app:summary="@string/enabled_summary"
-        app:title="@string/enabled_title" />
+        app:title="@string/enabled" />
     <Preference
         app:enableCopying="true"
         app:iconSpaceReserved="false"
