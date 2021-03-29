@@ -16,7 +16,8 @@ class PhoneStateSensorManager : SensorManager {
             "phone_state",
             "sensor",
             R.string.basic_sensor_name_phone,
-            R.string.sensor_description_phone_state
+            R.string.sensor_description_phone_state,
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor"
         )
 
         val sim_1 = SensorManager.BasicSensor(
@@ -34,6 +35,9 @@ class PhoneStateSensorManager : SensorManager {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#cellular-provider-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int

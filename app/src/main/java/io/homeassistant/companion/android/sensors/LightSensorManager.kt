@@ -26,6 +26,9 @@ class LightSensorManager : SensorManager, SensorEventListener {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#light-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
 

@@ -29,6 +29,9 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#pressure-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
 

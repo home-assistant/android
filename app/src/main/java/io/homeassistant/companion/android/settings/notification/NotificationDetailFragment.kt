@@ -1,7 +1,10 @@
 package io.homeassistant.companion.android.settings.notification
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.Html.fromHtml
+import android.view.Menu
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import io.homeassistant.companion.android.R
@@ -20,6 +23,22 @@ class NotificationDetailFragment(
             notification: NotificationItem
         ): NotificationDetailFragment {
             return NotificationDetailFragment(notification)
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+        menu.setGroupVisible(R.id.toolbar_group, true)
+        menu.removeItem(R.id.action_filter)
+        menu.removeItem(R.id.action_search)
+
+        menu.findItem(R.id.get_help)?.let {
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/notifications/notifications-basic"))
         }
     }
 

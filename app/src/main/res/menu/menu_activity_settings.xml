@@ -48,4 +48,10 @@
             android:title="@string/refresh_log"
             app:showAsAction="ifRoom" />
     </group>
+
+    <item
+        android:id="@+id/get_help"
+        android:title="@string/get_help"
+        android:icon="@drawable/ic_question"
+        app:showAsAction="ifRoom"/>
 </menu>

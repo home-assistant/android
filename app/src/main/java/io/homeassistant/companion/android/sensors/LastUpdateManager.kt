@@ -19,6 +19,9 @@ class LastUpdateManager : SensorManager {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#last-update-trigger-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
