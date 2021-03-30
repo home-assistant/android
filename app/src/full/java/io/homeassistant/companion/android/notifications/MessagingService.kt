@@ -18,6 +18,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
@@ -89,6 +90,7 @@ class MessagingService : FirebaseMessagingService() {
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_BLE_TRANSMITTER = "command_ble_transmitter"
+        const val COMMAND_SCREEN_ON = "command_screen_on"
 
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
@@ -119,7 +121,7 @@ class MessagingService : FirebaseMessagingService() {
         // Command groups
         val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
             COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_BLE_TRANSMITTER, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY,
-            COMMAND_WEBVIEW)
+            COMMAND_WEBVIEW, COMMAND_SCREEN_ON)
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
@@ -267,6 +269,9 @@ class MessagingService : FirebaseMessagingService() {
                             }
                         }
                         COMMAND_WEBVIEW -> {
+                            handleDeviceCommands(it)
+                        }
+                        COMMAND_SCREEN_ON -> {
                             handleDeviceCommands(it)
                         }
                         else -> Log.d(TAG, "No command received")
@@ -497,6 +502,16 @@ class MessagingService : FirebaseMessagingService() {
                         openWebview(title)
                 } else
                     openWebview(title)
+            }
+            COMMAND_SCREEN_ON -> {
+                val powerManager = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+                val wakeLock = powerManager.newWakeLock(
+                    PowerManager.FULL_WAKE_LOCK or
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                    PowerManager.ON_AFTER_RELEASE, "HomeAssistant::NotificationScreenOnWakeLock"
+                )
+                wakeLock.acquire(1 * 30 * 1000L /*30 seconds */)
+                wakeLock.release()
             }
             else -> Log.d(TAG, "No command received")
         }
