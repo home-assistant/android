@@ -49,6 +49,9 @@ class SensorDetailFragment(
     }
 
     private lateinit var sensorDao: SensorDao
+    private var cachedZones: List<String> = emptyList()
+    private var zonesCached = false
+
     private val handler = Handler(Looper.getMainLooper())
     private val refresh = object : Runnable {
         override fun run() {
@@ -66,6 +69,8 @@ class SensorDetailFragment(
         sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
         addPreferencesFromResource(R.xml.sensor_detail)
+
+        zonesCached = false
 
         findPreference<SwitchPreference>("enabled")?.let {
             val dao = sensorDao.get(basicSensor.id)
@@ -283,16 +288,23 @@ class SensorDetailFragment(
                         val pref = createListPreference(key, setting, sensorDao, btDevices)
                         if (!it.contains(pref)) it.addPreference(pref)
                     } else if (setting.valueType == "list-zones") {
-                        var zones: List<String> = emptyList()
-                        runBlocking {
-                            try {
-                                zones = integrationUseCase.getZones().map { z -> z.entityId }
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Error receiving zones from Home Assistant", e)
+                        if (!zonesCached) {
+                            Log.d(TAG, "Get zones from Home Assistant for listing zones in preferences...")
+                            runBlocking {
+                                try {
+                                    cachedZones = integrationUseCase.getZones().map { z -> z.entityId }
+                                    Log.d(TAG, "Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error receiving zones from Home Assistant", e)
+                                }
                             }
+
+                            zonesCached = true
+                        } else {
+                            Log.d(TAG, "Using cached zones for listing zones in preferences")
                         }
 
-                        val pref = createListPreference(key, setting, sensorDao, zones)
+                        val pref = createListPreference(key, setting, sensorDao, cachedZones)
                         if (!it.contains(pref)) it.addPreference(pref)
                     }
                 }
