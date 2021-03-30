@@ -101,6 +101,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 "update_registration",
                 createUpdateRegistrationRequest(deviceRegistration)
             )
+        var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
                 if (integrationService.callWebhook(it.toHttpUrlOrNull()!!, request).isSuccessful) {
@@ -108,11 +109,13 @@ class IntegrationRepositoryImpl @Inject constructor(
                     return
                 }
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
         }
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request update_registration")
     }
 
     override suspend fun getRegistration(): DeviceRegistration {
@@ -137,6 +140,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun renderTemplate(template: String, variables: Map<String, String>): String {
+        var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
                 return integrationService.getTemplate(
@@ -147,15 +151,19 @@ class IntegrationRepositoryImpl @Inject constructor(
                     )
                 ).getValue("template")
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
         }
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request render_template")
     }
 
     override suspend fun updateLocation(updateLocation: UpdateLocation) {
         val updateLocationRequest = createUpdateLocation(updateLocation)
+
+        var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             var wasSuccess = false
             try {
@@ -165,14 +173,16 @@ class IntegrationRepositoryImpl @Inject constructor(
                         updateLocationRequest
                     ).isSuccessful
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
             if (wasSuccess)
                 return
         }
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request update_location")
     }
 
     override suspend fun callService(
@@ -189,6 +199,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 serviceData
             )
 
+        var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
@@ -200,19 +211,22 @@ class IntegrationRepositoryImpl @Inject constructor(
                         )
                     ).isSuccessful
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
             if (wasSuccess)
                 return
         }
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request call_service")
     }
 
     override suspend fun scanTag(data: HashMap<String, Any>) {
         var wasSuccess = false
 
+        var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
@@ -224,14 +238,16 @@ class IntegrationRepositoryImpl @Inject constructor(
                         )
                     ).isSuccessful
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
             if (wasSuccess)
                 return
         }
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request scan_tag")
     }
 
     override suspend fun fireEvent(eventType: String, eventData: Map<String, Any>) {
@@ -242,6 +258,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             eventData.plus(Pair("device_id", deviceId))
         )
 
+        var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
                 wasSuccess =
@@ -253,14 +270,16 @@ class IntegrationRepositoryImpl @Inject constructor(
                         )
                     ).isSuccessful
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
             // if we had a successful call we can return
             if (wasSuccess)
                 return
         }
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request fire_event")
     }
 
     override suspend fun getZones(): Array<Entity<ZoneAttributes>> {
@@ -269,12 +288,14 @@ class IntegrationRepositoryImpl @Inject constructor(
                 "get_zones",
                 null
             )
+        var causeException: Exception? = null
         var zones: Array<EntityResponse<ZoneAttributes>>? = null
         for (it in urlRepository.getApiUrls()) {
             try {
                 zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
 
             if (zones != null) {
@@ -282,7 +303,8 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request get_zones")
     }
 
     override suspend fun setFullScreenEnabled(enabled: Boolean) {
@@ -314,15 +336,19 @@ class IntegrationRepositoryImpl @Inject constructor(
         val requestBody = RateLimitRequest(pushToken)
         var checkRateLimits: RateLimitResponse? = null
 
+        var causeException: Exception? = null
+
         try {
             checkRateLimits = integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
         } catch (e: Exception) {
+            causeException = e
             Log.e(TAG, "Unable to get notification rate limits", e)
         }
         if (checkRateLimits != null)
             return checkRateLimits
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling checkRateLimits")
     }
 
     override suspend fun getThemeColor(): String {
@@ -331,19 +357,24 @@ class IntegrationRepositoryImpl @Inject constructor(
                 "get_config",
                 null
             )
+
         var response: GetConfigResponse? = null
+        var causeException: Exception? = null
+
         for (it in urlRepository.getApiUrls()) {
             try {
                 response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
 
             if (response != null)
                 return response.themeColor
         }
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request get_config/themeColor")
     }
 
     override suspend fun getHomeAssistantVersion(): String {
@@ -353,18 +384,22 @@ class IntegrationRepositoryImpl @Inject constructor(
                 null
             )
         var response: GetConfigResponse? = null
+        var causeException: Exception? = null
+
         for (it in urlRepository.getApiUrls()) {
             try {
                 response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
 
             if (response != null)
                 return response.version
         }
 
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request get_config/version")
     }
 
     // TODO: Use websocket to get panels.
@@ -418,6 +453,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             // Already registered
             return
         }
+
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
@@ -431,6 +467,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                 sensorRegistration.unitOfMeasurement
             )
         )
+
+        var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
                 integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
@@ -444,10 +482,12 @@ class IntegrationRepositoryImpl @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
         }
-        throw IntegrationException()
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration request register_sensor")
     }
 
     override suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean {
@@ -463,6 +503,8 @@ class IntegrationRepositoryImpl @Inject constructor(
                 )
             }
         )
+
+        var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
@@ -475,10 +517,13 @@ class IntegrationRepositoryImpl @Inject constructor(
                     return true
                 }
             } catch (e: Exception) {
-                // Ignore failure until we are out of URLS to try!
+                if (causeException == null) causeException = e
+                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
         }
-        throw IntegrationException()
+
+        if (causeException != null) throw IntegrationException(causeException)
+        else throw IntegrationException("Error calling integration update_sensor_states")
     }
 
     override suspend fun shouldNotifySecurityWarning(): Boolean {
