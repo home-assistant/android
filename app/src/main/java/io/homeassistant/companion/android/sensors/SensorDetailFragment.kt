@@ -45,18 +45,20 @@ class SensorDetailFragment(
             return SensorDetailFragment(sensorManager, basicSensor, integrationUseCase)
         }
 
+        private const val REFRESH_INTERVAL_MS = 5000L
         private const val TAG = "SensorDetailFragment"
     }
 
     private lateinit var sensorDao: SensorDao
     private var cachedZones: List<String> = emptyList()
     private var zonesCached = false
+    private var createdPreferencesDone = false
 
     private val handler = Handler(Looper.getMainLooper())
     private val refresh = object : Runnable {
         override fun run() {
             refreshSensorData()
-            handler.postDelayed(this, 5000)
+            handler.postDelayed(this, REFRESH_INTERVAL_MS)
         }
     }
 
@@ -119,11 +121,15 @@ class SensorDetailFragment(
         findPreference<Preference>("description")?.let {
             it.summary = getString(basicSensor.descriptionId)
         }
+
+        createdPreferencesDone = true
     }
 
     override fun onResume() {
         super.onResume()
-        handler.postDelayed(refresh, 0)
+        // If preferences are created, we can start the refresh handler right away
+        // If not, we delay the start, because onCreatePreferences will do a refresh anyway on start of the fragment
+        handler.postDelayed(refresh, if (createdPreferencesDone) 0 else REFRESH_INTERVAL_MS)
     }
 
     override fun onPause() {
