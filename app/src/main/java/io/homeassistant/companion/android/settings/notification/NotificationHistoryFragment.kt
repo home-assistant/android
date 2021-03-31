@@ -49,31 +49,37 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
         val allNotifications = notificationDao.getAll()
 
-        val searchViewItem = menu.findItem(R.id.search_notifications)
-        val searchView: SearchView = MenuItemCompat.getActionView(searchViewItem) as SearchView
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                searchView.clearFocus()
+        if (allNotifications.isNullOrEmpty()) {
+            menu.removeItem(R.id.search_notifications)
+            menu.removeItem(R.id.notification_filter)
+            menu.removeItem(R.id.action_delete)
+        } else {
+            val searchViewItem = menu.findItem(R.id.search_notifications)
+            val searchView: SearchView = MenuItemCompat.getActionView(searchViewItem) as SearchView
+            searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    searchView.clearFocus()
 
-                return false
-            }
-
-            override fun onQueryTextChange(query: String?): Boolean {
-                var searchList: Array<NotificationItem> = emptyArray()
-                if (allNotifications != null && !query.isNullOrEmpty()) {
-                    for (item in allNotifications) {
-                        if (item.message.contains(query, true))
-                            searchList += item
-                    }
-                    prefCategory?.title = getString(R.string.search_results)
-                    reloadNotifications(searchList, prefCategory)
-                } else if (query.isNullOrEmpty()) {
-                    prefCategory?.title = getString(R.string.notifications)
-                    filterNotifications(filterValue, notificationDao, prefCategory)
+                    return false
                 }
-                return false
-            }
-        })
+
+                override fun onQueryTextChange(query: String?): Boolean {
+                    var searchList: Array<NotificationItem> = emptyArray()
+                    if (!query.isNullOrEmpty()) {
+                        for (item in allNotifications) {
+                            if (item.message.contains(query, true))
+                                searchList += item
+                        }
+                        prefCategory?.title = getString(R.string.search_results)
+                        reloadNotifications(searchList, prefCategory)
+                    } else if (query.isNullOrEmpty()) {
+                        prefCategory?.title = getString(R.string.notifications)
+                        filterNotifications(filterValue, notificationDao, prefCategory)
+                    }
+                    return false
+                }
+            })
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
