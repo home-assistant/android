@@ -522,7 +522,7 @@ like to connect to:</string>
   <string name="filter_show_only_enabled_sensors">Only enabled sensors</string>
   <string name="share_logs">Share logs</string>
   <string name="share_logs_perm_message">In order to prepare the logs for sharing, the app needs permissions to access the external storage. Otherwise the log cannot be shared.\n\nDo you want to continue?</string>
-  <string name="share_logs_sens_message">Please note: By sharing the log, you could share sensitive data like location data or your Home Assistant url. Are you sure?.\n\nDo you want to continue?</string>
+  <string name="share_logs_sens_message">Please note: By sharing the log, you could share sensitive data like location data or your Home Assistant url.\n\nDo you want to continue?</string>
   <string name="log_file_not_created">Log file could not be created.</string>
   <string name="log">Log</string>
   <string name="show_share_logs">Show and Share Logs</string>
