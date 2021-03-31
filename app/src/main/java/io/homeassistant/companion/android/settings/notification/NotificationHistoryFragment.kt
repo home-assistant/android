@@ -106,6 +106,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
 
+        activity?.title = getString(R.string.notifications)
         val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
         val notificationList = notificationDao.getLastItems(25)
 

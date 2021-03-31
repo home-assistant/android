@@ -291,6 +291,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
+        activity?.title = getString(R.string.sensors)
         filterSensors()
         handler.postDelayed(refresh, 0)
     }
