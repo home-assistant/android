@@ -227,7 +227,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                     Log.d(TAG, "Click on share logs without WRITE_EXTERNAL_STORAGE permission")
                     AlertDialog.Builder(requireActivity())
                         .setTitle(getString(R.string.share_logs))
-                        .setMessage(getString(R.string.share_logs_message))
+                        .setMessage(getString(R.string.share_logs_perm_message))
                         .setPositiveButton(R.string.confirm_positive) { _, _ ->
                             Log.i(TAG, "Request WRITE_EXTERNAL_STORAGE permission, to create log file")
                             requestPermissions(permissions, SHARE_LOGS_REQUEST_CODE)
@@ -247,49 +247,59 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     }
 
     private fun shareLogFile() {
-        Log.d(TAG, "Share log file")
-        val c = Calendar.getInstance()
-        val year = c.get(Calendar.YEAR)
-        val month = c.get(Calendar.MONTH)
-        val day = c.get(Calendar.DAY_OF_MONTH)
-        val hour = c.get(Calendar.HOUR_OF_DAY)
-        val minute = c.get(Calendar.MINUTE)
-        val second = c.get(Calendar.SECOND)
 
-        val path = requireContext().externalCacheDir?.absolutePath + "/logs"
-        val fLogFilePath = File(path)
-        // First clear all logs which was created before
-        fLogFilePath.deleteRecursively()
-        // Recreate log dir
-        fLogFilePath.mkdir()
+        AlertDialog.Builder(requireActivity())
+            .setTitle(getString(R.string.share_logs))
+            .setMessage(getString(R.string.share_logs_sens_message))
+            .setPositiveButton(R.string.confirm_positive) { _, _ ->
+                Log.d(TAG, "User want to share log")
+                val c = Calendar.getInstance()
+                val year = c.get(Calendar.YEAR)
+                val month = c.get(Calendar.MONTH)
+                val day = c.get(Calendar.DAY_OF_MONTH)
+                val hour = c.get(Calendar.HOUR_OF_DAY)
+                val minute = c.get(Calendar.MINUTE)
+                val second = c.get(Calendar.SECOND)
 
-        val filePathWithoutExt = path + "/homeassistant_companion_log_$month-$day-$year" + "_" + "$hour-$minute-$second"
-        val logFilePath = "$filePathWithoutExt.txt"
+                val path = requireContext().externalCacheDir?.absolutePath + "/logs"
+                val fLogFilePath = File(path)
+                // First clear all logs which was created before
+                fLogFilePath.deleteRecursively()
+                // Recreate log dir
+                fLogFilePath.mkdir()
 
-        Log.i(TAG, "Create log file to: $logFilePath")
+                val filePathWithoutExt = path + "/homeassistant_companion_log_$month-$day-$year" + "_" + "$hour-$minute-$second"
+                val logFilePath = "$filePathWithoutExt.txt"
 
-        val fLogFile = LogcatReader.saveLog(logFilePath)
-        if (fLogFile.exists()) {
+                Log.i(TAG, "Create log file to: $logFilePath")
 
-            val uriToLog: Uri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".provider", fLogFile)
+                val fLogFile = LogcatReader.saveLog(logFilePath)
+                if (fLogFile.exists()) {
 
-            val shareIntent = ShareCompat.IntentBuilder.from(requireActivity())
-                .setStream(uriToLog)
-                .setType("text/plain")
-                .intent
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    val uriToLog: Uri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".provider", fLogFile)
 
-            val packageManager: PackageManager = requireContext().packageManager
-            if (shareIntent.resolveActivity(packageManager) != null) {
-                Log.i(TAG, "Open share dialog with log file")
-                startActivity(shareIntent)
-            } else {
-                Log.e(TAG, "Cannot open share dialog, because no app can receive the mime type text/plain")
+                    val shareIntent = ShareCompat.IntentBuilder.from(requireActivity())
+                        .setStream(uriToLog)
+                        .setType("text/plain")
+                        .intent
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
+                    val packageManager: PackageManager = requireContext().packageManager
+                    if (shareIntent.resolveActivity(packageManager) != null) {
+                        Log.i(TAG, "Open share dialog with log file")
+                        startActivity(shareIntent)
+                    } else {
+                        Log.e(TAG, "Cannot open share dialog, because no app can receive the mime type text/plain")
+                    }
+                } else {
+                    Log.e(TAG, "Could not open share dialog, because log file does not exist.")
+                    Toast.makeText(requireContext(), getString(R.string.log_file_not_created), LENGTH_LONG).show()
+                }
             }
-        } else {
-            Log.e(TAG, "Could not open share dialog, because log file does not exist.")
-            Toast.makeText(requireContext(), getString(R.string.log_file_not_created), LENGTH_LONG).show()
-        }
+            .setNegativeButton(R.string.confirm_negative) { _, _ ->
+                Log.w(TAG, "User don't want to share the log")
+                // Do nothing
+            }.show()
     }
 
     override fun disableInternalConnection() {
