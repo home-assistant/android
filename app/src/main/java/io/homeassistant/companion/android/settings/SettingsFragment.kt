@@ -47,8 +47,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
         private const val LOCATION_REQUEST_CODE = 0
         private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
-        private const val SHARE_LOGS_REQUEST_CODE = 2
-        private const val TAG = "SettingsFragment"
         fun newInstance() = SettingsFragment()
     }
 
