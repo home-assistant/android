@@ -76,6 +76,7 @@ class SensorDetailFragment(
         menu.removeItem(R.id.action_search)
 
         menu.findItem(R.id.get_help)?.let {
+            it.isVisible = true
             val docsLink = basicSensor.docsLink ?: sensorManager.docsLink()
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))
         }

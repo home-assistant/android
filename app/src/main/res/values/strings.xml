@@ -550,4 +550,6 @@ like to connect to:</string>
   <string name="refresh_log">Refresh logs</string>
   <string name="log_loader_text">Collecting logs...</string>
   <string name="get_help">Get Help</string>
+  <string name="search_notifications">Search notifications</string>
+  <string name="search_results">Search Results</string>
 </resources>

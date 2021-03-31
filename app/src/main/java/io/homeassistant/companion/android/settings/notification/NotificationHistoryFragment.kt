@@ -6,7 +6,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.text.Html.fromHtml
 import android.view.Menu
-import androidx.preference.DropDownPreference
+import android.view.MenuItem
+import android.widget.SearchView
+import androidx.core.view.MenuItemCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -20,6 +22,7 @@ import java.util.GregorianCalendar
 class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
     companion object {
+        private var filterValue = "last25"
         fun newInstance(): NotificationHistoryFragment {
             return NotificationHistoryFragment()
         }
@@ -32,13 +35,62 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.toolbar_group, true)
-        menu.removeItem(R.id.action_filter)
-        menu.removeItem(R.id.action_search)
+        menu.setGroupVisible(R.id.notification_toolbar_group, true)
 
         menu.findItem(R.id.get_help)?.let {
+            it.isVisible = true
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/notifications/notifications-basic"))
         }
+        menu.findItem(R.id.last25)?.title = getString(R.string.last_num_notifications, 25)
+        menu.findItem(R.id.last50)?.title = getString(R.string.last_num_notifications, 50)
+        menu.findItem(R.id.last100)?.title = getString(R.string.last_num_notifications, 100)
+
+        val prefCategory = findPreference<PreferenceCategory>("list_notifications")
+        val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
+        val allNotifications = notificationDao.getAll()
+
+        val searchViewItem = menu.findItem(R.id.search_notifications)
+        val searchView: SearchView = MenuItemCompat.getActionView(searchViewItem) as SearchView
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
+
+                return false
+            }
+
+            override fun onQueryTextChange(query: String?): Boolean {
+                var searchList: Array<NotificationItem> = emptyArray()
+                if (allNotifications != null && !query.isNullOrEmpty()) {
+                    for (item in allNotifications) {
+                        if (item.message.contains(query, true))
+                            searchList += item
+                    }
+                    prefCategory?.title = getString(R.string.search_results)
+                    reloadNotifications(searchList, prefCategory)
+                } else if (query.isNullOrEmpty()) {
+                    prefCategory?.title = getString(R.string.notifications)
+                    filterNotifications(filterValue, notificationDao, prefCategory)
+                }
+                return false
+            }
+        })
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val prefCategory = findPreference<PreferenceCategory>("list_notifications")
+        val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
+        if (item.itemId in listOf(R.id.last25, R.id.last50, R.id.last100)) {
+            filterValue = when (item.itemId) {
+                R.id.last25 -> "last25"
+                R.id.last50 -> "last50"
+                R.id.last100 -> "last100"
+                else -> "last25"
+            }
+            item.isChecked = !item.isChecked
+            filterNotifications(filterValue, notificationDao, prefCategory)
+        } else if (item.itemId == R.id.action_delete)
+            deleteAllConfirmation(notificationDao)
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -54,51 +106,8 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         val prefCategory = findPreference<PreferenceCategory>("list_notifications")
         if (!notificationList.isNullOrEmpty()) {
             prefCategory?.isVisible = true
-            prefCategory?.title = getString(R.string.last_num_notifications, 25)
             reloadNotifications(notificationList, prefCategory)
-
-            findPreference<PreferenceCategory>("manage_notifications")?.let {
-                it.isVisible = true
-            }
-
-            findPreference<DropDownPreference>("filter_notifications")?.let {
-                it.isVisible = true
-                it.setOnPreferenceChangeListener { _, newValue ->
-                    when (newValue) {
-                        "last25" -> {
-                            prefCategory?.title = getString(R.string.last_num_notifications, 25)
-                            reloadNotifications(notificationList, prefCategory)
-                        }
-                        "last50" -> {
-                            val newList = notificationDao.getLastItems(50)
-                            prefCategory?.title = getString(R.string.last_num_notifications, 50)
-                            reloadNotifications(newList, prefCategory)
-                        }
-                        "last100" -> {
-                            val newList = notificationDao.getLastItems(100)
-                            prefCategory?.title = getString(R.string.last_num_notifications, 100)
-                            reloadNotifications(newList, prefCategory)
-                        }
-                        else -> {
-                            prefCategory?.title = getString(R.string.last_num_notifications, 25)
-                            reloadNotifications(notificationList, prefCategory)
-                        }
-                    }
-                    return@setOnPreferenceChangeListener true
-                }
-            }
-
-            findPreference<Preference>("delete_all")?.let {
-                it.isVisible = true
-                it.setOnPreferenceClickListener {
-                    deleteAllConfirmation(notificationDao)
-                    return@setOnPreferenceClickListener true
-                }
-            }
         } else {
-            findPreference<PreferenceCategory>("manage_notifications")?.let {
-                it.isVisible = false
-            }
             findPreference<PreferenceCategory>("list_notifications")?.let {
                 it.isVisible = false
             }
@@ -159,6 +168,27 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 }
 
                 prefCategory?.addPreference(pref)
+            }
+        }
+    }
+
+    private fun filterNotifications(filterValue: String?, notificationDao: NotificationDao, prefCategory: PreferenceCategory?) {
+        when (filterValue) {
+            "last25" -> {
+                val notificationList = notificationDao.getLastItems(25)
+                reloadNotifications(notificationList, prefCategory)
+            }
+            "last50" -> {
+                val newList = notificationDao.getLastItems(50)
+                reloadNotifications(newList, prefCategory)
+            }
+            "last100" -> {
+                val newList = notificationDao.getLastItems(100)
+                reloadNotifications(newList, prefCategory)
+            }
+            else -> {
+                val notificationList = notificationDao.getLastItems(25)
+                reloadNotifications(notificationList, prefCategory)
             }
         }
     }
