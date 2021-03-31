@@ -12,14 +12,10 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.InputType
 import android.util.Log
-import android.widget.Toast
-import android.widget.Toast.LENGTH_LONG
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
-import androidx.core.app.ShareCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -35,15 +31,13 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
+import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
-import io.homeassistant.companion.android.util.LogcatReader
-import java.io.File
-import java.util.Calendar
 import javax.inject.Inject
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -220,86 +214,16 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
         }
 
-        findPreference<Preference>("sharelogs")?.let {
-            it.setOnPreferenceClickListener {
-                val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                if (!checkPermission(permissions)) {
-                    Log.d(TAG, "Click on share logs without WRITE_EXTERNAL_STORAGE permission")
-                    AlertDialog.Builder(requireActivity())
-                        .setTitle(getString(R.string.share_logs))
-                        .setMessage(getString(R.string.share_logs_perm_message))
-                        .setPositiveButton(R.string.confirm_positive) { _, _ ->
-                            Log.i(TAG, "Request WRITE_EXTERNAL_STORAGE permission, to create log file")
-                            requestPermissions(permissions, SHARE_LOGS_REQUEST_CODE)
-                        }
-                        .setNegativeButton(R.string.confirm_negative) { _, _ ->
-                            Log.w(TAG, "User cancel request for WRITE_EXTERNAL_STORAGE permission")
-                            // Do nothing
-                        }.show()
-                } else {
-                    shareLogFile()
-                }
-                true
-            }
+        findPreference<Preference>("show_share_logs")?.setOnPreferenceClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, LogFragment.newInstance())
+                .addToBackStack(getString(R.string.log))
+                .commit()
+            return@setOnPreferenceClickListener true
         }
 
         presenter.onCreate()
-    }
-
-    private fun shareLogFile() {
-
-        AlertDialog.Builder(requireActivity())
-            .setTitle(getString(R.string.share_logs))
-            .setMessage(getString(R.string.share_logs_sens_message))
-            .setPositiveButton(R.string.confirm_positive) { _, _ ->
-                Log.d(TAG, "User want to share log")
-                val c = Calendar.getInstance()
-                val year = c.get(Calendar.YEAR)
-                val month = c.get(Calendar.MONTH)
-                val day = c.get(Calendar.DAY_OF_MONTH)
-                val hour = c.get(Calendar.HOUR_OF_DAY)
-                val minute = c.get(Calendar.MINUTE)
-                val second = c.get(Calendar.SECOND)
-
-                val path = requireContext().externalCacheDir?.absolutePath + "/logs"
-                val fLogFilePath = File(path)
-                // First clear all logs which was created before
-                fLogFilePath.deleteRecursively()
-                // Recreate log dir
-                fLogFilePath.mkdir()
-
-                val filePathWithoutExt = path + "/homeassistant_companion_log_$month-$day-$year" + "_" + "$hour-$minute-$second"
-                val logFilePath = "$filePathWithoutExt.txt"
-
-                Log.i(TAG, "Create log file to: $logFilePath")
-
-                val fLogFile = LogcatReader.saveLog(logFilePath)
-                if (fLogFile.exists()) {
-
-                    val uriToLog: Uri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".provider", fLogFile)
-
-                    val shareIntent = ShareCompat.IntentBuilder.from(requireActivity())
-                        .setStream(uriToLog)
-                        .setType("text/plain")
-                        .intent
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-                    val packageManager: PackageManager = requireContext().packageManager
-                    if (shareIntent.resolveActivity(packageManager) != null) {
-                        Log.i(TAG, "Open share dialog with log file")
-                        startActivity(shareIntent)
-                    } else {
-                        Log.e(TAG, "Cannot open share dialog, because no app can receive the mime type text/plain")
-                    }
-                } else {
-                    Log.e(TAG, "Could not open share dialog, because log file does not exist.")
-                    Toast.makeText(requireContext(), getString(R.string.log_file_not_created), LENGTH_LONG).show()
-                }
-            }
-            .setNegativeButton(R.string.confirm_negative) { _, _ ->
-                Log.w(TAG, "User don't want to share the log")
-                // Do nothing
-            }.show()
     }
 
     override fun disableInternalConnection() {
@@ -498,10 +422,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 openSsidDialog()
             }
-        }
-
-        if (requestCode == SHARE_LOGS_REQUEST_CODE && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-            shareLogFile()
         }
     }
 }

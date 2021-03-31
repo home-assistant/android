@@ -121,10 +121,10 @@
                 android:data="https://companion.home-assistant.io" />
         </Preference>
         <Preference
-            android:key="sharelogs"
-            android:icon="@drawable/ic_share_24dp"
-            android:title="@string/share_logs"
-            android:summary="@string/share_logs_summary" />
+            android:key="show_share_logs"
+            android:icon="@drawable/ic_notes"
+            android:title="@string/show_share_logs"
+            android:summary="@string/show_share_logs_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">
