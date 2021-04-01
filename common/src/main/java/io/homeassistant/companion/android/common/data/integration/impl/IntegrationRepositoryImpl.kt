@@ -296,7 +296,6 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
         }
 
-
         notifyFailedToConnect(context)
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request call_service")
