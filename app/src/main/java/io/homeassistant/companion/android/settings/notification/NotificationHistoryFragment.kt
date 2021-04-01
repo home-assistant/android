@@ -22,7 +22,7 @@ import java.util.GregorianCalendar
 class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
     companion object {
-        private var filterValue = "last25"
+        private var filterValue = 25
         fun newInstance(): NotificationHistoryFragment {
             return NotificationHistoryFragment()
         }
@@ -87,10 +87,10 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
         if (item.itemId in listOf(R.id.last25, R.id.last50, R.id.last100)) {
             filterValue = when (item.itemId) {
-                R.id.last25 -> "last25"
-                R.id.last50 -> "last50"
-                R.id.last100 -> "last100"
-                else -> "last25"
+                R.id.last25 -> 25
+                R.id.last50 -> 50
+                R.id.last100 -> 100
+                else -> 25
             }
             item.isChecked = !item.isChecked
             filterNotifications(filterValue, notificationDao, prefCategory)
@@ -179,24 +179,8 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun filterNotifications(filterValue: String?, notificationDao: NotificationDao, prefCategory: PreferenceCategory?) {
-        when (filterValue) {
-            "last25" -> {
-                val notificationList = notificationDao.getLastItems(25)
-                reloadNotifications(notificationList, prefCategory)
-            }
-            "last50" -> {
-                val newList = notificationDao.getLastItems(50)
-                reloadNotifications(newList, prefCategory)
-            }
-            "last100" -> {
-                val newList = notificationDao.getLastItems(100)
-                reloadNotifications(newList, prefCategory)
-            }
-            else -> {
-                val notificationList = notificationDao.getLastItems(25)
-                reloadNotifications(notificationList, prefCategory)
-            }
-        }
+    private fun filterNotifications(filterValue: Int, notificationDao: NotificationDao, prefCategory: PreferenceCategory?) {
+        val notificationList = notificationDao.getLastItems(filterValue)
+        reloadNotifications(notificationList, prefCategory)
     }
 }
