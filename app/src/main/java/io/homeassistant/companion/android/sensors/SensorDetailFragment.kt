@@ -298,7 +298,7 @@ class SensorDetailFragment(
                             Log.d(TAG, "Get zones from Home Assistant for listing zones in preferences...")
                             runBlocking {
                                 try {
-                                    cachedZones = integrationUseCase.getZones().map { z -> z.entityId }
+                                    cachedZones = integrationUseCase.getZones(requireContext()).map { z -> z.entityId }
                                     Log.d(TAG, "Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
                                 } catch (e: Exception) {
                                     Log.e(TAG, "Error receiving zones from Home Assistant", e)
