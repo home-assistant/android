@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.text.InputType
+import android.util.Log
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
@@ -43,14 +44,21 @@ class SensorDetailFragment(
         ): SensorDetailFragment {
             return SensorDetailFragment(sensorManager, basicSensor, integrationUseCase)
         }
+
+        private const val REFRESH_INTERVAL_MS = 5000L
+        private const val TAG = "SensorDetailFragment"
     }
 
     private lateinit var sensorDao: SensorDao
+    private var cachedZones: List<String> = emptyList()
+    private var zonesCached = false
+    private var createdPreferencesDone = false
+
     private val handler = Handler(Looper.getMainLooper())
     private val refresh = object : Runnable {
         override fun run() {
             refreshSensorData()
-            handler.postDelayed(this, 5000)
+            handler.postDelayed(this, REFRESH_INTERVAL_MS)
         }
     }
 
@@ -63,6 +71,8 @@ class SensorDetailFragment(
         sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
         addPreferencesFromResource(R.xml.sensor_detail)
+
+        zonesCached = false
 
         findPreference<SwitchPreference>("enabled")?.let {
             val dao = sensorDao.get(basicSensor.id)
@@ -111,11 +121,15 @@ class SensorDetailFragment(
         findPreference<Preference>("description")?.let {
             it.summary = getString(basicSensor.descriptionId)
         }
+
+        createdPreferencesDone = true
     }
 
     override fun onResume() {
         super.onResume()
-        handler.postDelayed(refresh, 0)
+        // If preferences are created, we can start the refresh handler right away
+        // If not, we delay the start, because onCreatePreferences will do a refresh anyway on start of the fragment
+        handler.postDelayed(refresh, if (createdPreferencesDone) 0 else REFRESH_INTERVAL_MS)
     }
 
     override fun onPause() {
@@ -280,12 +294,23 @@ class SensorDetailFragment(
                         val pref = createListPreference(key, setting, sensorDao, btDevices)
                         if (!it.contains(pref)) it.addPreference(pref)
                     } else if (setting.valueType == "list-zones") {
-                        val zones: List<String>
-                        runBlocking {
-                            zones = integrationUseCase.getZones().map { z -> z.entityId }
+                        if (!zonesCached) {
+                            Log.d(TAG, "Get zones from Home Assistant for listing zones in preferences...")
+                            runBlocking {
+                                try {
+                                    cachedZones = integrationUseCase.getZones().map { z -> z.entityId }
+                                    Log.d(TAG, "Successfully received " + cachedZones.size + " zones (" + cachedZones + ") from Home Assistant")
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error receiving zones from Home Assistant", e)
+                                }
+                            }
+
+                            zonesCached = true
+                        } else {
+                            Log.d(TAG, "Using cached zones for listing zones in preferences")
                         }
 
-                        val pref = createListPreference(key, setting, sensorDao, zones)
+                        val pref = createListPreference(key, setting, sensorDao, cachedZones)
                         if (!it.contains(pref)) it.addPreference(pref)
                     }
                 }

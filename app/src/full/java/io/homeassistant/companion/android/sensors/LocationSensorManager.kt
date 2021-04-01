@@ -633,7 +633,13 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
 
         // TODO cache the zones on device so we don't need to reach out each time
-        val configuredZones = integrationUseCase.getZones()
+        var configuredZones: Array<Entity<ZoneAttributes>> = emptyArray()
+        try {
+            configuredZones = integrationUseCase.getZones()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error receiving zones from Home Assistant", e)
+        }
+
         val highAccuracyTriggerRange = getHighAccuracyModeTriggerRange()
         val highAccuracyZones = getHighAccuracyModeZones(false)
         configuredZones.forEach {
