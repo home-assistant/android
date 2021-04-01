@@ -207,7 +207,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
 
-        menu.setGroupVisible(R.id.toolbar_group, true)
+        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
 
         val searchViewItem = menu.findItem(R.id.action_search)
         val searchView: SearchView = MenuItemCompat.getActionView(searchViewItem) as SearchView

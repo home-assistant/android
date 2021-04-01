@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
+import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
@@ -224,6 +225,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("privacy")?.let {
             it.summary = "https://www.home-assistant.io/privacy/"
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
+        }
+
+        findPreference<Preference>("show_share_logs")?.setOnPreferenceClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, LogFragment.newInstance())
+                .addToBackStack(getString(R.string.log))
+                .commit()
+            return@setOnPreferenceClickListener true
         }
 
         presenter.onCreate()

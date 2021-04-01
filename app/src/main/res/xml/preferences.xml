@@ -83,18 +83,6 @@
             android:title="@string/background_access_title"/>
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="@string/need_help">
-        <Preference
-            android:key="docs"
-            android:icon="@drawable/ic_question"
-            android:title="@string/documentation"
-            android:summary="https://companion.home-assistant.io"
-            app:enableCopying="true">
-            <intent android:action="android.intent.action.VIEW"
-                android:data="https://companion.home-assistant.io" />
-        </Preference>
-    </PreferenceCategory>
-    <PreferenceCategory
         android:title="@string/notifications"
         android:key="notifications"
         app:isPreferenceVisible="false">
@@ -130,6 +118,23 @@
             android:icon="@drawable/ic_widget"
             android:title="@string/manage_widgets"
             android:summary="@string/manage_widgets_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/need_help">
+        <Preference
+            android:key="docs"
+            android:icon="@drawable/ic_question"
+            android:title="@string/documentation"
+            android:summary="https://companion.home-assistant.io"
+            app:enableCopying="true">
+            <intent android:action="android.intent.action.VIEW"
+                android:data="https://companion.home-assistant.io" />
+        </Preference>
+        <Preference
+            android:key="show_share_logs"
+            android:icon="@drawable/ic_notes"
+            android:title="@string/show_share_logs"
+            android:summary="@string/show_share_logs_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/app_version_info">
