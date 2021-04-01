@@ -4,9 +4,11 @@ import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.drawable.Icon
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
 import androidx.annotation.RequiresApi
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
@@ -33,6 +35,20 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+
+        menu.findItem(R.id.get_help)?.let {
+            it.isVisible = true
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/integrations/android-shortcuts"))
+        }
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.manage_shortcuts, rootKey)
     }
@@ -41,6 +57,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
 
+        activity?.title = getString(R.string.shortcuts)
         val addNewShortcut = findPreference<PreferenceCategory>("pinned_shortcut_category")
         val shortcutManager = requireContext().getSystemService(ShortcutManager::class.java)
         var pinnedShortcuts = shortcutManager.pinnedShortcuts

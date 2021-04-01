@@ -34,15 +34,13 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.toolbar_group, true)
-        menu.removeItem(R.id.action_filter)
-        menu.removeItem(R.id.action_search)
 
         menu.findItem(R.id.get_help)?.let {
             it.isVisible = true
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/integrations/android-widgets"))
         }
     }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.manage_widgets, rootKey)
     }
