@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.log
 
 import android.Manifest
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -17,7 +18,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
-import androidx.core.app.ShareCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.LogcatReader
 import java.io.File
 import java.util.Calendar
+import kotlin.collections.ArrayList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -155,12 +156,23 @@ class LogFragment() : Fragment() {
 
                     val uriToLog: Uri = FileProvider.getUriForFile(requireContext(), requireContext().packageName + ".provider", fLogFile)
 
-                    val shareIntent = ShareCompat.IntentBuilder.from(requireActivity())
-                        .setStream(uriToLog)
-                        .setSubject("Home Assistant Log file")
-                        .setType("text/plain")
-                        .intent
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    val sendIntent: Intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_STREAM, uriToLog)
+                        type = "text/plain"
+                        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+                    }
+
+                    val shareIntent = Intent.createChooser(sendIntent, null).apply {
+                        // Lets exclude github app, because github doesn't support sharing text files (only images)
+                        // Also no issue template will be used
+                        val excludedComponents = getExcludedComponentsForPackageName(sendIntent, arrayOf("com.github.android"))
+                        if (excludedComponents.size > 0) {
+                            putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, excludedComponents.toTypedArray())
+                        }
+                    }
 
                     val packageManager: PackageManager = requireContext().packageManager
                     if (shareIntent.resolveActivity(packageManager) != null) {
@@ -178,6 +190,19 @@ class LogFragment() : Fragment() {
                 Log.w(TAG, "User don't want to share the log")
                 // Do nothing
             }.show()
+    }
+
+    private fun getExcludedComponentsForPackageName(sendIntent: Intent, packageNames: Array<String>): ArrayList<ComponentName> {
+        val excludedComponents = ArrayList<ComponentName>()
+        val resInfos = requireContext().packageManager.queryIntentActivities(sendIntent, 0)
+        for (resInfo in resInfos) {
+            val packageName = resInfo.activityInfo.packageName
+            val name = resInfo.activityInfo.name
+            if (packageNames.contains(packageName)) {
+                excludedComponents.add(ComponentName(packageName, name))
+            }
+        }
+        return excludedComponents
     }
 
     private fun showHideLogLoader(show: Boolean) {
