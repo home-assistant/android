@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.settings.widgets
 
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.view.Menu
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -25,6 +27,20 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+
+        menu.findItem(R.id.get_help)?.let {
+            it.isVisible = true
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/integrations/android-widgets"))
+        }
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.manage_widgets, rootKey)
     }
@@ -32,6 +48,7 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
 
+        activity?.title = getString(R.string.widgets)
         val staticWidgetDao = AppDatabase.getInstance(requireContext()).staticWidgetDao()
         val staticWidgetList = staticWidgetDao.getAll()
         val templateWidgetDao = AppDatabase.getInstance(requireContext()).templateWidgetDao()

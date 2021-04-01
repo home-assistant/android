@@ -21,9 +21,13 @@ interface SensorManager {
         val name: Int = R.string.sensor,
         val descriptionId: Int = R.string.sensor_description_none,
         val deviceClass: String? = null,
-        val unitOfMeasurement: String? = null
+        val unitOfMeasurement: String? = null,
+        val docsLink: String? = null
     )
 
+    fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors"
+    }
     fun requiredPermissions(sensorId: String): Array<String>
 
     fun checkPermission(context: Context, sensorId: String): Boolean {

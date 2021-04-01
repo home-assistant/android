@@ -70,11 +70,15 @@ class NetworkSensorManager : SensorManager {
             "public_ip_address",
             "sensor",
             R.string.basic_sensor_name_public_ip,
-            R.string.sensor_description_public_ip
+            R.string.sensor_description_public_ip,
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor"
         )
         private const val GET_CURRENT_BSSID = "get_current_bssid"
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#connection-type-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int

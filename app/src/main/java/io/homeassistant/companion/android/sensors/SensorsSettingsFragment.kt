@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -160,6 +161,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     }
                 }
 
+                requireActivity().invalidateOptionsMenu()
                 return@setOnPreferenceChangeListener true
             }
         }
@@ -209,6 +211,9 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
 
+        if (enableAllSensors)
+            menu.removeItem(R.id.action_filter)
+
         val searchViewItem = menu.findItem(R.id.action_search)
         val searchView: SearchView = MenuItemCompat.getActionView(searchViewItem) as SearchView
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -227,6 +232,11 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         if (showOnlyEnabledSensors) {
             val checkable = menu.findItem(R.id.action_show_only_enabled_sensors)
             checkable.isChecked = true
+        }
+
+        menu.findItem(R.id.get_help)?.let {
+            it.isVisible = true
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/core/sensors"))
         }
     }
 
@@ -281,6 +291,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
+        activity?.title = getString(R.string.sensors)
         filterSensors()
         handler.postDelayed(refresh, 0)
     }

@@ -808,6 +808,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/location"
+    }
     override val enabledByDefault: Boolean
         get() = false
 

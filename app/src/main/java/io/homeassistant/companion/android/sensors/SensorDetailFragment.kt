@@ -3,12 +3,14 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.text.InputType
 import android.util.Log
+import android.view.Menu
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
@@ -59,6 +61,24 @@ class SensorDetailFragment(
         override fun run() {
             refreshSensorData()
             handler.postDelayed(this, REFRESH_INTERVAL_MS)
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
+        menu.removeItem(R.id.action_filter)
+        menu.removeItem(R.id.action_search)
+
+        menu.findItem(R.id.get_help)?.let {
+            it.isVisible = true
+            val docsLink = basicSensor.docsLink ?: sensorManager.docsLink()
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))
         }
     }
 

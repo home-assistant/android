@@ -45,6 +45,9 @@ class TrafficStatsManager : SensorManager {
         private var hasCellular = false
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#traffic-stats-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int

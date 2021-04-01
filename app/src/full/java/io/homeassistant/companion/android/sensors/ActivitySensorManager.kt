@@ -181,6 +181,9 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#activity-sensors"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
