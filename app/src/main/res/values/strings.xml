@@ -552,4 +552,7 @@ like to connect to:</string>
   <string name="get_help">Get Help</string>
   <string name="search_notifications">Search notifications</string>
   <string name="search_results">Search Results</string>
+  <string name="lovelace">Lovelace</string>
+  <string name="entity_id">Entity ID</string>
+  <string name="shortcut_type">Select Shortcut Type</string>
 </resources>
