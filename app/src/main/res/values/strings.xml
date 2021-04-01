@@ -427,8 +427,21 @@ like to connect to:</string>
   <string name="share_failed">Sharing with Home Assistant Failed!</string>
   <string name="share_success">Shared with Home Assistant</string>
   <string name="shopping_list">Shopping List</string>
+  <string name="shortcut">Shortcut</string>
+  <string name="description">Description</string>
+  <string name="label">Label</string>
+  <string name="lovelace_view_dashboard">Lovelace View or Dashboard</string>
+  <string name="add_shortcut">Add Shortcut</string>
+  <string name="update_shortcut">Update Shortcut Data</string>
+  <string name="pin_shortcut">Pin Shortcut</string>
+  <string name="update_pinned_shortcut">Update Pinned Shortcut Data</string>
+  <string name="shortcut_instruction_title">Shortcut Instructions</string>
+  <string name="shortcut_instruction_desc">Use the below sections to create your shortcuts. Once you have added a shortcut you will need to drag it on your home screen after long pressing on the app icon. Although Android supports up to 5 dynamic shortcuts most launchers will only show 4 shortcuts.</string>
+  <string name="shortcut5_note">Not all launchers support displaying 5 shortcuts, you may not see this shortcut if the above 4 are already added.</string>
   <string name="shortcuts">Shortcuts</string>
   <string name="shortcuts_summary">Add shortcuts to launcher</string>
+  <string name="manage_shortcuts">Manage Shortcuts</string>
+  <string name="manage_shortcuts_summary">Manage launcher shortcuts</string>
   <string name="skip">Skip</string>
   <string name="state">State</string>
   <string name="state_auto">Auto</string>
@@ -518,6 +531,13 @@ like to connect to:</string>
   <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
   <string name="basic_sensor_name_battery_temperature">Battery Temperature</string>
   <string name="sensor_description_battery_temperature">The current battery temperature</string>
+  <string name="shortcut_pinned_desc">Pinned Shortcut Description</string>
+  <string name="shortcut_pinned_label">Pinned Shortcut Label</string>
+  <string name="shortcut_pinned_id">Pinned Shortcut ID</string>
+  <string name="shortcut_pinned_note">Make sure to change the ID below for each new shortcut you want to add otherwise the existing ID will be updated. There are no limits to the amount of pinned shortcuts you can create.</string>
+  <string name="shortcut_pinned_category">Pinned Shortcut Category</string>
+  <string name="delete_shortcut">Delete Shortcut</string>
+  <string name="shortcut_pinned_list">List of Pinned Shortcut IDs</string>
   <string name="search_sensors">Search sensors</string>
   <string name="filter_show_only_enabled_sensors">Only enabled sensors</string>
 </resources>

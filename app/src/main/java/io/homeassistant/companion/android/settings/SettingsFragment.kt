@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
+import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
@@ -150,6 +151,20 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 .addToBackStack(getString(R.string.widgets))
                 .commit()
             return@setOnPreferenceClickListener true
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            findPreference<PreferenceCategory>("shortcuts")?.let {
+                it.isVisible = true
+            }
+            findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
+                parentFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.content, ManageShortcutsSettingsFragment.newInstance())
+                        .addToBackStack(getString(R.string.shortcuts))
+                        .commit()
+                return@setOnPreferenceClickListener true
+            }
         }
 
         if (BuildConfig.FLAVOR == "full") {
