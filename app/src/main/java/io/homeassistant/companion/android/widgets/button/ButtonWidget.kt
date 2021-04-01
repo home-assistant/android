@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 class ButtonWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "ButtonWidget"
-        private const val CALL_SERVICE =
+        const val CALL_SERVICE =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.CALL_SERVICE"
         internal const val RECEIVE_DATA =
             "io.homeassistant.companion.android.widgets.button.ButtonWidget.RECEIVE_DATA"
@@ -193,6 +193,11 @@ class ButtonWidget : AppWidgetProvider() {
         val widget = buttonWidgetDao.get(appWidgetId)
 
         mainScope.launch {
+            if (widget == null) {
+                Log.d(TAG, "Widget not found for ID: $appWidgetId")
+                Toast.makeText(context, R.string.widget_not_found, Toast.LENGTH_LONG).show()
+                return@launch
+            }
             // Change color of background image for feedback
             var views = getWidgetRemoteViews(context, appWidgetId)
 

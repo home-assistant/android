@@ -555,4 +555,6 @@ like to connect to:</string>
   <string name="lovelace">Lovelace</string>
   <string name="entity_id">Entity ID</string>
   <string name="shortcut_type">Select Shortcut Type</string>
+  <string name="executed_service_call">Executed service call</string>
+  <string name="widget_not_found">Widget not found, please remove and readd the widget</string>
 </resources>

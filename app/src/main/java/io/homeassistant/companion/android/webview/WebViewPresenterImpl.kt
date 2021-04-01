@@ -39,7 +39,7 @@ class WebViewPresenterImpl @Inject constructor(
             val oldUrl = url
             url = urlUseCase.getUrl()
 
-            if (path != null && !path.startsWith("entityId:")) {
+            if (path != null && !path.startsWith("entityId:") && !path.startsWith("widgetId:")) {
                 url = UrlHandler.handle(url, path)
             }
 

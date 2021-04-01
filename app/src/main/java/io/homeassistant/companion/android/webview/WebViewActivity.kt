@@ -2,10 +2,13 @@ package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
 import android.app.PictureInPictureParams
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Rect
 import android.net.Uri
@@ -70,6 +73,7 @@ import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
+import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_player_control_view.*
@@ -137,6 +141,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoMute: Boolean = true
     private var failedConnection = "external"
     private var moreInfoEntity = ""
+    private var widgetId = 0
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -219,6 +224,22 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         webView.evaluateJavascript("document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))", null)
                     }
                     moreInfoEntity = ""
+                }
+
+                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    super.onPageStarted(view, url, favicon)
+                    if (widgetId != 0) {
+                        Log.d(TAG, "Executing service call widget id: $widgetId")
+                        val intent = Intent()
+                        intent.action = ButtonWidget.CALL_SERVICE
+                        intent.component = ComponentName(context, ButtonWidget::class.java)
+                        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, widgetId)
+                        sendBroadcast(intent)
+                        Toast.makeText(applicationContext, R.string.executed_service_call, Toast.LENGTH_SHORT)
+                            .show()
+                        finishAffinity()
+                    }
+                    widgetId = 0
                 }
 
                 override fun onReceivedHttpError(
@@ -758,6 +779,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             presenter.onViewReady(path)
             if (path?.startsWith("entityId:") == true)
                 moreInfoEntity = path.substringAfter("entityId:")
+            if (path?.startsWith("widgetId:") == true)
+                widgetId = path.substringAfter("widgetId:").toInt()
             intent.removeExtra(EXTRA_PATH)
 
             if (presenter.isFullScreen())

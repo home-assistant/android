@@ -22,11 +22,18 @@
         <ListPreference
             android:key="shortcut1_type"
             android:title="@string/shortcut_type"
+            android:defaultValue="@string/lovelace"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut1_entity_list"
             android:title="@string/entity_id"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut1_button_widget_list"
+            android:title="@string/widget_button_image_description"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
@@ -60,11 +67,18 @@
         <ListPreference
             android:key="shortcut2_type"
             android:title="@string/shortcut_type"
+            android:defaultValue="@string/lovelace"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut2_entity_list"
             android:title="@string/entity_id"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut2_button_widget_list"
+            android:title="@string/widget_button_image_description"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
@@ -98,11 +112,18 @@
         <ListPreference
             android:key="shortcut3_type"
             android:title="@string/shortcut_type"
+            android:defaultValue="@string/lovelace"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut3_entity_list"
             android:title="@string/entity_id"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut3_button_widget_list"
+            android:title="@string/widget_button_image_description"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
@@ -136,11 +157,18 @@
         <ListPreference
             android:key="shortcut4_type"
             android:title="@string/shortcut_type"
+            android:defaultValue="@string/lovelace"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut4_entity_list"
             android:title="@string/entity_id"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut4_button_widget_list"
+            android:title="@string/widget_button_image_description"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
@@ -179,11 +207,18 @@
         <ListPreference
             android:key="shortcut5_type"
             android:title="@string/shortcut_type"
+            android:defaultValue="@string/lovelace"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut5_entity_list"
             android:title="@string/entity_id"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut5_button_widget_list"
+            android:title="@string/widget_button_image_description"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
@@ -243,6 +278,12 @@
         <ListPreference
             android:key="pinned_shortcut_entity_list"
             android:title="@string/entity_id"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false"
+            app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="pinned_shortcut_button_widget_list"
+            android:title="@string/widget_button_image_description"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>

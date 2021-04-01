@@ -18,6 +18,7 @@ import androidx.preference.PreferenceFragmentCompat
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.settings.DaggerSettingsComponent
 import io.homeassistant.companion.android.webview.WebViewActivity
 import java.lang.Exception
@@ -37,6 +38,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
         private const val DELETE_SUFFIX = "_delete"
         private const val TYPE_SUFFIX = "_type"
         private const val ENTITY_SUFFIX = "_entity_list"
+        private const val WIDGET_LIST = "_button_widget_list"
         private const val TAG = "ManageShortcutFrag"
         fun newInstance(): ManageShortcutsSettingsFragment {
             return ManageShortcutsSettingsFragment()
@@ -74,7 +76,19 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 .inject(this)
 
         val addNewShortcut = findPreference<PreferenceCategory>("pinned_shortcut_category")
-        val shortcutTypes = listOf(getString(R.string.entity_id), getString(R.string.lovelace))
+        val buttonWidgetDao = AppDatabase.getInstance(requireContext()).buttonWidgetDao()
+        val buttonWidgetList = buttonWidgetDao.getAll()
+        var shortcutTypes = listOf(getString(R.string.entity_id), getString(R.string.lovelace))
+        var buttonWidgetIdList = listOf<String>()
+        var buttonWidgetIdLabel = listOf<String>()
+        if (!buttonWidgetList.isNullOrEmpty()) {
+            shortcutTypes = shortcutTypes + getString(R.string.widget_button_image_description)
+            for (widget in buttonWidgetList) {
+                buttonWidgetIdList = buttonWidgetIdList + widget.id.toString()
+                val label = if (!widget.label.isNullOrEmpty()) widget.label else "${widget.domain}.${widget.service}"
+                buttonWidgetIdLabel = buttonWidgetIdLabel + label
+            }
+        }
         val shortcutManager = requireContext().getSystemService(ShortcutManager::class.java)
         var pinnedShortcuts = shortcutManager.pinnedShortcuts
         var dynamicShortcuts = shortcutManager.dynamicShortcuts
@@ -106,10 +120,16 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             val deletePreference = findPreference<Preference>(SHORTCUT_PREFIX + i + DELETE_SUFFIX)
             val shortcutType = findPreference<ListPreference>(SHORTCUT_PREFIX + i + TYPE_SUFFIX)
             val shortcutEntityList = findPreference<ListPreference>(SHORTCUT_PREFIX + i + ENTITY_SUFFIX)
+            val shortcutButtonWidgetList = findPreference<ListPreference>(SHORTCUT_PREFIX + i + WIDGET_LIST)
 
             if (entityList.isNotEmpty()) {
                 shortcutEntityList?.entries = entityList.sorted().toTypedArray()
                 shortcutEntityList?.entryValues = entityList.sorted().toTypedArray()
+            }
+
+            if (buttonWidgetList.isNullOrEmpty()) {
+                shortcutButtonWidgetList?.entries = buttonWidgetIdLabel.sorted().toTypedArray()
+                shortcutButtonWidgetList?.entryValues = buttonWidgetIdList.sorted().toTypedArray()
             }
             shortcutType?.entries = shortcutTypes.toTypedArray()
             shortcutType?.entryValues = shortcutTypes.toTypedArray()
@@ -122,6 +142,17 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             shortcutEntityList?.setOnPreferenceChangeListener { _, newValue ->
                 shortcutPath = newValue.toString()
                 addUpdatePreference?.isEnabled = !shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()
+                return@setOnPreferenceChangeListener true
+            }
+            shortcutButtonWidgetList?.setOnPreferenceChangeListener { _, newValue ->
+                shortcutPath = "widgetId:$newValue"
+                val selectedWidget = buttonWidgetDao.get(newValue.toString().toInt())
+                val widgetLabel = if (!selectedWidget?.label.isNullOrEmpty()) selectedWidget?.label else "${selectedWidget?.domain}.${selectedWidget?.service}"
+                shortcutLabel = widgetLabel
+                findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + LABEL_SUFFIX)?.text = widgetLabel
+                shortcutDesc = widgetLabel
+                findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + DESC_SUFFIX)?.text = widgetLabel
+                addUpdatePreference?.isEnabled = !(shortcutLabel.isNullOrEmpty() || shortcutDesc.isNullOrEmpty() && shortcutPath.isNullOrEmpty())
                 return@setOnPreferenceChangeListener true
             }
             addUpdatePreference?.isEnabled = !(shortcutLabel.isNullOrEmpty() || shortcutDesc.isNullOrEmpty() && shortcutPath.isNullOrEmpty())
@@ -194,12 +225,17 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             val pinnedShortcutPref = findPreference<Preference>("pinned_shortcut_pin")
             val pinnedShortcutType = findPreference<ListPreference>("pinned_shortcut_type")
             val pinnedShortcutEntityList = findPreference<ListPreference>("pinned_shortcut_entity_list")
+            val pinnedShortcutButtonWidgetList = findPreference<ListPreference>("pinned_shortcut_button_widget_list")
             val pinnedList = findPreference<ListPreference>("pinned_shortcut_list")
             val pinnedShortcutIds = pinnedShortcuts.asSequence().map { it.id }.toList()
 
             if (entityList.isNotEmpty()) {
                 pinnedShortcutEntityList?.entries = entityList.sorted().toTypedArray()
                 pinnedShortcutEntityList?.entryValues = entityList.sorted().toTypedArray()
+            }
+            if (!buttonWidgetList.isNullOrEmpty()) {
+                pinnedShortcutButtonWidgetList?.entries = buttonWidgetIdLabel.sorted().toTypedArray()
+                pinnedShortcutButtonWidgetList?.entryValues = buttonWidgetIdList.sorted().toTypedArray()
             }
             pinnedShortcutType?.entries = shortcutTypes.toTypedArray()
             pinnedShortcutType?.entryValues = shortcutTypes.toTypedArray()
@@ -212,6 +248,19 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             }
             pinnedShortcutEntityList?.setOnPreferenceChangeListener { _, newValue ->
                 pinnedShortcutPath = newValue.toString()
+                pinnedShortcutPref?.isEnabled = !pinnedShortcutId.isNullOrEmpty() && !pinnedShortcutLabel.isNullOrEmpty() && !pinnedShortcutDesc.isNullOrEmpty() && !pinnedShortcutPath.isNullOrEmpty()
+                return@setOnPreferenceChangeListener true
+            }
+            pinnedShortcutButtonWidgetList?.setOnPreferenceChangeListener { _, newValue ->
+                pinnedShortcutPath = "widgetId:$newValue"
+                val selectedWidget = buttonWidgetDao.get(newValue.toString().toInt())
+                val widgetLabel = if (!selectedWidget?.label.isNullOrEmpty()) selectedWidget?.label else "${selectedWidget?.domain}.${selectedWidget?.service}"
+                pinnedShortcutId = selectedWidget?.id.toString()
+                findPreference<EditTextPreference>("pinned_shortcut_id")?.text = selectedWidget?.id.toString()
+                pinnedShortcutLabel = widgetLabel
+                findPreference<EditTextPreference>("pinned_shortcut_label")?.text = widgetLabel
+                pinnedShortcutDesc = widgetLabel
+                findPreference<EditTextPreference>("pinned_shortcut_desc")?.text = widgetLabel
                 pinnedShortcutPref?.isEnabled = !pinnedShortcutId.isNullOrEmpty() && !pinnedShortcutLabel.isNullOrEmpty() && !pinnedShortcutDesc.isNullOrEmpty() && !pinnedShortcutPath.isNullOrEmpty()
                 return@setOnPreferenceChangeListener true
             }
@@ -231,6 +280,14 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                             findPreference<EditTextPreference>("pinned_shortcut_path")?.text = item.intent?.action
                             pinnedShortcutPath = item.intent?.action
                             pinnedShortcutEntityList?.value = item.intent?.action?.removePrefix("entityId:")
+                            pinnedShortcutButtonWidgetList?.value = item.intent?.action?.removePrefix("widgetId:")
+                            when {
+                                pinnedShortcutPath?.startsWith("entityId:") == true ->
+                                    setPinnedShortcutType(getString(R.string.entity_id))
+                                pinnedShortcutPath?.startsWith("widgetId") == true ->
+                                    setPinnedShortcutType(getString(R.string.widget_button_image_description))
+                                else -> setPinnedShortcutType(getString(R.string.lovelace))
+                            }
                             pinnedShortcutPref?.title = getString(R.string.update_pinned_shortcut)
                             pinnedShortcutPref?.isEnabled = true
                         }
@@ -321,6 +378,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
     private fun createShortcut(shortcutId: String, shortcutLabel: String, shortcutDesc: String, shortcutPath: String): ShortcutInfo {
         val intent = Intent(WebViewActivity.newInstance(requireContext(), shortcutPath).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         intent.action = shortcutPath
+        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
         return ShortcutInfo.Builder(requireContext(), shortcutId)
                 .setShortLabel(shortcutLabel)
@@ -334,11 +392,21 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
         when (value) {
             getString(R.string.entity_id) -> {
                 findPreference<EditTextPreference>("pinned_shortcut_path")?.isVisible = false
+                findPreference<ListPreference>("pinned_shortcut_button_widget_list")?.isVisible = false
                 findPreference<ListPreference>("pinned_shortcut_entity_list")?.isVisible = true
+                findPreference<ListPreference>("pinned_shortcut_type")?.value = getString(R.string.entity_id)
             }
             getString(R.string.lovelace) -> {
                 findPreference<EditTextPreference>("pinned_shortcut_path")?.isVisible = true
+                findPreference<ListPreference>("pinned_shortcut_button_widget_list")?.isVisible = false
                 findPreference<ListPreference>("pinned_shortcut_entity_list")?.isVisible = false
+                findPreference<ListPreference>("pinned_shortcut_type")?.value = getString(R.string.lovelace)
+            }
+            getString(R.string.widget_button_image_description) -> {
+                findPreference<EditTextPreference>("pinned_shortcut_path")?.isVisible = false
+                findPreference<ListPreference>("pinned_shortcut_button_widget_list")?.isVisible = true
+                findPreference<ListPreference>("pinned_shortcut_entity_list")?.isVisible = false
+                findPreference<ListPreference>("pinned_shortcut_type")?.value = getString(R.string.widget_button_image_description)
             }
         }
     }
@@ -348,10 +416,17 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             getString(R.string.entity_id) -> {
                 findPreference<EditTextPreference>(SHORTCUT_PREFIX + position + PATH_SUFFIX)?.isVisible = false
                 findPreference<ListPreference>(SHORTCUT_PREFIX + position + ENTITY_SUFFIX)?.isVisible = true
+                findPreference<ListPreference>(SHORTCUT_PREFIX + position + WIDGET_LIST)?.isVisible = false
             }
             getString(R.string.lovelace) -> {
                 findPreference<EditTextPreference>(SHORTCUT_PREFIX + position + PATH_SUFFIX)?.isVisible = true
                 findPreference<ListPreference>(SHORTCUT_PREFIX + position + ENTITY_SUFFIX)?.isVisible = false
+                findPreference<ListPreference>(SHORTCUT_PREFIX + position + WIDGET_LIST)?.isVisible = false
+            }
+            getString(R.string.widget_button_image_description) -> {
+                findPreference<EditTextPreference>(SHORTCUT_PREFIX + position + PATH_SUFFIX)?.isVisible = false
+                findPreference<ListPreference>(SHORTCUT_PREFIX + position + ENTITY_SUFFIX)?.isVisible = false
+                findPreference<ListPreference>(SHORTCUT_PREFIX + position + WIDGET_LIST)?.isVisible = true
             }
         }
     }
