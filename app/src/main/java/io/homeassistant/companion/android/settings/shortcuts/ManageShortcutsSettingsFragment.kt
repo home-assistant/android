@@ -288,7 +288,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                         }
                     }
 
-
                     if (isNewPinned) {
                         Log.d(TAG, "Requesting to pin shortcut $pinnedShortcutId")
                         shortcutManager.requestPinShortcut(shortcut, null)

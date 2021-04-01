@@ -238,6 +238,7 @@
             android:key="pinned_shortcut_type"
             android:title="@string/shortcut_type"
             app:useSimpleSummaryProvider="true"
+            android:defaultValue="@string/lovelace"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="pinned_shortcut_entity_list"
