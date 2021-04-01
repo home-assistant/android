@@ -79,8 +79,8 @@ class NetworkSensorManager : SensorManager {
         get() = false
     override val name: Int
         get() = R.string.sensor_name_network
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(
             wifiConnection,
             bssidState,
             wifiIp,
@@ -90,6 +90,7 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength,
             publicIp
         )
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {

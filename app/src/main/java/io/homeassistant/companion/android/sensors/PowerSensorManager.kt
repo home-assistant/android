@@ -37,12 +37,13 @@ class PowerSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_power
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             listOf(interactiveDevice, doze, powerSave)
         } else {
             listOf(interactiveDevice, powerSave)
         }
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()

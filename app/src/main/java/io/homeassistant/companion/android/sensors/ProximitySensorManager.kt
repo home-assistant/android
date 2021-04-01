@@ -34,8 +34,9 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     override val name: Int
         get() = R.string.sensor_name_proximity
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(proximitySensor)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(proximitySensor)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()

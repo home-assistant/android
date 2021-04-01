@@ -31,8 +31,9 @@ class NextAlarmManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_alarm
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(nextAlarm)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(nextAlarm)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()

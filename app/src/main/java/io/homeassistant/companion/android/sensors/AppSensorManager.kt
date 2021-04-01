@@ -75,16 +75,22 @@ class AppSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_app_sensor
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = when {
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return when {
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) ->
-                listOf(currentVersion, app_rx_gb, app_tx_gb, app_memory, app_inactive,
-                    app_standby_bucket, app_importance)
+                listOf(
+                    currentVersion, app_rx_gb, app_tx_gb, app_memory, app_inactive,
+                    app_standby_bucket, app_importance
+                )
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ->
-                listOf(currentVersion, app_rx_gb, app_tx_gb, app_memory, app_inactive,
-                    app_importance)
+                listOf(
+                    currentVersion, app_rx_gb, app_tx_gb, app_memory, app_inactive,
+                    app_importance
+                )
             else -> listOf(currentVersion, app_rx_gb, app_tx_gb, app_memory, app_importance)
         }
+    }
+
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
     }

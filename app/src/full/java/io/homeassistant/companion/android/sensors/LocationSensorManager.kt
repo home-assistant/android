@@ -431,7 +431,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
                 // Update GeoLocation Sensor (if enabled) with new Location
-                val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.availableSensors.any { s -> s.name == R.string.basic_sensor_name_geolocation } }
+                val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == R.string.basic_sensor_name_geolocation } }
                 if (geoSensorManager != null) {
                     if (geoSensorManager.isEnabled(latestContext, "geocoded_location")) {
                         geoSensorManager.requestSensorUpdate(latestContext)
@@ -443,6 +443,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 // Send new location to Home Assistant
                 sendLocationUpdate(location)
             }
+        }
+    }
+
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return if (DisabledLocationHandler.hasGPS(context)) {
+            listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
+        } else {
+            listOf(backgroundLocation, zoneLocation)
         }
     }
 
@@ -799,15 +807,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     override val name: Int
         get() = R.string.sensor_name_location
-
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() {
-            return if (DisabledLocationHandler.hasGPS(latestContext)) {
-                listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
-            } else {
-                listOf(backgroundLocation, zoneLocation)
-            }
-        }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

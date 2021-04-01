@@ -66,8 +66,9 @@ class BluetoothSensorManager : SensorManager {
         get() = false
     override val name: Int
         get() = R.string.sensor_name_bluetooth
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(bluetoothConnection, bluetoothState, bleTransmitter)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(bluetoothConnection, bluetoothState, bleTransmitter)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.BLUETOOTH)

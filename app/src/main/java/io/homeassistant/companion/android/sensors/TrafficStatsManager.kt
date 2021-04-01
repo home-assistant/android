@@ -50,10 +50,11 @@ class TrafficStatsManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_traffic_stats
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = if (hasCellular) {
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return if (hasCellular) {
             listOf(rxBytesMobile, txBytesMobile, rxBytesTotal, txBytesTotal)
         } else listOf(rxBytesTotal, txBytesTotal)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()

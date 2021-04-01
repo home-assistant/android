@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.database.sensor.Setting
 interface SensorManager {
 
     val name: Int
-    val availableSensors: List<BasicSensor>
     val enabledByDefault: Boolean
 
     data class BasicSensor(
@@ -54,6 +53,8 @@ interface SensorManager {
     }
 
     fun requestSensorUpdate(context: Context)
+
+    fun getAvailableSensors(context: Context): List<BasicSensor>
 
     fun hasSensor(context: Context): Boolean {
         return true

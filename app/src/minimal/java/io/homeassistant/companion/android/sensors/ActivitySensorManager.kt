@@ -16,8 +16,9 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     override val name: Int
         get() = R.string.sensor_name_activity
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf()
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf()
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         // Noop

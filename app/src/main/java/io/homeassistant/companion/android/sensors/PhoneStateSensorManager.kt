@@ -39,10 +39,11 @@ class PhoneStateSensorManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_phone
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
             listOf(phoneState, sim_1, sim_2)
         else listOf(phoneState)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)

@@ -24,8 +24,9 @@ class LastUpdateManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_last_update
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(lastUpdate)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(lastUpdate)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()

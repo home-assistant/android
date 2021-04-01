@@ -41,7 +41,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             totalEnabledSensors = 0
             val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
             SensorReceiver.MANAGERS.forEach { managers ->
-                managers.availableSensors.forEach { basicSensor ->
+                managers.getAvailableSensors(requireContext()).forEach { basicSensor ->
                     findPreference<Preference>(basicSensor.id)?.let {
                         val sensorEntity = sensorDao.get(basicSensor.id)
                         if (sensorEntity?.enabled == true) {
@@ -118,7 +118,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 val locationEnabled = DisabledLocationHandler.isLocationEnabled(context)
 
                 SensorReceiver.MANAGERS.forEach { managers ->
-                    managers.availableSensors.forEach { basicSensor ->
+                    managers.getAvailableSensors(context).forEach { basicSensor ->
                         val requiredPermissions = managers.requiredPermissions(basicSensor.id)
 
                         val locationPermissionCoarse = DisabledLocationHandler.containsLocationPermission(requiredPermissions, false)
@@ -169,7 +169,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             prefCategory.title = getString(manager.name)
             preferenceScreen.addPreference(prefCategory)
 
-            manager.availableSensors.sortedBy { getString(it.name) }.forEach { basicSensor ->
+            manager.getAvailableSensors(requireContext()).sortedBy { getString(it.name) }.forEach { basicSensor ->
                 val pref = Preference(preferenceScreen.context)
                 pref.key = basicSensor.id
                 pref.title = getString(basicSensor.name)
@@ -245,7 +245,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     private fun filterSensors(searchQuery: String? = "") {
         SensorReceiver.MANAGERS.filter { m -> m.hasSensor(requireContext()) }.forEach { manager ->
-            manager.availableSensors.forEach { sensor ->
+            manager.getAvailableSensors(requireContext()).forEach { sensor ->
                 val pref = findPreference<Preference>(sensor.id)
                 if (pref != null) {
                     pref.isVisible = true
@@ -358,7 +358,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
         SensorReceiver.MANAGERS.forEach { managers ->
-            managers.availableSensors.forEach { basicSensor ->
+            managers.getAvailableSensors(requireContext()).forEach { basicSensor ->
                 val sensorTurnsOnWithGroupToggle = managers.enableToggleAll(requireContext(), basicSensor.id)
                 if (!sensorTurnsOnWithGroupToggle) {
                     return@forEach

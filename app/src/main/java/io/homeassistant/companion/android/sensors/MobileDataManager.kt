@@ -29,8 +29,9 @@ class MobileDataManager : SensorManager {
     override val name: Int
         get() = R.string.sensor_name_mobile_data
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(mobileDataState, mobileDataRoaming)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(mobileDataState, mobileDataRoaming)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf()
