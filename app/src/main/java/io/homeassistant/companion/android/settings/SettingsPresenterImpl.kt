@@ -17,6 +17,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class SettingsPresenterImpl @Inject constructor(
     private val settingsView: SettingsView,
@@ -201,14 +202,12 @@ class SettingsPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getNotificationRateLimits(): RateLimitResponse? {
-        return runBlocking {
-            try {
-                integrationUseCase.getNotificationRateLimits()
-            } catch (e: Exception) {
-                Log.d(TAG, "Unable to get rate limits")
-                return@runBlocking null
-            }
+    override suspend fun getNotificationRateLimits(): RateLimitResponse? = withContext(Dispatchers.IO) {
+        try {
+            integrationUseCase.getNotificationRateLimits()
+        } catch (e: Exception) {
+            Log.d(TAG, "Unable to get rate limits")
+            return@withContext null
         }
     }
 
