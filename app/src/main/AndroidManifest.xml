@@ -224,7 +224,8 @@
 
         <activity
             android:name=".settings.SettingsActivity"
-            android:parentActivityName=".webview.WebViewActivity" />
+            android:parentActivityName=".webview.WebViewActivity"
+            android:configChanges="orientation|screenSize"/>
 
         <activity
             android:name=".nfc.TagReaderActivity"

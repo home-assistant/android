@@ -1,25 +1,30 @@
 package io.homeassistant.companion.android.util
 
+import android.util.Log
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 object LogcatReader {
-    fun readLog(): String {
-        val command = arrayOf("logcat", "--pid=" + android.os.Process.myPid(), "-d")
-        val process = Runtime.getRuntime().exec(command)
+    const val TAG = "LogcatReader"
+    suspend fun readLog(): String = withContext(Dispatchers.IO) {
+        val pid = android.os.Process.myPid()
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            process.waitFor(10, TimeUnit.SECONDS)
-        } else process.waitFor()
-
-        val bufferedReader = BufferedReader(InputStreamReader(process.inputStream))
-
+        Log.d(TAG, "Read logcat for pid $pid")
         val log = StringBuilder()
+        val pb = ProcessBuilder("logcat", "--pid=$pid", "-d")
+        pb.redirectErrorStream(true)
+        val process = pb.start()
+
+        val reader = BufferedReader(InputStreamReader(process.inputStream))
         var line: String? = ""
-        while (bufferedReader.readLine().also { line = it } != null) {
+        while (reader.readLine().also { line = it } != null) {
             log.append(line + "\n")
         }
-        return log.toString()
+        process.waitFor()
+
+        Log.d(TAG, "Done reading logcat for pid $pid")
+        return@withContext log.toString()
     }
 }
