@@ -127,8 +127,8 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 shortcutScriptList?.entries = scriptList.sorted().toTypedArray()
                 shortcutScriptList?.entryValues = scriptList.sorted().toTypedArray()
             }
-            shortcutType?.entries = shortcutTypes.toTypedArray()
-            shortcutType?.entryValues = shortcutTypes.toTypedArray()
+            shortcutType?.entries = shortcutTypes.sorted().toTypedArray()
+            shortcutType?.entryValues = shortcutTypes.sorted().toTypedArray()
             setDynamicShortcutType(shortcutType?.value.toString(), i)
             shortcutType?.setOnPreferenceChangeListener { _, newValue ->
                 setDynamicShortcutType(newValue.toString(), i)
@@ -232,8 +232,8 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 pinnedShortcutScriptList?.entries = scriptList.sorted().toTypedArray()
                 pinnedShortcutScriptList?.entryValues = scriptList.sorted().toTypedArray()
             }
-            pinnedShortcutType?.entries = shortcutTypes.toTypedArray()
-            pinnedShortcutType?.entryValues = shortcutTypes.toTypedArray()
+            pinnedShortcutType?.entries = shortcutTypes.sorted().toTypedArray()
+            pinnedShortcutType?.entryValues = shortcutTypes.sorted().toTypedArray()
             pinnedShortcutType?.setDefaultValue(getString(R.string.lovelace))
             setPinnedShortcutType(pinnedShortcutType?.value.toString())
             pinnedShortcutType?.setOnPreferenceChangeListener { _, newValue ->
