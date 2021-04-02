@@ -6,6 +6,8 @@ interface WebViewPresenter {
 
     fun onGetExternalAuth(callback: String, force: Boolean)
 
+    fun executeScript(script: String): Boolean
+
     fun checkSecurityVersion()
 
     fun onRevokeExternalAuth(callback: String)

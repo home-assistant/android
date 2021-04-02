@@ -30,6 +30,12 @@
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut1_script_list"
+            android:title="@string/select_script"
+            app:useSimpleSummaryProvider="true"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false" />
         <EditTextPreference
             android:key="shortcut1_path"
             app:iconSpaceReserved="false"
@@ -68,6 +74,12 @@
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut2_script_list"
+            android:title="@string/select_script"
+            app:useSimpleSummaryProvider="true"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false" />
         <EditTextPreference
             android:key="shortcut2_path"
             android:title="@string/lovelace_view_dashboard"
@@ -106,6 +118,12 @@
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut3_script_list"
+            android:title="@string/select_script"
+            app:useSimpleSummaryProvider="true"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false" />
         <EditTextPreference
             android:key="shortcut3_path"
             android:title="@string/lovelace_view_dashboard"
@@ -144,6 +162,12 @@
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut4_script_list"
+            android:title="@string/select_script"
+            app:useSimpleSummaryProvider="true"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false" />
         <EditTextPreference
             android:key="shortcut4_path"
             android:title="@string/lovelace_view_dashboard"
@@ -187,6 +211,12 @@
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false"
             app:useSimpleSummaryProvider="true"/>
+        <ListPreference
+            android:key="shortcut5_script_list"
+            android:title="@string/select_script"
+            app:useSimpleSummaryProvider="true"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false" />
         <EditTextPreference
             android:key="shortcut5_path"
             android:title="@string/lovelace_view_dashboard"
@@ -239,6 +269,12 @@
             android:title="@string/shortcut_type"
             app:useSimpleSummaryProvider="true"
             android:defaultValue="@string/lovelace"
+            app:iconSpaceReserved="false" />
+        <ListPreference
+            android:key="pinned_shortcut_script_list"
+            android:title="@string/select_script"
+            app:useSimpleSummaryProvider="true"
+            app:isPreferenceVisible="false"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="pinned_shortcut_entity_list"

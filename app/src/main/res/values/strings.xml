@@ -555,4 +555,8 @@ like to connect to:</string>
   <string name="lovelace">Lovelace</string>
   <string name="entity_id">Entity ID</string>
   <string name="shortcut_type">Select Shortcut Type</string>
+  <string name="select_script">Select Script</string>
+  <string name="execute_script">Execute Script</string>
+  <string name="script_executed">Script executed successfully</string>
+  <string name="script_failed">Script failed to execute</string>
 </resources>

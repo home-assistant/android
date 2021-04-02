@@ -37,6 +37,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
         private const val DELETE_SUFFIX = "_delete"
         private const val TYPE_SUFFIX = "_type"
         private const val ENTITY_SUFFIX = "_entity_list"
+        private const val SCRIPT_SUFFIX = "_script_list"
         private const val TAG = "ManageShortcutFrag"
         fun newInstance(): ManageShortcutsSettingsFragment {
             return ManageShortcutsSettingsFragment()
@@ -74,22 +75,27 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 .inject(this)
 
         val addNewShortcut = findPreference<PreferenceCategory>("pinned_shortcut_category")
-        val shortcutTypes = listOf(getString(R.string.entity_id), getString(R.string.lovelace))
+        var shortcutTypes = listOf(getString(R.string.entity_id), getString(R.string.lovelace))
         val shortcutManager = requireContext().getSystemService(ShortcutManager::class.java)
         var pinnedShortcuts = shortcutManager.pinnedShortcuts
         var dynamicShortcuts = shortcutManager.dynamicShortcuts
         var entityList = listOf<String>()
+        var scriptList = listOf<String>()
 
         runBlocking {
             try {
                 integrationUseCase.getEntities().forEach {
                     entityList = entityList + it.entityId
+                    if (it.entityId.split('.')[0] == "script")
+                        scriptList = scriptList + it.entityId
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to fetch list of entity IDs", e)
             }
         }
 
+        if (scriptList.isNotEmpty())
+            shortcutTypes = shortcutTypes + getString(R.string.execute_script)
         Log.d(TAG, "We have ${dynamicShortcuts.size} dynamic shortcuts")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -99,17 +105,27 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
 
         for (i in 1..MAX_SHORTCUTS) {
             findPreference<PreferenceCategory>(SHORTCUT_PREFIX + i + CATEGORY_SUFFIX)?.title = "${getString(R.string.shortcut)} $i"
-            var shortcutLabel = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + LABEL_SUFFIX)?.text
-            var shortcutDesc = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + DESC_SUFFIX)?.text
-            var shortcutPath = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + PATH_SUFFIX)?.text
-            val addUpdatePreference = findPreference<Preference>(SHORTCUT_PREFIX + i + UPDATE_SUFFIX)
-            val deletePreference = findPreference<Preference>(SHORTCUT_PREFIX + i + DELETE_SUFFIX)
             val shortcutType = findPreference<ListPreference>(SHORTCUT_PREFIX + i + TYPE_SUFFIX)
             val shortcutEntityList = findPreference<ListPreference>(SHORTCUT_PREFIX + i + ENTITY_SUFFIX)
+            val shortcutScriptList = findPreference<ListPreference>(SHORTCUT_PREFIX + i + SCRIPT_SUFFIX)
+            var shortcutLabel = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + LABEL_SUFFIX)?.text
+            var shortcutDesc = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + DESC_SUFFIX)?.text
+            var shortcutPath = when (shortcutType?.value) {
+                getString(R.string.lovelace) -> findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + PATH_SUFFIX)?.text
+                getString(R.string.entity_id) -> shortcutEntityList?.value
+                getString(R.string.execute_script) -> shortcutScriptList?.value
+                else -> findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + PATH_SUFFIX)?.text
+            }
+            val addUpdatePreference = findPreference<Preference>(SHORTCUT_PREFIX + i + UPDATE_SUFFIX)
+            val deletePreference = findPreference<Preference>(SHORTCUT_PREFIX + i + DELETE_SUFFIX)
 
             if (entityList.isNotEmpty()) {
                 shortcutEntityList?.entries = entityList.sorted().toTypedArray()
                 shortcutEntityList?.entryValues = entityList.sorted().toTypedArray()
+            }
+            if (scriptList.isNotEmpty()) {
+                shortcutScriptList?.entries = scriptList.sorted().toTypedArray()
+                shortcutScriptList?.entryValues = scriptList.sorted().toTypedArray()
             }
             shortcutType?.entries = shortcutTypes.toTypedArray()
             shortcutType?.entryValues = shortcutTypes.toTypedArray()
@@ -120,6 +136,11 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 return@setOnPreferenceChangeListener true
             }
             shortcutEntityList?.setOnPreferenceChangeListener { _, newValue ->
+                shortcutPath = newValue.toString()
+                addUpdatePreference?.isEnabled = !shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()
+                return@setOnPreferenceChangeListener true
+            }
+            shortcutScriptList?.setOnPreferenceChangeListener { _, newValue ->
                 shortcutPath = newValue.toString()
                 addUpdatePreference?.isEnabled = !shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()
                 return@setOnPreferenceChangeListener true
@@ -187,19 +208,29 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && shortcutManager.isRequestPinShortcutSupported) {
             addNewShortcut?.isVisible = true
+            val pinnedShortcutType = findPreference<ListPreference>("pinned_shortcut_type")
+            val pinnedShortcutEntityList = findPreference<ListPreference>("pinned_shortcut_entity_list")
+            val pinnedShortcutScriptList = findPreference<ListPreference>("pinned_shortcut_script_list")
             var pinnedShortcutId = findPreference<EditTextPreference>("pinned_shortcut_id")?.text
             var pinnedShortcutLabel = findPreference<EditTextPreference>("pinned_shortcut_label")?.text
             var pinnedShortcutDesc = findPreference<EditTextPreference>("pinned_shortcut_desc")?.text
-            var pinnedShortcutPath = findPreference<EditTextPreference>("pinned_shortcut_path")?.text
+            var pinnedShortcutPath = when (pinnedShortcutType?.value) {
+                getString(R.string.lovelace) -> findPreference<EditTextPreference>("pinned_shortcut_path")?.text
+                getString(R.string.entity_id) -> pinnedShortcutEntityList?.value
+                getString(R.string.execute_script) -> pinnedShortcutScriptList?.value
+                else -> findPreference<EditTextPreference>("pinned_shortcut_path")?.text
+            }
             val pinnedShortcutPref = findPreference<Preference>("pinned_shortcut_pin")
-            val pinnedShortcutType = findPreference<ListPreference>("pinned_shortcut_type")
-            val pinnedShortcutEntityList = findPreference<ListPreference>("pinned_shortcut_entity_list")
             val pinnedList = findPreference<ListPreference>("pinned_shortcut_list")
             val pinnedShortcutIds = pinnedShortcuts.asSequence().map { it.id }.toList()
 
             if (entityList.isNotEmpty()) {
                 pinnedShortcutEntityList?.entries = entityList.sorted().toTypedArray()
                 pinnedShortcutEntityList?.entryValues = entityList.sorted().toTypedArray()
+            }
+            if (scriptList.isNotEmpty()) {
+                pinnedShortcutScriptList?.entries = scriptList.sorted().toTypedArray()
+                pinnedShortcutScriptList?.entryValues = scriptList.sorted().toTypedArray()
             }
             pinnedShortcutType?.entries = shortcutTypes.toTypedArray()
             pinnedShortcutType?.entryValues = shortcutTypes.toTypedArray()
@@ -211,6 +242,11 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 return@setOnPreferenceChangeListener true
             }
             pinnedShortcutEntityList?.setOnPreferenceChangeListener { _, newValue ->
+                pinnedShortcutPath = newValue.toString()
+                pinnedShortcutPref?.isEnabled = !pinnedShortcutId.isNullOrEmpty() && !pinnedShortcutLabel.isNullOrEmpty() && !pinnedShortcutDesc.isNullOrEmpty() && !pinnedShortcutPath.isNullOrEmpty()
+                return@setOnPreferenceChangeListener true
+            }
+            pinnedShortcutScriptList?.setOnPreferenceChangeListener { _, newValue ->
                 pinnedShortcutPath = newValue.toString()
                 pinnedShortcutPref?.isEnabled = !pinnedShortcutId.isNullOrEmpty() && !pinnedShortcutLabel.isNullOrEmpty() && !pinnedShortcutDesc.isNullOrEmpty() && !pinnedShortcutPath.isNullOrEmpty()
                 return@setOnPreferenceChangeListener true
@@ -293,6 +329,8 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                     Log.d(TAG, "Attempt to add $pinnedShortcutId")
                     if (pinnedShortcutType?.value == getString(R.string.entity_id))
                         pinnedShortcutPath = "entityId:${pinnedShortcutEntityList?.value}"
+                    if (pinnedShortcutType?.value == getString(R.string.execute_script))
+                        pinnedShortcutPath = "executeScript:${pinnedShortcutScriptList?.value}"
                     val shortcut = createShortcut(pinnedShortcutId!!, pinnedShortcutLabel!!, pinnedShortcutDesc!!, pinnedShortcutPath!!)
                     var isNewPinned = true
 
@@ -321,6 +359,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
     private fun createShortcut(shortcutId: String, shortcutLabel: String, shortcutDesc: String, shortcutPath: String): ShortcutInfo {
         val intent = Intent(WebViewActivity.newInstance(requireContext(), shortcutPath).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         intent.action = shortcutPath
+        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
         return ShortcutInfo.Builder(requireContext(), shortcutId)
                 .setShortLabel(shortcutLabel)
@@ -335,10 +374,17 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             getString(R.string.entity_id) -> {
                 findPreference<EditTextPreference>("pinned_shortcut_path")?.isVisible = false
                 findPreference<ListPreference>("pinned_shortcut_entity_list")?.isVisible = true
+                findPreference<ListPreference>("pinned_shortcut_script_list")?.isVisible = false
             }
             getString(R.string.lovelace) -> {
                 findPreference<EditTextPreference>("pinned_shortcut_path")?.isVisible = true
                 findPreference<ListPreference>("pinned_shortcut_entity_list")?.isVisible = false
+                findPreference<ListPreference>("pinned_shortcut_script_list")?.isVisible = false
+            }
+            getString(R.string.execute_script) -> {
+                findPreference<EditTextPreference>("pinned_shortcut_path")?.isVisible = false
+                findPreference<ListPreference>("pinned_shortcut_entity_list")?.isVisible = false
+                findPreference<ListPreference>("pinned_shortcut_script_list")?.isVisible = true
             }
         }
     }
@@ -348,10 +394,17 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             getString(R.string.entity_id) -> {
                 findPreference<EditTextPreference>(SHORTCUT_PREFIX + position + PATH_SUFFIX)?.isVisible = false
                 findPreference<ListPreference>(SHORTCUT_PREFIX + position + ENTITY_SUFFIX)?.isVisible = true
+                findPreference<ListPreference>(SHORTCUT_PREFIX + position + SCRIPT_SUFFIX)?.isVisible = false
             }
             getString(R.string.lovelace) -> {
                 findPreference<EditTextPreference>(SHORTCUT_PREFIX + position + PATH_SUFFIX)?.isVisible = true
                 findPreference<ListPreference>(SHORTCUT_PREFIX + position + ENTITY_SUFFIX)?.isVisible = false
+                findPreference<ListPreference>(SHORTCUT_PREFIX + position + SCRIPT_SUFFIX)?.isVisible = false
+            }
+            getString(R.string.execute_script) -> {
+                findPreference<EditTextPreference>(SHORTCUT_PREFIX + position + PATH_SUFFIX)?.isVisible = false
+                findPreference<ListPreference>(SHORTCUT_PREFIX + position + ENTITY_SUFFIX)?.isVisible = false
+                findPreference<ListPreference>(SHORTCUT_PREFIX + position + SCRIPT_SUFFIX)?.isVisible = true
             }
         }
     }

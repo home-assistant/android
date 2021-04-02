@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Rect
 import android.net.Uri
@@ -137,6 +138,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoMute: Boolean = true
     private var failedConnection = "external"
     private var moreInfoEntity = ""
+    private var scriptEntity = ""
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -219,6 +221,20 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         webView.evaluateJavascript("document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))", null)
                     }
                     moreInfoEntity = ""
+                }
+
+                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                    super.onPageStarted(view, url, favicon)
+                    if (scriptEntity != "") {
+                        Log.d(TAG, "Executing script: $scriptEntity")
+                        val success = presenter.executeScript(scriptEntity)
+                        if (success)
+                            Toast.makeText(applicationContext, R.string.script_executed, Toast.LENGTH_SHORT).show()
+                        else
+                            Toast.makeText(applicationContext, R.string.script_failed, Toast.LENGTH_LONG).show()
+                        finishAffinity()
+                    }
+                    scriptEntity = ""
                 }
 
                 override fun onReceivedHttpError(
@@ -758,6 +774,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             presenter.onViewReady(path)
             if (path?.startsWith("entityId:") == true)
                 moreInfoEntity = path.substringAfter("entityId:")
+            if (path?.startsWith("executeScript:") == true)
+                scriptEntity = path.substringAfter("executeScript:")
             intent.removeExtra(EXTRA_PATH)
 
             if (presenter.isFullScreen())

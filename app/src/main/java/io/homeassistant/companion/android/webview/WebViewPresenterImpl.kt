@@ -39,7 +39,7 @@ class WebViewPresenterImpl @Inject constructor(
             val oldUrl = url
             url = urlUseCase.getUrl()
 
-            if (path != null && !path.startsWith("entityId:")) {
+            if (path != null && !path.startsWith("entityId:") && !path.startsWith("executeScript:")) {
                 url = UrlHandler.handle(url, path)
             }
 
@@ -59,6 +59,19 @@ class WebViewPresenterImpl @Inject constructor(
                 )
             }
         }
+    }
+
+    override fun executeScript(script: String): Boolean {
+        var success = false
+        runBlocking {
+            try {
+                integrationUseCase.callService(script.split('.')[0], script.split('.')[1], hashMapOf())
+                success = true
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to execute script: $script", e)
+            }
+        }
+        return success
     }
 
     override fun checkSecurityVersion() {
