@@ -11,6 +11,10 @@
     <PreferenceCategory
         android:key="shortcut1_category"
         app:iconSpaceReserved="false">
+        <Preference
+            android:key="shortcut1_icon"
+            android:title="@string/shortcut_icon"
+            android:icon="@drawable/ic_stat_ic_notification_blue"/>
         <EditTextPreference
             android:key="shortcut1_label"
             app:iconSpaceReserved="false"
@@ -49,6 +53,10 @@
     <PreferenceCategory
         android:key="shortcut2_category"
         app:iconSpaceReserved="false">
+        <Preference
+            android:key="shortcut2_icon"
+            android:title="@string/shortcut_icon"
+            android:icon="@drawable/ic_stat_ic_notification_blue"/>
         <EditTextPreference
             android:key="shortcut2_label"
             app:iconSpaceReserved="false"
@@ -87,6 +95,10 @@
     <PreferenceCategory
         android:key="shortcut3_category"
         app:iconSpaceReserved="false">
+        <Preference
+            android:key="shortcut3_icon"
+            android:title="@string/shortcut_icon"
+            android:icon="@drawable/ic_stat_ic_notification_blue"/>
         <EditTextPreference
             android:key="shortcut3_label"
             app:iconSpaceReserved="false"
@@ -125,6 +137,10 @@
     <PreferenceCategory
         android:key="shortcut4_category"
         app:iconSpaceReserved="false">
+        <Preference
+            android:key="shortcut4_icon"
+            android:title="@string/shortcut_icon"
+            android:icon="@drawable/ic_stat_ic_notification_blue"/>
         <EditTextPreference
             android:key="shortcut4_label"
             app:iconSpaceReserved="false"
@@ -168,6 +184,10 @@
             android:summary="@string/shortcut5_note"
             app:iconSpaceReserved="false"
             android:selectable="false" />
+        <Preference
+            android:key="shortcut5_icon"
+            android:title="@string/shortcut_icon"
+            android:icon="@drawable/ic_stat_ic_notification_blue"/>
         <EditTextPreference
             android:key="shortcut5_label"
             app:iconSpaceReserved="false"
@@ -224,6 +244,10 @@
             android:title="@string/shortcut_pinned_id"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
+        <Preference
+            android:key="pinned_shortcut_icon"
+            android:title="@string/shortcut_icon"
+            android:icon="@drawable/ic_stat_ic_notification_blue"/>
         <EditTextPreference
             android:key="pinned_shortcut_label"
             android:title="@string/shortcut_pinned_label"
