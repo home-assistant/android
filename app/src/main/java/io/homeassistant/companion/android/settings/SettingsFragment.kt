@@ -16,6 +16,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -40,6 +41,8 @@ import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettings
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
@@ -185,13 +188,16 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             }
 
             findPreference<Preference>("notification_rate_limit")?.let {
-                val rateLimits = presenter.getNotificationRateLimits()
+                lifecycleScope.launch(Dispatchers.Main) {
+                    // Runs in IO Dispatcher
+                    val rateLimits = presenter.getNotificationRateLimits()
 
-                if (rateLimits != null)
-                    it.isVisible = true
-                it.summary = "\nSuccessful: ${rateLimits?.successful}       Errors: ${rateLimits?.errors}" +
-                        "\n\nRemaining/Maximum: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
-                        "\n\nResets at: ${rateLimits?.resetsAt}"
+                    if (rateLimits != null)
+                        it.isVisible = true
+                    it.summary = "\nSuccessful: ${rateLimits?.successful}       Errors: ${rateLimits?.errors}" +
+                            "\n\nRemaining/Maximum: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
+                            "\n\nResets at: ${rateLimits?.resetsAt}"
+                }
             }
             findPreference<SwitchPreference>("crash_reporting")?.let {
                 it.isVisible = true
