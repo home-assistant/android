@@ -8,7 +8,6 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
@@ -21,15 +20,13 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.LogcatReader
 import java.io.File
 import java.util.Calendar
-import kotlin.collections.ArrayList
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class LogFragment() : Fragment() {
 
@@ -43,11 +40,6 @@ class LogFragment() : Fragment() {
         fun newInstance(): LogFragment {
             return LogFragment()
         }
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.log_toolbar_group, true)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -82,33 +74,26 @@ class LogFragment() : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Needed to call onPrepareOptionsMenu
         setHasOptionsMenu(true)
 
         refreshLog()
     }
 
-    private fun refreshLog() {
+    private fun refreshLog() = lifecycleScope.launch(Dispatchers.Main) {
         val logTextView = requireView().findViewById<TextView>(R.id.logTextView)
-        logTextView?.text = ""
-
         val toolbar = requireActivity().findViewById<Toolbar>(R.id.toolbar)
-        toolbar.menu.setGroupEnabled(R.id.log_toolbar_group, false)
 
+        toolbar.menu.setGroupVisible(R.id.log_toolbar_group, false)
         showHideLogLoader(true)
 
-        GlobalScope.launch {
-            withContext(Dispatchers.Default) {
-                currentLog = LogcatReader.readLog()
-            }
-            activity?.runOnUiThread {
-                logTextView?.text = currentLog
-                (view?.findViewById<ScrollView>(R.id.logScrollview))?.apply {
-                    post { fullScroll(ScrollView.FOCUS_DOWN) }
-                }
-                toolbar.menu.setGroupEnabled(R.id.log_toolbar_group, true)
-                showHideLogLoader(false)
-            }
+        // Runs with Dispatcher IO
+        currentLog = LogcatReader.readLog()
+
+        logTextView?.text = currentLog
+        toolbar.menu.setGroupVisible(R.id.log_toolbar_group, true)
+        showHideLogLoader(false)
+        (view?.findViewById<ScrollView>(R.id.logScrollview))?.apply {
+            post { fullScroll(ScrollView.FOCUS_DOWN) }
         }
     }
 
@@ -206,10 +191,12 @@ class LogFragment() : Fragment() {
     }
 
     private fun showHideLogLoader(show: Boolean) {
-        val logLoader = requireView().findViewById<LinearLayout>(R.id.logLoader)
-        val logScrollView = requireView().findViewById<ScrollView>(R.id.logScrollview)
+        if (view != null) {
+            val logLoader = requireView().findViewById<LinearLayout>(R.id.logLoader)
+            val logScrollView = requireView().findViewById<ScrollView>(R.id.logScrollview)
 
-        logScrollView.visibility = if (!show) View.VISIBLE else View.GONE
-        logLoader.visibility = if (show) View.VISIBLE else View.GONE
+            logScrollView.visibility = if (!show) View.VISIBLE else View.GONE
+            logLoader.visibility = if (show) View.VISIBLE else View.GONE
+        }
     }
 }
