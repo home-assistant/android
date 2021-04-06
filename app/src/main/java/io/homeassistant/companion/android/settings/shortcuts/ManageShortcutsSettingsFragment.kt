@@ -257,9 +257,18 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                             pinnedShortcutLabel = item.shortLabel.toString()
                             findPreference<EditTextPreference>("pinned_shortcut_desc")?.text = item.longLabel.toString()
                             pinnedShortcutDesc = item.longLabel.toString()
-                            findPreference<EditTextPreference>("pinned_shortcut_path")?.text = item.intent?.action
-                            pinnedShortcutPath = item.intent?.action
-                            pinnedShortcutEntityList?.value = item.intent?.action?.removePrefix("entityId:")
+                            if (item.intent?.action?.startsWith("entityId:") == true) {
+                                val entityId = item.intent?.action?.removePrefix("entityId:")
+                                pinnedShortcutPath = entityId
+                                pinnedShortcutEntityList?.value = entityId
+                                pinnedShortcutType?.value = getString(R.string.entity_id)
+                                setPinnedShortcutType(getString(R.string.entity_id))
+                            } else {
+                                findPreference<EditTextPreference>("pinned_shortcut_path")?.text = item.intent?.action
+                                pinnedShortcutPath = item.intent?.action
+                                pinnedShortcutType?.value = getString(R.string.lovelace)
+                                setPinnedShortcutType(getString(R.string.lovelace))
+                            }
                             pinnedShortcutPref?.title = getString(R.string.update_pinned_shortcut)
                             pinnedShortcutPref?.isEnabled = true
                         }
