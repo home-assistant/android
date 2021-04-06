@@ -559,4 +559,9 @@ like to connect to:</string>
   <string name="execute_script">Execute Script</string>
   <string name="script_executed">Script executed successfully</string>
   <string name="script_failed">Script failed to execute</string>
+  <string name="successful">Successful</string>
+  <string name="errors">Errors</string>
+  <string name="remaining">Remaining</string>
+  <string name="maximum">Maximum</string>
+  <string name="resets_at">Resets at</string>
 </resources>
