@@ -48,8 +48,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
         private const val ENTITY_SUFFIX = "_entity_list"
         private const val ICON_PREFIX = "_icon"
         private const val TAG = "ManageShortcutFrag"
-        private const val ICON_DIALOG_TAG = "icon-dialog"
-        private var LAST_ICON_SELECT = ""
         fun newInstance(): ManageShortcutsSettingsFragment {
             return ManageShortcutsSettingsFragment()
         }
@@ -159,8 +157,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
 
             findPreference<Preference>(SHORTCUT_PREFIX + i + ICON_PREFIX)?.let {
                 it.setOnPreferenceClickListener {
-                    LAST_ICON_SELECT = SHORTCUT_PREFIX + i
-                    iconDialog.show(childFragmentManager, ICON_DIALOG_TAG)
+                    iconDialog.show(childFragmentManager, SHORTCUT_PREFIX + i)
                     return@setOnPreferenceClickListener true
                 }
             }
@@ -297,8 +294,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
 
             findPreference<Preference>("pinned_shortcut_icon")?.let {
                 it.setOnPreferenceClickListener {
-                    LAST_ICON_SELECT = "pinned"
-                    iconDialog.show(childFragmentManager, ICON_DIALOG_TAG)
+                    iconDialog.show(childFragmentManager, "pinned")
                     return@setOnPreferenceClickListener true
                 }
             }
@@ -413,7 +409,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
             if (iconDrawable != null) {
                 val icon = DrawableCompat.wrap(iconDrawable)
                 icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
-                when (LAST_ICON_SELECT) {
+                when (dialog.tag) {
                     "pinned" -> findPreference<Preference>("pinned_shortcut_icon")?.icon = icon
                     "${SHORTCUT_PREFIX}1" -> findPreference<Preference>(SHORTCUT_PREFIX + "1_icon")?.icon = icon
                     "${SHORTCUT_PREFIX}2" -> findPreference<Preference>(SHORTCUT_PREFIX + "2_icon")?.icon = icon
@@ -421,7 +417,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                     "${SHORTCUT_PREFIX}4" -> findPreference<Preference>(SHORTCUT_PREFIX + "4_icon")?.icon = icon
                     "${SHORTCUT_PREFIX}5" -> findPreference<Preference>(SHORTCUT_PREFIX + "5_icon")?.icon = icon
                 }
-                LAST_ICON_SELECT = ""
             }
         }
     }
