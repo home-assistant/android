@@ -392,6 +392,10 @@ class SensorDetailFragment(
         pref.isIconSpaceReserved = false
         pref.isSingleLineTitle = false
         pref.summary = setting.value
+
+        // If selected list values are empty, but the setting.value is filled, then set the selected list value to the setting value
+        if ((pref.values == null || pref.values.isEmpty()) && setting.value.isNotEmpty()) pref.values = setting.value.split(", ").map { it }.toSet()
+
         pref.setOnPreferenceChangeListener { _, newValue ->
             sensorDao.add(
                 Setting(
