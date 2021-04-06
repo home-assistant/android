@@ -177,6 +177,11 @@ class LogFragment() : Fragment() {
             }.show()
     }
 
+    override fun onResume() {
+        super.onResume()
+        activity?.title = getString(R.string.log)
+    }
+
     private fun getExcludedComponentsForPackageName(sendIntent: Intent, packageNames: Array<String>): ArrayList<ComponentName> {
         val excludedComponents = ArrayList<ComponentName>()
         val resInfos = requireContext().packageManager.queryIntentActivities(sendIntent, 0)
