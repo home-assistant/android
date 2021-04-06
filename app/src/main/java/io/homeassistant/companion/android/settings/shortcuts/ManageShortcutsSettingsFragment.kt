@@ -361,6 +361,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
     private fun createShortcut(shortcutId: String, shortcutLabel: String, shortcutDesc: String, shortcutPath: String, bitmap: Bitmap? = null): ShortcutInfo {
         val intent = Intent(WebViewActivity.newInstance(requireContext(), shortcutPath).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         intent.action = shortcutPath
+        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
         return ShortcutInfo.Builder(requireContext(), shortcutId)
                 .setShortLabel(shortcutLabel)
