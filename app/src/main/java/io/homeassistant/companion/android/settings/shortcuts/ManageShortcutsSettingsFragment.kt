@@ -3,6 +3,8 @@ package io.homeassistant.companion.android.settings.shortcuts
 import android.content.Intent
 import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
+import android.graphics.Bitmap
+import android.graphics.PorterDuff
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
@@ -10,11 +12,18 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import androidx.annotation.RequiresApi
+import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.graphics.drawable.toBitmap
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
+import com.maltaisn.icondialog.IconDialog
+import com.maltaisn.icondialog.IconDialogSettings
+import com.maltaisn.icondialog.pack.IconPack
+import com.maltaisn.icondialog.pack.IconPackLoader
+import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -24,7 +33,7 @@ import java.lang.Exception
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 
-class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
+class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.Callback {
 
     companion object {
         private const val MAX_SHORTCUTS = 5
@@ -37,11 +46,14 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
         private const val DELETE_SUFFIX = "_delete"
         private const val TYPE_SUFFIX = "_type"
         private const val ENTITY_SUFFIX = "_entity_list"
+        private const val ICON_PREFIX = "_icon"
         private const val TAG = "ManageShortcutFrag"
         fun newInstance(): ManageShortcutsSettingsFragment {
             return ManageShortcutsSettingsFragment()
         }
     }
+
+    private lateinit var iconPack: IconPack
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +78,16 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
     @RequiresApi(Build.VERSION_CODES.N_MR1)
     override fun onResume() {
         super.onResume()
+
+        val loader = IconPackLoader(requireContext())
+        iconPack = createMaterialDesignIconPack(loader)
+        iconPack.loadDrawables(loader.drawableLoader)
+        val settings = IconDialogSettings {
+            searchVisibility = IconDialog.SearchVisibility.ALWAYS
+        }
+        val iconDialog = IconDialog.newInstance(settings)
+        val iconId = 62017
+        onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[iconId]!!))
 
         activity?.title = getString(R.string.shortcuts)
         DaggerSettingsComponent.builder()
@@ -133,6 +155,13 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 }
             }
 
+            findPreference<Preference>(SHORTCUT_PREFIX + i + ICON_PREFIX)?.let {
+                it.setOnPreferenceClickListener {
+                    iconDialog.show(childFragmentManager, SHORTCUT_PREFIX + i)
+                    return@setOnPreferenceClickListener true
+                }
+            }
+
             findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + LABEL_SUFFIX)?.let {
                 it.title = "${getString(R.string.shortcut)} $i ${getString(R.string.label)}"
                 it.dialogTitle = "${getString(R.string.shortcut)} $i ${getString(R.string.label)}"
@@ -166,7 +195,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 if (!shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()) {
                     if (shortcutType?.value == getString(R.string.entity_id))
                         shortcutPath = "entityId:${shortcutEntityList?.value}"
-                    val shortcut = createShortcut(SHORTCUT_PREFIX + i, shortcutLabel!!, shortcutDesc!!, shortcutPath!!)
+                    val shortcut = createShortcut(SHORTCUT_PREFIX + i, shortcutLabel!!, shortcutDesc!!, shortcutPath!!, findPreference<Preference>(SHORTCUT_PREFIX + i + ICON_PREFIX)?.icon?.toBitmap())
                     shortcutManager!!.addDynamicShortcuts(listOf(shortcut))
                 }
                 dynamicShortcuts = shortcutManager.dynamicShortcuts
@@ -263,6 +292,13 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                 }
             }
 
+            findPreference<Preference>("pinned_shortcut_icon")?.let {
+                it.setOnPreferenceClickListener {
+                    iconDialog.show(childFragmentManager, "pinned")
+                    return@setOnPreferenceClickListener true
+                }
+            }
+
             findPreference<EditTextPreference>("pinned_shortcut_label")?.let {
                 it.setOnPreferenceChangeListener { _, newValue ->
                     pinnedShortcutLabel = newValue.toString()
@@ -293,7 +329,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
                     Log.d(TAG, "Attempt to add $pinnedShortcutId")
                     if (pinnedShortcutType?.value == getString(R.string.entity_id))
                         pinnedShortcutPath = "entityId:${pinnedShortcutEntityList?.value}"
-                    val shortcut = createShortcut(pinnedShortcutId!!, pinnedShortcutLabel!!, pinnedShortcutDesc!!, pinnedShortcutPath!!)
+                    val shortcut = createShortcut(pinnedShortcutId!!, pinnedShortcutLabel!!, pinnedShortcutDesc!!, pinnedShortcutPath!!, findPreference<Preference>("pinned_shortcut_icon")?.icon?.toBitmap())
                     var isNewPinned = true
 
                     for (item in pinnedShortcuts) {
@@ -318,14 +354,20 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
     }
 
     @RequiresApi(Build.VERSION_CODES.N_MR1)
-    private fun createShortcut(shortcutId: String, shortcutLabel: String, shortcutDesc: String, shortcutPath: String): ShortcutInfo {
+    private fun createShortcut(shortcutId: String, shortcutLabel: String, shortcutDesc: String, shortcutPath: String, bitmap: Bitmap? = null): ShortcutInfo {
         val intent = Intent(WebViewActivity.newInstance(requireContext(), shortcutPath).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         intent.action = shortcutPath
+        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
         return ShortcutInfo.Builder(requireContext(), shortcutId)
                 .setShortLabel(shortcutLabel)
                 .setLongLabel(shortcutDesc)
-                .setIcon(Icon.createWithResource(requireContext(), R.drawable.ic_stat_ic_notification_blue))
+                .setIcon(
+                    if (bitmap != null)
+                        Icon.createWithBitmap(bitmap)
+                    else
+                        Icon.createWithResource(requireContext(), R.drawable.ic_stat_ic_notification_blue)
+                )
                 .setIntent(intent)
                 .build()
     }
@@ -352,6 +394,29 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat() {
             getString(R.string.lovelace) -> {
                 findPreference<EditTextPreference>(SHORTCUT_PREFIX + position + PATH_SUFFIX)?.isVisible = true
                 findPreference<ListPreference>(SHORTCUT_PREFIX + position + ENTITY_SUFFIX)?.isVisible = false
+            }
+        }
+    }
+
+    override val iconDialogIconPack: IconPack
+        get() = iconPack
+
+    override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<com.maltaisn.icondialog.data.Icon>) {
+        Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
+        val selectedIcon = icons.firstOrNull()
+        if (selectedIcon != null) {
+            val iconDrawable = selectedIcon.drawable
+            if (iconDrawable != null) {
+                val icon = DrawableCompat.wrap(iconDrawable)
+                icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
+                when (dialog.tag) {
+                    "pinned" -> findPreference<Preference>("pinned_shortcut_icon")?.icon = icon
+                    "${SHORTCUT_PREFIX}1" -> findPreference<Preference>(SHORTCUT_PREFIX + "1_icon")?.icon = icon
+                    "${SHORTCUT_PREFIX}2" -> findPreference<Preference>(SHORTCUT_PREFIX + "2_icon")?.icon = icon
+                    "${SHORTCUT_PREFIX}3" -> findPreference<Preference>(SHORTCUT_PREFIX + "3_icon")?.icon = icon
+                    "${SHORTCUT_PREFIX}4" -> findPreference<Preference>(SHORTCUT_PREFIX + "4_icon")?.icon = icon
+                    "${SHORTCUT_PREFIX}5" -> findPreference<Preference>(SHORTCUT_PREFIX + "5_icon")?.icon = icon
+                }
             }
         }
     }

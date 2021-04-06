@@ -560,4 +560,5 @@ like to connect to:</string>
   <string name="remaining">Remaining</string>
   <string name="maximum">Maximum</string>
   <string name="resets_at">Resets at</string>
+  <string name="shortcut_icon">Shortcut Icon</string>
 </resources>
