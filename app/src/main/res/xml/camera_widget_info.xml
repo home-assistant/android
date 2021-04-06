@@ -6,6 +6,6 @@
     android:minWidth="250dp"
     android:minHeight="80dp"
     android:resizeMode="vertical|horizontal"
-    android:updatePeriodMillis="86400000"
+    android:updatePeriodMillis="3600000"
     android:widgetCategory="home_screen"
     android:previewImage="@drawable/widget_example_camera" />
