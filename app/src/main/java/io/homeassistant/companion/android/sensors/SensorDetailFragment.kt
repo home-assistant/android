@@ -48,6 +48,7 @@ class SensorDetailFragment(
         }
 
         private const val REFRESH_INTERVAL_MS = 5000L
+        private const val SENSOR_SETTING_TRANS_KEY_PREFIX = "sensor_setting_"
         private const val TAG = "SensorDetailFragment"
     }
 
@@ -220,13 +221,13 @@ class SensorDetailFragment(
 
         findPreference<PreferenceCategory>("sensor_settings")?.let {
             if (sensorData.enabled && !sensorSettings.isNullOrEmpty()) {
-                sensorSettings.forEach { setting ->
+                sensorSettings.sortedBy { sensorSetting -> sensorSetting.sensorId }.forEach { setting ->
                     val key = "setting_${basicSensor.id}_${setting.name}"
                     if (setting.valueType == "toggle") {
                         val pref = findPreference(key) ?: SwitchPreference(requireContext())
                         pref.key = key
                         pref.isEnabled = setting.enabled
-                        pref.title = setting.name
+                        pref.title = getTranslatedTitle(setting.name)
                         pref.isChecked = setting.value == "true"
                         pref.isIconSpaceReserved = false
                         pref.isSingleLineTitle = false
@@ -242,19 +243,16 @@ class SensorDetailFragment(
                         val pref = findPreference(key) ?: ListPreference(requireContext())
                         pref.key = key
                         pref.isEnabled = setting.enabled
-                        val titleId = resources.getIdentifier(key + "_title", "string", requireContext().packageName)
-                        pref.title = resources.getString(titleId)
-                        pref.dialogTitle = resources.getString(titleId)
-                        val entriesResourceId = resources.getIdentifier(key + "_labels", "array", requireContext().packageName)
-                        pref.entries = requireContext().resources.getStringArray(entriesResourceId)
-                        val entryValuesResourceId = resources.getIdentifier(key + "_values", "array", requireContext().packageName)
-                        pref.entryValues = requireContext().resources.getStringArray(entryValuesResourceId)
+                        pref.title = getTranslatedTitle(setting.name)
+                        pref.dialogTitle = pref.title
+                        pref.entries = getTranslatedEntries(setting.name, setting.entries)
+                        pref.entryValues = setting.entries.toTypedArray()
                         pref.value = setting.value
                         pref.summary = setting.value
                         pref.isIconSpaceReserved = false
                         pref.isSingleLineTitle = false
                         pref.setOnPreferenceChangeListener { _, newState ->
-                            sensorDao.add(Setting(basicSensor.id, setting.name, newState as String, "list", setting.enabled))
+                            sensorDao.add(Setting(basicSensor.id, setting.name, newState as String, "list", setting.entries, setting.enabled))
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
@@ -263,8 +261,8 @@ class SensorDetailFragment(
                         val pref = findPreference(key) ?: EditTextPreference(requireContext())
                         pref.key = key
                         pref.isEnabled = setting.enabled
-                        pref.title = setting.name
-                        pref.dialogTitle = setting.name
+                        pref.title = getTranslatedTitle(setting.name)
+                        pref.dialogTitle = pref.title
                         pref.isSingleLineTitle = false
                         if (pref.text != null)
                             pref.summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
@@ -340,6 +338,42 @@ class SensorDetailFragment(
         }
     }
 
+    private fun getTranslatedEntries(key: String, entries: List<String>): Array<String> {
+        val translatedEntries = ArrayList<String>(entries.size)
+        for (entry in entries) {
+            var translatedEntry = entry
+            val name = SENSOR_SETTING_TRANS_KEY_PREFIX + key + "_" + entry + "_label"
+            val entryId = resources.getIdentifier(name, "string", requireContext().packageName)
+            if (entryId != 0) {
+                try {
+                    translatedEntry = getString(entryId)
+                } catch (e: Exception) {
+                    Log.e(TAG, "getTranslatedEntries: Cannot get translated string for name \"$name\"", e)
+                }
+            } else {
+                Log.e(TAG, "getTranslatedEntries: Cannot find string identifier for name \"$name\"")
+            }
+            translatedEntries.add(translatedEntry)
+        }
+        return translatedEntries.toTypedArray()
+    }
+
+    private fun getTranslatedTitle(key: String): String {
+        var translatedValue = key
+        val name = SENSOR_SETTING_TRANS_KEY_PREFIX + key + "_title"
+        val titleId = resources.getIdentifier(name, "string", requireContext().packageName)
+        if (titleId != null) {
+            try {
+                translatedValue = getString(titleId)
+            } catch (e: Exception) {
+                Log.w(TAG, "getTranslatedTitle: Cannot get translated string for name \"$name\"", e)
+            }
+        } else {
+            Log.e(TAG, "getTranslatedTitle: Cannot find string identifier for name \"$name\"")
+        }
+        return translatedValue
+    }
+
     private fun createListPreference(
         key: String,
         setting: Setting,
@@ -351,10 +385,10 @@ class SensorDetailFragment(
             ?: MultiSelectListPreference(requireContext())
         pref.key = key
         pref.isEnabled = setting.enabled
-        pref.title = setting.name
+        pref.title = getTranslatedTitle(setting.name)
         pref.entries = entries.toTypedArray()
         pref.entryValues = entries.toTypedArray()
-        pref.dialogTitle = setting.name
+        pref.dialogTitle = pref.title
         pref.isIconSpaceReserved = false
         pref.isSingleLineTitle = false
         pref.setOnPreferenceChangeListener { _, newValue ->

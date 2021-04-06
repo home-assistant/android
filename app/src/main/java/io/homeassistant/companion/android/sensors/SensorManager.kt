@@ -104,13 +104,25 @@ interface SensorManager {
         default: String,
         enabled: Boolean = true
     ): String {
+        return getSetting(context, sensor, settingName, settingType, arrayListOf(), default, enabled)
+    }
+
+    fun getSetting(
+        context: Context,
+        sensor: BasicSensor,
+        settingName: String,
+        settingType: String,
+        entries: List<String> = arrayListOf(),
+        default: String,
+        enabled: Boolean = true
+    ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
                 .getSettings(sensor.id)
                 .firstOrNull { it.name == settingName }
                 ?.value
         if (setting == null)
-            sensorDao.add(Setting(sensor.id, settingName, default, settingType, enabled))
+            sensorDao.add(Setting(sensor.id, settingName, default, settingType, entries, enabled))
 
         return setting ?: default
     }

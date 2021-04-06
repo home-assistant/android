@@ -15,7 +15,7 @@ import java.util.TimeZone
 class NextAlarmManager : SensorManager {
     companion object {
         private const val TAG = "NextAlarm"
-        private const val ALLOW_LIST = "Allow List"
+        private const val ALLOW_LIST = "nextalarm_allow_list"
 
         val nextAlarm = SensorManager.BasicSensor(
             "next_alarm",

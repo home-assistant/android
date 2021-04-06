@@ -1,15 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
-  <string-array name="pref_theme_option_labels">
-    <item>@string/themes_option_label_light</item>
-    <item>@string/themes_option_label_dark</item>
-    <item>@string/themes_option_label_system</item>
-  </string-array>
-  <string-array name="pref_theme_option_values">
-    <item>@string/themes_option_value_light</item>
-    <item>@string/themes_option_value_dark</item>
-    <item>@string/themes_option_value_system</item>
-  </string-array>
   <string name="action_reply">Reply</string>
   <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
   <string name="add_service_data_field">Add Field</string>
@@ -88,14 +78,6 @@
   <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
   <string name="biometric_set_title">Confirm to continue</string>
   <string name="biometric_title">Home Assistant is locked</string>
-  <string name="ble_transmit_power_label_high">High</string>
-  <string name="ble_transmit_power_label_low">Low</string>
-  <string name="ble_transmit_power_label_medium">Medium</string>
-  <string name="ble_transmit_power_label_ultra_low">Ultra Low</string>
-  <string name="ble_transmit_power_value_high">high</string>
-  <string name="ble_transmit_power_value_low">low</string>
-  <string name="ble_transmit_power_value_medium">medium</string>
-  <string name="ble_transmit_power_value_ultra_low">ultraLow</string>
   <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
   <string name="calendar">Calendar</string>
   <string name="cancel">Cancel</string>
@@ -422,7 +404,6 @@ like to connect to:</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
   <string name="set_lock_title">App Locking Error</string>
-  <string name="setting_ble_emitter_transmit_power_title">Transmitter power</string>
   <string name="settings">Settings</string>
   <string name="share_failed">Sharing with Home Assistant Failed!</string>
   <string name="share_success">Shared with Home Assistant</string>
@@ -555,4 +536,27 @@ like to connect to:</string>
   <string name="lovelace">Lovelace</string>
   <string name="entity_id">Entity ID</string>
   <string name="shortcut_type">Select Shortcut Type</string>
+  <string name="sensor_setting_nextalarm_allow_list">Allow List</string>
+  <string name="sensor_setting_geocode_minimum_accuracy_title">Minimum Accuracy</string>
+  <string name="sensor_setting_location_minimum_accuracy_title">Minimum Accuracy</string>
+  <string name="sensor_setting_location_minimum_time_updates_title">Minimum time between updates</string>
+  <string name="sensor_setting_location_include_sensor_update_title">Include in sensor update</string>
+  <string name="sensor_setting_location_ham_enabled_title">High accuracy mode (May drain battery fast)</string>
+  <string name="sensor_setting_location_ham_update_interval_title">High accuracy mode update interval (seconds)</string>
+  <string name="sensor_setting_location_ham_only_bt_dev_title">High accuracy mode only when connected to BT devices</string>
+  <string name="sensor_setting_location_ham_only_enter_zone_title">High accuracy mode only when entering zone</string>
+  <string name="sensor_setting_location_ham_trigger_range_title">High accuracy mode trigger range for zone (meters)</string>
+  <string name="sensor_setting_ble_transmit_power_title">Transmitter power</string>
+  <string name="sensor_setting_ble_transmit_power_high_label">High</string>
+  <string name="sensor_setting_ble_transmit_power_low_label">Low</string>
+  <string name="sensor_setting_ble_transmit_power_medium_label">Medium</string>
+  <string name="sensor_setting_ble_transmit_power_ultraLow_label">Ultra Low</string>
+  <string name="sensor_setting_ble_transmit_enabled_title">Enable Transmitter</string>
+  <string name="sensor_setting_ble_enable_toggle_all_title">Include when enabling all sensors</string>
+  <string name="sensor_setting_ble_major_title">Major</string>
+  <string name="sensor_setting_ble_minor_title">Minor</string>
+  <string name="sensor_setting_ble_uuid_title">UUID</string>
+  <string name="sensor_setting_lastreboot_deadband_title">Deadband</string>
+  <string name="sensor_setting_lastupdate_add_new_intent_title">Add New Intent</string>
+  <string name="sensor_setting_network_get_current_bssid_title">Get current BSSID</string>
 </resources>
