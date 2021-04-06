@@ -29,6 +29,8 @@ import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.Setting
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
+import io.homeassistant.companion.android.database.widget.CameraWidgetDao
+import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
@@ -44,18 +46,20 @@ import kotlinx.coroutines.runBlocking
         Sensor::class,
         Setting::class,
         ButtonWidgetEntity::class,
+        CameraWidgetEntity::class,
         MediaPlayerControlsWidgetEntity::class,
         StaticWidgetEntity::class,
         TemplateWidgetEntity::class,
         NotificationItem::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
     abstract fun sensorDao(): SensorDao
     abstract fun buttonWidgetDao(): ButtonWidgetDao
+    abstract fun cameraWidgetDao(): CameraWidgetDao
     abstract fun mediaPlayCtrlWidgetDao(): MediaPlayerControlsWidgetDao
     abstract fun staticWidgetDao(): StaticWidgetDao
     abstract fun templateWidgetDao(): TemplateWidgetDao
@@ -64,9 +68,9 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
         internal const val TAG = "AppDatabase"
-        const val channelId = "App Database"
-        const val NOTIFICATION_ID = 45
-        lateinit var appContext: Context
+        private const val channelId = "App Database"
+        private const val NOTIFICATION_ID = 45
+        private lateinit var appContext: Context
         lateinit var integrationRepository: IntegrationRepository
 
         @Volatile
@@ -98,7 +102,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_11_12,
                     MIGRATION_12_13,
                     MIGRATION_13_14,
-                    MIGRATION_14_15
+                    MIGRATION_14_15,
+                    MIGRATION_15_16
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -291,6 +296,12 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_14_15 = object : Migration(14, 15) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `sensor_settings` ADD `enabled` INTEGER NOT NULL DEFAULT '1'")
+            }
+        }
+
+        private val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `camera_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, PRIMARY KEY(`id`))")
             }
         }
 

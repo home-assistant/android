@@ -562,4 +562,6 @@ like to connect to:</string>
   <string name="resets_at">Resets at</string>
   <string name="shortcut_icon">Shortcut Icon</string>
   <string name="shortcut_updated">Shortcut updated</string>
+  <string name="widget_camera_description">Camera Widget</string>
+  <string name="widget_media_player_description">Media Player Widget</string>
 </resources>
