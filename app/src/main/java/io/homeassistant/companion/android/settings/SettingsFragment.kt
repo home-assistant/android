@@ -204,7 +204,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                                 val localDateTime = LocalDateTime.parse(rateLimits?.resetsAt, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
                                 formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault()).format(localDateTime)
                             } catch (e: Exception) {
-                                Log.d(TAG, "Cannot parse notification rate limit date", e)
+                                Log.d(TAG, "Cannot parse notification rate limit date \"${rateLimits?.resetsAt}\"", e)
                             }
                         }
                         it.isVisible = true
