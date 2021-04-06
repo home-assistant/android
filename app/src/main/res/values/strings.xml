@@ -555,4 +555,9 @@ like to connect to:</string>
   <string name="lovelace">Lovelace</string>
   <string name="entity_id">Entity ID</string>
   <string name="shortcut_type">Select Shortcut Type</string>
+  <string name="successful">Successful</string>
+  <string name="errors">Errors</string>
+  <string name="remaining">Remaining</string>
+  <string name="maximum">Maximum</string>
+  <string name="resets_at">Resets at</string>
 </resources>
