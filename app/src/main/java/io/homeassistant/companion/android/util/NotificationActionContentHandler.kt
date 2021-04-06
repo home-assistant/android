@@ -24,8 +24,8 @@ object NotificationActionContentHandler {
                 }
             } ?: WebViewActivity.newInstance(context)
 
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            intent.flags = Intent.FLAG_ACTIVITY_MULTIPLE_TASK
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
             context.startActivity(intent)
             onComplete()
         }
