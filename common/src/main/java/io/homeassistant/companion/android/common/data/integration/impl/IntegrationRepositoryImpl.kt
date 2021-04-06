@@ -8,7 +8,6 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.Panel
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
@@ -400,11 +399,6 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration request get_config/version")
-    }
-
-    // TODO: Use websocket to get panels.
-    override suspend fun getPanels(): Array<Panel> {
-        return arrayOf()
     }
 
     override suspend fun getServices(): Array<Service> {
