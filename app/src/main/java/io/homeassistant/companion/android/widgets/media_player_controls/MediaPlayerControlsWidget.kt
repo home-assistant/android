@@ -14,10 +14,12 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import com.squareup.picasso.Picasso
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
@@ -56,6 +58,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var urlUseCase: UrlRepository
 
     lateinit var mediaPlayCtrlWidgetDao: MediaPlayerControlsWidgetDao
 
@@ -148,6 +153,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                     label ?: entityId
                 )
                 val entityPictureUrl = retrieveMediaPlayerImageUrl(context, entityId)
+                val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
+                val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
                     setImageViewResource(
                         R.id.widgetMediaImage,
@@ -172,7 +179,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                     )
                     Log.d(TAG, "Fetching media preview image")
                     Handler(Looper.getMainLooper()).post {
-                        Picasso.get().load(entityPictureUrl).into(
+                        if (BuildConfig.DEBUG)
+                            Picasso.get().isLoggingEnabled = true
+                        Picasso.get().load(url).resize(1920, 1080).into(
                             this,
                             R.id.widgetMediaImage,
                             intArrayOf(appWidgetId)
