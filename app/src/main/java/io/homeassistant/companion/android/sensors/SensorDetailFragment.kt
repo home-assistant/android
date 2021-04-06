@@ -386,11 +386,12 @@ class SensorDetailFragment(
         pref.key = key
         pref.isEnabled = setting.enabled
         pref.title = getTranslatedTitle(setting.name)
+        pref.dialogTitle = pref.title
         pref.entries = entries.toTypedArray()
         pref.entryValues = entries.toTypedArray()
-        pref.dialogTitle = pref.title
         pref.isIconSpaceReserved = false
         pref.isSingleLineTitle = false
+        pref.summary = setting.value
         pref.setOnPreferenceChangeListener { _, newValue ->
             sensorDao.add(
                 Setting(
@@ -404,10 +405,6 @@ class SensorDetailFragment(
             sensorManager.requestSensorUpdate(requireContext())
             return@setOnPreferenceChangeListener true
         }
-        if (pref.values != null)
-            pref.summary = pref.values.toString()
-        else
-            pref.summary = setting.value
 
         return pref
     }
