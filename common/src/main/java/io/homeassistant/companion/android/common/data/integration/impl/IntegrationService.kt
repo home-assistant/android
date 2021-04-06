@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
-import io.homeassistant.companion.android.common.data.integration.Panel
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.CheckRateLimits
 import io.homeassistant.companion.android.common.data.integration.impl.entities.DiscoveryInfoResponse
@@ -73,12 +72,6 @@ interface IntegrationService {
         @Url url: HttpUrl,
         @Body request: IntegrationRequest
     ): GetConfigResponse
-
-    @POST
-    suspend fun getPanels(
-        @Url url: HttpUrl,
-        @Body request: IntegrationRequest
-    ): Array<Panel>
 
     @POST
     suspend fun getRateLimit(
