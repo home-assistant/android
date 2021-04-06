@@ -71,6 +71,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     it.title = getString(R.string.disable_all_sensors, totalEnabledSensors)
                     it.summary = ""
                     it.isChecked = permissionsAllGranted
+                    enableAllSensors = permissionsAllGranted
+                    activity?.invalidateOptionsMenu()
                 } else {
                     if (totalEnabledSensors == 0)
                         it.title = getString(R.string.enable_all_sensors)
