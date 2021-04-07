@@ -363,15 +363,13 @@ abstract class AppDatabase : RoomDatabase() {
                                 // Last update
                                 else if (currentSensorId == "last_update" && currentSensorSettingName == "Add New Intent") {
                                     newSensorSettingName = "lastupdate_add_new_intent"
-                                }
-                                else if (currentSensorId == "last_update" && currentSensorSettingName.startsWith("intent")) {
+                                } else if (currentSensorId == "last_update" && currentSensorSettingName.startsWith("intent")) {
                                     newSensorSettingName = "lastupdate_intent_var1:" + currentSensorSettingName.substringAfter("intent") + ":"
                                 }
                                 // Network
                                 else if (currentSensorId == "wifi_bssid" && currentSensorSettingName == "get_current_bssid") {
                                     newSensorSettingName = "network_get_current_bssid"
-                                }
-                                else if (currentSensorId == "wifi_bssid" && currentSensorSettingName.startsWith("replace_")) {
+                                } else if (currentSensorId == "wifi_bssid" && currentSensorSettingName.startsWith("replace_")) {
                                     newSensorSettingName = "network_replace_mac_var1:" + currentSensorSettingName.substringAfter("replace_") + ":"
                                 }
                                 it.put("sensor_id", cursor.getString(cursor.getColumnIndex("sensor_id")))

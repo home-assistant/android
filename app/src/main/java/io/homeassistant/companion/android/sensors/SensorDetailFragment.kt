@@ -386,14 +386,14 @@ class SensorDetailFragment(
     private fun getCleanedKey(key: String): String {
         val varWithUnderscoreRegex = "_var\\d:.*:".toRegex()
         val cleanedKey = key.replace(varWithUnderscoreRegex, "")
-        if(key != cleanedKey) Log.d(TAG, "Cleaned translation key \"$cleanedKey\"")
+        if (key != cleanedKey) Log.d(TAG, "Cleaned translation key \"$cleanedKey\"")
         return cleanedKey
     }
 
     private fun getRawVars(key: String): List<String> {
         val varRegex = "var\\d:.*:".toRegex()
         val rawVars = key.split("_").filter { it.matches(varRegex) }
-        if(rawVars.isNotEmpty()) Log.d(TAG, "Vars from translation key \"$key\": $rawVars")
+        if (rawVars.isNotEmpty()) Log.d(TAG, "Vars from translation key \"$key\": $rawVars")
         return rawVars
     }
 
