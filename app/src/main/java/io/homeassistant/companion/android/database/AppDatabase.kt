@@ -364,6 +364,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 else if (currentSensorId == "last_update" && currentSensorSettingName == "Add New Intent") {
                                     newSensorSettingName = "lastupdate_add_new_intent"
                                 }
+                                else if (currentSensorId == "last_update" && currentSensorSettingName.startsWith("intent")) {
+                                    newSensorSettingName = "lastupdate_intent_var1:" + currentSensorSettingName.substringAfter("intent") + ":"
+                                }
                                 // Network
                                 else if (currentSensorId == "wifi_bssid" && currentSensorSettingName == "get_current_bssid") {
                                     newSensorSettingName = "network_get_current_bssid"
