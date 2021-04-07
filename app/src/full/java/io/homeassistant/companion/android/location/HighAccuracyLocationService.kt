@@ -132,7 +132,7 @@ class HighAccuracyLocationService : Service() {
         }
     }
 
-    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+    private var fusedLocationProviderClient: FusedLocationProviderClient? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -163,7 +163,7 @@ class HighAccuracyLocationService : Service() {
     override fun onDestroy() {
         super.onDestroy()
 
-        fusedLocationProviderClient.removeLocationUpdates(getLocationUpdateIntent())
+        fusedLocationProviderClient?.removeLocationUpdates(getLocationUpdateIntent())
 
         LAUNCHER.onServiceDestroy(this)
 
@@ -190,6 +190,6 @@ class HighAccuracyLocationService : Service() {
         request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        fusedLocationProviderClient.requestLocationUpdates(request, getLocationUpdateIntent())
+        fusedLocationProviderClient?.requestLocationUpdates(request, getLocationUpdateIntent())
     }
 }
