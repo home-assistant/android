@@ -163,7 +163,7 @@ class HighAccuracyLocationService : Service() {
     override fun onDestroy() {
         super.onDestroy()
 
-        fusedLocationProviderClient.removeLocationUpdates(getLocationUpdateIntent())
+        if(fusedLocationProviderClient != null) fusedLocationProviderClient.removeLocationUpdates(getLocationUpdateIntent())
 
         LAUNCHER.onServiceDestroy(this)
 
