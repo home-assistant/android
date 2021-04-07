@@ -386,21 +386,21 @@ class SensorDetailFragment(
     private fun getCleanedKey(key: String): String {
         val varWithUnderscoreRegex = "_var\\d:.*:".toRegex()
         val cleanedKey = key.replace(varWithUnderscoreRegex, "")
-        Log.d(TAG, "Cleaned translation key: $cleanedKey")
+        if(key != cleanedKey) Log.d(TAG, "Cleaned translation key \"$cleanedKey\"")
         return cleanedKey
     }
 
     private fun getRawVars(key: String): List<String> {
         val varRegex = "var\\d:.*:".toRegex()
         val rawVars = key.split("_").filter { it.matches(varRegex) }
-        Log.d(TAG, "Vars from translation key: $key: $rawVars")
+        if(rawVars.isNotEmpty()) Log.d(TAG, "Vars from translation key \"$key\": $rawVars")
         return rawVars
     }
 
     private fun convertRawVarsToStringVars(rawVars: List<String>): Array<String> {
         var stringVars: MutableList<String> = ArrayList()
         if (rawVars.isNotEmpty()) {
-            Log.d(TAG, "Convert raw vars ($rawVars) to string vars...")
+            Log.d(TAG, "Convert raw vars \"$rawVars\" to string vars...")
             var varPrefixRegex = "var\\d:".toRegex()
             var varSuffixRegex = ":$".toRegex()
             for (rawVar in rawVars) {
