@@ -27,6 +27,9 @@
             android:key="shortcut1_type"
             android:title="@string/shortcut_type"
             app:useSimpleSummaryProvider="true"
+            android:defaultValue="@string/lovelace"
+            android:entries="@array/shortcutTypes"
+            android:entryValues="@array/shortcutTypes"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut1_entity_list"
@@ -69,6 +72,9 @@
             android:key="shortcut2_type"
             android:title="@string/shortcut_type"
             app:useSimpleSummaryProvider="true"
+            android:defaultValue="@string/lovelace"
+            android:entries="@array/shortcutTypes"
+            android:entryValues="@array/shortcutTypes"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut2_entity_list"
@@ -111,6 +117,9 @@
             android:key="shortcut3_type"
             android:title="@string/shortcut_type"
             app:useSimpleSummaryProvider="true"
+            android:defaultValue="@string/lovelace"
+            android:entries="@array/shortcutTypes"
+            android:entryValues="@array/shortcutTypes"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut3_entity_list"
@@ -153,6 +162,9 @@
             android:key="shortcut4_type"
             android:title="@string/shortcut_type"
             app:useSimpleSummaryProvider="true"
+            android:defaultValue="@string/lovelace"
+            android:entries="@array/shortcutTypes"
+            android:entryValues="@array/shortcutTypes"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut4_entity_list"
@@ -200,6 +212,9 @@
             android:key="shortcut5_type"
             android:title="@string/shortcut_type"
             app:useSimpleSummaryProvider="true"
+            android:defaultValue="@string/lovelace"
+            android:entries="@array/shortcutTypes"
+            android:entryValues="@array/shortcutTypes"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="shortcut5_entity_list"
@@ -263,6 +278,8 @@
             android:title="@string/shortcut_type"
             app:useSimpleSummaryProvider="true"
             android:defaultValue="@string/lovelace"
+            android:entries="@array/shortcutTypes"
+            android:entryValues="@array/shortcutTypes"
             app:iconSpaceReserved="false" />
         <ListPreference
             android:key="pinned_shortcut_entity_list"
