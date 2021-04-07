@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -197,6 +198,8 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                     shortcutManager!!.addDynamicShortcuts(listOf(shortcut))
                 }
                 dynamicShortcuts = shortcutManager.dynamicShortcuts
+                if (it.title == getString(R.string.update_shortcut))
+                    Toast.makeText(requireContext(), R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                 it.title = getString(R.string.update_shortcut)
                 deletePreference?.isVisible = true
                 return@setOnPreferenceClickListener true
@@ -342,6 +345,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                             isNewPinned = false
                             Log.d(TAG, "Updating pinned shortcut $pinnedShortcutId")
                             shortcutManager.updateShortcuts(listOf(shortcut))
+                            Toast.makeText(requireContext(), R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                         }
                     }
 
