@@ -174,7 +174,7 @@ class NetworkSensorManager : SensorManager {
 
         var bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
 
-        val settingName = "replace_$bssid"
+        val settingName = "network_replace_mac_var1:$bssid:"
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensorSettings = sensorDao.getSettings(bssidState.id)
         val getCurrentBSSID = sensorSettings.firstOrNull { it.name == SETTING_GET_CURRENT_BSSID }?.value ?: "false"

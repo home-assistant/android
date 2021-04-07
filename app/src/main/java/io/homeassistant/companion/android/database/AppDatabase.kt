@@ -368,6 +368,9 @@ abstract class AppDatabase : RoomDatabase() {
                                 else if (currentSensorId == "wifi_bssid" && currentSensorSettingName == "get_current_bssid") {
                                     newSensorSettingName = "network_get_current_bssid"
                                 }
+                                else if (currentSensorId == "wifi_bssid" && currentSensorSettingName.startsWith("replace_")) {
+                                    newSensorSettingName = "network_replace_mac_var1:" + currentSensorSettingName.substringAfter("replace_") + ":"
+                                }
                                 it.put("sensor_id", cursor.getString(cursor.getColumnIndex("sensor_id")))
                                 it.put("name", newSensorSettingName)
                                 it.put("value", cursor.getString(cursor.getColumnIndex("value")))

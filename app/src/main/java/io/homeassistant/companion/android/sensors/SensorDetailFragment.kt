@@ -342,11 +342,15 @@ class SensorDetailFragment(
         val translatedEntries = ArrayList<String>(entries.size)
         for (entry in entries) {
             var translatedEntry = entry
-            val name = SENSOR_SETTING_TRANS_KEY_PREFIX + key + "_" + entry + "_label"
+
+            val rawVars = getRawVars(key)
+            val cleanedKey = getCleanedKey(key)
+
+            val name = SENSOR_SETTING_TRANS_KEY_PREFIX + cleanedKey + "_" + entry + "_label"
             val entryId = resources.getIdentifier(name, "string", requireContext().packageName)
             if (entryId != 0) {
                 try {
-                    translatedEntry = getString(entryId)
+                    translatedEntry = getString(entryId, convertRawVarsToStringVars(rawVars))
                 } catch (e: Exception) {
                     Log.e(TAG, "getTranslatedEntries: Cannot get translated string for name \"$name\"", e)
                 }
@@ -360,11 +364,16 @@ class SensorDetailFragment(
 
     private fun getTranslatedTitle(key: String): String {
         var translatedValue = key
-        val name = SENSOR_SETTING_TRANS_KEY_PREFIX + key + "_title"
+
+        val rawVars = getRawVars(key)
+        val cleanedKey = getCleanedKey(key)
+
+        val name = SENSOR_SETTING_TRANS_KEY_PREFIX + cleanedKey + "_title"
+
         val titleId = resources.getIdentifier(name, "string", requireContext().packageName)
         if (titleId != null) {
             try {
-                translatedValue = getString(titleId)
+                translatedValue = getString(titleId, *convertRawVarsToStringVars(rawVars))
             } catch (e: Exception) {
                 Log.w(TAG, "getTranslatedTitle: Cannot get translated string for name \"$name\"", e)
             }
@@ -372,6 +381,36 @@ class SensorDetailFragment(
             Log.e(TAG, "getTranslatedTitle: Cannot find string identifier for name \"$name\"")
         }
         return translatedValue
+    }
+
+    private fun getCleanedKey(key: String): String {
+        val varWithUnderscoreRegex = "_var\\d:.*:".toRegex()
+        val cleanedKey = key.replace(varWithUnderscoreRegex, "")
+        Log.d(TAG, "Cleaned translation key: $cleanedKey")
+        return cleanedKey
+    }
+
+    private fun getRawVars(key: String): List<String> {
+        val varRegex = "var\\d:.*:".toRegex()
+        val rawVars = key.split("_").filter { it.matches(varRegex) }
+        Log.d(TAG, "Vars from translation key: $key: $rawVars")
+        return rawVars
+    }
+
+    private fun convertRawVarsToStringVars(rawVars: List<String>): Array<String> {
+        var stringVars: MutableList<String> = ArrayList()
+        if (rawVars.isNotEmpty()) {
+            Log.d(TAG, "Convert raw vars ($rawVars) to string vars...")
+            var varPrefixRegex = "var\\d:".toRegex()
+            var varSuffixRegex = ":$".toRegex()
+            for (rawVar in rawVars) {
+                var stringVar = rawVar.replace(varPrefixRegex, "").replace(varSuffixRegex, "")
+                Log.d(TAG, "Convert raw var \"$rawVar\" to string var \"$stringVar\"")
+                stringVars.add(stringVar)
+            }
+            Log.d(TAG, "Converted raw vars to string vars \"$stringVars\"")
+        }
+        return stringVars.toTypedArray()
     }
 
     private fun createListPreference(
