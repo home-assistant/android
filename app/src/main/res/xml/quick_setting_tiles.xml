@@ -16,6 +16,10 @@
             android:defaultValue="tile_1"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
+        <Preference
+            android:key="tile_icon"
+            android:title="Tile Icon"
+            android:icon="@drawable/ic_stat_ic_notification_blue" />
         <EditTextPreference
             android:key="tile_label"
             android:title="@string/tile_label"

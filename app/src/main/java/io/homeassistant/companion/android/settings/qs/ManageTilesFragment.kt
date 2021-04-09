@@ -1,16 +1,23 @@
 package io.homeassistant.companion.android.settings.qs
 
 import android.content.Intent
+import android.graphics.PorterDuff
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.widget.Toast
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.maltaisn.icondialog.IconDialog
+import com.maltaisn.icondialog.IconDialogSettings
+import com.maltaisn.icondialog.pack.IconPack
+import com.maltaisn.icondialog.pack.IconPackLoader
+import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -21,7 +28,7 @@ import java.lang.Exception
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 
-class ManageTilesFragment : PreferenceFragmentCompat() {
+class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
 
     companion object {
         private const val TAG = "TileFragment"
@@ -32,6 +39,8 @@ class ManageTilesFragment : PreferenceFragmentCompat() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    private lateinit var iconPack: IconPack
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +63,14 @@ class ManageTilesFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
 
+        val loader = IconPackLoader(requireContext())
+        iconPack = createMaterialDesignIconPack(loader)
+        iconPack.loadDrawables(loader.drawableLoader)
+        val settings = IconDialogSettings {
+            searchVisibility = IconDialog.SearchVisibility.ALWAYS
+        }
+        val iconDialog = IconDialog.newInstance(settings)
+
         DaggerSettingsComponent.builder()
             .appComponent((activity?.applicationContext as GraphComponentAccessor).appComponent)
             .build()
@@ -66,9 +83,22 @@ class ManageTilesFragment : PreferenceFragmentCompat() {
         var tileSubtitle = findPreference<EditTextPreference>("tile_subtitle")?.text
         val tileEntityPref = findPreference<ListPreference>("tile_entity")
         var tileId = findPreference<ListPreference>("tile_list")?.value
+        val resumeIcon = tileDao.get(tileId!!)?.iconId
         val tileSavePref = findPreference<Preference>("tile_save")
         var tileEntity = tileEntityPref?.value
         var entityList = listOf<String>()
+
+        if (resumeIcon != null) {
+            val iconDrawable = iconPack.getIcon(resumeIcon)?.drawable
+            if (iconDrawable != null) {
+                val icon = DrawableCompat.wrap(iconDrawable)
+                icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
+                findPreference<Preference>("tile_icon")?.let {
+                    it.icon = icon
+                    it.summary = resumeIcon.toString()
+                }
+            }
+        }
 
         runBlocking {
             try {
@@ -100,6 +130,20 @@ class ManageTilesFragment : PreferenceFragmentCompat() {
                         tileSubtitle = item.subtitle
                         findPreference<ListPreference>("tile_entity")?.value = item.entityId
                         tileEntity = item.entityId
+                        findPreference<Preference>("tile_icon")?.let {
+                            it.summary = item.iconId.toString()
+                            if (item.iconId != null) {
+                                val iconDrawable = iconPack.getIcon(item.iconId)?.drawable
+                                if (iconDrawable != null) {
+                                    val icon = DrawableCompat.wrap(iconDrawable)
+                                    icon.setColorFilter(
+                                        resources.getColor(R.color.colorAccent),
+                                        PorterDuff.Mode.SRC_IN
+                                    )
+                                    it.icon = icon
+                                }
+                            }
+                        }
                         tileSavePref?.isEnabled = !tileEntity.isNullOrEmpty() && !tileLabel.isNullOrEmpty()
                     }
                 }
@@ -107,6 +151,14 @@ class ManageTilesFragment : PreferenceFragmentCompat() {
             tileId = newValue.toString()
             return@setOnPreferenceChangeListener true
         }
+
+        findPreference<Preference>("tile_icon")?.let {
+            it.setOnPreferenceClickListener {
+                iconDialog.show(childFragmentManager, tileId)
+                return@setOnPreferenceClickListener true
+            }
+        }
+
         findPreference<EditTextPreference>("tile_label")?.setOnPreferenceChangeListener { _, newValue ->
             tileLabel = newValue.toString()
             tileSavePref?.isEnabled = !tileEntity.isNullOrEmpty() && !tileLabel.isNullOrEmpty()
@@ -141,6 +193,7 @@ class ManageTilesFragment : PreferenceFragmentCompat() {
             val tileData = TileEntity(
                 id,
                 tileId!!,
+                findPreference<Preference>("tile_icon")?.summary.toString().toIntOrNull(),
                 tileEntity.toString(),
                 tileLabel.toString(),
                 tileSubtitle
@@ -149,6 +202,25 @@ class ManageTilesFragment : PreferenceFragmentCompat() {
             tileList = tileDao.getAll()
             Toast.makeText(requireContext(), R.string.tile_updated, Toast.LENGTH_SHORT).show()
             return@setOnPreferenceClickListener true
+        }
+    }
+
+    override val iconDialogIconPack: IconPack
+        get() = iconPack
+
+    override fun onIconDialogIconsSelected(dialog: IconDialog, icons: List<com.maltaisn.icondialog.data.Icon>) {
+        Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
+        val selectedIcon = icons.firstOrNull()
+        if (selectedIcon != null) {
+            val iconDrawable = selectedIcon.drawable
+            if (iconDrawable != null) {
+                val icon = DrawableCompat.wrap(iconDrawable)
+                icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
+                findPreference<Preference>("tile_icon")?.let {
+                    it.icon = icon
+                    it.summary = selectedIcon.id.toString()
+                }
+            }
         }
     }
 }

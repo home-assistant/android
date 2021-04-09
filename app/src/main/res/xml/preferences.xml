@@ -106,7 +106,7 @@
         app:isPreferenceVisible="false">
         <Preference
             android:key="manage_tiles"
-            android:icon="@drawable/ic_shortcut"
+            android:icon="@drawable/ic_tile"
             android:title="@string/manage_tiles"
             android:summary="@string/manage_tiles_summary" />
     </PreferenceCategory>

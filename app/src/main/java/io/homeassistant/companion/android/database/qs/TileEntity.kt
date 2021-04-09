@@ -10,6 +10,8 @@ data class TileEntity(
     val id: Int,
     @ColumnInfo(name = "tileId")
     val tileId: String,
+    @ColumnInfo(name = "icon_id")
+    val iconId: Int?,
     @ColumnInfo(name = "entityId")
     val entityId: String,
     @ColumnInfo(name = "label")
