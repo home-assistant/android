@@ -245,7 +245,7 @@ class ButtonWidget : AppWidgetProvider() {
                     feedbackIcon = R.drawable.ic_check_black_24dp
                 } catch (e: Exception) {
                     Log.e(TAG, "Could not send service call.", e)
-                    Toast.makeText(context, R.string.widget_service_call_failure, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, R.string.service_call_failure, Toast.LENGTH_LONG).show()
                 }
             }
 
