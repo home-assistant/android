@@ -202,8 +202,9 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         val mediaSessionManager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
         val mediaList = mediaSessionManager.getActiveSessions(ComponentName(context, NotificationSensorManager::class.java))
         val sessionCount = mediaList.size
-        var primaryTitle = mediaList[0].metadata?.getString(MediaMetadata.METADATA_KEY_TITLE) ?: "Unavailable"
-        if (getPlaybackState(mediaList[0].playbackState?.state) != "Playing")
+        var primaryTitle = mediaList[0].metadata?.getString(MediaMetadata.METADATA_KEY_TITLE)
+            ?: if (sessionCount > 0) getPlaybackState(mediaList[0].playbackState?.state) else "Unavailable"
+        if (sessionCount > 0 && getPlaybackState(mediaList[0].playbackState?.state) != "Playing")
             primaryTitle = getPlaybackState(mediaList[0].playbackState?.state)
         val attr: MutableMap<String, Any?> = mutableMapOf()
         val icon = "mdi:play-circle"
