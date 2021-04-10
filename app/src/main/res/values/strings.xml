@@ -569,5 +569,5 @@ like to connect to:</string>
   <string name="widget_camera_description">Camera Widget</string>
   <string name="widget_media_player_description">Media Player Widget</string>
   <string name="basic_sensor_name_media_session">Media Session</string>
-  <string name="sensor_description_media_session">The total count of media sessions on the device along with some attributes for media identification</string>
+  <string name="sensor_description_media_session">The state will either be the title of the media when it is actively playing or it will be the playback state, it can also be unavailable when you have no active sessions. Attributes will include data from all active sessions including total count.</string>
 </resources>
