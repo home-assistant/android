@@ -182,7 +182,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         if (BuildConfig.DEBUG)
                             Picasso.get().isLoggingEnabled = true
                         try {
-                            Picasso.get().load(url).resize(800, 400).into(
+                            Picasso.get().load(url).resize(1024, 600).into(
                                 this,
                                 R.id.widgetMediaImage,
                                 intArrayOf(appWidgetId)
