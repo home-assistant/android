@@ -42,7 +42,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             "media_session",
             "sensor",
             R.string.basic_sensor_name_media_session,
-            R.string.sensor_description_media_session
+            R.string.sensor_description_media_session,
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#media-session-sensor"
         )
     }
 
