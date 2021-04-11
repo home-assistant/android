@@ -80,6 +80,26 @@ android {
             applicationIdSuffix = ""
             versionNameSuffix = "-full"
         }
+
+        // Generate a list of application ids into BuildConfig
+        var values = ""
+        productFlavors.all { flavor ->
+            if (values.isNotEmpty())
+                values += ","
+
+            values += "\""
+            values += if (flavor.applicationId == null)
+                defaultConfig.applicationId
+            else
+                flavor.applicationId
+
+            flavor.applicationIdSuffix?.let { values += it }
+            values += "\""
+
+            true
+        }
+
+        defaultConfig.buildConfigField("String[]", "APPLICATION_IDS", "{$values}")
     }
 
     playConfigs {
