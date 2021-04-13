@@ -24,6 +24,7 @@ import android.view.HapticFeedbackConstants
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowInsetsController
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
@@ -73,7 +74,11 @@ import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_player_control_view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -409,6 +414,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             addJavascriptInterface(object : Any() {
                 @JavascriptInterface
+                fun onHomeAssistantSetTheme() {
+                    // We need to launch the getAndSetStatusBarNavigationBarColors in another thread, because otherwise the evaluateJavascript inside the method
+                    // will not trigger it's callback method :/
+                    GlobalScope.launch(Dispatchers.Main) {
+                        getAndSetStatusBarNavigationBarColors()
+                    }
+                }
+
+                @JavascriptInterface
                 fun getExternalAuth(payload: String) {
                     JSONObject(payload).let {
                         presenter.onGetExternalAuth(
@@ -463,10 +477,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     Log.d(TAG, "Callback $it")
                                 }
 
-                                // Set statusbar color
-                                webView.evaluateJavascript("document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0];") {
-                                    presenter.setStatusbarColor(it)
-                                }
+                                getAndSetStatusBarNavigationBarColors()
+
+                                // Set event lister for HA theme change
+                                webView.evaluateJavascript(
+                                    "document.addEventListener('settheme', function ()" +
+                                            "{" +
+                                            "window.externalApp.onHomeAssistantSetTheme();" +
+                                            "});", null
+                                )
                             }
                             "config_screen/show" ->
                                 startActivity(
@@ -508,6 +527,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
             Log.d(TAG, "Current webview package ${webviewPackage?.packageName} and version ${webviewPackage?.versionName}")
+        }
+    }
+
+    private fun getAndSetStatusBarNavigationBarColors() {
+        if (themesManager.getCurrentTheme() == "system") { // Only change colors, if following the colors of home assistant (system)
+            webView.evaluateJavascript("document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0];") { webViewcolor ->
+                GlobalScope.launch {
+                    var statusBarNavBarcolor = presenter.getStatusBarAndNavigationBarColor(webViewcolor)
+                    withContext(Dispatchers.Main) {
+                        setStatusBarAndNavigationBarColor(statusBarNavBarcolor)
+                    }
+                }
+            }
         }
     }
 
@@ -769,8 +801,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     private fun hideSystemUI() {
         if (isCutout())
-            decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+            decor.systemUiVisibility = decor.systemUiVisibility or
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         else {
             decor.viewTreeObserver.addOnGlobalLayoutListener {
                 val r = Rect()
@@ -784,17 +817,29 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
                 decor.requestLayout()
             }
-            decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+            decor.systemUiVisibility = decor.systemUiVisibility or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         }
     }
 
     private fun showSystemUI() {
-        decor.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
+        if (isCutout()) {
+            decor.systemUiVisibility = decor.systemUiVisibility and
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION.inv() and
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY.inv()
+        } else {
+            decor.systemUiVisibility = decor.systemUiVisibility and View.SYSTEM_UI_FLAG_LAYOUT_STABLE.inv() and
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION.inv() and
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN.inv() and
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION.inv() and
+                    View.SYSTEM_UI_FLAG_FULLSCREEN.inv() and
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY.inv()
+        }
     }
 
     override fun onPictureInPictureModeChanged(
@@ -855,19 +900,63 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         waitForConnection()
     }
 
-    override fun setStatusBarAndNavigationBarColor(color: Int) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            var flags = window.decorView.systemUiVisibility
-            flags = if (ColorUtils.calculateLuminance(color) < 0.5) { // If color is dark...
-                flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv() // Remove light flag
-            } else {
-                flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR // Add light flag
-            }
+    private fun useWindowInsets(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
+    @Suppress("DEPRECATION")
+    override fun setStatusBarAndNavigationBarColor(color: Int) {
+        if (color != 0) {
+            val darkThemeColorUsed = isColorDark(color)
             window.statusBarColor = color
             window.navigationBarColor = color
-            window.decorView.systemUiVisibility = flags
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (useWindowInsets()) {
+                    var appFlags = if (darkThemeColorUsed) {
+                        // Theme color is dark, so the status bar background should be also dark
+                        // Then remove the light flag which, indicates that the status bar background is light
+                        0 // Remove light flag
+                    } else {
+                        // Theme color is light, so the status bar background should be also light
+                        // Then add the light flag, which indicates that the status bar background is light
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS // Add light flag
+                    }
+                    window.insetsController?.setSystemBarsAppearance(appFlags, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)
+                } else {
+                    var flags = window.decorView.systemUiVisibility
+
+                    flags = if (darkThemeColorUsed) {
+                        // Theme color is dark, so the status bar background should be also dark
+                        // Then remove the light flag which, indicates that the status bar background is light
+                        flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() // Remove light flag
+                    } else {
+                        // Theme color is light, so the status bar background should be also light
+                        // Then add the light flag, which indicates that the status bar background is light
+                        flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR // Add light flag
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        flags = if (darkThemeColorUsed) {
+                            // Theme color is dark, so the navigation bar background should be also dark
+                            // Then remove the light flag which, indicates that the navigation background is light
+                            flags and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv() // Remove light flag
+                        } else {
+                            // Theme color is light, so the navigation background should be also light
+                            // Then add the light flag, which indicates that the navigation background is light
+                            flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR // Add light flag
+                        }
+                    }
+                    window.decorView.systemUiVisibility = flags
+                }
+            }
+        } else {
+            Log.e(TAG, "Cannot set status bar/navigation bar color $color. Skipping coloring...")
         }
+    }
+
+    private fun isColorDark(color: Int): Boolean {
+        val whiteContrast = ColorUtils.calculateContrast(Color.WHITE, color)
+        val blackContrast = ColorUtils.calculateContrast(Color.BLACK, color)
+
+        return whiteContrast > blackContrast
     }
 
     override fun setExternalAuth(script: String) {

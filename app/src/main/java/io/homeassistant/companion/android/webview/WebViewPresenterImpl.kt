@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.webview
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
+import androidx.core.graphics.ColorUtils
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -18,6 +19,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,
@@ -161,43 +163,45 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun setStatusbarColor(colorString: String) {
-        mainScope.launch {
-            Log.d(TAG, "Try setting statusbar color with color string $colorString from webview")
-            if (!colorString.isNullOrBlank() && colorString.length >= 2) {
-                val trimmedColorString = colorString.substring(1, colorString.length - 1).trim()
+    override suspend fun getStatusBarAndNavigationBarColor(webViewColor: String): Int = withContext(Dispatchers.IO) {
+        var statusbarNavBarColor = 0
 
-                try {
-                    val statusbarNavBarColor = parseColorWithRgb(trimmedColorString)
-                    Log.d(TAG, "Set statusbar color with color $statusbarNavBarColor")
-                    view.setStatusBarAndNavigationBarColor(statusbarNavBarColor)
-                    return@launch
-                } catch (e: Exception) {
-                    Log.e(TAG, "Issue getting/setting theme from webview. Get/Set theme from HA", e)
-                }
-            }
-
+        Log.d(TAG, "Try getting status bar/navigation bar color from webviews color \"$webViewColor\"")
+        if (!webViewColor.isNullOrEmpty() && webViewColor != "null" && webViewColor.length >= 2) {
+            val trimmedColorString = webViewColor.substring(1, webViewColor.length - 1).trim()
+            Log.d(TAG, "Color from webview is \"$trimmedColorString\"")
             try {
-                val colorString = integrationUseCase.getThemeColor()
-                Log.d(TAG, "Try setting statusbar color with color string $colorString from HA")
-                // If color from theme found and if colorString is NOT #03A9F3.
-                // This means a custom theme is set and the theme has a app-header-background-color defined
-                // which we can use as navigation bar color and status bar color.
-                // Attention: This is kind of an hack, as there is no way to check if a custom theme is set
-                // or not in HA. Right now we check on the default color (#03A9F4), because
-                // this color is given back if no theme is set. Always.
-                // See here:
-                // https://github.com/home-assistant/core/blob/ee64aafc3932ea0a7a76a33d1827db0c78fc0ed3/homeassistant/components/frontend/__init__.py#L362
-                // TODO: Implement proper check for detecting if a custom theme is set or not in HA
-                if (!colorString.isNullOrEmpty() && colorString != "#03A9F4") { // HA is using a custom theme
-                    val statusbarNavBarColor = parseColorWithRgb(colorString)
-                    Log.d(TAG, "Set statusbar color with color $statusbarNavBarColor")
-                    view.setStatusBarAndNavigationBarColor(statusbarNavBarColor)
-                }
+                statusbarNavBarColor = parseColorWithRgb(trimmedColorString)
+                Log.i(TAG, "Found color $statusbarNavBarColor for status bar/navigation bar")
             } catch (e: Exception) {
-                Log.e(TAG, "Issue getting/setting theme from HA", e)
+                Log.w(TAG, "Could not get status bar/navigation bar color from webview. Try getting status bar/navigation bar color from HA", e)
+            }
+        } else {
+            Log.w(TAG, "Could not get status bar/navigation bar color from webview. Color \"$webViewColor\" is not a valid color. Try getting status bar/navigation bar color from HA")
+        }
+
+        if (statusbarNavBarColor == 0) {
+            Log.d(TAG, "Try getting status bar/navigation bar color from HA")
+            runBlocking {
+                try {
+                    val colorString = integrationUseCase.getThemeColor()
+                    Log.d(TAG, "Color from HA is \"$colorString\"")
+                    if (!colorString.isNullOrEmpty()) {
+                        statusbarNavBarColor = parseColorWithRgb(colorString)
+                        Log.i(TAG, "Found color $statusbarNavBarColor for status bar/navigation bar")
+                    } else {
+                        Log.e(TAG, "Could not get status bar/navigation bar color from HA. No theme color defined in theme variable \"app-header-background-color\"")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Could not get status bar/navigation bar color from HA.", e)
+                }
             }
         }
+
+        // Darken the found color a bit
+        statusbarNavBarColor = ColorUtils.blendARGB(statusbarNavBarColor, Color.BLACK, 0.1f)
+
+        return@withContext statusbarNavBarColor
     }
 
     private fun parseColorWithRgb(colorString: String): Int {
