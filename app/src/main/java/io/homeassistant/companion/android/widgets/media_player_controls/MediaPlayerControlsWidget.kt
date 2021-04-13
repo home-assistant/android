@@ -181,11 +181,15 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                     Handler(Looper.getMainLooper()).post {
                         if (BuildConfig.DEBUG)
                             Picasso.get().isLoggingEnabled = true
-                        Picasso.get().load(url).resize(1920, 1080).into(
-                            this,
-                            R.id.widgetMediaImage,
-                            intArrayOf(appWidgetId)
-                        )
+                        try {
+                            Picasso.get().load(url).resize(1024, 600).into(
+                                this,
+                                R.id.widgetMediaImage,
+                                intArrayOf(appWidgetId)
+                            )
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Unable to load image", e)
+                        }
                         Log.d(TAG, "Fetch and load complete")
                     }
                 }
