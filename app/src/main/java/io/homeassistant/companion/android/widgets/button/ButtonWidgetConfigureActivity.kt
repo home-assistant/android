@@ -55,8 +55,6 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
-
     private lateinit var iconPack: IconPack
 
     private var services = HashMap<String, Service>()
