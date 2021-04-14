@@ -52,7 +52,7 @@ class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
 
         menu.findItem(R.id.get_help)?.let {
             it.isVisible = true
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/integrations/android-tiles"))
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/integrations/android-quick-settings"))
         }
     }
 
