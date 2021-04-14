@@ -347,7 +347,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         widget_config_fields_layout.layoutManager = LinearLayoutManager(this)
 
         // Do this off the main thread, takes a second or two...
-        ioScope.launch {
+        runOnUiThread {
             // Create an icon pack and load all drawables.
             iconPack = createMaterialDesignIconPack(loader)
             iconPack.loadDrawables(loader.drawableLoader)
