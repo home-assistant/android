@@ -450,6 +450,15 @@ class SensorDetailFragment(
             return@setOnPreferenceChangeListener true
         }
 
+        if (pref.values != null) {
+            for (item in pref.values.toList()) {
+                if (!entries.contains(item.toString().removeSurrounding("[", "]")))
+                    pref.values = setOf()
+            }
+            pref.summary = pref.values.toString()
+        } else
+            pref.summary = setting.value
+
         return pref
     }
 
