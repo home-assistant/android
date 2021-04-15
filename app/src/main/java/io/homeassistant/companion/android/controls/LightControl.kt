@@ -42,8 +42,14 @@ class LightControl {
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
             control.setZone(context.getString(R.string.domain_light))
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(
-                R.string.state_on))
+            control.setStatusText(
+                when (entity.state) {
+                    "off" -> context.getString(R.string.state_off)
+                    "on" -> context.getString(R.string.state_on)
+                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    else -> context.getString(R.string.state_unknown)
+                }
+            )
             val minValue = 0f
             val maxValue = 100f
             var currentValue = (entity.attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100) ?: 0f
@@ -55,7 +61,7 @@ class LightControl {
                     if ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS)
                         ToggleRangeTemplate(
                                 entity.entityId,
-                                entity.state != "off",
+                                entity.state == "on",
                                 "",
                                 RangeTemplate(
                                         entity.entityId,

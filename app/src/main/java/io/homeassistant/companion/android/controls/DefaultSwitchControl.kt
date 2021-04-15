@@ -49,7 +49,14 @@ class DefaultSwitchControl {
                 }
             )
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(R.string.state_on))
+            control.setStatusText(
+                when (entity.state) {
+                    "off" -> context.getString(R.string.state_off)
+                    "on" -> context.getString(R.string.state_on)
+                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    else -> context.getString(R.string.state_unknown)
+                }
+            )
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,

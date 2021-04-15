@@ -42,9 +42,14 @@ class VacuumControl {
             control.setZone(context.getString(R.string.domain_vacuum))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
-                    if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON)
-                        if (entity.state == "off") context.getString(R.string.state_off) else context.getString(R.string.state_on)
-                    else
+                    if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
+                        when (entity.state) {
+                            "off" -> context.getString(R.string.state_off)
+                            "on" -> context.getString(R.string.state_on)
+                            "unavailable" -> context.getString(R.string.state_unavailable)
+                            else -> context.getString(R.string.state_unknown)
+                        }
+                    } else {
                         when (entity.state) {
                             "cleaning" -> context.getString(R.string.state_cleaning)
                             "docked" -> context.getString(R.string.state_docked)
@@ -55,7 +60,8 @@ class VacuumControl {
                             "unavailable" -> context.getString(R.string.state_unavailable)
                             else -> context.getString(R.string.state_unknown)
                         }
-                    )
+                    }
+            )
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,

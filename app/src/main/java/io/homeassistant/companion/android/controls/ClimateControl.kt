@@ -46,6 +46,7 @@ class ClimateControl {
                     "heat" -> context.getString(R.string.state_heat)
                     "heat_cool" -> context.getString(R.string.state_heat_cool)
                     "off" -> context.getString(R.string.state_off)
+                    "unavailable" -> context.getString(R.string.state_unavailable)
                     else -> entity.state
                 }
             )
