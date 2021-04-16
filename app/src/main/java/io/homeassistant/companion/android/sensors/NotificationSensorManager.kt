@@ -11,6 +11,8 @@ import io.homeassistant.companion.android.R
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
     companion object {
         private const val TAG = "NotificationManager"
+        private const val SETTING_ALLOW_LIST = "notification_allow_list"
+
         private var listenerConnected = false
         val lastNotification = SensorManager.BasicSensor(
             "last_notification",
@@ -82,7 +84,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         val allowPackages = getSetting(
             applicationContext,
             lastNotification,
-            "Allow List",
+            SETTING_ALLOW_LIST,
             "list-apps",
             ""
         ).split(", ").filter { it.isNotBlank() }
@@ -126,7 +128,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         val allowPackages = getSetting(
             applicationContext,
             lastRemovedNotification,
-            "Allow List",
+            SETTING_ALLOW_LIST,
             "list-apps",
             ""
         ).split(", ").filter { it.isNotBlank() }

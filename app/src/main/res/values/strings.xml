@@ -548,6 +548,7 @@ like to connect to:</string>
   <string name="widget_camera_description">Camera Widget</string>
   <string name="widget_media_player_description">Media Player Widget</string>
   <string name="sensor_setting_nextalarm_allow_list">Allow List</string>
+  <string name="sensor_setting_notification_allow_list_title">Allow List</string>
   <string name="sensor_setting_geocode_minimum_accuracy_title">Minimum Accuracy</string>
   <string name="sensor_setting_location_minimum_accuracy_title">Minimum Accuracy</string>
   <string name="sensor_setting_location_minimum_time_updates_title">Minimum time between updates</string>
