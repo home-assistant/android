@@ -4,6 +4,8 @@ import dagger.Component
 import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
+import io.homeassistant.companion.android.widgets.camera.CameraWidget
+import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget
@@ -16,6 +18,9 @@ interface ProviderComponent {
 
     fun inject(receiver: ButtonWidget)
     fun inject(activity: ButtonWidgetConfigureActivity)
+
+    fun inject(receiver: CameraWidget)
+    fun inject(activity: CameraWidgetConfigureActivity)
 
     fun inject(receiver: MediaPlayerControlsWidget)
     fun inject(activity: MediaPlayerControlsWidgetConfigureActivity)

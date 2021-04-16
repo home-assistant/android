@@ -71,6 +71,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     it.title = getString(R.string.disable_all_sensors, totalEnabledSensors)
                     it.summary = ""
                     it.isChecked = permissionsAllGranted
+                    enableAllSensors = permissionsAllGranted
+                    activity?.invalidateOptionsMenu()
                 } else {
                     if (totalEnabledSensors == 0)
                         it.title = getString(R.string.enable_all_sensors)
@@ -231,7 +233,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         if (showOnlyEnabledSensors) {
             val checkable = menu.findItem(R.id.action_show_only_enabled_sensors)
-            checkable.isChecked = true
+            checkable?.isChecked = true
         }
 
         menu.findItem(R.id.get_help)?.let {

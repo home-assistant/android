@@ -18,7 +18,7 @@ object Config {
 
     object Dependency {
         object Kotlin {
-            const val version = "1.4.31"
+            const val version = "1.4.32"
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
             const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${version}"
 
@@ -30,7 +30,7 @@ object Config {
         }
 
         object Google {
-            private const val daggerVersion = "2.33"
+            private const val daggerVersion = "2.34"
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
@@ -44,15 +44,15 @@ object Config {
 
             const val webKit = "androidx.webkit:webkit:1.4.0"
             const val appcompat = "androidx.appcompat:appcompat:1.2.0"
-            const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
-            const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"
+            const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.3.1"
+            const val recyclerview = "androidx.recyclerview:recyclerview:1.2.0"
             const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.0.4"
             const val preference = "androidx.preference:preference-ktx:1.1.1"
 
             const val wear = "androidx.wear:wear:1.1.0"
 
-            const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.3"
-            const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.3"
+            const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.5"
+            const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.5"
 
             const val workManager = "androidx.work:work-runtime-ktx:2.5.0"
             const val biometric = "androidx.biometric:biometric:1.1.0"

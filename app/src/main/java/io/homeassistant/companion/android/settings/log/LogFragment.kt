@@ -80,20 +80,22 @@ class LogFragment() : Fragment() {
     }
 
     private fun refreshLog() = lifecycleScope.launch(Dispatchers.Main) {
-        val logTextView = requireView().findViewById<TextView>(R.id.logTextView)
-        val toolbar = requireActivity().findViewById<Toolbar>(R.id.toolbar)
+        if (view != null && activity != null) {
+            val logTextView = requireView().findViewById<TextView>(R.id.logTextView)
+            val toolbar = requireActivity().findViewById<Toolbar>(R.id.toolbar)
 
-        toolbar.menu.setGroupVisible(R.id.log_toolbar_group, false)
-        showHideLogLoader(true)
+            toolbar.menu.setGroupVisible(R.id.log_toolbar_group, false)
+            showHideLogLoader(true)
 
-        // Runs with Dispatcher IO
-        currentLog = LogcatReader.readLog()
+            // Runs with Dispatcher IO
+            currentLog = LogcatReader.readLog()
 
-        logTextView?.text = currentLog
-        toolbar.menu.setGroupVisible(R.id.log_toolbar_group, true)
-        showHideLogLoader(false)
-        (view?.findViewById<ScrollView>(R.id.logScrollview))?.apply {
-            post { fullScroll(ScrollView.FOCUS_DOWN) }
+            logTextView?.text = currentLog
+            toolbar.menu.setGroupVisible(R.id.log_toolbar_group, true)
+            showHideLogLoader(false)
+            (view?.findViewById<ScrollView>(R.id.logScrollview))?.apply {
+                post { fullScroll(ScrollView.FOCUS_DOWN) }
+            }
         }
     }
 

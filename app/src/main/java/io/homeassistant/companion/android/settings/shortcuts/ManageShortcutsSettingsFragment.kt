@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -96,7 +97,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                 .inject(this)
 
         val addNewShortcut = findPreference<PreferenceCategory>("pinned_shortcut_category")
-        val shortcutTypes = listOf(getString(R.string.entity_id), getString(R.string.lovelace))
         val shortcutManager = requireContext().getSystemService(ShortcutManager::class.java)
         var pinnedShortcuts = shortcutManager.pinnedShortcuts
         var dynamicShortcuts = shortcutManager.dynamicShortcuts
@@ -133,8 +133,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                 shortcutEntityList?.entries = entityList.sorted().toTypedArray()
                 shortcutEntityList?.entryValues = entityList.sorted().toTypedArray()
             }
-            shortcutType?.entries = shortcutTypes.toTypedArray()
-            shortcutType?.entryValues = shortcutTypes.toTypedArray()
+
             setDynamicShortcutType(shortcutType?.value.toString(), i)
             shortcutType?.setOnPreferenceChangeListener { _, newValue ->
                 setDynamicShortcutType(newValue.toString(), i)
@@ -199,6 +198,8 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                     shortcutManager!!.addDynamicShortcuts(listOf(shortcut))
                 }
                 dynamicShortcuts = shortcutManager.dynamicShortcuts
+                if (it.title == getString(R.string.update_shortcut))
+                    Toast.makeText(requireContext(), R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                 it.title = getString(R.string.update_shortcut)
                 deletePreference?.isVisible = true
                 return@setOnPreferenceClickListener true
@@ -230,9 +231,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                 pinnedShortcutEntityList?.entries = entityList.sorted().toTypedArray()
                 pinnedShortcutEntityList?.entryValues = entityList.sorted().toTypedArray()
             }
-            pinnedShortcutType?.entries = shortcutTypes.toTypedArray()
-            pinnedShortcutType?.entryValues = shortcutTypes.toTypedArray()
-            pinnedShortcutType?.setDefaultValue(getString(R.string.lovelace))
+
             setPinnedShortcutType(pinnedShortcutType?.value.toString())
             pinnedShortcutType?.setOnPreferenceChangeListener { _, newValue ->
                 setPinnedShortcutType(newValue.toString())
@@ -257,9 +256,18 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                             pinnedShortcutLabel = item.shortLabel.toString()
                             findPreference<EditTextPreference>("pinned_shortcut_desc")?.text = item.longLabel.toString()
                             pinnedShortcutDesc = item.longLabel.toString()
-                            findPreference<EditTextPreference>("pinned_shortcut_path")?.text = item.intent?.action
-                            pinnedShortcutPath = item.intent?.action
-                            pinnedShortcutEntityList?.value = item.intent?.action?.removePrefix("entityId:")
+                            if (item.intent?.action?.startsWith("entityId:") == true) {
+                                val entityId = item.intent?.action?.removePrefix("entityId:")
+                                pinnedShortcutPath = entityId
+                                pinnedShortcutEntityList?.value = entityId
+                                pinnedShortcutType?.value = getString(R.string.entity_id)
+                                setPinnedShortcutType(getString(R.string.entity_id))
+                            } else {
+                                findPreference<EditTextPreference>("pinned_shortcut_path")?.text = item.intent?.action
+                                pinnedShortcutPath = item.intent?.action
+                                pinnedShortcutType?.value = getString(R.string.lovelace)
+                                setPinnedShortcutType(getString(R.string.lovelace))
+                            }
                             pinnedShortcutPref?.title = getString(R.string.update_pinned_shortcut)
                             pinnedShortcutPref?.isEnabled = true
                         }
@@ -337,6 +345,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                             isNewPinned = false
                             Log.d(TAG, "Updating pinned shortcut $pinnedShortcutId")
                             shortcutManager.updateShortcuts(listOf(shortcut))
+                            Toast.makeText(requireContext(), R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                         }
                     }
 

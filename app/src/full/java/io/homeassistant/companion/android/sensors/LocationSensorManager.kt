@@ -268,7 +268,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             DEFAULT_UPDATE_INTERVAL_HA_SECONDS.toString()
         )
 
-        var updateIntervalHighAccuracySecondsInt = updateIntervalHighAccuracySeconds.toInt()
+        var updateIntervalHighAccuracySecondsInt = if (updateIntervalHighAccuracySeconds.isNullOrEmpty()) DEFAULT_UPDATE_INTERVAL_HA_SECONDS else updateIntervalHighAccuracySeconds.toInt()
         if (updateIntervalHighAccuracySecondsInt < 5) {
             updateIntervalHighAccuracySecondsInt = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
 
