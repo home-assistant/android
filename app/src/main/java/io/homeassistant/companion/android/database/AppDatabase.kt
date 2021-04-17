@@ -330,6 +330,10 @@ abstract class AppDatabase : RoomDatabase() {
                                 if (currentSensorId == "next_alarm" && currentSensorSettingName == "Allow List") {
                                     newSensorSettingName = "nextalarm_allow_list"
                                 }
+                                // Notification
+                                else if ((currentSensorId == "last_removed_notification" || currentSensorId == "last_notification")  && currentSensorSettingName == "Allow List") {
+                                    newSensorSettingName = "notification_allow_list"
+                                }
                                 // Geocode
                                 else if (currentSensorId == "geocoded_location" && currentSensorSettingName == "Minimum Accuracy") {
                                     newSensorSettingName = "geocode_minimum_accuracy"
