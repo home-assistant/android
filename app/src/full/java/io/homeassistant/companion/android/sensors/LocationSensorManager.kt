@@ -83,8 +83,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         )
         internal const val TAG = "LocBroadcastReceiver"
 
-        private lateinit var geofencingClient: GeofencingClient
-        private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+        private var geofencingClient: GeofencingClient? = null
+        private var fusedLocationProviderClient: FusedLocationProviderClient? = null
 
         private var isBackgroundLocationSetup = false
         private var isZoneLocationSetup = false
@@ -166,13 +166,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 if (!zoneEnabled && isZoneLocationSetup) {
                     removeGeofenceUpdateRequests()
                     isZoneLocationSetup = false
-                    Log.d(TAG, "Removing geofence update requests")
                 }
                 if (!backgroundEnabled && isBackgroundLocationSetup) {
                     removeBackgroundUpdateRequests()
                     stopHighAccuracyService()
                     isBackgroundLocationSetup = false
-                    Log.d(TAG, "Removing background update requests")
                 }
                 if (zoneEnabled && !isZoneLocationSetup) {
                     isZoneLocationSetup = true
@@ -361,19 +359,22 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun removeBackgroundUpdateRequests() {
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
-        val backgroundIntent = getLocationUpdateIntent(false)
-
-        fusedLocationProviderClient.removeLocationUpdates(backgroundIntent)
+        if (fusedLocationProviderClient != null) {
+            Log.d(TAG, "Removing background location requests.")
+            val backgroundIntent = getLocationUpdateIntent(false)
+            fusedLocationProviderClient?.removeLocationUpdates(backgroundIntent)
+        } else Log.d(TAG, "Cannot remove background location requests. Location provider is not set.")
     }
 
     private fun removeGeofenceUpdateRequests() {
-        geofencingClient = LocationServices.getGeofencingClient(latestContext)
-        val zoneIntent = getLocationUpdateIntent(true)
-        geofencingClient.removeGeofences(zoneIntent)
-        geofenceRegistered = false
-        lastEnteredGeoZones.clear()
-        lastExitedGeoZones.clear()
+        if (geofencingClient != null) {
+            Log.d(TAG, "Removing geofence location requests.")
+            val zoneIntent = getLocationUpdateIntent(true)
+            geofencingClient?.removeGeofences(zoneIntent)
+            geofenceRegistered = false
+            lastEnteredGeoZones.clear()
+            lastExitedGeoZones.clear()
+        } else Log.d(TAG, "Cannot remove geofence location requests. Geofence provider is not set.")
     }
 
     private fun requestLocationUpdates() {
@@ -386,7 +387,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
         val intent = getLocationUpdateIntent(false)
 
-        fusedLocationProviderClient.requestLocationUpdates(
+        fusedLocationProviderClient?.requestLocationUpdates(
             createLocationRequest(),
             intent
         )
@@ -409,7 +410,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             geofencingClient = LocationServices.getGeofencingClient(latestContext)
             val intent = getLocationUpdateIntent(true)
             val geofencingRequest = createGeofencingRequest()
-            geofencingClient.addGeofences(
+            geofencingClient?.addGeofences(
                 geofencingRequest,
                 intent
             )

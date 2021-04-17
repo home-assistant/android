@@ -167,6 +167,9 @@ class HighAccuracyLocationService : Service() {
 
         LAUNCHER.onServiceDestroy(this)
 
+        // Remove notification again. Sometimes stopForeground(true) is not enough. Just to be sure
+        notificationManagerCompat.cancel(notificationId)
+
         Log.d(TAG, "High accuracy location service stopped -> onDestroy")
     }
 
