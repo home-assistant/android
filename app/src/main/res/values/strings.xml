@@ -547,6 +547,8 @@ like to connect to:</string>
   <string name="shortcut_updated">Shortcut updated</string>
   <string name="widget_camera_description">Camera Widget</string>
   <string name="widget_media_player_description">Media Player Widget</string>
+  <string name="basic_sensor_name_media_session">Media Session</string>
+  <string name="sensor_description_media_session">The state will either be the playback state of the primary media session or it will be unavailable when you have no active sessions. Attributes will include data from all active sessions including total count.</string>
   <string name="sensor_setting_nextalarm_allow_list_title">Allow List</string>
   <string name="sensor_setting_notification_allow_list_title">Allow List</string>
   <string name="sensor_setting_geocode_minimum_accuracy_title">Minimum Accuracy</string>
