@@ -14,12 +14,12 @@ import kotlin.collections.ArrayList
 class BluetoothSensorManager : SensorManager {
     companion object {
 
-        private const val BLE_ID1 = "UUID"
-        private const val BLE_ID2 = "Major"
-        private const val BLE_ID3 = "Minor"
-        private const val BLE_TRANSMIT_POWER = "transmit_power"
-        private const val BLE_TRANSMIT_ACTIVE = "Enable Transmitter"
-        private const val ENABLE_TOGGLE_ALL = "Include when enabling all sensors"
+        private const val SETTING_BLE_ID1 = "ble_uuid"
+        private const val SETTING_BLE_ID2 = "ble_major"
+        private const val SETTING_BLE_ID3 = "ble_minor"
+        private const val SETTING_BLE_TRANSMIT_POWER = "ble_transmit_power"
+        private const val SETTING_BLE_TRANSMIT_ENABLED = "ble_transmit_enabled"
+        private const val SETTING_BLE_ENABLE_TOGGLE_ALL = "ble_enable_toggle_all"
         private const val DEFAULT_BLE_TRANSMIT_POWER = "ultraLow"
         private const val DEFAULT_BLE_ID2 = "100"
         private const val DEFAULT_BLE_ID3 = "1"
@@ -58,7 +58,7 @@ class BluetoothSensorManager : SensorManager {
             if (transmitEnabled) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
             }
-            sensorDao.add(Setting(bleTransmitter.id, BLE_TRANSMIT_ACTIVE, transmitEnabled.toString(), "toggle"))
+            sensorDao.add(Setting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), "toggle"))
         }
     }
 
@@ -139,18 +139,18 @@ class BluetoothSensorManager : SensorManager {
 
     override fun enableToggleAll(context: Context, sensorId: String): Boolean {
         if (sensorId == bleTransmitter.id) {
-            return getSetting(context, bleTransmitter, ENABLE_TOGGLE_ALL, "toggle", "false").toBoolean()
+            return getSetting(context, bleTransmitter, SETTING_BLE_ENABLE_TOGGLE_ALL, "toggle", "false").toBoolean()
         }
         return super.enableToggleAll(context, sensorId)
     }
 
     private fun updateBLEDevice(context: Context) {
-        addSettingIfNotPresent(context, bleTransmitter, ENABLE_TOGGLE_ALL, "toggle", "false")
-        var transmitActive = getSetting(context, bleTransmitter, BLE_TRANSMIT_ACTIVE, "toggle", "true").toBoolean()
-        var id1 = getSetting(context, bleTransmitter, BLE_ID1, "string", UUID.randomUUID().toString())
-        var id2 = getSetting(context, bleTransmitter, BLE_ID2, "string", DEFAULT_BLE_ID2)
-        var id3 = getSetting(context, bleTransmitter, BLE_ID3, "string", DEFAULT_BLE_ID3)
-        var transmitPower = getSetting(context, bleTransmitter, BLE_TRANSMIT_POWER, "list", DEFAULT_BLE_TRANSMIT_POWER)
+        addSettingIfNotPresent(context, bleTransmitter, SETTING_BLE_ENABLE_TOGGLE_ALL, "toggle", "false")
+        var transmitActive = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, "toggle", "true").toBoolean()
+        var id1 = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
+        var id2 = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_ID2)
+        var id3 = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_ID3)
+        var transmitPower = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list", listOf("ultraLow", "low", "medium", "high"), DEFAULT_BLE_TRANSMIT_POWER)
         bleTransmitterDevice.restartRequired = false
         if (bleTransmitterDevice.uuid != id1 || bleTransmitterDevice.major != id2 ||
                 bleTransmitterDevice.minor != id3 || bleTransmitterDevice.transmitPowerSetting != transmitPower ||

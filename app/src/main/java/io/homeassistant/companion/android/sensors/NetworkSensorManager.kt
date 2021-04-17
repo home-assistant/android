@@ -73,7 +73,7 @@ class NetworkSensorManager : SensorManager {
             R.string.sensor_description_public_ip,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor"
         )
-        private const val GET_CURRENT_BSSID = "get_current_bssid"
+        private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }
 
     override fun docsLink(): String {
@@ -174,14 +174,14 @@ class NetworkSensorManager : SensorManager {
 
         var bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
 
-        val settingName = "replace_$bssid"
+        val settingName = "network_replace_mac_var1:$bssid:"
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensorSettings = sensorDao.getSettings(bssidState.id)
-        val getCurrentBSSID = sensorSettings.firstOrNull { it.name == GET_CURRENT_BSSID }?.value ?: "false"
+        val getCurrentBSSID = sensorSettings.firstOrNull { it.name == SETTING_GET_CURRENT_BSSID }?.value ?: "false"
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
-                sensorDao.add(Setting(bssidState.id, GET_CURRENT_BSSID, "false", "toggle"))
+                sensorDao.add(Setting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", "toggle"))
                 sensorDao.add(Setting(bssidState.id, settingName, bssid, "string"))
             }
         } else {
@@ -190,7 +190,7 @@ class NetworkSensorManager : SensorManager {
             else
                 sensorDao.removeSetting(bssidState.id, settingName)
 
-            sensorDao.add(Setting(bssidState.id, GET_CURRENT_BSSID, "false", "toggle"))
+            sensorDao.add(Setting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", "toggle"))
         }
 
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"

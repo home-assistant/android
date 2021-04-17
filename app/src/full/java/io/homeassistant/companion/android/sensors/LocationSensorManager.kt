@@ -41,14 +41,14 @@ import kotlinx.coroutines.runBlocking
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     companion object {
-        private const val SETTING_ACCURACY = "Minimum Accuracy"
-        private const val SETTING_ACCURATE_UPDATE_TIME = "Minimum time between updates"
-        private const val SETTING_INCLUDE_SENSOR_UPDATE = "Include in sensor update"
-        private const val SETTING_HIGH_ACCURACY_MODE = "High accuracy mode (May drain battery fast)"
-        private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL = "High accuracy mode update interval (seconds)"
-        private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES = "High accuracy mode only when connected to BT devices"
-        private const val SETTING_HIGH_ACCURACY_MODE_ZONE = "High accuracy mode only when entering zone"
-        private const val SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE = "High accuracy mode trigger range for zone (meters)"
+        private const val SETTING_ACCURACY = "location_minimum_accuracy"
+        private const val SETTING_ACCURATE_UPDATE_TIME = "location_minimum_time_updates"
+        private const val SETTING_INCLUDE_SENSOR_UPDATE = "location_include_sensor_update"
+        private const val SETTING_HIGH_ACCURACY_MODE = "location_ham_enabled"
+        private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL = "location_ham_update_interval"
+        private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES = "location_ham_only_bt_dev"
+        private const val SETTING_HIGH_ACCURACY_MODE_ZONE = "location_ham_only_enter_zone"
+        private const val SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE = "location_ham_trigger_range"
 
         private const val DEFAULT_MINIMUM_ACCURACY = 200
         private const val DEFAULT_UPDATE_INTERVAL_HA_SECONDS = 5
