@@ -45,11 +45,19 @@ class FanControl {
             control.setDeviceType(DeviceTypes.TYPE_FAN)
             control.setZone(context.getString(R.string.domain_fan))
             control.setStatus(Control.STATUS_OK)
+            control.setStatusText(
+                when (entity.state) {
+                    "off" -> context.getString(R.string.state_off)
+                    "on" -> context.getString(R.string.state_on)
+                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    else -> context.getString(R.string.state_unknown)
+                }
+            )
             if (currentSpeed.isNotBlank()) {
                 control.setControlTemplate(
                     ToggleRangeTemplate(
                         entity.entityId,
-                        entity.state != "off",
+                        entity.state == "on",
                         "",
                         RangeTemplate(
                             entity.entityId,
@@ -66,7 +74,7 @@ class FanControl {
                     ToggleTemplate(
                         entity.entityId,
                         ControlButton(
-                            entity.state != "off",
+                            entity.state == "on",
                             ""
                         )
                     )

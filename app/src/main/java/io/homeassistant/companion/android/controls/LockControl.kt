@@ -39,7 +39,14 @@ class LockControl {
             )
             control.setZone(context.getString(R.string.domain_lock))
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText(if (entity.state == "locked") context.getString(R.string.state_locked) else context.getString(R.string.state_unlocked))
+            control.setStatusText(
+                when (entity.state) {
+                    "locked" -> context.getString(R.string.state_locked)
+                    "unlocked" -> context.getString(R.string.state_unlocked)
+                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    else -> context.getString(R.string.state_unknown)
+                }
+            )
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,
