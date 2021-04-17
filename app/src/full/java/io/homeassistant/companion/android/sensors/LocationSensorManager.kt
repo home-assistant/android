@@ -41,14 +41,14 @@ import kotlinx.coroutines.runBlocking
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     companion object {
-        private const val SETTING_ACCURACY = "Minimum Accuracy"
-        private const val SETTING_ACCURATE_UPDATE_TIME = "Minimum time between updates"
-        private const val SETTING_INCLUDE_SENSOR_UPDATE = "Include in sensor update"
-        private const val SETTING_HIGH_ACCURACY_MODE = "High accuracy mode (May drain battery fast)"
-        private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL = "High accuracy mode update interval (seconds)"
-        private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES = "High accuracy mode only when connected to BT devices"
-        private const val SETTING_HIGH_ACCURACY_MODE_ZONE = "High accuracy mode only when entering zone"
-        private const val SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE = "High accuracy mode trigger range for zone (meters)"
+        private const val SETTING_ACCURACY = "location_minimum_accuracy"
+        private const val SETTING_ACCURATE_UPDATE_TIME = "location_minimum_time_updates"
+        private const val SETTING_INCLUDE_SENSOR_UPDATE = "location_include_sensor_update"
+        private const val SETTING_HIGH_ACCURACY_MODE = "location_ham_enabled"
+        private const val SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL = "location_ham_update_interval"
+        private const val SETTING_HIGH_ACCURACY_MODE_BLUETOOTH_DEVICES = "location_ham_only_bt_dev"
+        private const val SETTING_HIGH_ACCURACY_MODE_ZONE = "location_ham_only_enter_zone"
+        private const val SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE = "location_ham_trigger_range"
 
         private const val DEFAULT_MINIMUM_ACCURACY = 200
         private const val DEFAULT_UPDATE_INTERVAL_HA_SECONDS = 5
@@ -83,8 +83,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         )
         internal const val TAG = "LocBroadcastReceiver"
 
-        private lateinit var geofencingClient: GeofencingClient
-        private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+        private var geofencingClient: GeofencingClient? = null
+        private var fusedLocationProviderClient: FusedLocationProviderClient? = null
 
         private var isBackgroundLocationSetup = false
         private var isZoneLocationSetup = false
@@ -166,13 +166,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 if (!zoneEnabled && isZoneLocationSetup) {
                     removeGeofenceUpdateRequests()
                     isZoneLocationSetup = false
-                    Log.d(TAG, "Removing geofence update requests")
                 }
                 if (!backgroundEnabled && isBackgroundLocationSetup) {
                     removeBackgroundUpdateRequests()
                     stopHighAccuracyService()
                     isBackgroundLocationSetup = false
-                    Log.d(TAG, "Removing background update requests")
                 }
                 if (zoneEnabled && !isZoneLocationSetup) {
                     isZoneLocationSetup = true
@@ -361,19 +359,22 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun removeBackgroundUpdateRequests() {
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
-        val backgroundIntent = getLocationUpdateIntent(false)
-
-        fusedLocationProviderClient.removeLocationUpdates(backgroundIntent)
+        if (fusedLocationProviderClient != null) {
+            Log.d(TAG, "Removing background location requests.")
+            val backgroundIntent = getLocationUpdateIntent(false)
+            fusedLocationProviderClient?.removeLocationUpdates(backgroundIntent)
+        } else Log.d(TAG, "Cannot remove background location requests. Location provider is not set.")
     }
 
     private fun removeGeofenceUpdateRequests() {
-        geofencingClient = LocationServices.getGeofencingClient(latestContext)
-        val zoneIntent = getLocationUpdateIntent(true)
-        geofencingClient.removeGeofences(zoneIntent)
-        geofenceRegistered = false
-        lastEnteredGeoZones.clear()
-        lastExitedGeoZones.clear()
+        if (geofencingClient != null) {
+            Log.d(TAG, "Removing geofence location requests.")
+            val zoneIntent = getLocationUpdateIntent(true)
+            geofencingClient?.removeGeofences(zoneIntent)
+            geofenceRegistered = false
+            lastEnteredGeoZones.clear()
+            lastExitedGeoZones.clear()
+        } else Log.d(TAG, "Cannot remove geofence location requests. Geofence provider is not set.")
     }
 
     private fun requestLocationUpdates() {
@@ -386,7 +387,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(latestContext)
         val intent = getLocationUpdateIntent(false)
 
-        fusedLocationProviderClient.requestLocationUpdates(
+        fusedLocationProviderClient?.requestLocationUpdates(
             createLocationRequest(),
             intent
         )
@@ -409,7 +410,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             geofencingClient = LocationServices.getGeofencingClient(latestContext)
             val intent = getLocationUpdateIntent(true)
             val geofencingRequest = createGeofencingRequest()
-            geofencingClient.addGeofences(
+            geofencingClient?.addGeofences(
                 geofencingRequest,
                 intent
             )

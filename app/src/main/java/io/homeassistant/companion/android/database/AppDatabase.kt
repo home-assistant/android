@@ -15,6 +15,7 @@ import androidx.room.Database
 import androidx.room.OnConflictStrategy
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.homeassistant.companion.android.R
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.sensor.Attribute
+import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.Setting
@@ -52,9 +54,10 @@ import kotlinx.coroutines.runBlocking
         TemplateWidgetEntity::class,
         NotificationItem::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = false
 )
+@TypeConverters(EntriesTypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
     abstract fun sensorDao(): SensorDao
@@ -103,7 +106,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_12_13,
                     MIGRATION_13_14,
                     MIGRATION_14_15,
-                    MIGRATION_15_16
+                    MIGRATION_15_16,
+                    MIGRATION_16_17
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -302,6 +306,111 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("CREATE TABLE IF NOT EXISTS `camera_widgets` (`id` INTEGER NOT NULL, `entityId` TEXT NOT NULL, PRIMARY KEY(`id`))")
+            }
+        }
+
+        private val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+
+                val cursor = database.query("SELECT * FROM sensor_settings")
+                val sensorSettings = mutableListOf<ContentValues>()
+                var migrationSuccessful = false
+                var migrationFailed = false
+                try {
+                    if (cursor.moveToFirst()) {
+                        while (cursor.moveToNext()) {
+
+                            sensorSettings.add(ContentValues().also {
+
+                                val currentSensorId = cursor.getString(cursor.getColumnIndex("sensor_id"))
+                                val currentSensorSettingName = cursor.getString(cursor.getColumnIndex("name"))
+                                var entries: String = ""
+                                var newSensorSettingName = currentSensorSettingName
+                                // Alarm
+                                if (currentSensorId == "next_alarm" && currentSensorSettingName == "Allow List") {
+                                    newSensorSettingName = "nextalarm_allow_list"
+                                }
+                                // Notification
+                                else if ((currentSensorId == "last_removed_notification" || currentSensorId == "last_notification") && currentSensorSettingName == "Allow List") {
+                                    newSensorSettingName = "notification_allow_list"
+                                }
+                                // Geocode
+                                else if (currentSensorId == "geocoded_location" && currentSensorSettingName == "Minimum Accuracy") {
+                                    newSensorSettingName = "geocode_minimum_accuracy"
+                                }
+                                // Location
+                                else if ((currentSensorId == "zone_background" || currentSensorId == "accurate_location" || currentSensorId == "location_background") && currentSensorSettingName == "Minimum Accuracy") {
+                                    newSensorSettingName = "location_minimum_accuracy"
+                                } else if (currentSensorId == "accurate_location" && currentSensorSettingName == "Minimum time between updates") {
+                                    newSensorSettingName = "location_minimum_time_updates"
+                                } else if (currentSensorId == "accurate_location" && currentSensorSettingName == "Include in sensor update") {
+                                    newSensorSettingName = "location_include_sensor_update"
+                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode (May drain battery fast)") {
+                                    newSensorSettingName = "location_ham_enabled"
+                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode update interval (seconds)") {
+                                    newSensorSettingName = "location_ham_update_interval"
+                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode only when connected to BT devices") {
+                                    newSensorSettingName = "location_ham_only_bt_dev"
+                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode only when entering zone") {
+                                    newSensorSettingName = "location_ham_only_enter_zone"
+                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode trigger range for zone (meters)") {
+                                    newSensorSettingName = "location_ham_trigger_range"
+                                }
+                                // Bluetooth
+                                else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "UUID") {
+                                    newSensorSettingName = "ble_uuid"
+                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Major") {
+                                    newSensorSettingName = "ble_major"
+                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Minor") {
+                                    newSensorSettingName = "ble_minor"
+                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "transmit_power") {
+                                    newSensorSettingName = "ble_transmit_power"
+                                    entries = "ultraLow|low|medium|high"
+                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Enable Transmitter") {
+                                    newSensorSettingName = "ble_transmit_enabled"
+                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Include when enabling all sensors") {
+                                    newSensorSettingName = "ble_enable_toggle_all"
+                                }
+                                // Last reboot
+                                else if (currentSensorId == "last_reboot" && currentSensorSettingName == "deadband") {
+                                    newSensorSettingName = "lastreboot_deadband"
+                                }
+                                // Last update
+                                else if (currentSensorId == "last_update" && currentSensorSettingName == "Add New Intent") {
+                                    newSensorSettingName = "lastupdate_add_new_intent"
+                                } else if (currentSensorId == "last_update" && currentSensorSettingName.startsWith("intent")) {
+                                    newSensorSettingName = "lastupdate_intent_var1:" + currentSensorSettingName.substringAfter("intent") + ":"
+                                }
+                                // Network
+                                else if (currentSensorId == "wifi_bssid" && currentSensorSettingName == "get_current_bssid") {
+                                    newSensorSettingName = "network_get_current_bssid"
+                                } else if (currentSensorId == "wifi_bssid" && currentSensorSettingName.startsWith("replace_")) {
+                                    newSensorSettingName = "network_replace_mac_var1:" + currentSensorSettingName.substringAfter("replace_") + ":"
+                                }
+                                it.put("sensor_id", cursor.getString(cursor.getColumnIndex("sensor_id")))
+                                it.put("name", newSensorSettingName)
+                                it.put("value", cursor.getString(cursor.getColumnIndex("value")))
+                                it.put("value_type", cursor.getString(cursor.getColumnIndex("value_type")))
+                                it.put("entries", entries)
+                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                            })
+                        }
+                        migrationSuccessful = true
+                    }
+                    cursor.close()
+                } catch (e: Exception) {
+                    migrationFailed = true
+                    Log.e(TAG, "Unable to migrate, proceeding with recreating the table", e)
+                }
+                database.execSQL("DROP TABLE IF EXISTS `sensor_settings`")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `sensor_settings` (`sensor_id` TEXT NOT NULL, `name` TEXT NOT NULL, `value` TEXT NOT NULL, `value_type` TEXT NOT NULL DEFAULT 'string', `entries` TEXT NOT NULL, `enabled` INTEGER NOT NULL DEFAULT '1', PRIMARY KEY(`sensor_id`, `name`))")
+                if (migrationSuccessful) {
+                    sensorSettings.forEach {
+                        database.insert("sensor_settings", OnConflictStrategy.REPLACE, it)
+                    }
+                }
+                if (migrationFailed)
+                    notifyMigrationFailed()
             }
         }
 

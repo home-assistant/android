@@ -15,7 +15,7 @@ import java.util.TimeZone
 class NextAlarmManager : SensorManager {
     companion object {
         private const val TAG = "NextAlarm"
-        private const val ALLOW_LIST = "Allow List"
+        private const val SETTING_ALLOW_LIST = "nextalarm_allow_list"
 
         val nextAlarm = SensorManager.BasicSensor(
             "next_alarm",
@@ -60,7 +60,7 @@ class NextAlarmManager : SensorManager {
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensorSetting = sensorDao.getSettings(nextAlarm.id)
-        val allowPackageList = sensorSetting.firstOrNull { it.name == ALLOW_LIST }?.value ?: ""
+        val allowPackageList = sensorSetting.firstOrNull { it.name == SETTING_ALLOW_LIST }?.value ?: ""
 
         try {
             val alarmManager: AlarmManager =
@@ -80,7 +80,7 @@ class NextAlarmManager : SensorManager {
                         return
                     }
                 } else {
-                    sensorDao.add(Setting(nextAlarm.id, ALLOW_LIST, allowPackageList, "list-apps"))
+                    sensorDao.add(Setting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, "list-apps"))
                 }
 
                 val cal: Calendar = GregorianCalendar()

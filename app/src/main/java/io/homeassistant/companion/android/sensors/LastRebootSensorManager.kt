@@ -18,7 +18,7 @@ class LastRebootSensorManager : SensorManager {
     companion object {
         private const val TAG = "LastReboot"
         private const val LOCAL_TIME = "Local Time"
-        private const val DEADBAND = "deadband"
+        private const val SETTING_DEADBAND = "lastreboot_deadband"
         private const val TIME_MILLISECONDS = "Time in Milliseconds"
 
         private val lastRebootSensor = SensorManager.BasicSensor(
@@ -65,8 +65,8 @@ class LastRebootSensorManager : SensorManager {
         val fullSensor = sensorDao.getFull(lastRebootSensor.id)
         val sensorSetting = sensorDao.getSettings(lastRebootSensor.id)
         val lastTimeMillis = fullSensor?.attributes?.firstOrNull { it.name == TIME_MILLISECONDS }?.value?.toLongOrNull() ?: 0L
-        val settingDeadband = sensorSetting.firstOrNull { it.name == DEADBAND }?.value?.toIntOrNull() ?: 60000
-        sensorDao.add(Setting(lastRebootSensor.id, DEADBAND, settingDeadband.toString(), "number"))
+        val settingDeadband = sensorSetting.firstOrNull { it.name == SETTING_DEADBAND }?.value?.toIntOrNull() ?: 60000
+        sensorDao.add(Setting(lastRebootSensor.id, SETTING_DEADBAND, settingDeadband.toString(), "number"))
         try {
             timeInMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime()
             val diffMillis = (timeInMillis - lastTimeMillis).absoluteValue

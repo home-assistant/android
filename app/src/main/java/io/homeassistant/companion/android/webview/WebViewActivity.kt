@@ -953,10 +953,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun isColorDark(color: Int): Boolean {
-        val whiteContrast = ColorUtils.calculateContrast(Color.WHITE, color)
-        val blackContrast = ColorUtils.calculateContrast(Color.BLACK, color)
-
-        return whiteContrast > blackContrast
+        return ColorUtils.calculateLuminance(color) < 0.5
     }
 
     override fun setExternalAuth(script: String) {

@@ -61,6 +61,7 @@ class CoverControl {
                         "closing" -> context.getString(R.string.state_closing)
                         "open" -> context.getString(R.string.state_open)
                         "opening" -> context.getString(R.string.state_opening)
+                        "unavailable" -> context.getString(R.string.state_unavailable)
                         else -> entity.state
                     }
             )
@@ -76,7 +77,7 @@ class CoverControl {
                     if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_POSITION == SUPPORT_SET_POSITION)
                         ToggleRangeTemplate(
                                 entity.entityId,
-                                entity.state !in listOf("closed", "closing"),
+                                entity.state in listOf("open", "opening"),
                                 "",
                                 RangeTemplate(
                                         entity.entityId,
