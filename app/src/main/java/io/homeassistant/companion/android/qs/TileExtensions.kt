@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Icon
 import android.os.Build
 import android.service.quicksettings.Tile
+import android.service.quicksettings.TileService
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -14,12 +15,41 @@ import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
+import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 
 @RequiresApi(Build.VERSION_CODES.N)
-class TileExtensions {
+abstract class TileExtensions : TileService() {
+
+    abstract fun getTile(): Tile
+
+    abstract fun getTileId(): String
+
+    @Inject
+    lateinit var integrationUseCase: IntegrationRepository
+
+    override fun onClick() {
+        super.onClick()
+        DaggerTileComponent.builder()
+            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
+            .build()
+            .inject(this)
+        setTileData(applicationContext, getTileId(), getTile())
+        tileClicked(applicationContext, getTileId(), getTile(), integrationUseCase)
+    }
+
+    override fun onTileAdded() {
+        super.onTileAdded()
+        setTileData(applicationContext, getTileId(), getTile())
+    }
+
+    override fun onStartListening() {
+        super.onStartListening()
+        setTileData(applicationContext, getTileId(), getTile())
+    }
 
     companion object {
         private const val TAG = "TileExtensions"

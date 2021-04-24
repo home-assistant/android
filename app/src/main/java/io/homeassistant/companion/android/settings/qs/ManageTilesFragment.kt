@@ -112,9 +112,10 @@ class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
             }
         }
 
+        val sortedEntities = entityList.sorted().toTypedArray()
         if (entityList.isNotEmpty()) {
-            tileEntityPref?.entries = entityList.sorted().toTypedArray()
-            tileEntityPref?.entryValues = entityList.sorted().toTypedArray()
+            tileEntityPref?.entries = sortedEntities
+            tileEntityPref?.entryValues = sortedEntities
         }
 
         tileSavePref?.isEnabled = !tileEntity.isNullOrEmpty() && !tileLabel.isNullOrEmpty()
