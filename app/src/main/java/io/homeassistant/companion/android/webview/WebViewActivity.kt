@@ -46,10 +46,11 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.webkit.WebViewCompat
-import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.video.VideoListener
 import com.google.android.material.textfield.TextInputEditText
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
@@ -74,6 +75,7 @@ import io.homeassistant.companion.android.util.isStarted
 import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_player_control_view.*
+import kotlinx.android.synthetic.main.exo_player_view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -614,15 +616,31 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val payload = json.getJSONObject("payload")
         val uri = Uri.parse(payload.getString("url"))
         exoMute = payload.optBoolean("muted")
-        val loadControl = DefaultLoadControl.Builder().setBufferDurationsMs(
-            DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
-            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS, 500,
-            2500).build()
         runOnUiThread {
             exoPlayer =
-                SimpleExoPlayer.Builder(applicationContext).setLoadControl(loadControl).build()
+                SimpleExoPlayer.Builder(applicationContext).build()
             exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
             exoPlayer?.playWhenReady = true
+            exoPlayer?.addVideoListener(object : VideoListener {
+                override fun onVideoSizeChanged(
+                    width: Int,
+                    height: Int,
+                    unappliedRotationDegrees: Int,
+                    pixelWidthHeightRatio: Float
+                ) {
+                    super.onVideoSizeChanged(
+                        width,
+                        height,
+                        unappliedRotationDegrees,
+                        pixelWidthHeightRatio
+                    )
+                    exoBottom =
+                        exoTop + ((exoRight - exoLeft) * height / width)
+                    runOnUiThread {
+                        exoResizeLayout()
+                    }
+                }
+            })
             exoPlayer?.prepare()
             exoMute = !exoMute
             exoToggleMute()
@@ -658,7 +676,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoLeft = (rect.getInt("left") * displayMetrics.density).toInt()
         exoTop = (rect.getInt("top") * displayMetrics.density).toInt()
         exoRight = (rect.getInt("right") * displayMetrics.density).toInt()
-        exoBottom = (rect.getInt("bottom") * displayMetrics.density).toInt()
+        if ((exoPlayer == null) || (exoPlayer!!.videoFormat == null)) {
+            // only set exoBottom if we can't calculate it from the video
+            exoBottom = (rect.getInt("bottom") * displayMetrics.density).toInt()
+        } else {
+            exoBottom = exoTop + (exoRight - exoLeft) * exoPlayer!!.videoFormat!!.height / exoPlayer!!.videoFormat!!.width
+        }
         runOnUiThread {
             exoResizeLayout()
         }
@@ -688,6 +711,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     fun exoResizeLayout() {
         val exoLayoutParams = exoPlayerView.layoutParams as FrameLayout.LayoutParams
         if (isExoFullScreen) {
+            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                exo_content_frame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+            } else {
+                exo_content_frame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
+            }
             exoLayoutParams.setMargins(0, 0, 0, 0)
             exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
             exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
@@ -699,6 +727,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             )
             hideSystemUI()
         } else {
+            exo_content_frame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
             exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT
             exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
             val screenWidth: Int = resources.displayMetrics.widthPixels
