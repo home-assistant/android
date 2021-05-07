@@ -24,6 +24,8 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import io.homeassistant.companion.android.database.qs.TileDao
+import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -52,9 +54,10 @@ import kotlinx.coroutines.runBlocking
         MediaPlayerControlsWidgetEntity::class,
         StaticWidgetEntity::class,
         TemplateWidgetEntity::class,
-        NotificationItem::class
+        NotificationItem::class,
+        TileEntity::class
     ],
-    version = 17,
+    version = 18,
     exportSchema = false
 )
 @TypeConverters(EntriesTypeConverter::class)
@@ -67,6 +70,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun staticWidgetDao(): StaticWidgetDao
     abstract fun templateWidgetDao(): TemplateWidgetDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun tileDao(): TileDao
 
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
@@ -107,7 +111,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_13_14,
                     MIGRATION_14_15,
                     MIGRATION_15_16,
-                    MIGRATION_16_17
+                    MIGRATION_16_17,
+                    MIGRATION_17_18
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -411,6 +416,12 @@ abstract class AppDatabase : RoomDatabase() {
                 }
                 if (migrationFailed)
                     notifyMigrationFailed()
+            }
+        }
+
+        private val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `qs_tiles` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `tileId` TEXT NOT NULL, `iconId` INTEGER, `entityId` TEXT NOT NULL, `label` TEXT NOT NULL, `subtitle` TEXT, PRIMARY KEY(`id`))")
             }
         }
 

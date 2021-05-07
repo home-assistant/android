@@ -101,6 +101,16 @@
             android:summary="@string/rate_limit_summary"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="quick_settings"
+        android:title="@string/quick_settings"
+        app:isPreferenceVisible="false">
+        <Preference
+            android:key="manage_tiles"
+            android:icon="@drawable/ic_tile"
+            android:title="@string/manage_tiles"
+            android:summary="@string/manage_tiles_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:key="shortcuts"
         android:title="@string/shortcuts"
         app:isPreferenceVisible="false">

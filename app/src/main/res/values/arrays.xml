@@ -16,4 +16,18 @@
         <item>@string/entity_id</item>
         <item>@string/lovelace</item>
     </string-array>
+    <string-array name="tile_ids">
+        <item>tile_1</item>
+        <item>tile_2</item>
+        <item>tile_3</item>
+        <item>tile_4</item>
+        <item>tile_5</item>
+    </string-array>
+    <string-array name="tile_name">
+        <item>@string/tile_1</item>
+        <item>@string/tile_2</item>
+        <item>@string/tile_3</item>
+        <item>@string/tile_4</item>
+        <item>@string/tile_5</item>
+    </string-array>
 </resources>
