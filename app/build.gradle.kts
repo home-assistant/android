@@ -83,7 +83,7 @@ android {
 
         // Generate a list of application ids into BuildConfig
         val values = productFlavors.joinToString {
-            "\"${it.applicationId?: defaultConfig.applicationId}${it.applicationIdSuffix}\""
+            "\"${it.applicationId ?: defaultConfig.applicationId}${it.applicationIdSuffix}\""
         }
 
         defaultConfig.buildConfigField("String[]", "APPLICATION_IDS", "{$values}")
