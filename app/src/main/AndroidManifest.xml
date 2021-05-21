@@ -80,8 +80,8 @@
         <receiver android:name=".widgets.camera.CameraWidget" android:label="@string/widget_camera_description">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.RECEIVE_DATA" />
-                <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.UPDATE_IMAGE" />
+                <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE" />
             </intent-filter>
 
             <meta-data
@@ -117,7 +117,7 @@
                 android:resource="@xml/media_player_control_widget_info" />
         </receiver>
 
-        <receiver android:name=".widgets.template.TemplateWidget" android:label="Template Widget">
+        <receiver android:name=".widgets.template.TemplateWidget" android:label="@string/template_widget">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
