@@ -64,28 +64,28 @@ class LightControl {
             if (currentValue > maxValue)
                 currentValue = maxValue
             control.setControlTemplate(
-                    if (supportsBrightness || ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS))
-                        ToggleRangeTemplate(
-                                entity.entityId,
-                                entity.state == "on",
-                                "",
-                                RangeTemplate(
-                                        entity.entityId,
-                                        minValue,
-                                        maxValue,
-                                        currentValue,
-                                        1f,
-                                        "%.0f%%"
-                                )
+                if (supportsBrightness || ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS))
+                    ToggleRangeTemplate(
+                        entity.entityId,
+                        entity.state == "on",
+                        "",
+                        RangeTemplate(
+                            entity.entityId,
+                            minValue,
+                            maxValue,
+                            currentValue,
+                            1f,
+                            "%.0f%%"
                         )
-                    else
-                        ToggleTemplate(
-                                entity.entityId,
-                                ControlButton(
-                                        entity.state == "on",
-                                        "Description"
-                                )
+                    )
+                else
+                    ToggleTemplate(
+                        entity.entityId,
+                        ControlButton(
+                            entity.state == "on",
+                            "Description"
                         )
+                    )
             )
             return control.build()
         }

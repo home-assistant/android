@@ -24,10 +24,10 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 import javax.inject.Named
 import kotlin.Exception
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,

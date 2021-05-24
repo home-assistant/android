@@ -16,8 +16,12 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
 
-class OnboardingActivity : BaseActivity(), DiscoveryListener, ManualSetupListener,
-    AuthenticationListener, MobileAppIntegrationListener {
+class OnboardingActivity :
+    BaseActivity(),
+    DiscoveryListener,
+    ManualSetupListener,
+    AuthenticationListener,
+    MobileAppIntegrationListener {
 
     companion object {
         const val SESSION_CONNECTED = "is_registered"
@@ -113,7 +117,8 @@ class OnboardingActivity : BaseActivity(), DiscoveryListener, ManualSetupListene
         // Temporary workaround to sideload on Android TV and use a remote for basic navigation in WebView
         val fragmentManager = supportFragmentManager.findFragmentByTag(AUTHENTICATION_FRAGMENT)
         if (event?.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN &&
-            fragmentManager != null && fragmentManager.isVisible) {
+            fragmentManager != null && fragmentManager.isVisible
+        ) {
             dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_TAB))
             return true
         }

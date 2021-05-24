@@ -52,7 +52,8 @@ class DNDSensorManager : SensorManager {
             }
             val icon = "mdi:do-not-disturb"
 
-            onSensorUpdated(context,
+            onSensorUpdated(
+                context,
                 dndSensor,
                 dndState,
                 icon,

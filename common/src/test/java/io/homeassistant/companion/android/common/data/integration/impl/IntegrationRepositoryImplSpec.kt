@@ -18,10 +18,6 @@ import io.mockk.coVerify
 import io.mockk.coVerifyAll
 import io.mockk.every
 import io.mockk.mockk
-import java.net.URL
-import java.util.Calendar
-import java.util.HashMap
-import kotlin.properties.Delegates
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.assertj.core.api.Assertions.assertThat
@@ -29,6 +25,10 @@ import org.assertj.core.api.Assertions.catchThrowable
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import retrofit2.Response
+import java.net.URL
+import java.util.Calendar
+import java.util.HashMap
+import kotlin.properties.Delegates
 
 object IntegrationRepositoryImplSpec : Spek({
 
@@ -106,7 +106,8 @@ object IntegrationRepositoryImplSpec : Spek({
                     urlRepository.saveRegistrationUrls(
                         "https://home-assistant.io/1/",
                         "https://home-assistant.io/2/",
-                        "FGHIJ")
+                        "FGHIJ"
+                    )
                     localStorage.putString("secret", "ABCDE")
                 }
             }
@@ -170,7 +171,8 @@ object IntegrationRepositoryImplSpec : Spek({
                     urlRepository.saveRegistrationUrls(
                         "https://home-assistant.io/1/",
                         "https://home-assistant.io/2/",
-                        "FGHIJ")
+                        "FGHIJ"
+                    )
                     localStorage.putString("secret", "ABCDE")
                 }
             }
@@ -209,7 +211,8 @@ object IntegrationRepositoryImplSpec : Spek({
                 )
             beforeEachTest {
                 coEvery {
-                    integrationService.callWebhook(any(),
+                    integrationService.callWebhook(
+                        any(),
                         IntegrationRequest(
                             "update_registration",
                             registerDeviceRequest

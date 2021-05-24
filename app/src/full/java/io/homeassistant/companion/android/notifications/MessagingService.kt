@@ -57,14 +57,14 @@ import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.util.getActiveNotification
 import io.homeassistant.companion.android.webview.WebViewActivity
-import java.net.URL
-import java.util.Locale
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.net.URL
+import java.util.Locale
+import javax.inject.Inject
 
 class MessagingService : FirebaseMessagingService() {
     companion object {
@@ -135,15 +135,19 @@ class MessagingService : FirebaseMessagingService() {
         const val MEDIA_STOP = "stop"
 
         // Command groups
-        val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
+        val DEVICE_COMMANDS = listOf(
+            COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
             COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_BLE_TRANSMITTER, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY,
-            COMMAND_WEBVIEW, COMMAND_SCREEN_ON, COMMAND_MEDIA)
+            COMMAND_WEBVIEW, COMMAND_SCREEN_ON, COMMAND_MEDIA
+        )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
         val ENABLE_COMMANDS = listOf(TURN_OFF, TURN_ON)
-        val MEDIA_COMMANDS = listOf(MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
-            MEDIA_PLAY_PAUSE, MEDIA_PREVIOUS, MEDIA_REWIND, MEDIA_STOP)
+        val MEDIA_COMMANDS = listOf(
+            MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
+            MEDIA_PLAY_PAUSE, MEDIA_PREVIOUS, MEDIA_REWIND, MEDIA_STOP
+        )
     }
 
     @Inject
@@ -235,7 +239,8 @@ class MessagingService : FirebaseMessagingService() {
                         }
                         COMMAND_VOLUME_LEVEL -> {
                             if (!it["channel"].isNullOrEmpty() && it["channel"] in CHANNEL_VOLUME_STREAM &&
-                                !it[TITLE].isNullOrEmpty() && it[TITLE]?.toIntOrNull() != null)
+                                !it[TITLE].isNullOrEmpty() && it[TITLE]?.toIntOrNull() != null
+                            )
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
@@ -354,7 +359,8 @@ class MessagingService : FirebaseMessagingService() {
         val maxAlarmVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
             tts = getString(R.string.tts_no_title)
-        textToSpeech = TextToSpeech(applicationContext
+        textToSpeech = TextToSpeech(
+            applicationContext
         ) {
             if (it == TextToSpeech.SUCCESS) {
                 val listener = object : UtteranceProgressListener() {
@@ -454,7 +460,8 @@ class MessagingService : FirebaseMessagingService() {
                                 if (pair[1].isDigitsOnly())
                                     pair[1].toInt()
                                 else if ((pair[1].toLowerCase() == "true") ||
-                                    (pair[1].toLowerCase() == "false"))
+                                    (pair[1].toLowerCase() == "false")
+                                )
                                     pair[1].toBoolean()
                                 else pair[1]
                             )
@@ -542,8 +549,9 @@ class MessagingService : FirebaseMessagingService() {
                 val powerManager = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
                 val wakeLock = powerManager.newWakeLock(
                     PowerManager.FULL_WAKE_LOCK or
-                    PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                    PowerManager.ON_AFTER_RELEASE, "HomeAssistant::NotificationScreenOnWakeLock"
+                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                        PowerManager.ON_AFTER_RELEASE,
+                    "HomeAssistant::NotificationScreenOnWakeLock"
                 )
                 wakeLock.acquire(1 * 30 * 1000L /*30 seconds */)
                 wakeLock.release()
@@ -753,7 +761,8 @@ class MessagingService : FirebaseMessagingService() {
             builder.setSound(
                 RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_ALARM)
                     ?: RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE),
-                AudioManager.STREAM_ALARM)
+                AudioManager.STREAM_ALARM
+            )
         } else {
             builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
         }
@@ -1088,9 +1097,11 @@ class MessagingService : FirebaseMessagingService() {
             .setLegacyStreamType(AudioManager.STREAM_ALARM)
             .setUsage(AudioAttributes.USAGE_ALARM)
             .build()
-        channel.setSound(RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE),
-            audioAttributes)
+        channel.setSound(
+            RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE),
+            audioAttributes
+        )
     }
 
     private fun parseVibrationPattern(
@@ -1133,7 +1144,8 @@ class MessagingService : FirebaseMessagingService() {
     private fun requestSystemAlertPermission() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:$packageName"))
+            Uri.parse("package:$packageName")
+        )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
     }
@@ -1255,7 +1267,8 @@ class MessagingService : FirebaseMessagingService() {
                         if (pair[1].isDigitsOnly())
                             pair[1].toInt()
                         else if ((pair[1].toLowerCase() == "true") ||
-                            (pair[1].toLowerCase() == "false"))
+                            (pair[1].toLowerCase() == "false")
+                        )
                             pair[1].toBoolean()
                         else pair[1]
                     )

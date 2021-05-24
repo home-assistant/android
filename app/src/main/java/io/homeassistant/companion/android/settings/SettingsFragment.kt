@@ -41,14 +41,14 @@ import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
@@ -169,10 +169,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             }
             findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
                 parentFragmentManager
-                        .beginTransaction()
-                        .replace(R.id.content, ManageShortcutsSettingsFragment.newInstance())
-                        .addToBackStack(getString(R.string.shortcuts))
-                        .commit()
+                    .beginTransaction()
+                    .replace(R.id.content, ManageShortcutsSettingsFragment.newInstance())
+                    .addToBackStack(getString(R.string.shortcuts))
+                    .commit()
                 return@setOnPreferenceClickListener true
             }
         }
@@ -224,8 +224,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                         }
                         it.isVisible = true
                         it.summary = "\n${getString(R.string.successful)}: ${rateLimits?.successful}       ${getString(R.string.errors)}: ${rateLimits?.errors}" +
-                                "\n\n${getString(R.string.remaining)}/${getString(R.string.maximum)}: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
-                                "\n\n${getString(R.string.resets_at)}: $formattedDate"
+                            "\n\n${getString(R.string.remaining)}/${getString(R.string.maximum)}: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
+                            "\n\n${getString(R.string.resets_at)}: $formattedDate"
                     }
                 }
             }
@@ -326,10 +326,13 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
                 val hasPermission = checkPermission(permissionsToCheck)
                 if (permissionsToCheck.isNotEmpty() && !hasPermission) {
-                    LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(requireContext(), permissionsToCheck, continueYesCallback = {
-                        checkAndRequestPermissions(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest, true)
-                        // openSsidDialog() will be called in onRequestPermissionsResult if permission is granted
-                    })
+                    LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
+                        requireContext(), permissionsToCheck,
+                        continueYesCallback = {
+                            checkAndRequestPermissions(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest, true)
+                            // openSsidDialog() will be called in onRequestPermissionsResult if permission is granted
+                        }
+                    )
                 } else openSsidDialog()
             } else {
                 if (presenter.isSsidUsed()) {
@@ -441,9 +444,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-                context?.getSystemService(PowerManager::class.java)
-                    ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
-                ?: false
+            context?.getSystemService(PowerManager::class.java)
+            ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
+            ?: false
     }
 
     override fun onRequestPermissionsResult(

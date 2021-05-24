@@ -53,7 +53,8 @@ class ClimateControl {
             val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
             val maxValue = (entity.attributes["max_temp"] as? Number)?.toFloat() ?: 100f
             var currentValue = (entity.attributes["temperature"] as? Number)?.toFloat() ?: (
-                    entity.attributes["current_temperature"] as? Number)?.toFloat() ?: 0f
+                entity.attributes["current_temperature"] as? Number
+                )?.toFloat() ?: 0f
             // Ensure the current value is never lower than the minimum or higher than the maximum
             if (currentValue < minValue)
                 currentValue = minValue

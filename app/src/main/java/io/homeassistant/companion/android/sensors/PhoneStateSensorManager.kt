@@ -86,7 +86,8 @@ class PhoneStateSensorManager : SensorManager {
         if (state == "ringing" || state == "offhook")
             phoneIcon += "-in-talk"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             phoneState,
             state,
             phoneIcon,
@@ -126,7 +127,8 @@ class PhoneStateSensorManager : SensorManager {
                 }
             }
 
-            onSensorUpdated(context,
+            onSensorUpdated(
+                context,
                 basicSimSensor,
                 displayName,
                 "mdi:sim",

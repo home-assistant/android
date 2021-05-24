@@ -59,7 +59,8 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
         val mediaWidgetList = mediaPlayerControlsWidgetDao.getAll()
 
         if (staticWidgetList.isNullOrEmpty() && templateWidgetList.isNullOrEmpty() &&
-            buttonWidgetList.isNullOrEmpty() && mediaWidgetList.isNullOrEmpty()) {
+            buttonWidgetList.isNullOrEmpty() && mediaWidgetList.isNullOrEmpty()
+        ) {
             findPreference<Preference>("no_widgets")?.let {
                 it.isVisible = true
             }

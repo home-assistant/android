@@ -91,7 +91,8 @@ interface SensorManager {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val settingEnabled = isSettingEnabled(context, sensor, settingName)
         if (enabled && !settingEnabled ||
-            !enabled && settingEnabled) {
+            !enabled && settingEnabled
+        ) {
             sensorDao.updateSettingEnabled(sensor.id, settingName, enabled)
         }
     }
@@ -118,9 +119,9 @@ interface SensorManager {
     ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
-                .getSettings(sensor.id)
-                .firstOrNull { it.name == settingName }
-                ?.value
+            .getSettings(sensor.id)
+            .firstOrNull { it.name == settingName }
+            ?.value
         if (setting == null)
             sensorDao.add(Setting(sensor.id, settingName, default, settingType, entries, enabled))
 
@@ -164,12 +165,12 @@ interface SensorManager {
             }
 
             sensorDao.add(
-                    Attribute(
-                            basicSensor.id,
-                            item.key,
-                            item.value.toString(),
-                            valueType
-                    )
+                Attribute(
+                    basicSensor.id,
+                    item.key,
+                    item.value.toString(),
+                    valueType
+                )
             )
         }
     }

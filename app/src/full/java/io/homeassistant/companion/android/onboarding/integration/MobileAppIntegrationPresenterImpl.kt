@@ -4,8 +4,8 @@ import android.util.Log
 import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import javax.inject.Inject
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
     view: MobileAppIntegrationView,

@@ -14,10 +14,10 @@ class HighAccuracyLocationReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             HIGH_ACCURACY_LOCATION_DISABLE ->
-            {
-                HighAccuracyLocationService.stopService(context)
-                LocationSensorManager.setHighAccuracyModeSetting(context, false)
-            }
+                {
+                    HighAccuracyLocationService.stopService(context)
+                    LocationSensorManager.setHighAccuracyModeSetting(context, false)
+                }
         }
     }
 }

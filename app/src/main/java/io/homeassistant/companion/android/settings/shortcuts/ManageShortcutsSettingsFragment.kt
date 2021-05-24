@@ -30,9 +30,9 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.DaggerSettingsComponent
 import io.homeassistant.companion.android.webview.WebViewActivity
+import kotlinx.coroutines.runBlocking
 import java.lang.Exception
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
 
 class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.Callback {
 
@@ -92,9 +92,9 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
 
         activity?.title = getString(R.string.shortcuts)
         DaggerSettingsComponent.builder()
-                .appComponent((activity?.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
+            .appComponent((activity?.applicationContext as GraphComponentAccessor).appComponent)
+            .build()
+            .inject(this)
 
         val addNewShortcut = findPreference<PreferenceCategory>("pinned_shortcut_category")
         val shortcutManager = requireContext().getSystemService(ShortcutManager::class.java)
@@ -369,16 +369,16 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
         return ShortcutInfo.Builder(requireContext(), shortcutId)
-                .setShortLabel(shortcutLabel)
-                .setLongLabel(shortcutDesc)
-                .setIcon(
-                    if (bitmap != null)
-                        Icon.createWithBitmap(bitmap)
-                    else
-                        Icon.createWithResource(requireContext(), R.drawable.ic_stat_ic_notification_blue)
-                )
-                .setIntent(intent)
-                .build()
+            .setShortLabel(shortcutLabel)
+            .setLongLabel(shortcutDesc)
+            .setIcon(
+                if (bitmap != null)
+                    Icon.createWithBitmap(bitmap)
+                else
+                    Icon.createWithResource(requireContext(), R.drawable.ic_stat_ic_notification_blue)
+            )
+            .setIntent(intent)
+            .build()
     }
 
     private fun setPinnedShortcutType(value: String) {

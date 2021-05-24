@@ -92,7 +92,8 @@ class StorageSensorManager : SensorManager {
 
         val icon = "mdi:harddisk"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             storageSensor,
             percentageFreeInternalStorage,
             icon,
@@ -124,7 +125,8 @@ class StorageSensorManager : SensorManager {
 
         val icon = "mdi:micro-sd"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             externalStorage,
             percentFreeExternal,
             icon,

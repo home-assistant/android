@@ -99,7 +99,8 @@ class NextAlarmManager : SensorManager {
 
         val icon = "mdi:alarm"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             nextAlarm,
             utc,
             icon,

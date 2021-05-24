@@ -69,7 +69,8 @@ class LightSensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 lightSensors,
-                SENSOR_DELAY_NORMAL)
+                SENSOR_DELAY_NORMAL
+            )
             Log.d(TAG, "Light sensor listener registered")
             isListenerRegistered = true
         }

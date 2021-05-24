@@ -9,10 +9,6 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.util.UrlHandler
-import java.net.URL
-import java.util.regex.Matcher
-import java.util.regex.Pattern
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,6 +16,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import java.net.URL
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+import javax.inject.Inject
 
 class WebViewPresenterImpl @Inject constructor(
     private val view: WebView,

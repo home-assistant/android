@@ -8,9 +8,12 @@ import io.homeassistant.companion.android.R
 object LocationPermissionInfoHandler {
 
     fun showLocationPermInfoDialogIfNeeded(context: Context, permissions: Array<String>, continueYesCallback: () -> Unit, continueNoCallback: (() -> Unit)? = null) {
-        if (permissions.any { it == Manifest.permission.ACCESS_FINE_LOCATION ||
-                    it == Manifest.permission.ACCESS_FINE_LOCATION ||
-                    it == Manifest.permission.ACCESS_BACKGROUND_LOCATION }) {
+        if (permissions.any {
+            it == Manifest.permission.ACCESS_FINE_LOCATION ||
+                it == Manifest.permission.ACCESS_FINE_LOCATION ||
+                it == Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        }
+        ) {
             AlertDialog.Builder(context)
                 .setTitle(R.string.location_perm_info_title)
                 .setMessage(context.getString(R.string.location_perm_info_message))

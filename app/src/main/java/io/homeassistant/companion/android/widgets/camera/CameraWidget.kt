@@ -24,11 +24,11 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class CameraWidget : AppWidgetProvider() {
 
@@ -190,9 +190,10 @@ class CameraWidget : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
-            TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + lastIntent + System.lineSeparator() +
-                    "AppWidgetId: " + appWidgetId
+            TAG,
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + lastIntent + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId
         )
 
         ensureInjected(context)
@@ -220,8 +221,9 @@ class CameraWidget : AppWidgetProvider() {
 
         mainScope.launch {
             Log.d(
-                TAG, "Saving camera config data:" + System.lineSeparator() +
-                        "entity id: " + entitySelection + System.lineSeparator()
+                TAG,
+                "Saving camera config data:" + System.lineSeparator() +
+                    "entity id: " + entitySelection + System.lineSeparator()
             )
             cameraWidgetDao.add(
                 CameraWidgetEntity(

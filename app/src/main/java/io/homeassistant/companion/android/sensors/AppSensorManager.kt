@@ -127,7 +127,8 @@ class AppSensorManager : SensorManager {
         val state = BuildConfig.VERSION_NAME
         val icon = "mdi:android"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             currentVersion,
             state,
             icon,

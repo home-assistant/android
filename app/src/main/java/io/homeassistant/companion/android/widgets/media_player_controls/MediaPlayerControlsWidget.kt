@@ -24,11 +24,11 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class MediaPlayerControlsWidget : AppWidgetProvider() {
 
@@ -296,9 +296,10 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
-            TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + lastIntent + System.lineSeparator() +
-                    "AppWidgetId: " + appWidgetId
+            TAG,
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + lastIntent + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId
         )
 
         ensureInjected(context)
@@ -334,8 +335,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
         mainScope.launch {
             Log.d(
-                TAG, "Saving service call config data:" + System.lineSeparator() +
-                        "entity id: " + entitySelection + System.lineSeparator()
+                TAG,
+                "Saving service call config data:" + System.lineSeparator() +
+                    "entity id: " + entitySelection + System.lineSeparator()
             )
             mediaPlayCtrlWidgetDao.add(
                 MediaPlayerControlsWidgetEntity(
@@ -362,8 +364,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling previous track service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling previous track service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
@@ -386,8 +389,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling rewind service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling rewind service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val currentEntityInfo: Entity<Map<String, Any>>
@@ -431,8 +435,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling play/pause service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling play/pause service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
@@ -455,8 +460,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling fast forward service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling fast forward service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val currentEntityInfo: Entity<Map<String, Any>>
@@ -500,8 +506,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling next track service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling next track service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"

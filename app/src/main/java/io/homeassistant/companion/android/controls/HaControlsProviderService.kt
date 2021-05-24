@@ -12,13 +12,13 @@ import androidx.core.os.postDelayed
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import java.util.concurrent.Flow
-import java.util.function.Consumer
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.Flow
+import java.util.function.Consumer
+import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.R)
 class HaControlsProviderService : ControlsProviderService() {

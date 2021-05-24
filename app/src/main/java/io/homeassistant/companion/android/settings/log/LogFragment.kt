@@ -23,10 +23,10 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.LogcatReader
-import java.io.File
-import java.util.Calendar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
+import java.util.Calendar
 
 class LogFragment() : Fragment() {
 

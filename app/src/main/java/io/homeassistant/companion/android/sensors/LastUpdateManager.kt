@@ -53,7 +53,8 @@ class LastUpdateManager : SensorManager {
 
         Log.d(TAG, "Last update is $intentAction")
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             lastUpdate,
             intentAction,
             icon,
