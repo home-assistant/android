@@ -73,7 +73,12 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
         if (templateWidget != null) {
             templateText.setText(templateWidget.template)
             add_button.setText(R.string.update_widget)
-            renderTemplateText(templateWidget.template)
+            if (templateWidget.template.isNotEmpty())
+                renderTemplateText(templateWidget.template)
+            else {
+                renderedTemplate.text = getString(R.string.empty_template)
+                add_button.isEnabled = false
+            }
             delete_button.visibility = VISIBLE
             delete_button.setOnClickListener(onDeleteWidget)
         }
@@ -81,7 +86,13 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
         templateText.doAfterTextChanged { editableText ->
             if (editableText == null)
                 return@doAfterTextChanged
-            renderTemplateText(editableText.toString())
+            if (editableText.isNotEmpty()) {
+                add_button.isEnabled = true
+                renderTemplateText(editableText.toString())
+            } else {
+                renderedTemplate.text = getString(R.string.empty_template)
+                add_button.isEnabled = false
+            }
         }
 
         add_button.setOnClickListener {
