@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 class LightControl {
     companion object : HaControl {
         private const val SUPPORT_BRIGHTNESS = 1
+        private val NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
 
         override fun createControl(
             context: Context,
@@ -38,6 +39,17 @@ class LightControl {
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
+
+            // On HA Core 2021.5 and later brightness detection has changed
+            // to simplify things in the app lets use both methods for now
+            var supportsBrightness = false
+            val supportedColorModes = entity.attributes["supported_color_modes"] as? List<String>
+            if (supportedColorModes != null) {
+                for (item in supportedColorModes) {
+                    if (item !in NO_BRIGHTNESS_SUPPORT)
+                        supportsBrightness = true
+                }
+            }
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
             control.setZone(context.getString(R.string.domain_light))
@@ -58,7 +70,7 @@ class LightControl {
             if (currentValue > maxValue)
                 currentValue = maxValue
             control.setControlTemplate(
-                    if ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS)
+                    if (supportsBrightness || ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS))
                         ToggleRangeTemplate(
                                 entity.entityId,
                                 entity.state == "on",
