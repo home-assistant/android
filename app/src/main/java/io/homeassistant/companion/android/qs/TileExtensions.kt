@@ -24,7 +24,7 @@ import kotlinx.coroutines.runBlocking
 @RequiresApi(Build.VERSION_CODES.N)
 abstract class TileExtensions : TileService() {
 
-    abstract fun getTile(): Tile
+    abstract fun getTile(): Tile?
 
     abstract fun getTileId(): String
 
@@ -37,18 +37,22 @@ abstract class TileExtensions : TileService() {
             .appComponent((applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
-        setTileData(applicationContext, getTileId(), getTile())
-        tileClicked(applicationContext, getTileId(), getTile(), integrationUseCase)
+        if (getTile() != null) {
+            setTileData(applicationContext, getTileId(), getTile()!!)
+            tileClicked(applicationContext, getTileId(), getTile()!!, integrationUseCase)
+        }
     }
 
     override fun onTileAdded() {
         super.onTileAdded()
-        setTileData(applicationContext, getTileId(), getTile())
+        if (getTile() != null)
+            setTileData(applicationContext, getTileId(), getTile()!!)
     }
 
     override fun onStartListening() {
         super.onStartListening()
-        setTileData(applicationContext, getTileId(), getTile())
+        if (getTile() != null)
+            setTileData(applicationContext, getTileId(), getTile()!!)
     }
 
     companion object {
@@ -59,22 +63,27 @@ abstract class TileExtensions : TileService() {
         fun setTileData(context: Context, tileId: String, tile: Tile): Boolean {
             val tileDao = AppDatabase.getInstance(context).tileDao()
             val tileData = tileDao.get(tileId)
-            return if (tileData != null) {
-                tile.label = tileData.label
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    tile.subtitle = tileData.subtitle
+            try {
+                return if (tileData != null) {
+                    tile.label = tileData.label
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        tile.subtitle = tileData.subtitle
+                    }
+                    tile.state = Tile.STATE_INACTIVE
+                    if (tileData.iconId != null) {
+                        val icon = getTileIcon(tileData.iconId, context)
+                        tile.icon = Icon.createWithBitmap(icon)
+                    }
+                    tile.updateTile()
+                    true
+                } else {
+                    tile.state = Tile.STATE_UNAVAILABLE
+                    tile.updateTile()
+                    false
                 }
-                tile.state = Tile.STATE_INACTIVE
-                if (tileData.iconId != null) {
-                    val icon = getTileIcon(tileData.iconId, context)
-                    tile.icon = Icon.createWithBitmap(icon)
-                }
-                tile.updateTile()
-                true
-            } else {
-                tile.state = Tile.STATE_UNAVAILABLE
-                tile.updateTile()
-                false
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to set tile data", e)
+                return false
             }
         }
 

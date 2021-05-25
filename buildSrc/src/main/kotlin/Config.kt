@@ -3,8 +3,8 @@ object Config {
     object Plugin {
         const val android = "com.android.tools.build:gradle:4.1.2"
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
-        const val google = "com.google.gms:google-services:4.3.5"
-        const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:2.0.1"
+        const val google = "com.google.gms:google-services:4.3.8"
+        const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:2.1.2"
         const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
     }
 
@@ -30,7 +30,7 @@ object Config {
         }
 
         object Google {
-            private const val daggerVersion = "2.34"
+            private const val daggerVersion = "2.35.1"
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
@@ -68,9 +68,9 @@ object Config {
         }
 
         object Firebase {
-            const val core = "com.google.firebase:firebase-core:17.3.0"
-            const val iid = "com.google.firebase:firebase-iid:20.3.0"
-            const val messaging = "com.google.firebase:firebase-messaging:20.3.0"
+            const val core = "com.google.firebase:firebase-core:19.0.0"
+            const val iid = "com.google.firebase:firebase-iid:21.1.0"
+            const val messaging = "com.google.firebase:firebase-messaging:22.0.0"
         }
 
         object Square {
@@ -101,7 +101,7 @@ object Config {
 
         object Misc {
             const val sentry = "io.sentry:sentry-android:4.3.0"
-            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.2"
+            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3"
             const val blurView = "com.eightbitlab:blurview:1.6.6"
             const val iconDialog = "com.maltaisn:icondialog:3.3.0"
             const val iconDialogMaterial = "com.maltaisn:iconpack-community-material:5.3.45"
