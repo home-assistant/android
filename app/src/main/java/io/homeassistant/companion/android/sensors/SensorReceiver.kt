@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.PowerManager
 import android.util.Log
@@ -13,6 +14,7 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.database.AppDatabase
+import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -159,7 +161,10 @@ class SensorReceiver : BroadcastReceiver() {
                 // Register Sensors if needed
                 if (sensor?.enabled == true && !sensor.registered && !sensor.type.isBlank()) {
                     val reg = fullSensor.toSensorRegistration()
-                    reg.name = context.getString(basicSensor.name)
+                    val config = Configuration(context.resources.configuration)
+                    config.setLocale(Locale("en"))
+                    reg.name = context.createConfigurationContext(config).resources.getString(basicSensor.name)
+
                     try {
                         integrationUseCase.registerSensor(reg)
                         sensor.registered = true

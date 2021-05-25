@@ -128,7 +128,7 @@ class TemplateWidget : AppWidgetProvider() {
                     templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
-                    if (lastIntent != Intent.ACTION_SCREEN_ON)
+                    if (lastIntent == UPDATE_VIEW)
                         Toast.makeText(context, R.string.widget_template_error, Toast.LENGTH_LONG).show()
                 }
                 setTextViewText(

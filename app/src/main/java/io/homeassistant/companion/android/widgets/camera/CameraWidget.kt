@@ -177,7 +177,7 @@ class CameraWidget : AppWidgetProvider() {
             entity = integrationUseCase.getEntity(entityId)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
-            if (lastIntent != Intent.ACTION_SCREEN_ON)
+            if (lastIntent == UPDATE_IMAGE)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             return null
         }
