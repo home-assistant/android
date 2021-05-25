@@ -592,5 +592,7 @@ like to connect to:</string>
   <string name="tile_5">Tile 5</string>
   <string name="quick_settings">Quick Settings</string>
   <string name="manage_tiles_summary">Setup and manage Quick Setting tiles here. They will not function until you set them up here.</string>
+  <string name="tile_missing_entity_title">Missing Script or Scene</string>
+  <string name="tile_missing_entity_summary">Please add a script or scene to Home Assistant and revisit this screen to enable the below field</string>
   <string name="template_widget">Template Widget</string>
 </resources>

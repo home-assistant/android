@@ -31,10 +31,18 @@
             app:useSimpleSummaryProvider="true"
             app:isPreferenceVisible="false"
             app:iconSpaceReserved="false" />
+        <Preference
+            android:key="tile_missing_entity"
+            android:title="@string/tile_missing_entity_title"
+            android:summary="@string/tile_missing_entity_summary"
+            app:isPreferenceVisible="false"
+            app:iconSpaceReserved="false"
+            android:selectable="false" />
         <ListPreference
             android:key="tile_entity"
             android:title="@string/tile_entity"
             app:useSimpleSummaryProvider="true"
+            app:enabled="false"
             app:iconSpaceReserved="false" />
         <Preference
             android:key="tile_save"
