@@ -151,7 +151,7 @@ class EntityWidget : AppWidgetProvider() {
             entity = entityId?.let { integrationUseCase.getEntity(it) }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
-            if (lastIntent != Intent.ACTION_SCREEN_ON)
+            if (lastIntent == UPDATE_ENTITY)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
         if (attributeIds == null) {
@@ -169,7 +169,7 @@ class EntityWidget : AppWidgetProvider() {
             return lastUpdate
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
-            if (lastIntent != Intent.ACTION_SCREEN_ON)
+            if (lastIntent == UPDATE_ENTITY)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
         return staticWidgetDao.get(appWidgetId)?.lastUpdate
