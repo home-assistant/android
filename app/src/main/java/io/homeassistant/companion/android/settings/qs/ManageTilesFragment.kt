@@ -118,6 +118,8 @@ class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
             tileEntityPref?.entryValues = sortedEntities
         }
 
+        findPreference<ListPreference>("tile_entity")?.isEnabled = entityList.isNotEmpty()
+        findPreference<Preference>("tile_missing_entity")?.isVisible = entityList.isEmpty()
         tileSavePref?.isEnabled = !tileEntity.isNullOrEmpty() && !tileLabel.isNullOrEmpty()
 
         findPreference<ListPreference>("tile_list")?.setOnPreferenceChangeListener { _, newValue ->
@@ -145,6 +147,8 @@ class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
                                 }
                             }
                         }
+                        findPreference<ListPreference>("tile_entity")?.isEnabled = entityList.isNotEmpty()
+                        findPreference<Preference>("tile_missing_entity")?.isVisible = entityList.isEmpty()
                         tileSavePref?.isEnabled = !tileEntity.isNullOrEmpty() && !tileLabel.isNullOrEmpty()
                     }
                 }
