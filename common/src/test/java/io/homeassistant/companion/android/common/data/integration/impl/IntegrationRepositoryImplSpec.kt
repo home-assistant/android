@@ -291,7 +291,6 @@ object IntegrationRepositoryImplSpec : Spek({
 
             describe("updateLocation cloud url") {
                 val location = UpdateLocation(
-                    "locationName",
                     arrayOf(45.0, -45.0),
                     0,
                     1,
@@ -303,7 +302,6 @@ object IntegrationRepositoryImplSpec : Spek({
                     IntegrationRequest(
                         "update_location",
                         UpdateLocationRequest(
-                            location.locationName,
                             location.gps,
                             location.gpsAccuracy,
                             location.speed,
@@ -339,7 +337,6 @@ object IntegrationRepositoryImplSpec : Spek({
 
             describe("updateLocation remote ui url") {
                 val location = UpdateLocation(
-                    "locationName",
                     arrayOf(45.0, -45.0),
                     0,
                     1,
@@ -351,7 +348,6 @@ object IntegrationRepositoryImplSpec : Spek({
                     IntegrationRequest(
                         "update_location",
                         UpdateLocationRequest(
-                            location.locationName,
                             location.gps,
                             location.gpsAccuracy,
                             location.speed,
@@ -386,7 +382,6 @@ object IntegrationRepositoryImplSpec : Spek({
 
             describe("updateLocation auth url") {
                 val location = UpdateLocation(
-                    "locationName",
                     arrayOf(45.0, -45.0),
                     0,
                     1,
@@ -398,7 +393,6 @@ object IntegrationRepositoryImplSpec : Spek({
                     IntegrationRequest(
                         "update_location",
                         UpdateLocationRequest(
-                            location.locationName,
                             location.gps,
                             location.gpsAccuracy,
                             location.speed,
@@ -432,7 +426,6 @@ object IntegrationRepositoryImplSpec : Spek({
 
             describe("updateLocation fail then succeeds") {
                 val location = UpdateLocation(
-                    "locationName",
                     arrayOf(45.0, -45.0),
                     0,
                     1,
@@ -444,7 +437,6 @@ object IntegrationRepositoryImplSpec : Spek({
                     IntegrationRequest(
                         "update_location",
                         UpdateLocationRequest(
-                            location.locationName,
                             location.gps,
                             location.gpsAccuracy,
                             location.speed,
@@ -494,7 +486,6 @@ object IntegrationRepositoryImplSpec : Spek({
 
             describe("updateLocation failure") {
                 val location = UpdateLocation(
-                    "locationName",
                     arrayOf(45.0, -45.0),
                     0,
                     1,

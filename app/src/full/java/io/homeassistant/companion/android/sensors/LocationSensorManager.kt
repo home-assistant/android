@@ -530,7 +530,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             )
             requestSingleAccurateLocation()
         } else {
-            sendLocationUpdate(geofencingEvent.triggeringLocation, "", true)
+            sendLocationUpdate(geofencingEvent.triggeringLocation, true)
         }
 
         ioScope.launch {
@@ -538,7 +538,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         }
     }
 
-    private fun sendLocationUpdate(location: Location, name: String = "", geofenceUpdate: Boolean = false) {
+    private fun sendLocationUpdate(location: Location, geofenceUpdate: Boolean = false) {
         Log.d(
             TAG, "Last Location: " +
                     "\nCoords:(${location.latitude}, ${location.longitude})" +
@@ -550,7 +550,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             accuracy = location.accuracy.toInt()
         }
         val updateLocation = UpdateLocation(
-            name,
             arrayOf(location.latitude, location.longitude),
             accuracy,
             location.speed.toInt(),
