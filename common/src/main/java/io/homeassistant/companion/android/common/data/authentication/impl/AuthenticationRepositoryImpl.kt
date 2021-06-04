@@ -103,7 +103,7 @@ class AuthenticationRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun ensureValidSession(forceRefresh: Boolean = false): Session {
+    override suspend fun ensureValidSession(forceRefresh: Boolean): Session {
         val session = retrieveSession() ?: throw AuthorizationException()
 
         if (session.isExpired() || forceRefresh) {

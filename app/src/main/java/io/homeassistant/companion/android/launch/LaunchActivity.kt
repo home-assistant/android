@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.launch
 
 import android.os.Bundle
+import android.util.Log
 import io.homeassistant.companion.android.BaseActivity
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
