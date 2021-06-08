@@ -32,11 +32,11 @@ import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Setting
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.util.DisabledLocationHandler
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
 
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
@@ -540,10 +540,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     private fun sendLocationUpdate(location: Location, geofenceUpdate: Boolean = false) {
         Log.d(
-            TAG, "Last Location: " +
-                    "\nCoords:(${location.latitude}, ${location.longitude})" +
-                    "\nAccuracy: ${location.accuracy}" +
-                    "\nBearing: ${location.bearing}"
+            TAG,
+            "Last Location: " +
+                "\nCoords:(${location.latitude}, ${location.longitude})" +
+                "\nAccuracy: ${location.accuracy}" +
+                "\nBearing: ${location.bearing}"
         )
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {

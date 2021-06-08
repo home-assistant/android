@@ -6,13 +6,13 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
     companion object {
@@ -34,23 +34,25 @@ class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
         .client(
             OkHttpClient.Builder().apply {
                 if (BuildConfig.DEBUG) {
-                    addInterceptor(HttpLoggingInterceptor().apply {
-                        level = HttpLoggingInterceptor.Level.BODY
-                    })
+                    addInterceptor(
+                        HttpLoggingInterceptor().apply {
+                            level = HttpLoggingInterceptor.Level.BODY
+                        }
+                    )
                 }
             }.addInterceptor {
-                    return@addInterceptor if (it.request().url.toString().contains(LOCAL_HOST)) {
-                        val newRequest = runBlocking {
-                            it.request().newBuilder()
-                                .url(it.request().url.toString().replace(LOCAL_HOST, urlRepository.getUrl().toString()))
-                                .header(USER_AGENT, "$USER_AGENT_STRING ${BuildConfig.VERSION_NAME}")
-                                .build()
-                        }
-                        it.proceed(newRequest)
-                    } else {
-                        it.proceed(it.request())
+                return@addInterceptor if (it.request().url.toString().contains(LOCAL_HOST)) {
+                    val newRequest = runBlocking {
+                        it.request().newBuilder()
+                            .url(it.request().url.toString().replace(LOCAL_HOST, urlRepository.getUrl().toString()))
+                            .header(USER_AGENT, "$USER_AGENT_STRING ${BuildConfig.VERSION_NAME}")
+                            .build()
                     }
+                    it.proceed(newRequest)
+                } else {
+                    it.proceed(it.request())
                 }
+            }
                 .callTimeout(30L, TimeUnit.SECONDS)
                 .readTimeout(30L, TimeUnit.SECONDS)
                 .build()

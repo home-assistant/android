@@ -365,9 +365,9 @@ class NetworkSensorManager : SensorManager {
 
     private fun getIpAddress(ip: Int): String {
         return (ip and 0xFF).toString() + "." +
-                (ip shr 8 and 0xFF) + "." +
-                (ip shr 16 and 0xFF) + "." +
-                (ip shr 24 and 0xFF)
+            (ip shr 8 and 0xFF) + "." +
+            (ip shr 16 and 0xFF) + "." +
+            (ip shr 24 and 0xFF)
     }
 
     private fun updatePublicIpSensor(context: Context) {

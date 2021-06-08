@@ -122,7 +122,8 @@ class AudioSensorManager : SensorManager {
             else -> "mdi:volume-low"
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             audioSensor,
             ringerMode,
             icon,
@@ -149,7 +150,8 @@ class AudioSensorManager : SensorManager {
             else -> "mdi:volume-low"
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             audioState,
             audioMode,
             icon,
@@ -175,7 +177,8 @@ class AudioSensorManager : SensorManager {
 
         val icon = if (isHeadphones) "mdi:headphones" else "mdi:headphones-off"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             headphoneState,
             isHeadphones,
             icon,
@@ -191,7 +194,8 @@ class AudioSensorManager : SensorManager {
 
         val icon = if (!isMicMuted) "mdi:microphone" else "mdi:microphone-off"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             micMuted,
             isMicMuted,
             icon,
@@ -207,7 +211,8 @@ class AudioSensorManager : SensorManager {
 
         val icon = if (isMusicActive) "mdi:music" else "mdi:music-off"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             musicActive,
             isMusicActive,
             icon,
@@ -223,7 +228,8 @@ class AudioSensorManager : SensorManager {
 
         val icon = if (isSpeakerOn) "mdi:volume-high" else "mdi:volume-off"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             speakerphoneState,
             isSpeakerOn,
             icon,
@@ -238,7 +244,8 @@ class AudioSensorManager : SensorManager {
 
         val icon = "mdi:alarm"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             volAlarm,
             volumeLevelAlarm,
             icon,
@@ -254,7 +261,8 @@ class AudioSensorManager : SensorManager {
 
         val icon = "mdi:phone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             volCall,
             volumeLevelCall,
             icon,
@@ -270,7 +278,8 @@ class AudioSensorManager : SensorManager {
 
         val icon = "mdi:music"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             volMusic,
             volumeLevelMusic,
             icon,
@@ -286,7 +295,8 @@ class AudioSensorManager : SensorManager {
 
         val icon = "mdi:phone-ring"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             volRing,
             volumeLevelRing,
             icon,

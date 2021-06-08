@@ -78,7 +78,8 @@ class KeyguardSensorManager : SensorManager {
         val isLocked = km.isDeviceLocked
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             deviceLocked,
             isLocked,
             icon,
@@ -95,7 +96,8 @@ class KeyguardSensorManager : SensorManager {
         val isSecure = km.isDeviceSecure
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             deviceSecure,
             isSecure,
             icon,
@@ -111,7 +113,8 @@ class KeyguardSensorManager : SensorManager {
         val isLocked = km.isKeyguardLocked
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             keyguardLocked,
             isLocked,
             icon,
@@ -127,7 +130,8 @@ class KeyguardSensorManager : SensorManager {
         val isSecure = km.isKeyguardSecure
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             keyguardSecure,
             isSecure,
             icon,

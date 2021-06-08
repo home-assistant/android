@@ -27,8 +27,8 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.DisabledLocationHandler
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
+import javax.inject.Inject
 
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
@@ -217,8 +217,8 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-                context?.getSystemService(PowerManager::class.java)
-                    ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
-                ?: false
+            context?.getSystemService(PowerManager::class.java)
+            ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
+            ?: false
     }
 }

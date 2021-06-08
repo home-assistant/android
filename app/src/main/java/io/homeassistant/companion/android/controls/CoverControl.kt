@@ -29,73 +29,73 @@ class CoverControl {
             entity: Entity<Map<String, Any>>
         ): Control {
             val control = Control.StatefulBuilder(
-                    entity.entityId,
-                    PendingIntent.getActivity(
-                            context,
-                            0,
-                            WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                            PendingIntent.FLAG_CANCEL_CURRENT
-                    )
+                entity.entityId,
+                PendingIntent.getActivity(
+                    context,
+                    0,
+                    WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    PendingIntent.FLAG_CANCEL_CURRENT
+                )
             )
             control.setTitle(
-                    (entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence
+                (entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence
             )
             control.setDeviceType(
-                    when (entity.attributes["device_class"]) {
-                        "awning" -> DeviceTypes.TYPE_AWNING
-                        "blind" -> DeviceTypes.TYPE_BLINDS
-                        "curtain" -> DeviceTypes.TYPE_CURTAIN
-                        "door" -> DeviceTypes.TYPE_DOOR
-                        "garage" -> DeviceTypes.TYPE_GARAGE
-                        "gate" -> DeviceTypes.TYPE_GATE
-                        "shutter" -> DeviceTypes.TYPE_SHUTTER
-                        "window" -> DeviceTypes.TYPE_WINDOW
-                        else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
-                    }
+                when (entity.attributes["device_class"]) {
+                    "awning" -> DeviceTypes.TYPE_AWNING
+                    "blind" -> DeviceTypes.TYPE_BLINDS
+                    "curtain" -> DeviceTypes.TYPE_CURTAIN
+                    "door" -> DeviceTypes.TYPE_DOOR
+                    "garage" -> DeviceTypes.TYPE_GARAGE
+                    "gate" -> DeviceTypes.TYPE_GATE
+                    "shutter" -> DeviceTypes.TYPE_SHUTTER
+                    "window" -> DeviceTypes.TYPE_WINDOW
+                    else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
+                }
             )
             control.setZone(context.getString(R.string.domain_cover))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
-                    when (entity.state) {
-                        "closed" -> context.getString(R.string.state_closed)
-                        "closing" -> context.getString(R.string.state_closing)
-                        "open" -> context.getString(R.string.state_open)
-                        "opening" -> context.getString(R.string.state_opening)
-                        "unavailable" -> context.getString(R.string.state_unavailable)
-                        else -> entity.state
-                    }
+                when (entity.state) {
+                    "closed" -> context.getString(R.string.state_closed)
+                    "closing" -> context.getString(R.string.state_closing)
+                    "open" -> context.getString(R.string.state_open)
+                    "opening" -> context.getString(R.string.state_opening)
+                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    else -> entity.state
+                }
             )
             val minValue = 0f
             val maxValue = 100f
             var currentValue =
-                    (entity.attributes["current_position"] as? Number)?.toFloat() ?: 0f
+                (entity.attributes["current_position"] as? Number)?.toFloat() ?: 0f
             if (currentValue < minValue)
                 currentValue = minValue
             if (currentValue > maxValue)
                 currentValue = maxValue
             control.setControlTemplate(
-                    if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_POSITION == SUPPORT_SET_POSITION)
-                        ToggleRangeTemplate(
-                                entity.entityId,
-                                entity.state in listOf("open", "opening"),
-                                "",
-                                RangeTemplate(
-                                        entity.entityId,
-                                        minValue,
-                                        maxValue,
-                                        currentValue,
-                                        1f,
-                                        "%.0f%%"
-                                )
+                if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_POSITION == SUPPORT_SET_POSITION)
+                    ToggleRangeTemplate(
+                        entity.entityId,
+                        entity.state in listOf("open", "opening"),
+                        "",
+                        RangeTemplate(
+                            entity.entityId,
+                            minValue,
+                            maxValue,
+                            currentValue,
+                            1f,
+                            "%.0f%%"
                         )
-                    else
-                        ToggleTemplate(
-                                entity.entityId,
-                                ControlButton(
-                                        entity.state in listOf("open", "opening"),
-                                        "Description"
-                                )
+                    )
+                else
+                    ToggleTemplate(
+                        entity.entityId,
+                        ControlButton(
+                            entity.state in listOf("open", "opening"),
+                            "Description"
                         )
+                    )
             )
             return control.build()
         }
@@ -107,23 +107,23 @@ class CoverControl {
                 return@runBlocking when (action) {
                     is BooleanAction -> {
                         integrationRepository.callService(
-                                action.templateId.split(".")[0],
-                                if ((action as? BooleanAction)?.newState == true) "open_cover" else "close_cover",
-                                hashMapOf(
-                                        "entity_id" to action.templateId
-                                )
+                            action.templateId.split(".")[0],
+                            if ((action as? BooleanAction)?.newState == true) "open_cover" else "close_cover",
+                            hashMapOf(
+                                "entity_id" to action.templateId
+                            )
                         )
                         true
                     }
                     is FloatAction -> {
                         val convertPosition = action.newValue
                         integrationRepository.callService(
-                                action.templateId.split(".")[0],
-                                "set_cover_position",
-                                hashMapOf(
-                                        "entity_id" to action.templateId,
-                                        "position" to convertPosition.toInt()
-                                )
+                            action.templateId.split(".")[0],
+                            "set_cover_position",
+                            hashMapOf(
+                                "entity_id" to action.templateId,
+                                "position" to convertPosition.toInt()
+                            )
                         )
                         true
                     }

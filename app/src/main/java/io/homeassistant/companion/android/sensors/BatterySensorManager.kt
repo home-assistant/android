@@ -198,11 +198,11 @@ class BatterySensorManager : SensorManager {
         val batteryTemp = getBatteryTemperature(intent)
 
         onSensorUpdated(
-                context,
-                batteryTemperature,
-                batteryTemp,
-                "mdi:battery",
-                mapOf()
+            context,
+            batteryTemperature,
+            batteryTemp,
+            "mdi:battery",
+            mapOf()
         )
     }
 
@@ -210,7 +210,7 @@ class BatterySensorManager : SensorManager {
         val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
         return status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL
+            status == BatteryManager.BATTERY_STATUS_FULL
     }
 
     private fun getChargerType(intent: Intent): String {

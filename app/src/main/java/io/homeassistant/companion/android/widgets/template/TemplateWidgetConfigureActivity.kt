@@ -15,13 +15,13 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_template_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class TemplateWidgetConfigureActivity : BaseActivity() {
     companion object {

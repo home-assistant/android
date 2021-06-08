@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.util
 
 import android.util.Log
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 object LogcatReader {
     const val TAG = "LogcatReader"

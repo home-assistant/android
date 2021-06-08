@@ -10,8 +10,8 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.Service
-import kotlin.Exception
 import kotlinx.android.synthetic.main.widget_button_configure_dynamic_field.view.*
+import kotlin.Exception
 
 class WidgetDynamicFieldAdapter(
     private val services: HashMap<String, Service>,

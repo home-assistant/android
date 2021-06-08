@@ -7,11 +7,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
 import io.mockk.mockk
-import java.net.URL
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+import java.net.URL
 
 object UrlRepositoryImplSpec : Spek({
     describe("a repository") {

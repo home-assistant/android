@@ -67,7 +67,8 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 pressureSensors,
-                SENSOR_DELAY_NORMAL)
+                SENSOR_DELAY_NORMAL
+            )
             Log.d(TAG, "Pressure sensor listener registered")
             isListenerRegistered = true
         }

@@ -97,7 +97,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             rxBytesMobile,
             mobileRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,
@@ -119,7 +120,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             txBytesMobile,
             mobileTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,
@@ -140,7 +142,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             rxBytesTotal,
             totalRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,
@@ -162,7 +165,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             txBytesTotal,
             totalTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,

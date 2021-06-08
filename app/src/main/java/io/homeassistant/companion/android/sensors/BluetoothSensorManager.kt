@@ -28,23 +28,23 @@ class BluetoothSensorManager : SensorManager {
         // private const val TAG = "BluetoothSM"
         private var bleTransmitterDevice = IBeaconTransmitter("", "", "", transmitPowerSetting = "", transmitting = false, state = "", restartRequired = false)
         val bluetoothConnection = SensorManager.BasicSensor(
-                "bluetooth_connection",
-                "sensor",
-                R.string.basic_sensor_name_bluetooth,
-                R.string.sensor_description_bluetooth_connection,
-                unitOfMeasurement = "connection(s)"
+            "bluetooth_connection",
+            "sensor",
+            R.string.basic_sensor_name_bluetooth,
+            R.string.sensor_description_bluetooth_connection,
+            unitOfMeasurement = "connection(s)"
         )
         val bluetoothState = SensorManager.BasicSensor(
-                "bluetooth_state",
-                "binary_sensor",
-                R.string.basic_sensor_name_bluetooth_state,
-                R.string.sensor_description_bluetooth_state
+            "bluetooth_state",
+            "binary_sensor",
+            R.string.basic_sensor_name_bluetooth_state,
+            R.string.sensor_description_bluetooth_state
         )
         val bleTransmitter = SensorManager.BasicSensor(
-                "ble_emitter",
-                "sensor",
-                R.string.basic_sensor_name_bluetooth_ble_emitter,
-                R.string.sensor_description_bluetooth_ble_emitter
+            "ble_emitter",
+            "sensor",
+            R.string.basic_sensor_name_bluetooth_ble_emitter,
+            R.string.sensor_description_bluetooth_ble_emitter
         )
 
         fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
@@ -104,15 +104,15 @@ class BluetoothSensorManager : SensorManager {
             totalConnectedDevices = bluetoothDevices.filter { b -> b.connected }.count()
         }
         onSensorUpdated(
-                context,
-                bluetoothConnection,
-                totalConnectedDevices,
-                icon,
-                mapOf(
-                        "connected_paired_devices" to connectedPairedDevices,
-                        "connected_not_paired_devices" to connectedNotPairedDevices,
-                        "paired_devices" to bondedString
-                )
+            context,
+            bluetoothConnection,
+            totalConnectedDevices,
+            icon,
+            mapOf(
+                "connected_paired_devices" to connectedPairedDevices,
+                "connected_not_paired_devices" to connectedNotPairedDevices,
+                "paired_devices" to bondedString
+            )
         )
     }
 
@@ -129,11 +129,11 @@ class BluetoothSensorManager : SensorManager {
             return
         val icon = if (isBtOn(context)) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
-                context,
-                bluetoothState,
-                isBtOn(context),
-                icon,
-                mapOf()
+            context,
+            bluetoothState,
+            isBtOn(context),
+            icon,
+            mapOf()
         )
     }
 
@@ -153,9 +153,10 @@ class BluetoothSensorManager : SensorManager {
         var transmitPower = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list", listOf("ultraLow", "low", "medium", "high"), DEFAULT_BLE_TRANSMIT_POWER)
         bleTransmitterDevice.restartRequired = false
         if (bleTransmitterDevice.uuid != id1 || bleTransmitterDevice.major != id2 ||
-                bleTransmitterDevice.minor != id3 || bleTransmitterDevice.transmitPowerSetting != transmitPower ||
-                bleTransmitterDevice.transmitRequested != transmitActive ||
-                priorBluetoothStateEnabled != isBtOn(context)) {
+            bleTransmitterDevice.minor != id3 || bleTransmitterDevice.transmitPowerSetting != transmitPower ||
+            bleTransmitterDevice.transmitRequested != transmitActive ||
+            priorBluetoothStateEnabled != isBtOn(context)
+        ) {
             bleTransmitterDevice.restartRequired = true
         }
         // stash the current BT state to help us know if we need to restart if BT state turns from off to on
@@ -174,7 +175,7 @@ class BluetoothSensorManager : SensorManager {
 
         // sensor disabled, stop transmitting if we have been
         if (!isEnabled(context, bleTransmitter.id)) {
-                TransmitterManager.stopTransmitting(bleTransmitterDevice)
+            TransmitterManager.stopTransmitting(bleTransmitterDevice)
             return
         }
         // transmit when BT is on, if we are not already transmitting, or details have changed
@@ -192,14 +193,14 @@ class BluetoothSensorManager : SensorManager {
         val state = if (isBtOn(context)) bleTransmitterDevice.state else "Bluetooth is turned off"
         val icon = if (bleTransmitterDevice.transmitting) "mdi:bluetooth" else "mdi:bluetooth-off"
         onSensorUpdated(
-                context,
-                bleTransmitter,
-                state,
-                icon,
-                mapOf(
-                        "id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
-                        "Transmitting power" to bleTransmitterDevice.transmitPowerSetting
-                )
+            context,
+            bleTransmitter,
+            state,
+            icon,
+            mapOf(
+                "id" to bleTransmitterDevice.uuid + "-" + bleTransmitterDevice.major + "-" + bleTransmitterDevice.minor,
+                "Transmitting power" to bleTransmitterDevice.transmitPowerSetting
+            )
         )
     }
 }

@@ -36,7 +36,7 @@ class SensorDetailFragment(
     private val basicSensor: SensorManager.BasicSensor,
     private val integrationUseCase: IntegrationRepository
 ) :
-        PreferenceFragmentCompat() {
+    PreferenceFragmentCompat() {
 
     companion object {
         fun newInstance(
@@ -85,10 +85,10 @@ class SensorDetailFragment(
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         DaggerSensorComponent
-                .builder()
-                .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
+            .builder()
+            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
+            .build()
+            .inject(this)
         sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
         addPreferencesFromResource(R.xml.sensor_detail)
@@ -116,15 +116,19 @@ class SensorDetailFragment(
                     val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
 
                     if ((fineLocation || coarseLocation) &&
-                            !DisabledLocationHandler.isLocationEnabled(context)) {
+                        !DisabledLocationHandler.isLocationEnabled(context)
+                    ) {
                         DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(basicSensor.name)))
                         return@setOnPreferenceChangeListener false
                     } else {
                         if (!sensorManager.checkPermission(context, basicSensor.id)) {
                             if (sensorManager is NetworkSensorManager) {
-                                LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(context, permissions, continueYesCallback = {
-                                    requestPermissions(permissions)
-                                })
+                                LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
+                                    context, permissions,
+                                    continueYesCallback = {
+                                        requestPermissions(permissions)
+                                    }
+                                )
                             } else requestPermissions(permissions)
 
                             return@setOnPreferenceChangeListener false
@@ -281,13 +285,13 @@ class SensorDetailFragment(
 
                         pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
-                                    Setting(
-                                            basicSensor.id,
-                                            setting.name,
-                                            newValue as String,
-                                            setting.valueType,
-                                            setting.enabled
-                                    )
+                                Setting(
+                                    basicSensor.id,
+                                    setting.name,
+                                    newValue as String,
+                                    setting.valueType,
+                                    setting.enabled
+                                )
                             )
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
@@ -483,8 +487,9 @@ class SensorDetailFragment(
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
                 requestPermissions(
-                        permissions.toSet()
-                                .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(), 0
+                    permissions.toSet()
+                        .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION).toTypedArray(),
+                    0
                 )
             else -> requestPermissions(permissions, 0)
         }
@@ -498,7 +503,8 @@ class SensorDetailFragment(
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R
+        ) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
         }
 

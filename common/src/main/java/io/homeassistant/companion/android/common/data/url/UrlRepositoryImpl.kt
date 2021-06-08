@@ -4,12 +4,12 @@ import android.util.Log
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
-import java.net.URL
-import javax.inject.Inject
-import javax.inject.Named
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import java.net.URL
+import javax.inject.Inject
+import javax.inject.Named
 
 class UrlRepositoryImpl @Inject constructor(
     @Named("url") private val localStorage: LocalStorage,

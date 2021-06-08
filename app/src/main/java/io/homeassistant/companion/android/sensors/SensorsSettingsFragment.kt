@@ -151,9 +151,12 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                         val locationPermissionCoarse = DisabledLocationHandler.containsLocationPermission(permArray, false)
                         val locationPermissionFine = DisabledLocationHandler.containsLocationPermission(permArray, true)
                         if (locationPermissionCoarse || locationPermissionFine) {
-                            LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(context, permArray, continueYesCallback = {
-                                requestPermission(permArray)
-                            })
+                            LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
+                                context, permArray,
+                                continueYesCallback = {
+                                    requestPermission(permArray)
+                                }
+                            )
                         } else requestPermission(permArray)
                     }
                 } else {
@@ -317,7 +320,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             requestPermissions(
                 permissions.toSet()
                     .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                    .toTypedArray(), 0
+                    .toTypedArray(),
+                0
             )
         } else {
             requestPermissions(permissions, 0)
@@ -332,7 +336,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R
+        ) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
             return
         }

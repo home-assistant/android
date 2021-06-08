@@ -4,10 +4,10 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
-import java.util.UUID
 import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
+import java.util.UUID
 
 object TransmitterManager {
     private lateinit var physicalTransmitter: BeaconTransmitter
@@ -60,25 +60,28 @@ object TransmitterManager {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {
                 physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
-                physicalTransmitter.startAdvertising(beacon, object : AdvertiseCallback() {
-                    override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-                        haTransmitter.transmitting = true
-                        haTransmitter.state = "Transmitting"
-                    }
-
-                    override fun onStartFailure(errorCode: Int) {
-                        if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
-                            haTransmitter.uuid = ""
-                            haTransmitter.major = ""
-                            haTransmitter.minor = ""
-                            haTransmitter.state = "Unable to transmit"
-                            haTransmitter.transmitting = false
-                        } else {
+                physicalTransmitter.startAdvertising(
+                    beacon,
+                    object : AdvertiseCallback() {
+                        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
                             haTransmitter.transmitting = true
                             haTransmitter.state = "Transmitting"
                         }
+
+                        override fun onStartFailure(errorCode: Int) {
+                            if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
+                                haTransmitter.uuid = ""
+                                haTransmitter.major = ""
+                                haTransmitter.minor = ""
+                                haTransmitter.state = "Unable to transmit"
+                                haTransmitter.transmitting = false
+                            } else {
+                                haTransmitter.transmitting = true
+                                haTransmitter.state = "Transmitting"
+                            }
+                        }
                     }
-                })
+                )
             }
         } else {
             stopTransmitting(haTransmitter)

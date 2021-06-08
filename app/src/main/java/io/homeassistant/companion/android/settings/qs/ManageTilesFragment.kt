@@ -24,9 +24,9 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.qs.TileEntity
 import io.homeassistant.companion.android.settings.DaggerSettingsComponent
+import kotlinx.coroutines.runBlocking
 import java.lang.Exception
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
 
 class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
 

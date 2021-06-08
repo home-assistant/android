@@ -15,9 +15,9 @@ open class BaseActivity : AppCompatActivity() {
     override fun attachBaseContext(newBase: Context) {
 
         DaggerSettingsComponent.builder()
-                .appComponent((newBase.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
+            .appComponent((newBase.applicationContext as GraphComponentAccessor).appComponent)
+            .build()
+            .inject(this)
 
         super.attachBaseContext(lm.getContextWrapper(newBase))
     }

@@ -26,12 +26,12 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import java.util.regex.Pattern
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.util.regex.Pattern
+import javax.inject.Inject
 
 class ButtonWidget : AppWidgetProvider() {
     companion object {
@@ -116,9 +116,10 @@ class ButtonWidget : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
-            TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + action + System.lineSeparator() +
-                    "AppWidgetId: " + appWidgetId
+            TAG,
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + action + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId
         )
 
         ensureInjected(context)
@@ -206,10 +207,11 @@ class ButtonWidget : AppWidgetProvider() {
             val serviceDataJson = widget?.serviceData
 
             Log.d(
-                TAG, "Service Call Data loaded:" + System.lineSeparator() +
-                        "domain: " + domain + System.lineSeparator() +
-                        "service: " + service + System.lineSeparator() +
-                        "service_data: " + serviceDataJson
+                TAG,
+                "Service Call Data loaded:" + System.lineSeparator() +
+                    "domain: " + domain + System.lineSeparator() +
+                    "service: " + service + System.lineSeparator() +
+                    "service_data: " + serviceDataJson
             )
 
             if (domain == null || service == null || serviceDataJson == null) {
@@ -229,7 +231,8 @@ class ButtonWidget : AppWidgetProvider() {
                             val value = entityIdWithoutBrackets.group(1)
                             if (value != null) {
                                 if (value == "all" ||
-                                    value.split(",").contains("all")) {
+                                    value.split(",").contains("all")
+                                ) {
                                     serviceDataMap["entity_id"] = "all"
                                 }
                             }
@@ -261,15 +264,18 @@ class ButtonWidget : AppWidgetProvider() {
             views = getWidgetRemoteViews(context, appWidgetId)
 
             // Set a timer to change it back after 1 second
-            Handler(Looper.getMainLooper()).postDelayed({
-                views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
-                views.setInt(
-                    R.id.widgetLayout,
-                    "setBackgroundResource",
-                    R.drawable.widget_button_background
-                )
-                appWidgetManager.updateAppWidget(appWidgetId, views)
-            }, 1000)
+            Handler(Looper.getMainLooper()).postDelayed(
+                {
+                    views.setViewVisibility(R.id.widgetLabelLayout, View.VISIBLE)
+                    views.setInt(
+                        R.id.widgetLayout,
+                        "setBackgroundResource",
+                        R.drawable.widget_button_background
+                    )
+                    appWidgetManager.updateAppWidget(appWidgetId, views)
+                },
+                1000
+            )
         }
     }
 
@@ -289,11 +295,12 @@ class ButtonWidget : AppWidgetProvider() {
 
         mainScope.launch {
             Log.d(
-                TAG, "Saving service call config data:" + System.lineSeparator() +
-                        "domain: " + domain + System.lineSeparator() +
-                        "service: " + service + System.lineSeparator() +
-                        "service_data: " + serviceData + System.lineSeparator() +
-                        "label: " + label
+                TAG,
+                "Saving service call config data:" + System.lineSeparator() +
+                    "domain: " + domain + System.lineSeparator() +
+                    "service: " + service + System.lineSeparator() +
+                    "service_data: " + serviceData + System.lineSeparator() +
+                    "label: " + label
             )
 
             val widget = ButtonWidgetEntity(appWidgetId, icon, domain, service, serviceData, label)

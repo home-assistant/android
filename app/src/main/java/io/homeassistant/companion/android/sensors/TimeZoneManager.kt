@@ -51,7 +51,8 @@ class TimeZoneManager : SensorManager {
 
         val icon = "mdi:map-clock"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             currentTimeZone,
             currentZone,
             icon,

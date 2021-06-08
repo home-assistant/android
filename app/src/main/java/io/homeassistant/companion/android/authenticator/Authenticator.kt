@@ -14,7 +14,8 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
     }
 
     private val executor = ContextCompat.getMainExecutor(context)
-    private val biometricPrompt = BiometricPrompt(fragmentActivity, executor,
+    private val biometricPrompt = BiometricPrompt(
+        fragmentActivity, executor,
         object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 super.onAuthenticationError(errorCode, errString)
@@ -34,7 +35,8 @@ class Authenticator(context: Context, fragmentActivity: FragmentActivity, callba
                 super.onAuthenticationSucceeded(result)
                 callback(SUCCESS)
             }
-        })
+        }
+    )
 
     fun authenticate(title: String) {
         val promptDialog = BiometricPrompt.PromptInfo.Builder()

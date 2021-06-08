@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_camera_configure.add_button
 import kotlinx.android.synthetic.main.widget_camera_configure.widget_text_config_entity_id
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class CameraWidgetConfigureActivity : BaseActivity() {
 
@@ -114,7 +114,7 @@ class CameraWidgetConfigureActivity : BaseActivity() {
     private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
             selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
-    }
+        }
 
     private var addWidgetButtonClickListener = View.OnClickListener {
         try {

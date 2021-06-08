@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.util
 
-import java.net.URL
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import java.net.URL
 
 object UrlHandler {
     fun handle(base: URL?, input: String): URL? {

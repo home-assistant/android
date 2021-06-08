@@ -120,7 +120,8 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))"
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `sensors` (`unique_id` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `registered` INTEGER NOT NULL, `state` TEXT NOT NULL, PRIMARY KEY(`unique_id`))"
                 )
             }
         }
@@ -189,20 +190,22 @@ abstract class AppDatabase : RoomDatabase() {
                 try {
                     if (cursor.moveToFirst()) {
                         while (cursor.moveToNext()) {
-                            sensors.add(ContentValues().also {
-                                it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
-                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                                it.put(
-                                    "registered",
-                                    cursor.getInt(cursor.getColumnIndex("registered"))
-                                )
-                                it.put("state", "")
-                                it.put("state_type", "")
-                                it.put("type", "")
-                                it.put("icon", "")
-                                it.put("name", "")
-                                it.put("device_class", "")
-                            })
+                            sensors.add(
+                                ContentValues().also {
+                                    it.put("id", cursor.getString(cursor.getColumnIndex("unique_id")))
+                                    it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                                    it.put(
+                                        "registered",
+                                        cursor.getInt(cursor.getColumnIndex("registered"))
+                                    )
+                                    it.put("state", "")
+                                    it.put("state_type", "")
+                                    it.put("type", "")
+                                    it.put("icon", "")
+                                    it.put("name", "")
+                                    it.put("device_class", "")
+                                }
+                            )
                         }
                         migrationSuccessful = true
                     }
@@ -243,20 +246,22 @@ abstract class AppDatabase : RoomDatabase() {
                 try {
                     if (cursor.moveToFirst()) {
                         while (cursor.moveToNext()) {
-                            sensors.add(ContentValues().also {
-                                it.put("id", cursor.getString(cursor.getColumnIndex("id")))
-                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                                it.put(
-                                    "registered",
-                                    cursor.getInt(cursor.getColumnIndex("registered"))
-                                )
-                                it.put("state", "")
-                                it.put("last_sent_state", "")
-                                it.put("state_type", "")
-                                it.put("type", "")
-                                it.put("icon", "")
-                                it.put("name", "")
-                            })
+                            sensors.add(
+                                ContentValues().also {
+                                    it.put("id", cursor.getString(cursor.getColumnIndex("id")))
+                                    it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
+                                    it.put(
+                                        "registered",
+                                        cursor.getInt(cursor.getColumnIndex("registered"))
+                                    )
+                                    it.put("state", "")
+                                    it.put("last_sent_state", "")
+                                    it.put("state_type", "")
+                                    it.put("type", "")
+                                    it.put("icon", "")
+                                    it.put("name", "")
+                                }
+                            )
                         }
                         migrationSuccessful = true
                     }
@@ -325,80 +330,82 @@ abstract class AppDatabase : RoomDatabase() {
                     if (cursor.moveToFirst()) {
                         while (cursor.moveToNext()) {
 
-                            sensorSettings.add(ContentValues().also {
+                            sensorSettings.add(
+                                ContentValues().also {
 
-                                val currentSensorId = cursor.getString(cursor.getColumnIndex("sensor_id"))
-                                val currentSensorSettingName = cursor.getString(cursor.getColumnIndex("name"))
-                                var entries: String = ""
-                                var newSensorSettingName = currentSensorSettingName
-                                // Alarm
-                                if (currentSensorId == "next_alarm" && currentSensorSettingName == "Allow List") {
-                                    newSensorSettingName = "nextalarm_allow_list"
+                                    val currentSensorId = cursor.getString(cursor.getColumnIndex("sensor_id"))
+                                    val currentSensorSettingName = cursor.getString(cursor.getColumnIndex("name"))
+                                    var entries: String = ""
+                                    var newSensorSettingName = currentSensorSettingName
+                                    // Alarm
+                                    if (currentSensorId == "next_alarm" && currentSensorSettingName == "Allow List") {
+                                        newSensorSettingName = "nextalarm_allow_list"
+                                    }
+                                    // Notification
+                                    else if ((currentSensorId == "last_removed_notification" || currentSensorId == "last_notification") && currentSensorSettingName == "Allow List") {
+                                        newSensorSettingName = "notification_allow_list"
+                                    }
+                                    // Geocode
+                                    else if (currentSensorId == "geocoded_location" && currentSensorSettingName == "Minimum Accuracy") {
+                                        newSensorSettingName = "geocode_minimum_accuracy"
+                                    }
+                                    // Location
+                                    else if ((currentSensorId == "zone_background" || currentSensorId == "accurate_location" || currentSensorId == "location_background") && currentSensorSettingName == "Minimum Accuracy") {
+                                        newSensorSettingName = "location_minimum_accuracy"
+                                    } else if (currentSensorId == "accurate_location" && currentSensorSettingName == "Minimum time between updates") {
+                                        newSensorSettingName = "location_minimum_time_updates"
+                                    } else if (currentSensorId == "accurate_location" && currentSensorSettingName == "Include in sensor update") {
+                                        newSensorSettingName = "location_include_sensor_update"
+                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode (May drain battery fast)") {
+                                        newSensorSettingName = "location_ham_enabled"
+                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode update interval (seconds)") {
+                                        newSensorSettingName = "location_ham_update_interval"
+                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode only when connected to BT devices") {
+                                        newSensorSettingName = "location_ham_only_bt_dev"
+                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode only when entering zone") {
+                                        newSensorSettingName = "location_ham_only_enter_zone"
+                                    } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode trigger range for zone (meters)") {
+                                        newSensorSettingName = "location_ham_trigger_range"
+                                    }
+                                    // Bluetooth
+                                    else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "UUID") {
+                                        newSensorSettingName = "ble_uuid"
+                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Major") {
+                                        newSensorSettingName = "ble_major"
+                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Minor") {
+                                        newSensorSettingName = "ble_minor"
+                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "transmit_power") {
+                                        newSensorSettingName = "ble_transmit_power"
+                                        entries = "ultraLow|low|medium|high"
+                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Enable Transmitter") {
+                                        newSensorSettingName = "ble_transmit_enabled"
+                                    } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Include when enabling all sensors") {
+                                        newSensorSettingName = "ble_enable_toggle_all"
+                                    }
+                                    // Last reboot
+                                    else if (currentSensorId == "last_reboot" && currentSensorSettingName == "deadband") {
+                                        newSensorSettingName = "lastreboot_deadband"
+                                    }
+                                    // Last update
+                                    else if (currentSensorId == "last_update" && currentSensorSettingName == "Add New Intent") {
+                                        newSensorSettingName = "lastupdate_add_new_intent"
+                                    } else if (currentSensorId == "last_update" && currentSensorSettingName.startsWith("intent")) {
+                                        newSensorSettingName = "lastupdate_intent_var1:" + currentSensorSettingName.substringAfter("intent") + ":"
+                                    }
+                                    // Network
+                                    else if (currentSensorId == "wifi_bssid" && currentSensorSettingName == "get_current_bssid") {
+                                        newSensorSettingName = "network_get_current_bssid"
+                                    } else if (currentSensorId == "wifi_bssid" && currentSensorSettingName.startsWith("replace_")) {
+                                        newSensorSettingName = "network_replace_mac_var1:" + currentSensorSettingName.substringAfter("replace_") + ":"
+                                    }
+                                    it.put("sensor_id", cursor.getString(cursor.getColumnIndex("sensor_id")))
+                                    it.put("name", newSensorSettingName)
+                                    it.put("value", cursor.getString(cursor.getColumnIndex("value")))
+                                    it.put("value_type", cursor.getString(cursor.getColumnIndex("value_type")))
+                                    it.put("entries", entries)
+                                    it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
                                 }
-                                // Notification
-                                else if ((currentSensorId == "last_removed_notification" || currentSensorId == "last_notification") && currentSensorSettingName == "Allow List") {
-                                    newSensorSettingName = "notification_allow_list"
-                                }
-                                // Geocode
-                                else if (currentSensorId == "geocoded_location" && currentSensorSettingName == "Minimum Accuracy") {
-                                    newSensorSettingName = "geocode_minimum_accuracy"
-                                }
-                                // Location
-                                else if ((currentSensorId == "zone_background" || currentSensorId == "accurate_location" || currentSensorId == "location_background") && currentSensorSettingName == "Minimum Accuracy") {
-                                    newSensorSettingName = "location_minimum_accuracy"
-                                } else if (currentSensorId == "accurate_location" && currentSensorSettingName == "Minimum time between updates") {
-                                    newSensorSettingName = "location_minimum_time_updates"
-                                } else if (currentSensorId == "accurate_location" && currentSensorSettingName == "Include in sensor update") {
-                                    newSensorSettingName = "location_include_sensor_update"
-                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode (May drain battery fast)") {
-                                    newSensorSettingName = "location_ham_enabled"
-                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode update interval (seconds)") {
-                                    newSensorSettingName = "location_ham_update_interval"
-                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode only when connected to BT devices") {
-                                    newSensorSettingName = "location_ham_only_bt_dev"
-                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode only when entering zone") {
-                                    newSensorSettingName = "location_ham_only_enter_zone"
-                                } else if (currentSensorId == "location_background" && currentSensorSettingName == "High accuracy mode trigger range for zone (meters)") {
-                                    newSensorSettingName = "location_ham_trigger_range"
-                                }
-                                // Bluetooth
-                                else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "UUID") {
-                                    newSensorSettingName = "ble_uuid"
-                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Major") {
-                                    newSensorSettingName = "ble_major"
-                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Minor") {
-                                    newSensorSettingName = "ble_minor"
-                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "transmit_power") {
-                                    newSensorSettingName = "ble_transmit_power"
-                                    entries = "ultraLow|low|medium|high"
-                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Enable Transmitter") {
-                                    newSensorSettingName = "ble_transmit_enabled"
-                                } else if (currentSensorId == "ble_emitter" && currentSensorSettingName == "Include when enabling all sensors") {
-                                    newSensorSettingName = "ble_enable_toggle_all"
-                                }
-                                // Last reboot
-                                else if (currentSensorId == "last_reboot" && currentSensorSettingName == "deadband") {
-                                    newSensorSettingName = "lastreboot_deadband"
-                                }
-                                // Last update
-                                else if (currentSensorId == "last_update" && currentSensorSettingName == "Add New Intent") {
-                                    newSensorSettingName = "lastupdate_add_new_intent"
-                                } else if (currentSensorId == "last_update" && currentSensorSettingName.startsWith("intent")) {
-                                    newSensorSettingName = "lastupdate_intent_var1:" + currentSensorSettingName.substringAfter("intent") + ":"
-                                }
-                                // Network
-                                else if (currentSensorId == "wifi_bssid" && currentSensorSettingName == "get_current_bssid") {
-                                    newSensorSettingName = "network_get_current_bssid"
-                                } else if (currentSensorId == "wifi_bssid" && currentSensorSettingName.startsWith("replace_")) {
-                                    newSensorSettingName = "network_replace_mac_var1:" + currentSensorSettingName.substringAfter("replace_") + ":"
-                                }
-                                it.put("sensor_id", cursor.getString(cursor.getColumnIndex("sensor_id")))
-                                it.put("name", newSensorSettingName)
-                                it.put("value", cursor.getString(cursor.getColumnIndex("value")))
-                                it.put("value_type", cursor.getString(cursor.getColumnIndex("value_type")))
-                                it.put("entries", entries)
-                                it.put("enabled", cursor.getInt(cursor.getColumnIndex("enabled")))
-                            })
+                            )
                         }
                         migrationSuccessful = true
                     }

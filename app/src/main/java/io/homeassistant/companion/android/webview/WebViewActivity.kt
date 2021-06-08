@@ -72,7 +72,6 @@ import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_player_control_view.*
 import kotlinx.android.synthetic.main.exo_player_view.*
@@ -82,6 +81,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import javax.inject.Inject
 
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -414,51 +414,52 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
             }
 
-            addJavascriptInterface(object : Any() {
-                @JavascriptInterface
-                fun onHomeAssistantSetTheme() {
-                    // We need to launch the getAndSetStatusBarNavigationBarColors in another thread, because otherwise the evaluateJavascript inside the method
-                    // will not trigger it's callback method :/
-                    GlobalScope.launch(Dispatchers.Main) {
-                        getAndSetStatusBarNavigationBarColors()
+            addJavascriptInterface(
+                object : Any() {
+                    @JavascriptInterface
+                    fun onHomeAssistantSetTheme() {
+                        // We need to launch the getAndSetStatusBarNavigationBarColors in another thread, because otherwise the evaluateJavascript inside the method
+                        // will not trigger it's callback method :/
+                        GlobalScope.launch(Dispatchers.Main) {
+                            getAndSetStatusBarNavigationBarColors()
+                        }
                     }
-                }
 
-                @JavascriptInterface
-                fun getExternalAuth(payload: String) {
-                    JSONObject(payload).let {
-                        presenter.onGetExternalAuth(
-                            it.getString("callback"),
-                            it.has("force") && it.getBoolean("force")
-                        )
+                    @JavascriptInterface
+                    fun getExternalAuth(payload: String) {
+                        JSONObject(payload).let {
+                            presenter.onGetExternalAuth(
+                                it.getString("callback"),
+                                it.has("force") && it.getBoolean("force")
+                            )
+                        }
                     }
-                }
 
-                @JavascriptInterface
-                fun revokeExternalAuth(callback: String) {
-                    presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
-                    openOnBoarding()
-                    finish()
-                }
+                    @JavascriptInterface
+                    fun revokeExternalAuth(callback: String) {
+                        presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
+                        openOnBoarding()
+                        finish()
+                    }
 
-                @JavascriptInterface
-                fun externalBus(message: String) {
-                    Log.d(TAG, "External bus $message")
-                    webView.post {
-                        val json = JSONObject(message)
-                        when (json.get("type")) {
-                            "connection-status" -> {
-                                isConnected = json.getJSONObject("payload")
-                                    .getString("event") == "connected"
-                                if (isConnected) {
-                                    alertDialog?.cancel()
-                                    presenter.checkSecurityVersion()
+                    @JavascriptInterface
+                    fun externalBus(message: String) {
+                        Log.d(TAG, "External bus $message")
+                        webView.post {
+                            val json = JSONObject(message)
+                            when (json.get("type")) {
+                                "connection-status" -> {
+                                    isConnected = json.getJSONObject("payload")
+                                        .getString("event") == "connected"
+                                    if (isConnected) {
+                                        alertDialog?.cancel()
+                                        presenter.checkSecurityVersion()
+                                    }
                                 }
-                            }
-                            "config/get" -> {
-                                val pm: PackageManager = context.packageManager
-                                val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
-                                val script = "externalBus(" +
+                                "config/get" -> {
+                                    val pm: PackageManager = context.packageManager
+                                    val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
+                                    val script = "externalBus(" +
                                         "${JSONObject(
                                             mapOf(
                                                 "id" to JSONObject(message).get("id"),
@@ -474,42 +475,45 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                             )
                                         )}" +
                                         ");"
-                                Log.d(TAG, script)
-                                webView.evaluateJavascript(script) {
-                                    Log.d(TAG, "Callback $it")
-                                }
+                                    Log.d(TAG, script)
+                                    webView.evaluateJavascript(script) {
+                                        Log.d(TAG, "Callback $it")
+                                    }
 
-                                getAndSetStatusBarNavigationBarColors()
+                                    getAndSetStatusBarNavigationBarColors()
 
-                                // Set event lister for HA theme change
-                                webView.evaluateJavascript(
-                                    "document.addEventListener('settheme', function ()" +
+                                    // Set event lister for HA theme change
+                                    webView.evaluateJavascript(
+                                        "document.addEventListener('settheme', function ()" +
                                             "{" +
                                             "window.externalApp.onHomeAssistantSetTheme();" +
-                                            "});", null
-                                )
+                                            "});",
+                                        null
+                                    )
+                                }
+                                "config_screen/show" ->
+                                    startActivity(
+                                        SettingsActivity.newInstance(this@WebViewActivity)
+                                    )
+                                "tag/write" ->
+                                    startActivityForResult(
+                                        NfcSetupActivity.newInstance(
+                                            this@WebViewActivity,
+                                            json.getJSONObject("payload").getString("tag"),
+                                            JSONObject(message).getInt("id")
+                                        ),
+                                        NFC_COMPLETE
+                                    )
+                                "exoplayer/play_hls" -> exoPlayHls(json)
+                                "exoplayer/stop" -> exoStopHls()
+                                "exoplayer/resize" -> exoResizeHls(json)
+                                "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
                             }
-                            "config_screen/show" ->
-                                startActivity(
-                                    SettingsActivity.newInstance(this@WebViewActivity)
-                                )
-                            "tag/write" ->
-                                startActivityForResult(
-                                    NfcSetupActivity.newInstance(
-                                        this@WebViewActivity,
-                                        json.getJSONObject("payload").getString("tag"),
-                                        JSONObject(message).getInt("id")
-                                    ),
-                                    NFC_COMPLETE
-                                )
-                            "exoplayer/play_hls" -> exoPlayHls(json)
-                            "exoplayer/stop" -> exoStopHls()
-                            "exoplayer/resize" -> exoResizeHls(json)
-                            "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
                         }
                     }
-                }
-            }, "externalApp")
+                },
+                "externalApp"
+            )
         }
 
         themesManager.setThemeForWebView(this, webView.settings)
@@ -550,7 +554,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (currentLang != languagesManager.getCurrentLang())
             recreate()
         if ((!unlocked && !presenter.isLockEnabled()) ||
-            (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis())) {
+            (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis())
+        ) {
             unlocked = true
             blurView.setBlurEnabled(false)
         }
@@ -648,14 +653,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoPlayerView.visibility = View.VISIBLE
         }
         val script = "externalBus(" + "${
-            JSONObject(
-                mapOf(
-                    "id" to json.get("id"),
-                    "type" to "result",
-                    "success" to true,
-                    "result" to null
-                )
+        JSONObject(
+            mapOf(
+                "id" to json.get("id"),
+                "type" to "result",
+                "success" to true,
+                "result" to null
             )
+        )
         }" + ");"
         Log.d(TAG, script)
         webView.evaluateJavascript(script) { Log.d(TAG, "Callback $it") }
@@ -831,8 +836,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private fun hideSystemUI() {
         if (isCutout())
             decor.systemUiVisibility = decor.systemUiVisibility or
-                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         else {
             decor.viewTreeObserver.addOnGlobalLayoutListener {
                 val r = Rect()
@@ -847,27 +852,27 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 decor.requestLayout()
             }
             decor.systemUiVisibility = decor.systemUiVisibility or
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
-                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                    View.SYSTEM_UI_FLAG_FULLSCREEN or
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         }
     }
 
     private fun showSystemUI() {
         if (isCutout()) {
             decor.systemUiVisibility = decor.systemUiVisibility and
-                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION.inv() and
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY.inv()
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION.inv() and
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY.inv()
         } else {
             decor.systemUiVisibility = decor.systemUiVisibility and View.SYSTEM_UI_FLAG_LAYOUT_STABLE.inv() and
-                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION.inv() and
-                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN.inv() and
-                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION.inv() and
-                    View.SYSTEM_UI_FLAG_FULLSCREEN.inv() and
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY.inv()
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION.inv() and
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN.inv() and
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION.inv() and
+                View.SYSTEM_UI_FLAG_FULLSCREEN.inv() and
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY.inv()
         }
     }
 
@@ -1064,7 +1069,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     R.string.refresh_internal
                 else
                     R.string.refresh_external
-                    ) { _, _ ->
+            ) { _, _ ->
                 runBlocking {
                     failedConnection = if (failedConnection == "external") {
                         webView.loadUrl(urlRepository.getUrl(true).toString())
@@ -1191,11 +1196,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun waitForConnection() {
-        Handler(Looper.getMainLooper()).postDelayed({
-            if (!isConnected) {
-                showError()
-            }
-        }, CONNECTION_DELAY)
+        Handler(Looper.getMainLooper()).postDelayed(
+            {
+                if (!isConnected) {
+                    showError()
+                }
+            },
+            CONNECTION_DELAY
+        )
     }
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {

@@ -85,12 +85,16 @@ class HighAccuracyLocationService : Service() {
                 longSeconds %= 60
                 val latDegree = if (latDegrees >= 0) "N" else "S"
                 val lonDegrees = if (longDegrees >= 0) "E" else "W"
-                (abs(latDegrees).toString() + "°" + latMinutes + "'" + latSeconds +
+                (
+                    abs(latDegrees).toString() + "°" + latMinutes + "'" + latSeconds +
                         "\"" + latDegree + " " + abs(longDegrees) + "°" + longMinutes +
-                        "'" + longSeconds + "\"" + lonDegrees)
+                        "'" + longSeconds + "\"" + lonDegrees
+                    )
             } catch (e: java.lang.Exception) {
-                ("" + String.format("%8.5f", latitude) + "  " +
-                        String.format("%8.5f", longitude))
+                (
+                    "" + String.format("%8.5f", latitude) + "  " +
+                        String.format("%8.5f", longitude)
+                    )
             }
         }
 
