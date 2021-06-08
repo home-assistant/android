@@ -7,8 +7,11 @@ import androidx.annotation.RequiresApi
 @RequiresApi(Build.VERSION_CODES.N)
 class Tile3Service : TileExtensions() {
 
-    override fun getTile(): Tile {
-        return qsTile
+    override fun getTile(): Tile? {
+        return if (qsTile != null)
+            qsTile
+        else
+            null
     }
 
     override fun getTileId(): String {

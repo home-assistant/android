@@ -11,8 +11,11 @@ class Tile5Service : TileExtensions() {
         private const val TILE_ID = "tile_5"
     }
 
-    override fun getTile(): Tile {
-        return qsTile
+    override fun getTile(): Tile? {
+        return if (qsTile != null)
+            qsTile
+        else
+            null
     }
 
     override fun getTileId(): String {
