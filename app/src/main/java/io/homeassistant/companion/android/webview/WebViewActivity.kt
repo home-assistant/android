@@ -75,8 +75,11 @@ import io.homeassistant.companion.android.util.isStarted
 import kotlinx.android.synthetic.main.activity_webview.*
 import kotlinx.android.synthetic.main.exo_player_control_view.*
 import kotlinx.android.synthetic.main.exo_player_view.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -105,6 +108,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         private const val CONNECTION_DELAY = 10000L
     }
+
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     @Inject
     lateinit var presenter: WebViewPresenter
@@ -221,11 +226,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
-                    if (moreInfoEntity != "") {
-                        Log.d(TAG, "More info entity: $moreInfoEntity")
-                        webView.evaluateJavascript("document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))", null)
+                    if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
+                        ioScope.launch {
+                            delay(2000L)
+                            Log.d(TAG, "More info entity: $moreInfoEntity")
+                            webView.evaluateJavascript(
+                                "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))",
+                                null
+                            )
+                            moreInfoEntity = ""
+                        }
                     }
-                    moreInfoEntity = ""
                 }
 
                 override fun onReceivedHttpError(
