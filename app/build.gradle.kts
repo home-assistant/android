@@ -174,6 +174,7 @@ dependencies {
     implementation(Config.Dependency.Misc.exoCore)
     implementation(Config.Dependency.Misc.exoHls)
     implementation(Config.Dependency.Misc.exoUi)
+    implementation(Config.Dependency.Misc.exoCronet)
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

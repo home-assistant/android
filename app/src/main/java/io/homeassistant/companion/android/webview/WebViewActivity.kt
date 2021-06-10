@@ -49,6 +49,9 @@ import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.ext.cronet.CronetDataSource
+import com.google.android.exoplayer2.ext.cronet.CronetEngineWrapper
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.video.VideoSize
@@ -85,6 +88,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.util.concurrent.Executors
 import javax.inject.Inject
 
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
@@ -634,8 +638,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val uri = Uri.parse(payload.getString("url"))
         exoMute = payload.optBoolean("muted")
         runOnUiThread {
-            exoPlayer =
-                SimpleExoPlayer.Builder(applicationContext).build()
+            exoPlayer = SimpleExoPlayer.Builder(applicationContext).setMediaSourceFactory(
+                DefaultMediaSourceFactory(
+                    CronetDataSource.Factory(
+                        CronetEngineWrapper(
+                            applicationContext
+                        ),
+                        Executors.newSingleThreadExecutor()
+                    )
+                )
+            ).build()
             exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
             exoPlayer?.playWhenReady = true
             exoPlayer?.addListener(object : Player.Listener {
