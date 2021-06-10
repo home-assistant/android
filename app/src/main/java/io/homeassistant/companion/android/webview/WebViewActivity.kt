@@ -47,10 +47,11 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.video.VideoListener
+import com.google.android.exoplayer2.video.VideoSize
 import com.google.android.material.textfield.TextInputEditText
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
@@ -637,21 +638,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 SimpleExoPlayer.Builder(applicationContext).build()
             exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
             exoPlayer?.playWhenReady = true
-            exoPlayer?.addVideoListener(object : VideoListener {
-                override fun onVideoSizeChanged(
-                    width: Int,
-                    height: Int,
-                    unappliedRotationDegrees: Int,
-                    pixelWidthHeightRatio: Float
-                ) {
-                    super.onVideoSizeChanged(
-                        width,
-                        height,
-                        unappliedRotationDegrees,
-                        pixelWidthHeightRatio
-                    )
+            exoPlayer?.addListener(object : Player.Listener {
+                override fun onVideoSizeChanged(videoSize: VideoSize) {
+                    super.onVideoSizeChanged(videoSize)
                     exoBottom =
-                        exoTop + ((exoRight - exoLeft) * height / width)
+                        exoTop + ((exoRight - exoLeft) * videoSize.height / videoSize.width)
                     runOnUiThread {
                         exoResizeLayout()
                     }
