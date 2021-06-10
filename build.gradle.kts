@@ -9,6 +9,7 @@ buildscript {
     repositories {
         google()
         gradlePluginPortal()
+        maven("https://oss.sonatype.org/content/repositories/snapshots")
     }
     dependencies {
         classpath(Config.Plugin.android)
@@ -16,6 +17,7 @@ buildscript {
         classpath(Config.Plugin.google)
         classpath(Config.Plugin.appDistribution)
         classpath(Config.Plugin.androidJunit5)
+        classpath(Config.Plugin.gpp)
     }
 }
 

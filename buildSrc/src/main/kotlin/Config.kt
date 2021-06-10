@@ -6,6 +6,7 @@ object Config {
         const val google = "com.google.gms:google-services:4.3.8"
         const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:2.1.2"
         const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
+        const val gpp = "com.github.triplet.gradle:play-publisher:3.5.0-SNAPSHOT"
     }
 
     object Android {
