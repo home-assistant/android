@@ -238,6 +238,8 @@
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data android:scheme="wear" android:host="*"
                     android:path="/request_authentication_token" />
+                <data android:scheme="wear" android:host="*"
+                    android:path="/request_home_assistant_instance" />
             </intent-filter>
         </service>
         

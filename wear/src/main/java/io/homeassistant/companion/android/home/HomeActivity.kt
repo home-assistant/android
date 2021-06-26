@@ -1,5 +1,7 @@
-package io.homeassistant.companion.android
+package io.homeassistant.companion.android.home
 
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.support.wearable.activity.WearableActivity
@@ -7,12 +9,23 @@ import android.util.Log
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.*
+import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.authentication.impl.Session
+import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import kotlinx.android.synthetic.main.activity_home.*
 
-class Home : WearableActivity(),
+class HomeActivity : WearableActivity(),
         MessageClient.OnMessageReceivedListener,
         DataClient.OnDataChangedListener {
+
+    companion object {
+        private const val TAG = "OnboardingActivity"
+
+        fun newInstance(context: Context): Intent {
+            return Intent(context, OnboardingActivity::class.java)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +56,25 @@ class Home : WearableActivity(),
     }
 
     private fun requestAuthenticationToken() {
+        // Desired flow:
+        // - Check if local token is available
+        //      - If token is valid => login => DONE
+        //      - If token is invalid => try to refresh
+        // - If not possible to login
+        //      - Check in DataClient for all data items with server addresses
+        //      - Put server addresses in list (with node id)
+        //      - Send message to all nodes to request updated server addresses
+        //      - If any data is received, update the item in the list based on node id
+        // - If user selects one of the servers in the list
+        //      - Send message to the specific node to share authentication info
+        //      - Node shares authentication info if available or error otherwise
+        //      - If authentication info available: try to login => DONE
+        //      - If login failed or authentication info not available: ask user to login on phone
+        // - If user selects "other" from list, or is asked to login on phone
+        //      - Field to enter server opens on phone if server was not yet selected
+        //      - Webkit window to login screen opens on phone
+        //      - If login successful: pass authentication info to wear => DONE
+        //      - If login not successful: pass error message to wear => ERROR
         Log.d("Home", "requestAuthenticationToken")
 
         var validSession: Session? = null
@@ -89,8 +121,8 @@ class Home : WearableActivity(),
                 "/request_authentication_token",
                 ByteArray(0)
             ).apply {
-                addOnSuccessListener { this@Home.text.text = "Waiting for token $nodeId" }
-                addOnFailureListener { this@Home.text.text = "Can't connect to phone" }
+                addOnSuccessListener { this@HomeActivity.text.text = "Waiting for token $nodeId" }
+                addOnFailureListener { this@HomeActivity.text.text = "Can't connect to phone" }
             }
         }
     }

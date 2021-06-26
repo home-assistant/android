@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">Home Assistant Wear OS</string>
+    <string name="button_forward">Next</string>
+    <string name="device_name">Device Name</string>
+    <string name="finish">Finish</string>
+    <string name="input_url">Home Assistant URL</string>
+    <string name="input_url_hint">https://example.duckdns.org:8123</string>
+    <string name="list_header_instances">Instances</string>
+    <string name="list_header_other">Other</string>
+    <string name="login">Login</string>
+    <string name="password">Password</string>
+    <string name="registerDevice">Register watch</string>
+    <string name="username">Username</string>
 </resources>
