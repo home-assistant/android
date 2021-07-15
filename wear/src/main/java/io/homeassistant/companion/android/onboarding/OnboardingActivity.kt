@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.wear.widget.WearableLinearLayoutManager
 import androidx.wear.widget.WearableRecyclerView
 import com.google.android.gms.tasks.Tasks
@@ -58,9 +59,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
         adapter = ServerListAdapter(ArrayList()) { instance -> presenter.onAdapterItemClick(instance) }
 
         findViewById<WearableRecyclerView>(R.id.server_list)?.apply {
-            // To align the edge children (first and last) with the center of the screen
-            isEdgeItemsCenteringEnabled = false
-            layoutManager = WearableLinearLayoutManager(this@OnboardingActivity)
+            layoutManager = LinearLayoutManager(this@OnboardingActivity)
             adapter = this@OnboardingActivity.adapter
         }
     }
