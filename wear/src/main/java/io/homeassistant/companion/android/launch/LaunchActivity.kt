@@ -1,5 +1,7 @@
 package io.homeassistant.companion.android.launch
 
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.DaggerPresenterComponent
@@ -14,6 +16,14 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
 
     @Inject
     lateinit var presenter: LaunchPresenter
+
+    companion object {
+        private const val TAG = "LaunchActivity"
+
+        fun newInstance(context: Context): Intent {
+            return Intent(context, LaunchActivity::class.java)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

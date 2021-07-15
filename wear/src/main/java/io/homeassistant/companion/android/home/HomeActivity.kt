@@ -5,13 +5,16 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.wearable.activity.WearableActivity
 import android.util.Log
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.wearable.*
+import com.google.android.material.button.MaterialButton
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.launch.LaunchActivity
 import kotlinx.android.synthetic.main.activity_home.*
 import javax.inject.Inject
 
@@ -39,10 +42,31 @@ class HomeActivity : AppCompatActivity(), HomeView {
             .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
+
+        findViewById<MaterialButton>(R.id.btn_logout).setOnClickListener {
+            presenter.onLogoutClicked()
+        }
+
+        presenter.onViewReady()
     }
 
     override fun onDestroy() {
         presenter.onFinish()
         super.onDestroy()
+    }
+
+    override fun showHomeAssistantVersion(version: String) {
+        val txtVersion = findViewById<TextView>(R.id.txt_version)
+        txtVersion.text = getString(R.string.version, version)
+    }
+
+    override fun showEntitiesCount(count: Int) {
+        val txtEntities = findViewById<TextView>(R.id.txt_entities)
+        txtEntities.text = resources.getQuantityString(R.plurals.entities_found, count, count)
+    }
+
+    override fun displayLaunchView() {
+        startActivity(LaunchActivity.newInstance(this))
+        finish()
     }
 }

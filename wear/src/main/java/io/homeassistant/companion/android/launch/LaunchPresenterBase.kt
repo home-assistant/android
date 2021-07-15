@@ -25,7 +25,6 @@ abstract class LaunchPresenterBase(
     override fun onViewReady() {
         mainScope.launch {
             Log.d(TAG, "Authentication state: ${authenticationUseCase.getSessionState()}")
-            Log.d(TAG, "Authentication bearer token: ${authenticationUseCase.buildBearerToken()}")
             Log.d(TAG, "Integration is registered: ${integrationUseCase.isRegistered()}")
             val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
             if (sessionValid && integrationUseCase.isRegistered()) {
