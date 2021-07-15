@@ -24,6 +24,7 @@ class AuthenticationPresenterImpl @Inject constructor(
         Log.d(TAG, "onNextClicked")
         mainScope.launch {
             val flowCreateEntry: LoginFlowCreateEntry = authenticationUseCase.loginAuthentication(flowId, username, password)
+            // TODO handle authentication errors
             Log.d(TAG, "Authenticated result: ${flowCreateEntry.result}")
             authenticationUseCase.registerAuthorizationCode(flowCreateEntry.result)
             Log.d(TAG, "Finished!")

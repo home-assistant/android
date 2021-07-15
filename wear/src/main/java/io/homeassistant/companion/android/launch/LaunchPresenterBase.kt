@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.launch
 
+import android.util.Log
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -23,14 +24,17 @@ abstract class LaunchPresenterBase(
 
     override fun onViewReady() {
         mainScope.launch {
+            Log.d(TAG, "Authentication state: ${authenticationUseCase.getSessionState()}")
+            Log.d(TAG, "Authentication bearer token: ${authenticationUseCase.buildBearerToken()}")
+            Log.d(TAG, "Integration is registered: ${integrationUseCase.isRegistered()}")
             val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
             if (sessionValid && integrationUseCase.isRegistered()) {
                 resyncRegistration()
                 view.displayHome()
             } else if (sessionValid) {
-                view.displayOnBoarding()
+                view.displayMobileAppIntegration()
             } else {
-                view.displayIntegration()
+                view.displayOnBoarding()
             }
         }
     }

@@ -124,6 +124,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun isRegistered(): Boolean {
+        Log.d(TAG, urlRepository.getApiUrls().toString())
         return urlRepository.getApiUrls().isNotEmpty()
     }
 

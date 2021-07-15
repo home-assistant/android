@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Home Assistant Wear OS</string>
+    <string name="attempting_authentication">Authenticating…</string>
+    <string name="attempting_registration">Registering application…</string>
     <string name="button_forward">Next</string>
     <string name="device_name">Device Name</string>
     <string name="finish">Finish</string>

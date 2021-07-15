@@ -39,7 +39,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         finish()
     }
 
-    override fun displayIntegration() {
+    override fun displayMobileAppIntegration() {
         val intent = MobileAppIntegrationActivity.newInstance(this)
         startActivity(intent)
         finish()

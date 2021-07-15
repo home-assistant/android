@@ -5,5 +5,5 @@ interface LaunchView {
 
     fun displayOnBoarding()
 
-    fun displayIntegration()
+    fun displayMobileAppIntegration()
 }

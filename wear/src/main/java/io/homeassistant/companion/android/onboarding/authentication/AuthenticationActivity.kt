@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.util.Log
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -61,5 +62,14 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
 
     override fun startIntegration() {
         startActivity(MobileAppIntegrationActivity.newInstance(this))
+    }
+
+    override fun showLoading() {
+        loading_view.visibility = View.VISIBLE
+    }
+
+    override fun onDestroy() {
+        presenter.onFinish()
+        super.onDestroy()
     }
 }

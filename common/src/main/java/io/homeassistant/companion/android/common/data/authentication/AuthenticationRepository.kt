@@ -23,8 +23,6 @@ interface AuthenticationRepository {
 
     suspend fun buildBearerToken(): String
 
-    suspend fun ensureValidSession(forceRefresh: Boolean = false): Session
-
     suspend fun setLockEnabled(enabled: Boolean)
     suspend fun isLockEnabled(): Boolean
 }

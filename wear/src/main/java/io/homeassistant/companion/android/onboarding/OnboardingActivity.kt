@@ -59,7 +59,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
 
         findViewById<WearableRecyclerView>(R.id.server_list)?.apply {
             // To align the edge children (first and last) with the center of the screen
-            isEdgeItemsCenteringEnabled = true
+            isEdgeItemsCenteringEnabled = false
             layoutManager = WearableLinearLayoutManager(this@OnboardingActivity)
             adapter = this@OnboardingActivity.adapter
         }
@@ -85,7 +85,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
     }
 
     override fun startAuthentication(flowId: String) {
-        startActivity(AuthenticationActivity.newInstance(this, flowId, "",""))
+        startActivity(AuthenticationActivity.newInstance(this, flowId, "", ""))
         //finish()
     }
 
@@ -141,58 +141,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
         }
     }
 
-    private fun adapterOnClick(instance: HomeAssistantInstance) {
-        Log.d(TAG, "Clicked on ${instance.name}")
-
-        // Login authentication
-
-        // Register authorization code
-
-
-        //TODO Request authentication info
-        /*
-        When authenticating we should call the auth api
-        Normally, this is done by redirecting the user to the authorization url (AuthenticationRepositoryImpl.buildAuthenticationUrl())
-        For example: http://your-instance.com/auth/authorize?client_id=https%3A%2F%2Fhass-auth-demo.glitch.me&redirect_uri=https%3A%2F%2Fhass-auth-demo.glitch.me%2F%3Fauth_callback%3D1
-        The callback url (in the android app: homeassistant://auth-callback) is then picked up by the app
-        After logging in, the user will be redirected to the callback url, where the authentication code is passed. This code is then exchanged for a token
-
-        I don't think we can implement a callback url in Wear OS. Therefore, the procedure should be:
-        - Request login info from android app (host, username, password)
-        - Show login form where user can fill in/change username and password
-        - Send filled in username and password back to android app
-        - Android app provides the info with the callback url etc. And then receives authorization code
-        - Android app requests tokens and sends them to the Wear OS app
-
-        After some testing with curl in a terminal, the following procedure was found:
-        - post to https://server.adr/auth/login_flow, with json content: 'client_id':'website_of_app', 'redirect_uri':'valid_uri_but_isnt_used_now', 'handler':['homassistant',null]
-        - The return json should have the following fields:
-            "type": "form"
-            "handler": ["homeassistant", null]
-            "step_id": "init"
-            "data_schema": [{"type": "string", "name": "username"},{"type": "string", "name": "password"}]
-            "errors": {}
-            "flow_id": "flow_id_code_to_use"
-        - Use the returned flow_id for the next step:
-        - post to https://server.adr/auth/login_flow/{flow_id}, with json content: 'client_id':'website_of_app', 'username':'{username}', 'password':'{password}'
-        - The return json should have the following fields:
-            "version": 1
-            "type": "create_entry"
-            "flow_id": "same_flow_id"
-            "handler": ["homeassistant", null]
-            "title": "Home Assistant Local"
-            "result": "code_for_authentication"
-        - post to https://server.adr/auth/token, with content type application/x-www-form-urlencoded and data: grant_type=authorization_code&code={code_for_authentication}&client_id=website_of_app
-        - The return json should have the following fields:
-            "token_type": "Bearer"
-            "access_token": "ABCDEFGH"
-            "expires_in": 1800
-            "refresh_token": "IJKLMNOPQRST"
-        - Now the tokens can be saved and used for authentication afterwards
-        - Next step is device registration
-         */
-    }
-
     private fun onInstanceFound(instance: HomeAssistantInstance) {
         Log.d(TAG, "onInstanceFound: ${instance.name}")
         if (!adapter.servers.contains(instance)) {
@@ -239,5 +187,10 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
 
     private fun onAuthenticationSuccess() {
         //TODO go to register integration
+    }
+
+    override fun onDestroy() {
+        presenter.onFinish()
+        super.onDestroy()
     }
 }
