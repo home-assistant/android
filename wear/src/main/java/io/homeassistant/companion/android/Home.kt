@@ -1,15 +1,20 @@
 package io.homeassistant.companion.android
 
 import android.os.Bundle
-import android.support.wearable.activity.WearableActivity
+import androidx.fragment.app.FragmentActivity
+import androidx.wear.ambient.AmbientModeSupport
+import io.homeassistant.companion.android.databinding.ActivityHomeBinding
 
-class Home : WearableActivity() {
+class Home : FragmentActivity() {
+
+    private lateinit var binding: ActivityHomeBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_home)
 
-        // Enables Always-on
-        setAmbientEnabled()
+        binding = ActivityHomeBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        AmbientModeSupport.attach(this)
     }
 }
