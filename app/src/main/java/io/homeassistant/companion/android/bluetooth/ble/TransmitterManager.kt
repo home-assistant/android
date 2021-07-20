@@ -88,12 +88,13 @@ object TransmitterManager {
         }
     }
 
-    private fun getPowerLevel(haTransmitter: IBeaconTransmitter): Int {
-        if (haTransmitter.transmitPowerSetting == "high") return AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
-        if (haTransmitter.transmitPowerSetting == "medium") return AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
-        if (haTransmitter.transmitPowerSetting == "low") return AdvertiseSettings.ADVERTISE_TX_POWER_LOW
-        return AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
-    }
+    private fun getPowerLevel(haTransmitter: IBeaconTransmitter) =
+        when (haTransmitter.transmitPowerSetting) {
+            "high" -> AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
+            "medium" -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
+            "low" -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
+            else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
+        }
 
     fun stopTransmitting(haTransmitter: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter) {
         if (haTransmitter.transmitting && this::physicalTransmitter.isInitialized) {
