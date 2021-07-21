@@ -15,13 +15,13 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_template_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class TemplateWidgetConfigureActivity : BaseActivity() {
     companion object {
@@ -73,7 +73,12 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
         if (templateWidget != null) {
             templateText.setText(templateWidget.template)
             add_button.setText(R.string.update_widget)
-            renderTemplateText(templateWidget.template)
+            if (templateWidget.template.isNotEmpty())
+                renderTemplateText(templateWidget.template)
+            else {
+                renderedTemplate.text = getString(R.string.empty_template)
+                add_button.isEnabled = false
+            }
             delete_button.visibility = VISIBLE
             delete_button.setOnClickListener(onDeleteWidget)
         }
@@ -81,7 +86,13 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
         templateText.doAfterTextChanged { editableText ->
             if (editableText == null)
                 return@doAfterTextChanged
-            renderTemplateText(editableText.toString())
+            if (editableText.isNotEmpty()) {
+                add_button.isEnabled = true
+                renderTemplateText(editableText.toString())
+            } else {
+                renderedTemplate.text = getString(R.string.empty_template)
+                add_button.isEnabled = false
+            }
         }
 
         add_button.setOnClickListener {

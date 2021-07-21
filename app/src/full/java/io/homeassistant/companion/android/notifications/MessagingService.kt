@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.bluetooth.BluetoothAdapter
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -13,16 +14,20 @@ import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.RingtoneManager
+import android.media.session.MediaController
+import android.media.session.MediaSessionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
 import android.util.Log
+import android.view.KeyEvent
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -46,19 +51,20 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
+import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.util.getActiveNotification
 import io.homeassistant.companion.android.webview.WebViewActivity
-import java.net.URL
-import java.util.Locale
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.net.URL
+import java.util.Locale
+import javax.inject.Inject
 
 class MessagingService : FirebaseMessagingService() {
     companion object {
@@ -89,6 +95,8 @@ class MessagingService : FirebaseMessagingService() {
         const val COMMAND_VOLUME_LEVEL = "command_volume_level"
         const val COMMAND_BLUETOOTH = "command_bluetooth"
         const val COMMAND_BLE_TRANSMITTER = "command_ble_transmitter"
+        const val COMMAND_SCREEN_ON = "command_screen_on"
+        const val COMMAND_MEDIA = "command_media"
 
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
@@ -116,14 +124,30 @@ class MessagingService : FirebaseMessagingService() {
         const val TURN_ON = "turn_on"
         const val TURN_OFF = "turn_off"
 
+        // Media Commands
+        const val MEDIA_FAST_FORWARD = "fast_forward"
+        const val MEDIA_NEXT = "next"
+        const val MEDIA_PAUSE = "pause"
+        const val MEDIA_PLAY = "play"
+        const val MEDIA_PLAY_PAUSE = "play_pause"
+        const val MEDIA_PREVIOUS = "previous"
+        const val MEDIA_REWIND = "rewind"
+        const val MEDIA_STOP = "stop"
+
         // Command groups
-        val DEVICE_COMMANDS = listOf(COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
+        val DEVICE_COMMANDS = listOf(
+            COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
             COMMAND_VOLUME_LEVEL, COMMAND_BLUETOOTH, COMMAND_BLE_TRANSMITTER, COMMAND_HIGH_ACCURACY_MODE, COMMAND_ACTIVITY,
-            COMMAND_WEBVIEW)
+            COMMAND_WEBVIEW, COMMAND_SCREEN_ON, COMMAND_MEDIA
+        )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
         val ENABLE_COMMANDS = listOf(TURN_OFF, TURN_ON)
+        val MEDIA_COMMANDS = listOf(
+            MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
+            MEDIA_PLAY_PAUSE, MEDIA_PREVIOUS, MEDIA_REWIND, MEDIA_STOP
+        )
     }
 
     @Inject
@@ -215,7 +239,8 @@ class MessagingService : FirebaseMessagingService() {
                         }
                         COMMAND_VOLUME_LEVEL -> {
                             if (!it["channel"].isNullOrEmpty() && it["channel"] in CHANNEL_VOLUME_STREAM &&
-                                !it[TITLE].isNullOrEmpty() && it[TITLE]?.toIntOrNull() != null)
+                                !it[TITLE].isNullOrEmpty() && it[TITLE]?.toIntOrNull() != null
+                            )
                                 handleDeviceCommands(it)
                             else {
                                 mainScope.launch {
@@ -269,6 +294,26 @@ class MessagingService : FirebaseMessagingService() {
                         COMMAND_WEBVIEW -> {
                             handleDeviceCommands(it)
                         }
+                        COMMAND_SCREEN_ON -> {
+                            handleDeviceCommands(it)
+                        }
+                        COMMAND_MEDIA -> {
+                            if (!it[TITLE].isNullOrEmpty() && it[TITLE] in MEDIA_COMMANDS && !it["channel"].isNullOrEmpty()) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                                    handleDeviceCommands(it)
+                                } else {
+                                    mainScope.launch {
+                                        Log.d(TAG, "Posting notification to device as it does not support media commands")
+                                        sendNotification(it)
+                                    }
+                                }
+                            } else {
+                                mainScope.launch {
+                                    Log.d(TAG, "Invalid media command received, posting notification to device")
+                                    sendNotification(it)
+                                }
+                            }
+                        }
                         else -> Log.d(TAG, "No command received")
                     }
                 }
@@ -314,7 +359,8 @@ class MessagingService : FirebaseMessagingService() {
         val maxAlarmVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
             tts = getString(R.string.tts_no_title)
-        textToSpeech = TextToSpeech(applicationContext
+        textToSpeech = TextToSpeech(
+            applicationContext
         ) {
             if (it == TextToSpeech.SUCCESS) {
                 val listener = object : UtteranceProgressListener() {
@@ -414,7 +460,8 @@ class MessagingService : FirebaseMessagingService() {
                                 if (pair[1].isDigitsOnly())
                                     pair[1].toInt()
                                 else if ((pair[1].toLowerCase() == "true") ||
-                                    (pair[1].toLowerCase() == "false"))
+                                    (pair[1].toLowerCase() == "false")
+                                )
                                     pair[1].toBoolean()
                                 else pair[1]
                             )
@@ -497,6 +544,26 @@ class MessagingService : FirebaseMessagingService() {
                         openWebview(title)
                 } else
                     openWebview(title)
+            }
+            COMMAND_SCREEN_ON -> {
+                val powerManager = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+                val wakeLock = powerManager.newWakeLock(
+                    PowerManager.FULL_WAKE_LOCK or
+                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                        PowerManager.ON_AFTER_RELEASE,
+                    "HomeAssistant::NotificationScreenOnWakeLock"
+                )
+                wakeLock.acquire(1 * 30 * 1000L /*30 seconds */)
+                wakeLock.release()
+            }
+            COMMAND_MEDIA -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    if (!NotificationManagerCompat.getEnabledListenerPackages(applicationContext).contains(applicationContext.packageName))
+                        requestNotificationPermission()
+                    else {
+                        processMediaCommand(data)
+                    }
+                }
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -694,7 +761,8 @@ class MessagingService : FirebaseMessagingService() {
             builder.setSound(
                 RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_ALARM)
                     ?: RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE),
-                AudioManager.STREAM_ALARM)
+                AudioManager.STREAM_ALARM
+            )
         } else {
             builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
         }
@@ -953,7 +1021,7 @@ class MessagingService : FirebaseMessagingService() {
                         actionIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT
                     )
-                    val action: NotificationCompat.Action = NotificationCompat.Action.Builder(0, "reply", replyPendingIntent)
+                    val action: NotificationCompat.Action = NotificationCompat.Action.Builder(0, notificationAction.title, replyPendingIntent)
                         .addRemoteInput(remoteInput)
                         .build()
                     builder.addAction(action)
@@ -1029,9 +1097,11 @@ class MessagingService : FirebaseMessagingService() {
             .setLegacyStreamType(AudioManager.STREAM_ALARM)
             .setUsage(AudioAttributes.USAGE_ALARM)
             .build()
-        channel.setSound(RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_ALARM)
-            ?: RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE),
-            audioAttributes)
+        channel.setSound(
+            RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_ALARM)
+                ?: RingtoneManager.getActualDefaultRingtoneUri(applicationContext, RingtoneManager.TYPE_RINGTONE),
+            audioAttributes
+        )
     }
 
     private fun parseVibrationPattern(
@@ -1074,9 +1144,64 @@ class MessagingService : FirebaseMessagingService() {
     private fun requestSystemAlertPermission() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:$packageName"))
+            Uri.parse("package:$packageName")
+        )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         startActivity(intent)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
+    private fun requestNotificationPermission() {
+        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+    private fun getKeyEvent(key: String): Int {
+        return when (key) {
+            MEDIA_FAST_FORWARD -> KeyEvent.KEYCODE_MEDIA_FAST_FORWARD
+            MEDIA_NEXT -> KeyEvent.KEYCODE_MEDIA_NEXT
+            MEDIA_PAUSE -> KeyEvent.KEYCODE_MEDIA_PAUSE
+            MEDIA_PLAY -> KeyEvent.KEYCODE_MEDIA_PLAY
+            MEDIA_PLAY_PAUSE -> KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
+            MEDIA_PREVIOUS -> KeyEvent.KEYCODE_MEDIA_PREVIOUS
+            MEDIA_REWIND -> KeyEvent.KEYCODE_MEDIA_REWIND
+            MEDIA_STOP -> KeyEvent.KEYCODE_MEDIA_STOP
+            else -> 0
+        }
+    }
+
+    private fun processMediaCommand(data: Map<String, String>) {
+        val title = data[TITLE]
+        val mediaSessionManager = applicationContext.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+        val mediaList = mediaSessionManager.getActiveSessions(ComponentName(applicationContext, NotificationSensorManager::class.java))
+        var hasCorrectPackage = false
+        if (mediaList.size > 0) {
+            for (item in mediaList) {
+                if (item.packageName == data["channel"]) {
+                    hasCorrectPackage = true
+                    val mediaSessionController = MediaController(applicationContext, item.sessionToken)
+                    val success = mediaSessionController.dispatchMediaButtonEvent(KeyEvent(KeyEvent.ACTION_DOWN, getKeyEvent(title!!)))
+                    if (!success) {
+                        mainScope.launch {
+                            Log.d(TAG, "Posting notification as the command was not sent to the session")
+                            sendNotification(data)
+                        }
+                    }
+                }
+            }
+            if (!hasCorrectPackage) {
+                mainScope.launch {
+                    Log.d(TAG, "Posting notification as the package is not found in the list of media sessions")
+                    sendNotification(data)
+                }
+            }
+        } else {
+            mainScope.launch {
+                Log.d(TAG, "Posting notification as there are no active media sessions")
+                sendNotification(data)
+            }
+        }
     }
 
     private fun processRingerMode(audioManager: AudioManager, title: String?) {
@@ -1142,7 +1267,8 @@ class MessagingService : FirebaseMessagingService() {
                         if (pair[1].isDigitsOnly())
                             pair[1].toInt()
                         else if ((pair[1].toLowerCase() == "true") ||
-                            (pair[1].toLowerCase() == "false"))
+                            (pair[1].toLowerCase() == "false")
+                        )
                             pair[1].toBoolean()
                         else pair[1]
                     )

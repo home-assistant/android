@@ -15,7 +15,7 @@ import java.util.TimeZone
 class NextAlarmManager : SensorManager {
     companion object {
         private const val TAG = "NextAlarm"
-        private const val ALLOW_LIST = "Allow List"
+        private const val SETTING_ALLOW_LIST = "nextalarm_allow_list"
 
         val nextAlarm = SensorManager.BasicSensor(
             "next_alarm",
@@ -26,13 +26,17 @@ class NextAlarmManager : SensorManager {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#next-alarm-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_alarm
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(nextAlarm)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(nextAlarm)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -56,7 +60,7 @@ class NextAlarmManager : SensorManager {
 
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensorSetting = sensorDao.getSettings(nextAlarm.id)
-        val allowPackageList = sensorSetting.firstOrNull { it.name == ALLOW_LIST }?.value ?: ""
+        val allowPackageList = sensorSetting.firstOrNull { it.name == SETTING_ALLOW_LIST }?.value ?: ""
 
         try {
             val alarmManager: AlarmManager =
@@ -66,15 +70,18 @@ class NextAlarmManager : SensorManager {
 
             if (alarmClockInfo != null) {
                 pendingIntent = alarmClockInfo.showIntent?.creatorPackage ?: "Unknown"
+                triggerTime = alarmClockInfo.triggerTime
 
+                Log.d(TAG, "Next alarm is scheduled by $pendingIntent with trigger time $triggerTime")
                 if (allowPackageList != "") {
                     val allowPackageListing = allowPackageList.split(", ")
-                    if (pendingIntent !in allowPackageListing)
+                    if (pendingIntent !in allowPackageListing) {
+                        Log.d(TAG, "Skipping update from $pendingIntent as it is not in the allow list")
                         return
+                    }
                 } else {
-                    sensorDao.add(Setting(nextAlarm.id, ALLOW_LIST, allowPackageList, "list-apps"))
+                    sensorDao.add(Setting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, "list-apps"))
                 }
-                triggerTime = alarmClockInfo.triggerTime
 
                 val cal: Calendar = GregorianCalendar()
                 cal.timeInMillis = triggerTime
@@ -84,14 +91,16 @@ class NextAlarmManager : SensorManager {
                 val sdf = SimpleDateFormat(dateFormat)
                 sdf.timeZone = TimeZone.getTimeZone("UTC")
                 utc = sdf.format(Date(triggerTime))
-            }
+            } else
+                Log.d(TAG, "No alarm is scheduled, sending unavailable")
         } catch (e: Exception) {
             Log.e(TAG, "Error getting the next alarm info", e)
         }
 
         val icon = "mdi:alarm"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             nextAlarm,
             utc,
             icon,

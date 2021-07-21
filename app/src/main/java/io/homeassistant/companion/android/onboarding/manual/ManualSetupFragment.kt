@@ -67,7 +67,7 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
 
     override fun displayUrlError() {
         view?.findViewById<TextInputLayout>(R.id.url_text_layout)?.error =
-            context?.getString(R.string.url_parse_error)
+            getString(R.string.url_parse_error)
     }
 
     override fun onDestroy() {

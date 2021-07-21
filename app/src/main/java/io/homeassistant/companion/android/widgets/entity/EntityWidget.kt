@@ -19,11 +19,11 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class EntityWidget : AppWidgetProvider() {
 
@@ -151,7 +151,7 @@ class EntityWidget : AppWidgetProvider() {
             entity = entityId?.let { integrationUseCase.getEntity(it) }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
-            if (lastIntent != Intent.ACTION_SCREEN_ON)
+            if (lastIntent == UPDATE_ENTITY)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
         if (attributeIds == null) {
@@ -169,7 +169,7 @@ class EntityWidget : AppWidgetProvider() {
             return lastUpdate
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
-            if (lastIntent != Intent.ACTION_SCREEN_ON)
+            if (lastIntent == UPDATE_ENTITY)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
         }
         return staticWidgetDao.get(appWidgetId)?.lastUpdate
@@ -180,9 +180,10 @@ class EntityWidget : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
-            TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + lastIntent + System.lineSeparator() +
-                    "AppWidgetId: " + appWidgetId
+            TAG,
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + lastIntent + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId
         )
 
         ensureInjected(context)
@@ -216,20 +217,23 @@ class EntityWidget : AppWidgetProvider() {
 
         mainScope.launch {
             Log.d(
-                TAG, "Saving entity state config data:" + System.lineSeparator() +
-                "entity id: " + entitySelection + System.lineSeparator() +
-                "attribute: " + (attributeSelection ?: "N/A")
+                TAG,
+                "Saving entity state config data:" + System.lineSeparator() +
+                    "entity id: " + entitySelection + System.lineSeparator() +
+                    "attribute: " + (attributeSelection ?: "N/A")
             )
-            staticWidgetDao.add(StaticWidgetEntity(
-                appWidgetId,
-                entitySelection,
-                attributeSelection?.joinToString(","),
-                labelSelection,
-                textSizeSelection?.toFloatOrNull() ?: 30F,
-                stateSeparatorSelection ?: "",
-                attributeSeparatorSelection ?: "",
-                staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
-            ))
+            staticWidgetDao.add(
+                StaticWidgetEntity(
+                    appWidgetId,
+                    entitySelection,
+                    attributeSelection?.joinToString(","),
+                    labelSelection,
+                    textSizeSelection?.toFloatOrNull() ?: 30F,
+                    stateSeparatorSelection ?: "",
+                    attributeSeparatorSelection ?: "",
+                    staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
+                )
+            )
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }

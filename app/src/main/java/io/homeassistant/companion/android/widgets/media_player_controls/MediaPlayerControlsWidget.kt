@@ -14,19 +14,21 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import com.squareup.picasso.Picasso
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class MediaPlayerControlsWidget : AppWidgetProvider() {
 
@@ -56,6 +58,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    @Inject
+    lateinit var urlUseCase: UrlRepository
 
     lateinit var mediaPlayCtrlWidgetDao: MediaPlayerControlsWidgetDao
 
@@ -148,6 +153,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                     label ?: entityId
                 )
                 val entityPictureUrl = retrieveMediaPlayerImageUrl(context, entityId)
+                val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
+                val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
                     setImageViewResource(
                         R.id.widgetMediaImage,
@@ -172,11 +179,17 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                     )
                     Log.d(TAG, "Fetching media preview image")
                     Handler(Looper.getMainLooper()).post {
-                        Picasso.get().load(entityPictureUrl).into(
-                            this,
-                            R.id.widgetMediaImage,
-                            intArrayOf(appWidgetId)
-                        )
+                        if (BuildConfig.DEBUG)
+                            Picasso.get().isLoggingEnabled = true
+                        try {
+                            Picasso.get().load(url).resize(1024, 600).into(
+                                this,
+                                R.id.widgetMediaImage,
+                                intArrayOf(appWidgetId)
+                            )
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Unable to load image", e)
+                        }
                         Log.d(TAG, "Fetch and load complete")
                     }
                 }
@@ -270,7 +283,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             entity = integrationUseCase.getEntity(entityId)
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent != Intent.ACTION_SCREEN_ON)
+            if (lastIntent == UPDATE_MEDIA_IMAGE)
                 Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             return null
         }
@@ -283,9 +296,10 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val appWidgetId = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1)
 
         Log.d(
-            TAG, "Broadcast received: " + System.lineSeparator() +
-                    "Broadcast action: " + lastIntent + System.lineSeparator() +
-                    "AppWidgetId: " + appWidgetId
+            TAG,
+            "Broadcast received: " + System.lineSeparator() +
+                "Broadcast action: " + lastIntent + System.lineSeparator() +
+                "AppWidgetId: " + appWidgetId
         )
 
         ensureInjected(context)
@@ -321,8 +335,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
         mainScope.launch {
             Log.d(
-                TAG, "Saving service call config data:" + System.lineSeparator() +
-                        "entity id: " + entitySelection + System.lineSeparator()
+                TAG,
+                "Saving service call config data:" + System.lineSeparator() +
+                    "entity id: " + entitySelection + System.lineSeparator()
             )
             mediaPlayCtrlWidgetDao.add(
                 MediaPlayerControlsWidgetEntity(
@@ -349,8 +364,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling previous track service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling previous track service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
@@ -373,8 +389,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling rewind service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling rewind service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val currentEntityInfo: Entity<Map<String, Any>>
@@ -418,8 +435,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling play/pause service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling play/pause service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"
@@ -442,8 +460,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling fast forward service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling fast forward service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val currentEntityInfo: Entity<Map<String, Any>>
@@ -487,8 +506,9 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             }
 
             Log.d(
-                TAG, "Calling next track service:" + System.lineSeparator() +
-                        "entity id: " + entity.entityId + System.lineSeparator()
+                TAG,
+                "Calling next track service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
             )
 
             val domain = "media_player"

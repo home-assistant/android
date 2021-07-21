@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.PowerManager
 import android.util.Log
@@ -13,12 +14,13 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.database.AppDatabase
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.Locale
+import javax.inject.Inject
 
 class SensorReceiver : BroadcastReceiver() {
 
@@ -94,8 +96,11 @@ class SensorReceiver : BroadcastReceiver() {
         if (skippableActions.containsKey(intent.action)) {
             val sensor = skippableActions[intent.action]
             if (!isSensorEnabled(context, sensor!!)) {
-                Log.d(TAG, String.format
-                    ("Sensor %s corresponding to received event %s is disabled, skipping sensors update", sensor, intent.action))
+                Log.d(
+                    TAG,
+                    String.format
+                    ("Sensor %s corresponding to received event %s is disabled, skipping sensors update", sensor, intent.action)
+                )
                 return
             }
         }
@@ -152,14 +157,17 @@ class SensorReceiver : BroadcastReceiver() {
             } catch (e: Exception) {
                 Log.e(TAG, "Issue requesting updates for ${context.getString(manager.name)}", e)
             }
-            manager.availableSensors.forEach { basicSensor ->
+            manager.getAvailableSensors(context).forEach { basicSensor ->
                 val fullSensor = sensorDao.getFull(basicSensor.id)
                 val sensor = fullSensor?.sensor
 
                 // Register Sensors if needed
                 if (sensor?.enabled == true && !sensor.registered && !sensor.type.isBlank()) {
                     val reg = fullSensor.toSensorRegistration()
-                    reg.name = context.getString(basicSensor.name)
+                    val config = Configuration(context.resources.configuration)
+                    config.setLocale(Locale("en"))
+                    reg.name = context.createConfigurationContext(config).resources.getString(basicSensor.name)
+
                     try {
                         integrationUseCase.registerSensor(reg)
                         sensor.registered = true

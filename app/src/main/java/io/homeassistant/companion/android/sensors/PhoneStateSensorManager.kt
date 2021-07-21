@@ -16,7 +16,8 @@ class PhoneStateSensorManager : SensorManager {
             "phone_state",
             "sensor",
             R.string.basic_sensor_name_phone,
-            R.string.sensor_description_phone_state
+            R.string.sensor_description_phone_state,
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor"
         )
 
         val sim_1 = SensorManager.BasicSensor(
@@ -34,15 +35,19 @@ class PhoneStateSensorManager : SensorManager {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#cellular-provider-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_phone
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
             listOf(phoneState, sim_1, sim_2)
         else listOf(phoneState)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf(Manifest.permission.READ_PHONE_STATE)
@@ -81,7 +86,8 @@ class PhoneStateSensorManager : SensorManager {
         if (state == "ringing" || state == "offhook")
             phoneIcon += "-in-talk"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             phoneState,
             state,
             phoneIcon,
@@ -121,7 +127,8 @@ class PhoneStateSensorManager : SensorManager {
                 }
             }
 
-            onSensorUpdated(context,
+            onSensorUpdated(
+                context,
                 basicSimSensor,
                 displayName,
                 "mdi:sim",

@@ -38,13 +38,13 @@ import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_button_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     companion object {
@@ -54,8 +54,6 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
-
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     private lateinit var iconPack: IconPack
 
@@ -166,54 +164,56 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         }
     }
 
-    private val serviceTextWatcher: TextWatcher = (object : TextWatcher {
-        override fun afterTextChanged(p0: Editable?) {
-            val serviceText: String = p0.toString()
+    private val serviceTextWatcher: TextWatcher = (
+        object : TextWatcher {
+            override fun afterTextChanged(p0: Editable?) {
+                val serviceText: String = p0.toString()
 
-            if (services.keys.contains(serviceText)) {
-                Log.d(TAG, "Valid domain and service--processing dynamic fields")
+                if (services.keys.contains(serviceText)) {
+                    Log.d(TAG, "Valid domain and service--processing dynamic fields")
 
-                // Make sure there are not already any dynamic fields created
-                // This can happen if selecting the drop-down twice or pasting
-                dynamicFields.clear()
-
-                // We only call this if servicesAvailable was fetched and is not null,
-                // so we can safely assume that it is not null here
-                val serviceData = services[serviceText]!!.serviceData
-                val target = serviceData.target
-                val fields = serviceData.fields
-
-                val fieldKeys = fields.keys
-                Log.d(TAG, "Fields applicable to this service: $fields")
-
-                if (target !== false) {
-                    dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id"))
-                }
-
-                fieldKeys.sorted().forEach { fieldKey ->
-                    Log.d(TAG, "Creating a text input box for $fieldKey")
-
-                    // Insert a dynamic layout
-                    // IDs get priority and go at the top, since the other fields
-                    // are usually optional but the ID is required
-                    if (fieldKey.contains("_id"))
-                        dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
-                    else
-                        dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
-                }
-
-                dynamicFieldAdapter.notifyDataSetChanged()
-            } else {
-                if (dynamicFields.size > 0) {
+                    // Make sure there are not already any dynamic fields created
+                    // This can happen if selecting the drop-down twice or pasting
                     dynamicFields.clear()
+
+                    // We only call this if servicesAvailable was fetched and is not null,
+                    // so we can safely assume that it is not null here
+                    val serviceData = services[serviceText]!!.serviceData
+                    val target = serviceData.target
+                    val fields = serviceData.fields
+
+                    val fieldKeys = fields.keys
+                    Log.d(TAG, "Fields applicable to this service: $fields")
+
+                    if (target !== false) {
+                        dynamicFields.add(0, ServiceFieldBinder(serviceText, "entity_id"))
+                    }
+
+                    fieldKeys.sorted().forEach { fieldKey ->
+                        Log.d(TAG, "Creating a text input box for $fieldKey")
+
+                        // Insert a dynamic layout
+                        // IDs get priority and go at the top, since the other fields
+                        // are usually optional but the ID is required
+                        if (fieldKey.contains("_id"))
+                            dynamicFields.add(0, ServiceFieldBinder(serviceText, fieldKey))
+                        else
+                            dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
+                    }
+
                     dynamicFieldAdapter.notifyDataSetChanged()
+                } else {
+                    if (dynamicFields.size > 0) {
+                        dynamicFields.clear()
+                        dynamicFieldAdapter.notifyDataSetChanged()
+                    }
                 }
             }
-        }
 
-        override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-        override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
-    })
+            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
+        }
+        )
 
     private fun getServiceString(service: Service): String {
         return "${service.domain}.${service.service}"
@@ -275,6 +275,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 integrationUseCase.getServices().forEach {
                     services[getServiceString(it)] = it
                 }
+                Log.d(TAG, "Services found: $services")
                 if (buttonWidget != null) {
                     serviceAdapter.add(services[serviceText])
                     val serviceData = services[serviceText]!!.serviceData
@@ -321,7 +322,8 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             } catch (e: Exception) {
                 // Custom components can cause services to not load
                 // Display error text
-                widget_config_service_error.visibility = View.VISIBLE
+                Log.e(TAG, "Unable to load services from Home Assistant", e)
+                widget_config_service_error.visibility = VISIBLE
             }
 
             try {
@@ -345,7 +347,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         widget_config_fields_layout.layoutManager = LinearLayoutManager(this)
 
         // Do this off the main thread, takes a second or two...
-        ioScope.launch {
+        runOnUiThread {
             // Create an icon pack and load all drawables.
             iconPack = createMaterialDesignIconPack(loader)
             iconPack.loadDrawables(loader.drawableLoader)

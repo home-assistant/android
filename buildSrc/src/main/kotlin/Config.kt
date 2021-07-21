@@ -1,11 +1,12 @@
 object Config {
 
     object Plugin {
-        const val android = "com.android.tools.build:gradle:4.1.2"
+        const val android = "com.android.tools.build:gradle:4.2.1"
         const val kotlin = "org.jetbrains.kotlin:kotlin-gradle-plugin:${Dependency.Kotlin.version}"
-        const val google = "com.google.gms:google-services:4.3.5"
-        const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:2.0.1"
+        const val google = "com.google.gms:google-services:4.3.8"
+        const val appDistribution = "com.google.firebase:firebase-appdistribution-gradle:2.1.2"
         const val androidJunit5 = "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
+        const val gpp = "com.github.triplet.gradle:play-publisher:3.5.0-SNAPSHOT"
     }
 
     object Android {
@@ -18,7 +19,7 @@ object Config {
 
     object Dependency {
         object Kotlin {
-            const val version = "1.4.31"
+            const val version = "1.5.0"
             const val core = "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${version}"
             const val reflect = "org.jetbrains.kotlin:kotlin-reflect:${version}"
 
@@ -30,7 +31,7 @@ object Config {
         }
 
         object Google {
-            private const val daggerVersion = "2.33"
+            private const val daggerVersion = "2.35.1"
             const val dagger = "com.google.dagger:dagger:${daggerVersion}"
             const val daggerCompiler = "com.google.dagger:dagger-compiler:${daggerVersion}"
 
@@ -44,15 +45,15 @@ object Config {
 
             const val webKit = "androidx.webkit:webkit:1.4.0"
             const val appcompat = "androidx.appcompat:appcompat:1.2.0"
-            const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
-            const val recyclerview = "androidx.recyclerview:recyclerview:1.1.0"
+            const val lifecycle = "androidx.lifecycle:lifecycle-runtime-ktx:2.3.1"
+            const val recyclerview = "androidx.recyclerview:recyclerview:1.2.0"
             const val constraintlayout = "androidx.constraintlayout:constraintlayout:2.0.4"
             const val preference = "androidx.preference:preference-ktx:1.1.1"
 
             const val wear = "androidx.wear:wear:1.1.0"
 
-            const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.3"
-            const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.3"
+            const val navigationFragment = "androidx.navigation:navigation-fragment-ktx:2.3.5"
+            const val navigationUi = "androidx.navigation:navigation-ui-ktx:2.3.5"
 
             const val workManager = "androidx.work:work-runtime-ktx:2.5.0"
             const val biometric = "androidx.biometric:biometric:1.1.0"
@@ -68,9 +69,9 @@ object Config {
         }
 
         object Firebase {
-            const val core = "com.google.firebase:firebase-core:17.3.0"
-            const val iid = "com.google.firebase:firebase-iid:20.3.0"
-            const val messaging = "com.google.firebase:firebase-messaging:20.3.0"
+            const val core = "com.google.firebase:firebase-core:19.0.0"
+            const val iid = "com.google.firebase:firebase-iid:21.1.0"
+            const val messaging = "com.google.firebase:firebase-messaging:22.0.0"
         }
 
         object Square {
@@ -101,14 +102,15 @@ object Config {
 
         object Misc {
             const val sentry = "io.sentry:sentry-android:4.3.0"
-            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.2"
+            const val jackson = "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3"
             const val blurView = "com.eightbitlab:blurview:1.6.6"
             const val iconDialog = "com.maltaisn:icondialog:3.3.0"
             const val iconDialogMaterial = "com.maltaisn:iconpack-community-material:5.3.45"
             const val emoji = "com.vdurmont:emoji-java:5.1.1"
-            const val exoCore = "com.google.android.exoplayer:exoplayer-core:2.11.7"
-            const val exoHls = "com.google.android.exoplayer:exoplayer-hls:2.11.7"
-            const val exoUi = "com.google.android.exoplayer:exoplayer-ui:2.11.7"
+            const val exoCore = "com.google.android.exoplayer:exoplayer-core:2.14.1"
+            const val exoHls = "com.google.android.exoplayer:exoplayer-hls:2.14.1"
+            const val exoUi = "com.google.android.exoplayer:exoplayer-ui:2.14.1"
+            const val exoCronet = "com.google.android.exoplayer:extension-cronet:2.14.1"
             const val altBeacon =  "org.altbeacon:android-beacon-library:2+"
         }
 

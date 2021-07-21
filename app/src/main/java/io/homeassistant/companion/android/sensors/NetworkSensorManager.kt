@@ -70,17 +70,21 @@ class NetworkSensorManager : SensorManager {
             "public_ip_address",
             "sensor",
             R.string.basic_sensor_name_public_ip,
-            R.string.sensor_description_public_ip
+            R.string.sensor_description_public_ip,
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor"
         )
-        private const val GET_CURRENT_BSSID = "get_current_bssid"
+        private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#connection-type-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_network
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(
             wifiConnection,
             bssidState,
             wifiIp,
@@ -90,6 +94,7 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength,
             publicIp
         )
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
@@ -169,14 +174,14 @@ class NetworkSensorManager : SensorManager {
 
         var bssid = if (conInfo!!.bssid == null) "<not connected>" else conInfo.bssid
 
-        val settingName = "replace_$bssid"
+        val settingName = "network_replace_mac_var1:$bssid:"
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val sensorSettings = sensorDao.getSettings(bssidState.id)
-        val getCurrentBSSID = sensorSettings.firstOrNull { it.name == GET_CURRENT_BSSID }?.value ?: "false"
+        val getCurrentBSSID = sensorSettings.firstOrNull { it.name == SETTING_GET_CURRENT_BSSID }?.value ?: "false"
         val currentSetting = sensorSettings.firstOrNull { it.name == settingName }?.value ?: ""
         if (getCurrentBSSID == "true") {
             if (currentSetting == "") {
-                sensorDao.add(Setting(bssidState.id, GET_CURRENT_BSSID, "false", "toggle"))
+                sensorDao.add(Setting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", "toggle"))
                 sensorDao.add(Setting(bssidState.id, settingName, bssid, "string"))
             }
         } else {
@@ -185,7 +190,7 @@ class NetworkSensorManager : SensorManager {
             else
                 sensorDao.removeSetting(bssidState.id, settingName)
 
-            sensorDao.add(Setting(bssidState.id, GET_CURRENT_BSSID, "false", "toggle"))
+            sensorDao.add(Setting(bssidState.id, SETTING_GET_CURRENT_BSSID, "false", "toggle"))
         }
 
         val icon = if (bssid != "<not connected>") "mdi:wifi" else "mdi:wifi-off"
@@ -360,9 +365,9 @@ class NetworkSensorManager : SensorManager {
 
     private fun getIpAddress(ip: Int): String {
         return (ip and 0xFF).toString() + "." +
-                (ip shr 8 and 0xFF) + "." +
-                (ip shr 16 and 0xFF) + "." +
-                (ip shr 24 and 0xFF)
+            (ip shr 8 and 0xFF) + "." +
+            (ip shr 16 and 0xFF) + "." +
+            (ip shr 24 and 0xFF)
     }
 
     private fun updatePublicIpSensor(context: Context) {

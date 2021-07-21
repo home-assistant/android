@@ -43,15 +43,28 @@ class BatterySensorManager : SensorManager {
             R.string.basic_sensor_name_battery_health,
             R.string.sensor_description_battery_health
         )
+
+        private val batteryTemperature = SensorManager.BasicSensor(
+            "battery_temperature",
+            "sensor",
+            R.string.basic_sensor_name_battery_temperature,
+            R.string.sensor_description_battery_temperature,
+            "temperature",
+            "°C"
+        )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#battery-sensors"
+    }
     override val enabledByDefault: Boolean
         get() = true
 
     override val name: Int
         get() = R.string.sensor_name_battery
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(batteryLevel, batteryState, isChargingState, chargerTypeState, batteryHealthState)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(batteryLevel, batteryState, isChargingState, chargerTypeState, batteryHealthState, batteryTemperature)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -67,6 +80,7 @@ class BatterySensorManager : SensorManager {
             updateIsCharging(context, intent)
             updateChargerType(context, intent)
             updateBatteryHealth(context, intent)
+            updateBatteryTemperature(context, intent)
         }
     }
 
@@ -177,11 +191,26 @@ class BatterySensorManager : SensorManager {
         )
     }
 
+    private fun updateBatteryTemperature(context: Context, intent: Intent) {
+        if (!isEnabled(context, batteryTemperature.id))
+            return
+
+        val batteryTemp = getBatteryTemperature(intent)
+
+        onSensorUpdated(
+            context,
+            batteryTemperature,
+            batteryTemp,
+            "mdi:battery",
+            mapOf()
+        )
+    }
+
     private fun getIsCharging(intent: Intent): Boolean {
         val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
         return status == BatteryManager.BATTERY_STATUS_CHARGING ||
-                status == BatteryManager.BATTERY_STATUS_FULL
+            status == BatteryManager.BATTERY_STATUS_FULL
     }
 
     private fun getChargerType(intent: Intent): String {
@@ -213,5 +242,9 @@ class BatterySensorManager : SensorManager {
             BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "failed"
             else -> "unknown"
         }
+    }
+
+    private fun getBatteryTemperature(intent: Intent): Float {
+        return intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10f
     }
 }

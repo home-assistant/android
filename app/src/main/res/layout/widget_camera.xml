@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widgetLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minHeight="40dp"
+    android:minWidth="40dp"
+    android:background="@drawable/widget_button_background">
+
+    <ImageView
+        android:id="@+id/widgetCameraImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible"
+        android:contentDescription="@string/widget_camera_description"
+        android:scaleType="centerInside" />
+    <ImageView
+        android:id="@+id/widgetCameraPlaceholder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:src="@drawable/app_icon"
+        android:contentDescription="@string/widget_camera_description"
+        android:scaleType="fitCenter" />
+</FrameLayout>

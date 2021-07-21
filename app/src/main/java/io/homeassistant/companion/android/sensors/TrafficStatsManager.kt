@@ -45,15 +45,19 @@ class TrafficStatsManager : SensorManager {
         private var hasCellular = false
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#traffic-stats-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_traffic_stats
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = if (hasCellular) {
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return if (hasCellular) {
             listOf(rxBytesMobile, txBytesMobile, rxBytesTotal, txBytesTotal)
         } else listOf(rxBytesTotal, txBytesTotal)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -93,7 +97,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             rxBytesMobile,
             mobileRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,
@@ -115,7 +120,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             txBytesMobile,
             mobileTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,
@@ -136,7 +142,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             rxBytesTotal,
             totalRx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,
@@ -158,7 +165,8 @@ class TrafficStatsManager : SensorManager {
             return
         }
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             txBytesTotal,
             totalTx.toBigDecimal().setScale(3, RoundingMode.HALF_EVEN),
             icon,

@@ -7,7 +7,7 @@ plugins {
     id("kotlin-kapt")
     id("kotlin-android-extensions")
     id("com.google.firebase.appdistribution")
-    id("com.github.triplet.play") version "3.0.0"
+    id("com.github.triplet.play")
     id("com.google.gms.google-services")
 }
 
@@ -83,6 +83,13 @@ android {
             applicationIdSuffix = ""
             versionNameSuffix = "-full"
         }
+
+        // Generate a list of application ids into BuildConfig
+        val values = productFlavors.joinToString {
+            "\"${it.applicationId ?: defaultConfig.applicationId}${it.applicationIdSuffix}\""
+        }
+
+        defaultConfig.buildConfigField("String[]", "APPLICATION_IDS", "{$values}")
     }
 
     playConfigs {
@@ -170,7 +177,7 @@ dependencies {
     implementation(Config.Dependency.Misc.exoCore)
     implementation(Config.Dependency.Misc.exoHls)
     implementation(Config.Dependency.Misc.exoUi)
-
+    implementation(Config.Dependency.Misc.exoCronet)
     implementation(Config.Dependency.Amap.location)
 }
 

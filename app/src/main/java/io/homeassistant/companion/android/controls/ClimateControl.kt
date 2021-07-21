@@ -29,7 +29,7 @@ class ClimateControl {
                 PendingIntent.getActivity(
                     context,
                     0,
-                    WebViewActivity.newInstance(context.applicationContext).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
@@ -46,13 +46,15 @@ class ClimateControl {
                     "heat" -> context.getString(R.string.state_heat)
                     "heat_cool" -> context.getString(R.string.state_heat_cool)
                     "off" -> context.getString(R.string.state_off)
+                    "unavailable" -> context.getString(R.string.state_unavailable)
                     else -> entity.state
                 }
             )
             val minValue = (entity.attributes["min_temp"] as? Number)?.toFloat() ?: 0f
             val maxValue = (entity.attributes["max_temp"] as? Number)?.toFloat() ?: 100f
             var currentValue = (entity.attributes["temperature"] as? Number)?.toFloat() ?: (
-                    entity.attributes["current_temperature"] as? Number)?.toFloat() ?: 0f
+                entity.attributes["current_temperature"] as? Number
+                )?.toFloat() ?: 0f
             // Ensure the current value is never lower than the minimum or higher than the maximum
             if (currentValue < minValue)
                 currentValue = minValue

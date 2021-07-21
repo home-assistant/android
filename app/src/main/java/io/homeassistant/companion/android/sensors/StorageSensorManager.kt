@@ -60,12 +60,16 @@ class StorageSensorManager : SensorManager {
         }
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#storage-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_storage
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(storageSensor, externalStorage)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(storageSensor, externalStorage)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -88,7 +92,8 @@ class StorageSensorManager : SensorManager {
 
         val icon = "mdi:harddisk"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             storageSensor,
             percentageFreeInternalStorage,
             icon,
@@ -120,7 +125,8 @@ class StorageSensorManager : SensorManager {
 
         val icon = "mdi:micro-sd"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             externalStorage,
             percentFreeExternal,
             icon,

@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
+    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
     id("com.github.ben-manes.versions") version "0.38.0"
 }
 
@@ -12,6 +12,7 @@ buildscript {
         maven { url = java.net.URI("https://maven.aliyun.com/repository/public") }
         maven { url = java.net.URI("https://maven.aliyun.com/repository/gradle-plugin") }
         gradlePluginPortal()
+        maven("https://oss.sonatype.org/content/repositories/snapshots")
     }
     dependencies {
         classpath(Config.Plugin.android)
@@ -19,6 +20,7 @@ buildscript {
         classpath(Config.Plugin.google)
         classpath(Config.Plugin.appDistribution)
         classpath(Config.Plugin.androidJunit5)
+        classpath(Config.Plugin.gpp)
     }
 }
 

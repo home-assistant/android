@@ -27,14 +27,19 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#pedometer-sensors"
+    }
+
     override val enabledByDefault: Boolean
         get() = false
 
     override val name: Int
         get() = R.string.sensor_name_steps
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(stepsSensor)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(stepsSensor)
+    }
 
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager

@@ -8,8 +8,8 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
-import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
 
 class ThemesManager @Inject constructor(
     private val themesUseCase: PrefsRepository
@@ -63,7 +63,7 @@ class ThemesManager @Inject constructor(
                         WebSettingsCompat.FORCE_DARK_ON
                     )
                 }
-                "system" -> {
+                "android", "system" -> {
                     val nightModeFlags =
                         context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
                     if (nightModeFlags == Configuration.UI_MODE_NIGHT_YES) {
@@ -93,7 +93,7 @@ class ThemesManager @Inject constructor(
             "dark" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
             }
-            "system" -> {
+            "android", "system" -> {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
             }
             else -> {

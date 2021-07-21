@@ -36,16 +36,20 @@ class KeyguardSensorManager : SensorManager {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#keyguard-sensors"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_keyguard
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = when {
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return when {
             (Build.VERSION.SDK_INT >= 23) -> listOf(deviceLocked, deviceSecure, keyguardLocked, keyguardSecure)
             (Build.VERSION.SDK_INT >= 22) -> listOf(deviceLocked, keyguardLocked, keyguardSecure)
             else -> listOf(keyguardLocked, keyguardSecure)
+        }
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -74,7 +78,8 @@ class KeyguardSensorManager : SensorManager {
         val isLocked = km.isDeviceLocked
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             deviceLocked,
             isLocked,
             icon,
@@ -91,7 +96,8 @@ class KeyguardSensorManager : SensorManager {
         val isSecure = km.isDeviceSecure
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             deviceSecure,
             isSecure,
             icon,
@@ -107,7 +113,8 @@ class KeyguardSensorManager : SensorManager {
         val isLocked = km.isKeyguardLocked
         val icon = if (isLocked) "mdi:cellphone-lock" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             keyguardLocked,
             isLocked,
             icon,
@@ -123,7 +130,8 @@ class KeyguardSensorManager : SensorManager {
         val isSecure = km.isKeyguardSecure
         val icon = if (isSecure) "mdi:cellphone-key" else "mdi:cellphone"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             keyguardSecure,
             isSecure,
             icon,

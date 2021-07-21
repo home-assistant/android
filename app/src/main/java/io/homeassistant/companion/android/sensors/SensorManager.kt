@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.database.sensor.Setting
 interface SensorManager {
 
     val name: Int
-    val availableSensors: List<BasicSensor>
     val enabledByDefault: Boolean
 
     data class BasicSensor(
@@ -22,9 +21,13 @@ interface SensorManager {
         val name: Int = R.string.sensor,
         val descriptionId: Int = R.string.sensor_description_none,
         val deviceClass: String? = null,
-        val unitOfMeasurement: String? = null
+        val unitOfMeasurement: String? = null,
+        val docsLink: String? = null
     )
 
+    fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors"
+    }
     fun requiredPermissions(sensorId: String): Array<String>
 
     fun checkPermission(context: Context, sensorId: String): Boolean {
@@ -54,6 +57,8 @@ interface SensorManager {
     }
 
     fun requestSensorUpdate(context: Context)
+
+    fun getAvailableSensors(context: Context): List<BasicSensor>
 
     fun hasSensor(context: Context): Boolean {
         return true
@@ -86,7 +91,8 @@ interface SensorManager {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val settingEnabled = isSettingEnabled(context, sensor, settingName)
         if (enabled && !settingEnabled ||
-            !enabled && settingEnabled) {
+            !enabled && settingEnabled
+        ) {
             sensorDao.updateSettingEnabled(sensor.id, settingName, enabled)
         }
     }
@@ -99,13 +105,25 @@ interface SensorManager {
         default: String,
         enabled: Boolean = true
     ): String {
+        return getSetting(context, sensor, settingName, settingType, arrayListOf(), default, enabled)
+    }
+
+    fun getSetting(
+        context: Context,
+        sensor: BasicSensor,
+        settingName: String,
+        settingType: String,
+        entries: List<String> = arrayListOf(),
+        default: String,
+        enabled: Boolean = true
+    ): String {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val setting = sensorDao
-                .getSettings(sensor.id)
-                .firstOrNull { it.name == settingName }
-                ?.value
+            .getSettings(sensor.id)
+            .firstOrNull { it.name == settingName }
+            ?.value
         if (setting == null)
-            sensorDao.add(Setting(sensor.id, settingName, default, settingType, enabled))
+            sensorDao.add(Setting(sensor.id, settingName, default, settingType, entries, enabled))
 
         return setting ?: default
     }
@@ -147,12 +165,12 @@ interface SensorManager {
             }
 
             sensorDao.add(
-                    Attribute(
-                            basicSensor.id,
-                            item.key,
-                            item.value.toString(),
-                            valueType
-                    )
+                Attribute(
+                    basicSensor.id,
+                    item.key,
+                    item.value.toString(),
+                    valueType
+                )
             )
         }
     }

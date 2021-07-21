@@ -17,13 +17,17 @@ class DNDSensorManager : SensorManager {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#do-not-disturb-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_dnd
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(dndSensor)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(dndSensor)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -48,7 +52,8 @@ class DNDSensorManager : SensorManager {
             }
             val icon = "mdi:do-not-disturb"
 
-            onSensorUpdated(context,
+            onSensorUpdated(
+                context,
                 dndSensor,
                 dndState,
                 icon,

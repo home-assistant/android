@@ -17,8 +17,11 @@ object NFCUtil {
     @Throws(Exception::class)
     fun createNFCMessage(url: String, intent: Intent?): Boolean {
         val nfcRecord = NdefRecord.createUri(url)
-        val applicationRecord = NdefRecord.createApplicationRecord(BuildConfig.APPLICATION_ID)
-        val nfcMessage = NdefMessage(arrayOf(nfcRecord, applicationRecord))
+        val applicationRecords = BuildConfig.APPLICATION_IDS.map {
+            NdefRecord.createApplicationRecord(it)
+        }
+
+        val nfcMessage = NdefMessage(arrayOf(nfcRecord) + applicationRecords)
         val nfcFallbackMessage = NdefMessage(arrayOf(nfcRecord))
         intent?.let {
             val tag = it.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)

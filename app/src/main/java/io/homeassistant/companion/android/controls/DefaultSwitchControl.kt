@@ -29,7 +29,7 @@ class DefaultSwitchControl {
                 PendingIntent.getActivity(
                     context,
                     0,
-                    WebViewActivity.newInstance(context.applicationContext).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
@@ -49,7 +49,14 @@ class DefaultSwitchControl {
                 }
             )
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(R.string.state_on))
+            control.setStatusText(
+                when (entity.state) {
+                    "off" -> context.getString(R.string.state_off)
+                    "on" -> context.getString(R.string.state_on)
+                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    else -> context.getString(R.string.state_unknown)
+                }
+            )
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,

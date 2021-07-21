@@ -33,7 +33,7 @@ class VacuumControl {
                 PendingIntent.getActivity(
                     context,
                     0,
-                    WebViewActivity.newInstance(context.applicationContext).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
@@ -42,20 +42,26 @@ class VacuumControl {
             control.setZone(context.getString(R.string.domain_vacuum))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
-                    if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON)
-                        if (entity.state == "off") context.getString(R.string.state_off) else context.getString(R.string.state_on)
-                    else
-                        when (entity.state) {
-                            "cleaning" -> context.getString(R.string.state_cleaning)
-                            "docked" -> context.getString(R.string.state_docked)
-                            "error" -> context.getString(R.string.state_error)
-                            "idle" -> context.getString(R.string.state_idle)
-                            "paused" -> context.getString(R.string.state_paused)
-                            "returning" -> context.getString(R.string.state_returning)
-                            "unavailable" -> context.getString(R.string.state_unavailable)
-                            else -> context.getString(R.string.state_unknown)
-                        }
-                    )
+                if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
+                    when (entity.state) {
+                        "off" -> context.getString(R.string.state_off)
+                        "on" -> context.getString(R.string.state_on)
+                        "unavailable" -> context.getString(R.string.state_unavailable)
+                        else -> context.getString(R.string.state_unknown)
+                    }
+                } else {
+                    when (entity.state) {
+                        "cleaning" -> context.getString(R.string.state_cleaning)
+                        "docked" -> context.getString(R.string.state_docked)
+                        "error" -> context.getString(R.string.state_error)
+                        "idle" -> context.getString(R.string.state_idle)
+                        "paused" -> context.getString(R.string.state_paused)
+                        "returning" -> context.getString(R.string.state_returning)
+                        "unavailable" -> context.getString(R.string.state_unavailable)
+                        else -> context.getString(R.string.state_unknown)
+                    }
+                }
+            )
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,
@@ -64,7 +70,7 @@ class VacuumControl {
                             entity.state == "on"
                         else
                             entity.state == "cleaning",
-                            "Description"
+                        "Description"
                     )
                 )
             )

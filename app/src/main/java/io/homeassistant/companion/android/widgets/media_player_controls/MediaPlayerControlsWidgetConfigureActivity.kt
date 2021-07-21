@@ -18,7 +18,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.widget_media_controls_configure.add_button
 import kotlinx.android.synthetic.main.widget_media_controls_configure.delete_button
 import kotlinx.android.synthetic.main.widget_media_controls_configure.label
@@ -31,6 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
 
 class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
@@ -144,7 +144,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
     private val entityDropDownOnItemClick =
         AdapterView.OnItemClickListener { parent, _, position, _ ->
             selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
-    }
+        }
 
     private var addWidgetButtonClickListener = View.OnClickListener {
         try {

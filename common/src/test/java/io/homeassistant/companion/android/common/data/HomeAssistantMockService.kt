@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.common.data
 
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import java.io.IOException
-import java.net.URL
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import java.io.IOException
+import java.net.URL
 
 class HomeAssistantMockService<T>(private val c: Class<T>) {
 

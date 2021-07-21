@@ -16,6 +16,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
@@ -31,18 +32,28 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
+import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
+import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
+import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
-import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import javax.inject.Inject
 
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
+        private const val TAG = "SettingsFragment"
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
         private const val LOCATION_REQUEST_CODE = 0
         private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
@@ -152,6 +163,34 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             return@setOnPreferenceClickListener true
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            findPreference<PreferenceCategory>("shortcuts")?.let {
+                it.isVisible = true
+            }
+            findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.content, ManageShortcutsSettingsFragment.newInstance())
+                    .addToBackStack(getString(R.string.shortcuts))
+                    .commit()
+                return@setOnPreferenceClickListener true
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            findPreference<PreferenceCategory>("quick_settings")?.let {
+                it.isVisible = true
+            }
+            findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.content, ManageTilesFragment.newInstance())
+                    .addToBackStack(getString(R.string.tiles))
+                    .commit()
+                return@setOnPreferenceClickListener true
+            }
+        }
+
         if (BuildConfig.FLAVOR == "full") {
             findPreference<PreferenceCategory>("notifications")?.let {
                 it.isVisible = true
@@ -169,13 +208,26 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             }
 
             findPreference<Preference>("notification_rate_limit")?.let {
-                val rateLimits = presenter.getNotificationRateLimits()
+                lifecycleScope.launch(Dispatchers.Main) {
+                    // Runs in IO Dispatcher
+                    val rateLimits = presenter.getNotificationRateLimits()
 
-                if (rateLimits != null)
-                    it.isVisible = true
-                it.summary = "\nSuccessful: ${rateLimits?.successful}       Errors: ${rateLimits?.errors}" +
-                        "\n\nRemaining/Maximum: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
-                        "\n\nResets at: ${rateLimits?.resetsAt}"
+                    if (rateLimits != null) {
+                        var formattedDate = rateLimits?.resetsAt
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            try {
+                                val localDateTime = LocalDateTime.parse(rateLimits?.resetsAt, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
+                                formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault()).format(localDateTime)
+                            } catch (e: Exception) {
+                                Log.d(TAG, "Cannot parse notification rate limit date \"${rateLimits?.resetsAt}\"", e)
+                            }
+                        }
+                        it.isVisible = true
+                        it.summary = "\n${getString(R.string.successful)}: ${rateLimits?.successful}       ${getString(R.string.errors)}: ${rateLimits?.errors}" +
+                            "\n\n${getString(R.string.remaining)}/${getString(R.string.maximum)}: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
+                            "\n\n${getString(R.string.resets_at)}: $formattedDate"
+                    }
+                }
             }
             findPreference<SwitchPreference>("crash_reporting")?.let {
                 it.isVisible = true
@@ -209,6 +261,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("privacy")?.let {
             it.summary = "https://www.home-assistant.io/privacy/"
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(it.summary.toString()))
+        }
+
+        findPreference<Preference>("show_share_logs")?.setOnPreferenceClickListener {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.content, LogFragment.newInstance())
+                .addToBackStack(getString(R.string.log))
+                .commit()
+            return@setOnPreferenceClickListener true
         }
 
         presenter.onCreate()
@@ -254,9 +315,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION)
             }
 
-            val fineLocation = DisabledLocationHandler.containsLocationPermission(permissionsToCheck, true)
-
-            if (DisabledLocationHandler.isLocationEnabled(requireContext(), fineLocation)) {
+            if (DisabledLocationHandler.isLocationEnabled(requireContext())) {
                 var permissionsToRequest: Array<String>? = null
                 if (!permissionsToCheck.isNullOrEmpty() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     // For Android 11 we MUST NOT request Background Location permission with fine or coarse permissions
@@ -267,10 +326,13 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
                 val hasPermission = checkPermission(permissionsToCheck)
                 if (permissionsToCheck.isNotEmpty() && !hasPermission) {
-                    LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(requireContext(), permissionsToCheck, continueYesCallback = {
-                        checkAndRequestPermissions(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest, true)
-                        // openSsidDialog() will be called in onRequestPermissionsResult if permission is granted
-                    })
+                    LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
+                        requireContext(), permissionsToCheck,
+                        continueYesCallback = {
+                            checkAndRequestPermissions(permissionsToCheck, LOCATION_REQUEST_CODE, permissionsToRequest, true)
+                            // openSsidDialog() will be called in onRequestPermissionsResult if permission is granted
+                        }
+                    )
                 } else openSsidDialog()
             } else {
                 if (presenter.isSsidUsed()) {
@@ -382,9 +444,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-                context?.getSystemService(PowerManager::class.java)
-                    ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
-                ?: false
+            context?.getSystemService(PowerManager::class.java)
+            ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
+            ?: false
     }
 
     override fun onRequestPermissionsResult(
@@ -413,5 +475,10 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 openSsidDialog()
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        activity?.title = getString(R.string.app_name)
     }
 }

@@ -29,14 +29,18 @@ class PressureSensorManager : SensorManager, SensorEventListener {
     private lateinit var latestContext: Context
     private lateinit var mySensorManager: android.hardware.SensorManager
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#pressure-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
 
     override val name: Int
         get() = R.string.sensor_name_pressure
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(pressureSensor)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(pressureSensor)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -63,7 +67,8 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 pressureSensors,
-                SENSOR_DELAY_NORMAL)
+                SENSOR_DELAY_NORMAL
+            )
             Log.d(TAG, "Pressure sensor listener registered")
             isListenerRegistered = true
         }

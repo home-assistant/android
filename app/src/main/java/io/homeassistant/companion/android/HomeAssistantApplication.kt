@@ -44,7 +44,8 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
         // This should be nearly instantaneous allowing automations to fire immediately when a phone is plugged
         // in or unplugged. Updates will also be triggered when the system reports low battery and when it recovers.
         registerReceiver(
-            sensorReceiver, IntentFilter().apply {
+            sensorReceiver,
+            IntentFilter().apply {
                 addAction(Intent.ACTION_BATTERY_LOW)
                 addAction(Intent.ACTION_BATTERY_OKAY)
                 addAction(Intent.ACTION_POWER_CONNECTED)
@@ -54,7 +55,8 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
 
         // This will cause interactive and power save to update upon a state change
         registerReceiver(
-            sensorReceiver, IntentFilter().apply {
+            sensorReceiver,
+            IntentFilter().apply {
                 addAction(Intent.ACTION_SCREEN_OFF)
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
@@ -64,7 +66,8 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
         // Update doze mode immediately on supported devices
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             registerReceiver(
-                sensorReceiver, IntentFilter().apply {
+                sensorReceiver,
+                IntentFilter().apply {
                     addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED)
                 }
             )
@@ -85,7 +88,8 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
         )
 
         // Listen for bluetooth state changes
-        registerReceiver(sensorReceiver,
+        registerReceiver(
+            sensorReceiver,
             IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         )
 

@@ -3,15 +3,23 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.SearchView
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.view.MenuItemCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceGroup
 import androidx.preference.SwitchPreference
+import androidx.preference.forEach
+import androidx.preference.iterator
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -34,19 +42,21 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             totalEnabledSensors = 0
             val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
             SensorReceiver.MANAGERS.forEach { managers ->
-                managers.availableSensors.forEach { basicSensor ->
+                managers.getAvailableSensors(requireContext()).forEach { basicSensor ->
                     findPreference<Preference>(basicSensor.id)?.let {
                         val sensorEntity = sensorDao.get(basicSensor.id)
                         if (sensorEntity?.enabled == true) {
                             totalEnabledSensors += 1
-                            if (basicSensor.unitOfMeasurement.isNullOrBlank())
-                                it.summary = sensorEntity.state
-                            else
-                                it.summary = sensorEntity.state + " " + basicSensor.unitOfMeasurement
+                            if (!sensorEntity.state.isNullOrBlank()) {
+                                if (basicSensor.unitOfMeasurement.isNullOrBlank()) it.summary = sensorEntity.state
+                                else it.summary = sensorEntity.state + " " + basicSensor.unitOfMeasurement
+                            } else {
+                                it.summary = getString(R.string.enabled)
+                            }
                             // TODO: Add the icon from mdi:icon?
                         } else {
                             totalDisabledSensors += 1
-                            it.summary = "Disabled"
+                            it.summary = getString(R.string.disabled)
                         }
                     }
                 }
@@ -61,6 +71,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     it.title = getString(R.string.disable_all_sensors, totalEnabledSensors)
                     it.summary = ""
                     it.isChecked = permissionsAllGranted
+                    enableAllSensors = permissionsAllGranted
+                    activity?.invalidateOptionsMenu()
                 } else {
                     if (totalEnabledSensors == 0)
                         it.title = getString(R.string.enable_all_sensors)
@@ -81,6 +93,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         private var permissionsAllGranted = true
         private var settingsWithLocation = mutableListOf<String>()
         private var enableAllSensors = false
+        private var showOnlyEnabledSensors = false
 
         fun newInstance(): SensorsSettingsFragment {
             return SensorsSettingsFragment()
@@ -105,11 +118,10 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 val context = requireContext()
                 enableAllSensors = newState as Boolean
 
-                val locationEnabledFine = DisabledLocationHandler.isLocationEnabled(context, true)
-                val locationEnabledCoarse = DisabledLocationHandler.isLocationEnabled(context, false)
+                val locationEnabled = DisabledLocationHandler.isLocationEnabled(context)
 
                 SensorReceiver.MANAGERS.forEach { managers ->
-                    managers.availableSensors.forEach { basicSensor ->
+                    managers.getAvailableSensors(context).forEach { basicSensor ->
                         val requiredPermissions = managers.requiredPermissions(basicSensor.id)
 
                         val locationPermissionCoarse = DisabledLocationHandler.containsLocationPermission(requiredPermissions, false)
@@ -120,8 +132,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                         // Only if one of the options is true, enable the sensor
                         if (!enableAllSensors || // All Sensors switch is disabled
                             !locationPermission || // No location permission used for sensor
-                            (locationEnabledCoarse && locationPermissionCoarse) || // Coarse location used for sensor and location coarse is enabled in settings
-                            (locationEnabledFine && locationPermissionFine) // Fine location used for sensor and location fine is enabled in settings
+                            (locationEnabled && locationPermissionCoarse) || // Coarse location used for sensor and location is enabled in settings
+                            (locationEnabled && locationPermissionFine) // Fine location used for sensor and location is enabled in settings
                         ) {
                             enableSensor = enableAllSensors
                         } else {
@@ -139,9 +151,12 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                         val locationPermissionCoarse = DisabledLocationHandler.containsLocationPermission(permArray, false)
                         val locationPermissionFine = DisabledLocationHandler.containsLocationPermission(permArray, true)
                         if (locationPermissionCoarse || locationPermissionFine) {
-                            LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(context, permArray, continueYesCallback = {
-                                requestPermission(permArray)
-                            })
+                            LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
+                                context, permArray,
+                                continueYesCallback = {
+                                    requestPermission(permArray)
+                                }
+                            )
                         } else requestPermission(permArray)
                     }
                 } else {
@@ -151,6 +166,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                     }
                 }
 
+                requireActivity().invalidateOptionsMenu()
                 return@setOnPreferenceChangeListener true
             }
         }
@@ -158,14 +174,13 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         SensorReceiver.MANAGERS.sortedBy { getString(it.name) }.filter { it.hasSensor(requireContext()) }.forEach { manager ->
             val prefCategory = PreferenceCategory(preferenceScreen.context)
             prefCategory.title = getString(manager.name)
-
             preferenceScreen.addPreference(prefCategory)
-            manager.availableSensors.sortedBy { getString(it.name) }.forEach { basicSensor ->
 
+            manager.getAvailableSensors(requireContext()).sortedBy { getString(it.name) }.forEach { basicSensor ->
                 val pref = Preference(preferenceScreen.context)
                 pref.key = basicSensor.id
                 pref.title = getString(basicSensor.name)
-
+                pref.isVisible = !showOnlyEnabledSensors || (showOnlyEnabledSensors && manager.isEnabled(requireContext(), basicSensor.id))
                 pref.setOnPreferenceClickListener {
                     parentFragmentManager
                         .beginTransaction()
@@ -185,10 +200,104 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 prefCategory.addPreference(pref)
             }
         }
+
+        if (showOnlyEnabledSensors) showHideGroupsIfNeeded()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Needed to call onPrepareOptionsMenu
+        setHasOptionsMenu(true)
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+
+        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
+
+        if (enableAllSensors)
+            menu.removeItem(R.id.action_filter)
+
+        val searchViewItem = menu.findItem(R.id.action_search)
+        val searchView: SearchView = MenuItemCompat.getActionView(searchViewItem) as SearchView
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                searchView.clearFocus()
+
+                return false
+            }
+
+            override fun onQueryTextChange(query: String?): Boolean {
+                filterSensors(query)
+                return false
+            }
+        })
+
+        if (showOnlyEnabledSensors) {
+            val checkable = menu.findItem(R.id.action_show_only_enabled_sensors)
+            checkable?.isChecked = true
+        }
+
+        menu.findItem(R.id.get_help)?.let {
+            it.isVisible = true
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/core/sensors"))
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_show_only_enabled_sensors -> {
+                item.isChecked = !item.isChecked
+                showOnlyEnabledSensors = item.isChecked
+
+                filterSensors()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun filterSensors(searchQuery: String? = "") {
+        SensorReceiver.MANAGERS.filter { m -> m.hasSensor(requireContext()) }.forEach { manager ->
+            manager.getAvailableSensors(requireContext()).forEach { sensor ->
+                val pref = findPreference<Preference>(sensor.id)
+                if (pref != null) {
+                    pref.isVisible = true
+                    if (!searchQuery.isNullOrBlank()) {
+                        val found = pref.title.contains(searchQuery, true)
+                        pref.isVisible = found
+                    } else {
+                        if (showOnlyEnabledSensors) {
+                            pref.isVisible = manager.isEnabled(requireContext(), sensor.id)
+                        }
+                    }
+                }
+            }
+        }
+        showHideGroupsIfNeeded()
+    }
+
+    private fun showHideGroupsIfNeeded() {
+        for (pref in preferenceScreen) {
+            val prefGroup = pref as? PreferenceGroup
+            if (prefGroup != null) {
+                prefGroup.isVisible = false
+
+                prefGroup.forEach { pref ->
+                    if (pref.isVisible) {
+                        prefGroup.isVisible = true
+                        return@forEach
+                    }
+                }
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
+        activity?.title = getString(R.string.sensors)
+        filterSensors()
         handler.postDelayed(refresh, 0)
     }
 
@@ -211,7 +320,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
             requestPermissions(
                 permissions.toSet()
                     .minus(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                    .toTypedArray(), 0
+                    .toTypedArray(),
+                0
             )
         } else {
             requestPermissions(permissions, 0)
@@ -226,7 +336,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
-            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R
+        ) {
             requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), 0)
             return
         }
@@ -265,7 +376,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
         SensorReceiver.MANAGERS.forEach { managers ->
-            managers.availableSensors.forEach { basicSensor ->
+            managers.getAvailableSensors(requireContext()).forEach { basicSensor ->
                 val sensorTurnsOnWithGroupToggle = managers.enableToggleAll(requireContext(), basicSensor.id)
                 if (!sensorTurnsOnWithGroupToggle) {
                     return@forEach
@@ -285,5 +396,6 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 }
             }
         }
+        filterSensors()
     }
 }

@@ -4,10 +4,10 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
-import java.util.UUID
 import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
+import java.util.UUID
 
 object TransmitterManager {
     private lateinit var physicalTransmitter: BeaconTransmitter
@@ -60,37 +60,41 @@ object TransmitterManager {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {
                 physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
-                physicalTransmitter.startAdvertising(beacon, object : AdvertiseCallback() {
-                    override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-                        haTransmitter.transmitting = true
-                        haTransmitter.state = "Transmitting"
-                    }
-
-                    override fun onStartFailure(errorCode: Int) {
-                        if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
-                            haTransmitter.uuid = ""
-                            haTransmitter.major = ""
-                            haTransmitter.minor = ""
-                            haTransmitter.state = "Unable to transmit"
-                            haTransmitter.transmitting = false
-                        } else {
+                physicalTransmitter.startAdvertising(
+                    beacon,
+                    object : AdvertiseCallback() {
+                        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
                             haTransmitter.transmitting = true
                             haTransmitter.state = "Transmitting"
                         }
+
+                        override fun onStartFailure(errorCode: Int) {
+                            if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
+                                haTransmitter.uuid = ""
+                                haTransmitter.major = ""
+                                haTransmitter.minor = ""
+                                haTransmitter.state = "Unable to transmit"
+                                haTransmitter.transmitting = false
+                            } else {
+                                haTransmitter.transmitting = true
+                                haTransmitter.state = "Transmitting"
+                            }
+                        }
                     }
-                })
+                )
             }
         } else {
             stopTransmitting(haTransmitter)
         }
     }
 
-    private fun getPowerLevel(haTransmitter: IBeaconTransmitter): Int {
-        if (haTransmitter.transmitPowerSetting == "high") return AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
-        if (haTransmitter.transmitPowerSetting == "medium") return AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
-        if (haTransmitter.transmitPowerSetting == "low") return AdvertiseSettings.ADVERTISE_TX_POWER_LOW
-        return AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
-    }
+    private fun getPowerLevel(haTransmitter: IBeaconTransmitter) =
+        when (haTransmitter.transmitPowerSetting) {
+            "high" -> AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
+            "medium" -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
+            "low" -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
+            else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
+        }
 
     fun stopTransmitting(haTransmitter: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter) {
         if (haTransmitter.transmitting && this::physicalTransmitter.isInitialized) {

@@ -7,9 +7,9 @@ import android.content.res.Resources
 import android.os.Build
 import android.os.LocaleList
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import kotlinx.coroutines.runBlocking
 import java.util.Locale
 import javax.inject.Inject
-import kotlinx.coroutines.runBlocking
 
 class LanguagesManager @Inject constructor(
     private var prefs: PrefsRepository

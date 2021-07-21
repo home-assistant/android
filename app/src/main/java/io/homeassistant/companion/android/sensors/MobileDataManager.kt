@@ -24,13 +24,17 @@ class MobileDataManager : SensorManager {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#mobile-data-sensors"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_mobile_data
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(mobileDataState, mobileDataRoaming)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(mobileDataState, mobileDataRoaming)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return arrayOf()

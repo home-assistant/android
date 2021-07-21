@@ -23,7 +23,8 @@ import kotlinx.coroutines.runBlocking
 @RequiresApi(Build.VERSION_CODES.R)
 class LightControl {
     companion object : HaControl {
-        const val SUPPORT_BRIGHTNESS = 1
+        private const val SUPPORT_BRIGHTNESS = 1
+        private val NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
 
         override fun createControl(
             context: Context,
@@ -34,16 +35,27 @@ class LightControl {
                 PendingIntent.getActivity(
                     context,
                     0,
-                    WebViewActivity.newInstance(context.applicationContext).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                     PendingIntent.FLAG_CANCEL_CURRENT
                 )
             )
+
+            // On HA Core 2021.5 and later brightness detection has changed
+            // to simplify things in the app lets use both methods for now
+            val supportedColorModes = entity.attributes["supported_color_modes"] as? List<String>
+            val supportsBrightness = if (supportedColorModes == null) false else !(supportedColorModes - NO_BRIGHTNESS_SUPPORT).isEmpty()
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
             control.setZone(context.getString(R.string.domain_light))
             control.setStatus(Control.STATUS_OK)
-            control.setStatusText(if (entity.state == "off") context.getString(R.string.state_off) else context.getString(
-                R.string.state_on))
+            control.setStatusText(
+                when (entity.state) {
+                    "off" -> context.getString(R.string.state_off)
+                    "on" -> context.getString(R.string.state_on)
+                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    else -> context.getString(R.string.state_unknown)
+                }
+            )
             val minValue = 0f
             val maxValue = 100f
             var currentValue = (entity.attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100) ?: 0f
@@ -52,28 +64,28 @@ class LightControl {
             if (currentValue > maxValue)
                 currentValue = maxValue
             control.setControlTemplate(
-                    if ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS)
-                        ToggleRangeTemplate(
-                                entity.entityId,
-                                entity.state != "off",
-                                "",
-                                RangeTemplate(
-                                        entity.entityId,
-                                        minValue,
-                                        maxValue,
-                                        currentValue,
-                                        1f,
-                                        "%.0f%%"
-                                )
+                if (supportsBrightness || ((entity.attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS == SUPPORT_BRIGHTNESS))
+                    ToggleRangeTemplate(
+                        entity.entityId,
+                        entity.state == "on",
+                        "",
+                        RangeTemplate(
+                            entity.entityId,
+                            minValue,
+                            maxValue,
+                            currentValue,
+                            1f,
+                            "%.0f%%"
                         )
-                    else
-                        ToggleTemplate(
-                                entity.entityId,
-                                ControlButton(
-                                        entity.state == "on",
-                                        "Description"
-                                )
+                    )
+                else
+                    ToggleTemplate(
+                        entity.entityId,
+                        ControlButton(
+                            entity.state == "on",
+                            "Description"
                         )
+                    )
             )
             return control.build()
         }

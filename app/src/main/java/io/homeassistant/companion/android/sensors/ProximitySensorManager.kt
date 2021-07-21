@@ -28,14 +28,18 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     private lateinit var mySensorManager: android.hardware.SensorManager
     private var maxRange: Int = 0
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#proximity-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
 
     override val name: Int
         get() = R.string.sensor_name_proximity
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(proximitySensor)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(proximitySensor)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()

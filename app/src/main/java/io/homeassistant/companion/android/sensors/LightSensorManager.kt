@@ -26,14 +26,18 @@ class LightSensorManager : SensorManager, SensorEventListener {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#light-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
 
     override val name: Int
         get() = R.string.sensor_name_light
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(lightSensor)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(lightSensor)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -65,7 +69,8 @@ class LightSensorManager : SensorManager, SensorEventListener {
             mySensorManager.registerListener(
                 this,
                 lightSensors,
-                SENSOR_DELAY_NORMAL)
+                SENSOR_DELAY_NORMAL
+            )
             Log.d(TAG, "Light sensor listener registered")
             isListenerRegistered = true
         }

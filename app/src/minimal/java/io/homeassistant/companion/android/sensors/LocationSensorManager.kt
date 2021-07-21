@@ -48,8 +48,10 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         get() = false
     override val name: Int
         get() = R.string.sensor_name_location
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf()
+
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf()
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         // Noop

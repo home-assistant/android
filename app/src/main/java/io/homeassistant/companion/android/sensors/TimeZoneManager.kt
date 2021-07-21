@@ -18,13 +18,17 @@ class TimeZoneManager : SensorManager {
         )
     }
 
+    override fun docsLink(): String {
+        return "https://companion.home-assistant.io/docs/core/sensors#current-time-zone-sensor"
+    }
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
         get() = R.string.sensor_name_time_zone
 
-    override val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(currentTimeZone)
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(currentTimeZone)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return emptyArray()
@@ -47,7 +51,8 @@ class TimeZoneManager : SensorManager {
 
         val icon = "mdi:map-clock"
 
-        onSensorUpdated(context,
+        onSensorUpdated(
+            context,
             currentTimeZone,
             currentZone,
             icon,

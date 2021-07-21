@@ -24,7 +24,8 @@
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
     <uses-feature android:name="android.hardware.telephony" android:required="false"/>
@@ -89,6 +90,18 @@
                 android:resource="@xml/button_widget_info" />
         </receiver>
 
+        <receiver android:name=".widgets.camera.CameraWidget" android:label="@string/widget_camera_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.camera.CameraWidget.UPDATE_IMAGE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/camera_widget_info" />
+        </receiver>
+
         <receiver android:name=".widgets.entity.EntityWidget" android:label="@string/widget_static_image_description">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -100,7 +113,7 @@
                 android:resource="@xml/entity_widget_info" />
         </receiver>
 
-        <receiver android:name=".widgets.media_player_controls.MediaPlayerControlsWidget">
+        <receiver android:name=".widgets.media_player_controls.MediaPlayerControlsWidget" android:label="@string/widget_media_player_description">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.RECEIVE_DATA" />
@@ -117,7 +130,7 @@
                 android:resource="@xml/media_player_control_widget_info" />
         </receiver>
 
-        <receiver android:name=".widgets.template.TemplateWidget" android:label="Template Widget">
+        <receiver android:name=".widgets.template.TemplateWidget" android:label="@string/template_widget">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
@@ -140,7 +153,11 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
-
+        <activity android:name=".widgets.camera.CameraWidgetConfigureActivity">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
         <activity android:name=".widgets.entity.EntityWidgetConfigureActivity">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
@@ -236,7 +253,8 @@
 
         <activity
             android:name=".settings.SettingsActivity"
-            android:parentActivityName=".webview.WebViewActivity" />
+            android:parentActivityName=".webview.WebViewActivity"
+            android:configChanges="orientation|screenSize"/>
 
         <activity
             android:name=".nfc.TagReaderActivity"
@@ -274,6 +292,71 @@
                 <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
+
+        <service
+            android:name=".qs.Tile1Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile2Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile3Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile4Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile5Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
