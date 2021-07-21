@@ -31,7 +31,7 @@ class GeocodeSensorManager : SensorManager {
         get() = false
     override val name: Int
         get() = R.string.sensor_name_geolocation
-    override val availableSensors: List<SensorManager.BasicSensor>
+    val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(geocodedLocation)
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -49,6 +49,10 @@ class GeocodeSensorManager : SensorManager {
         context: Context
     ) {
         updateGeocodedLocation(context)
+    }
+
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(geocodedLocation)
     }
 
     private fun updateGeocodedLocation(context: Context) {

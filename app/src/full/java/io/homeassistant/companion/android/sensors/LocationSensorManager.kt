@@ -20,6 +20,7 @@ import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.util.DisabledLocationHandler
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -356,7 +357,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             accuracy = location.accuracy.toInt()
         }
         val updateLocation = UpdateLocation(
-            name,
+           // name,
             arrayOf(location.latitude, location.longitude),
             accuracy,
             location.speed.toInt(),
@@ -503,7 +504,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     override val name: Int
         get() = R.string.sensor_name_location
 
-    override val availableSensors: List<SensorManager.BasicSensor>
+    val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -550,6 +551,14 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     "toggle"
                 )
             )
+    }
+
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return if (DisabledLocationHandler.hasGPS(context)) {
+            listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
+        } else {
+            listOf(backgroundLocation, zoneLocation)
+        }
     }
 
     private fun addressUpdata(context: Context) {

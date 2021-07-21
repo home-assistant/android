@@ -111,7 +111,7 @@ object Config {
             const val exoHls = "com.google.android.exoplayer:exoplayer-hls:2.14.1"
             const val exoUi = "com.google.android.exoplayer:exoplayer-ui:2.14.1"
             const val exoCronet = "com.google.android.exoplayer:extension-cronet:2.14.1"
-            const val altBeacon =  "org.altbeacon:android-beacon-library:2+"
+            const val altBeacon =  "org.altbeacon:android-beacon-library:2.17.1"
         }
 
         object Amap{
