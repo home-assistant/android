@@ -39,5 +39,5 @@ dependencies {
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.8")
     testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.8")
     testImplementation("org.assertj:assertj-core:3.13.2")
-    testImplementation("io.mockk:mockk:1.9.3")
+    testImplementation("io.mockk:mockk:1.12.0")
 }
