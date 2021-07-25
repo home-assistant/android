@@ -1,0 +1,30 @@
+version: 2
+updates:
+  # Updates for Github Actions used in the repo
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  # Root
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Common
+  - package-ecosystem: gradle
+    directory: "/common/"
+    schedule:
+      interval: "weekly"
+
+  # App
+  - package-ecosystem: gradle
+    directory: "/app/"
+    schedule:
+      interval: "weekly"
+
+  # Wear
+  - package-ecosystem: gradle
+    directory: "/wear/"
+    schedule:
+      interval: "weekly"
