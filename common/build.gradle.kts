@@ -23,7 +23,7 @@ android {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1-native-mt")
 
     implementation("com.google.dagger:dagger:2.35.1")
     kapt("com.google.dagger:dagger-compiler:2.35.1")
