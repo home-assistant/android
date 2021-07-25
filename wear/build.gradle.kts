@@ -5,12 +5,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion(Config.Android.compileSdk)
+    compileSdkVersion(30)
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdkVersion(Config.Android.minSdkWear)
-        targetSdkVersion(Config.Android.targetSdk)
+        minSdkVersion(23)
+        targetSdkVersion(30)
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
@@ -65,9 +65,9 @@ android {
 dependencies {
     implementation(project(":common"))
 
-    implementation(Config.Dependency.Google.material)
+    implementation("com.google.android.material:material:1.3.0")
 
-    implementation(Config.Dependency.AndroidX.wear)
-    implementation(Config.Dependency.Google.wearableSupport)
-    compileOnly(Config.Dependency.Google.wearable)
+    implementation("androidx.wear:wear:1.1.0")
+    implementation("com.google.android.support:wearable:2.8.1")
+    compileOnly("com.google.android.wearable:wearable:2.8.1")
 }

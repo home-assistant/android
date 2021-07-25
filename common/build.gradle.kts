@@ -8,10 +8,10 @@ val homeAssistantAndroidPushUrl: String by project
 val homeAssistantAndroidRateLimitUrl: String by project
 
 android {
-    compileSdkVersion(Config.Android.compileSdk)
+    compileSdkVersion(30)
 
     defaultConfig {
-        minSdkVersion(Config.Android.minSdk)
+        minSdkVersion(21)
         buildConfigField("String", "PUSH_URL", "\"$homeAssistantAndroidPushUrl\"")
         buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
         versionName = System.getenv("VERSION") ?: "LOCAL"
@@ -21,22 +21,23 @@ android {
 }
 
 dependencies {
-    implementation(Config.Dependency.Kotlin.core)
-    implementation(Config.Dependency.Kotlin.reflect)
-    implementation(Config.Dependency.Kotlin.coroutines)
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.0")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
 
-    implementation(Config.Dependency.Google.dagger)
-    kapt(Config.Dependency.Google.daggerCompiler)
+    implementation("com.google.dagger:dagger:2.35.1")
+    kapt("com.google.dagger:dagger-compiler:2.35.1")
 
-    implementation(Config.Dependency.Square.retrofit)
-    implementation(Config.Dependency.Square.retrofitJacksonConverter)
-    implementation(Config.Dependency.Square.okhttp)
-    implementation(Config.Dependency.Square.okhttpInterceptor)
-    implementation(Config.Dependency.Misc.jackson)
-    implementation(Config.Dependency.Misc.altBeacon)
-    testImplementation(Config.Dependency.Square.okhttpMockServer)
-    testImplementation(Config.Dependency.Testing.spek2Jvm)
-    testRuntimeOnly(Config.Dependency.Testing.spek2JUnit)
-    testImplementation(Config.Dependency.Testing.assertJ)
-    testImplementation(Config.Dependency.Testing.mockk)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.9.1")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3")
+    implementation("org.altbeacon:android-beacon-library:2+")
+
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.1")
+    testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.8")
+    testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.8")
+    testImplementation("org.assertj:assertj-core:3.13.2")
+    testImplementation("io.mockk:mockk:1.9.3")
 }

@@ -27,6 +27,6 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         google()
-        jcenter()
+        maven("https://jitpack.io")
     }
 }
