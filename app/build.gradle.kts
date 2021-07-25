@@ -149,7 +149,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.2.6")
     kapt("androidx.room:room-compiler:2.2.6")
 
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.4")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("com.squareup.picasso:picasso:2.8")
 
