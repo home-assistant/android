@@ -168,7 +168,7 @@ dependencies {
     testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.8")
     testImplementation("org.assertj:assertj-core:3.13.2")
     testImplementation("io.mockk:mockk:1.9.3")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.4.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1-native-mt")
     testImplementation("org.altbeacon:android-beacon-library:2+")
 
     implementation("com.google.android.exoplayer:exoplayer-core:2.14.1")
