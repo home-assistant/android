@@ -20,6 +20,7 @@ open class MobileAppIntegrationPresenterBase constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     internal open suspend fun createRegistration(simple: Boolean, deviceName: String): DeviceRegistration {
         return DeviceRegistration(
@@ -30,7 +31,7 @@ open class MobileAppIntegrationPresenterBase constructor(
 
     override fun onRegistrationAttempt(simple: Boolean, deviceName: String) {
         view.showLoading()
-        mainScope.launch {
+        ioScope.launch {
             val deviceRegistration: DeviceRegistration
             try {
                 deviceRegistration = createRegistration(simple, deviceName)

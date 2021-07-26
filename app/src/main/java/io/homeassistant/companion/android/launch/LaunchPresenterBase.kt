@@ -20,6 +20,7 @@ abstract class LaunchPresenterBase(
     }
 
     internal val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    internal val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
     override fun onViewReady() {
         mainScope.launch {
