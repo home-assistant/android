@@ -164,7 +164,7 @@ dependencies {
     implementation("androidx.webkit:webkit:1.4.0")
 
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.8")
-    testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.8")
+    testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.15")
     testImplementation("org.assertj:assertj-core:3.13.2")
     testImplementation("io.mockk:mockk:1.12.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1")
