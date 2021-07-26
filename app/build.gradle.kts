@@ -130,7 +130,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.21")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.21")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1-native-mt")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
 
     implementation("com.google.dagger:dagger:2.38")
