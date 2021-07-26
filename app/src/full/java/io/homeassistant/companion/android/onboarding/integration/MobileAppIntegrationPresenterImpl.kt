@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.onboarding.integration
 
 import android.util.Log
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.iid.FirebaseInstanceId
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
@@ -18,7 +18,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
 
         if (!simple) {
             try {
-                val instanceId = FirebaseInstanceId.getInstance().instanceId.await()
+                val instanceId = Tasks.await(FirebaseInstanceId.getInstance().instanceId)
                 registration.pushToken = instanceId.token
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to get firebase token.", e)

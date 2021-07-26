@@ -65,7 +65,7 @@ android {
 dependencies {
     implementation(project(":common"))
 
-    implementation("com.google.android.material:material:1.3.0")
+    implementation("com.google.android.material:material:1.4.0")
 
     implementation("androidx.wear:wear:1.1.0")
     implementation("com.google.android.support:wearable:2.8.1")
