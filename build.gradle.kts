@@ -13,7 +13,7 @@ buildscript {
     }
     dependencies {
         classpath("com.android.tools.build:gradle:4.2.2")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.21")
         classpath("com.google.gms:google-services:4.3.8")
         classpath("com.google.firebase:firebase-appdistribution-gradle:2.1.3")
         classpath("de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0")
