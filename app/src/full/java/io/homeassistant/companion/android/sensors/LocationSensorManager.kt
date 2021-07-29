@@ -81,6 +81,13 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             R.string.basic_sensor_name_location_accurate,
             R.string.sensor_description_location_accurate
         )
+
+        val highAccuracyMode = SensorManager.BasicSensor(
+            "high_accuracy_mode",
+            "binary_sensor",
+            R.string.basic_sensor_name_high_accuracy_mode,
+            R.string.sensor_description_high_accuracy_mode
+        )
         internal const val TAG = "LocBroadcastReceiver"
 
         private var geofencingClient: GeofencingClient? = null
@@ -250,10 +257,26 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     }
 
     private fun startHighAccuracyService(intervalInSeconds: Int) {
+        onSensorUpdated(
+            latestContext,
+            highAccuracyMode,
+            true,
+            "mdi:crosshairs-gps",
+            mapOf()
+        )
+        SensorWorker.start(latestContext)
         HighAccuracyLocationService.startService(latestContext, intervalInSeconds)
     }
 
     private fun stopHighAccuracyService() {
+        onSensorUpdated(
+            latestContext,
+            highAccuracyMode,
+            false,
+            "mdi:crosshairs-gps",
+            mapOf()
+        )
+        SensorWorker.start(latestContext)
         HighAccuracyLocationService.stopService(latestContext)
     }
 
@@ -449,9 +472,9 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (DisabledLocationHandler.hasGPS(context)) {
-            listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
+            listOf(singleAccurateLocation, backgroundLocation, zoneLocation, highAccuracyMode)
         } else {
-            listOf(backgroundLocation, zoneLocation)
+            listOf(backgroundLocation, zoneLocation, highAccuracyMode)
         }
     }
 
