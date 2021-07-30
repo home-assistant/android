@@ -596,4 +596,6 @@ like to connect to:</string>
   <string name="tile_missing_entity_title">Missing Script or Scene</string>
   <string name="tile_missing_entity_summary">Please add a script or scene to Home Assistant and revisit this screen to enable the below field</string>
   <string name="template_widget">Template Widget</string>
+    <string name="basic_sensor_name_high_accuracy_mode">High Accuracy Mode</string>
+  <string name="sensor_description_high_accuracy_mode">Whether or not high accuracy mode is active on the device</string>
 </resources>
