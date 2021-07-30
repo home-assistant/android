@@ -7,6 +7,9 @@ plugins {
 val homeAssistantAndroidPushUrl: String by project
 val homeAssistantAndroidRateLimitUrl: String by project
 
+val versionName = System.getenv("VERSION") ?: "LOCAL"
+val versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+
 android {
     compileSdkVersion(30)
 
@@ -14,8 +17,6 @@ android {
         minSdkVersion(21)
         buildConfigField("String", "PUSH_URL", "\"$homeAssistantAndroidPushUrl\"")
         buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
-        versionName = System.getenv("VERSION") ?: "LOCAL"
-        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
         buildConfigField("String", "VERSION_NAME", "\"$versionName-$versionCode\"")
     }
 }
@@ -38,6 +39,6 @@ dependencies {
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.1")
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.8")
     testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.15")
-    testImplementation("org.assertj:assertj-core:3.13.2")
+    testImplementation("org.assertj:assertj-core:3.20.2")
     testImplementation("io.mockk:mockk:1.12.0")
 }
