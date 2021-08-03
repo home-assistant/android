@@ -101,13 +101,12 @@ abstract class TileExtensions : TileService() {
             if (hasTile) {
                 tile.state = Tile.STATE_ACTIVE
                 tile.updateTile()
-                val tileService = tileData?.entityId?.split(".")
                 runBlocking {
                     try {
                         integrationUseCase.callService(
-                            tileService!![0],
-                            tileService[1],
-                            hashMapOf()
+                            tileData?.entityId?.split(".")!![0],
+                            "turn_on",
+                            hashMapOf("entity_id" to tileData.entityId)
                         )
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to call service", e)
