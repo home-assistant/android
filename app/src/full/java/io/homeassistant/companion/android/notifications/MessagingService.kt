@@ -83,6 +83,7 @@ class MessagingService : FirebaseMessagingService() {
         const val WHEN = "when"
         const val GROUP_PREFIX = "group_"
         const val KEY_TEXT_REPLY = "key_text_reply"
+        const val ALERT_ONCE = "alert_once"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -766,6 +767,8 @@ class MessagingService : FirebaseMessagingService() {
         } else {
             builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
         }
+        if (data[ALERT_ONCE].toBoolean())
+            builder.setOnlyAlertOnce(true)
     }
 
     private fun handleColor(
