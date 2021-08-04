@@ -36,10 +36,9 @@ class SingleItemArrayAdapter<T>(
                 constraint?.let {
                     val containSeq = ArrayList<T>()
 
-                    for (i in 0 until filterItems.size) {
-                        val item = filterItems[i]
+                    filterItems.forEach { item ->
                         if (createText(item).contains(constraint)) {
-                            containSeq.add(item!!)
+                            containSeq.add(item)
                         }
                     }
                     result.values = containSeq
