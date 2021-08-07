@@ -38,8 +38,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility(JavaVersion.VERSION_11)
+        targetCompatibility(JavaVersion.VERSION_11)
     }
 
     firebaseAppDistribution {
@@ -133,8 +133,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
 
-    implementation("com.google.dagger:dagger:2.38")
-    kapt("com.google.dagger:dagger-compiler:2.38")
+    implementation("com.google.dagger:dagger:2.38.1")
+    kapt("com.google.dagger:dagger-compiler:2.38.1")
 
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
@@ -165,7 +165,7 @@ dependencies {
 
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.16")
     testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.15")
-    testImplementation("org.assertj:assertj-core:3.13.2")
+    testImplementation("org.assertj:assertj-core:3.20.2")
     testImplementation("io.mockk:mockk:1.12.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1")
     testImplementation("org.altbeacon:android-beacon-library:2.18")
