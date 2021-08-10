@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android
 
-import android.app.Application
 import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
 import android.content.Intent
@@ -10,9 +9,7 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
-import io.homeassistant.companion.android.common.dagger.AppComponent
 import io.homeassistant.companion.android.common.dagger.Graph
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.sensors.LastUpdateManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -20,15 +17,9 @@ import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget
 import io.homeassistant.companion.android.widgets.template.TemplateWidget
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-open class HomeAssistantApplication : Application(), GraphComponentAccessor {
-
-    lateinit var graph: Graph
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+open class HomeAssistantMobileApplication : HomeAssistantApplication() {
 
     override fun onCreate() {
         super.onCreate()
@@ -160,7 +151,4 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
             IntentFilter(Intent.ACTION_SCREEN_ON)
         )
     }
-
-    override val appComponent: AppComponent
-        get() = graph.appComponent
 }

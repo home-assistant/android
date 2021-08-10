@@ -39,7 +39,7 @@
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
 
     <application
-        android:name=".HomeAssistantApplication"
+        android:name=".HomeAssistantMobileApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:banner="@mipmap/ic_banner"

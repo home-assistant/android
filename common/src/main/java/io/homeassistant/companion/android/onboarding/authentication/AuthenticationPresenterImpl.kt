@@ -2,13 +2,9 @@ package io.homeassistant.companion.android.onboarding.authentication
 
 import android.net.Uri
 import android.util.Log
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 class AuthenticationPresenterImpl @Inject constructor(

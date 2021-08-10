@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="webview_error">There was an error loading Home Assistant, please review the connection settings and try again. We will attempt to try another provided URL when you click on Refresh.</string>
+</resources>

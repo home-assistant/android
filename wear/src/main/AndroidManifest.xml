@@ -12,6 +12,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:name=".HomeAssistantWearApplication"
         android:theme="@style/Theme.HomeAssistant">
         <uses-library
             android:name="com.google.android.wearable"

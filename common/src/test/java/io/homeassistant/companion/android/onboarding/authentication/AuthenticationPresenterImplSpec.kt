@@ -2,17 +2,11 @@ package io.homeassistant.companion.android.onboarding.authentication
 
 import android.net.Uri
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.mockk.Called
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.verify
+import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.net.URL
@@ -58,7 +52,7 @@ object AuthenticationPresenterImplSpec : Spek({
             it("should open the webview") {
                 coVerify { authenticationUseCase.registerAuthorizationCode("123456") }
                 verify { view.openWebview() }
-                assertThat(allowRedirect).isTrue()
+                Assertions.assertThat(allowRedirect).isTrue()
             }
         }
 
@@ -75,7 +69,7 @@ object AuthenticationPresenterImplSpec : Spek({
             it("should not open the webview") {
                 coVerify { authenticationUseCase wasNot Called }
                 verify { view wasNot Called }
-                assertThat(allowRedirect).isFalse()
+                Assertions.assertThat(allowRedirect).isFalse()
             }
         }
     }
