@@ -67,18 +67,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         request.appName = APP_NAME
         request.osName = OS_NAME
         request.supportsEncryption = false
-
-        try {
-            val version = integrationService
-                .discoveryInfo(authenticationRepository.buildBearerToken())
-                .version.split(".")
-            // If we are above version 0.104.0 add device_id
-            if (version.size > 2 && (Integer.parseInt(version[0]) > 0 || Integer.parseInt(version[1]) >= 104)) {
-                request.deviceId = deviceId
-            }
-        } catch (e: Exception) {
-            // Ignore errors we don't technically need it need it
-        }
+        request.deviceId = deviceId
 
         val response =
             integrationService.registerDevice(
