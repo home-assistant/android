@@ -9,10 +9,9 @@ import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLProtocolException
 
-//TODO make common-full module that only app full and wear full use
-fun initCrashReporting(context: Context, enabled: Boolean) {
+fun initCrashReporting(context: Context, debug: Boolean, enabled: Boolean) {
     // Don't init on debug builds or when disabled
-    if (BuildConfig.DEBUG || !enabled)
+    if (debug || !enabled)
         return
 
     SentryAndroid.init(context) { options ->

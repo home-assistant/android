@@ -86,6 +86,8 @@ android {
 
 dependencies {
     implementation(project(":common"))
+    "minimalImplementation"(project(":common-minimal"))
+    "fullImplementation"(project(":common-full"))
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
@@ -94,8 +96,6 @@ dependencies {
 
     implementation("androidx.wear:wear:1.1.0")
     implementation("com.google.android.support:wearable:2.8.1")
-
-    "fullImplementation"("io.sentry:sentry-android:5.0.1")
 
     compileOnly("com.google.android.wearable:wearable:2.8.1")
 }

@@ -27,7 +27,11 @@ open class HomeAssistantMobileApplication : HomeAssistantApplication() {
         graph = Graph(this, 0)
 
         ioScope.launch {
-            initCrashReporting(applicationContext, graph.appComponent.prefsUseCase().isCrashReporting())
+            initCrashReporting(
+                applicationContext,
+                BuildConfig.DEBUG,
+                graph.appComponent.prefsUseCase().isCrashReporting()
+            )
         }
 
         val sensorReceiver = SensorReceiver()

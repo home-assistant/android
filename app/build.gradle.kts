@@ -119,6 +119,8 @@ play {
 
 dependencies {
     implementation(project(":common"))
+    "minimalImplementation"(project(":common-minimal"))
+    "fullImplementation"(project(":common-full"))
 
     implementation("com.github.Dimezis:BlurView:version-1.6.6")
     implementation("org.altbeacon:android-beacon-library:2.18")
@@ -157,7 +159,6 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-core:19.0.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:22.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.0.1")
 
     implementation("androidx.work:work-runtime-ktx:2.5.0")
     implementation("androidx.biometric:biometric:1.1.0")

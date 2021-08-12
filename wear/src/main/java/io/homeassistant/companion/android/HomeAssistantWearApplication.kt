@@ -1,22 +1,6 @@
 package io.homeassistant.companion.android
 
-import android.app.NotificationManager
-import android.bluetooth.BluetoothAdapter
-import android.content.Intent
-import android.content.IntentFilter
-import android.media.AudioManager
-import android.net.wifi.WifiManager
-import android.os.Build
-import android.os.PowerManager
-import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.common.dagger.Graph
-//import io.homeassistant.companion.android.database.AppDatabase
-//import io.homeassistant.companion.android.sensors.LastUpdateManager
-//import io.homeassistant.companion.android.sensors.SensorReceiver
-//import io.homeassistant.companion.android.widgets.button.ButtonWidget
-//import io.homeassistant.companion.android.widgets.entity.EntityWidget
-//import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget
-//import io.homeassistant.companion.android.widgets.template.TemplateWidget
 import kotlinx.coroutines.launch
 
 open class HomeAssistantWearApplication : HomeAssistantApplication() {
@@ -27,7 +11,11 @@ open class HomeAssistantWearApplication : HomeAssistantApplication() {
         graph = Graph(this, 0)
 
         ioScope.launch {
-            initCrashReporting(applicationContext, graph.appComponent.prefsUseCase().isCrashReporting())
+            initCrashReporting(
+                applicationContext,
+                BuildConfig.DEBUG,
+                graph.appComponent.prefsUseCase().isCrashReporting()
+            )
         }
 
 //        val sensorReceiver = SensorReceiver()
