@@ -34,7 +34,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.4")
-    implementation("org.altbeacon:android-beacon-library:2.18")
+    implementation("org.altbeacon:android-beacon-library:2.19.1")
 
     testImplementation("com.squareup.okhttp3:mockwebserver:4.9.1")
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.16")
