@@ -163,7 +163,7 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 
-    testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.16")
+    testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.17")
     testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.15")
     testImplementation("org.assertj:assertj-core:3.20.2")
     testImplementation("io.mockk:mockk:1.12.0")
