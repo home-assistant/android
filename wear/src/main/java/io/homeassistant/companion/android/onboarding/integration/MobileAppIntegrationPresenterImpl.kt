@@ -28,14 +28,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
     override fun onRegistrationAttempt(deviceName: String) {
         view.showLoading()
         mainScope.launch {
-            val deviceRegistration: DeviceRegistration
-            try {
-                deviceRegistration = createRegistration(deviceName)
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to create registration.", e)
-                view.showWarning()
-                return@launch
-            }
+            val deviceRegistration = createRegistration(deviceName)
             try {
                 integrationUseCase.registerDevice(deviceRegistration)
             } catch (e: Exception) {

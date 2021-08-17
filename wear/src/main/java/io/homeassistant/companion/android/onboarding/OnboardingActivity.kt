@@ -5,9 +5,10 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.wear.widget.WearableLinearLayoutManager
+import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.widget.WearableRecyclerView
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.*
@@ -15,15 +16,11 @@ import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
 import kotlinx.android.synthetic.main.activity_home.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.android.synthetic.main.activity_integration.*
+import kotlinx.android.synthetic.main.activity_integration.loading_view
+import kotlinx.android.synthetic.main.activity_onboarding.*
 import java.net.URL
 import javax.inject.Inject
 
@@ -84,8 +81,24 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
     }
 
     override fun startAuthentication(flowId: String) {
-        startActivity(AuthenticationActivity.newInstance(this, flowId, "", ""))
-        //finish()
+        startActivity(AuthenticationActivity.newInstance(this, flowId))
+        loading_view.visibility = View.GONE
+    }
+
+    override fun showLoading() {
+        loading_view.visibility = View.VISIBLE
+    }
+
+    override fun showError() {
+        // Hide loading view again
+        loading_view.visibility = View.GONE
+
+        // Show failure message
+        val intent = Intent(this, ConfirmationActivity::class.java).apply {
+            putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_connection))
+        }
+        startActivity(intent)
     }
 
     private fun findExistingInstances() {

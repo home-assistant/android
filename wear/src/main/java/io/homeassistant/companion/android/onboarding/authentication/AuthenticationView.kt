@@ -4,4 +4,6 @@ interface AuthenticationView {
     fun startIntegration()
 
     fun showLoading()
+
+    fun showError()
 }

@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.wear.activity.ConfirmationActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -13,7 +14,9 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
+import kotlinx.android.synthetic.main.activity_authentication.*
 import kotlinx.android.synthetic.main.activity_integration.*
+import kotlinx.android.synthetic.main.activity_integration.loading_view
 import javax.inject.Inject
 
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
@@ -52,18 +55,24 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         // empty the back stack
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
+
+        loading_view.visibility = View.GONE
     }
 
     override fun showLoading() {
         loading_view.visibility = View.VISIBLE
     }
 
-    override fun showWarning() {
-        TODO("Not yet implemented")
-    }
-
     override fun showError() {
-        TODO("Not yet implemented")
+        // Hide loading view again
+        loading_view.visibility = View.GONE
+
+        // Show failure message
+        val intent = Intent(this, ConfirmationActivity::class.java).apply {
+            putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_registration))
+        }
+        startActivity(intent)
     }
 
     override fun onDestroy() {

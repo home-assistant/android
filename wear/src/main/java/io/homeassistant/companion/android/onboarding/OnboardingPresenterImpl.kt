@@ -26,15 +26,21 @@ class OnboardingPresenterImpl @Inject constructor(
 
     override fun onAdapterItemClick(instance: HomeAssistantInstance) {
         Log.d(TAG, "onAdapterItemClick: ${instance.name}")
+        view.showLoading()
         mainScope.launch {
             // Set current url
             urlUseCase.saveUrl(instance.url.toString())
 
             // Initiate login flow
-            val flowInit: LoginFlowInit = authenticationUseCase.initiateLoginFlow()
-            Log.d(TAG, "Created login flow step ${flowInit.stepId}: ${flowInit.flowId}")
+            try {
+                val flowInit: LoginFlowInit = authenticationUseCase.initiateLoginFlow()
+                Log.d(TAG, "Created login flow step ${flowInit.stepId}: ${flowInit.flowId}")
 
-            view.startAuthentication(flowInit.flowId)
+                view.startAuthentication(flowInit.flowId)
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to initiate login flow", e)
+                view.showError()
+            }
         }
     }
 

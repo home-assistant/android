@@ -6,7 +6,5 @@ interface MobileAppIntegrationView {
 
     fun showLoading()
 
-    fun showWarning()
-
     fun showError()
 }

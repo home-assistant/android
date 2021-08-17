@@ -7,23 +7,24 @@ import android.os.PersistableBundle
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.wear.activity.ConfirmationActivity
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import kotlinx.android.synthetic.main.activity_authentication.*
+import kotlinx.android.synthetic.main.activity_authentication.loading_view
+import kotlinx.android.synthetic.main.activity_integration.*
 import javax.inject.Inject
 
 class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
     companion object {
         private const val TAG = "AuthenticationActivity"
 
-        fun newInstance(context: Context, flowId: String, username: String, password: String): Intent {
+        fun newInstance(context: Context, flowId: String): Intent {
             var intent = Intent(context, AuthenticationActivity::class.java)
             intent.putExtra("flowId", flowId)
-            intent.putExtra("username", username)
-            intent.putExtra("password", password)
             return intent
         }
     }
@@ -34,6 +35,11 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (intent == null || !intent.hasExtra("flowId")) {
+            Log.e(TAG, "Flow id not specified, canceling authentication")
+            finish()
+        }
+
         DaggerPresenterComponent
             .builder()
             .appComponent((application as GraphComponentAccessor).appComponent)
@@ -43,29 +49,34 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
 
         setContentView(R.layout.activity_authentication)
 
-        if (intent == null) {
-            Log.e(TAG, "intent data does not exist, canceling authentication")
-            finish()
-        } else {
-            // Set login info from intent
-            intent.getStringExtra("username").also { username.setText(it) }
-            intent.getStringExtra("password").also { password.setText(it) }
-
-            button_next.setOnClickListener {
-                presenter.onNextClicked(
-                    intent.getStringExtra("flowId")!!,
-                    username.text.toString(),
-                    password.text.toString())
-            }
+        button_next.setOnClickListener {
+            presenter.onNextClicked(
+                intent.getStringExtra("flowId")!!,
+                username.text.toString(),
+                password.text.toString())
         }
     }
 
     override fun startIntegration() {
         startActivity(MobileAppIntegrationActivity.newInstance(this))
+
+        loading_view.visibility = View.GONE
     }
 
     override fun showLoading() {
         loading_view.visibility = View.VISIBLE
+    }
+
+    override fun showError() {
+        // Hide loading view again
+        loading_view.visibility = View.GONE
+
+        // Show failure message
+        val intent = Intent(this, ConfirmationActivity::class.java).apply {
+            putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_authentication))
+        }
+        startActivity(intent)
     }
 
     override fun onDestroy() {

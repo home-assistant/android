@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.onboarding.authentication
 import android.util.Log
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
+import io.homeassistant.companion.android.onboarding.OnboardingPresenterImpl
 import kotlinx.coroutines.*
 import javax.inject.Inject
 
@@ -21,15 +22,21 @@ class AuthenticationPresenterImpl @Inject constructor(
     }
 
     override fun onNextClicked(flowId: String, username: String, password: String) {
+        view.showLoading()
         Log.d(TAG, "onNextClicked")
         mainScope.launch {
-            val flowCreateEntry: LoginFlowCreateEntry = authenticationUseCase.loginAuthentication(flowId, username, password)
-            // TODO handle authentication errors
-            Log.d(TAG, "Authenticated result: ${flowCreateEntry.result}")
-            authenticationUseCase.registerAuthorizationCode(flowCreateEntry.result)
-            Log.d(TAG, "Finished!")
+            try {
+                val flowCreateEntry: LoginFlowCreateEntry = authenticationUseCase.loginAuthentication(flowId, username, password)
+                // TODO handle authentication errors
+                Log.d(TAG, "Authenticated result: ${flowCreateEntry.result}")
+                authenticationUseCase.registerAuthorizationCode(flowCreateEntry.result)
+                Log.d(TAG, "Finished!")
 
-            view.startIntegration()
+                view.startIntegration()
+            } catch (e: Exception) {
+                Log.e(TAG, "Unable to authenticate", e)
+                view.showError()
+            }
         }
     }
 

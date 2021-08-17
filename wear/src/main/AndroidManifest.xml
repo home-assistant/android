@@ -39,6 +39,9 @@
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity android:name=".onboarding.integration.MobileAppIntegrationActivity" />
         <activity android:name=".onboarding.authentication.AuthenticationActivity" />
+
+        <!-- To show confirmations and failures -->
+        <activity android:name="androidx.wear.activity.ConfirmationActivity" />
     </application>
 
 </manifest>
