@@ -3,18 +3,17 @@ package io.homeassistant.companion.android.home
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.support.wearable.activity.WearableActivity
-import android.util.Log
+import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.wearable.*
 import com.google.android.material.button.MaterialButton
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.launch.LaunchActivity
+import io.homeassistant.companion.android.onboarding.OnboardingActivity
+import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import kotlinx.android.synthetic.main.activity_home.*
 import javax.inject.Inject
 
@@ -65,8 +64,15 @@ class HomeActivity : AppCompatActivity(), HomeView {
         txtEntities.text = resources.getQuantityString(R.plurals.entities_found, count, count)
     }
 
-    override fun displayLaunchView() {
-        startActivity(LaunchActivity.newInstance(this))
+    override fun displayOnBoarding() {
+        val intent = OnboardingActivity.newInstance(this)
+        startActivity(intent)
+        finish()
+    }
+
+    override fun displayMobileAppIntegration() {
+        val intent = MobileAppIntegrationActivity.newInstance(this)
+        startActivity(intent)
         finish()
     }
 }

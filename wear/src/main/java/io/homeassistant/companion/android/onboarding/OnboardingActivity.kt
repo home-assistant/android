@@ -80,9 +80,14 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
         Wearable.getDataClient(this).removeListener(this)
     }
 
+    override fun onStop() {
+        super.onStop()
+
+        loading_view.visibility = View.GONE
+    }
+
     override fun startAuthentication(flowId: String) {
         startActivity(AuthenticationActivity.newInstance(this, flowId))
-        loading_view.visibility = View.GONE
     }
 
     override fun showLoading() {
@@ -90,9 +95,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
     }
 
     override fun showError() {
-        // Hide loading view again
-        loading_view.visibility = View.GONE
-
         // Show failure message
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)

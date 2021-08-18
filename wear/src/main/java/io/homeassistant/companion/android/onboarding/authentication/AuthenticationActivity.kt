@@ -57,10 +57,14 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
         }
     }
 
-    override fun startIntegration() {
-        startActivity(MobileAppIntegrationActivity.newInstance(this))
+    override fun onStop() {
+        super.onStop()
 
         loading_view.visibility = View.GONE
+    }
+
+    override fun startIntegration() {
+        startActivity(MobileAppIntegrationActivity.newInstance(this))
     }
 
     override fun showLoading() {
@@ -68,9 +72,6 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
     }
 
     override fun showError() {
-        // Hide loading view again
-        loading_view.visibility = View.GONE
-
         // Show failure message
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)

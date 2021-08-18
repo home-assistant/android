@@ -4,6 +4,7 @@
     <string name="attempting_connection">Connecting…</string>
     <string name="attempting_registration">Registering application…</string>
     <string name="button_forward">Next</string>
+    <string name="checking_connection">Checking connection…</string>
     <string name="device_name">Device Name</string>
     <plurals name="entities_found">
         <item quantity="one">%d entity found</item>

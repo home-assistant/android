@@ -4,5 +4,6 @@ interface HomeView {
     fun showHomeAssistantVersion(version: String)
     fun showEntitiesCount(count: Int)
 
-    fun displayLaunchView()
+    fun displayOnBoarding()
+    fun displayMobileAppIntegration()
 }

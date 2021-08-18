@@ -50,13 +50,17 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+
+        loading_view.visibility = View.GONE
+    }
+
     override fun deviceRegistered() {
         val intent = HomeActivity.newInstance(this)
         // empty the back stack
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
-
-        loading_view.visibility = View.GONE
     }
 
     override fun showLoading() {
@@ -64,9 +68,6 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
     }
 
     override fun showError() {
-        // Hide loading view again
-        loading_view.visibility = View.GONE
-
         // Show failure message
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)
