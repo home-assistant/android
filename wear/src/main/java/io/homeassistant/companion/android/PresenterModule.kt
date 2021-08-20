@@ -15,6 +15,9 @@ import io.homeassistant.companion.android.onboarding.authentication.Authenticati
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenter
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenterImpl
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationView
+import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupPresenter
+import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupPresenterImpl
+import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupView
 
 @Module(includes = [PresenterModule.Declaration::class])
 class PresenterModule {
@@ -22,6 +25,7 @@ class PresenterModule {
     private lateinit var onBoardingView: OnboardingView
     private lateinit var authenticationView: AuthenticationView
     private lateinit var mobileAppIntegrationView: MobileAppIntegrationView
+    private lateinit var manualSetupView: ManualSetupView
     private lateinit var homeView: HomeView
 
     constructor(onBoardingView: OnboardingView) {
@@ -34,6 +38,10 @@ class PresenterModule {
 
     constructor(mobileAppIntegrationView: MobileAppIntegrationView) {
         this.mobileAppIntegrationView = mobileAppIntegrationView
+    }
+
+    constructor(manualSetupView: ManualSetupView) {
+        this.manualSetupView = manualSetupView
     }
 
     constructor(homeView: HomeView) {
@@ -50,6 +58,9 @@ class PresenterModule {
     fun provideMobileAppIntegrationView() = mobileAppIntegrationView
 
     @Provides
+    fun provideManualSetupView() = manualSetupView
+
+    @Provides
     fun provideHomeView() = homeView
 
     @Module
@@ -63,6 +74,9 @@ class PresenterModule {
 
         @Binds
         fun bindMobileAppIntegrationPresenter(presenter: MobileAppIntegrationPresenterImpl): MobileAppIntegrationPresenter
+
+        @Binds
+        fun bindManualSetupPresenter(presenter: ManualSetupPresenterImpl): ManualSetupPresenter
 
         @Binds
         fun bindHomePresenter(presenter: HomePresenterImpl): HomePresenter

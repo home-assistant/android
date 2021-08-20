@@ -17,10 +17,6 @@ class AuthenticationPresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onViewReady() {
-        TODO("Not yet implemented")
-    }
-
     override fun onNextClicked(flowId: String, username: String, password: String) {
         view.showLoading()
         Log.d(TAG, "onNextClicked")

@@ -16,7 +16,6 @@ class InstanceViewHolder(v: View, val onClick: (HomeAssistantInstance) -> Unit):
             name.text = value?.name
             field = value
         }
-        var nodeId: Int = 0
 
         init {
             v.setOnClickListener {

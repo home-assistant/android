@@ -1,33 +1,30 @@
-package io.homeassistant.companion.android.onboarding.integration
+package io.homeassistant.companion.android.onboarding.manual_setup
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.home.HomeActivity
-import kotlinx.android.synthetic.main.activity_integration.*
-import kotlinx.android.synthetic.main.activity_integration.loading_view
+import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
+import kotlinx.android.synthetic.main.activity_manual_setup.*
 import javax.inject.Inject
 
-class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
+class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
     companion object {
-        private const val TAG = "MobileAppIntegrationActivity"
+        private const val TAG = "ManualSetupActivity"
 
         fun newInstance(context: Context): Intent {
-            return Intent(context, MobileAppIntegrationActivity::class.java)
+            return Intent(context, ManualSetupActivity::class.java)
         }
     }
 
     @Inject
-    lateinit var presenter: MobileAppIntegrationPresenter
+    lateinit var presenter: ManualSetupPresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,26 +36,15 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
             .build()
             .inject(this)
 
-        setContentView(R.layout.activity_integration)
+        setContentView(R.layout.activity_manual_setup)
 
-        server_url.setText(Build.MODEL)
-
-        findViewById<FloatingActionButton>(R.id.finish).setOnClickListener {
-            presenter.onRegistrationAttempt(server_url.text.toString())
+        button_next.setOnClickListener {
+            presenter.onNextClicked(server_url.text.toString())
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-
-        loading_view.visibility = View.GONE
-    }
-
-    override fun deviceRegistered() {
-        val intent = HomeActivity.newInstance(this)
-        // empty the back stack
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        startActivity(intent)
+    override fun startAuthentication(flowId: String) {
+        startActivity(AuthenticationActivity.newInstance(this, flowId))
     }
 
     override fun showLoading() {
@@ -69,9 +55,15 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         // Show failure message
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)
-            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_registration))
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_connection))
         }
         startActivity(intent)
+        loading_view.visibility = View.GONE
+    }
+
+    override fun onStop() {
+        super.onStop()
+
         loading_view.visibility = View.GONE
     }
 

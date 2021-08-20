@@ -15,7 +15,7 @@
         app:layout_boxedEdges="all">
 
         <EditText
-            android:id="@+id/device_name"
+            android:id="@+id/server_url"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -56,5 +56,5 @@
         android:layout_height="match_parent"
         app:loading_text="@string/attempting_registration"
         android:visibility="gone" />
-    
+
 </androidx.wear.widget.BoxInsetLayout>

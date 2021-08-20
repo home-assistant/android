@@ -78,6 +78,7 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_authentication))
         }
         startActivity(intent)
+        loading_view.visibility = View.GONE
     }
 
     override fun onDestroy() {

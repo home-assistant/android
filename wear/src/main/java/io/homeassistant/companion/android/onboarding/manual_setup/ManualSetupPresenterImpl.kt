@@ -1,31 +1,28 @@
-package io.homeassistant.companion.android.onboarding
+package io.homeassistant.companion.android.onboarding.manual_setup
 
 import android.util.Log
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
 import kotlinx.coroutines.*
 import javax.inject.Inject
 
-class OnboardingPresenterImpl @Inject constructor(
-    private val view: OnboardingView,
+class ManualSetupPresenterImpl @Inject constructor(
+    private val view: ManualSetupView,
     private val authenticationUseCase: AuthenticationRepository,
     private val urlUseCase: UrlRepository
-): OnboardingPresenter {
+): ManualSetupPresenter {
     companion object {
-        private const val TAG = "OnboardingPresenter"
+        private const val TAG = "ManualSetupPresenter"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onAdapterItemClick(instance: HomeAssistantInstance) {
-        Log.d(TAG, "onAdapterItemClick: ${instance.name}")
+    override fun onNextClicked(url: String) {
         view.showLoading()
         mainScope.launch {
             // Set current url
-            urlUseCase.saveUrl(instance.url.toString())
+            urlUseCase.saveUrl(url)
 
             // Initiate login flow
             try {

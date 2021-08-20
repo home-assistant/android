@@ -17,6 +17,7 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
+import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupActivity
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.activity_integration.*
 import kotlinx.android.synthetic.main.activity_integration.loading_view
@@ -39,8 +40,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
     @Inject
     lateinit var presenter: OnboardingPresenter
 
-    //private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -53,10 +52,13 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
 
         setContentView(R.layout.activity_onboarding)
 
-        adapter = ServerListAdapter(ArrayList()) { instance -> presenter.onAdapterItemClick(instance) }
+        adapter = ServerListAdapter(ArrayList())
+        adapter.onInstanceClicked = { instance -> presenter.onAdapterItemClick(instance) }
+        adapter.onManualSetupClicked = {this.startManualSetup()}
 
         findViewById<WearableRecyclerView>(R.id.server_list)?.apply {
             layoutManager = LinearLayoutManager(this@OnboardingActivity)
+            isEdgeItemsCenteringEnabled = true
             adapter = this@OnboardingActivity.adapter
         }
     }
@@ -90,6 +92,10 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
         startActivity(AuthenticationActivity.newInstance(this, flowId))
     }
 
+    override fun startManualSetup() {
+        startActivity(ManualSetupActivity.newInstance(this))
+    }
+
     override fun showLoading() {
         loading_view.visibility = View.VISIBLE
     }
@@ -101,6 +107,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_connection))
         }
         startActivity(intent)
+        loading_view.visibility = View.GONE
     }
 
     private fun findExistingInstances() {
@@ -160,7 +167,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
         if (!adapter.servers.contains(instance)) {
             adapter.servers.add(instance)
             adapter.notifyDataSetChanged()
-            //adapter.notifyItemInserted(adapter.servers.size-1)
             Log.d(TAG, "onInstanceFound: added ${instance.name}")
         }
     }
@@ -193,14 +199,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
                 }
             }
         }
-    }
-
-    private fun onSelectManualSetup() {
-        //TODO
-    }
-
-    private fun onAuthenticationSuccess() {
-        //TODO go to register integration
     }
 
     override fun onDestroy() {
