@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
 
-class LogFragment() : Fragment() {
+class LogFragment : Fragment() {
 
     private var currentLog = ""
 
