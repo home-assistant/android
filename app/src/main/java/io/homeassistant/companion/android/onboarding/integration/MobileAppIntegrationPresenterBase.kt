@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 open class MobileAppIntegrationPresenterBase constructor(
     private val view: MobileAppIntegrationView,
@@ -37,7 +38,9 @@ open class MobileAppIntegrationPresenterBase constructor(
                 deviceRegistration = createRegistration(simple, deviceName)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to create registration.", e)
-                view.showWarning()
+                withContext(mainScope.coroutineContext) {
+                    view.showWarning()
+                }
                 return@launch
             }
             try {
