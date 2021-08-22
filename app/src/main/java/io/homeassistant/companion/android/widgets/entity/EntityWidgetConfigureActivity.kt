@@ -10,10 +10,10 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import android.widget.LinearLayout.GONE
 import android.widget.LinearLayout.VISIBLE
 import android.widget.MultiAutoCompleteTextView.CommaTokenizer
 import android.widget.Toast
+import androidx.core.view.isVisible
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
@@ -129,7 +129,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
         }
 
         append_attribute_value_checkbox.setOnCheckedChangeListener { _, isChecked ->
-            attribute_value_linear_layout.visibility = if (isChecked) VISIBLE else GONE
+            attribute_value_linear_layout.isVisible = isChecked
             appendAttributes = isChecked
         }
 
