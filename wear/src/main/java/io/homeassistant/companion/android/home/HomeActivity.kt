@@ -33,7 +33,7 @@ class HomeActivity : AppCompatActivity(), HomeView {
         setContentView(R.layout.activity_home)
 
         DaggerPresenterComponent
-                .builder()
+            .builder()
             .appComponent((application as GraphComponentAccessor).appComponent)
             .presenterModule(PresenterModule(this))
             .build()

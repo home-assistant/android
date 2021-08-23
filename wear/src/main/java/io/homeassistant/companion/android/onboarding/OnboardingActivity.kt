@@ -21,8 +21,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
 import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupActivity
-import javax.inject.Inject
 import kotlinx.android.synthetic.main.activity_integration.loading_view
+import javax.inject.Inject
 
 class OnboardingActivity : AppCompatActivity(), OnboardingView {
 

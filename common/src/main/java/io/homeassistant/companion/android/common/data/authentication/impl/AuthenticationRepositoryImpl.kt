@@ -31,11 +31,13 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun initiateLoginFlow(): LoginFlowInit {
-        return authenticationService.initializeLogin(LoginFlowRequest(
-            AuthenticationService.CLIENT_ID,
-            AuthenticationService.AUTH_CALLBACK,
-            AuthenticationService.HANDLER
-        ))
+        return authenticationService.initializeLogin(
+            LoginFlowRequest(
+                AuthenticationService.CLIENT_ID,
+                AuthenticationService.AUTH_CALLBACK,
+                AuthenticationService.HANDLER
+            )
+        )
     }
 
     override suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowCreateEntry {

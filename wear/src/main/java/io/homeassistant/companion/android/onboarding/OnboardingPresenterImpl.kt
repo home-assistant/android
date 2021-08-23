@@ -8,13 +8,13 @@ import com.google.android.gms.wearable.DataMapItem
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import java.net.URL
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.net.URL
+import javax.inject.Inject
 
 class OnboardingPresenterImpl @Inject constructor(
     private val view: OnboardingView,

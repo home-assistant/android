@@ -9,8 +9,8 @@ import com.google.android.gms.wearable.WearableListenerService
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
+import javax.inject.Inject
 
 class WearOnboardingListener : WearableListenerService() {
 

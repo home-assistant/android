@@ -10,16 +10,16 @@ import io.homeassistant.companion.android.R
 class ManualSetupViewHolder(v: View, val onClick: () -> Unit) :
     RecyclerView.ViewHolder(v) {
 
-        val text: TextView = v.findViewById(R.id.name)
+    val text: TextView = v.findViewById(R.id.name)
 
-        init {
-            // Increase margin
-            val marginTop = (20 * Resources.getSystem().displayMetrics.density).toInt()
-            (v.layoutParams as ViewGroup.MarginLayoutParams).topMargin = marginTop
+    init {
+        // Increase margin
+        val marginTop = (20 * Resources.getSystem().displayMetrics.density).toInt()
+        (v.layoutParams as ViewGroup.MarginLayoutParams).topMargin = marginTop
 
-            // Set onclick listener
-            v.setOnClickListener {
-                onClick()
-            }
+        // Set onclick listener
+        v.setOnClickListener {
+            onClick()
         }
+    }
 }
