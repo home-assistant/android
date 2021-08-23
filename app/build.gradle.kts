@@ -121,7 +121,7 @@ dependencies {
     implementation(project(":common"))
 
     implementation("com.github.Dimezis:BlurView:version-1.6.6")
-    implementation("org.altbeacon:android-beacon-library:2.19.1")
+    implementation("org.altbeacon:android-beacon-library:2.19.2")
     implementation("com.maltaisn:icondialog:3.3.0")
     implementation("com.maltaisn:iconpack-community-material:5.3.45")
     implementation("com.vdurmont:emoji-java:5.1.1") {
@@ -168,7 +168,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.20.2")
     testImplementation("io.mockk:mockk:1.12.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1")
-    testImplementation("org.altbeacon:android-beacon-library:2.18")
+    testImplementation("org.altbeacon:android-beacon-library:2.19.2")
 
     implementation("com.google.android.exoplayer:exoplayer-core:2.14.2")
     implementation("com.google.android.exoplayer:exoplayer-hls:2.14.2")
