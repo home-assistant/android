@@ -21,7 +21,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
 import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupActivity
-import kotlinx.android.synthetic.main.activity_integration.loading_view
+import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
 
 class OnboardingActivity : AppCompatActivity(), OnboardingView {
@@ -38,6 +38,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
     @Inject
     lateinit var presenter: OnboardingPresenter
+    private lateinit var loadingView: LoadingView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +51,8 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
             .inject(this)
 
         setContentView(R.layout.activity_onboarding)
+
+        loadingView = findViewById<LoadingView>(R.id.loading_view)
 
         adapter = ServerListAdapter(ArrayList())
         adapter.onInstanceClicked = { instance -> presenter.onAdapterItemClick(instance) }
@@ -65,7 +68,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
     override fun onResume() {
         super.onResume()
 
-        loading_view.visibility = View.GONE
+        loadingView.visibility = View.GONE
 
         // Add listener to exchange authentication tokens
         Wearable.getDataClient(this).addListener(presenter)
@@ -92,7 +95,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
     }
 
     override fun showLoading() {
-        loading_view.visibility = View.VISIBLE
+        loadingView.visibility = View.VISIBLE
     }
 
     override fun showError() {
@@ -102,7 +105,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_connection))
         }
         startActivity(intent)
-        loading_view.visibility = View.GONE
+        loadingView.visibility = View.GONE
     }
 
     override fun onInstanceFound(instance: HomeAssistantInstance) {

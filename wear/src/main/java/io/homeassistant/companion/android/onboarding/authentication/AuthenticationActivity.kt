@@ -5,14 +5,16 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
-import kotlinx.android.synthetic.main.activity_authentication.*
+import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
 
 class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
@@ -28,6 +30,7 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
 
     @Inject
     lateinit var presenter: AuthenticationPresenter
+    private lateinit var loadingView: LoadingView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,11 +49,13 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
 
         setContentView(R.layout.activity_authentication)
 
-        button_next.setOnClickListener {
+        loadingView = findViewById<LoadingView>(R.id.loading_view)
+
+        findViewById<FloatingActionButton>(R.id.button_next).setOnClickListener {
             presenter.onNextClicked(
                 intent.getStringExtra("flowId")!!,
-                username.text.toString(),
-                password.text.toString()
+                findViewById<EditText>(R.id.username).text.toString(),
+                findViewById<EditText>(R.id.password).text.toString()
             )
         }
     }
@@ -58,7 +63,7 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
     override fun onResume() {
         super.onResume()
 
-        loading_view.visibility = View.GONE
+        loadingView.visibility = View.GONE
     }
 
     override fun startIntegration() {
@@ -66,7 +71,7 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
     }
 
     override fun showLoading() {
-        loading_view.visibility = View.VISIBLE
+        loadingView.visibility = View.VISIBLE
     }
 
     override fun showError() {
@@ -76,7 +81,7 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_authentication))
         }
         startActivity(intent)
-        loading_view.visibility = View.GONE
+        loadingView.visibility = View.GONE
     }
 
     override fun onDestroy() {

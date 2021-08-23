@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -13,7 +14,7 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.home.HomeActivity
-import kotlinx.android.synthetic.main.activity_integration.*
+import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
 
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
@@ -27,6 +28,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
 
     @Inject
     lateinit var presenter: MobileAppIntegrationPresenter
+    private lateinit var loadingView: LoadingView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,17 +42,20 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
 
         setContentView(R.layout.activity_integration)
 
-        server_url.setText(Build.MODEL)
+        loadingView = findViewById<LoadingView>(R.id.loading_view)
+
+        val serverUrl: EditText = findViewById(R.id.server_url)
+        serverUrl.setText(Build.MODEL)
 
         findViewById<FloatingActionButton>(R.id.finish).setOnClickListener {
-            presenter.onRegistrationAttempt(server_url.text.toString())
+            presenter.onRegistrationAttempt(serverUrl.text.toString())
         }
     }
 
     override fun onResume() {
         super.onResume()
 
-        loading_view.visibility = View.GONE
+        loadingView.visibility = View.GONE
     }
 
     override fun deviceRegistered() {
@@ -61,7 +66,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
     }
 
     override fun showLoading() {
-        loading_view.visibility = View.VISIBLE
+        loadingView.visibility = View.VISIBLE
     }
 
     override fun showError() {
@@ -71,7 +76,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_registration))
         }
         startActivity(intent)
-        loading_view.visibility = View.GONE
+        loadingView.visibility = View.GONE
     }
 
     override fun onDestroy() {

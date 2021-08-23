@@ -4,14 +4,16 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
-import kotlinx.android.synthetic.main.activity_manual_setup.*
+import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
 
 class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
@@ -25,6 +27,7 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
 
     @Inject
     lateinit var presenter: ManualSetupPresenter
+    private lateinit var loadingView: LoadingView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,8 +41,10 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
 
         setContentView(R.layout.activity_manual_setup)
 
-        button_next.setOnClickListener {
-            presenter.onNextClicked(server_url.text.toString())
+        loadingView = findViewById<LoadingView>(R.id.loading_view)
+
+        findViewById<FloatingActionButton>(R.id.button_next).setOnClickListener {
+            presenter.onNextClicked(findViewById<EditText>(R.id.server_url).text.toString())
         }
     }
 
@@ -48,7 +53,7 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
     }
 
     override fun showLoading() {
-        loading_view.visibility = View.VISIBLE
+        loadingView.visibility = View.VISIBLE
     }
 
     override fun showError() {
@@ -58,13 +63,13 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_connection))
         }
         startActivity(intent)
-        loading_view.visibility = View.GONE
+        loadingView.visibility = View.GONE
     }
 
     override fun onResume() {
         super.onResume()
 
-        loading_view.visibility = View.GONE
+        loadingView.visibility = View.GONE
     }
 
     override fun onDestroy() {
