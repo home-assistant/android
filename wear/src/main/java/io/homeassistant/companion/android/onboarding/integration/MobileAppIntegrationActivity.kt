@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.home.HomeActivity
 import kotlinx.android.synthetic.main.activity_integration.*
-import kotlinx.android.synthetic.main.activity_integration.loading_view
 import javax.inject.Inject
 
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
@@ -48,8 +47,8 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
         }
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onResume() {
+        super.onResume()
 
         loading_view.visibility = View.GONE
     }

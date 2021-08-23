@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.onboarding.authentication
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -14,8 +13,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import kotlinx.android.synthetic.main.activity_authentication.*
-import kotlinx.android.synthetic.main.activity_authentication.loading_view
-import kotlinx.android.synthetic.main.activity_integration.*
 import javax.inject.Inject
 
 class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
@@ -57,8 +54,8 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onResume() {
+        super.onResume()
 
         loading_view.visibility = View.GONE
     }

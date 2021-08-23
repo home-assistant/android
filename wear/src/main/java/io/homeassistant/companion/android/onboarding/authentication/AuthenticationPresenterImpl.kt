@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.onboarding.authentication
 import android.util.Log
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
-import io.homeassistant.companion.android.onboarding.OnboardingPresenterImpl
 import kotlinx.coroutines.*
 import javax.inject.Inject
 
@@ -23,7 +22,6 @@ class AuthenticationPresenterImpl @Inject constructor(
         mainScope.launch {
             try {
                 val flowCreateEntry: LoginFlowCreateEntry = authenticationUseCase.loginAuthentication(flowId, username, password)
-                // TODO handle authentication errors
                 Log.d(TAG, "Authenticated result: ${flowCreateEntry.result}")
                 authenticationUseCase.registerAuthorizationCode(flowCreateEntry.result)
                 Log.d(TAG, "Finished!")

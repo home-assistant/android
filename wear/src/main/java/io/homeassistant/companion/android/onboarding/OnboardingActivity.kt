@@ -22,10 +22,9 @@ import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.activity_integration.*
 import kotlinx.android.synthetic.main.activity_integration.loading_view
 import kotlinx.android.synthetic.main.activity_onboarding.*
-import java.net.URL
 import javax.inject.Inject
 
-class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDataChangedListener {
+class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
     private lateinit var adapter: ServerListAdapter
 
@@ -66,8 +65,10 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
     override fun onResume() {
         super.onResume()
 
+        loading_view.visibility = View.GONE
+
         // Add listener to exchange authentication tokens
-        Wearable.getDataClient(this).addListener(this)
+        Wearable.getDataClient(this).addListener(presenter)
 
         // Check for current instances
         Thread { findExistingInstances() }.start()
@@ -79,13 +80,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
     override fun onPause() {
         super.onPause()
 
-        Wearable.getDataClient(this).removeListener(this)
-    }
-
-    override fun onStop() {
-        super.onStop()
-
-        loading_view.visibility = View.GONE
+        Wearable.getDataClient(this).removeListener(presenter)
     }
 
     override fun startAuthentication(flowId: String) {
@@ -110,12 +105,28 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
         loading_view.visibility = View.GONE
     }
 
+    override fun onInstanceFound(instance: HomeAssistantInstance) {
+        Log.d(TAG, "onInstanceFound: ${instance.name}")
+        if (!adapter.servers.contains(instance)) {
+            adapter.servers.add(instance)
+            adapter.notifyDataSetChanged()
+            Log.d(TAG, "onInstanceFound: added ${instance.name}")
+        }
+    }
+
+    override fun onInstanceLost(instance: HomeAssistantInstance) {
+        if (adapter.servers.contains(instance)) {
+            adapter.servers.remove(instance)
+            adapter.notifyDataSetChanged()
+        }
+    }
+
     private fun findExistingInstances() {
         Log.d(TAG, "findExistingInstances")
         Tasks.await(Wearable.getDataClient(this).getDataItems(Uri.parse("wear://*/home_assistant_instance"))).apply {
             Log.d(TAG, "findExistingInstances: success, found ${this.count}")
             this.forEach { item ->
-                val instance = getInstance(DataMapItem.fromDataItem(item).dataMap)
+                val instance = presenter.getInstance(DataMapItem.fromDataItem(item).dataMap)
                 this@OnboardingActivity.runOnUiThread {
                     onInstanceFound(instance)
                 }
@@ -137,7 +148,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
 
         if (capabilityInfo.nodes.size == 0) {
             Log.d(TAG, "requestInstances: No nodes found")
-            //TODO Immediately go to manual setup
         }
 
         capabilityInfo.nodes.forEach { node ->
@@ -148,55 +158,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView, DataClient.OnDat
             ).apply {
                 addOnSuccessListener { Log.d(TAG, "requestInstances: request home assistant instances from $node.id: ${node.displayName}") }
                 addOnFailureListener { Log.w(TAG, "requestInstances: failed to request home assistant instances from $node.id: ${node.displayName}") }
-            }
-        }
-    }
-
-    private fun getInstance(map: DataMap): HomeAssistantInstance {
-        map.apply {
-            return HomeAssistantInstance(
-                getString("name", ""),
-                URL(getString("url", "")),
-                getString("version", "")
-            )
-        }
-    }
-
-    private fun onInstanceFound(instance: HomeAssistantInstance) {
-        Log.d(TAG, "onInstanceFound: ${instance.name}")
-        if (!adapter.servers.contains(instance)) {
-            adapter.servers.add(instance)
-            adapter.notifyDataSetChanged()
-            Log.d(TAG, "onInstanceFound: added ${instance.name}")
-        }
-    }
-
-    private fun onInstanceLost(instance: HomeAssistantInstance) {
-        if (adapter.servers.contains(instance)) {
-            adapter.servers.remove(instance)
-            adapter.notifyDataSetChanged()
-        }
-    }
-
-    override fun onDataChanged(dataEvents: DataEventBuffer) {
-        Log.d(TAG, "onDataChanged: [${dataEvents.count}]")
-        dataEvents.forEach { event ->
-            // DataItem changed
-            if (event.type == DataEvent.TYPE_CHANGED) {
-                event.dataItem.also { item ->
-                    if (item.uri.path?.compareTo("/home_assistant_instance") == 0) {
-                        Log.d(TAG, "onDataChanged: found home_assistant_instance")
-                        val instance = getInstance(DataMapItem.fromDataItem(item).dataMap)
-                        onInstanceFound(instance)
-                    }
-                }
-            } else if (event.type == DataEvent.TYPE_DELETED) {
-                event.dataItem.also { item ->
-                    if (item.uri.path?.compareTo("/home_assistant_instance") == 0) {
-                        val instance = getInstance(DataMapItem.fromDataItem(item).dataMap)
-                        onInstanceLost(instance)
-                    }
-                }
             }
         }
     }

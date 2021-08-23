@@ -1,13 +1,10 @@
 package io.homeassistant.companion.android.onboarding
 
 import android.util.Log
-import com.google.android.gms.tasks.Task
-import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.*
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.notifications.DaggerServiceComponent
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
@@ -38,13 +35,6 @@ class WearOnboardingListener : WearableListenerService() {
 
     private fun sendHomeAssistantInstance(nodeId: String) = runBlocking {
         Log.d("WearOnboardingListener", "sendHomeAssistantInstance: $nodeId")
-        /*
-        TODO move database.authentication to common
-        This also means that database.AppDatabase needs to be split up
-        Then try to retrieve an Authentication instance from the database (will only be present if the user selected "remember me")
-        If it is present, use that to get the url, hostname, username and password
-        If it is not present, use the current method and add empty username and password
-         */
         // Retrieve current instance
         val url = urlUseCase.getUrl()
 

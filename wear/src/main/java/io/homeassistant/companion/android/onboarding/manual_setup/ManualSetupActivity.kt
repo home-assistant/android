@@ -61,8 +61,8 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
         loading_view.visibility = View.GONE
     }
 
-    override fun onStop() {
-        super.onStop()
+    override fun onResume() {
+        super.onResume()
 
         loading_view.visibility = View.GONE
     }
