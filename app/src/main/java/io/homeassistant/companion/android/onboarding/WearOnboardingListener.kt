@@ -1,12 +1,16 @@
 package io.homeassistant.companion.android.onboarding
 
 import android.util.Log
-import com.google.android.gms.wearable.*
+import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.PutDataRequest
+import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.WearableListenerService
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import kotlinx.coroutines.runBlocking
 
 class WearOnboardingListener : WearableListenerService() {
 

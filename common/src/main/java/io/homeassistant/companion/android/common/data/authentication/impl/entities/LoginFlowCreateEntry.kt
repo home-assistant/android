@@ -10,5 +10,5 @@ data class LoginFlowCreateEntry(
     @JsonProperty("flow_id")
     val flowId: String,
     @JsonProperty("result")
-    val result: String,
+    val result: String
 )

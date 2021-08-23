@@ -3,13 +3,17 @@ package io.homeassistant.companion.android.onboarding.authentication
 import android.util.Log
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
-import kotlinx.coroutines.*
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class AuthenticationPresenterImpl @Inject constructor(
     private val view: AuthenticationView,
     private val authenticationUseCase: AuthenticationRepository
-): AuthenticationPresenter{
+) : AuthenticationPresenter {
     companion object {
         private const val TAG = "AuthenticationPresenter"
     }

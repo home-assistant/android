@@ -1,8 +1,16 @@
 package io.homeassistant.companion.android.common.data.authentication.impl
 
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.*
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowAuthentication
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowRequest
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.Token
 import retrofit2.Response
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.Field
+import retrofit2.http.FormUrlEncoded
+import retrofit2.http.POST
+import retrofit2.http.Url
 
 interface AuthenticationService {
 
@@ -44,5 +52,4 @@ interface AuthenticationService {
 
     @POST
     suspend fun authenticate(@Url url: String, @Body body: LoginFlowAuthentication): LoginFlowCreateEntry
-
 }

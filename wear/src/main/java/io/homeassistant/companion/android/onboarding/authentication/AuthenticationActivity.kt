@@ -12,8 +12,8 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
-import kotlinx.android.synthetic.main.activity_authentication.*
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.activity_authentication.*
 
 class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
     companion object {

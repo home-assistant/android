@@ -4,14 +4,18 @@ import android.util.Log
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import kotlinx.coroutines.*
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 class ManualSetupPresenterImpl @Inject constructor(
     private val view: ManualSetupView,
     private val authenticationUseCase: AuthenticationRepository,
     private val urlUseCase: UrlRepository
-): ManualSetupPresenter {
+) : ManualSetupPresenter {
     companion object {
         private const val TAG = "ManualSetupPresenter"
     }

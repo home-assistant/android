@@ -7,5 +7,4 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 interface OnboardingListenerComponent {
 
     fun inject(listener: WearOnboardingListener)
-
 }

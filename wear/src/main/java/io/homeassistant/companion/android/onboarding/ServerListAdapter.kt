@@ -12,8 +12,8 @@ import io.homeassistant.companion.android.onboarding.viewHolders.ManualSetupView
 import kotlin.math.min
 
 class ServerListAdapter(
-        val servers: ArrayList<HomeAssistantInstance>
-): RecyclerView.Adapter<ViewHolder>() {
+    val servers: ArrayList<HomeAssistantInstance>
+) : RecyclerView.Adapter<ViewHolder>() {
 
     lateinit var onInstanceClicked: (HomeAssistantInstance) -> Unit
     lateinit var onManualSetupClicked: () -> Unit
@@ -63,15 +63,14 @@ class ServerListAdapter(
         }
     }
 
-    override fun getItemCount() = min(servers.size+2, 3)
+    override fun getItemCount() = min(servers.size + 2, 3)
 
     override fun getItemViewType(position: Int): Int {
         return when {
             position == 0 -> TYPE_HEADER
-            position == this.itemCount-1 -> TYPE_MANUAL
+            position == this.itemCount - 1 -> TYPE_MANUAL
             servers.size > 0 -> TYPE_INSTANCE
             else -> TYPE_LOADING
         }
     }
-
 }

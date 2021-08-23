@@ -11,18 +11,18 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.widget.WearableRecyclerView
 import com.google.android.gms.tasks.Tasks
-import com.google.android.gms.wearable.*
+import com.google.android.gms.wearable.CapabilityClient
+import com.google.android.gms.wearable.CapabilityInfo
+import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.Wearable
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
 import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupActivity
-import kotlinx.android.synthetic.main.activity_home.*
-import kotlinx.android.synthetic.main.activity_integration.*
-import kotlinx.android.synthetic.main.activity_integration.loading_view
-import kotlinx.android.synthetic.main.activity_onboarding.*
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.activity_integration.loading_view
 
 class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
@@ -53,7 +53,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
         adapter = ServerListAdapter(ArrayList())
         adapter.onInstanceClicked = { instance -> presenter.onAdapterItemClick(instance) }
-        adapter.onManualSetupClicked = {this.startManualSetup()}
+        adapter.onManualSetupClicked = { this.startManualSetup() }
 
         findViewById<WearableRecyclerView>(R.id.server_list)?.apply {
             layoutManager = LinearLayoutManager(this@OnboardingActivity)

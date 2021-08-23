@@ -13,8 +13,8 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.home.HomeActivity
-import kotlinx.android.synthetic.main.activity_integration.*
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.activity_integration.*
 
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
     companion object {

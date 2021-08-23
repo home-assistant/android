@@ -11,8 +11,8 @@ import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
-import kotlinx.android.synthetic.main.activity_manual_setup.*
 import javax.inject.Inject
+import kotlinx.android.synthetic.main.activity_manual_setup.*
 
 class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
     companion object {

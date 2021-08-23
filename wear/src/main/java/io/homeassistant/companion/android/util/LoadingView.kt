@@ -7,7 +7,8 @@ import android.widget.TextView
 import io.homeassistant.companion.android.R
 
 class LoadingView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null
+    context: Context,
+    attrs: AttributeSet? = null
 ) : LinearLayout(context, attrs) {
 
     init {
