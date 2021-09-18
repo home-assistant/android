@@ -97,12 +97,12 @@ object TransmitterManager {
         }
 
     private fun getReferencePowerInDbs(haTransmitter: IBeaconTransmitter) =
-        // from altbeacon library, below values correspond to the PowerLevels, using reference phone of Nexus 5
+        // from https://github.com/home-assistant/android/issues/1715, below values correspond to the PowerLevels, using reference phone of S5
         when (haTransmitter.transmitPowerSetting) {
-            "high" -> -56
-            "medium" -> -66
-            "low" -> -75
-            else -> -99
+            "high" -> -74
+            "medium" -> -84
+            "low" -> -90
+            else -> -94
         }
 
     fun stopTransmitting(haTransmitter: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter) {
