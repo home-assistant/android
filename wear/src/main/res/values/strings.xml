@@ -22,6 +22,7 @@
     <string name="login">Login</string>
     <string name="logout">Logout</string>
     <string name="manual_setup">Manual setup</string>
+    <string name="other">Other</string>
     <string name="password">Password</string>
     <string name="registerDevice">Register watch</string>
     <string name="username">Username</string>

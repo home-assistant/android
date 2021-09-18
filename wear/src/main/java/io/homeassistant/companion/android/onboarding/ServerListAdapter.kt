@@ -59,15 +59,19 @@ class ServerListAdapter(
         } else if (holder is ManualSetupViewHolder) {
             holder.text.setText(R.string.manual_setup)
         } else if (holder is HeaderViewHolder) {
-            holder.headerTextView.setText(R.string.list_header_instances)
+            if (position == 0) {
+                holder.headerTextView.setText(R.string.list_header_instances)
+            } else {
+                holder.headerTextView.setText(R.string.other)
+            }
         }
     }
 
-    override fun getItemCount() = min(servers.size + 2, 3)
+    override fun getItemCount() = min(servers.size + 3, 4)
 
     override fun getItemViewType(position: Int): Int {
         return when {
-            position == 0 -> TYPE_HEADER
+            position == 0 || position == this.itemCount - 2 -> TYPE_HEADER
             position == this.itemCount - 1 -> TYPE_MANUAL
             servers.size > 0 -> TYPE_INSTANCE
             else -> TYPE_LOADING
