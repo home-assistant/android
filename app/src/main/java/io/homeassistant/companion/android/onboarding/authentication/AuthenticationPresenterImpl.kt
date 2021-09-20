@@ -41,7 +41,7 @@ class AuthenticationPresenterImpl @Inject constructor(
                 try {
                     authenticationUseCase.registerAuthorizationCode(code)
                 } catch (e: Exception) {
-                    Log.e(TAG, "unable to register code")
+                    Log.e(TAG, "unable to register code", e)
                     view.showError(R.string.webview_error)
                     return@launch
                 }
