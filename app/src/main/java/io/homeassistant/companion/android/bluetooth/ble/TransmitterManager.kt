@@ -15,7 +15,7 @@ object TransmitterManager {
 
     private fun buildBeacon(haTransmitterI: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter): Beacon {
         val builder = Beacon.Builder()
-        builder.setTxPower(-59)
+        builder.setTxPower(getReferencePowerInDbs(haTransmitterI))
         builder.setId1(haTransmitterI.uuid)
         builder.setId2(haTransmitterI.major)
         builder.setId3(haTransmitterI.minor)
@@ -94,6 +94,15 @@ object TransmitterManager {
             "medium" -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
             "low" -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
             else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
+        }
+
+    private fun getReferencePowerInDbs(haTransmitter: IBeaconTransmitter) =
+        // from https://github.com/home-assistant/android/issues/1715, below values correspond to the PowerLevels, using reference phone of S5
+        when (haTransmitter.transmitPowerSetting) {
+            "high" -> -74
+            "medium" -> -84
+            "low" -> -90
+            else -> -94
         }
 
     fun stopTransmitting(haTransmitter: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter) {
