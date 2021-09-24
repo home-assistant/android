@@ -170,10 +170,10 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1")
     testImplementation("org.altbeacon:android-beacon-library:2.19.2")
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.14.2")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.14.2")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.14.2")
-    implementation("com.google.android.exoplayer:extension-cronet:2.14.2")
+    implementation("com.google.android.exoplayer:exoplayer-core:2.15.1")
+    implementation("com.google.android.exoplayer:exoplayer-hls:2.15.1")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
+    implementation("com.google.android.exoplayer:extension-cronet:2.15.1")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
