@@ -87,6 +87,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.chromium.net.CronetEngine
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -641,9 +642,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoPlayer = SimpleExoPlayer.Builder(applicationContext).setMediaSourceFactory(
                 DefaultMediaSourceFactory(
                     CronetDataSource.Factory(
-                        CronetEngineWrapper(
-                            applicationContext
-                        ),
+                        CronetEngine.Builder(applicationContext).build(),
                         Executors.newSingleThreadExecutor()
                     )
                 )
