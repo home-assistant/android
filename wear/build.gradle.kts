@@ -76,5 +76,5 @@ dependencies {
     compileOnly("com.google.android.wearable:wearable:2.8.1")
 
     implementation("com.google.dagger:dagger:2.38.1")
-    kapt("com.google.dagger:dagger-compiler:2.38.1")
+    kapt("com.google.dagger:dagger-compiler:2.39")
 }
