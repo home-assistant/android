@@ -167,9 +167,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             .build()
             .inject(this)
 
-        // Start the sensor worker if they start the app. The only other place we start this ia Boot BroadcastReceiver
-        SensorWorker.start(this)
-
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
         }
