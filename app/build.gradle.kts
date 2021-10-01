@@ -159,7 +159,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-core:19.0.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:22.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.1.2")
+    "fullImplementation"("io.sentry:sentry-android:5.2.0")
 
     implementation("androidx.work:work-runtime-ktx:2.5.0")
     implementation("androidx.biometric:biometric:1.1.0")
