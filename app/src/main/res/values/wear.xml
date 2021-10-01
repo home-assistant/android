@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@array/android_wear_capabilities">
+    <string-array name="android_wear_capabilities">
+        <item>request_authentication_token</item>
+        <item>request_home_assistant_instance</item>
+    </string-array>
+</resources>

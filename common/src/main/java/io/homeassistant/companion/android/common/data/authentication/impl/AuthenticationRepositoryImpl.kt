@@ -5,6 +5,10 @@ import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowAuthentication
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URL
@@ -24,6 +28,27 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_TOKEN_TYPE = "token_type"
 
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
+    }
+
+    override suspend fun initiateLoginFlow(): LoginFlowInit {
+        return authenticationService.initializeLogin(
+            LoginFlowRequest(
+                AuthenticationService.CLIENT_ID,
+                AuthenticationService.AUTH_CALLBACK,
+                AuthenticationService.HANDLER
+            )
+        )
+    }
+
+    override suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowCreateEntry {
+        return authenticationService.authenticate(
+            AuthenticationService.AUTHENTICATE_BASE_PATH + flowId,
+            LoginFlowAuthentication(
+                AuthenticationService.CLIENT_ID,
+                username,
+                password
+            )
+        )
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {

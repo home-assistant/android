@@ -7,3 +7,4 @@ google-services.json
 .idea/
 .gradle/
 build/
+*.keystore

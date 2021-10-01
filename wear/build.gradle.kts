@@ -53,6 +53,7 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -65,9 +66,15 @@ android {
 dependencies {
     implementation(project(":common"))
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
+
     implementation("com.google.android.material:material:1.4.0")
 
     implementation("androidx.wear:wear:1.1.0")
     implementation("com.google.android.support:wearable:2.8.1")
+    implementation("com.google.android.gms:play-services-wearable:17.1.0")
     compileOnly("com.google.android.wearable:wearable:2.8.1")
+
+    implementation("com.google.dagger:dagger:2.38.1")
+    kapt("com.google.dagger:dagger-compiler:2.38.1")
 }
