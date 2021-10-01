@@ -161,7 +161,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-messaging:22.0.0")
     "fullImplementation"("io.sentry:sentry-android:5.2.0")
 
-    implementation("androidx.work:work-runtime-ktx:2.5.0")
+    implementation("androidx.work:work-runtime-ktx:2.6.0")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 
