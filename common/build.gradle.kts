@@ -35,5 +35,4 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5")
     implementation("org.altbeacon:android-beacon-library:2.19.2")
-
 }
