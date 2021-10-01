@@ -165,13 +165,6 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 
-    testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.17")
-    testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.15")
-    testImplementation("org.assertj:assertj-core:3.20.2")
-    testImplementation("io.mockk:mockk:1.12.0")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1")
-    testImplementation("org.altbeacon:android-beacon-library:2.19.2")
-
     implementation("com.google.android.exoplayer:exoplayer-core:2.15.1")
     implementation("com.google.android.exoplayer:exoplayer-hls:2.15.1")
     implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
