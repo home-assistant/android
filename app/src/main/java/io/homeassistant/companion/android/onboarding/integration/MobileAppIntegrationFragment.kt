@@ -218,7 +218,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
             context?.getSystemService(PowerManager::class.java)
-            ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
-            ?: false
+                ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
+                ?: false
     }
 }

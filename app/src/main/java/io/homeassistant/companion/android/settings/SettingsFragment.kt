@@ -445,8 +445,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
             context?.getSystemService(PowerManager::class.java)
-            ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
-            ?: false
+                ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
+                ?: false
     }
 
     override fun onRequestPermissionsResult(
