@@ -32,13 +32,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.9.1")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.9.2")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5")
     implementation("org.altbeacon:android-beacon-library:2.19.2")
-
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.1")
-    testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.17")
-    testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.15")
-    testImplementation("org.assertj:assertj-core:3.20.2")
-    testImplementation("io.mockk:mockk:1.12.0")
 }
