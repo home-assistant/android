@@ -590,6 +590,13 @@ like to connect to:</string>
   <string name="tile_3">Tile 3</string>
   <string name="tile_4">Tile 4</string>
   <string name="tile_5">Tile 5</string>
+  <string name="tile_6">Tile 6</string>
+  <string name="tile_7">Tile 7</string>
+  <string name="tile_8">Tile 8</string>
+  <string name="tile_9">Tile 9</string>
+  <string name="tile_10">Tile 10</string>
+  <string name="tile_11">Tile 11</string>
+  <string name="tile_12">Tile 12</string>
   <string name="quick_settings">Quick Settings</string>
   <string name="manage_tiles_summary">Setup and manage Quick Setting tiles here. They will not function until you set them up here.</string>
   <string name="empty_template">Template value must not be blank</string>
