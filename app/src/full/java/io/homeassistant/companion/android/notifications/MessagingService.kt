@@ -452,6 +452,7 @@ class MessagingService : FirebaseMessagingService() {
                     val packageName = data["channel"]
                     val intent = Intent(title)
                     val extras = data["group"]
+                    val className = data["sticky"]
                     if (!extras.isNullOrEmpty()) {
                         val items = extras.split(',')
                         for (item in items) {
@@ -469,6 +470,8 @@ class MessagingService : FirebaseMessagingService() {
                         }
                     }
                     intent.`package` = packageName
+                    if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty())
+                        intent.setClassName(packageName, className)
                     Log.d(TAG, "Sending broadcast intent")
                     applicationContext.sendBroadcast(intent)
                 } catch (e: Exception) {
@@ -1255,11 +1258,14 @@ class MessagingService : FirebaseMessagingService() {
         try {
             val packageName = data["channel"]
             val action = data["tag"]
+            val className = data["sticky"]
             val intentUri = if (!data[TITLE].isNullOrEmpty()) Uri.parse(data[TITLE]) else null
             val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
             val type = data["subject"]
             if (!type.isNullOrEmpty())
                 intent.type = type
+            if (!className.isNullOrEmpty() && !packageName.isNullOrEmpty())
+                intent.setClassName(packageName, className)
             val extras = data["group"]
             if (!extras.isNullOrEmpty()) {
                 val items = extras.split(',')
