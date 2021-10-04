@@ -50,7 +50,7 @@ class DNDSensorManager : SensorManager {
                 3 -> "alarms_only"
                 else -> "unknown"
             }
-            val icon = "mdi:do-not-disturb"
+            val icon = "mdi:minus-circle"
 
             onSensorUpdated(
                 context,

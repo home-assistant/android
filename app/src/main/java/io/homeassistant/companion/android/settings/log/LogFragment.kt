@@ -19,6 +19,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.view.isGone
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import io.homeassistant.companion.android.R
@@ -28,7 +30,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
 
-class LogFragment() : Fragment() {
+class LogFragment : Fragment() {
 
     private var currentLog = ""
 
@@ -202,8 +204,8 @@ class LogFragment() : Fragment() {
             val logLoader = requireView().findViewById<LinearLayout>(R.id.logLoader)
             val logScrollView = requireView().findViewById<ScrollView>(R.id.logScrollview)
 
-            logScrollView.visibility = if (!show) View.VISIBLE else View.GONE
-            logLoader.visibility = if (show) View.VISIBLE else View.GONE
+            logScrollView.isGone = show
+            logLoader.isVisible = show
         }
     }
 }

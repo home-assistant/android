@@ -121,20 +121,20 @@ dependencies {
     implementation(project(":common"))
 
     implementation("com.github.Dimezis:BlurView:version-1.6.6")
-    implementation("org.altbeacon:android-beacon-library:2.18")
+    implementation("org.altbeacon:android-beacon-library:2.19.2")
     implementation("com.maltaisn:icondialog:3.3.0")
     implementation("com.maltaisn:iconpack-community-material:5.3.45")
     implementation("com.vdurmont:emoji-java:5.1.1") {
         exclude(group = "org.json", module = "json")
     }
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.21")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.21")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.31")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.31")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
 
-    implementation("com.google.dagger:dagger:2.38.1")
-    kapt("com.google.dagger:dagger-compiler:2.38.1")
+    implementation("com.google.dagger:dagger:2.39")
+    kapt("com.google.dagger:dagger-compiler:2.39")
 
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
@@ -145,35 +145,30 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
     implementation("com.google.android.material:material:1.4.0")
 
+    implementation("com.google.android.gms:play-services-wearable:17.1.0")
+
     implementation("androidx.room:room-runtime:2.3.0")
     implementation("androidx.room:room-ktx:2.3.0")
     kapt("androidx.room:room-compiler:2.3.0")
 
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.4")
-    implementation("com.squareup.okhttp3:okhttp:4.9.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
+    implementation("com.squareup.okhttp3:okhttp:4.9.2")
     implementation("com.squareup.picasso:picasso:2.8")
 
     "fullImplementation"("com.google.android.gms:play-services-location:18.0.0")
     "fullImplementation"("com.google.firebase:firebase-core:19.0.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:22.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.0.1")
+    "fullImplementation"("io.sentry:sentry-android:5.2.0")
 
-    implementation("androidx.work:work-runtime-ktx:2.5.0")
+    implementation("androidx.work:work-runtime-ktx:2.6.0")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 
-    testImplementation("org.spekframework.spek2:spek-dsl-jvm:2.0.16")
-    testImplementation("org.spekframework.spek2:spek-runner-junit5:2.0.15")
-    testImplementation("org.assertj:assertj-core:3.20.2")
-    testImplementation("io.mockk:mockk:1.12.0")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.1")
-    testImplementation("org.altbeacon:android-beacon-library:2.18")
-
-    implementation("com.google.android.exoplayer:exoplayer-core:2.14.2")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.14.2")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.14.2")
-    implementation("com.google.android.exoplayer:extension-cronet:2.14.2")
+    implementation("com.google.android.exoplayer:exoplayer-core:2.15.1")
+    implementation("com.google.android.exoplayer:exoplayer-hls:2.15.1")
+    implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
+    implementation("com.google.android.exoplayer:extension-cronet:2.15.1")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

@@ -1,3 +1,30 @@
 <resources>
-    <string name="app_name">Home Assistant Wear OS</string>
+    <string name="app_name">Home Assistant</string>
+    <string name="attempting_authentication">Authenticating…</string>
+    <string name="attempting_connection">Connecting…</string>
+    <string name="attempting_registration">Registering application…</string>
+    <string name="button_forward">Next</string>
+    <string name="choose_server">Choose server</string>
+    <string name="device_name">Device Name</string>
+    <plurals name="entities_found">
+        <item quantity="one">%d entity found</item>
+        <item quantity="other">%d entities found</item>
+    </plurals>
+    <string name="failed_authentication">Could not authenticate</string>
+    <string name="failed_connection">Could not connect</string>
+    <string name="failed_registration">Could not register</string>
+    <string name="finish">Finish</string>
+    <string name="input_url">Home Assistant URL</string>
+    <string name="input_url_hint">https://example.duckdns.org:8123</string>
+    <string name="list_header_instances">Instances</string>
+    <string name="list_header_other">Other</string>
+    <string name="loading">Loading…</string>
+    <string name="login">Login</string>
+    <string name="logout">Logout</string>
+    <string name="manual_setup">Manual setup</string>
+    <string name="other">Other</string>
+    <string name="password">Password</string>
+    <string name="registerDevice">Register watch</string>
+    <string name="username">Username</string>
+    <string name="version">Version: %s</string>
 </resources>

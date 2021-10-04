@@ -2,11 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="io.homeassistant.companion.android">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <uses-feature android:name="android.hardware.type.watch" />
 
     <application
+        android:name=".HomeAssistantApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -17,23 +19,26 @@
             android:name="com.google.android.wearable"
             android:required="true" />
 
-        <!--
-               Set to true if your app is Standalone, that is, it does not require the handheld
-               app to run.
-        -->
+        <!-- The app can run without a connected phone -->
         <meta-data
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
 
-        <activity
-            android:name=".Home"
-            android:label="@string/app_name">
+        <activity android:name=".home.HomeActivity"
+            android:label="@string/app_name"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".onboarding.OnboardingActivity" />
+        <activity android:name=".onboarding.integration.MobileAppIntegrationActivity" />
+        <activity android:name=".onboarding.authentication.AuthenticationActivity" />
+        <activity android:name=".onboarding.manual_setup.ManualSetupActivity" />
+
+        <!-- To show confirmations and failures -->
+        <activity android:name="androidx.wear.activity.ConfirmationActivity" />
     </application>
 
 </manifest>

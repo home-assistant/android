@@ -50,7 +50,6 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ext.cronet.CronetDataSource
-import com.google.android.exoplayer2.ext.cronet.CronetEngineWrapper
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
@@ -87,6 +86,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.chromium.net.CronetEngine
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -166,9 +166,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             .presenterModule(PresenterModule(this))
             .build()
             .inject(this)
-
-        // Start the sensor worker if they start the app. The only other place we start this ia Boot BroadcastReceiver
-        SensorWorker.start(this)
 
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
@@ -641,9 +638,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoPlayer = SimpleExoPlayer.Builder(applicationContext).setMediaSourceFactory(
                 DefaultMediaSourceFactory(
                     CronetDataSource.Factory(
-                        CronetEngineWrapper(
-                            applicationContext
-                        ),
+                        CronetEngine.Builder(applicationContext).build(),
                         Executors.newSingleThreadExecutor()
                     )
                 )

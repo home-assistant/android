@@ -3,45 +3,66 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/dark_grey"
-    android:clipToPadding="false"
-    android:padding="@dimen/box_inset_layout_padding"
-    tools:context=".Home"
-    tools:deviceIds="wear">
+    android:layout_height="match_parent">
 
-    <androidx.core.widget.NestedScrollView
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        android:clipToPadding="false"
         android:fillViewport="true"
-        app:layout_boxedEdges="all">
+        tools:context=".home.HomeActivity"
+        tools:deviceIds="wear">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="@dimen/inner_frame_layout_padding"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark">
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:padding="8dp">
+
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="84dp"
+                android:layout_height="84dp"
+                android:contentDescription="@string/app_name"
+                android:src="@drawable/app_icon" />
 
             <TextView
                 android:id="@+id/text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
                 android:text="@string/app_name"
-                android:textSize="12sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/imageView" />
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
 
-            <ImageView
-                android:id="@+id/imageView"
+            <TextView
+                android:id="@+id/txt_version"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:contentDescription="@string/app_name"
-                android:src="@drawable/app_icon"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_marginTop="5dp"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:text="@string/loading" />
+
+            <TextView
+                android:id="@+id/txt_entities"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:text="@string/loading" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_logout"
+                android:layout_height="48dp"
+                android:layout_width="wrap_content"
+                android:layout_margin="8dp"
+                app:cornerRadius="24dp"
+                android:backgroundTint="@color/colorWarning"
+                android:text="@string/logout" />
 
             <TextView
                 android:id="@+id/batteryLevel"
@@ -51,7 +72,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/text"
                 tools:text="100%" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.core.widget.NestedScrollView>
-
+        </LinearLayout>
+    </ScrollView>
 </androidx.wear.widget.BoxInsetLayout>

@@ -231,6 +231,15 @@
         <activity
             android:name=".onboarding.OnboardingActivity"
             android:configChanges="orientation|screenSize|keyboardHidden" />
+
+        <service android:name=".onboarding.WearOnboardingListener">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data android:scheme="wear" android:host="*"
+                    android:path="/request_home_assistant_instance" />
+            </intent-filter>
+        </service>
         
         <activity
             android:name=".webview.WebViewActivity"
@@ -336,6 +345,83 @@
 
         <service
             android:name=".qs.Tile5Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile6Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile7Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile8Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile9Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile10Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile11Service"
+            android:icon="@drawable/ic_stat_ic_notification"
+            android:label="@string/tile_not_setup"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action
+                    android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".qs.Tile12Service"
             android:icon="@drawable/ic_stat_ic_notification"
             android:label="@string/tile_not_setup"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">

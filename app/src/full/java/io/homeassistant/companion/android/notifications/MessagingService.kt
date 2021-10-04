@@ -681,7 +681,7 @@ class MessagingService : FirebaseMessagingService() {
         groupId: Int,
         data: Map<String, String>
     ) {
-        val actionUri = data["clickAction"]
+        val actionUri = if (!data["clickAction"].isNullOrEmpty()) data["clickAction"] else "/"
         val contentIntent = Intent(this, NotificationContentReceiver::class.java).apply {
             putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
