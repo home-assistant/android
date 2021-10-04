@@ -2,9 +2,12 @@ package io.homeassistant.companion.android.home
 
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
 import android.os.Bundle
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.wear.ambient.AmbientModeSupport
 import com.google.android.material.button.MaterialButton
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -32,6 +35,8 @@ class HomeActivity : AppCompatActivity(), HomeView {
 
         setContentView(R.layout.activity_home)
 
+        AmbientModeSupport.attach(this)
+
         DaggerPresenterComponent
             .builder()
             .appComponent((application as GraphComponentAccessor).appComponent)
@@ -42,6 +47,8 @@ class HomeActivity : AppCompatActivity(), HomeView {
         findViewById<MaterialButton>(R.id.btn_logout).setOnClickListener {
             presenter.onLogoutClicked()
         }
+
+        findViewById<TextView>(R.id.batteryLevel).text = getBatteryInfoPhone()
 
         presenter.onViewReady()
     }
@@ -71,5 +78,13 @@ class HomeActivity : AppCompatActivity(), HomeView {
         val intent = MobileAppIntegrationActivity.newInstance(this)
         startActivity(intent)
         finish()
+    }
+
+    private fun getBatteryInfoPhone(): String {
+        val iFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        val batteryStatus: Intent? = registerReceiver(null, iFilter)
+//        val status = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val level = batteryStatus?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        return "$level%"
     }
 }
