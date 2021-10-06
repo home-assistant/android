@@ -608,7 +608,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleLargeIcon(notificationBuilder, data)
 
-        handleGroup(notificationBuilder, group)
+        handleGroup(notificationBuilder, group, data[ALERT_ONCE].toBoolean())
 
         handleTimeout(notificationBuilder, data)
 
@@ -749,6 +749,8 @@ class MessagingService : FirebaseMessagingService() {
             .setGroup(group)
             .setGroupSummary(true)
 
+        if (data[ALERT_ONCE].toBoolean())
+            groupNotificationBuilder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         handleColor(groupNotificationBuilder, data)
         return groupNotificationBuilder
     }
@@ -878,10 +880,13 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun handleGroup(
         builder: NotificationCompat.Builder,
-        group: String?
+        group: String?,
+        alertOnce: Boolean?
     ) {
         if (!group.isNullOrBlank()) {
             builder.setGroup(group)
+            if (alertOnce == true)
+                builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         }
     }
 
