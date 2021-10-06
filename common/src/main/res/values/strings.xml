@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="database_event_failure">Unable to send migration failure event to Home Assistant</string>
+    <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
+    <string name="sensor">Sensor</string>
+    <string name="sensors">Sensors</string>
+    <string name="sensor_description_none">No description</string>
+</resources>
