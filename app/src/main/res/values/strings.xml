@@ -101,8 +101,6 @@ to your home internet.</string>
   <string name="crash_reporting">Crash Reporting</string>
   <string name="crash_reporting_summary">Help the developers fix bugs and crashes by leaving this enabled. If the application crashes this will automatically generate and send a report. If you notice a crash also create an issue on Github!</string>
   <string name="create_template">Create Template</string>
-  <string name="database_event_failure">Unable to send migration failure event to Home Assistant</string>
-  <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
   <string name="delete_all_notifications">Delete all notifications from history</string>
   <string name="delete_this_notification">Delete this notification from history</string>
   <string name="delete_widget">Delete Widget</string>
@@ -285,7 +283,6 @@ for Home Assistant</string>
   <string name="select_entity_to_display">Select Entity to display</string>
   <string name="select_instance">Select the server you would
 like to connect to:</string>
-  <string name="sensor">Sensor</string>
   <string name="sensor_description">Description</string>
   <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
   <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be.</string>
@@ -335,7 +332,6 @@ like to connect to:</string>
   <string name="sensor_description_mobile_tx_gb">Total Tx GB on cellular data since last device reboot</string>
   <string name="sensor_description_music_active">Whether or not music is actively playing on the device</string>
   <string name="sensor_description_next_alarm">The date and time of the next scheduled alarm, any app or manufacturer can override the default behavior. The package attribute will tell you which app set the next scheduled alarm. The setting below will create an Allow List so you can specify what packages you want the alarm event from. This will ignore alarm events for packages not selected and the state will not update until the next scheduled alarm matches one of the selected packages.</string>
-  <string name="sensor_description_none">No description</string>
   <string name="sensor_description_phone_state">Whether or not the phone is ringing or in a call, no other caller information is stored</string>
   <string name="sensor_description_power_save">Whether or not the device is in Power Save mode</string>
   <string name="sensor_description_pressure_sensor">The current ambient air pressure reading</string>
@@ -401,7 +397,6 @@ like to connect to:</string>
   <string name="sensor_settings">Sensor Settings</string>
   <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
   <string name="sensor_title">Manage Sensors</string>
-  <string name="sensors">Sensors</string>
   <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>

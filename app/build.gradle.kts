@@ -27,12 +27,6 @@ android {
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments(mapOf("room.incremental" to "true"))
-            }
-        }
     }
 
     buildFeatures {
@@ -159,10 +153,6 @@ dependencies {
 
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
-
-    implementation("androidx.room:room-runtime:2.3.0")
-    implementation("androidx.room:room-ktx:2.3.0")
-    kapt("androidx.room:room-compiler:2.3.0")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
