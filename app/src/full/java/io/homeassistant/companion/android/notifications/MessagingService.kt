@@ -84,6 +84,7 @@ class MessagingService : FirebaseMessagingService() {
         const val GROUP_PREFIX = "group_"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val ALERT_ONCE = "alert_once"
+        const val INTENT_CLASS_NAME = "intent_class_name"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -452,7 +453,7 @@ class MessagingService : FirebaseMessagingService() {
                     val packageName = data["channel"]
                     val intent = Intent(title)
                     val extras = data["group"]
-                    val className = data["sticky"]
+                    val className = data[INTENT_CLASS_NAME]
                     if (!extras.isNullOrEmpty()) {
                         val items = extras.split(',')
                         for (item in items) {
@@ -1258,7 +1259,7 @@ class MessagingService : FirebaseMessagingService() {
         try {
             val packageName = data["channel"]
             val action = data["tag"]
-            val className = data["sticky"]
+            val className = data[INTENT_CLASS_NAME]
             val intentUri = if (!data[TITLE].isNullOrEmpty()) Uri.parse(data[TITLE]) else null
             val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
             val type = data["subject"]
