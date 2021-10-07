@@ -59,6 +59,11 @@
             android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
+        <SwitchPreference
+            android:key="keep_screen_on"
+            android:icon="@drawable/ic_phone_check"
+            android:title="@string/keep_screen_on"
+            android:summary="@string/keep_screen_on_def"/>
         <Preference
             android:key="nfc_tags"
             android:icon="@drawable/ic_nfc"
