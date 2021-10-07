@@ -176,7 +176,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             .setBlurRadius(5f)
             .setHasFixedTransformationMatrix(false)
 
-        exoPlayerView = findViewById<PlayerView>(R.id.exoplayerView)
+        exoPlayerView = findViewById(R.id.exoplayerView)
         exoPlayerView.visibility = View.GONE
         exoPlayerView.setBackgroundColor(Color.BLACK)
         exoPlayerView.alpha = 1f
@@ -1116,7 +1116,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
         var autoAuth = false
 
-        viewPassword.setOnClickListener() {
+        viewPassword.setOnClickListener {
             if (password.transformationMethod == PasswordTransformationMethod.getInstance()) {
                 password.transformationMethod = HideReturnsTransformationMethod.getInstance()
                 viewPassword.setImageResource(R.drawable.ic_visibility_off)

@@ -13,7 +13,7 @@ object TransmitterManager {
     private lateinit var physicalTransmitter: BeaconTransmitter
     private lateinit var beacon: Beacon
 
-    private fun buildBeacon(haTransmitterI: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter): Beacon {
+    private fun buildBeacon(haTransmitterI: IBeaconTransmitter): Beacon {
         val builder = Beacon.Builder()
         builder.setTxPower(getReferencePowerInDbs(haTransmitterI))
         builder.setId1(haTransmitterI.uuid)
@@ -42,7 +42,7 @@ object TransmitterManager {
     }
 
     @Synchronized
-    fun startTransmitting(context: Context, haTransmitter: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter) {
+    fun startTransmitting(context: Context, haTransmitter: IBeaconTransmitter) {
         if (!shouldStartTransmitting(haTransmitter)) {
             return
         }
@@ -105,7 +105,7 @@ object TransmitterManager {
             else -> -94
         }
 
-    fun stopTransmitting(haTransmitter: io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter) {
+    fun stopTransmitting(haTransmitter: IBeaconTransmitter) {
         if (haTransmitter.transmitting && this::physicalTransmitter.isInitialized) {
             if (physicalTransmitter.isStarted)
                 physicalTransmitter.stopAdvertising()

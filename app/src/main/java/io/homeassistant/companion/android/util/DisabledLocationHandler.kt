@@ -16,6 +16,7 @@ import android.provider.Settings
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.R
 
 object DisabledLocationHandler {
@@ -27,7 +28,7 @@ object DisabledLocationHandler {
     }
 
     fun isLocationEnabled(context: Context): Boolean {
-        val lm: LocationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val lm: LocationManager = context.getSystemService()!!
 
         return if (VERSION.SDK_INT >= VERSION_CODES.P) {
             lm.isLocationEnabled
