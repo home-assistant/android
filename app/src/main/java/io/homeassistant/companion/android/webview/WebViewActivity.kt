@@ -25,6 +25,7 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
@@ -541,6 +542,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     hideSystemUI()
         }
 
+        if (presenter.isKeepScreenOnEnabled())
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         currentLang = languagesManager.getCurrentLang()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -572,6 +576,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             unlocked = true
             blurView.setBlurEnabled(false)
         }
+
+        if (presenter.isKeepScreenOnEnabled())
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         SensorWorker.start(this)
         checkAndWarnForDisabledLocation()

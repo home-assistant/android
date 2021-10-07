@@ -14,6 +14,8 @@ interface WebViewPresenter {
 
     fun isFullScreen(): Boolean
 
+    fun isKeepScreenOnEnabled(): Boolean
+
     fun isLockEnabled(): Boolean
 
     fun sessionTimeOut(): Int
