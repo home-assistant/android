@@ -84,6 +84,7 @@ class MessagingService : FirebaseMessagingService() {
         const val GROUP_PREFIX = "group_"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val ALERT_ONCE = "alert_once"
+        const val INTENT_CLASS_NAME = "intent_class_name"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -452,6 +453,7 @@ class MessagingService : FirebaseMessagingService() {
                     val packageName = data["channel"]
                     val intent = Intent(title)
                     val extras = data["group"]
+                    val className = data[INTENT_CLASS_NAME]
                     if (!extras.isNullOrEmpty()) {
                         val items = extras.split(',')
                         for (item in items) {
@@ -469,6 +471,8 @@ class MessagingService : FirebaseMessagingService() {
                         }
                     }
                     intent.`package` = packageName
+                    if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty())
+                        intent.setClassName(packageName, className)
                     Log.d(TAG, "Sending broadcast intent")
                     applicationContext.sendBroadcast(intent)
                 } catch (e: Exception) {
@@ -1260,11 +1264,14 @@ class MessagingService : FirebaseMessagingService() {
         try {
             val packageName = data["channel"]
             val action = data["tag"]
+            val className = data[INTENT_CLASS_NAME]
             val intentUri = if (!data[TITLE].isNullOrEmpty()) Uri.parse(data[TITLE]) else null
             val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
             val type = data["subject"]
             if (!type.isNullOrEmpty())
                 intent.type = type
+            if (!className.isNullOrEmpty() && !packageName.isNullOrEmpty())
+                intent.setClassName(packageName, className)
             val extras = data["group"]
             if (!extras.isNullOrEmpty()) {
                 val items = extras.split(',')
