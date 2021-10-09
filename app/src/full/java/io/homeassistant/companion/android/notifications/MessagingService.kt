@@ -136,6 +136,8 @@ class MessagingService : FirebaseMessagingService() {
         const val MEDIA_REWIND = "rewind"
         const val MEDIA_STOP = "stop"
 
+        const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
+
         // Command groups
         val DEVICE_COMMANDS = listOf(
             COMMAND_DND, COMMAND_RINGER_MODE, COMMAND_BROADCAST_INTENT,
@@ -551,6 +553,14 @@ class MessagingService : FirebaseMessagingService() {
                     openWebview(title)
             }
             COMMAND_SCREEN_ON -> {
+                if (!title.isNullOrEmpty()) {
+                    mainScope.launch {
+                        integrationUseCase.setKeepScreenOnEnabled(
+                            title == COMMAND_KEEP_SCREEN_ON
+                        )
+                    }
+                }
+
                 val powerManager = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
                 val wakeLock = powerManager.newWakeLock(
                     PowerManager.FULL_WAKE_LOCK or
