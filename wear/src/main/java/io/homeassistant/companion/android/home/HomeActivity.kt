@@ -42,7 +42,7 @@ class HomeActivity : AppCompatActivity(), HomeView {
             .build()
             .inject(this)
 
-        adapter = HomeListAdapter(ArrayList())
+        adapter = HomeListAdapter()
         adapter.onSceneClicked = { entity -> presenter.onEntityClicked(entity) }
         adapter.onButtonClicked = { id -> presenter.onButtonClicked(id) }
 
@@ -59,9 +59,11 @@ class HomeActivity : AppCompatActivity(), HomeView {
         super.onDestroy()
     }
 
-    override fun showHomeList(scenes: List<Entity<Any>>) {
+    override fun showHomeList(scenes: List<Entity<Any>>, scripts: List<Entity<Any>>) {
         adapter.scenes.clear()
         adapter.scenes.addAll(scenes)
+        adapter.scripts.clear()
+        adapter.scripts.addAll(scripts)
         adapter.notifyDataSetChanged()
     }
 

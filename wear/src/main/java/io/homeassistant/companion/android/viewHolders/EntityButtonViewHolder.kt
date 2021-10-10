@@ -17,7 +17,19 @@ class EntityButtonViewHolder(v: View, val onClick: (Entity<Any>) -> Unit) :
         set(value) {
             val entityAttributes = value?.attributes as Map<String, String>
             txtName.text = entityAttributes["friendly_name"]
-            //TODO set icon
+
+            // Set default icon
+            if (value.entityId.split(".")[0] == "script") {
+                imgIcon.setImageResource(R.drawable.ic_scripts)
+            } else {
+                imgIcon.setImageResource(R.drawable.ic_scenes)
+            }
+            /*if (entityAttributes.containsKey("icon")) {
+                Need to implement dynamic icon loading here
+                The default library used (com.maltaisn:icondialog) does not allow to get icons by the mdi: string
+                Alternative library: https://github.com/outadoc/mdi-android
+                This one requires a github access token...
+            }*/
             field = value
         }
 

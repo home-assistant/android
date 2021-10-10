@@ -70,7 +70,8 @@ class HomePresenterImpl @Inject constructor(
 
     private fun processEntities(entities: Array<Entity<Any>>) {
         val scenes = entities.filter { it.entityId.split(".")[0] == "scene" }
-        view.showHomeList(scenes)
+        val scripts = entities.filter { it.entityId.split(".")[0] == "script" }
+        view.showHomeList(scenes, scripts)
     }
 
     private fun resyncRegistration() {
