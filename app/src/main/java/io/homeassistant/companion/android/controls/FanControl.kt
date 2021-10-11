@@ -23,15 +23,11 @@ import kotlinx.coroutines.runBlocking
 @RequiresApi(Build.VERSION_CODES.R)
 class FanControl {
     companion object : HaControl {
+        private const val SUPPORT_SET_SPEED = 1
         override fun createControl(
             context: Context,
             entity: Entity<Map<String, Any>>
         ): Control {
-            val speeds = entity.attributes["speed_list"].toString()
-                .removeSurrounding("[", "]")
-                .split(", ")
-            val currentSpeed = entity.attributes["speed"].toString()
-
             val control = Control.StatefulBuilder(
                 entity.entityId,
                 PendingIntent.getActivity(
@@ -53,7 +49,15 @@ class FanControl {
                     else -> context.getString(R.string.state_unknown)
                 }
             )
-            if (currentSpeed.isNotBlank()) {
+            if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_SPEED == SUPPORT_SET_SPEED) {
+                val minValue = 0f
+                val maxValue = 100f
+                var currentValue =
+                    (entity.attributes["percentage"] as? Number)?.toFloat() ?: 0f
+                if (currentValue < minValue)
+                    currentValue = minValue
+                if (currentValue > maxValue)
+                    currentValue = maxValue
                 control.setControlTemplate(
                     ToggleRangeTemplate(
                         entity.entityId,
@@ -61,11 +65,11 @@ class FanControl {
                         "",
                         RangeTemplate(
                             entity.entityId,
-                            0f,
-                            speeds.size.toFloat() - 1,
-                            if (speeds.contains(currentSpeed)) speeds.indexOf(currentSpeed).toFloat() else 0f,
+                            minValue,
+                            maxValue,
+                            currentValue,
                             1f,
-                            "%.0f"
+                            "%.0f%%"
                         )
                     )
                 )
@@ -97,16 +101,13 @@ class FanControl {
                         )
                     }
                     is FloatAction -> {
-                        val speeds = integrationRepository.getEntity(action.templateId)
-                            .attributes["speed_list"].toString()
-                            .removeSurrounding("[", "]")
-                            .split(", ")
+                        val convertPercentage = action.newValue
                         integrationRepository.callService(
                             action.templateId.split(".")[0],
-                            "set_speed",
+                            "set_percentage",
                             hashMapOf(
                                 "entity_id" to action.templateId,
-                                "speed" to speeds[action.newValue.toInt()]
+                                "percentage" to convertPercentage.toInt()
                             )
                         )
                     }
