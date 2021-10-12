@@ -613,7 +613,7 @@ like to connect to:</string>
   <string name="learn_more">Learn More</string>
   <string name="continue_connect">Continue</string>
   <string name="manual_title">What is your Home Assistant URL?</string>
-  <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure the URL includes the protocol and port. For example: http://homeassistant.local:8123 or https://example.duckdns.org.</string>
+  <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure the URL includes the protocol and port. For example:\n\nhttp://homeassistant.local:8123 or \nhttps://example.duckdns.org.</string>
   <string name="webview_error_FAILED_SSL_HANDSHAKE">Failed to perform SSL handshake, please ensure your certificate is valid.</string>
   <string name="webview_error_AUTHENTICATION">User authentication failed on server, please check server settings.</string>
   <string name="webview_error_PROXY_AUTHENTICATION">User authentication failed on proxy, please check proxy settings.</string>
