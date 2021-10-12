@@ -1,13 +1,16 @@
 package io.homeassistant.companion.android.onboarding.manual
 
 import android.os.Bundle
+import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.webkit.URLUtil
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import com.google.android.material.textfield.TextInputLayout
 import io.homeassistant.companion.android.DaggerPresenterComponent
@@ -44,6 +47,9 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         savedInstanceState: Bundle?
     ): View? {
         return inflater.inflate(R.layout.fragment_manual_setup, container, false).apply {
+            findViewById<AppCompatEditText>(R.id.home_assistant_url).addTextChangedListener { text ->
+                findViewById<Button>(R.id.ok).isEnabled = URLUtil.isValidUrl(text.toString()) && Patterns.WEB_URL.matcher(text.toString()).matches()
+            }
             findViewById<AppCompatEditText>(R.id.home_assistant_url).setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     submitForm()

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding.authentication
 
 import android.annotation.SuppressLint
 import android.net.http.SslError
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -73,7 +74,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
                         error: WebResourceError?
                     ) {
                         super.onReceivedError(view, request, error)
-                        showError(R.string.webview_error)
+                        showError(R.string.webview_error, null, error)
                     }
 
                     override fun onReceivedSslError(
@@ -82,7 +83,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
                         error: SslError?
                     ) {
                         super.onReceivedSslError(view, handler, error)
-                        showError(R.string.error_ssl)
+                        showError(R.string.error_ssl, error, null)
                     }
                 }
             }
@@ -108,14 +109,36 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         super.onDestroy()
     }
 
-    override fun showError(message: Int) {
+    override fun showError(message: Int, sslError: SslError?, error: WebResourceError?) {
         if (!isStarted) {
             // Fragment is at least paused, can't display alert
             return
         }
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.error_connection_failed)
-            .setMessage(message)
+            .setMessage(
+                when (sslError?.primaryError) {
+                    SslError.SSL_DATE_INVALID -> R.string.webview_error_SSL_DATE_INVALID
+                    SslError.SSL_EXPIRED -> R.string.webview_error_SSL_EXPIRED
+                    SslError.SSL_IDMISMATCH -> R.string.webview_error_SSL_IDMISMATCH
+                    SslError.SSL_INVALID -> R.string.webview_error_SSL_INVALID
+                    SslError.SSL_NOTYETVALID -> R.string.webview_error_SSL_NOTYETVALID
+                    SslError.SSL_UNTRUSTED -> R.string.webview_error_SSL_UNTRUSTED
+                    else -> {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            when (error?.errorCode) {
+                                WebViewClient.ERROR_FAILED_SSL_HANDSHAKE ->
+                                    R.string.webview_error_FAILED_SSL_HANDSHAKE
+                                WebViewClient.ERROR_AUTHENTICATION -> R.string.webview_error_AUTHENTICATION
+                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> R.string.webview_error_PROXY_AUTHENTICATION
+                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> R.string.webview_error_AUTH_SCHEME
+                                WebViewClient.ERROR_HOST_LOOKUP -> R.string.webview_error_HOST_LOOKUP
+                            }
+                        }
+                        message
+                    }
+                }
+            )
             .setPositiveButton(android.R.string.ok) { _, _ -> }
             .show()
         parentFragmentManager.popBackStack()

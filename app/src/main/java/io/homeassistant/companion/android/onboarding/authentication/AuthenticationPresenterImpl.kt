@@ -29,7 +29,7 @@ class AuthenticationPresenterImpl @Inject constructor(
                 view.loadUrl(authenticationUseCase.buildAuthenticationUrl(AUTH_CALLBACK).toString())
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to create auth url and/or load it.", e)
-                view.showError(R.string.webview_error)
+                view.showError(R.string.webview_error, null, null)
             }
         }
     }
@@ -42,7 +42,7 @@ class AuthenticationPresenterImpl @Inject constructor(
                     authenticationUseCase.registerAuthorizationCode(code)
                 } catch (e: Exception) {
                     Log.e(TAG, "unable to register code", e)
-                    view.showError(R.string.webview_error)
+                    view.showError(R.string.webview_error, null, null)
                     return@launch
                 }
                 view.openWebview()

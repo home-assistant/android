@@ -8,7 +8,6 @@ import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
-import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryListener
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationListener
@@ -47,11 +46,11 @@ class OnboardingActivity :
                 .add(R.id.content, mobileAppIntegrationFragment)
                 .commit()
         } else {
-            val discoveryFragment = DiscoveryFragment.newInstance()
-            discoveryFragment.retainInstance = true
+            val welcomeFragment = WelcomeFragment.newInstance()
+            welcomeFragment.retainInstance = true
             supportFragmentManager
                 .beginTransaction()
-                .add(R.id.content, discoveryFragment)
+                .add(R.id.content, welcomeFragment)
                 .commit()
         }
     }

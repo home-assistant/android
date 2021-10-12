@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/view_flipper"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="@dimen/activity_margin">
+
+    <ImageView
+        android:layout_width="274dp"
+        android:layout_height="202dp"
+        android:layout_marginBottom="15dp"
+        android:src="@drawable/app_icon"
+        android:contentDescription="@string/app_name" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:text="@string/welcome_hass"
+        style="@style/TextAppearance.HomeAssistant.Headline" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:text="@string/welcome_hass_desc"
+        style="@style/TextAppearance.HomeAssistant.Medium" />
+
+    <TextView
+        android:id="@+id/learn_more"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="15dp"
+        android:text="@string/learn_more"
+        style="@style/TextAppearance.HomeAssistant.Medium" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/welcome"
+        style="@style/Widget.HomeAssistant.Button.Colored"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/continue_connect" />
+
+</LinearLayout>
