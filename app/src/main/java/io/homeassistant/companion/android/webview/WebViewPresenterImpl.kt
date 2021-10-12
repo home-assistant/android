@@ -129,6 +129,12 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isKeepScreenOnEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isKeepScreenOnEnabled()
+        }
+    }
+
     override fun isLockEnabled(): Boolean {
         return runBlocking {
             authenticationUseCase.isLockEnabled()

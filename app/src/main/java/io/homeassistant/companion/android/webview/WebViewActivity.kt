@@ -25,6 +25,7 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.webkit.CookieManager
 import android.webkit.HttpAuthHandler
 import android.webkit.JavascriptInterface
@@ -176,7 +177,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             .setBlurRadius(5f)
             .setHasFixedTransformationMatrix(false)
 
-        exoPlayerView = findViewById<PlayerView>(R.id.exoplayerView)
+        exoPlayerView = findViewById(R.id.exoplayerView)
         exoPlayerView.visibility = View.GONE
         exoPlayerView.setBackgroundColor(Color.BLACK)
         exoPlayerView.alpha = 1f
@@ -541,6 +542,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     hideSystemUI()
         }
 
+        if (presenter.isKeepScreenOnEnabled())
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         currentLang = languagesManager.getCurrentLang()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -572,6 +576,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             unlocked = true
             blurView.setBlurEnabled(false)
         }
+
+        if (presenter.isKeepScreenOnEnabled())
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         SensorWorker.start(this)
         checkAndWarnForDisabledLocation()
@@ -1116,7 +1125,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
         var autoAuth = false
 
-        viewPassword.setOnClickListener() {
+        viewPassword.setOnClickListener {
             if (password.transformationMethod == PasswordTransformationMethod.getInstance()) {
                 password.transformationMethod = HideReturnsTransformationMethod.getInstance()
                 viewPassword.setImageResource(R.drawable.ic_visibility_off)

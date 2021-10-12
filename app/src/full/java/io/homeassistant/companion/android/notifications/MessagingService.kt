@@ -84,6 +84,7 @@ class MessagingService : FirebaseMessagingService() {
         const val GROUP_PREFIX = "group_"
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val ALERT_ONCE = "alert_once"
+        const val INTENT_CLASS_NAME = "intent_class_name"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -134,6 +135,8 @@ class MessagingService : FirebaseMessagingService() {
         const val MEDIA_PREVIOUS = "previous"
         const val MEDIA_REWIND = "rewind"
         const val MEDIA_STOP = "stop"
+
+        const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
 
         // Command groups
         val DEVICE_COMMANDS = listOf(
@@ -452,6 +455,7 @@ class MessagingService : FirebaseMessagingService() {
                     val packageName = data["channel"]
                     val intent = Intent(title)
                     val extras = data["group"]
+                    val className = data[INTENT_CLASS_NAME]
                     if (!extras.isNullOrEmpty()) {
                         val items = extras.split(',')
                         for (item in items) {
@@ -469,6 +473,8 @@ class MessagingService : FirebaseMessagingService() {
                         }
                     }
                     intent.`package` = packageName
+                    if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty())
+                        intent.setClassName(packageName, className)
                     Log.d(TAG, "Sending broadcast intent")
                     applicationContext.sendBroadcast(intent)
                 } catch (e: Exception) {
@@ -547,6 +553,14 @@ class MessagingService : FirebaseMessagingService() {
                     openWebview(title)
             }
             COMMAND_SCREEN_ON -> {
+                if (!title.isNullOrEmpty()) {
+                    mainScope.launch {
+                        integrationUseCase.setKeepScreenOnEnabled(
+                            title == COMMAND_KEEP_SCREEN_ON
+                        )
+                    }
+                }
+
                 val powerManager = applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
                 val wakeLock = powerManager.newWakeLock(
                     PowerManager.FULL_WAKE_LOCK or
@@ -608,7 +622,7 @@ class MessagingService : FirebaseMessagingService() {
 
         handleLargeIcon(notificationBuilder, data)
 
-        handleGroup(notificationBuilder, group)
+        handleGroup(notificationBuilder, group, data[ALERT_ONCE].toBoolean())
 
         handleTimeout(notificationBuilder, data)
 
@@ -749,6 +763,8 @@ class MessagingService : FirebaseMessagingService() {
             .setGroup(group)
             .setGroupSummary(true)
 
+        if (data[ALERT_ONCE].toBoolean())
+            groupNotificationBuilder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         handleColor(groupNotificationBuilder, data)
         return groupNotificationBuilder
     }
@@ -878,10 +894,13 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun handleGroup(
         builder: NotificationCompat.Builder,
-        group: String?
+        group: String?,
+        alertOnce: Boolean?
     ) {
         if (!group.isNullOrBlank()) {
             builder.setGroup(group)
+            if (alertOnce == true)
+                builder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         }
     }
 
@@ -1255,11 +1274,14 @@ class MessagingService : FirebaseMessagingService() {
         try {
             val packageName = data["channel"]
             val action = data["tag"]
+            val className = data[INTENT_CLASS_NAME]
             val intentUri = if (!data[TITLE].isNullOrEmpty()) Uri.parse(data[TITLE]) else null
             val intent = if (intentUri != null) Intent(action, intentUri) else Intent(action)
             val type = data["subject"]
             if (!type.isNullOrEmpty())
                 intent.type = type
+            if (!className.isNullOrEmpty() && !packageName.isNullOrEmpty())
+                intent.setClassName(packageName, className)
             val extras = data["group"]
             if (!extras.isNullOrEmpty()) {
                 val items = extras.split(',')

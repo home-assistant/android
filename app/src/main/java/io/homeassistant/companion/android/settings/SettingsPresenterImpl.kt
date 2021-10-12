@@ -39,6 +39,7 @@ class SettingsPresenterImpl @Inject constructor(
         return runBlocking {
             return@runBlocking when (key) {
                 "fullscreen" -> integrationUseCase.isFullScreenEnabled()
+                "keep_screen_on" -> integrationUseCase.isKeepScreenOnEnabled()
                 "app_lock" -> authenticationUseCase.isLockEnabled()
                 "crash_reporting" -> prefsRepository.isCrashReporting()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
@@ -50,6 +51,7 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.launch {
             when (key) {
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
+                "keep_screen_on" -> integrationUseCase.setKeepScreenOnEnabled(value)
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
