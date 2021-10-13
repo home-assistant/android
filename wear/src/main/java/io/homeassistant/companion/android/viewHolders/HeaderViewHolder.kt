@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding.viewHolders
+package io.homeassistant.companion.android.viewHolders
 
 import android.view.View
 import android.widget.TextView

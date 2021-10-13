@@ -25,6 +25,9 @@
     <string name="other">Other</string>
     <string name="password">Password</string>
     <string name="registerDevice">Register watch</string>
+    <string name="scene">Scene</string>
+    <string name="scenes">Scenes</string>
+    <string name="scripts">Scripts</string>
     <string name="username">Username</string>
     <string name="version">Version: %s</string>
 </resources>

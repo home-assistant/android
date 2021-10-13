@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding.viewHolders
+package io.homeassistant.companion.android.viewHolders
 
 import android.util.Log
 import android.view.View
@@ -10,7 +10,7 @@ import io.homeassistant.companion.android.onboarding.HomeAssistantInstance
 class InstanceViewHolder(v: View, val onClick: (HomeAssistantInstance) -> Unit) :
     RecyclerView.ViewHolder(v), View.OnClickListener {
 
-    private val name: TextView = v.findViewById(R.id.name)
+    private val name: TextView = v.findViewById(R.id.txt_name)
     var server: HomeAssistantInstance? = null
         set(value) {
             name.text = value?.name

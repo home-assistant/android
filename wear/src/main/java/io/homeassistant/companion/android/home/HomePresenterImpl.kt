@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,14 +31,29 @@ class HomePresenterImpl @Inject constructor(
             val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
             if (sessionValid && integrationUseCase.isRegistered()) {
                 resyncRegistration()
-                // We'll stay on HomeActivity, so start loading
-                view.showHomeAssistantVersion(integrationUseCase.getHomeAssistantVersion())
-                view.showEntitiesCount(integrationUseCase.getEntities().size)
+                // We'll stay on HomeActivity, so start loading entities
+                processEntities(integrationUseCase.getEntities())
             } else if (sessionValid) {
                 view.displayMobileAppIntegration()
             } else {
                 view.displayOnBoarding()
             }
+        }
+    }
+
+    override fun onEntityClicked(entity: Entity<Any>) {
+        mainScope.launch {
+            integrationUseCase.callService(
+                entity.entityId.split(".")[0],
+                "turn_on",
+                hashMapOf("entity_id" to entity.entityId)
+            )
+        }
+    }
+
+    override fun onButtonClicked(id: String) {
+        if (id == HomeListAdapter.BUTTON_ID_LOGOUT) {
+            onLogoutClicked()
         }
     }
 
@@ -50,6 +66,12 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onFinish() {
         mainScope.cancel()
+    }
+
+    private fun processEntities(entities: Array<Entity<Any>>) {
+        val scenes = entities.filter { it.entityId.split(".")[0] == "scene" }
+        val scripts = entities.filter { it.entityId.split(".")[0] == "script" }
+        view.showHomeList(scenes, scripts)
     }
 
     private fun resyncRegistration() {

@@ -15,6 +15,7 @@
     <color name="colorActionBar">#1c1c1c</color>
     <color name="colorIcon">@android:color/white</color>
     <color name="colorOverlay">#24FFFFFF</color>
+    <color name="colorRipple">#AAFFFFFF</color>
     <color name="colorWidgetButtonBackground">#1c1c1c</color>
     <color name="colorWidgetButtonLabel">#E6E6E6</color>
 </resources>

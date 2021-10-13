@@ -3,13 +3,14 @@ package io.homeassistant.companion.android.home
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.button.MaterialButton
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.wear.widget.WearableRecyclerView
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import javax.inject.Inject
@@ -18,6 +19,8 @@ class HomeActivity : AppCompatActivity(), HomeView {
 
     @Inject
     lateinit var presenter: HomePresenter
+
+    private lateinit var adapter: HomeListAdapter
 
     companion object {
         private const val TAG = "HomeActivity"
@@ -39,8 +42,13 @@ class HomeActivity : AppCompatActivity(), HomeView {
             .build()
             .inject(this)
 
-        findViewById<MaterialButton>(R.id.btn_logout).setOnClickListener {
-            presenter.onLogoutClicked()
+        adapter = HomeListAdapter()
+        adapter.onSceneClicked = { entity -> presenter.onEntityClicked(entity) }
+        adapter.onButtonClicked = { id -> presenter.onButtonClicked(id) }
+
+        findViewById<WearableRecyclerView>(R.id.home_list)?.apply {
+            layoutManager = LinearLayoutManager(this@HomeActivity)
+            adapter = this@HomeActivity.adapter
         }
 
         presenter.onViewReady()
@@ -51,14 +59,12 @@ class HomeActivity : AppCompatActivity(), HomeView {
         super.onDestroy()
     }
 
-    override fun showHomeAssistantVersion(version: String) {
-        val txtVersion = findViewById<TextView>(R.id.txt_version)
-        txtVersion.text = getString(R.string.version, version)
-    }
-
-    override fun showEntitiesCount(count: Int) {
-        val txtEntities = findViewById<TextView>(R.id.txt_entities)
-        txtEntities.text = resources.getQuantityString(R.plurals.entities_found, count, count)
+    override fun showHomeList(scenes: List<Entity<Any>>, scripts: List<Entity<Any>>) {
+        adapter.scenes.clear()
+        adapter.scenes.addAll(scenes)
+        adapter.scripts.clear()
+        adapter.scripts.addAll(scripts)
+        adapter.notifyDataSetChanged()
     }
 
     override fun displayOnBoarding() {

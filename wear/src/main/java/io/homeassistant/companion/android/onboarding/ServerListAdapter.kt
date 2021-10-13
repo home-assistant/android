@@ -5,10 +5,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.onboarding.viewHolders.HeaderViewHolder
-import io.homeassistant.companion.android.onboarding.viewHolders.InstanceViewHolder
-import io.homeassistant.companion.android.onboarding.viewHolders.LoadingViewHolder
-import io.homeassistant.companion.android.onboarding.viewHolders.ManualSetupViewHolder
+import io.homeassistant.companion.android.viewHolders.HeaderViewHolder
+import io.homeassistant.companion.android.viewHolders.InstanceViewHolder
+import io.homeassistant.companion.android.viewHolders.LoadingViewHolder
+import io.homeassistant.companion.android.viewHolders.ManualSetupViewHolder
 import kotlin.math.min
 
 class ServerListAdapter(
