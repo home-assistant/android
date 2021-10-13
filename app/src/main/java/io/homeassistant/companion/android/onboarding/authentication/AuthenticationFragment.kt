@@ -65,6 +65,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
             webView.apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                settings.userAgentString = USER_AGENT_STRING + " ${presenter.getDeviceName()} ${BuildConfig.VERSION_NAME}"
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                         return presenter.onRedirectUrl(url)
@@ -99,9 +100,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     }
 
     override fun loadUrl(url: String) {
-        val headers: Map<String, String> = mapOf()
-        headers.plus(Pair("User-Agent", USER_AGENT_STRING + " ${presenter.getDeviceName()} ${BuildConfig.VERSION_NAME}"))
-        webView.loadUrl(url, headers)
+        webView.loadUrl(url)
     }
 
     override fun openWebview() {

@@ -216,6 +216,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.userAgentString = USER_AGENT_STRING + " ${presenter.getDeviceName()} ${BuildConfig.VERSION_NAME}"
             webViewClient = object : WebViewClient() {
                 override fun onReceivedError(
                     view: WebView?,
@@ -949,9 +950,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun loadUrl(url: String) {
         loadedUrl = url
-        val headers: Map<String, String> = mapOf()
-        headers.plus(Pair("User-Agent", USER_AGENT_STRING + " ${presenter.getDeviceName()} ${BuildConfig.VERSION_NAME}"))
-        webView.loadUrl(url, headers)
+        webView.loadUrl(url)
         waitForConnection()
     }
 
