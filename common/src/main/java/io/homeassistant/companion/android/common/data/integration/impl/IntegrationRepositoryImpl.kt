@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
+import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.LocalStorage
@@ -74,7 +75,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         val response =
             integrationService.registerDevice(
                 authenticationRepository.buildBearerToken(),
-                USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                USER_AGENT_STRING + " ${deviceRegistration.deviceName} ${BuildConfig.VERSION_NAME}",
                 request
             )
         persistDeviceRegistration(deviceRegistration)
@@ -97,7 +98,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 if (integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                        USER_AGENT_STRING + " ${deviceRegistration.deviceName} ${BuildConfig.VERSION_NAME}",
                         request
                     ).isSuccessful
                 ) {
@@ -131,6 +132,10 @@ class IntegrationRepositoryImpl @Inject constructor(
             localStorage.putString(PREF_PUSH_TOKEN, deviceRegistration.pushToken)
     }
 
+    override suspend fun getDeviceName(): String {
+        return localStorage.getString(PREF_DEVICE_NAME) ?: Build.MODEL
+    }
+
     override suspend fun isRegistered(): Boolean {
         return urlRepository.getApiUrls().isNotEmpty()
     }
@@ -141,7 +146,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 return integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
-                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                     IntegrationRequest(
                         "render_template",
                         mapOf("template" to Template(template, variables))
@@ -167,7 +172,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                        USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                         updateLocationRequest
                     ).isSuccessful
             } catch (e: Exception) {
@@ -203,7 +208,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                        USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                         IntegrationRequest(
                             "call_service",
                             serviceCallRequest
@@ -231,7 +236,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                        USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                         IntegrationRequest(
                             "scan_tag",
                             data
@@ -264,7 +269,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
-                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                        USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                         IntegrationRequest(
                             "fire_event",
                             fireEventRequest
@@ -295,7 +300,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 zones = integrationService.getZones(
                     it.toHttpUrlOrNull()!!,
-                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                     getZonesRequest
                 )
             } catch (e: Exception) {
@@ -378,7 +383,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 response = integrationService.getConfig(
                     it.toHttpUrlOrNull()!!,
-                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                     getConfigRequest
                 )
             } catch (e: Exception) {
@@ -407,7 +412,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 response = integrationService.getConfig(
                     it.toHttpUrlOrNull()!!,
-                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                     getConfigRequest
                 )
             } catch (e: Exception) {
@@ -426,7 +431,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun getServices(): Array<Service> {
         val response = integrationService.getServices(
             authenticationRepository.buildBearerToken(),
-            USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}"
+            USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}"
         )
 
         return response.flatMap {
@@ -439,7 +444,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun getEntities(): Array<Entity<Any>> {
         val response = integrationService.getStates(
             authenticationRepository.buildBearerToken(),
-            USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}"
+            USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}"
         )
 
         return response.map {
@@ -457,7 +462,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun getEntity(entityId: String): Entity<Map<String, Any>> {
         val response = integrationService.getState(
             authenticationRepository.buildBearerToken(),
-            USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+            USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
             entityId
         )
         return Entity(
@@ -496,7 +501,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 integrationService.callWebhook(
                     it.toHttpUrlOrNull()!!,
-                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                     integrationRequest
                 ).let {
                     // If we created sensor or it already exists
@@ -536,7 +541,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 integrationService.updateSensors(
                     it.toHttpUrlOrNull()!!,
-                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}",
                     integrationRequest
                 ).let {
                     it.forEach { (_, response) ->

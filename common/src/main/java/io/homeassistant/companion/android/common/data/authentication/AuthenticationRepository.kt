@@ -24,4 +24,5 @@ interface AuthenticationRepository {
 
     suspend fun setLockEnabled(enabled: Boolean)
     suspend fun isLockEnabled(): Boolean
+    suspend fun getDeviceName(): String
 }

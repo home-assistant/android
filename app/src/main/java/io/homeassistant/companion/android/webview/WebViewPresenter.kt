@@ -16,6 +16,8 @@ interface WebViewPresenter {
 
     fun isKeepScreenOnEnabled(): Boolean
 
+    fun getDeviceName(): String
+
     fun isLockEnabled(): Boolean
 
     fun sessionTimeOut(): Int

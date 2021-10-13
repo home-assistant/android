@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class AuthenticationPresenterImpl @Inject constructor(
@@ -22,6 +23,10 @@ class AuthenticationPresenterImpl @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    override fun getDeviceName(): String {
+        return runBlocking { authenticationUseCase.getDeviceName() }
+    }
 
     override fun onViewReady() {
         mainScope.launch {

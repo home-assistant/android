@@ -7,4 +7,6 @@ interface AuthenticationPresenter {
     fun onRedirectUrl(redirectUrl: String): Boolean
 
     fun onFinish()
+
+    fun getDeviceName(): String
 }

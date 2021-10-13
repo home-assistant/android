@@ -14,6 +14,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
@@ -26,6 +27,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
 
     companion object {
         private const val TAG = "AuthenticationFragment"
+        private const val USER_AGENT_STRING = "HomeAssistant/Android"
 
         fun newInstance(): AuthenticationFragment {
             return AuthenticationFragment()
@@ -97,7 +99,9 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     }
 
     override fun loadUrl(url: String) {
-        webView.loadUrl(url)
+        val headers: Map<String, String> = mapOf()
+        headers.plus(Pair("User-Agent", USER_AGENT_STRING + " ${presenter.getDeviceName()} ${BuildConfig.VERSION_NAME}"))
+        webView.loadUrl(url, headers)
     }
 
     override fun openWebview() {
