@@ -121,7 +121,7 @@ dependencies {
     implementation(project(":common"))
 
     implementation("com.github.Dimezis:BlurView:version-1.6.6")
-    implementation("org.altbeacon:android-beacon-library:2.19.2")
+    implementation("org.altbeacon:android-beacon-library:2.19.3")
     implementation("com.maltaisn:icondialog:3.3.0")
     implementation("com.maltaisn:iconpack-community-material:5.3.45")
     implementation("com.vdurmont:emoji-java:5.1.1") {
