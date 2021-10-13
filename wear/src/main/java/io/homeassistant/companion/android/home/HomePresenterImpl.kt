@@ -69,8 +69,8 @@ class HomePresenterImpl @Inject constructor(
     }
 
     private fun processEntities(entities: Array<Entity<Any>>) {
-        val scenes = entities.filter { it.entityId.split(".")[0] == "scene" }
-        val scripts = entities.filter { it.entityId.split(".")[0] == "script" }
+        val scenes = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
+        val scripts = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "script" }
         view.showHomeList(scenes, scripts)
     }
 
