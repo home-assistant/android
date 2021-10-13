@@ -75,4 +75,4 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew publishFullReleaseBundle || echo "Issue uploading Release, may just be nothing has changed"
+        run: ./gradlew :app:publishFullReleaseBundle :wear:publishReleaseBundle || echo "Issue uploading Release, may just be nothing has changed"

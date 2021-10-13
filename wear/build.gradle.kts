@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("kotlin-kapt")
+    id("com.github.triplet.play")
 }
 
 android {
@@ -61,6 +62,12 @@ android {
     lintOptions {
         disable("MissingTranslation")
     }
+}
+
+play {
+    serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
+    track.set("beta")
+    resolutionStrategy.set(com.github.triplet.gradle.androidpublisher.ResolutionStrategy.IGNORE)
 }
 
 dependencies {
