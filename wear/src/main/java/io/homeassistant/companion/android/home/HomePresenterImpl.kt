@@ -93,10 +93,10 @@ class HomePresenterImpl @Inject constructor(
     }
 
     private fun processEntities(entities: Array<Entity<Any>>) {
-        val scenes = entities.filter { it.entityId.split(".")[0] == "scene" }
-        val scripts = entities.filter { it.entityId.split(".")[0] == "script" }
-        val lights = entities.filter { it.entityId.split(".")[0] == "light" }
-        val covers = entities.filter { it.entityId.split(".")[0] == "cover" }
+        val scenes = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
+        val scripts = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "script" }
+        val lights = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "light" }
+        val covers = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "cover" }
         view.showHomeList(scenes, scripts, lights, covers)
         Log.i(TAG, "Cover data: "+ covers[0].attributes.toString())
     }
