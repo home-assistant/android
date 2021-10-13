@@ -49,6 +49,7 @@ class HomeActivity : AppCompatActivity(), HomeView {
         findViewById<WearableRecyclerView>(R.id.home_list)?.apply {
             layoutManager = LinearLayoutManager(this@HomeActivity)
             adapter = this@HomeActivity.adapter
+            requestFocus()
         }
 
         presenter.onViewReady()
