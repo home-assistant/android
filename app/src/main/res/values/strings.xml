@@ -131,7 +131,7 @@ to your home internet.</string>
   <string name="enable_all_sensors">Enable All Sensors</string>
   <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
   <string name="enable_location_tracking">Enable Location Tracking</string>
-  <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.  Your location data is sent directly to your Home Assistant instance and is never sent to a 3rd party.</string>
+  <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your Home Assistant server. Ensure that you enable background access to location, otherwise we cannot enable location tracking.  Your location data is sent directly to your Home Assistant server and is never sent to a 3rd party.</string>
   <string name="enable_location_tracking_prompt">This app collects location data to enable Location Tracking, Wifi Connection Status, and URL decision making even when the app is closed or not in use.</string>
   <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
@@ -142,7 +142,7 @@ to your home internet.</string>
   <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
   <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
   <string name="error_with_registration">Please check to ensure you have the mobile_app 
-integration enabled on your home assistant instance.</string>
+integration enabled on your home assistant server.</string>
   <string name="event_error">Failed to notify HA of picked option.</string>
   <string name="exit">Exit</string>
   <string name="failed_scan">Scanning for Home Assistant failed.</string>
@@ -160,7 +160,7 @@ integration enabled on your home assistant instance.</string>
   <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
   <string name="history">History</string>
   <string name="home_assistant_not_discover">Unable to find your 
-Home Assistant instance</string>
+Home Assistant server</string>
   <string name="icon">Icon</string>
   <string name="input_url">Home Assistant URL</string>
   <string name="input_url_hint">https://example.duckdns.org:8123</string>
@@ -283,7 +283,7 @@ for Home Assistant</string>
   <string name="security_vulnerably_understand">I Understand</string>
   <string name="security_vulnerably_view">View Bulletin</string>
   <string name="select_entity_to_display">Select Entity to display</string>
-  <string name="select_instance">Select the instance you would 
+  <string name="select_instance">Select the server you would
 like to connect to:</string>
   <string name="sensor">Sensor</string>
   <string name="sensor_description">Description</string>
@@ -607,4 +607,16 @@ like to connect to:</string>
   <string name="template_widget">Template Widget</string>
     <string name="basic_sensor_name_high_accuracy_mode">High Accuracy Mode</string>
   <string name="sensor_description_high_accuracy_mode">Whether or not high accuracy mode is active on the device</string>
+  <string name="connect">Connect</string>
+  <string name="welcome_hass">Welcome to Home Assistant Android!</string>
+  <string name="welcome_hass_desc">This app connects to your Home Assistant server and allows integrating data about you and your phone.\n\nHome Assistant is free and open source home automation software with a focus on local control and privacy.</string>
+  <string name="learn_more">Learn More</string>
+  <string name="continue_connect">Continue</string>
+  <string name="manual_title">What is your Home Assistant URL?</string>
+  <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure the URL includes the protocol and port. For example:\n\nhttp://homeassistant.local:8123 or \nhttps://example.duckdns.org.</string>
+  <string name="webview_error_FAILED_SSL_HANDSHAKE">Failed to perform SSL handshake, please ensure your certificate is valid.</string>
+  <string name="webview_error_AUTHENTICATION">User authentication failed on server, please check server settings.</string>
+  <string name="webview_error_PROXY_AUTHENTICATION">User authentication failed on proxy, please check proxy settings.</string>
+  <string name="webview_error_AUTH_SCHEME">Unsupported authentication scheme (not basic or digest), please check network settings.</string>
+  <string name="webview_error_HOST_LOOKUP">Server or proxy hostname lookup failed, please check that the URL is a valid Home Assistant URL.</string>
 </resources>
