@@ -60,6 +60,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
+        private const val USER_AGENT_STRING = "HomeAssistant/Android"
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -73,6 +74,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         val response =
             integrationService.registerDevice(
                 authenticationRepository.buildBearerToken(),
+                USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
                 request
             )
         persistDeviceRegistration(deviceRegistration)
@@ -93,7 +95,12 @@ class IntegrationRepositoryImpl @Inject constructor(
         var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
-                if (integrationService.callWebhook(it.toHttpUrlOrNull()!!, request).isSuccessful) {
+                if (integrationService.callWebhook(
+                        it.toHttpUrlOrNull()!!,
+                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                        request
+                    ).isSuccessful
+                ) {
                     persistDeviceRegistration(deviceRegistration)
                     return
                 }
@@ -134,6 +141,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             try {
                 return integrationService.getTemplate(
                     it.toHttpUrlOrNull()!!,
+                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
                     IntegrationRequest(
                         "render_template",
                         mapOf("template" to Template(template, variables))
@@ -159,6 +167,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
+                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
                         updateLocationRequest
                     ).isSuccessful
             } catch (e: Exception) {
@@ -194,6 +203,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
+                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
                         IntegrationRequest(
                             "call_service",
                             serviceCallRequest
@@ -221,6 +231,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
+                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
                         IntegrationRequest(
                             "scan_tag",
                             data
@@ -253,6 +264,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 wasSuccess =
                     integrationService.callWebhook(
                         it.toHttpUrlOrNull()!!,
+                        USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
                         IntegrationRequest(
                             "fire_event",
                             fireEventRequest
@@ -281,7 +293,11 @@ class IntegrationRepositoryImpl @Inject constructor(
         var zones: Array<EntityResponse<ZoneAttributes>>? = null
         for (it in urlRepository.getApiUrls()) {
             try {
-                zones = integrationService.getZones(it.toHttpUrlOrNull()!!, getZonesRequest)
+                zones = integrationService.getZones(
+                    it.toHttpUrlOrNull()!!,
+                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    getZonesRequest
+                )
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -360,7 +376,11 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         for (it in urlRepository.getApiUrls()) {
             try {
-                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+                response = integrationService.getConfig(
+                    it.toHttpUrlOrNull()!!,
+                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    getConfigRequest
+                )
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -385,7 +405,11 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         for (it in urlRepository.getApiUrls()) {
             try {
-                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
+                response = integrationService.getConfig(
+                    it.toHttpUrlOrNull()!!,
+                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    getConfigRequest
+                )
             } catch (e: Exception) {
                 if (causeException == null) causeException = e
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
@@ -400,7 +424,10 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getServices(): Array<Service> {
-        val response = integrationService.getServices(authenticationRepository.buildBearerToken())
+        val response = integrationService.getServices(
+            authenticationRepository.buildBearerToken(),
+            USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}"
+        )
 
         return response.flatMap {
             it.services.map { service ->
@@ -410,7 +437,10 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getEntities(): Array<Entity<Any>> {
-        val response = integrationService.getStates(authenticationRepository.buildBearerToken())
+        val response = integrationService.getStates(
+            authenticationRepository.buildBearerToken(),
+            USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}"
+        )
 
         return response.map {
             Entity(
@@ -427,6 +457,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun getEntity(entityId: String): Entity<Map<String, Any>> {
         val response = integrationService.getState(
             authenticationRepository.buildBearerToken(),
+            USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
             entityId
         )
         return Entity(
@@ -463,7 +494,11 @@ class IntegrationRepositoryImpl @Inject constructor(
         var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
-                integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
+                integrationService.callWebhook(
+                    it.toHttpUrlOrNull()!!,
+                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    integrationRequest
+                ).let {
                     // If we created sensor or it already exists
                     if (it.isSuccessful || it.code() == 409) {
                         localStorage.putStringSet(
@@ -499,7 +534,11 @@ class IntegrationRepositoryImpl @Inject constructor(
         var causeException: Exception? = null
         for (it in urlRepository.getApiUrls()) {
             try {
-                integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
+                integrationService.updateSensors(
+                    it.toHttpUrlOrNull()!!,
+                    USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}",
+                    integrationRequest
+                ).let {
                     it.forEach { (_, response) ->
                         if (response["success"] == false) {
                             localStorage.putStringSet(PREF_SENSORS_REGISTERED, setOf())

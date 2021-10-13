@@ -30,46 +30,54 @@ interface IntegrationService {
     @POST("/api/mobile_app/registrations")
     suspend fun registerDevice(
         @Header("Authorization") auth: String,
+        @Header("User-Agent") userAgent: String,
         @Body request: RegisterDeviceRequest
     ): RegisterDeviceResponse
 
     @GET("/api/services")
     suspend fun getServices(
-        @Header("Authorization") auth: String
+        @Header("Authorization") auth: String,
+        @Header("User-Agent") userAgent: String
     ): Array<DomainResponse>
 
     @GET("/api/states")
     suspend fun getStates(
-        @Header("Authorization") auth: String
+        @Header("Authorization") auth: String,
+        @Header("User-Agent") userAgent: String
     ): Array<EntityResponse<Any>>
 
     @GET("/api/states/{entityId}")
     suspend fun getState(
         @Header("Authorization") auth: String,
+        @Header("User-Agent") userAgent: String,
         @Path("entityId") entityId: String
     ): EntityResponse<Map<String, Any>>
 
     @POST
     suspend fun callWebhook(
         @Url url: HttpUrl,
+        @Header("User-Agent") userAgent: String,
         @Body request: IntegrationRequest
     ): Response<ResponseBody>
 
     @POST
     suspend fun getTemplate(
         @Url url: HttpUrl,
+        @Header("User-Agent") userAgent: String,
         @Body request: IntegrationRequest
     ): Map<String, String>
 
     @POST
     suspend fun getZones(
         @Url url: HttpUrl,
+        @Header("User-Agent") userAgent: String,
         @Body request: IntegrationRequest
     ): Array<EntityResponse<ZoneAttributes>>
 
     @POST
     suspend fun getConfig(
         @Url url: HttpUrl,
+        @Header("User-Agent") userAgent: String,
         @Body request: IntegrationRequest
     ): GetConfigResponse
 
@@ -82,6 +90,7 @@ interface IntegrationService {
     @POST
     suspend fun updateSensors(
         @Url url: HttpUrl,
+        @Header("User-Agent") userAgent: String,
         @Body request: IntegrationRequest
     ): Map<String, Map<String, Any>>
 }

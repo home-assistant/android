@@ -105,6 +105,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         private const val APP_PREFIX = "app://"
         private const val INTENT_PREFIX = "intent://"
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
+        private const val USER_AGENT_STRING = "HomeAssistant/Android"
 
         fun newInstance(context: Context, path: String? = null): Intent {
             return Intent(context, WebViewActivity::class.java).apply {
@@ -948,7 +949,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun loadUrl(url: String) {
         loadedUrl = url
-        webView.loadUrl(url)
+        val headers: Map<String, String> = mapOf()
+        headers.plus(Pair("User-Agent", USER_AGENT_STRING + " ${BuildConfig.VERSION_NAME}"))
+        webView.loadUrl(url, headers)
         waitForConnection()
     }
 
