@@ -100,7 +100,9 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
     }
 
     override fun loadUrl(url: String) {
-        webView.loadUrl(url)
+        val headers: Map<String, String> = mapOf()
+        headers.plus(Pair("User-Agent", USER_AGENT_STRING + " ${presenter.getDeviceName()} ${BuildConfig.VERSION_NAME}"))
+        webView.loadUrl(url, headers)
     }
 
     override fun openWebview() {
