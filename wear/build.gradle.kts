@@ -14,7 +14,8 @@ android {
         targetSdk = 30
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
-        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        // We add 1 because the app and wear versions need to have different version codes.
+        versionCode = (System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1) + 1
 
         javaCompileOptions {
             annotationProcessorOptions {
