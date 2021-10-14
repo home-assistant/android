@@ -43,10 +43,10 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onEntityClicked(entity: Entity<Any>) {
 
-            Log.i(TAG,"Light Entity State: "+ entity.state)
-        if (entity.entityId.split(".")[0] == "light"){
-            Log.i(TAG,"Entity data: "+ entity.state)
-            if (entity.state == "on"){
+        Log.i(TAG, "Light Entity State: " + entity.state)
+        if (entity.entityId.split(".")[0] == "light") {
+            Log.i(TAG, "Entity data: " + entity.state)
+            if (entity.state == "on") {
                 mainScope.launch {
                     integrationUseCase.callService(
                         entity.entityId.split(".")[0],
@@ -54,8 +54,7 @@ class HomePresenterImpl @Inject constructor(
                         hashMapOf("entity_id" to entity.entityId)
                     )
                 }
-
-            }else{
+            } else {
                 mainScope.launch {
                     integrationUseCase.callService(
                         entity.entityId.split(".")[0],
@@ -97,7 +96,7 @@ class HomePresenterImpl @Inject constructor(
         val lights = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "light" }
         val covers = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "cover" }
         view.showHomeList(scenes, scripts, lights, covers)
-        Log.i(TAG, "Cover data: "+ covers[0].attributes.toString())
+        Log.i(TAG, "Cover data: " + covers[0].attributes.toString())
     }
 
     private fun resyncRegistration() {
