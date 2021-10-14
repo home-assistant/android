@@ -58,7 +58,7 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew bundleFullRelease
+        run: ./gradlew :app:bundleFullRelease :wear:bundleRelease
 
       - name: Check for build need
         run: |
