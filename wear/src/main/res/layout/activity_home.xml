@@ -8,4 +8,5 @@
     android:paddingBottom="48dp"
     android:clipToPadding="false"
     tools:listitem="@layout/listitem_entity_button">
+    <requestFocus />
 </androidx.wear.widget.WearableRecyclerView>
