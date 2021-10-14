@@ -64,7 +64,7 @@ class HomeListAdapter() : RecyclerView.Adapter<ViewHolder>() {
         if (holder is EntityButtonViewHolder) {
             if (position < scenes.size + 1) {
                 holder.entity = scenes[position - 1]
-            } else if (position > scenes.size + 1 + scripts.size + 1){
+            } else if (position > scenes.size + 1 + scripts.size + 1) {
                 holder.entity = lights[position - 3 - scenes.size - scripts.size]
             } else
                 holder.entity = scripts[position - 2 - scenes.size]
