@@ -43,33 +43,22 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onEntityClicked(entity: Entity<Any>) {
 
-        Log.i(TAG, "Light Entity State: " + entity.state)
         if (entity.entityId.split(".")[0] == "light") {
-            Log.i(TAG, "Entity data: " + entity.state)
-            if (entity.state == "on") {
-                mainScope.launch {
-                    integrationUseCase.callService(
-                        entity.entityId.split(".")[0],
-                        "turn_off",
-                        hashMapOf("entity_id" to entity.entityId)
-                    )
-                }
-            } else {
-                mainScope.launch {
-                    integrationUseCase.callService(
-                        entity.entityId.split(".")[0],
-                        "turn_on",
-                        hashMapOf("entity_id" to entity.entityId)
-                    )
-                }
+            mainScope.launch {
+                integrationUseCase.callService(
+                    entity.entityId.split(".")[0],
+                    "toggle",
+                    hashMapOf("entity_id" to entity.entityId)
+                )
             }
-        }
-        mainScope.launch {
-            integrationUseCase.callService(
-                entity.entityId.split(".")[0],
-                "turn_on",
-                hashMapOf("entity_id" to entity.entityId)
-            )
+        } else {
+            mainScope.launch {
+                integrationUseCase.callService(
+                    entity.entityId.split(".")[0],
+                    "turn_on",
+                    hashMapOf("entity_id" to entity.entityId)
+                )
+            }
         }
     }
 
