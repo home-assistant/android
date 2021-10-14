@@ -79,11 +79,6 @@ class HomePresenterImpl @Inject constructor(
         mainScope.cancel()
     }
 
-    private suspend fun refreshEntity(entity: Entity<Any>){
-        Log.i(TAG, " Get Entity: " + integrationUseCase.getEntity(entityId = entity.entityId))
-
-    }
-
     private fun processEntities(entities: Array<Entity<Any>>) {
         val scenes = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
         val scripts = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "script" }
