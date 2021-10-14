@@ -948,11 +948,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun loadUrl(url: String, headers: Map<String, String>?) {
+    override fun loadUrl(url: String) {
         loadedUrl = url
-        val headers: Map<String, String> = mapOf()
-        headers.plus(Pair("User-Agent", USER_AGENT_STRING + " ${presenter.getDeviceName()} ${BuildConfig.VERSION_NAME}"))
-        webView.loadUrl(url, headers)
+        webView.loadUrl(url)
         waitForConnection()
     }
 

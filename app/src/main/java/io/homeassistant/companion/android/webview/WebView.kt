@@ -10,7 +10,7 @@ interface WebView {
         TIMEOUT
     }
 
-    fun loadUrl(url: String, headers: Map<String, String>?)
+    fun loadUrl(url: String)
 
     fun setStatusBarAndNavigationBarColor(color: Int)
 

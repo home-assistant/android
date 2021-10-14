@@ -4,7 +4,6 @@ import android.graphics.Color
 import android.net.Uri
 import android.util.Log
 import androidx.core.graphics.ColorUtils
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -31,7 +30,6 @@ class WebViewPresenterImpl @Inject constructor(
 
     companion object {
         private const val TAG = "WebViewPresenterImpl"
-        private const val USER_AGENT_STRING = "HomeAssistant/Android"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -54,15 +52,12 @@ class WebViewPresenterImpl @Inject constructor(
             url externally.
              */
             if (oldUrl?.host != url?.host) {
-                val headers: Map<String, String> = mapOf()
-                headers.plus(Pair("User-Agent", USER_AGENT_STRING + " ${getDeviceName()} ${BuildConfig.VERSION_NAME}"))
                 view.loadUrl(
                     Uri.parse(url.toString())
                         .buildUpon()
                         .appendQueryParameter("external_auth", "1")
                         .build()
-                        .toString(),
-                    headers
+                        .toString()
                 )
             }
         }
