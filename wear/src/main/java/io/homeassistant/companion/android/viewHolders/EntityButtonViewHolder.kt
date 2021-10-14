@@ -21,11 +21,11 @@ class EntityButtonViewHolder(v: View, val onClick: (Entity<Any>) -> Unit) :
             // Set default icon
             if (value.entityId.split(".")[0] == "script") {
                 imgIcon.setImageResource(R.drawable.ic_scripts)
-            } else if (value.entityId.split(".")[0] == "light"){
+            } else if (value.entityId.split(".")[0] == "light") {
                 imgIcon.setImageResource(R.drawable.ic_light)
-            }else if (value.entityId.split(".")[0] == "cover") {
+            } else if (value.entityId.split(".")[0] == "cover") {
                 imgIcon.setImageResource(R.drawable.ic_garage)
-            }else {
+            } else {
                 imgIcon.setImageResource(R.drawable.ic_scenes)
             }
 

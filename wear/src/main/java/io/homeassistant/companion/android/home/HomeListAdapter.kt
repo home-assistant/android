@@ -62,18 +62,17 @@ class HomeListAdapter() : RecyclerView.Adapter<ViewHolder>() {
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         if (holder is EntityButtonViewHolder) {
-            if (position < scenes.size + 1)
+            if (position < scenes.size + 1) {
                 holder.entity = scenes[position - 1]
-            else if (position > scenes.size + 1 + scripts.size + 1){
+            } else if (position > scenes.size + 1 + scripts.size + 1){
                 holder.entity = lights[position - 3 - scenes.size - scripts.size]
-            }
-            else
+            } else
                 holder.entity = scripts[position - 2 - scenes.size]
         } else if (holder is HeaderViewHolder) {
             when (position) {
                 0 -> holder.headerTextView.setText(R.string.scenes)
                 scenes.size + 1 -> holder.headerTextView.setText(R.string.scripts)
-                scenes.size +scripts.size + 2 -> holder.headerTextView.setText("Lights")
+                scenes.size + scripts.size + 2 -> holder.headerTextView.setText(R.string.lights)
                 else -> holder.headerTextView.setText(R.string.other)
             }
         } else if (holder is ButtonViewHolder) {
@@ -112,7 +111,6 @@ class HomeListAdapter() : RecyclerView.Adapter<ViewHolder>() {
         # Other
         - Settings
          */
-
 
         return when {
             position == 0 || position == scenes.size + 1 || position == scenes.size + scripts.size + 2 || position == itemCount - 2 -> TYPE_HEADER
