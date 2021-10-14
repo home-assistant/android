@@ -43,11 +43,10 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onEntityClicked(entity: Entity<Any>) {
 
-            Log.i(TAG,"")
+            Log.i(TAG,"Light Entity State: "+ entity.state)
         if (entity.entityId.split(".")[0] == "light"){
             Log.i(TAG,"Entity data: "+ entity.state)
             if (entity.state == "on"){
-                
                 mainScope.launch {
                     integrationUseCase.callService(
                         entity.entityId.split(".")[0],
