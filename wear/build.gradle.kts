@@ -68,6 +68,7 @@ play {
     serviceAccountCredentials.set(file("playStorePublishServiceCredentialsFile.json"))
     track.set("beta")
     resolutionStrategy.set(com.github.triplet.gradle.androidpublisher.ResolutionStrategy.IGNORE)
+    commit.set(true)
 }
 
 dependencies {
