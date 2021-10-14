@@ -115,7 +115,7 @@ play {
     track.set("beta")
     resolutionStrategy.set(ResolutionStrategy.IGNORE)
     // We will depend on the wear commit.
-    commit.set(false)
+    commit.set(true)
 }
 
 dependencies {

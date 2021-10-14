@@ -30,6 +30,12 @@ allprojects {
     }
 }
 
+gradle.projectsEvaluated {
+    project(":app").tasks.matching { it.name.startsWith("publish") }.configureEach {
+        mustRunAfter(project(":wear").tasks.matching { it.name.startsWith("publish") })
+    }
+}
+
 tasks.register("clean").configure {
     delete("build")
 }
