@@ -608,7 +608,7 @@ like to connect to:</string>
     <string name="basic_sensor_name_high_accuracy_mode">High Accuracy Mode</string>
   <string name="sensor_description_high_accuracy_mode">Whether or not high accuracy mode is active on the device</string>
   <string name="connect">Connect</string>
-  <string name="welcome_hass">Welcome to Home Assistant Android!</string>
+  <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
   <string name="welcome_hass_desc">This app connects to your Home Assistant server and allows integrating data about you and your phone.\n\nHome Assistant is free and open source home automation software with a focus on local control and privacy.</string>
   <string name="learn_more">Learn More</string>
   <string name="continue_connect">Continue</string>

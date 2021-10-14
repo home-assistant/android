@@ -12,14 +12,14 @@ plugins {
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdk = 31
 
     ndkVersion = "21.3.6528147"
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdkVersion(21)
-        targetSdkVersion(30)
+        minSdk = 21
+        targetSdk = 30
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
@@ -54,8 +54,8 @@ android {
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
             keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
             keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
-            isV1SigningEnabled = true
-            isV2SigningEnabled = true
+            enableV1Signing = true
+            enableV2Signing = true
         }
     }
 
@@ -66,11 +66,10 @@ android {
         named("release").configure {
             isDebuggable = false
             isJniDebuggable = false
-            isZipAlignEnabled = true
             signingConfig = signingConfigs.getByName("release")
         }
     }
-    flavorDimensions("version")
+    flavorDimensions.add("version")
     productFlavors {
         create("minimal") {
             applicationIdSuffix = ".minimal"
@@ -105,7 +104,7 @@ android {
         }
     }
 
-    lintOptions {
+    lint {
         isAbortOnError = false
         disable("MissingTranslation")
     }
@@ -130,7 +129,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.31")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.31")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
 
     implementation("com.google.dagger:dagger:2.39.1")
@@ -138,7 +137,7 @@ dependencies {
 
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
-    implementation("androidx.constraintlayout:constraintlayout:2.0.4")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.1")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.1.1")
     implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
@@ -156,7 +155,7 @@ dependencies {
     implementation("com.squareup.picasso:picasso:2.8")
 
     "fullImplementation"("com.google.android.gms:play-services-location:18.0.0")
-    "fullImplementation"("com.google.firebase:firebase-core:19.0.0")
+    "fullImplementation"("com.google.firebase:firebase-core:19.0.2")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:22.0.0")
     "fullImplementation"("io.sentry:sentry-android:5.2.1")

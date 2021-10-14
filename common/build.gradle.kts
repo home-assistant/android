@@ -11,10 +11,10 @@ val versionName = System.getenv("VERSION") ?: "LOCAL"
 val versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
 android {
-    compileSdkVersion(30)
+    compileSdk = 31
 
     defaultConfig {
-        minSdkVersion(21)
+        minSdk = 21
         buildConfigField("String", "PUSH_URL", "\"$homeAssistantAndroidPushUrl\"")
         buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
         buildConfigField("String", "VERSION_NAME", "\"$versionName-$versionCode\"")
@@ -24,7 +24,7 @@ android {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.31")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.31")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 
     implementation("com.google.dagger:dagger:2.39.1")
     kapt("com.google.dagger:dagger-compiler:2.39.1")

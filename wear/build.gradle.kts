@@ -6,12 +6,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion(30)
+    compileSdk = 31
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdkVersion(23)
-        targetSdkVersion(30)
+        minSdk = 23
+        targetSdk = 30
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
@@ -38,8 +38,8 @@ android {
             storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
             keyAlias = System.getenv("KEYSTORE_ALIAS") ?: ""
             keyPassword = System.getenv("KEYSTORE_ALIAS_PASSWORD") ?: ""
-            isV1SigningEnabled = true
-            isV2SigningEnabled = true
+            enableV1Signing = true
+            enableV2Signing = true
         }
     }
 
@@ -50,7 +50,6 @@ android {
         named("release").configure {
             isDebuggable = false
             isJniDebuggable = false
-            isZipAlignEnabled = true
             signingConfig = signingConfigs.getByName("release")
         }
     }
@@ -59,7 +58,7 @@ android {
         jvmTarget = "11"
     }
 
-    lintOptions {
+    lint {
         disable("MissingTranslation")
     }
 }
@@ -77,7 +76,7 @@ dependencies {
 
     implementation("com.google.android.material:material:1.4.0")
 
-    implementation("androidx.wear:wear:1.1.0")
+    implementation("androidx.wear:wear:1.2.0")
     implementation("com.google.android.support:wearable:2.8.1")
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
     compileOnly("com.google.android.wearable:wearable:2.8.1")
