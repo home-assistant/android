@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<network-security-config>
+    <!-- We need to allow clear traffic for those who don't have SSL setup. -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <!-- Trust preinstalled CAs -->
+            <certificates src="system"/>
+            <!-- Additionally trust user added CAs -->
+            <certificates src="user"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>
