@@ -17,4 +17,8 @@ interface UrlRepository {
     suspend fun saveHomeWifiSsids(ssid: Set<String>)
 
     suspend fun isInternal(): Boolean
+
+    suspend fun isPrioritizeInternal(): Boolean
+
+    suspend fun setPrioritizeInternal(enabled: Boolean)
 }

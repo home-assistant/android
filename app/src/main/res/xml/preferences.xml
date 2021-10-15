@@ -21,6 +21,11 @@
             android:key="connection_internal"
             android:title="@string/pref_connection_internal"
             app:useSimpleSummaryProvider="true"/>
+        <SwitchPreference
+            android:key="prioritize_internal"
+            android:title="@string/prioritize_internal"
+            android:icon="@drawable/ic_priority"
+            android:summary="@string/prioritize_internal_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/device_registration">

@@ -284,6 +284,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 Log.d("SettingsFragment", "Unable to set the icon tint", e)
             }
         }
+
+        findPreference<SwitchPreference>("prioritize_internal")?.isEnabled = false
     }
 
     override fun enableInternalConnection() {
@@ -298,6 +300,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 Log.d("SettingsFragment", "Unable to set the icon tint", e)
             }
         }
+
+        findPreference<SwitchPreference>("prioritize_internal")?.isEnabled = true
     }
 
     override fun onLangSettingsChanged() {
