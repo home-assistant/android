@@ -7,7 +7,6 @@ interface SettingsPresenter {
     fun getPreferenceDataStore(): PreferenceDataStore
     fun onCreate()
     fun onFinish()
-    fun nfcEnabled(): Boolean
     fun isLockEnabled(): Boolean
     fun sessionTimeOut(): Int
     suspend fun getNotificationRateLimits(): RateLimitResponse?
