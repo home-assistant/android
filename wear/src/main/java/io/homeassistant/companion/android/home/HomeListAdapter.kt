@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -30,6 +31,8 @@ class HomeListAdapter() : RecyclerView.Adapter<ViewHolder>() {
         private const val TYPE_BUTTON = 4
 
         const val BUTTON_ID_LOGOUT: String = "logout"
+
+        private const val TAG = "HomeListAdapter"
     }
 
     override fun onCreateViewHolder(
@@ -61,24 +64,28 @@ class HomeListAdapter() : RecyclerView.Adapter<ViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        if (holder is EntityButtonViewHolder) {
-            if (position < scenes.size + 1) {
-                holder.entity = scenes[position - 1]
-            } else if (position > scenes.size + 1 + scripts.size + 1) {
-                holder.entity = lights[position - 3 - scenes.size - scripts.size]
-            } else
-                holder.entity = scripts[position - 2 - scenes.size]
-        } else if (holder is HeaderViewHolder) {
-            when (position) {
-                0 -> holder.headerTextView.setText(R.string.scenes)
-                scenes.size + 1 -> holder.headerTextView.setText(R.string.scripts)
-                scenes.size + scripts.size + 2 -> holder.headerTextView.setText(R.string.lights)
-                else -> holder.headerTextView.setText(R.string.other)
+        try {
+            if (holder is EntityButtonViewHolder) {
+                if (position < scenes.size + 1) {
+                    holder.entity = scenes[position - 1]
+                } else if (position > scenes.size + 1 + scripts.size + 1) {
+                    holder.entity = lights[position - 3 - scenes.size - scripts.size]
+                } else
+                    holder.entity = scripts[position - 2 - scenes.size]
+            } else if (holder is HeaderViewHolder) {
+                when (position) {
+                    0 -> holder.headerTextView.setText(R.string.scenes)
+                    scenes.size + 1 -> holder.headerTextView.setText(R.string.scripts)
+                    scenes.size + scripts.size + 2 -> holder.headerTextView.setText(R.string.lights)
+                    else -> holder.headerTextView.setText(R.string.other)
+                }
+            } else if (holder is ButtonViewHolder) {
+                holder.txtName.setText(R.string.logout)
+                holder.id = BUTTON_ID_LOGOUT
+                holder.color = R.color.colorWarning
             }
-        } else if (holder is ButtonViewHolder) {
-            holder.txtName.setText(R.string.logout)
-            holder.id = BUTTON_ID_LOGOUT
-            holder.color = R.color.colorWarning
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to add entities to list", e)
         }
     }
 

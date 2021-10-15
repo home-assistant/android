@@ -85,7 +85,6 @@ class HomePresenterImpl @Inject constructor(
         val lights = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "light" }
         val covers = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "cover" }
         view.showHomeList(scenes, scripts, lights, covers)
-        Log.i(TAG, "Cover data: " + covers[0].attributes.toString())
     }
 
     private fun resyncRegistration() {
