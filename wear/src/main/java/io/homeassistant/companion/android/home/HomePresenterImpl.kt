@@ -42,12 +42,23 @@ class HomePresenterImpl @Inject constructor(
     }
 
     override fun onEntityClicked(entity: Entity<Any>) {
-        mainScope.launch {
-            integrationUseCase.callService(
-                entity.entityId.split(".")[0],
-                "turn_on",
-                hashMapOf("entity_id" to entity.entityId)
-            )
+
+        if (entity.entityId.split(".")[0] == "light") {
+            mainScope.launch {
+                integrationUseCase.callService(
+                    entity.entityId.split(".")[0],
+                    "toggle",
+                    hashMapOf("entity_id" to entity.entityId)
+                )
+            }
+        } else {
+            mainScope.launch {
+                integrationUseCase.callService(
+                    entity.entityId.split(".")[0],
+                    "turn_on",
+                    hashMapOf("entity_id" to entity.entityId)
+                )
+            }
         }
     }
 
@@ -71,7 +82,10 @@ class HomePresenterImpl @Inject constructor(
     private fun processEntities(entities: Array<Entity<Any>>) {
         val scenes = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
         val scripts = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "script" }
-        view.showHomeList(scenes, scripts)
+        val lights = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "light" }
+        val covers = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "cover" }
+        view.showHomeList(scenes, scripts, lights, covers)
+        Log.i(TAG, "Cover data: " + covers[0].attributes.toString())
     }
 
     private fun resyncRegistration() {

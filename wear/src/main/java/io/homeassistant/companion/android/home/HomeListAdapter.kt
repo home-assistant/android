@@ -19,6 +19,9 @@ class HomeListAdapter() : RecyclerView.Adapter<ViewHolder>() {
 
     val scenes = arrayListOf<Entity<Any>>()
     val scripts = arrayListOf<Entity<Any>>()
+    val lights = arrayListOf<Entity<Any>>()
+    val covers = arrayListOf<Entity<Any>>()
+    val dataList = mutableListOf<Entity<Any>>()
 
     companion object {
         private const val TYPE_SCENE = 1 // Used for scenes and scripts
@@ -59,14 +62,17 @@ class HomeListAdapter() : RecyclerView.Adapter<ViewHolder>() {
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         if (holder is EntityButtonViewHolder) {
-            if (position < scenes.size + 1)
+            if (position < scenes.size + 1) {
                 holder.entity = scenes[position - 1]
-            else
+            } else if (position > scenes.size + 1 + scripts.size + 1) {
+                holder.entity = lights[position - 3 - scenes.size - scripts.size]
+            } else
                 holder.entity = scripts[position - 2 - scenes.size]
         } else if (holder is HeaderViewHolder) {
             when (position) {
                 0 -> holder.headerTextView.setText(R.string.scenes)
                 scenes.size + 1 -> holder.headerTextView.setText(R.string.scripts)
+                scenes.size + scripts.size + 2 -> holder.headerTextView.setText(R.string.lights)
                 else -> holder.headerTextView.setText(R.string.other)
             }
         } else if (holder is ButtonViewHolder) {
@@ -76,7 +82,7 @@ class HomeListAdapter() : RecyclerView.Adapter<ViewHolder>() {
         }
     }
 
-    override fun getItemCount() = max(scenes.size + scripts.size + 4, 6)
+    override fun getItemCount() = max(scenes.size + scripts.size + lights.size + 5, 7)
 
     override fun getItemViewType(position: Int): Int {
         /*
@@ -105,8 +111,9 @@ class HomeListAdapter() : RecyclerView.Adapter<ViewHolder>() {
         # Other
         - Settings
          */
+
         return when {
-            position == 0 || position == scenes.size + 1 || position == itemCount - 2 -> TYPE_HEADER
+            position == 0 || position == scenes.size + 1 || position == scenes.size + scripts.size + 2 || position == itemCount - 2 -> TYPE_HEADER
             position == itemCount - 1 -> TYPE_BUTTON
             position < scenes.size + 1 && scenes.size > 0 -> TYPE_SCENE
             position > scenes.size + 1 && scripts.size > 0 -> TYPE_SCENE

@@ -21,9 +21,14 @@ class EntityButtonViewHolder(v: View, val onClick: (Entity<Any>) -> Unit) :
             // Set default icon
             if (value.entityId.split(".")[0] == "script") {
                 imgIcon.setImageResource(R.drawable.ic_scripts)
+            } else if (value.entityId.split(".")[0] == "light") {
+                imgIcon.setImageResource(R.drawable.ic_light)
+            } else if (value.entityId.split(".")[0] == "cover") {
+                imgIcon.setImageResource(R.drawable.ic_garage)
             } else {
                 imgIcon.setImageResource(R.drawable.ic_scenes)
             }
+
             /*if (entityAttributes.containsKey("icon")) {
                 Need to implement dynamic icon loading here
                 The default library used (com.maltaisn:icondialog) does not allow to get icons by the mdi: string
