@@ -135,12 +135,6 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun getDeviceName(): String {
-        return runBlocking {
-            integrationUseCase.getDeviceName()
-        }
-    }
-
     override fun isLockEnabled(): Boolean {
         return runBlocking {
             authenticationUseCase.isLockEnabled()

@@ -35,12 +35,12 @@ interface IntegrationService {
 
     @GET("/api/services")
     suspend fun getServices(
-        @Header("Authorization") auth: String,
+        @Header("Authorization") auth: String
     ): Array<DomainResponse>
 
     @GET("/api/states")
     suspend fun getStates(
-        @Header("Authorization") auth: String,
+        @Header("Authorization") auth: String
     ): Array<EntityResponse<Any>>
 
     @GET("/api/states/{entityId}")

@@ -29,10 +29,6 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
     }
 
-    override suspend fun getDeviceName(): String {
-        return urlRepository.getDeviceName()
-    }
-
     override suspend fun initiateLoginFlow(): LoginFlowInit {
         return authenticationService.initializeLogin(
             LoginFlowRequest(

@@ -17,6 +17,4 @@ interface UrlRepository {
     suspend fun saveHomeWifiSsids(ssid: Set<String>)
 
     suspend fun isInternal(): Boolean
-
-    suspend fun getDeviceName(): String
 }

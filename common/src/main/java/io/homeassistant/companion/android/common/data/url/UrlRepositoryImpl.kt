@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.url
 
-import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.MalformedHttpUrlException
@@ -14,7 +13,6 @@ import javax.inject.Named
 
 class UrlRepositoryImpl @Inject constructor(
     @Named("url") private val localStorage: LocalStorage,
-    @Named("integration") private val localIntegrationStorage: LocalStorage,
     private val wifiHelper: WifiHelper
 ) : UrlRepository {
 
@@ -25,11 +23,6 @@ class UrlRepositoryImpl @Inject constructor(
         private const val PREF_LOCAL_URL = "local_url"
         private const val PREF_WIFI_SSIDS = "wifi_ssids"
         private const val TAG = "UrlRepository"
-        private const val PREF_DEVICE_NAME = "device_name"
-    }
-
-    override suspend fun getDeviceName(): String {
-        return localIntegrationStorage.getString(PREF_DEVICE_NAME) ?: Build.MODEL
     }
 
     override suspend fun getApiUrls(): Array<URL> {
