@@ -23,6 +23,9 @@ interface IntegrationRepository {
     suspend fun setKeepScreenOnEnabled(enabled: Boolean)
     suspend fun isKeepScreenOnEnabled(): Boolean
 
+    suspend fun setAutoPlayVideo(enabled: Boolean)
+    suspend fun isAutoPlayVideoEnabled(): Boolean
+
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
 

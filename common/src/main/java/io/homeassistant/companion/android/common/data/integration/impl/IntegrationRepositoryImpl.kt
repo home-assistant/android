@@ -52,6 +52,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_SECRET = "secret"
 
+        private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
@@ -310,6 +311,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isKeepScreenOnEnabled(): Boolean {
         return localStorage.getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
+    }
+
+    override suspend fun isAutoPlayVideoEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_AUTOPLAY_VIDEO)
+    }
+
+    override suspend fun setAutoPlayVideo(enabled: Boolean) {
+        localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
     }
 
     override suspend fun sessionTimeOut(value: Int) {

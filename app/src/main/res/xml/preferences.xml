@@ -69,6 +69,11 @@
             android:icon="@drawable/ic_phone_check"
             android:title="@string/keep_screen_on"
             android:summary="@string/keep_screen_on_def"/>
+        <SwitchPreference
+            android:key="autoplay_video"
+            android:icon="@drawable/ic_baseline_video_settings_24"
+            android:title="@string/autoplay_video"
+            android:summary="@string/autoplay_video_summary" />
         <Preference
             android:key="nfc_tags"
             android:icon="@drawable/ic_nfc"
