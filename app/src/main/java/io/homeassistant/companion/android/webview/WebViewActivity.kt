@@ -105,6 +105,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         private const val APP_PREFIX = "app://"
         private const val INTENT_PREFIX = "intent://"
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
+        private const val USER_AGENT_STRING = "HomeAssistant/Android"
 
         fun newInstance(context: Context, path: String? = null): Intent {
             return Intent(context, WebViewActivity::class.java).apply {
@@ -215,6 +216,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.userAgentString = USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
             webViewClient = object : WebViewClient() {
                 override fun onReceivedError(
                     view: WebView?,

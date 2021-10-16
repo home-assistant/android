@@ -14,6 +14,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
@@ -26,6 +27,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
 
     companion object {
         private const val TAG = "AuthenticationFragment"
+        private const val USER_AGENT_STRING = "HomeAssistant/Android"
 
         fun newInstance(): AuthenticationFragment {
             return AuthenticationFragment()
@@ -63,6 +65,7 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
             webView.apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                settings.userAgentString = USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                         return presenter.onRedirectUrl(url)

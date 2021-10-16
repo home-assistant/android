@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data
 
+import android.os.Build
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -45,7 +46,7 @@ class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
                     val newRequest = runBlocking {
                         it.request().newBuilder()
                             .url(it.request().url.toString().replace(LOCAL_HOST, urlRepository.getUrl().toString()))
-                            .header(USER_AGENT, "$USER_AGENT_STRING ${BuildConfig.VERSION_NAME}")
+                            .header(USER_AGENT, "$USER_AGENT_STRING ${Build.MODEL} ${BuildConfig.VERSION_NAME}")
                             .build()
                     }
                     it.proceed(newRequest)
