@@ -60,22 +60,23 @@ class HomeActivity : AppCompatActivity(), HomeView {
     }
 
     override fun showHomeList(scenes: List<Entity<Any>>, scripts: List<Entity<Any>>, lights: List<Entity<Any>>, covers: List<Entity<Any>>) {
-        if (scenes.isNotEmpty()) {
-            adapter.scenes.clear()
+        adapter.scenes.clear()
+        adapter.scripts.clear()
+        adapter.lights.clear()
+        adapter.covers.clear()
+
+        if (scenes.isNotEmpty())
             adapter.scenes.addAll(scenes)
-        }
-        if (scripts.isNotEmpty()) {
-            adapter.scripts.clear()
+
+        if (scripts.isNotEmpty())
             adapter.scripts.addAll(scripts)
-        }
-        if (lights.isNotEmpty()) {
-            adapter.lights.clear()
+
+        if (lights.isNotEmpty())
             adapter.lights.addAll(lights)
-        }
-        if (covers.isNotEmpty()) {
-            adapter.covers.clear()
+
+        if (covers.isNotEmpty())
             adapter.covers.addAll(covers)
-        }
+
         adapter.notifyDataSetChanged()
     }
 
