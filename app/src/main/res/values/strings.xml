@@ -584,7 +584,7 @@ like to connect to:</string>
   <string name="tile_list">List of Tiles</string>
   <string name="tile_label">Tile Label</string>
   <string name="tile_subtitle">Tile Subtitle</string>
-  <string name="tile_entity">Select a Script or Scene to call</string>
+  <string name="tile_entity">Select a entity to toggle or call</string>
   <string name="tile_save">Update Tile Data</string>
   <string name="tile_updated">Tile Data Updated</string>
   <string name="tile_1">Tile 1</string>
@@ -602,8 +602,8 @@ like to connect to:</string>
   <string name="quick_settings">Quick Settings</string>
   <string name="manage_tiles_summary">Setup and manage Quick Setting tiles here. They will not function until you set them up here.</string>
   <string name="empty_template">Template value must not be blank</string>
-  <string name="tile_missing_entity_title">Missing Script or Scene</string>
-  <string name="tile_missing_entity_summary">Please add a script or scene to Home Assistant and revisit this screen to enable the below field</string>
+  <string name="tile_missing_entity_title">Missing Valid Entity Domains</string>
+  <string name="tile_missing_entity_summary">You must have one of the following domains in order to use this feature: cover, fan, input_boolean, light, remote, scene, script, switch</string>
   <string name="template_widget">Template Widget</string>
     <string name="basic_sensor_name_high_accuracy_mode">High Accuracy Mode</string>
   <string name="sensor_description_high_accuracy_mode">Whether or not high accuracy mode is active on the device</string>

@@ -38,29 +38,41 @@ abstract class TileExtensions : TileService() {
             .build()
             .inject(this)
         if (getTile() != null) {
-            setTileData(applicationContext, getTileId(), getTile()!!)
+            setTileData(applicationContext, getTileId(), getTile()!!, integrationUseCase)
             tileClicked(applicationContext, getTileId(), getTile()!!, integrationUseCase)
         }
     }
 
     override fun onTileAdded() {
         super.onTileAdded()
+        DaggerTileComponent.builder()
+            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
+            .build()
+            .inject(this)
         if (getTile() != null)
-            setTileData(applicationContext, getTileId(), getTile()!!)
+            setTileData(applicationContext, getTileId(), getTile()!!, integrationUseCase)
     }
 
     override fun onStartListening() {
         super.onStartListening()
+        DaggerTileComponent.builder()
+            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
+            .build()
+            .inject(this)
         if (getTile() != null)
-            setTileData(applicationContext, getTileId(), getTile()!!)
+            setTileData(applicationContext, getTileId(), getTile()!!, integrationUseCase)
     }
 
     companion object {
         private const val TAG = "TileExtensions"
         private var iconPack: IconPack? = null
+        private val toggleDomains = listOf(
+            "cover", "fan", "humidifier", "input_boolean", "light",
+            "media_player", "remote", "siren", "switch"
+        )
 
         @RequiresApi(Build.VERSION_CODES.N)
-        fun setTileData(context: Context, tileId: String, tile: Tile): Boolean {
+        fun setTileData(context: Context, tileId: String, tile: Tile, integrationUseCase: IntegrationRepository): Boolean {
             val tileDao = AppDatabase.getInstance(context).tileDao()
             val tileData = tileDao.get(tileId)
             try {
@@ -69,7 +81,11 @@ abstract class TileExtensions : TileService() {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         tile.subtitle = tileData.subtitle
                     }
-                    tile.state = Tile.STATE_INACTIVE
+                    if (tileData.entityId.split('.')[0] in toggleDomains) {
+                        val state = runBlocking { integrationUseCase.getEntity(tileData.entityId) }
+                        tile.state = if (state.state == "on") Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                    } else
+                        tile.state = Tile.STATE_INACTIVE
                     if (tileData.iconId != null) {
                         val icon = getTileIcon(tileData.iconId, context)
                         tile.icon = Icon.createWithBitmap(icon)
@@ -97,7 +113,7 @@ abstract class TileExtensions : TileService() {
 
             val tileDao = AppDatabase.getInstance(context).tileDao()
             val tileData = tileDao.get(tileId)
-            val hasTile = setTileData(context, tileId, tile)
+            val hasTile = setTileData(context, tileId, tile, integrationUseCase)
             if (hasTile) {
                 tile.state = Tile.STATE_ACTIVE
                 tile.updateTile()
@@ -105,7 +121,7 @@ abstract class TileExtensions : TileService() {
                     try {
                         integrationUseCase.callService(
                             tileData?.entityId?.split(".")!![0],
-                            "turn_on",
+                            if (tileData.entityId.split(".")[0] in toggleDomains) "toggle" else "turn_on",
                             hashMapOf("entity_id" to tileData.entityId)
                         )
                     } catch (e: Exception) {
