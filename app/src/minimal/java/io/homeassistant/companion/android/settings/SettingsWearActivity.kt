@@ -8,10 +8,6 @@ import com.google.android.gms.wearable.CapabilityInfo
 
 class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityChangedListener {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     override fun onCapabilityChanged(capabilityInfo: CapabilityInfo) {
         // No op
     }

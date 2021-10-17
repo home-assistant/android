@@ -59,6 +59,7 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:key="wear_category"
+        app:isPreferenceVisible="false"
         android:title="Wear OS">
         <Preference
             android:key="wear_settings"
