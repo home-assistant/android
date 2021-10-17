@@ -58,6 +58,15 @@
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="wear_category"
+        android:title="Wear OS">
+        <Preference
+            android:key="wear_settings"
+            android:title="Wear OS Settings"
+            android:icon="@drawable/ic_baseline_watch_24"
+            android:summary="Manage Wear OS App" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/other_settings">
         <SwitchPreference
             android:key="fullscreen"

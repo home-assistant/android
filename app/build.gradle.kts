@@ -132,7 +132,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.31")
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.31")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
     implementation("com.google.dagger:dagger:2.39.1")
     kapt("com.google.dagger:dagger-compiler:2.39.1")
@@ -146,6 +147,8 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
     implementation("com.google.android.material:material:1.4.0")
 
+    implementation("androidx.wear:wear-remote-interactions:1.0.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-rc01")
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
 
     implementation("androidx.room:room-runtime:2.3.0")

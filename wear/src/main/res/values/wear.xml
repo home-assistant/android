@@ -3,5 +3,6 @@
             tools:keep="@array/android_wear_capabilities">
     <string-array name="android_wear_capabilities">
         <item>authentication_token</item>
+        <item>verify_wear_app</item>
     </string-array>
 </resources>

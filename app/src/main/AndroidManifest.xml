@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="io.homeassistant.companion.android">
 
+    <uses-sdk tools:overrideLibrary="androidx.wear.remote.interactions" />
+
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -232,6 +234,11 @@
         <activity
             android:name=".onboarding.OnboardingActivity"
             android:configChanges="orientation|screenSize|keyboardHidden" />
+
+        <activity
+            android:name=".settings.SettingsWearActivity"
+            android:parentActivityName=".settings.SettingsActivity"
+            android:configChanges="orientation|screenSize" />
 
         <service android:name=".onboarding.WearOnboardingListener">
             <intent-filter>
