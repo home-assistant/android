@@ -18,6 +18,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="100dp"
         android:layout_marginStart="15dp"
+        android:autoLink="web"
         android:layout_marginEnd="15dp"
         style="@style/TextAppearance.HomeAssistant.Headline"
         app:layout_constraintBottom_toTopOf="@id/remote_open_button"
