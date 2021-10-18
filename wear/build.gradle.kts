@@ -85,4 +85,8 @@ dependencies {
 
     implementation("com.google.dagger:dagger:2.39.1")
     kapt("com.google.dagger:dagger-compiler:2.39.1")
+
+    implementation("com.mikepenz:iconics-core:5.3.2")
+    implementation("androidx.appcompat:appcompat:1.3.1")
+    implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
 }
