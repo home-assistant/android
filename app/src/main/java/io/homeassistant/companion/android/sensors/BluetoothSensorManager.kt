@@ -50,7 +50,7 @@ class BluetoothSensorManager : SensorManager {
 
         fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            var sensorEntity = sensorDao.get(bleTransmitter.id)
+            val sensorEntity = sensorDao.get(bleTransmitter.id)
             val sensorEnabled = (sensorEntity != null && sensorEntity.enabled)
             if (!sensorEnabled)
                 return
@@ -150,11 +150,11 @@ class BluetoothSensorManager : SensorManager {
 
     private fun updateBLEDevice(context: Context) {
         addSettingIfNotPresent(context, bleTransmitter, SETTING_BLE_ENABLE_TOGGLE_ALL, "toggle", "false")
-        var transmitActive = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, "toggle", "true").toBoolean()
-        var id1 = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
-        var id2 = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_ID2)
-        var id3 = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_ID3)
-        var transmitPower = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list", listOf("ultraLow", "low", "medium", "high"), DEFAULT_BLE_TRANSMIT_POWER)
+        val transmitActive = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, "toggle", "true").toBoolean()
+        val id1 = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
+        val id2 = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_ID2)
+        val id3 = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_ID3)
+        val transmitPower = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list", listOf("ultraLow", "low", "medium", "high"), DEFAULT_BLE_TRANSMIT_POWER)
         bleTransmitterDevice.restartRequired = false
         if (bleTransmitterDevice.uuid != id1 || bleTransmitterDevice.major != id2 ||
             bleTransmitterDevice.minor != id3 || bleTransmitterDevice.transmitPowerSetting != transmitPower ||
