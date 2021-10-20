@@ -47,6 +47,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.webkit.WebViewCompat
+import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -649,10 +650,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoPlayer = SimpleExoPlayer.Builder(applicationContext).setMediaSourceFactory(
                 DefaultMediaSourceFactory(
                     CronetDataSource.Factory(
-                        CronetEngine.Builder(applicationContext).build(),
+                        CronetEngine.Builder(applicationContext).enableQuic(true).build(),
                         Executors.newSingleThreadExecutor()
                     )
-                )
+                ).setLiveMaxSpeed(8.0f)
+            ).setLoadControl(
+                DefaultLoadControl.Builder().setBufferDurationsMs(
+                    0, 30000, 0, 0
+                ).build()
             ).build()
             exoPlayer?.setMediaItem(MediaItem.fromUri(uri))
             exoPlayer?.playWhenReady = true
@@ -689,7 +694,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     fun exoStopHls() {
         runOnUiThread {
             exoPlayerView.visibility = View.GONE
-            exoPlayerView.setPlayer(null)
+            exoPlayerView.player = null
             exoPlayer?.release()
             exoPlayer = null
         }
@@ -705,7 +710,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             // only set exoBottom if we can't calculate it from the video
             exoBottom = (rect.getInt("bottom") * displayMetrics.density).toInt()
         } else {
-            exoBottom = exoTop + (exoRight - exoLeft) * exoPlayer!!.videoFormat!!.height / exoPlayer!!.videoFormat!!.width
+            exoBottom = exoTop + (exoRight - exoLeft) * exoPlayer!!.videoFormat!!.height /
+                exoPlayer!!.videoFormat!!.width
         }
         runOnUiThread {
             exoResizeLayout()
