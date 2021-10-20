@@ -157,6 +157,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoMute: Boolean = true
     private var failedConnection = "external"
     private var moreInfoEntity = ""
+    private var currentAutoplay: Boolean = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -217,6 +218,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
             settings.userAgentString = USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
             webViewClient = object : WebViewClient() {
                 override fun onReceivedError(
@@ -549,6 +551,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         currentLang = languagesManager.getCurrentLang()
+        currentAutoplay = presenter.isAutoPlayVideoEnabled()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val webviewPackage = WebViewCompat.getCurrentWebViewPackage(this)
@@ -571,7 +574,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     override fun onResume() {
         super.onResume()
-        if (currentLang != languagesManager.getCurrentLang())
+        if ((currentLang != languagesManager.getCurrentLang()) || currentAutoplay != presenter.isAutoPlayVideoEnabled())
             recreate()
         if ((!unlocked && !presenter.isLockEnabled()) ||
             (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis())

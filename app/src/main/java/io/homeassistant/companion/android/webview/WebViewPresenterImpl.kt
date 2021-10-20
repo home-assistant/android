@@ -141,6 +141,12 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isAutoPlayVideoEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isAutoPlayVideoEnabled()
+        }
+    }
+
     override fun sessionTimeOut(): Int {
         return runBlocking {
             integrationUseCase.getSessionTimeOut()

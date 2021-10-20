@@ -43,6 +43,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "app_lock" -> authenticationUseCase.isLockEnabled()
                 "crash_reporting" -> prefsRepository.isCrashReporting()
                 "prioritize_internal" -> urlUseCase.isPrioritizeInternal()
+                "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -56,6 +57,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "prioritize_internal" -> urlUseCase.setPrioritizeInternal(value)
+                "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }

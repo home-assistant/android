@@ -621,4 +621,6 @@ like to connect to:</string>
   <string name="webview_error_HOST_LOOKUP">Server or proxy hostname lookup failed, please check that the URL is a valid Home Assistant URL.</string>
   <string name="prioritize_internal">Prioritize Internal URL</string>
   <string name="prioritize_internal_summary">Always try the internal URL first before the external URL. Enable this setting if you typically leave location off.</string>
+  <string name="autoplay_video">Autoplay Videos</string>
+  <string name="autoplay_video_summary">Autoplay Videos when lovelace dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
 </resources>
