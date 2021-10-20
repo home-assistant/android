@@ -81,13 +81,13 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     private fun getActivityPendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, ActivitySensorManager::class.java)
         intent.action = ACTION_UPDATE_ACTIVITY
-        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
     }
 
     private fun getSleepPendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, ActivitySensorManager::class.java)
         intent.action = ACTION_SLEEP_ACTIVITY
-        return PendingIntent.getBroadcast(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getBroadcast(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
     }
 
     private fun handleActivityUpdate(intent: Intent, context: Context) {

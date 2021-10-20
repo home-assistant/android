@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.Manifest
 import android.content.Context
+import android.os.Build
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
@@ -74,7 +75,10 @@ class BluetoothSensorManager : SensorManager {
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return arrayOf(Manifest.permission.BLUETOOTH)
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            arrayOf(Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_CONNECT)
+        } else
+            arrayOf(Manifest.permission.BLUETOOTH)
     }
 
     override fun requestSensorUpdate(

@@ -122,7 +122,7 @@ class HighAccuracyLocationService : Service() {
                 action = HighAccuracyLocationReceiver.HIGH_ACCURACY_LOCATION_DISABLE
             }
 
-            val disablePendingIntent = PendingIntent.getBroadcast(context, 0, disableIntent, 0)
+            val disablePendingIntent = PendingIntent.getBroadcast(context, 0, disableIntent, PendingIntent.FLAG_MUTABLE)
 
             notificationBuilder = NotificationCompat.Builder(context, channelID)
                 .setSmallIcon(R.drawable.ic_stat_ic_notification)
@@ -184,7 +184,7 @@ class HighAccuracyLocationService : Service() {
     private fun getLocationUpdateIntent(): PendingIntent {
         val intent = Intent(this, LocationSensorManager::class.java)
         intent.action = LocationSensorManager.ACTION_PROCESS_LOCATION
-        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
     }
 
     @SuppressLint("MissingPermission")

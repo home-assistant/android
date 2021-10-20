@@ -34,7 +34,7 @@ class CoverControl {
                     context,
                     0,
                     WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    PendingIntent.FLAG_CANCEL_CURRENT
+                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             )
             control.setTitle(

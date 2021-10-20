@@ -492,6 +492,11 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             return
         }
 
+        if (geofencingEvent.triggeringLocation == null) {
+            Log.d(TAG, "Geofence event is null")
+            return
+        }
+
         val validGeofencingEvents = listOf(Geofence.GEOFENCE_TRANSITION_ENTER, Geofence.GEOFENCE_TRANSITION_EXIT)
         if (geofencingEvent.geofenceTransition in validGeofencingEvents) {
             val zoneStatusEvent = when (geofencingEvent.geofenceTransition) {
@@ -637,7 +642,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
     private fun getLocationUpdateIntent(isGeofence: Boolean): PendingIntent {
         val intent = Intent(latestContext, LocationSensorManager::class.java)
         intent.action = if (isGeofence) ACTION_PROCESS_GEO else ACTION_PROCESS_LOCATION
-        return PendingIntent.getBroadcast(latestContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        return PendingIntent.getBroadcast(latestContext, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
     }
 
     private fun createLocationRequest(): LocationRequest {
@@ -842,17 +847,31 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         get() = R.string.sensor_name_location
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                Manifest.permission.BLUETOOTH
-            )
-        } else {
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.BLUETOOTH
-            )
+        return when {
+            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                )
+            }
+            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) -> {
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.BLUETOOTH
+                )
+            }
+            else -> {
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.BLUETOOTH
+                )
+            }
         }
     }
 

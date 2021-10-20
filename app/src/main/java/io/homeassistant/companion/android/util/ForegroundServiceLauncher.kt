@@ -59,7 +59,7 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
 
                 // Restart service in 2 seconds
                 val restartIntent = Intent(context, serviceClass).apply { block() }
-                val restartServicePI = PendingIntent.getService(context, 1, restartIntent, PendingIntent.FLAG_ONE_SHOT)
+                val restartServicePI = PendingIntent.getService(context, 1, restartIntent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
 
                 val alarmManager: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                 val calendar: Calendar = Calendar.getInstance()

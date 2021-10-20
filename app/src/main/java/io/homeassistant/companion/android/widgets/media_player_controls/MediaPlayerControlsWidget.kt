@@ -200,7 +200,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         context,
                         appWidgetId,
                         updateMediaIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 )
                 setOnClickPendingIntent(
@@ -209,7 +209,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         context,
                         appWidgetId,
                         updateMediaIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 )
                 setOnClickPendingIntent(
@@ -218,7 +218,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         context,
                         appWidgetId,
                         playPauseIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 )
 
@@ -229,7 +229,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                             context,
                             appWidgetId,
                             prevTrackIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                     )
                     setOnClickPendingIntent(
@@ -238,7 +238,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                             context,
                             appWidgetId,
                             nextTrackIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                     )
                     setViewVisibility(R.id.widgetPrevTrackButton, View.VISIBLE)
@@ -255,7 +255,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                             context,
                             appWidgetId,
                             rewindIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                     )
                     setOnClickPendingIntent(
@@ -264,7 +264,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                             context,
                             appWidgetId,
                             fastForwardIntent,
-                            PendingIntent.FLAG_UPDATE_CURRENT
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         )
                     )
                     setViewVisibility(R.id.widgetRewindButton, View.VISIBLE)
