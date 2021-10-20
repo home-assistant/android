@@ -1031,7 +1031,12 @@ class MessagingService : FirebaseMessagingService() {
                         0
                     )
 
-                    builder.addAction(0, notificationAction.title, actionPendingIntent)
+                    val icon =
+                        if (notificationAction.key == "URI")
+                            R.drawable.ic_globe
+                        else
+                            R.drawable.ic_stat_ic_notification
+                    builder.addAction(icon, notificationAction.title, actionPendingIntent)
                 } else {
                     val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
                         setLabel(getString(R.string.action_reply))
@@ -1043,7 +1048,7 @@ class MessagingService : FirebaseMessagingService() {
                         actionIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT
                     )
-                    val action: NotificationCompat.Action = NotificationCompat.Action.Builder(0, notificationAction.title, replyPendingIntent)
+                    val action: NotificationCompat.Action = NotificationCompat.Action.Builder(R.drawable.ic_baseline_reply_24, notificationAction.title, replyPendingIntent)
                         .addRemoteInput(remoteInput)
                         .build()
                     builder.addAction(action)
