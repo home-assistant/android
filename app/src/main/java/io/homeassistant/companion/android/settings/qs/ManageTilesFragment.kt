@@ -32,6 +32,10 @@ class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
 
     companion object {
         private const val TAG = "TileFragment"
+        private val validDomains = listOf(
+            "cover", "fan", "humidifier", "input_boolean", "light",
+            "media_player", "remote", "siren", "scene", "script", "switch"
+        )
         fun newInstance(): ManageTilesFragment {
             return ManageTilesFragment()
         }
@@ -104,7 +108,7 @@ class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
             try {
                 integrationUseCase.getEntities().forEach {
                     val split = it.entityId.split(".")
-                    if (split[0].startsWith("script") || split[0].startsWith("scene"))
+                    if (split[0] in validDomains)
                         entityList = entityList + it.entityId
                 }
             } catch (e: Exception) {
