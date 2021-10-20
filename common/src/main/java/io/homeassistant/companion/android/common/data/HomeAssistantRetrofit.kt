@@ -54,6 +54,7 @@ class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
                     it.proceed(it.request())
                 }
             }
+                .cookieJar(CookieJarCookieManagerShim())
                 .callTimeout(30L, TimeUnit.SECONDS)
                 .readTimeout(30L, TimeUnit.SECONDS)
                 .build()
