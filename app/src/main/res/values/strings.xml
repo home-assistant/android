@@ -630,4 +630,7 @@ like to connect to:</string>
   <string name="store_request_successful">Request to install app on wear device sent successfully</string>
   <string name="store_request_unsuccessful">Play Store Request Failed. Wear device(s) may not support Play Store, that is, the Wear device may be version 1.0.</string>
   <string name="install_app">Install App on Wear Device</string>
+  <string name="wear_os_category">Wear OS</string>
+  <string name="wear_os_settings_title">Wear OS Settings</string>
+  <string name="wear_os_settings_summary">Manage Wear OS App</string>
 </resources>

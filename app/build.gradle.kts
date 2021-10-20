@@ -133,7 +133,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.31")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
     implementation("com.google.dagger:dagger:2.39.1")
     kapt("com.google.dagger:dagger-compiler:2.39.1")
@@ -164,6 +163,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:22.0.0")
     "fullImplementation"("io.sentry:sentry-android:5.2.3")
+    "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
     implementation("androidx.work:work-runtime-ktx:2.6.0")
     implementation("androidx.biometric:biometric:1.1.0")
