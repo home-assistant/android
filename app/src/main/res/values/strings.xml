@@ -619,4 +619,6 @@ like to connect to:</string>
   <string name="webview_error_PROXY_AUTHENTICATION">User authentication failed on proxy, please check proxy settings.</string>
   <string name="webview_error_AUTH_SCHEME">Unsupported authentication scheme (not basic or digest), please check network settings.</string>
   <string name="webview_error_HOST_LOOKUP">Server or proxy hostname lookup failed, please check that the URL is a valid Home Assistant URL.</string>
+  <string name="prioritize_internal">Prioritize Internal URL</string>
+  <string name="prioritize_internal_summary">Always try the internal URL first before the external URL. Enable this setting if you typically leave location off.</string>
 </resources>

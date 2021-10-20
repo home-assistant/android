@@ -22,6 +22,7 @@ class UrlRepositoryImpl @Inject constructor(
         private const val PREF_WEBHOOK_ID = "webhook_id"
         private const val PREF_LOCAL_URL = "local_url"
         private const val PREF_WIFI_SSIDS = "wifi_ssids"
+        private const val PREF_PRIORITIZE_INTERNAL = "prioritize_internal"
         private const val TAG = "UrlRepository"
     }
 
@@ -35,7 +36,7 @@ class UrlRepositoryImpl @Inject constructor(
         }
 
         // If we are local then add the local URL in the first position, otherwise no reason to try
-        if (isInternal()) {
+        if (isInternal() || isPrioritizeInternal()) {
             localStorage.getString(PREF_LOCAL_URL)?.let {
                 retVal.add(
                     it.toHttpUrl().newBuilder()
@@ -109,6 +110,14 @@ class UrlRepositoryImpl @Inject constructor(
 
     override suspend fun saveHomeWifiSsids(ssid: Set<String>) {
         localStorage.putStringSet(PREF_WIFI_SSIDS, ssid)
+    }
+
+    override suspend fun setPrioritizeInternal(enabled: Boolean) {
+        localStorage.putBoolean(PREF_PRIORITIZE_INTERNAL, enabled)
+    }
+
+    override suspend fun isPrioritizeInternal(): Boolean {
+        return localStorage.getBoolean(PREF_PRIORITIZE_INTERNAL)
     }
 
     override suspend fun isInternal(): Boolean {

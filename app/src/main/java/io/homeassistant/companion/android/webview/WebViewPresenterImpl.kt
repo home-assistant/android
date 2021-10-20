@@ -39,7 +39,7 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onViewReady(path: String?) {
         mainScope.launch {
             val oldUrl = url
-            url = urlUseCase.getUrl()
+            url = urlUseCase.getUrl(urlUseCase.isInternal() || urlUseCase.isPrioritizeInternal())
 
             if (path != null && !path.startsWith("entityId:")) {
                 url = UrlHandler.handle(url, path)
