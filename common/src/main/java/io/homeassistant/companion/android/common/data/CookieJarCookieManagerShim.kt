@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data
 
+import android.util.Log
 import android.webkit.CookieManager
 import okhttp3.Cookie
 import okhttp3.CookieJar
@@ -18,21 +19,31 @@ import okhttp3.HttpUrl
 class CookieJarCookieManagerShim : CookieJar {
 
     companion object {
-        private const val TAG = "CookieJarCookieManagerShim"
+        private const val TAG = "CookieJarCookieManager"
     }
 
     override fun loadForRequest(url: HttpUrl): List<Cookie> {
-        val cookies: String = CookieManager.getInstance()
-            ?.getCookie(url.toString()) ?: return emptyList()
-        return cookies.split("; ").map {
-            Cookie.parse(url, it)
-        }.filterNotNull()
+        try {
+            val cookies: String = CookieManager.getInstance()
+                ?.getCookie(url.toString()) ?: return emptyList()
+            return cookies.split("; ").map {
+                Cookie.parse(url, it)
+            }.filterNotNull()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get cookie manager", e)
+            return emptyList()
+        }
     }
 
     override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
-        val manager: CookieManager = CookieManager.getInstance() ?: return
-        for (cookie in cookies) {
-            manager.setCookie(url.toString(), cookie.toString(), null)
+        try {
+            val manager: CookieManager = CookieManager.getInstance() ?: return
+            for (cookie in cookies) {
+                manager.setCookie(url.toString(), cookie.toString(), null)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get cookie manager", e)
+            return
         }
     }
 }
