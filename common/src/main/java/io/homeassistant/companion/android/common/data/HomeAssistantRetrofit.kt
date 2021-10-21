@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data
 
 import android.os.Build
+import android.webkit.CookieManager
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategy
@@ -41,23 +42,40 @@ class HomeAssistantRetrofit @Inject constructor(urlRepository: UrlRepository) {
                         }
                     )
                 }
-            }.addInterceptor {
-                return@addInterceptor if (it.request().url.toString().contains(LOCAL_HOST)) {
-                    val newRequest = runBlocking {
-                        it.request().newBuilder()
-                            .url(it.request().url.toString().replace(LOCAL_HOST, urlRepository.getUrl().toString()))
-                            .header(USER_AGENT, "$USER_AGENT_STRING ${Build.MODEL} ${BuildConfig.VERSION_NAME}")
-                            .build()
+                addInterceptor {
+                    return@addInterceptor if (it.request().url.toString().contains(LOCAL_HOST)) {
+                        val newRequest = runBlocking {
+                            it.request().newBuilder()
+                                .url(
+                                    it.request().url.toString()
+                                        .replace(LOCAL_HOST, urlRepository.getUrl().toString())
+                                )
+                                .header(
+                                    USER_AGENT,
+                                    "$USER_AGENT_STRING ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
+                                )
+                                .build()
+                        }
+                        it.proceed(newRequest)
+                    } else {
+                        it.proceed(it.request())
                     }
-                    it.proceed(newRequest)
-                } else {
-                    it.proceed(it.request())
                 }
-            }
-                .cookieJar(CookieJarCookieManagerShim())
-                .callTimeout(30L, TimeUnit.SECONDS)
-                .readTimeout(30L, TimeUnit.SECONDS)
-                .build()
+                // Only deal with cookies when on non wear device and for now I don't have a better
+                // way to determine if we are really on wear os....
+                // TODO: Please fix me.
+                var cookieManager: CookieManager? = null
+                try {
+                    cookieManager = CookieManager.getInstance()
+                } catch (e: Exception) {
+                    // Noop
+                }
+                if (cookieManager != null) {
+                    cookieJar(CookieJarCookieManagerShim())
+                }
+                callTimeout(30L, TimeUnit.SECONDS)
+                readTimeout(30L, TimeUnit.SECONDS)
+            }.build()
         )
         .baseUrl(LOCAL_HOST)
         .build()
