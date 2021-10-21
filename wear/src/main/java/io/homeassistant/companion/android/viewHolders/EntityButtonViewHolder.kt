@@ -22,7 +22,7 @@ class EntityButtonViewHolder(v: View, val onClick: (Entity<Any>) -> Unit) :
             val entityAttributes = value?.attributes as Map<String, String>
             txtName.text = entityAttributes["friendly_name"]
 
-            if (entityAttributes.containsKey("icon")) {
+            if (entityAttributes["icon"]?.startsWith("mdi") == true) {
                 val icon: String = entityAttributes["icon"]!!.split(":")[1]
                 val iconDrawable = IconicsDrawable(imgIcon.context, "cmd-$icon").apply {
                     colorInt = Color.WHITE
