@@ -1028,7 +1028,7 @@ class MessagingService : FirebaseMessagingService() {
                         this,
                         (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
                         actionIntent,
-                        0
+                        PendingIntent.FLAG_IMMUTABLE
                     )
 
                     val icon =
