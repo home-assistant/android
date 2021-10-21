@@ -623,4 +623,14 @@ like to connect to:</string>
   <string name="prioritize_internal_summary">Always try the internal URL first before the external URL. Enable this setting if you typically leave location off.</string>
   <string name="autoplay_video">Autoplay Videos</string>
   <string name="autoplay_video_summary">Autoplay Videos when lovelace dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
+  <string name="message_checking">Checking Wear Devices with App</string>
+  <string name="message_missing_all">The Wear app is missing on your watch, click the button below to install the app.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
+  <string name="message_some_installed">The Wear app is installed on some of your wear devices: (%1$s)\n\nClick the button below to install the app on the other devices.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
+  <string name="message_all_installed">The Wear app is installed on all of your wear devices! \n\nStay tuned for more updates to this page.</string>
+  <string name="store_request_successful">Request to install app on wear device sent successfully</string>
+  <string name="store_request_unsuccessful">Play Store Request Failed. Wear device(s) may not support Play Store, that is, the Wear device may be version 1.0.</string>
+  <string name="install_app">Install App on Wear Device</string>
+  <string name="wear_os_category">Wear OS</string>
+  <string name="wear_os_settings_title">Wear OS Settings</string>
+  <string name="wear_os_settings_summary">Manage Wear OS App</string>
 </resources>

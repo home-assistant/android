@@ -234,6 +234,14 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                     true
                 }
             }
+
+            val pm = requireContext().packageManager
+            val hasWearApp = pm.getLaunchIntentForPackage("com.google.android.wearable.app")
+            findPreference<PreferenceCategory>("wear_category")?.isVisible = hasWearApp != null
+            findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
+                startActivity(SettingsWearActivity.newInstance(requireContext()))
+                return@setOnPreferenceClickListener true
+            }
         }
 
         findPreference<Preference>("changelog")?.let {
