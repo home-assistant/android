@@ -87,7 +87,7 @@ object DisabledLocationHandler {
 
                 val pendingIntent = PendingIntent.getActivity(
                     activity, 0,
-                    intent, 0
+                    intent, PendingIntent.FLAG_IMMUTABLE
                 )
 
                 val notificationBuilder = NotificationCompat.Builder(activity, channelID)
