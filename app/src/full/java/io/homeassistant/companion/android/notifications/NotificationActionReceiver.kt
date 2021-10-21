@@ -76,9 +76,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
             FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
             OPEN_URI -> NotificationActionContentHandler.openUri(context, notificationAction.uri, onComplete)
         }
-
-        // Make sure the notification shade closes
-        context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
     }
 
     private fun fireEvent(

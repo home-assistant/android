@@ -19,7 +19,7 @@ android {
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
         minSdk = 21
-        targetSdk = 30
+        targetSdk = 31
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
@@ -165,7 +165,7 @@ dependencies {
     "fullImplementation"("io.sentry:sentry-android:5.2.3")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
-    implementation("androidx.work:work-runtime-ktx:2.6.0")
+    implementation("androidx.work:work-runtime-ktx:2.7.0")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 

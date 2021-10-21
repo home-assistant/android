@@ -705,7 +705,7 @@ class MessagingService : FirebaseMessagingService() {
             this,
             messageId,
             contentIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT
+            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         builder.setContentIntent(contentPendingIntent)
     }
@@ -728,7 +728,7 @@ class MessagingService : FirebaseMessagingService() {
             this,
             messageId,
             deleteIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT
+            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         builder.setDeleteIntent(deletePendingIntent)
     }
@@ -1028,7 +1028,7 @@ class MessagingService : FirebaseMessagingService() {
                         this,
                         (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
                         actionIntent,
-                        0
+                        PendingIntent.FLAG_IMMUTABLE
                     )
 
                     val icon =
@@ -1046,7 +1046,7 @@ class MessagingService : FirebaseMessagingService() {
                         this,
                         0,
                         actionIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                     )
                     val action: NotificationCompat.Action = NotificationCompat.Action.Builder(R.drawable.ic_baseline_reply_24, notificationAction.title, replyPendingIntent)
                         .addRemoteInput(remoteInput)

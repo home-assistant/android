@@ -129,7 +129,7 @@ class EntityWidget : AppWidgetProvider() {
                         context,
                         appWidgetId,
                         intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 )
             }
