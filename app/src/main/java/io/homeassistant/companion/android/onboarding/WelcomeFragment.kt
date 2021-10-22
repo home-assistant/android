@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,11 +48,9 @@ class WelcomeFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_welcome, container, false).apply {
-
-            val welcomeSection = findViewById<ComposeView>(R.id.welcome_section)
-            welcomeSection.setContent {
+    ): View {
+        return ComposeView(requireContext()).apply {
+            setContent {
                 MdcTheme {
                     WelcomeSection()
                 }
@@ -60,7 +60,9 @@ class WelcomeFragment : Fragment() {
 
     @Composable
     private fun WelcomeSection() {
-        Column {
+        Column(
+            verticalArrangement = Arrangement.Center
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.app_icon),
                 contentDescription = stringResource(
@@ -74,6 +76,7 @@ class WelcomeFragment : Fragment() {
             Text(
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
                 text = stringResource(R.string.welcome_hass),
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
@@ -82,7 +85,7 @@ class WelcomeFragment : Fragment() {
                 fontSize = 17.sp,
                 text = stringResource(R.string.welcome_hass_desc),
                 modifier = Modifier
-                    .padding(bottom = 15.dp, start = 15.dp, end = 20.dp)
+                    .padding(bottom = 15.dp, start = 30.dp, end = 20.dp, top = 10.dp)
             )
             val annotatedString = buildAnnotatedString {
                 pushStringAnnotation("learn", "https://www.home-assistant.io")
