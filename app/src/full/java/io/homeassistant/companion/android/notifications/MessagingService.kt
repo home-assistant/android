@@ -52,6 +52,8 @@ import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
+import io.homeassistant.companion.android.sensors.SensorManager
+import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
@@ -66,7 +68,7 @@ import java.net.URL
 import java.util.Locale
 import javax.inject.Inject
 
-class MessagingService : FirebaseMessagingService() {
+class MessagingService : FirebaseMessagingService(), SensorManager {
     companion object {
         const val TAG = "MessagingService"
         const val TITLE = "title"
@@ -528,10 +530,26 @@ class MessagingService : FirebaseMessagingService() {
                 if (title == TURN_OFF) {
                     HighAccuracyLocationService.stopService(applicationContext)
                     LocationSensorManager.setHighAccuracyModeSetting(applicationContext, false)
+                    onSensorUpdated(
+                        applicationContext,
+                        LocationSensorManager.highAccuracyMode,
+                        false,
+                        "mdi:crosshairs-gps",
+                        mapOf()
+                    )
+                    SensorWorker.start(applicationContext)
                 }
                 if (title == TURN_ON) {
                     HighAccuracyLocationService.startService(applicationContext, LocationSensorManager.getHighAccuracyModeIntervalSetting(applicationContext))
                     LocationSensorManager.setHighAccuracyModeSetting(applicationContext, true)
+                    onSensorUpdated(
+                        applicationContext,
+                        LocationSensorManager.highAccuracyMode,
+                        true,
+                        "mdi:crosshairs-gps",
+                        mapOf()
+                    )
+                    SensorWorker.start(applicationContext)
                 }
             }
             COMMAND_ACTIVITY -> {
@@ -1362,5 +1380,23 @@ class MessagingService : FirebaseMessagingService() {
                 Log.e(TAG, "Issue updating token", e)
             }
         }
+    }
+
+    // The below is only necessary so we can update the high accuracy sensor
+    override val name: Int
+        get() = 0
+    override val enabledByDefault: Boolean
+        get() = false
+
+    override fun requiredPermissions(sensorId: String): Array<String> {
+        return emptyArray()
+    }
+
+    override fun requestSensorUpdate(context: Context) {
+        // No op
+    }
+
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return emptyList()
     }
 }
