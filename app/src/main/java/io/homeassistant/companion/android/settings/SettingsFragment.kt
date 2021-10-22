@@ -293,7 +293,17 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             }
         }
 
-        findPreference<SwitchPreference>("prioritize_internal")?.isEnabled = false
+        findPreference<SwitchPreference>("prioritize_internal")?.let {
+            it.isEnabled = false
+            try {
+                val unwrappedDrawable =
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_priority)
+                unwrappedDrawable?.setTint(Color.DKGRAY)
+                it.icon = unwrappedDrawable
+            } catch (e: Exception) {
+                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+            }
+        }
     }
 
     override fun enableInternalConnection() {
@@ -309,7 +319,17 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             }
         }
 
-        findPreference<SwitchPreference>("prioritize_internal")?.isEnabled = true
+        findPreference<SwitchPreference>("prioritize_internal")?.let {
+            it.isEnabled = true
+            try {
+                val unwrappedDrawable =
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_priority)
+                unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
+                it.icon = unwrappedDrawable
+            } catch (e: Exception) {
+                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+            }
+        }
     }
 
     override fun onLangSettingsChanged() {
