@@ -8,6 +8,8 @@
     android:minResizeWidth="40dp"
     android:minResizeHeight="40dp"
     android:resizeMode="vertical|horizontal"
+    android:widgetFeatures="reconfigurable"
+    android:description="@string/template_widget_desc"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen"
     android:previewImage="@drawable/widget_example_template" />
