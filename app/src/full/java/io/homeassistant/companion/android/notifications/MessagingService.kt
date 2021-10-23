@@ -51,7 +51,6 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
-import io.homeassistant.companion.android.sensors.SensorManager
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
@@ -66,7 +65,7 @@ import java.net.URL
 import java.util.Locale
 import javax.inject.Inject
 
-class MessagingService : FirebaseMessagingService(), SensorManager {
+class MessagingService : FirebaseMessagingService() {
     companion object {
         const val TAG = "MessagingService"
         const val TITLE = "title"
@@ -1363,23 +1362,5 @@ class MessagingService : FirebaseMessagingService(), SensorManager {
                 Log.e(TAG, "Issue updating token", e)
             }
         }
-    }
-
-    // The below is only necessary so we can update the high accuracy sensor
-    override val name: Int
-        get() = 0
-    override val enabledByDefault: Boolean
-        get() = false
-
-    override fun requiredPermissions(sensorId: String): Array<String> {
-        return emptyArray()
-    }
-
-    override fun requestSensorUpdate(context: Context) {
-        // No op
-    }
-
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return emptyList()
     }
 }
