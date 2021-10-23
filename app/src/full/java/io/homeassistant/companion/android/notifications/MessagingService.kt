@@ -48,12 +48,10 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorManager
-import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
@@ -528,29 +526,14 @@ class MessagingService : FirebaseMessagingService(), SensorManager {
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 if (title == TURN_OFF) {
-                    HighAccuracyLocationService.stopService(applicationContext)
                     LocationSensorManager.setHighAccuracyModeSetting(applicationContext, false)
-                    onSensorUpdated(
-                        applicationContext,
-                        LocationSensorManager.highAccuracyMode,
-                        false,
-                        "mdi:crosshairs-gps",
-                        mapOf()
-                    )
-                    SensorWorker.start(applicationContext)
                 }
                 if (title == TURN_ON) {
-                    HighAccuracyLocationService.startService(applicationContext, LocationSensorManager.getHighAccuracyModeIntervalSetting(applicationContext))
                     LocationSensorManager.setHighAccuracyModeSetting(applicationContext, true)
-                    onSensorUpdated(
-                        applicationContext,
-                        LocationSensorManager.highAccuracyMode,
-                        true,
-                        "mdi:crosshairs-gps",
-                        mapOf()
-                    )
-                    SensorWorker.start(applicationContext)
                 }
+                val intent = Intent(this, LocationSensorManager::class.java)
+                intent.action = LocationSensorManager.ACTION_REQUEST_LOCATION_UPDATES
+                applicationContext.sendBroadcast(intent)
             }
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
