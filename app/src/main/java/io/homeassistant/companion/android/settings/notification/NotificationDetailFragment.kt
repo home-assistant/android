@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.preference.PreferenceFragmentCompat
+import androidx.fragment.app.Fragment
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.android.material.composethemeadapter.MdcTheme
@@ -33,7 +33,7 @@ import java.util.GregorianCalendar
 class NotificationDetailFragment(
     private val notification: NotificationItem
 ) :
-    PreferenceFragmentCompat() {
+    Fragment() {
 
     companion object {
         fun newInstance(
@@ -134,10 +134,6 @@ class NotificationDetailFragment(
                     .padding(start = 20.dp)
             )
         }
-    }
-
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        // No op
     }
 
     private fun deleteConfirmation() {
