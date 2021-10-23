@@ -48,7 +48,6 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
@@ -526,13 +525,14 @@ class MessagingService : FirebaseMessagingService() {
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 if (title == TURN_OFF) {
-                    HighAccuracyLocationService.stopService(applicationContext)
                     LocationSensorManager.setHighAccuracyModeSetting(applicationContext, false)
                 }
                 if (title == TURN_ON) {
-                    HighAccuracyLocationService.startService(applicationContext, LocationSensorManager.getHighAccuracyModeIntervalSetting(applicationContext))
                     LocationSensorManager.setHighAccuracyModeSetting(applicationContext, true)
                 }
+                val intent = Intent(this, LocationSensorManager::class.java)
+                intent.action = LocationSensorManager.ACTION_REQUEST_LOCATION_UPDATES
+                applicationContext.sendBroadcast(intent)
             }
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
