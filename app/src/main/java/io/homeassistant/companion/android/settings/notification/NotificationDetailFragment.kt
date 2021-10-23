@@ -4,10 +4,26 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.text.Html.fromHtml
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import androidx.preference.Preference
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.preference.PreferenceFragmentCompat
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.android.material.composethemeadapter.MdcTheme
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
@@ -50,23 +66,78 @@ class NotificationDetailFragment(
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        return ComposeView(requireContext()).apply {
+            setContent {
+                MdcTheme {
+                    LoadNotification()
+                }
+            }
+        }
+    }
 
-        addPreferencesFromResource(R.xml.notification_detail)
-
-        findPreference<Preference>("received_at")?.let {
+    @Composable
+    private fun LoadNotification() {
+        Column {
+            Text(
+                text = getString(R.string.notification_received_at),
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .padding(top = 30.dp, bottom = 20.dp, start = 10.dp)
+            )
             val cal: Calendar = GregorianCalendar()
             cal.timeInMillis = notification.received
-            it.summary = cal.time.toString()
-        }
+            Text(
+                text = cal.time.toString(),
+                modifier = Modifier
+                    .padding(start = 20.dp)
+            )
+            Text(
+                text = getString(R.string.notification_message),
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .padding(top = 20.dp, bottom = 20.dp, start = 10.dp)
+            )
+            AndroidView(factory = { context ->
+                TextView(context).apply {
+                    text = fromHtml(notification.message)
+                    setPadding(80, 0, 0, 0)
+                    textSize = 16f
+                }
+            })
+            Text(
+                text = getString(R.string.notification_data),
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .padding(top = 20.dp, bottom = 20.dp, start = 10.dp)
+            )
+            val notifData =
+                try {
+                    val mapper = ObjectMapper()
+                    mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
+                    val jsonObject = mapper.readValue(notification.data, Object::class.java)
+                    mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject)
+                } catch (e: Exception) {
+                    notification.data
+                }
 
-        findPreference<Preference>("message")?.let {
-            it.summary = fromHtml(notification.message)
+            Text(
+                text = notifData,
+                modifier = Modifier
+                    .padding(start = 20.dp)
+            )
         }
+    }
 
-        findPreference<Preference>("data")?.let {
-            it.summary = notification.data
-        }
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        // No op
     }
 
     private fun deleteConfirmation() {
