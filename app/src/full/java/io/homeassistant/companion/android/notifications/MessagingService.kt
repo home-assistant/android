@@ -38,6 +38,8 @@ import androidx.core.text.HtmlCompat
 import androidx.core.text.isDigitsOnly
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
@@ -84,6 +86,7 @@ class MessagingService : FirebaseMessagingService() {
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val ALERT_ONCE = "alert_once"
         const val INTENT_CLASS_NAME = "intent_class_name"
+        const val NOTIFICATION_ICON = "notification_icon"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -614,7 +617,8 @@ class MessagingService : FirebaseMessagingService() {
         val channelId = handleChannel(notificationManagerCompat, data)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_stat_ic_notification)
+
+        handleSmallIcon(notificationBuilder, data)
 
         handleSound(notificationBuilder, data)
 
@@ -688,6 +692,18 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
+    private fun handleSmallIcon(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        if (data[NOTIFICATION_ICON]?.startsWith("mdi") == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val iconName = data[NOTIFICATION_ICON]!!.split(":")[1]
+            val iconDrawable = IconicsDrawable(applicationContext, "cmd-$iconName").toAndroidIconCompat()
+            builder.setSmallIcon(iconDrawable)
+        } else
+            builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
+    }
+
     private fun handleContentIntent(
         builder: NotificationCompat.Builder,
         messageId: Int,
@@ -753,7 +769,6 @@ class MessagingService : FirebaseMessagingService() {
     ): NotificationCompat.Builder {
 
         val groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .setSummaryText(
@@ -766,6 +781,7 @@ class MessagingService : FirebaseMessagingService() {
         if (data[ALERT_ONCE].toBoolean())
             groupNotificationBuilder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         handleColor(groupNotificationBuilder, data)
+        handleSmallIcon(groupNotificationBuilder, data)
         return groupNotificationBuilder
     }
 
