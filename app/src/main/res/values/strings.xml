@@ -633,4 +633,9 @@ like to connect to:</string>
   <string name="wear_os_category">Wear OS</string>
   <string name="wear_os_settings_title">Wear OS Settings</string>
   <string name="wear_os_settings_summary">Manage Wear OS App</string>
+  <string name="camera_widget_desc">Displays the latest image from the camera</string>
+  <string name="button_widget_desc">Call any service</string>
+  <string name="entity_widget_desc">Current state and attribute of any entity</string>
+  <string name="media_player_widget_desc">Control any media player and see current now playing image</string>
+  <string name="template_widget_desc">Render any template with HTML formatting</string>
 </resources>
