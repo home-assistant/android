@@ -42,7 +42,8 @@ class BatterySensorManager : SensorManager {
             "battery_health",
             "sensor",
             R.string.basic_sensor_name_battery_health,
-            R.string.sensor_description_battery_health
+            R.string.sensor_description_battery_health,
+            entityCategory = "diagnostic"
         )
 
         private val batteryTemperature = SensorManager.BasicSensor(
