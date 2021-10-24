@@ -237,7 +237,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
             val pm = requireContext().packageManager
             val hasWearApp = pm.getLaunchIntentForPackage("com.google.android.wearable.app")
-            findPreference<PreferenceCategory>("wear_category")?.isVisible = hasWearApp != null
+            val hasSamsungApp = pm.getLaunchIntentForPackage("com.samsung.android.app.watchmanager")
+            findPreference<PreferenceCategory>("wear_category")?.isVisible = hasWearApp != null || hasSamsungApp != null
             findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
                 startActivity(SettingsWearActivity.newInstance(requireContext()))
                 return@setOnPreferenceClickListener true
