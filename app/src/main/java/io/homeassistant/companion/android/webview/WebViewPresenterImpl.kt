@@ -67,7 +67,7 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.launch {
 
             try {
-                val version = integrationUseCase.getHomeAssistantVersion().split(".")
+                val version = integrationUseCase.getHAVersion().split(".")
                 if (version.size >= 3) {
                     val year = Integer.parseInt(version[0])
                     val month = Integer.parseInt(version[1])

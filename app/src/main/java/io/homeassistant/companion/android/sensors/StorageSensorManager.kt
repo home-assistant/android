@@ -17,14 +17,16 @@ class StorageSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_internal_storage,
             R.string.sensor_description_internal_storage,
-            unitOfMeasurement = "%"
+            unitOfMeasurement = "%",
+            stateClass = "measurement"
         )
         private val externalStorage = SensorManager.BasicSensor(
             "external_storage",
             "sensor",
             R.string.basic_sensor_name_external_storage,
             R.string.sensor_description_external_storage,
-            unitOfMeasurement = "%"
+            unitOfMeasurement = "%",
+            stateClass = "measurement"
         )
         val path: File = Environment.getDataDirectory()
         private val stat = StatFs(path.path)

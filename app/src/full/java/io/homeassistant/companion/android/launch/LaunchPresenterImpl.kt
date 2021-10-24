@@ -25,6 +25,7 @@ class LaunchPresenterImpl @Inject constructor(
                         Tasks.await(FirebaseInstanceId.getInstance().instanceId).token
                     )
                 )
+                integrationUseCase.setHomeAssistantVersion()
             } catch (e: Exception) {
                 Log.e(TAG, "Issue updating Registration", e)
             }

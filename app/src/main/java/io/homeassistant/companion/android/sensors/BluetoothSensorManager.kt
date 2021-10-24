@@ -33,7 +33,8 @@ class BluetoothSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_bluetooth,
             R.string.sensor_description_bluetooth_connection,
-            unitOfMeasurement = "connection(s)"
+            unitOfMeasurement = "connection(s)",
+            stateClass = "measurement"
         )
         val bluetoothState = SensorManager.BasicSensor(
             "bluetooth_state",

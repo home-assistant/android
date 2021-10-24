@@ -16,7 +16,8 @@ class BatterySensorManager : SensorManager {
             R.string.basic_sensor_name_battery_level,
             R.string.sensor_description_battery_level,
             "battery",
-            "%"
+            "%",
+            stateClass = "measurement"
         )
         private val batteryState = SensorManager.BasicSensor(
             "battery_state",
@@ -50,7 +51,8 @@ class BatterySensorManager : SensorManager {
             R.string.basic_sensor_name_battery_temperature,
             R.string.sensor_description_battery_temperature,
             "temperature",
-            "°C"
+            "°C",
+            stateClass = "measurement"
         )
     }
 

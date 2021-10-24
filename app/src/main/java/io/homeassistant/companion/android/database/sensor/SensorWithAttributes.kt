@@ -13,7 +13,7 @@ data class SensorWithAttributes(
     )
     val attributes: List<Attribute>
 ) {
-    fun toSensorRegistration(): SensorRegistration<Any> {
+    fun toSensorRegistration(canRegisterCategoryStateClass: Boolean): SensorRegistration<Any> {
         val attributes = attributes.map {
             val attributeValue = when (it.valueType) {
                 "boolean" -> it.value.toBoolean()
@@ -41,7 +41,9 @@ data class SensorWithAttributes(
             attributes,
             sensor.name,
             sensor.deviceClass,
-            sensor.unitOfMeasurement
+            sensor.unitOfMeasurement,
+            if (canRegisterCategoryStateClass) sensor.stateClass else null,
+            if (canRegisterCategoryStateClass) sensor.entityCategory else null
         )
     }
 }

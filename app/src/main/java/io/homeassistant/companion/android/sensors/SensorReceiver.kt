@@ -151,6 +151,8 @@ class SensorReceiver : BroadcastReceiver() {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
+        val canRegisterCategoryStateClass = integrationUseCase.canRegisterEntityCategoryStateClass()
+
         MANAGERS.forEach { manager ->
             try {
                 manager.requestSensorUpdate(context)
@@ -163,7 +165,7 @@ class SensorReceiver : BroadcastReceiver() {
 
                 // Register Sensors if needed
                 if (sensor?.enabled == true && !sensor.registered && !sensor.type.isBlank()) {
-                    val reg = fullSensor.toSensorRegistration()
+                    val reg = fullSensor.toSensorRegistration(canRegisterCategoryStateClass)
                     val config = Configuration(context.resources.configuration)
                     config.setLocale(Locale("en"))
                     reg.name = context.createConfigurationContext(config).resources.getString(basicSensor.name)
@@ -177,7 +179,7 @@ class SensorReceiver : BroadcastReceiver() {
                     }
                 }
                 if (sensor?.enabled == true && sensor.registered && sensor.state != sensor.lastSentState) {
-                    enabledRegistrations.add(fullSensor.toSensorRegistration())
+                    enabledRegistrations.add(fullSensor.toSensorRegistration(canRegisterCategoryStateClass))
                 }
             }
         }

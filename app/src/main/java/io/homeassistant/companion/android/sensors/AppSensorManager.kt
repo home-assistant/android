@@ -31,7 +31,8 @@ class AppSensorManager : SensorManager {
             R.string.basic_sensor_name_app_rx_gb,
             R.string.sensor_description_app_rx_gb,
             unitOfMeasurement = "GB",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
+            stateClass = "total_increasing"
         )
 
         val app_tx_gb = SensorManager.BasicSensor(
@@ -40,7 +41,8 @@ class AppSensorManager : SensorManager {
             R.string.basic_sensor_name_app_tx_gb,
             R.string.sensor_description_app_tx_gb,
             unitOfMeasurement = "GB",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
+            stateClass = "total_increasing"
         )
 
         val app_memory = SensorManager.BasicSensor(
@@ -49,7 +51,8 @@ class AppSensorManager : SensorManager {
             R.string.basic_sensor_name_app_memory,
             R.string.sensor_description_app_memory,
             unitOfMeasurement = "GB",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-memory-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-memory-sensor",
+            stateClass = "measurement"
         )
 
         val app_inactive = SensorManager.BasicSensor(

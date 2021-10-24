@@ -26,6 +26,9 @@ interface IntegrationRepository {
     suspend fun setAutoPlayVideo(enabled: Boolean)
     suspend fun isAutoPlayVideoEnabled(): Boolean
 
+    suspend fun getHAVersion(): String
+    suspend fun canRegisterEntityCategoryStateClass(): Boolean
+
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
 
@@ -34,7 +37,7 @@ interface IntegrationRepository {
 
     suspend fun getThemeColor(): String
 
-    suspend fun getHomeAssistantVersion(): String
+    suspend fun setHomeAssistantVersion()
 
     suspend fun getServices(): Array<Service>
 

@@ -44,7 +44,8 @@ class NetworkSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_wifi_link_speed,
             R.string.sensor_description_wifi_link_speed,
-            unitOfMeasurement = "Mbps"
+            unitOfMeasurement = "Mbps",
+            stateClass = "measurement"
         )
         val wifiState = SensorManager.BasicSensor(
             "wifi_state",
@@ -57,14 +58,16 @@ class NetworkSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_wifi_frequency,
             R.string.sensor_description_wifi_frequency,
-            unitOfMeasurement = "MHz"
+            unitOfMeasurement = "MHz",
+            stateClass = "measurement"
         )
         val wifiSignalStrength = SensorManager.BasicSensor(
             "wifi_signal_strength",
             "sensor",
             R.string.basic_sensor_name_wifi_signal,
             R.string.sensor_description_wifi_signal,
-            unitOfMeasurement = "dBm"
+            unitOfMeasurement = "dBm",
+            stateClass = "measurement"
         )
         val publicIp = SensorManager.BasicSensor(
             "public_ip_address",

@@ -22,7 +22,9 @@ interface SensorManager {
         val descriptionId: Int = R.string.sensor_description_none,
         val deviceClass: String? = null,
         val unitOfMeasurement: String? = null,
-        val docsLink: String? = null
+        val docsLink: String? = null,
+        val stateClass: String? = null,
+        val entityCategory: String? = null
     )
 
     fun docsLink(): String {
@@ -151,6 +153,8 @@ interface SensorManager {
         sensor.name = basicSensor.name.toString()
         sensor.deviceClass = basicSensor.deviceClass
         sensor.unitOfMeasurement = basicSensor.unitOfMeasurement
+        sensor.stateClass = basicSensor.stateClass
+        sensor.entityCategory = basicSensor.entityCategory
 
         sensorDao.update(sensor)
         sensorDao.clearAttributes(basicSensor.id)

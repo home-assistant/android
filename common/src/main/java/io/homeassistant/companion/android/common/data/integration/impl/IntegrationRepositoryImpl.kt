@@ -52,6 +52,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_SECRET = "secret"
 
+        private const val PREF_HA_VERSION = "ha_version"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
@@ -337,6 +338,14 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
+    override suspend fun getHAVersion(): String {
+        return localStorage.getString(PREF_HA_VERSION) ?: ""
+    }
+
+    private suspend fun setHAVersion(version: String) {
+        localStorage.putString(PREF_HA_VERSION, version)
+    }
+
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
         val requestBody = RateLimitRequest(pushToken)
@@ -383,7 +392,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         else throw IntegrationException("Error calling integration request get_config/themeColor")
     }
 
-    override suspend fun getHomeAssistantVersion(): String {
+    override suspend fun setHomeAssistantVersion() {
         val getConfigRequest =
             IntegrationRequest(
                 "get_config",
@@ -400,8 +409,10 @@ class IntegrationRepositoryImpl @Inject constructor(
                 // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
             }
 
-            if (response != null)
-                return response.version
+            if (response != null) {
+                setHAVersion(response.version)
+                return
+            }
         }
 
         if (causeException != null) throw IntegrationException(causeException)
@@ -448,6 +459,19 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun canRegisterEntityCategoryStateClass(): Boolean {
+        val version = getHAVersion().split(".")
+        var canRegisterCategoryStateClass = false
+        if (version.size >= 3) {
+            val year = Integer.parseInt(version[0])
+            val month = Integer.parseInt(version[1])
+            val release = Integer.parseInt(version[2])
+            canRegisterCategoryStateClass =
+                year > 2021 || (year == 2021 && month >= 11 && release >= 0)
+        }
+        return canRegisterCategoryStateClass
+    }
+
     override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
         val registeredSensors = localStorage.getStringSet(PREF_SENSORS_REGISTERED)
         if (registeredSensors?.contains(sensorRegistration.uniqueId) == true) {
@@ -455,6 +479,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             return
         }
 
+        val canRegisterCategoryStateClass = canRegisterEntityCategoryStateClass()
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
@@ -465,7 +490,9 @@ class IntegrationRepositoryImpl @Inject constructor(
                 sensorRegistration.attributes,
                 sensorRegistration.name,
                 sensorRegistration.deviceClass,
-                sensorRegistration.unitOfMeasurement
+                sensorRegistration.unitOfMeasurement,
+                if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
+                if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null
             )
         )
 
