@@ -66,6 +66,7 @@ class NetworkSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_wifi_signal,
             R.string.sensor_description_wifi_signal,
+            "signal_strength",
             unitOfMeasurement = "dBm",
             stateClass = "measurement"
         )
