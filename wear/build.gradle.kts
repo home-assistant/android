@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 23
+        minSdk = 25
         targetSdk = 30
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
@@ -89,4 +89,7 @@ dependencies {
     implementation("com.mikepenz:iconics-core:5.3.2")
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
+
+    implementation("com.google.guava:guava:31.0.1-android")
+    implementation("androidx.wear.tiles:tiles:1.0.0-beta01")
 }
