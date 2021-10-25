@@ -17,26 +17,30 @@ class BatterySensorManager : SensorManager {
             R.string.sensor_description_battery_level,
             "battery",
             "%",
-            stateClass = "measurement"
+            stateClass = "measurement",
+            entityCategory = "diagnostic"
         )
         private val batteryState = SensorManager.BasicSensor(
             "battery_state",
             "sensor",
             R.string.basic_sensor_name_battery_state,
-            R.string.sensor_description_battery_state
+            R.string.sensor_description_battery_state,
+            entityCategory = "diagnostic"
         )
         private val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
             R.string.basic_sensor_name_charging,
             R.string.sensor_description_charging,
-            "plug"
+            "plug",
+            entityCategory = "diagnostic"
         )
         private val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
             "sensor",
             R.string.basic_sensor_name_charger_type,
-            R.string.sensor_description_charger_type
+            R.string.sensor_description_charger_type,
+            entityCategory = "diagnostic"
         )
         private val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
@@ -53,7 +57,8 @@ class BatterySensorManager : SensorManager {
             R.string.sensor_description_battery_temperature,
             "temperature",
             "°C",
-            stateClass = "measurement"
+            stateClass = "measurement",
+            entityCategory = "diagnostic"
         )
     }
 

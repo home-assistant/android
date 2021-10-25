@@ -27,6 +27,10 @@
                         android:checkable="true"
                         android:icon="@drawable/ic_fact_check_toolbar_filter"
                         android:title="@string/filter_show_only_enabled_sensors" />
+                    <item
+                        android:id="@+id/action_reregister_enabled_sensors"
+                        android:checkable="false"
+                        android:title="Re-Register Sensors" />
                 </group>
             </menu>
         </item>

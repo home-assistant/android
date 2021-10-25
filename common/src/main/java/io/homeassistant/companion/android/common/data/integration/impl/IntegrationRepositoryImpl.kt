@@ -472,12 +472,13 @@ class IntegrationRepositoryImpl @Inject constructor(
         return canRegisterCategoryStateClass
     }
 
-    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
+    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>, bypass: Boolean?) {
         val registeredSensors = localStorage.getStringSet(PREF_SENSORS_REGISTERED)
-        if (registeredSensors?.contains(sensorRegistration.uniqueId) == true) {
-            // Already registered
-            return
-        }
+        if (!bypass!!)
+            if (registeredSensors?.contains(sensorRegistration.uniqueId) == true) {
+                // Already registered
+                return
+            }
 
         val canRegisterCategoryStateClass = canRegisterEntityCategoryStateClass()
         val integrationRequest = IntegrationRequest(

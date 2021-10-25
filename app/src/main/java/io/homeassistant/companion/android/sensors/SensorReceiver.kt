@@ -171,7 +171,7 @@ class SensorReceiver : BroadcastReceiver() {
                     reg.name = context.createConfigurationContext(config).resources.getString(basicSensor.name)
 
                     try {
-                        integrationUseCase.registerSensor(reg)
+                        integrationUseCase.registerSensor(reg, false)
                         sensor.registered = true
                         sensorDao.update(sensor)
                     } catch (e: Exception) {

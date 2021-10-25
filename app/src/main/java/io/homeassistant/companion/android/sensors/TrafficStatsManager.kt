@@ -20,7 +20,8 @@ class TrafficStatsManager : SensorManager {
             R.string.basic_sensor_name_mobile_rx_gb,
             R.string.sensor_description_mobile_rx_gb,
             unitOfMeasurement = "GB",
-            stateClass = "total_increasing"
+            stateClass = "total_increasing",
+            entityCategory = "diagnostic"
         )
         val txBytesMobile = SensorManager.BasicSensor(
             "mobile_tx_gb",
@@ -28,7 +29,8 @@ class TrafficStatsManager : SensorManager {
             R.string.basic_sensor_name_mobile_tx_gb,
             R.string.sensor_description_mobile_tx_gb,
             unitOfMeasurement = "GB",
-            stateClass = "total_increasing"
+            stateClass = "total_increasing",
+            entityCategory = "diagnostic"
         )
         val rxBytesTotal = SensorManager.BasicSensor(
             "total_rx_gb",
@@ -36,7 +38,8 @@ class TrafficStatsManager : SensorManager {
             R.string.basic_sensor_name_total_rx_gb,
             R.string.sensor_description_total_rx_gb,
             unitOfMeasurement = "GB",
-            stateClass = "total_increasing"
+            stateClass = "total_increasing",
+            entityCategory = "diagnostic"
         )
         val txBytesTotal = SensorManager.BasicSensor(
             "total_tx_gb",
@@ -44,7 +47,8 @@ class TrafficStatsManager : SensorManager {
             R.string.basic_sensor_name_total_tx_gb,
             R.string.sensor_description_total_tx_gb,
             unitOfMeasurement = "GB",
-            stateClass = "total_increasing"
+            stateClass = "total_increasing",
+            entityCategory = "diagnostic"
         )
         private var hasCellular = false
     }

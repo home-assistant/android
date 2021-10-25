@@ -25,19 +25,22 @@ class NetworkSensorManager : SensorManager {
             "wifi_connection",
             "sensor",
             R.string.basic_sensor_name_wifi,
-            R.string.sensor_description_wifi_connection
+            R.string.sensor_description_wifi_connection,
+            entityCategory = "diagnostic"
         )
         val bssidState = SensorManager.BasicSensor(
             "wifi_bssid",
             "sensor",
             R.string.basic_sensor_name_wifi_bssid,
-            R.string.sensor_description_wifi_bssid
+            R.string.sensor_description_wifi_bssid,
+            entityCategory = "diagnostic"
         )
         val wifiIp = SensorManager.BasicSensor(
             "wifi_ip_address",
             "sensor",
             R.string.basic_sensor_name_wifi_ip,
-            R.string.sensor_description_wifi_ip
+            R.string.sensor_description_wifi_ip,
+            entityCategory = "diagnostic"
         )
         val wifiLinkSpeed = SensorManager.BasicSensor(
             "wifi_link_speed",
@@ -79,7 +82,8 @@ class NetworkSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_public_ip,
             R.string.sensor_description_public_ip,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
+            entityCategory = "diagnostic"
         )
         private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }

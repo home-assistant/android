@@ -22,7 +22,8 @@ class AppSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_current_version,
             R.string.sensor_description_current_version,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#current-version-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#current-version-sensor",
+            entityCategory = "diagnostic"
         )
 
         val app_rx_gb = SensorManager.BasicSensor(
@@ -63,7 +64,8 @@ class AppSensorManager : SensorManager {
             "binary_sensor",
             R.string.basic_sensor_name_app_inactive,
             R.string.sensor_description_app_inactive,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
+            entityCategory = "diagnostic"
         )
 
         val app_standby_bucket = SensorManager.BasicSensor(
@@ -71,7 +73,8 @@ class AppSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_app_standby,
             R.string.sensor_description_app_standby,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
+            entityCategory = "diagnostic"
         )
 
         val app_importance = SensorManager.BasicSensor(
@@ -79,7 +82,8 @@ class AppSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_app_importance,
             R.string.sensor_description_app_importance,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-importance-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-importance-sensor",
+            entityCategory = "diagnostic"
         )
     }
 

@@ -17,21 +17,24 @@ class PowerSensorManager : SensorManager {
             "binary_sensor",
             R.string.basic_sensor_name_interactive,
             R.string.sensor_description_interactive,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#interactive-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#interactive-sensor",
+            entityCategory = "diagnostic"
         )
         val doze = SensorManager.BasicSensor(
             "is_idle",
             "binary_sensor",
             R.string.basic_sensor_name_doze,
             R.string.sensor_description_doze,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#doze-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#doze-sensor",
+            entityCategory = "diagnostic"
         )
         val powerSave = SensorManager.BasicSensor(
             "power_save",
             "binary_sensor",
             R.string.basic_sensor_name_power_save,
             R.string.sensor_description_power_save,
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#power-save-sensor"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#power-save-sensor",
+            entityCategory = "diagnostic"
         )
     }
 

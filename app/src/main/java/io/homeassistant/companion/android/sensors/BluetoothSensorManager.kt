@@ -47,7 +47,8 @@ class BluetoothSensorManager : SensorManager {
             "ble_emitter",
             "sensor",
             R.string.basic_sensor_name_bluetooth_ble_emitter,
-            R.string.sensor_description_bluetooth_ble_emitter
+            R.string.sensor_description_bluetooth_ble_emitter,
+            entityCategory = "diagnostic"
         )
 
         fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {
