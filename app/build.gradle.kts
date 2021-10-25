@@ -171,7 +171,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-core:19.0.2")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:22.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.2.3")
+    "fullImplementation"("io.sentry:sentry-android:5.2.4")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
     implementation("androidx.work:work-runtime-ktx:2.7.0")
