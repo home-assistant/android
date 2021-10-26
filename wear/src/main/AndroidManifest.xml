@@ -57,6 +57,9 @@
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/common_full_open_on_phone" />
         </service>
+        <activity android:name=".tiles.TileActionActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 
 </manifest>

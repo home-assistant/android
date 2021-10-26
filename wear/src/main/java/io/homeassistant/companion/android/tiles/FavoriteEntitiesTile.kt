@@ -129,8 +129,9 @@ class FavoriteEntitiesTile : TileService() {
                     ActionBuilders.LaunchAction.Builder()
                         .setAndroidActivity(
                             ActionBuilders.AndroidActivity.Builder()
-                                .setClassName(HomeActivity::class.java.name)
+                                .setClassName(TileActionActivity::class.java.name)
                                 .setPackageName(this@FavoriteEntitiesTile.packageName)
+                                .addKeyToExtraMapping("entity_id", ActionBuilders.stringExtra(entity.entityId))
                                 .build()
                         )
                         .build()
