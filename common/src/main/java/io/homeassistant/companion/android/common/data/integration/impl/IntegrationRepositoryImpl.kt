@@ -58,7 +58,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
-        private const val PREF_SENSORS_REGISTERED = "sensors_registered"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
@@ -472,13 +471,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         return canRegisterCategoryStateClass
     }
 
-    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>, bypass: Boolean?) {
-        val registeredSensors = localStorage.getStringSet(PREF_SENSORS_REGISTERED)
-        if (!bypass!!)
-            if (registeredSensors?.contains(sensorRegistration.uniqueId) == true) {
-                // Already registered
-                return
-            }
+    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
 
         val canRegisterCategoryStateClass = canRegisterEntityCategoryStateClass()
         val integrationRequest = IntegrationRequest(
@@ -503,10 +496,6 @@ class IntegrationRepositoryImpl @Inject constructor(
                 integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     // If we created sensor or it already exists
                     if (it.isSuccessful || it.code() == 409) {
-                        localStorage.putStringSet(
-                            PREF_SENSORS_REGISTERED,
-                            registeredSensors.orEmpty().plus(sensorRegistration.uniqueId)
-                        )
                         return
                     }
                 }
@@ -539,7 +528,6 @@ class IntegrationRepositoryImpl @Inject constructor(
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     it.forEach { (_, response) ->
                         if (response["success"] == false) {
-                            localStorage.putStringSet(PREF_SENSORS_REGISTERED, setOf())
                             return false
                         }
                     }

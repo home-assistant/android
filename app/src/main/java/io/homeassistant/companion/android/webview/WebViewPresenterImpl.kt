@@ -67,6 +67,7 @@ class WebViewPresenterImpl @Inject constructor(
         mainScope.launch {
 
             try {
+                integrationUseCase.setHomeAssistantVersion()
                 val version = integrationUseCase.getHAVersion().split(".")
                 if (version.size >= 3) {
                     val year = Integer.parseInt(version[0])

@@ -3,13 +3,11 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.SearchView
@@ -29,8 +27,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
-import kotlinx.coroutines.runBlocking
-import java.util.Locale
 import javax.inject.Inject
 
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
@@ -259,40 +255,8 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                 filterSensors()
                 return true
             }
-            R.id.action_reregister_enabled_sensors -> reRegisterSensors()
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    private fun reRegisterSensors() {
-        val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
-
-        val canRegisterCategoryStateClass = runBlocking {
-            integrationUseCase.canRegisterEntityCategoryStateClass()
-        }
-
-        SensorReceiver.MANAGERS.forEach { manager ->
-            manager.getAvailableSensors(requireContext()).forEach { basicSensor ->
-                val fullSensor = sensorDao.getFull(basicSensor.id)
-                val sensor = fullSensor?.sensor
-                if (sensor?.enabled == true) {
-                    val reg = fullSensor.toSensorRegistration(canRegisterCategoryStateClass)
-                    val config = Configuration(requireContext().resources.configuration)
-                    config.setLocale(Locale("en"))
-                    reg.name =
-                        requireContext().createConfigurationContext(config).resources.getString(
-                            basicSensor.name
-                        )
-                    try {
-                        runBlocking {
-                            integrationUseCase.registerSensor(reg, true)
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to re-register ${reg.uniqueId}", e)
-                    }
-                }
-            }
-        }
     }
 
     private fun filterSensors(searchQuery: String? = "") {

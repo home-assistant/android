@@ -151,6 +151,12 @@ class SensorReceiver : BroadcastReceiver() {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
+        try {
+            integrationUseCase.setHomeAssistantVersion()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to get HA version", e)
+        }
+
         val canRegisterCategoryStateClass = integrationUseCase.canRegisterEntityCategoryStateClass()
 
         MANAGERS.forEach { manager ->
@@ -163,15 +169,15 @@ class SensorReceiver : BroadcastReceiver() {
                 val fullSensor = sensorDao.getFull(basicSensor.id)
                 val sensor = fullSensor?.sensor
 
-                // Register Sensors if needed
-                if (sensor?.enabled == true && !sensor.registered && !sensor.type.isBlank()) {
+                // Always register enabled sensors in case of available entity updates
+                if (sensor?.enabled == true && sensor.type.isNotBlank() && sensor.icon.isNotBlank()) {
                     val reg = fullSensor.toSensorRegistration(canRegisterCategoryStateClass)
                     val config = Configuration(context.resources.configuration)
                     config.setLocale(Locale("en"))
                     reg.name = context.createConfigurationContext(config).resources.getString(basicSensor.name)
 
                     try {
-                        integrationUseCase.registerSensor(reg, false)
+                        integrationUseCase.registerSensor(reg)
                         sensor.registered = true
                         sensorDao.update(sensor)
                     } catch (e: Exception) {
