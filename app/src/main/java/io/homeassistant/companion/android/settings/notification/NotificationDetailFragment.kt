@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.notification
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Parcelable
 import android.text.Html.fromHtml
 import android.view.LayoutInflater
 import android.view.Menu
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +29,7 @@ import com.google.android.material.composethemeadapter.MdcTheme
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
+import kotlinx.android.parcel.Parcelize
 import java.util.Calendar
 import java.util.GregorianCalendar
 
@@ -74,14 +77,21 @@ class NotificationDetailFragment(
         return ComposeView(requireContext()).apply {
             setContent {
                 MdcTheme {
-                    LoadNotification()
+                    LoadNotification(notification)
                 }
             }
         }
     }
 
+    @Parcelize
+    data class NotificationData(val received: Long, val message: String, val data: String) : Parcelable
+
     @Composable
-    private fun LoadNotification() {
+    private fun LoadNotification(notification: NotificationItem) {
+        val notificationItem = rememberSaveable {
+            NotificationData(notification.received, notification.message, notification.data)
+        }
+
         Column {
             Text(
                 text = getString(R.string.notification_received_at),
@@ -91,7 +101,7 @@ class NotificationDetailFragment(
                     .padding(top = 30.dp, bottom = 20.dp, start = 10.dp)
             )
             val cal: Calendar = GregorianCalendar()
-            cal.timeInMillis = notification.received
+            cal.timeInMillis = notificationItem.received
             Text(
                 text = cal.time.toString(),
                 modifier = Modifier
@@ -106,7 +116,7 @@ class NotificationDetailFragment(
             )
             AndroidView(factory = { context ->
                 TextView(context).apply {
-                    text = fromHtml(notification.message)
+                    text = fromHtml(notificationItem.message)
                     setPadding(80, 0, 0, 0)
                     textSize = 16f
                 }
@@ -122,10 +132,10 @@ class NotificationDetailFragment(
                 try {
                     val mapper = ObjectMapper()
                     mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
-                    val jsonObject = mapper.readValue(notification.data, Object::class.java)
+                    val jsonObject = mapper.readValue(notificationItem.data, Object::class.java)
                     mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject)
                 } catch (e: Exception) {
-                    notification.data
+                    notificationItem.data
                 }
 
             Text(
