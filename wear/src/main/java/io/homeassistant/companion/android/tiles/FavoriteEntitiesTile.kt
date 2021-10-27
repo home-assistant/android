@@ -40,6 +40,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.guava.future
 import java.nio.ByteBuffer
 import javax.inject.Inject
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 private const val RESOURCES_VERSION = "1"
@@ -136,30 +137,44 @@ class FavoriteEntitiesTile : TileService() {
             .filter { it.entityId.split(".")[0] == "scene" }
     }
 
-    fun layout(entities: List<Entity<Any>>): LayoutElement = Column.Builder()
-        .addContent(
-            Row.Builder()
-                .addContent(iconLayout(entities[0]))
-                .addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
-                .addContent(iconLayout(entities[1]))
-                .build()
-        )
-        .addContent(
-            Row.Builder()
-                .addContent(iconLayout(entities[2]))
-                .addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
-                .addContent(iconLayout(entities[3]))
-                .addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
-                .addContent(iconLayout(entities[4]))
-                .build()
-        )
-        .addContent(
-            Row.Builder()
-                .addContent(iconLayout(entities[5]))
-                .addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
-                .addContent(iconLayout(entities[6]))
-                .build()
-        )
+    fun layout(entities: List<Entity<Any>>): LayoutElement = Column.Builder().apply {
+        if (entities.isNotEmpty()) {
+            addContent(
+                Row.Builder().apply {
+                    addContent(iconLayout(entities[0]))
+                    if (entities.size > 1) {
+                        addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
+                        addContent(iconLayout(entities[1]))
+                    }
+                }
+                    .build()
+            )
+        }
+        if (entities.size > 2) {
+            addContent(
+                Row.Builder().apply {
+                    addContent(iconLayout(entities[2]))
+                    entities.subList(3, min(5, entities.size)).forEach { entity ->
+                        addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
+                        addContent(iconLayout(entity))
+                    }
+                }
+                    .build()
+            )
+        }
+        if (entities.size > 5) {
+            addContent(
+                Row.Builder().apply {
+                    addContent(iconLayout(entities[5]))
+                    if (entities.size > 6) {
+                        addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
+                        addContent(iconLayout(entities[6]))
+                    }
+                }
+                    .build()
+            )
+        }
+    }
         .build()
 
     private fun iconLayout(entity: Entity<Any>): LayoutElement = Box.Builder().apply {
