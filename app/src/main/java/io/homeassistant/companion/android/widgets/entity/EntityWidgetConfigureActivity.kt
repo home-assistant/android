@@ -20,9 +20,9 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.android.synthetic.main.widget_static_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -46,6 +46,8 @@ class EntityWidgetConfigureActivity : BaseActivity() {
     private var appendAttributes: Boolean = false
     private var selectedAttributeIds: ArrayList<String> = ArrayList()
 
+    private lateinit var binding: WidgetStaticConfigureBinding
+
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -57,9 +59,10 @@ class EntityWidgetConfigureActivity : BaseActivity() {
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        setContentView(R.layout.widget_static_configure)
+        binding = WidgetStaticConfigureBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        add_button.setOnClickListener(addWidgetButtonClickListener)
+        binding.addButton.setOnClickListener(addWidgetButtonClickListener)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -85,10 +88,10 @@ class EntityWidgetConfigureActivity : BaseActivity() {
         val staticWidgetDao = AppDatabase.getInstance(applicationContext).staticWidgetDao()
         val staticWidget = staticWidgetDao.get(appWidgetId)
         if (staticWidget != null) {
-            widget_text_config_entity_id.setText(staticWidget.entityId)
-            label.setText(staticWidget.label)
-            textSize.setText(staticWidget.textSize.toInt().toString())
-            state_separator.setText(staticWidget.stateSeparator)
+            binding.widgetTextConfigEntityId.setText(staticWidget.entityId)
+            binding.label.setText(staticWidget.label)
+            binding.textSize.setText(staticWidget.textSize.toInt().toString())
+            binding.stateSeparator.setText(staticWidget.stateSeparator)
             val entity = runBlocking {
                 try {
                     integrationUseCase.getEntity(staticWidget.entityId)
@@ -101,35 +104,35 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             }
 
             if (!staticWidget.attributeIds.isNullOrEmpty()) {
-                append_attribute_value_checkbox.isChecked = true
+                binding.appendAttributeValueCheckbox.isChecked = true
                 appendAttributes = true
                 for (item in staticWidget.attributeIds.split(','))
                     selectedAttributeIds.add(item)
-                widget_text_config_attribute.setText(staticWidget.attributeIds.replace(",", ", "))
-                attribute_value_linear_layout.visibility = VISIBLE
-                attribute_separator.setText(staticWidget.attributeSeparator)
+                binding.widgetTextConfigAttribute.setText(staticWidget.attributeIds.replace(",", ", "))
+                binding.attributeValueLinearLayout.visibility = VISIBLE
+                binding.attributeSeparator.setText(staticWidget.attributeSeparator)
             }
             if (entity != null) {
                 selectedEntity = entity as Entity<Any>?
                 setupAttributes()
             }
-            add_button.setText(R.string.update_widget)
-            delete_button.visibility = VISIBLE
-            delete_button.setOnClickListener(onDeleteWidget)
+            binding.addButton.setText(R.string.update_widget)
+            binding.deleteButton.visibility = VISIBLE
+            binding.deleteButton.setOnClickListener(onDeleteWidget)
         }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
-        widget_text_config_entity_id.setAdapter(entityAdapter)
-        widget_text_config_entity_id.onFocusChangeListener = dropDownOnFocus
-        widget_text_config_entity_id.onItemClickListener = entityDropDownOnItemClick
-        widget_text_config_attribute.onFocusChangeListener = dropDownOnFocus
-        widget_text_config_attribute.onItemClickListener = attributeDropDownOnItemClick
-        widget_text_config_attribute.setOnClickListener {
-            if (!widget_text_config_attribute.isPopupShowing) widget_text_config_attribute.showDropDown()
+        binding.widgetTextConfigAttribute.setAdapter(entityAdapter)
+        binding.widgetTextConfigAttribute.onFocusChangeListener = dropDownOnFocus
+        binding.widgetTextConfigAttribute.onItemClickListener = entityDropDownOnItemClick
+        binding.widgetTextConfigAttribute.onFocusChangeListener = dropDownOnFocus
+        binding.widgetTextConfigAttribute.onItemClickListener = attributeDropDownOnItemClick
+        binding.widgetTextConfigAttribute.setOnClickListener {
+            if (!binding.widgetTextConfigAttribute.isPopupShowing) binding.widgetTextConfigAttribute.showDropDown()
         }
 
-        append_attribute_value_checkbox.setOnCheckedChangeListener { _, isChecked ->
-            attribute_value_linear_layout.isVisible = isChecked
+        binding.appendAttributeValueCheckbox.setOnCheckedChangeListener { _, isChecked ->
+            binding.attributeValueLinearLayout.isVisible = isChecked
             appendAttributes = isChecked
         }
 
@@ -175,9 +178,9 @@ class EntityWidgetConfigureActivity : BaseActivity() {
     private fun setupAttributes() {
         val fetchedAttributes = selectedEntity?.attributes as Map<String, String>
         val attributesAdapter = ArrayAdapter<String>(this, android.R.layout.simple_dropdown_item_1line)
-        widget_text_config_attribute.setAdapter(attributesAdapter)
+        binding.widgetTextConfigAttribute.setAdapter(attributesAdapter)
         attributesAdapter.addAll(*fetchedAttributes.keys.toTypedArray())
-        widget_text_config_attribute.setTokenizer(CommaTokenizer())
+        binding.widgetTextConfigAttribute.setTokenizer(CommaTokenizer())
         runOnUiThread {
             attributesAdapter.notifyDataSetChanged()
         }
@@ -196,7 +199,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
             val entity: String = if (selectedEntity == null)
-                widget_text_config_entity_id.text.toString()
+                binding.widgetTextConfigEntityId.text.toString()
             else
                 selectedEntity!!.entityId
             intent.putExtra(
@@ -206,22 +209,22 @@ class EntityWidgetConfigureActivity : BaseActivity() {
 
             intent.putExtra(
                 EntityWidget.EXTRA_LABEL,
-                label.text.toString()
+                binding.label.text.toString()
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_TEXT_SIZE,
-                textSize.text.toString()
+                binding.textSize.text.toString()
             )
 
             intent.putExtra(
                 EntityWidget.EXTRA_STATE_SEPARATOR,
-                state_separator.text.toString()
+                binding.stateSeparator.text.toString()
             )
 
             if (appendAttributes) {
                 val attributes = if (selectedAttributeIds.isNullOrEmpty())
-                    widget_text_config_attribute.text.toString()
+                    binding.widgetTextConfigAttribute.text.toString()
                 else
                     selectedAttributeIds
                 intent.putExtra(
@@ -231,7 +234,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
 
                 intent.putExtra(
                     EntityWidget.EXTRA_ATTRIBUTE_SEPARATOR,
-                    attribute_separator.text.toString()
+                    binding.attributeSeparator.text.toString()
                 )
             }
 

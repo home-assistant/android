@@ -14,8 +14,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
-import kotlinx.android.synthetic.main.widget_template_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,8 +31,9 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private lateinit var binding: WidgetTemplateConfigureBinding
 
+    private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
@@ -44,7 +45,8 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        setContentView(R.layout.widget_template_configure)
+        binding = WidgetTemplateConfigureBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -71,36 +73,36 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
         val templateWidgetDao = AppDatabase.getInstance(applicationContext).templateWidgetDao()
         val templateWidget = templateWidgetDao.get(appWidgetId)
         if (templateWidget != null) {
-            templateText.setText(templateWidget.template)
-            add_button.setText(R.string.update_widget)
+            binding.templateText.setText(templateWidget.template)
+            binding.addButton.setText(R.string.update_widget)
             if (templateWidget.template.isNotEmpty())
                 renderTemplateText(templateWidget.template)
             else {
-                renderedTemplate.text = getString(R.string.empty_template)
-                add_button.isEnabled = false
+                binding.renderedTemplate.text = getString(R.string.empty_template)
+                binding.addButton.isEnabled = false
             }
-            delete_button.visibility = VISIBLE
-            delete_button.setOnClickListener(onDeleteWidget)
+            binding.deleteButton.visibility = VISIBLE
+            binding.deleteButton.setOnClickListener(onDeleteWidget)
         }
 
-        templateText.doAfterTextChanged { editableText ->
+        binding.templateText.doAfterTextChanged { editableText ->
             if (editableText == null)
                 return@doAfterTextChanged
             if (editableText.isNotEmpty()) {
-                add_button.isEnabled = true
+                binding.addButton.isEnabled = true
                 renderTemplateText(editableText.toString())
             } else {
-                renderedTemplate.text = getString(R.string.empty_template)
-                add_button.isEnabled = false
+                binding.renderedTemplate.text = getString(R.string.empty_template)
+                binding.addButton.isEnabled = false
             }
         }
 
-        add_button.setOnClickListener {
+        binding.addButton.setOnClickListener {
             val createIntent = Intent().apply {
                 action = TemplateWidget.RECEIVE_DATA
                 component = ComponentName(applicationContext, TemplateWidget::class.java)
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                putExtra(TemplateWidget.EXTRA_TEMPLATE, templateText.text.toString())
+                putExtra(TemplateWidget.EXTRA_TEMPLATE, binding.templateText.text.toString())
             }
             applicationContext.sendBroadcast(createIntent)
 
@@ -129,8 +131,8 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
                 enabled = false
             }
             runOnUiThread {
-                renderedTemplate.text = fromHtml(templateText)
-                add_button.isEnabled = enabled
+                binding.renderedTemplate.text = fromHtml(templateText)
+                binding.addButton.isEnabled = enabled
             }
         }
     }

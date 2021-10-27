@@ -13,21 +13,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.AppCompatButton
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.switchmaterial.SwitchMaterial
-import com.google.android.material.textfield.TextInputEditText
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.databinding.FragmentMobileAppIntegrationBinding
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.DisabledLocationHandler
-import kotlinx.android.synthetic.main.fragment_mobile_app_integration.*
 import javax.inject.Inject
 
 class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
@@ -50,6 +48,9 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
     @Inject
     lateinit var presenter: MobileAppIntegrationPresenter
 
+    private var _binding: FragmentMobileAppIntegrationBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -65,52 +66,54 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_mobile_app_integration, container, false).apply {
+    ): View {
+        _binding = FragmentMobileAppIntegrationBinding.inflate(inflater, container, false)
+        val context = binding.root.context
 
-            findViewById<TextInputEditText>(R.id.deviceName).setText(Build.MODEL)
+        binding.deviceName.setText(Build.MODEL)
 
-            findViewById<SwitchMaterial>(R.id.locationTracking)?.let {
-                val sensorId = LocationSensorManager.backgroundLocation.id
-                setLocationTracking(it, DisabledLocationHandler.isLocationEnabled(context) && LocationSensorManager().checkPermission(context, sensorId))
-                it.setOnCheckedChangeListener { _, isChecked ->
-                    var checked = isChecked
-                    if (isChecked) {
+        binding.locationTracking.let {
+            val sensorId = LocationSensorManager.backgroundLocation.id
+            setLocationTracking(it, DisabledLocationHandler.isLocationEnabled(context) && LocationSensorManager().checkPermission(context, sensorId))
+            it.setOnCheckedChangeListener { _, isChecked ->
+                var checked = isChecked
+                if (isChecked) {
 
-                        val locationEnabled = DisabledLocationHandler.isLocationEnabled(context)
-                        val permissionOk = LocationSensorManager().checkPermission(requireContext(), sensorId)
+                    val locationEnabled = DisabledLocationHandler.isLocationEnabled(context)
+                    val permissionOk = LocationSensorManager().checkPermission(requireContext(), sensorId)
 
-                        if (!locationEnabled) {
-                            DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(LocationSensorManager.backgroundLocation.name)))
-                            checked = false
-                        } else if (!permissionOk) {
-                            dialog = AlertDialog.Builder(requireContext())
-                                .setTitle(R.string.enable_location_tracking)
-                                .setMessage(R.string.enable_location_tracking_prompt)
-                                .setPositiveButton(android.R.string.ok) { _, _ ->
-                                    requestPermissions(
-                                        sensorId
-                                    )
-                                }
-                                .setNegativeButton(android.R.string.cancel) { _, _ -> }
-                                .create()
-                            dialog?.show()
-                            checked = false
-                        }
+                    if (!locationEnabled) {
+                        DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(LocationSensorManager.backgroundLocation.name)))
+                        checked = false
+                    } else if (!permissionOk) {
+                        dialog = AlertDialog.Builder(requireContext())
+                            .setTitle(R.string.enable_location_tracking)
+                            .setMessage(R.string.enable_location_tracking_prompt)
+                            .setPositiveButton(android.R.string.ok) { _, _ ->
+                                requestPermissions(
+                                    sensorId
+                                )
+                            }
+                            .setNegativeButton(android.R.string.cancel) { _, _ -> }
+                            .create()
+                        dialog?.show()
+                        checked = false
                     }
-
-                    setLocationTracking(it, checked)
                 }
-            }
 
-            findViewById<AppCompatButton>(R.id.finish).setOnClickListener {
-                presenter.onRegistrationAttempt(false, deviceName.text.toString())
-            }
-
-            findViewById<AppCompatButton>(R.id.retry).setOnClickListener {
-                presenter.onRegistrationAttempt(false, deviceName.text.toString())
+                setLocationTracking(it, checked)
             }
         }
+
+        binding.finish.setOnClickListener {
+            presenter.onRegistrationAttempt(false, binding.deviceName.text.toString())
+        }
+
+        binding.retry.setOnClickListener {
+            presenter.onRegistrationAttempt(false, binding.deviceName.text.toString())
+        }
+
+        return binding.root
     }
 
     override fun deviceRegistered() {
@@ -122,20 +125,25 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
             .setTitle(R.string.firebase_error_title)
             .setMessage(R.string.firebase_error_message)
             .setPositiveButton(R.string.skip) { _, _ ->
-                presenter.onRegistrationAttempt(true, deviceName.text.toString())
+                presenter.onRegistrationAttempt(true, binding.deviceName.text.toString())
             }
             .setNegativeButton(R.string.retry) { _, _ ->
-                presenter.onRegistrationAttempt(false, deviceName.text.toString())
+                presenter.onRegistrationAttempt(false, binding.deviceName.text.toString())
             }
             .show()
     }
 
     override fun showError() {
-        viewFlipper.displayedChild = ERROR_VIEW
+        binding.viewFlipper.displayedChild = ERROR_VIEW
     }
 
     override fun showLoading() {
-        viewFlipper.displayedChild = LOADING_VIEW
+        binding.viewFlipper.displayedChild = LOADING_VIEW
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onDestroy() {
@@ -177,7 +185,7 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
 
         if (requestCode == LOCATION_REQUEST_CODE) {
             val hasPermission = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
-            setLocationTracking(locationTracking, hasPermission)
+            setLocationTracking(binding.locationTracking, hasPermission)
             requestBackgroundAccess()
         }
     }
