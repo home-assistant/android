@@ -53,9 +53,8 @@
                 <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
             </intent-filter>
 
-            <!-- TODO update with screenshot -->
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
-                android:resource="@drawable/common_full_open_on_phone" />
+                android:resource="@drawable/favorite_entities_tile_example" />
         </service>
         <activity android:name=".tiles.TileActionActivity"
             android:exported="true"
