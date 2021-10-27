@@ -4,9 +4,10 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 
 interface HomePresenter {
 
-    fun onViewReady()
+    fun onViewReady(): Boolean
     fun onEntityClicked(entity: Entity<Any>)
-    fun onButtonClicked(id: String)
     fun onLogoutClicked()
     fun onFinish()
+
+    suspend fun getEntities(): Array<Entity<Any>>
 }

@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class HomePresenterImpl @Inject constructor(
@@ -21,29 +22,43 @@ class HomePresenterImpl @Inject constructor(
 ) : HomePresenter {
 
     companion object {
+        private val toggleDomains = listOf(
+            "cover", "fan", "humidifier", "input_boolean", "light",
+            "media_player", "remote", "siren", "switch"
+        )
         const val TAG = "HomePresenter"
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onViewReady() {
-        mainScope.launch {
+    override fun onViewReady(): Boolean {
+        var isRegistered = false
+        runBlocking {
             val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
             if (sessionValid && integrationUseCase.isRegistered()) {
                 resyncRegistration()
-                // We'll stay on HomeActivity, so start loading entities
-                processEntities(integrationUseCase.getEntities())
+                isRegistered = true
             } else if (sessionValid) {
                 view.displayMobileAppIntegration()
             } else {
                 view.displayOnBoarding()
             }
         }
+        return isRegistered
+    }
+
+    override suspend fun getEntities(): Array<Entity<Any>> {
+        return try {
+            integrationUseCase.getEntities()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get entities", e)
+            emptyArray()
+        }
     }
 
     override fun onEntityClicked(entity: Entity<Any>) {
 
-        if (entity.entityId.split(".")[0] == "light") {
+        if (entity.entityId.split(".")[0] in toggleDomains) {
             mainScope.launch {
                 integrationUseCase.callService(
                     entity.entityId.split(".")[0],
@@ -62,12 +77,6 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override fun onButtonClicked(id: String) {
-        if (id == HomeListAdapter.BUTTON_ID_LOGOUT) {
-            onLogoutClicked()
-        }
-    }
-
     override fun onLogoutClicked() {
         mainScope.launch {
             authenticationUseCase.revokeSession()
@@ -77,14 +86,6 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onFinish() {
         mainScope.cancel()
-    }
-
-    private fun processEntities(entities: Array<Entity<Any>>) {
-        val scenes = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
-        val scripts = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "script" }
-        val lights = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "light" }
-        val covers = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "cover" }
-        view.showHomeList(scenes, scripts, lights, covers)
     }
 
     private fun resyncRegistration() {

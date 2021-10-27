@@ -31,4 +31,6 @@
     <string name="username">Username</string>
     <string name="version">Version: %s</string>
     <string name="lights">Lights</string>
+    <string name="input_booleans">Input Booleans</string>
+    <string name="switches">Switches</string>
 </resources>
