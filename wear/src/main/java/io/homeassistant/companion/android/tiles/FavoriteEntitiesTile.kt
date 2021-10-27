@@ -11,13 +11,13 @@ import androidx.wear.tiles.LayoutElementBuilders
 import androidx.wear.tiles.LayoutElementBuilders.Box
 import androidx.wear.tiles.LayoutElementBuilders.Column
 import androidx.wear.tiles.LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER
+import androidx.wear.tiles.LayoutElementBuilders.Layout
+import androidx.wear.tiles.LayoutElementBuilders.LayoutElement
 import androidx.wear.tiles.LayoutElementBuilders.Row
 import androidx.wear.tiles.LayoutElementBuilders.Spacer
-import androidx.wear.tiles.LayoutElementBuilders.LayoutElement
-import androidx.wear.tiles.LayoutElementBuilders.Layout
 import androidx.wear.tiles.ModifiersBuilders
-import androidx.wear.tiles.RequestBuilders.TileRequest
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
+import androidx.wear.tiles.RequestBuilders.TileRequest
 import androidx.wear.tiles.ResourceBuilders
 import androidx.wear.tiles.ResourceBuilders.Resources
 import androidx.wear.tiles.TileBuilders.Tile
@@ -47,7 +47,7 @@ private const val RESOURCES_VERSION = "1"
 
 // Dimensions (dp)
 private const val CIRCLE_SIZE = 56f
-private const val ICON_SIZE = 48f*0.7071f // square that fits in 48dp circle
+private const val ICON_SIZE = 48f * 0.7071f // square that fits in 48dp circle
 private const val SPACING = 8f
 
 class FavoriteEntitiesTile : TileService() {
@@ -84,6 +84,7 @@ class FavoriteEntitiesTile : TileService() {
                 .setVersion(RESOURCES_VERSION)
                 .apply {
                     entities.map { entity ->
+                        // Find icon name
                         val entityAttributes = entity.attributes as Map<String, String>
                         val iconName: String = if (entityAttributes["icon"]?.startsWith("mdi") == true) {
                             entityAttributes["icon"]!!.split(":")[1]
@@ -91,17 +92,19 @@ class FavoriteEntitiesTile : TileService() {
                             "palette" // Default scene icon
                         }
 
+                        // Create Bitmap from icon name
                         val iconBitmap = IconicsDrawable(this@FavoriteEntitiesTile, "cmd-$iconName").apply {
                             colorInt = Color.WHITE
                             sizeDp = ICON_SIZE.roundToInt()
                             backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
                         }.toBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565)
 
+                        // Make array of bitmap
                         val bitmapData = ByteBuffer.allocate(iconBitmap.byteCount).apply {
                             iconBitmap.copyPixelsToBuffer(this)
                         }.array()
 
-                        // link the entity id to the drawable
+                        // link the entity id to the bitmap data array
                         entity.entityId to ResourceBuilders.ImageResource.Builder()
                             .setInlineResource(
                                 ResourceBuilders.InlineImageResource.Builder()
@@ -126,7 +129,7 @@ class FavoriteEntitiesTile : TileService() {
     }
 
     private suspend fun getEntities(): List<Entity<Any>> {
-        //TODO this should actually be a list specified by the user in settings
+        // TODO this should actually be a list specified by the user in settings
         DaggerTilesComponent.builder()
             .appComponent((applicationContext as GraphComponentAccessor).appComponent)
             .build()
@@ -139,40 +142,22 @@ class FavoriteEntitiesTile : TileService() {
 
     fun layout(entities: List<Entity<Any>>): LayoutElement = Column.Builder().apply {
         if (entities.isNotEmpty()) {
-            addContent(
-                Row.Builder().apply {
-                    addContent(iconLayout(entities[0]))
-                    if (entities.size > 1) {
-                        addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
-                        addContent(iconLayout(entities[1]))
-                    }
-                }
-                    .build()
-            )
+            addContent(rowLayout(entities.subList(0, min(2, entities.size))))
         }
         if (entities.size > 2) {
-            addContent(
-                Row.Builder().apply {
-                    addContent(iconLayout(entities[2]))
-                    entities.subList(3, min(5, entities.size)).forEach { entity ->
-                        addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
-                        addContent(iconLayout(entity))
-                    }
-                }
-                    .build()
-            )
+            addContent(rowLayout(entities.subList(2, min(5, entities.size))))
         }
         if (entities.size > 5) {
-            addContent(
-                Row.Builder().apply {
-                    addContent(iconLayout(entities[5]))
-                    if (entities.size > 6) {
-                        addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
-                        addContent(iconLayout(entities[6]))
-                    }
-                }
-                    .build()
-            )
+            addContent(rowLayout(entities.subList(5, min(7, entities.size))))
+        }
+    }
+        .build()
+
+    private fun rowLayout(entities: List<Entity<Any>>): LayoutElement = Row.Builder().apply {
+        addContent(iconLayout(entities[0]))
+        entities.drop(1).forEach { entity ->
+            addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
+            addContent(iconLayout(entity))
         }
     }
         .build()
@@ -181,34 +166,39 @@ class FavoriteEntitiesTile : TileService() {
         setWidth(dp(CIRCLE_SIZE))
         setHeight(dp(CIRCLE_SIZE))
         setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
-        setModifiers(ModifiersBuilders.Modifiers.Builder()
-            .setBackground(
-                ModifiersBuilders.Background.Builder()
-                    .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorOverlay)))
-                    .setCorner(
-                        ModifiersBuilders.Corner.Builder()
-                            .setRadius(dp(CIRCLE_SIZE / 2))
-                            .build()
-                    )
-                    .build()
-            )
-            .setClickable(ModifiersBuilders.Clickable.Builder()
-                .setOnClick(
-                    ActionBuilders.LaunchAction.Builder()
-                        .setAndroidActivity(
-                            ActionBuilders.AndroidActivity.Builder()
-                                .setClassName(TileActionActivity::class.java.name)
-                                .setPackageName(this@FavoriteEntitiesTile.packageName)
-                                .addKeyToExtraMapping("entity_id", ActionBuilders.stringExtra(entity.entityId))
+        setModifiers(
+            ModifiersBuilders.Modifiers.Builder()
+                // Set circular background
+                .setBackground(
+                    ModifiersBuilders.Background.Builder()
+                        .setColor(argb(ContextCompat.getColor(baseContext, R.color.colorOverlay)))
+                        .setCorner(
+                            ModifiersBuilders.Corner.Builder()
+                                .setRadius(dp(CIRCLE_SIZE / 2))
+                                .build()
+                        )
+                        .build()
+                )
+                // Make clickable and call activity
+                .setClickable(
+                    ModifiersBuilders.Clickable.Builder()
+                        .setOnClick(
+                            ActionBuilders.LaunchAction.Builder()
+                                .setAndroidActivity(
+                                    ActionBuilders.AndroidActivity.Builder()
+                                        .setClassName(TileActionActivity::class.java.name)
+                                        .setPackageName(this@FavoriteEntitiesTile.packageName)
+                                        .addKeyToExtraMapping("entity_id", ActionBuilders.stringExtra(entity.entityId))
+                                        .build()
+                                )
                                 .build()
                         )
                         .build()
                 )
                 .build()
-            )
-            .build()
         )
         addContent(
+            // Add icon
             LayoutElementBuilders.Image.Builder()
                 .setResourceId(entity.entityId)
                 .setWidth(dp(ICON_SIZE))
