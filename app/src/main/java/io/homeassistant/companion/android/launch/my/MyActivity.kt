@@ -59,7 +59,7 @@ class MyActivity : BaseActivity() {
                     }
                 }
             }
-            webview.loadUrl(newUri.toString())
+            binding.webview.loadUrl(newUri.toString())
         }
     }
 }

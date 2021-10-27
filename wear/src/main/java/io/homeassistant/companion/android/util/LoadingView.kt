@@ -2,9 +2,10 @@ package io.homeassistant.companion.android.util
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.LayoutInflater
 import android.widget.LinearLayout
-import android.widget.TextView
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.databinding.ViewLoadingBinding
 
 class LoadingView @JvmOverloads constructor(
     context: Context,
@@ -12,12 +13,10 @@ class LoadingView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs) {
 
     init {
-        inflate(context, R.layout.view_loading, this)
-
-        val loadingText: TextView = findViewById(R.id.loading_text)
+        val binding = ViewLoadingBinding.inflate(LayoutInflater.from(context), this, true)
 
         val attributes = context.obtainStyledAttributes(attrs, R.styleable.LoadingView)
-        loadingText.text = attributes.getString(R.styleable.LoadingView_loading_text)
+        binding.loadingText.text = attributes.getString(R.styleable.LoadingView_loading_text)
         attributes.recycle()
     }
 }

@@ -38,9 +38,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.CheckBox
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -56,7 +54,6 @@ import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.video.VideoSize
-import com.google.android.material.textfield.TextInputEditText
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
@@ -69,6 +66,7 @@ import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
+import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerControlViewBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
@@ -216,7 +214,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         decor = window.decorView as FrameLayout
 
-        webView = findViewById(R.id.webview)
+        webView = binding.webview
         webView.apply {
             setOnTouchListener { _, motionEvent ->
                 if (motionEvent.pointerCount == 3 && motionEvent.action == MotionEvent.ACTION_POINTER_3_DOWN) {
@@ -1137,12 +1135,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val authenticationDao = AppDatabase.getInstance(applicationContext).authenticationDao()
         val httpAuth = authenticationDao.get((resourceURL + realm))
 
-        val inflater = layoutInflater
-        val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
-        val username = dialogLayout.findViewById<TextInputEditText>(R.id.username)
-        val password = dialogLayout.findViewById<TextInputEditText>(R.id.password)
-        val remember = dialogLayout.findViewById<CheckBox>(R.id.checkBox)
-        val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
+        val dialogLayout = DialogAuthenticationBinding.inflate(layoutInflater)
+        val username = dialogLayout.username
+        val password = dialogLayout.password
+        val remember = dialogLayout.checkBox
+        val viewPassword = dialogLayout.viewPassword
         var autoAuth = false
 
         viewPassword.setOnClickListener {
@@ -1176,7 +1173,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             AlertDialog.Builder(this, R.style.Authentication_Dialog)
                 .setTitle(R.string.auth_request)
                 .setMessage(message)
-                .setView(dialogLayout)
+                .setView(dialogLayout.root)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
                     if (username.text.toString() != "" && password.text.toString() != "") {
                         if (remember.isChecked) {
