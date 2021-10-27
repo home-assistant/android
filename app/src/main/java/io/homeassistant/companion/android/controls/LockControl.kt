@@ -41,8 +41,11 @@ class LockControl {
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
+                    "jammed" -> context.getString(R.string.state_jammed)
                     "locked" -> context.getString(R.string.state_locked)
+                    "locking" -> context.getString(R.string.state_locking)
                     "unlocked" -> context.getString(R.string.state_unlocked)
+                    "unlocking" -> context.getString(R.string.state_unlocking)
                     "unavailable" -> context.getString(R.string.state_unavailable)
                     else -> context.getString(R.string.state_unknown)
                 }
