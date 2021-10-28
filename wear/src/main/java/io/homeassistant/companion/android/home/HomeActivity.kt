@@ -7,10 +7,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,13 +20,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material.Button
-import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.PositionIndicator
+import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -95,73 +96,96 @@ class HomeActivity : ComponentActivity(), HomeView {
             presenter.getEntities()
         }
 
-        val scenes = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
-        val scripts = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "script" }
-        val lights = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "light" }
-        val inputBooleans = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "input_boolean" }
-        val switches = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "switch" }
+        val scenes =
+            entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
+        val scripts =
+            entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "script" }
+        val lights =
+            entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "light" }
+        val inputBooleans = entities.sortedBy { it.entityId }
+            .filter { it.entityId.split(".")[0] == "input_boolean" }
+        val switches =
+            entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "switch" }
 
-        ScalingLazyColumn(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentPadding = PaddingValues(
-                top = 10.dp,
-                start = 10.dp,
-                end = 10.dp,
-                bottom = 40.dp
-            ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            state = ScalingLazyListState()
-        ) {
-            if (inputBooleans.isNotEmpty()) {
-                items(inputBooleans.size) { index ->
-                    if (index == 0)
-                        SetTitle(R.string.input_booleans)
-                    SetEntityUI(inputBooleans[index], index)
-                }
-            }
-            if (lights.isNotEmpty()) {
-                items(lights.size) { index ->
-                    if (index == 0)
-                        SetTitle(R.string.lights)
-                    SetEntityUI(lights[index], index)
-                }
-            }
-            if (scenes.isNotEmpty()) {
-                items(scenes.size) { index ->
-                    if (index == 0)
-                        SetTitle(R.string.scenes)
+        val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
 
-                    SetEntityUI(scenes[index], index)
+        MaterialTheme {
+            Scaffold(
+                positionIndicator = {
+                    if (scalingLazyListState.isScrollInProgress)
+                        PositionIndicator(scalingLazyListState = scalingLazyListState)
                 }
-            }
-            if (scripts.isNotEmpty()) {
-                items(scripts.size) { index ->
-                    if (index == 0)
-                        SetTitle(R.string.scripts)
-                    SetEntityUI(scripts[index], index)
-                }
-            }
-            if (switches.isNotEmpty()) {
-                items(switches.size) { index ->
-                    if (index == 0)
-                        SetTitle(R.string.switches)
-                    SetEntityUI(switches[index], index)
-                }
-            }
+            ) {
+                ScalingLazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        top = 10.dp,
+                        start = 10.dp,
+                        end = 10.dp,
+                        bottom = 40.dp
+                    ),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    state = scalingLazyListState
+                ) {
+                    if (inputBooleans.isNotEmpty()) {
+                        items(inputBooleans.size) { index ->
+                            if (index == 0)
+                                SetTitle(R.string.input_booleans)
+                            SetEntityUI(inputBooleans[index], index)
+                        }
+                    }
+                    if (lights.isNotEmpty()) {
+                        items(lights.size) { index ->
+                            if (index == 0)
+                                SetTitle(R.string.lights)
+                            SetEntityUI(lights[index], index)
+                        }
+                    }
+                    if (scenes.isNotEmpty()) {
+                        items(scenes.size) { index ->
+                            if (index == 0)
+                                SetTitle(R.string.scenes)
 
-            items(1) {
-                Column {
-                    SetTitle(R.string.other)
-                    Button(
-                        modifier = Modifier
-                            .width(140.dp),
-                        onClick = { presenter.onLogoutClicked() },
-                        colors = ButtonDefaults.primaryButtonColors(backgroundColor = Color.Red)
-                    ) {
-                        Row {
-                            Image(asset = CommunityMaterial.Icon.cmd_exit_run)
-                            SetTitle(R.string.logout)
+                            SetEntityUI(scenes[index], index)
+                        }
+                    }
+                    if (scripts.isNotEmpty()) {
+                        items(scripts.size) { index ->
+                            if (index == 0)
+                                SetTitle(R.string.scripts)
+                            SetEntityUI(scripts[index], index)
+                        }
+                    }
+                    if (switches.isNotEmpty()) {
+                        items(switches.size) { index ->
+                            if (index == 0)
+                                SetTitle(R.string.switches)
+                            SetEntityUI(switches[index], index)
+                        }
+                    }
+
+                    item {
+                        Column {
+                            SetTitle(R.string.other)
+                            Chip(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp),
+                                icon = {
+                                    Image(asset = CommunityMaterial.Icon.cmd_exit_run)
+                                },
+                                label = {
+                                    Text(
+                                        text = stringResource(id = R.string.logout)
+                                    )
+                                },
+                                onClick = { presenter.onLogoutClicked() },
+                                colors = ChipDefaults.primaryChipColors(
+                                    backgroundColor = Color.Red,
+                                    contentColor = Color.Black
+                                )
+                            )
                         }
                     }
                 }
@@ -188,7 +212,7 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         Chip(
             modifier = Modifier
-                .width(140.dp)
+                .fillMaxWidth()
                 .padding(top = if (index == 0) 30.dp else 10.dp),
             icon = {
                 if (iconBitmap != null) {
@@ -198,7 +222,7 @@ class HomeActivity : ComponentActivity(), HomeView {
             },
             label = {
                 Text(
-                    text = attributes["friendly_name"].toString()
+                    text = attributes["friendly_name"].toString().take(30)
                 )
             },
             onClick = { presenter.onEntityClicked(entity) },
@@ -214,7 +238,7 @@ class HomeActivity : ComponentActivity(), HomeView {
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
-                .padding(start = 15.dp)
+                .fillMaxWidth()
         )
     }
 }
