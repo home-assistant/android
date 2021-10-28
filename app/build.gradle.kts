@@ -195,6 +195,9 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.3.1")
     implementation("com.google.android.material:compose-theme-adapter:1.0.4")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.0")
+
+    implementation("com.mikepenz:iconics-core:5.3.2")
+    implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
