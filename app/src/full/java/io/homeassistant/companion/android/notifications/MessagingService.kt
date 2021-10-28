@@ -537,7 +537,8 @@ class MessagingService : FirebaseMessagingService() {
                     LocationSensorManager.setHighAccuracyModeSetting(applicationContext, true)
                 }
                 val intent = Intent(this, LocationSensorManager::class.java)
-                intent.action = LocationSensorManager.ACTION_REQUEST_LOCATION_UPDATES
+                intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY
+                intent.putExtra("command", title)
                 applicationContext.sendBroadcast(intent)
             }
             COMMAND_ACTIVITY -> {
