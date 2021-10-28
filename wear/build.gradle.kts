@@ -96,7 +96,7 @@ dependencies {
     implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.3.2")
 
-    implementation("androidx.activity:activity-compose:1.3.1")
+    implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.compose.compiler:compiler:1.0.4")
     implementation("androidx.compose.foundation:foundation:1.0.4")
     implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha09")
