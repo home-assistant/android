@@ -472,7 +472,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         .getString("event") == "connected"
                                     if (isConnected) {
                                         alertDialog?.cancel()
-                                        presenter.checkSecurityVersion()
+                                        presenter.checkSecurityVersion(applicationContext)
                                     }
                                 }
                                 "config/get" -> {
