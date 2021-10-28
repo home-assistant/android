@@ -18,6 +18,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Chip
@@ -222,7 +223,9 @@ class HomeActivity : ComponentActivity(), HomeView {
             },
             label = {
                 Text(
-                    text = attributes["friendly_name"].toString().take(30)
+                    text = attributes["friendly_name"].toString(),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             },
             onClick = { presenter.onEntityClicked(entity) },
