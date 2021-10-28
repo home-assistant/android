@@ -61,6 +61,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.net.URL
 import java.util.Locale
 import javax.inject.Inject
@@ -178,9 +179,11 @@ class MessagingService : FirebaseMessagingService() {
         // Check if message contains a data payload.
         remoteMessage.data.let {
             Log.d(TAG, "Message data payload: " + remoteMessage.data)
+            val jsonData: Map<String, String> = it
+            val jsonObject = JSONObject(jsonData)
             val notificationDao = AppDatabase.getInstance(applicationContext).notificationDao()
             val now = System.currentTimeMillis()
-            val notificationRow = NotificationItem(0, now, it[MESSAGE].toString(), it.toString())
+            val notificationRow = NotificationItem(0, now, it[MESSAGE].toString(), jsonObject.toString())
             notificationDao.add(notificationRow)
 
             when {
