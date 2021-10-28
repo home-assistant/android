@@ -28,6 +28,7 @@ interface IntegrationRepository {
 
     suspend fun getHAVersion(): String
     suspend fun canRegisterEntityCategoryStateClass(): Boolean
+    suspend fun shouldReregisterSensors(): Boolean
 
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int

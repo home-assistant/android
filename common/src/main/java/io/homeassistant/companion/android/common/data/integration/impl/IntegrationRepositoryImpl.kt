@@ -24,6 +24,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import okhttp3.HttpUrl.Companion.get
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 import javax.inject.Named
@@ -52,6 +53,8 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_SECRET = "secret"
 
+        private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
+        private const val PREF_INSTALLED_APP_VERSION = "installed_app_version"
         private const val PREF_HA_VERSION = "ha_version"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
@@ -345,6 +348,14 @@ class IntegrationRepositoryImpl @Inject constructor(
         localStorage.putString(PREF_HA_VERSION, version)
     }
 
+    private suspend fun setInstalledAppVersion(version: String) {
+        localStorage.putString(PREF_INSTALLED_APP_VERSION, version)
+    }
+
+    private suspend fun getInstalledAppVersion(): String {
+        return localStorage.getString(PREF_INSTALLED_APP_VERSION) ?: ""
+    }
+
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
         val requestBody = RateLimitRequest(pushToken)
@@ -552,6 +563,30 @@ class IntegrationRepositoryImpl @Inject constructor(
         } else {
             false
         }
+    }
+
+    override suspend fun shouldReregisterSensors(): Boolean {
+        val currentHAVersion = getHAVersion()
+        val currentAppVersion = getInstalledAppVersion()
+        val current = System.currentTimeMillis()
+        val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
+        setInstalledAppVersion(BuildConfig.VERSION_NAME)
+        val newAppVersion = getInstalledAppVersion()
+
+        // Register sensors as the app version has changed
+        if (newAppVersion != currentAppVersion)
+            return true
+
+        if (current > next)
+            localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (14400000)) // 4 hours
+        else
+            return false // Skip checking HA version as it has not been 4 hours yet
+
+        setHomeAssistantVersion()
+        val newHAVersion = getHAVersion()
+
+        // Register sensors only if the HA version has changed
+        return currentHAVersion != newHAVersion
     }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
