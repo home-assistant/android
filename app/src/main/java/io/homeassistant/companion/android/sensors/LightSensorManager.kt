@@ -23,7 +23,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
             R.string.sensor_description_light_sensor,
             "illuminance",
             "lx",
-            stateClass = "measurement"
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
     }
 

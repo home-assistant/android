@@ -25,7 +25,7 @@ class PhoneStateSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_sim1,
             R.string.sensor_description_sim_1,
-            entityCategory = "diagnostic"
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
         val sim_2 = SensorManager.BasicSensor(
@@ -33,7 +33,7 @@ class PhoneStateSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_sim2,
             R.string.sensor_description_sim_2,
-            entityCategory = "diagnostic"
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 

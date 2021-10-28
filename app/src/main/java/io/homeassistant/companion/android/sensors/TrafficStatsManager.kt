@@ -20,8 +20,8 @@ class TrafficStatsManager : SensorManager {
             R.string.basic_sensor_name_mobile_rx_gb,
             R.string.sensor_description_mobile_rx_gb,
             unitOfMeasurement = "GB",
-            stateClass = "total_increasing",
-            entityCategory = "diagnostic"
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val txBytesMobile = SensorManager.BasicSensor(
             "mobile_tx_gb",
@@ -29,8 +29,8 @@ class TrafficStatsManager : SensorManager {
             R.string.basic_sensor_name_mobile_tx_gb,
             R.string.sensor_description_mobile_tx_gb,
             unitOfMeasurement = "GB",
-            stateClass = "total_increasing",
-            entityCategory = "diagnostic"
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val rxBytesTotal = SensorManager.BasicSensor(
             "total_rx_gb",
@@ -38,8 +38,8 @@ class TrafficStatsManager : SensorManager {
             R.string.basic_sensor_name_total_rx_gb,
             R.string.sensor_description_total_rx_gb,
             unitOfMeasurement = "GB",
-            stateClass = "total_increasing",
-            entityCategory = "diagnostic"
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val txBytesTotal = SensorManager.BasicSensor(
             "total_tx_gb",
@@ -47,8 +47,8 @@ class TrafficStatsManager : SensorManager {
             R.string.basic_sensor_name_total_tx_gb,
             R.string.sensor_description_total_tx_gb,
             unitOfMeasurement = "GB",
-            stateClass = "total_increasing",
-            entityCategory = "diagnostic"
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private var hasCellular = false
     }

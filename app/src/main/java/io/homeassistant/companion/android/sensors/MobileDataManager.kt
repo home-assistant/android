@@ -15,14 +15,14 @@ class MobileDataManager : SensorManager {
             "binary_sensor",
             R.string.basic_sensor_name_mobile_data,
             R.string.sensor_description_mobile_data,
-            entityCategory = "config"
+            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         val mobileDataRoaming = SensorManager.BasicSensor(
             "mobile_data_roaming",
             "binary_sensor",
             R.string.basic_sensor_name_mobile_data_roaming,
             R.string.sensor_description_mobile_data_roaming,
-            entityCategory = "config"
+            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
     }
 

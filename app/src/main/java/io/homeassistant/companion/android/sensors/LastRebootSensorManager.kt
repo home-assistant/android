@@ -27,7 +27,7 @@ class LastRebootSensorManager : SensorManager {
             R.string.basic_sensor_name_last_reboot,
             R.string.sensor_description_last_reboot,
             "timestamp",
-            entityCategory = "diagnostic"
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 

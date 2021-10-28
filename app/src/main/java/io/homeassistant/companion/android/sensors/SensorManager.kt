@@ -12,6 +12,14 @@ import io.homeassistant.companion.android.database.sensor.Setting
 
 interface SensorManager {
 
+    companion object {
+        const val ENTITY_CATEGORY_DIAGNOSTIC = "diagnostic"
+        const val ENTITY_CATEGORY_CONFIG = "config"
+        const val STATE_CLASS_MEASUREMENT = "measurement"
+        const val STATE_CLASS_TOTAL = "total"
+        const val STATE_CLASS_TOTAL_INCREASING = "total_increasing"
+    }
+
     val name: Int
     val enabledByDefault: Boolean
 

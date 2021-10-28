@@ -23,7 +23,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
             R.string.sensor_description_pressure_sensor,
             "pressure",
             "hPa",
-            stateClass = "measurement"
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
     }
 
