@@ -391,6 +391,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         AUDIO_REQUEST_CODE
                                     )
                                 }
+                            } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
+                                if (ActivityCompat.checkSelfPermission(
+                                        context,
+                                        android.Manifest.permission.MODIFY_AUDIO_SETTINGS
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    request.grant(arrayOf(it))
+                                }
                             }
                         }
                     } else {
