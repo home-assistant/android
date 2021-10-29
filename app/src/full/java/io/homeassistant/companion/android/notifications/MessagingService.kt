@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.notifications
 
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -62,6 +63,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
@@ -423,7 +425,7 @@ class MessagingService : FirebaseMessagingService() {
                     val notificationManager =
                         applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
-                        requestDNDPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         when (title) {
                             DND_ALARMS_ONLY -> notificationManager.setInterruptionFilter(
@@ -447,7 +449,7 @@ class MessagingService : FirebaseMessagingService() {
                     val notificationManager =
                         applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
-                        requestDNDPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         processRingerMode(audioManager, title)
                     }
@@ -500,7 +502,7 @@ class MessagingService : FirebaseMessagingService() {
                     val notificationManager =
                         applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
-                        requestDNDPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         processStreamVolume(
                             audioManager,
@@ -544,7 +546,7 @@ class MessagingService : FirebaseMessagingService() {
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(applicationContext))
-                        requestSystemAlertPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     else
                         processActivityCommand(data)
                 } else
@@ -553,7 +555,7 @@ class MessagingService : FirebaseMessagingService() {
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(applicationContext))
-                        requestSystemAlertPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     else
                         openWebview(title)
                 } else
@@ -581,7 +583,7 @@ class MessagingService : FirebaseMessagingService() {
             COMMAND_MEDIA -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (!NotificationManagerCompat.getEnabledListenerPackages(applicationContext).contains(applicationContext.packageName))
-                        requestNotificationPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     else {
                         processMediaCommand(data)
                     }
@@ -1359,6 +1361,38 @@ class MessagingService : FirebaseMessagingService() {
             Log.e(TAG, "Unable to open webview", e)
         }
     }
+
+    private fun notifyMissingPermission(type: String) {
+        val appManager =
+            applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val currentProcess = appManager.runningAppProcesses
+        if (currentProcess != null) {
+            for (item in currentProcess) {
+                if (applicationContext.applicationInfo.processName == item.processName) {
+                    if (item.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                        val data =
+                            mutableMapOf(MESSAGE to getString(R.string.missing_command_permission))
+                        runBlocking {
+                            sendNotification(data)
+                        }
+                    } else {
+                        when (type) {
+                            COMMAND_WEBVIEW, COMMAND_ACTIVITY -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                requestSystemAlertPermission()
+                            }
+                            COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                requestDNDPermission()
+                            }
+                            COMMAND_MEDIA -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                                requestNotificationPermission()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Called if InstanceID token is updated. This may occur if the security of
      * the previous token had been compromised. Note that this is called when the InstanceID token

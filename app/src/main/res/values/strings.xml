@@ -641,4 +641,5 @@ like to connect to:</string>
   <string name="entity_widget_desc">Current state and attribute of any entity</string>
   <string name="media_player_widget_desc">Control any media player and see current now playing image</string>
   <string name="template_widget_desc">Render any template with HTML formatting</string>
+  <string name="missing_command_permission">Please open the Home Assistant app and send the command again in order to grant the proper permissions.</string>
 </resources>
