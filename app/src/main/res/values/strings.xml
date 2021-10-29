@@ -439,7 +439,9 @@ like to connect to:</string>
   <string name="state_heat">Heat</string>
   <string name="state_heat_cool">Heat Cool</string>
   <string name="state_idle">Idle</string>
+  <string name="state_jammed">Jammed</string>
   <string name="state_locked">Locked</string>
+  <string name="state_locking">Locking</string>
   <string name="state_off">Off</string>
   <string name="state_on">On</string>
   <string name="state_open">Open</string>
@@ -449,6 +451,7 @@ like to connect to:</string>
   <string name="state_unavailable">Unavailable</string>
   <string name="state_unknown">Unknown</string>
   <string name="state_unlocked">Unlocked</string>
+  <string name="state_unlocking">Unlocking</string>
   <string name="states">Overview</string>
   <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
   <string name="tag_reader_title">Processing Tag</string>
