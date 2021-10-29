@@ -152,7 +152,7 @@ class SensorReceiver : BroadcastReceiver() {
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
         val checkDeviceRegistration = integrationUseCase.getRegistration()
-        if (checkDeviceRegistration.pushToken == null) {
+        if (checkDeviceRegistration.appVersion == null) {
             Log.w(TAG, "Device not registered, skipping sensor update/registration")
             return
         }
