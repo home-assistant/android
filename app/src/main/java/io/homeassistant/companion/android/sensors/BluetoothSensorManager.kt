@@ -154,14 +154,14 @@ class BluetoothSensorManager : SensorManager {
     private fun updateBLEDevice(context: Context) {
         addSettingIfNotPresent(context, bleTransmitter, SETTING_BLE_ENABLE_TOGGLE_ALL, "toggle", "false")
         val transmitActive = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, "toggle", "true").toBoolean()
-        val id1 = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
-        val id2 = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_ID2)
-        val id3 = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_ID3)
+        val uuid = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
+        val major = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_ID2)
+        val minor = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_ID3)
         val transmitPower = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list", listOf("ultraLow", "low", "medium", "high"), DEFAULT_BLE_TRANSMIT_POWER)
         val advertiseMode = getSetting(context, bleTransmitter, SETTING_BLE_ADVERTISE_MODE, "list", listOf("lowPower", "balanced", "lowLatency"), DEFAULT_BLE_ADVERTISE_MODE)
         bleTransmitterDevice.restartRequired = false
-        if (bleTransmitterDevice.uuid != id1 || bleTransmitterDevice.major != id2 ||
-            bleTransmitterDevice.minor != id3 || bleTransmitterDevice.transmitPowerSetting != transmitPower ||
+        if (bleTransmitterDevice.uuid != uuid || bleTransmitterDevice.major != major ||
+            bleTransmitterDevice.minor != minor || bleTransmitterDevice.transmitPowerSetting != transmitPower ||
             bleTransmitterDevice.advertiseModeSetting != advertiseMode || bleTransmitterDevice.transmitRequested != transmitActive ||
             priorBluetoothStateEnabled != isBtOn(context)
         ) {
@@ -170,9 +170,9 @@ class BluetoothSensorManager : SensorManager {
         // stash the current BT state to help us know if we need to restart if BT state turns from off to on
         priorBluetoothStateEnabled = isBtOn(context)
 
-        bleTransmitterDevice.uuid = id1
-        bleTransmitterDevice.major = id2
-        bleTransmitterDevice.minor = id3
+        bleTransmitterDevice.uuid = uuid
+        bleTransmitterDevice.major = major
+        bleTransmitterDevice.minor = minor
         bleTransmitterDevice.transmitPowerSetting = transmitPower
         bleTransmitterDevice.advertiseModeSetting = advertiseMode
         bleTransmitterDevice.transmitRequested = transmitActive
