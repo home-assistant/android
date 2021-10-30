@@ -25,8 +25,8 @@ class BluetoothSensorManager : SensorManager {
 
         private const val DEFAULT_BLE_TRANSMIT_POWER = "ultraLow"
         private const val DEFAULT_BLE_ADVERTISE_MODE = "lowPower"
-        private const val DEFAULT_BLE_ID2 = "100"
-        private const val DEFAULT_BLE_ID3 = "1"
+        private const val DEFAULT_BLE_MAJOR = "100"
+        private const val DEFAULT_BLE_MINOR = "1"
         private var priorBluetoothStateEnabled = false
 
         // private const val TAG = "BluetoothSM"
@@ -155,8 +155,8 @@ class BluetoothSensorManager : SensorManager {
         addSettingIfNotPresent(context, bleTransmitter, SETTING_BLE_ENABLE_TOGGLE_ALL, "toggle", "false")
         val transmitActive = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, "toggle", "true").toBoolean()
         val uuid = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
-        val major = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_ID2)
-        val minor = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_ID3)
+        val major = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_MAJOR)
+        val minor = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_MINOR)
         val transmitPower = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list", listOf("ultraLow", "low", "medium", "high"), DEFAULT_BLE_TRANSMIT_POWER)
         val advertiseMode = getSetting(context, bleTransmitter, SETTING_BLE_ADVERTISE_MODE, "list", listOf("lowPower", "balanced", "lowLatency"), DEFAULT_BLE_ADVERTISE_MODE)
         bleTransmitterDevice.restartRequired = false
