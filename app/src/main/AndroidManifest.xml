@@ -314,7 +314,7 @@
             android:label="@string/nfc_title_nfc_setup" />
 
         <activity android:name=".share.ShareActivity"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
