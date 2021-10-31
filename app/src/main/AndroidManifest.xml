@@ -60,7 +60,7 @@
 
         <!-- Start things like SensorWorker on device boot -->
         <receiver android:name=".sensors.SensorReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
@@ -131,7 +131,7 @@
         </receiver>
 
         <receiver android:name=".widgets.template.TemplateWidget" android:label="@string/template_widget"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
