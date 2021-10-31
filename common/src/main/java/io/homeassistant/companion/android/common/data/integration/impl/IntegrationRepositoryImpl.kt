@@ -340,19 +340,11 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
-    override suspend fun getHAVersion(): String {
-        return localStorage.getString(PREF_HA_VERSION) ?: ""
-    }
-
-    private suspend fun setHAVersion(version: String) {
-        localStorage.putString(PREF_HA_VERSION, version)
-    }
-
-    private suspend fun setInstalledAppVersion(version: String) {
+    override suspend fun setInstalledAppVersion(version: String) {
         localStorage.putString(PREF_INSTALLED_APP_VERSION, version)
     }
 
-    private suspend fun getInstalledAppVersion(): String {
+    override suspend fun getInstalledAppVersion(): String {
         return localStorage.getString(PREF_INSTALLED_APP_VERSION) ?: ""
     }
 
@@ -402,7 +394,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         else throw IntegrationException("Error calling integration request get_config/themeColor")
     }
 
-    override suspend fun setHomeAssistantVersion() {
+    override suspend fun getHomeAssistantVersion(): String {
         val getConfigRequest =
             IntegrationRequest(
                 "get_config",
@@ -410,6 +402,13 @@ class IntegrationRepositoryImpl @Inject constructor(
             )
         var response: GetConfigResponse? = null
         var causeException: Exception? = null
+
+        val current = System.currentTimeMillis()
+        val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
+        if (current > next)
+            localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (1440)) // 4 hours
+        else
+            return localStorage.getString(PREF_HA_VERSION) ?: "" // Skip checking HA version as it has not been 4 hours yet
 
         for (it in urlRepository.getApiUrls()) {
             try {
@@ -420,8 +419,8 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
 
             if (response != null) {
-                setHAVersion(response.version)
-                return
+                localStorage.putString(PREF_HA_VERSION, response.version)
+                return response.version
             }
         }
 
@@ -469,8 +468,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun canRegisterEntityCategoryStateClass(): Boolean {
-        val version = getHAVersion().split(".")
+    private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
+        val version = getHomeAssistantVersion().split(".")
         var canRegisterCategoryStateClass = false
         if (version.size >= 3) {
             val year = Integer.parseInt(version[0])
@@ -563,30 +562,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         } else {
             false
         }
-    }
-
-    override suspend fun shouldReregisterSensors(): Boolean {
-        val currentHAVersion = getHAVersion()
-        val currentAppVersion = getInstalledAppVersion()
-        val current = System.currentTimeMillis()
-        val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
-        setInstalledAppVersion(BuildConfig.VERSION_NAME)
-        val newAppVersion = getInstalledAppVersion()
-
-        // Register sensors as the app version has changed
-        if (newAppVersion != currentAppVersion)
-            return true
-
-        if (current > next)
-            localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (14400000)) // 4 hours
-        else
-            return false // Skip checking HA version as it has not been 4 hours yet
-
-        setHomeAssistantVersion()
-        val newHAVersion = getHAVersion()
-
-        // Register sensors only if the HA version has changed
-        return currentHAVersion != newHAVersion
     }
 
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {

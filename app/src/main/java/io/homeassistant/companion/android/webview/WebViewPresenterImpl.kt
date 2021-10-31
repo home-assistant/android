@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.webview
 
-import android.content.Context
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
@@ -9,7 +8,6 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,15 +63,11 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override fun checkSecurityVersion(context: Context) {
+    override fun checkSecurityVersion() {
         mainScope.launch {
 
             try {
-                val sensorDao = AppDatabase.getInstance(context).sensorDao()
-                val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
-                if (enabledSensorCount == 0)
-                    integrationUseCase.setHomeAssistantVersion()
-                val version = integrationUseCase.getHAVersion().split(".")
+                val version = integrationUseCase.getHomeAssistantVersion().split(".")
                 if (version.size >= 3) {
                     val year = Integer.parseInt(version[0])
                     val month = Integer.parseInt(version[1])

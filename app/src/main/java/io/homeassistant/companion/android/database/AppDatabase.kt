@@ -437,6 +437,8 @@ abstract class AppDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `sensors` ADD `state_class` TEXT")
                 database.execSQL("ALTER TABLE `sensors` ADD `entity_category` TEXT")
+                database.execSQL("ALTER TABLE `sensors` ADD `core_registration` TEXT")
+                database.execSQL("ALTER TABLE `sensors` ADD `app_registration` TEXT")
             }
         }
 
