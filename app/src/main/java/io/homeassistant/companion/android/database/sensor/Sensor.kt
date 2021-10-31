@@ -34,8 +34,8 @@ data class Sensor(
     @ColumnInfo(name = "entity_category")
     var entityCategory: String? = null,
     @ColumnInfo(name = "core_registration")
-    var coreRegistration: String = "",
+    var coreRegistration: String,
     @ColumnInfo(name = "app_registration")
-    var appRegistration: String = ""
+    var appRegistration: String
 
 )
