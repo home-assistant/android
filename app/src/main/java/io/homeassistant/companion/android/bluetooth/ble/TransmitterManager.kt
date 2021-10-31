@@ -52,14 +52,13 @@ object TransmitterManager {
         if (!this::physicalTransmitter.isInitialized) {
             val parser = BeaconParser().setBeaconLayout(haTransmitter.beaconLayout)
             physicalTransmitter = BeaconTransmitter(context, parser)
-            // this setting is how frequently we emit, low power mode is 1hz, could be a setting to make faster.
-            physicalTransmitter.advertiseMode = AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
         }
         val bluetoothOn = BluetoothAdapter.getDefaultAdapter().isEnabled
         if (bluetoothOn) {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {
                 physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
+                physicalTransmitter.advertiseMode = getAdvertiseMode(haTransmitter)
                 physicalTransmitter.startAdvertising(
                     beacon,
                     object : AdvertiseCallback() {
@@ -87,6 +86,14 @@ object TransmitterManager {
             stopTransmitting(haTransmitter)
         }
     }
+
+    private fun getAdvertiseMode(haTransmitter: IBeaconTransmitter) =
+        when (haTransmitter.advertiseModeSetting) {
+            "lowLatency" -> AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
+            "balanced" -> AdvertiseSettings.ADVERTISE_MODE_BALANCED
+            "lowPower" -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER // explicit for code readability
+            else -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
+        }
 
     private fun getPowerLevel(haTransmitter: IBeaconTransmitter) =
         when (haTransmitter.transmitPowerSetting) {

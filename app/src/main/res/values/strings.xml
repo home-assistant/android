@@ -299,7 +299,7 @@ like to connect to:</string>
   <string name="sensor_description_battery_health">The health of the battery</string>
   <string name="sensor_description_battery_level">The current battery level of the device</string>
   <string name="sensor_description_battery_state">The current charging state of the battery</string>
-  <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon message every second, used to track presence  around house, e.g. together with roomassistant or esp32-mqtt-room projects. Warning, this can affect battery life, particularly if the Transmit Power setting is set to High. Settings allow specifying UUID (standard UUID format), Major and Minor (should be 0 - 65535), to tailor identifiers and groups. By default this sensor is not turned on with the Enable all toggle, to avoid battery drain, there is a setting to enable this.  There is also a Transmitter Power setting to help preserve battery life (use the minimum as required) and a Transmit toggle to stop or start transmitting. </string>
+  <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant or esp32-mqtt-room projects.\nBy default this sensor is not turned on with the Enable all toggle, to avoid battery drain, there is a setting to enable this (\"Include when enabling all sensors\").\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
   <string name="sensor_description_bluetooth_connection">Information about currently connected bluetooth devices</string>
   <string name="sensor_description_bluetooth_state">Whether or not bluetooth is enabled on the device</string>
   <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
@@ -571,6 +571,10 @@ like to connect to:</string>
   <string name="sensor_setting_ble_transmit_power_medium_label">Medium</string>
   <string name="sensor_setting_ble_transmit_power_ultraLow_label">Ultra Low</string>
   <string name="sensor_setting_ble_transmit_enabled_title">Enable Transmitter</string>
+  <string name="sensor_setting_ble_advertise_mode_title">Advertise mode</string>
+  <string name="sensor_setting_ble_advertise_mode_lowLatency_label">Low latency (10Hz)</string>
+  <string name="sensor_setting_ble_advertise_mode_balanced_label">Balanced (3Hz)</string>
+  <string name="sensor_setting_ble_advertise_mode_lowPower_label">Low power (1Hz)</string>
   <string name="sensor_setting_ble_enable_toggle_all_title">Include when enabling all sensors</string>
   <string name="sensor_setting_ble_major_title">Major</string>
   <string name="sensor_setting_ble_minor_title">Minor</string>
@@ -608,7 +612,7 @@ like to connect to:</string>
   <string name="tile_missing_entity_title">Missing Valid Entity Domains</string>
   <string name="tile_missing_entity_summary">You must have one of the following domains in order to use this feature: cover, fan, input_boolean, light, remote, scene, script, switch</string>
   <string name="template_widget">Template Widget</string>
-    <string name="basic_sensor_name_high_accuracy_mode">High Accuracy Mode</string>
+  <string name="basic_sensor_name_high_accuracy_mode">High Accuracy Mode</string>
   <string name="sensor_description_high_accuracy_mode">Whether or not high accuracy mode is active on the device</string>
   <string name="connect">Connect</string>
   <string name="welcome_hass">Welcome to Home Assistant Companion!</string>
