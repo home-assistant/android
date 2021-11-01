@@ -5,13 +5,13 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,13 +41,15 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
-import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.viewModels.EntityViewModel
 import javax.inject.Inject
 
 class HomeActivity : ComponentActivity(), HomeView {
 
     @Inject
     lateinit var presenter: HomePresenter
+
+    val entityViewModel by viewModels<EntityViewModel>()
 
     companion object {
         private const val TAG = "HomeActivity"
@@ -68,11 +70,9 @@ class HomeActivity : ComponentActivity(), HomeView {
             .inject(this)
 
         if (presenter.onViewReady()) {
-            val entities = runBlocking {
-                presenter.getEntities()
-            }
             setContent {
-                LoadHomePage(entities)
+                LoadHomePage(entities = entityViewModel.entitiesResponse)
+                entityViewModel.getEntities(applicationContext)
             }
         }
     }
@@ -109,11 +109,7 @@ class HomeActivity : ComponentActivity(), HomeView {
             entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "switch" }
 
         val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
-        val scenesRemembered = rememberSaveable { scenes }
-        val inputBooleansRemembered = rememberSaveable { inputBooleans }
-        val lightsRemembered = rememberSaveable { lights }
-        val scriptsRemembered = rememberSaveable { scripts }
-        val switchesRemembered = rememberSaveable { switches }
+
         MaterialTheme {
             Scaffold(
                 positionIndicator = {
@@ -133,40 +129,40 @@ class HomeActivity : ComponentActivity(), HomeView {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     state = scalingLazyListState
                 ) {
-                    if (inputBooleansRemembered.isNotEmpty()) {
-                        items(inputBooleansRemembered.size) { index ->
+                    if (inputBooleans.isNotEmpty()) {
+                        items(inputBooleans.size) { index ->
                             if (index == 0)
                                 SetTitle(R.string.input_booleans)
-                            SetEntityUI(inputBooleansRemembered[index], index)
+                            SetEntityUI(inputBooleans[index], index)
                         }
                     }
-                    if (lightsRemembered.isNotEmpty()) {
-                        items(lightsRemembered.size) { index ->
+                    if (lights.isNotEmpty()) {
+                        items(lights.size) { index ->
                             if (index == 0)
                                 SetTitle(R.string.lights)
-                            SetEntityUI(lightsRemembered[index], index)
+                            SetEntityUI(lights[index], index)
                         }
                     }
-                    if (scenesRemembered.isNotEmpty()) {
-                        items(scenesRemembered.size) { index ->
+                    if (scenes.isNotEmpty()) {
+                        items(scenes.size) { index ->
                             if (index == 0)
                                 SetTitle(R.string.scenes)
 
-                            SetEntityUI(scenesRemembered[index], index)
+                            SetEntityUI(scenes[index], index)
                         }
                     }
-                    if (scriptsRemembered.isNotEmpty()) {
-                        items(scriptsRemembered.size) { index ->
+                    if (scripts.isNotEmpty()) {
+                        items(scripts.size) { index ->
                             if (index == 0)
                                 SetTitle(R.string.scripts)
-                            SetEntityUI(scriptsRemembered[index], index)
+                            SetEntityUI(scripts[index], index)
                         }
                     }
-                    if (switchesRemembered.isNotEmpty()) {
-                        items(switchesRemembered.size) { index ->
+                    if (switches.isNotEmpty()) {
+                        items(switches.size) { index ->
                             if (index == 0)
                                 SetTitle(R.string.switches)
-                            SetEntityUI(switchesRemembered[index], index)
+                            SetEntityUI(switches[index], index)
                         }
                     }
 

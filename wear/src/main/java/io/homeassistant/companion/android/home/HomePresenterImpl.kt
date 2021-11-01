@@ -47,15 +47,6 @@ class HomePresenterImpl @Inject constructor(
         return isRegistered
     }
 
-    override suspend fun getEntities(): Array<Entity<Any>> {
-        return try {
-            integrationUseCase.getEntities()
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get entities", e)
-            emptyArray()
-        }
-    }
-
     override fun onEntityClicked(entity: Entity<Any>) {
 
         if (entity.entityId.split(".")[0] in toggleDomains) {
