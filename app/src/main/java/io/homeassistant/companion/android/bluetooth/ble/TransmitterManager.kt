@@ -31,7 +31,7 @@ object TransmitterManager {
     private fun validateInputs(haTransmitter: IBeaconTransmitter): Boolean {
         try {
             UUID.fromString(haTransmitter.uuid)
-            if (haTransmitter.major.toInt() < 0 || haTransmitter.major.toInt() > 65535 || haTransmitter.minor.toInt() < 0 || haTransmitter.minor.toInt() > 65535 || haTransmitter.measuredPowerSetting >=0 )
+            if (haTransmitter.major.toInt() < 0 || haTransmitter.major.toInt() > 65535 || haTransmitter.minor.toInt() < 0 || haTransmitter.minor.toInt() > 65535 || haTransmitter.measuredPowerSetting >= 0)
                 throw IllegalArgumentException("Invalid Major or Minor")
         } catch (e: IllegalArgumentException) {
             stopTransmitting(haTransmitter)
@@ -102,7 +102,6 @@ object TransmitterManager {
             "low" -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
             else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
         }
-
 
     fun stopTransmitting(haTransmitter: IBeaconTransmitter) {
         if (haTransmitter.transmitting && this::physicalTransmitter.isInitialized) {
