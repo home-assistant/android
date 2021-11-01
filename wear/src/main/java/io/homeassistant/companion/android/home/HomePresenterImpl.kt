@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class HomePresenterImpl @Inject constructor(
@@ -31,20 +30,17 @@ class HomePresenterImpl @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onViewReady(): Boolean {
-        var isRegistered = false
-        runBlocking {
+    override fun onViewReady() {
+        mainScope.launch {
             val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
             if (sessionValid && integrationUseCase.isRegistered()) {
                 resyncRegistration()
-                isRegistered = true
             } else if (sessionValid) {
                 view.displayMobileAppIntegration()
             } else {
                 view.displayOnBoarding()
             }
         }
-        return isRegistered
     }
 
     override fun onEntityClicked(entity: Entity<Any>) {

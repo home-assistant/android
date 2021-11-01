@@ -4,7 +4,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 
 interface HomePresenter {
 
-    fun onViewReady(): Boolean
+    fun onViewReady()
     fun onEntityClicked(entity: Entity<Any>)
     fun onLogoutClicked()
     fun onFinish()

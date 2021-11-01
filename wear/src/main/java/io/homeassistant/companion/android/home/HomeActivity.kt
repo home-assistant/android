@@ -69,11 +69,10 @@ class HomeActivity : ComponentActivity(), HomeView {
             .build()
             .inject(this)
 
-        if (presenter.onViewReady()) {
-            setContent {
-                LoadHomePage(entities = entityViewModel.entitiesResponse)
-                entityViewModel.getEntities(applicationContext)
-            }
+        presenter.onViewReady()
+        setContent {
+            LoadHomePage(entities = entityViewModel.entitiesResponse)
+            entityViewModel.getEntities(applicationContext)
         }
     }
 
