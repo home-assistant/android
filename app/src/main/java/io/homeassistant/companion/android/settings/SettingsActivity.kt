@@ -17,10 +17,10 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_activity_settings, menu)
 
-        (menu?.findItem(R.id.action_search)?.actionView as SearchView).apply {
+        (menu.findItem(R.id.action_search)?.actionView as SearchView).apply {
             queryHint = getString(R.string.search_sensors)
             maxWidth = Integer.MAX_VALUE
         }

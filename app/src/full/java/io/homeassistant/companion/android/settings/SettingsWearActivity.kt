@@ -39,7 +39,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
     private var wearNodesWithApp: Set<Node>? = null
     private var allConnectedNodes: List<Node>? = null
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_activity_settings_wear, menu)
         return true
     }
