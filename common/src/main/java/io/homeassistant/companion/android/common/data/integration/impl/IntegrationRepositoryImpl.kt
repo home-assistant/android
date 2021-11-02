@@ -406,7 +406,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         val current = System.currentTimeMillis()
         val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
         if (current > next)
-            localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (1440)) // 4 hours
+            localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (14400000)) // 4 hours
         else
             return localStorage.getString(PREF_HA_VERSION) ?: "" // Skip checking HA version as it has not been 4 hours yet
 
