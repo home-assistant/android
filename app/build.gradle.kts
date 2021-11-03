@@ -128,6 +128,7 @@ play {
 }
 
 dependencies {
+    val composeVersion = "1.0.5"
     implementation(project(":common"))
 
     implementation("com.github.Dimezis:BlurView:version-1.6.6")
@@ -182,15 +183,15 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
     implementation("com.google.android.exoplayer:extension-cronet:2.15.1")
 
-    implementation("androidx.compose.animation:animation:1.0.4")
-    implementation("androidx.compose.compiler:compiler:1.0.4")
-    implementation("androidx.compose.foundation:foundation:1.0.4")
-    implementation("androidx.compose.material:material:1.0.4")
-    implementation("androidx.compose.material:material-icons-core:1.0.4")
-    implementation("androidx.compose.material:material-icons-extended:1.0.4")
-    implementation("androidx.compose.runtime:runtime:1.0.4")
-    implementation("androidx.compose.ui:ui:1.0.4")
-    implementation("androidx.compose.ui:ui-tooling:1.0.4")
+    implementation("androidx.compose.animation:animation:$composeVersion")
+    implementation("androidx.compose.compiler:compiler:$composeVersion")
+    implementation("androidx.compose.foundation:foundation:$composeVersion")
+    implementation("androidx.compose.material:material:$composeVersion")
+    implementation("androidx.compose.material:material-icons-core:$composeVersion")
+    implementation("androidx.compose.material:material-icons-extended:$composeVersion")
+    implementation("androidx.compose.runtime:runtime:$composeVersion")
+    implementation("androidx.compose.ui:ui:$composeVersion")
+    implementation("androidx.compose.ui:ui-tooling:$composeVersion")
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("com.google.android.material:compose-theme-adapter:1.0.4")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.0")
