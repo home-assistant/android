@@ -158,8 +158,7 @@ class SensorReceiver : BroadcastReceiver() {
             return
         }
 
-        integrationUseCase.setInstalledAppVersion(BuildConfig.VERSION_NAME)
-        val currentAppVersion = integrationUseCase.getInstalledAppVersion()
+        val currentAppVersion = BuildConfig.VERSION_NAME
         val currentHAversion = integrationUseCase.getHomeAssistantVersion()
 
         MANAGERS.forEach { manager ->

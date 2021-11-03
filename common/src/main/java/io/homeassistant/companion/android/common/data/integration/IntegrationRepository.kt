@@ -35,8 +35,6 @@ interface IntegrationRepository {
     suspend fun getThemeColor(): String
 
     suspend fun getHomeAssistantVersion(): String
-    suspend fun setInstalledAppVersion(version: String)
-    suspend fun getInstalledAppVersion(): String
 
     suspend fun getServices(): Array<Service>
 

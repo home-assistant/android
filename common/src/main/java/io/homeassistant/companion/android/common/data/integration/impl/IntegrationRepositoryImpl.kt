@@ -340,14 +340,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
-    override suspend fun setInstalledAppVersion(version: String) {
-        localStorage.putString(PREF_INSTALLED_APP_VERSION, version)
-    }
-
-    override suspend fun getInstalledAppVersion(): String {
-        return localStorage.getString(PREF_INSTALLED_APP_VERSION) ?: ""
-    }
-
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
         val requestBody = RateLimitRequest(pushToken)
