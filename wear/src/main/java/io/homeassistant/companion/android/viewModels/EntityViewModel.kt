@@ -9,8 +9,4 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 class EntityViewModel : ViewModel() {
 
     var entitiesResponse: Array<Entity<Any>> by mutableStateOf(arrayOf())
-
-    companion object {
-        private const val TAG = "EntityViewModel"
-    }
 }
