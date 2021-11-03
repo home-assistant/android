@@ -299,7 +299,7 @@ like to connect to:</string>
   <string name="sensor_description_battery_health">The health of the battery</string>
   <string name="sensor_description_battery_level">The current battery level of the device</string>
   <string name="sensor_description_battery_state">The current charging state of the battery</string>
-  <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant or esp32-mqtt-room projects.\nBy default this sensor is not turned on with the Enable all toggle, to avoid battery drain, there is a setting to enable this (\"Include when enabling all sensors\").\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
+  <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\nBy default this sensor is not turned on with the Enable all toggle, to avoid battery drain, there is a setting to enable this (\"Include when enabling all sensors\").\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)#n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
   <string name="sensor_description_bluetooth_connection">Information about currently connected bluetooth devices</string>
   <string name="sensor_description_bluetooth_state">Whether or not bluetooth is enabled on the device</string>
   <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
@@ -565,6 +565,7 @@ like to connect to:</string>
   <string name="sensor_setting_location_ham_only_bt_dev_title">High accuracy mode only when connected to BT devices</string>
   <string name="sensor_setting_location_ham_only_enter_zone_title">High accuracy mode only when entering zone</string>
   <string name="sensor_setting_location_ham_trigger_range_title">High accuracy mode trigger range for zone (meters)</string>
+  <string name="sensor_setting_ble_measured_power_at_1m_title">Measured power</string>
   <string name="sensor_setting_ble_transmit_power_title">Transmitter power</string>
   <string name="sensor_setting_ble_transmit_power_high_label">High</string>
   <string name="sensor_setting_ble_transmit_power_low_label">Low</string>

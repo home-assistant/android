@@ -15,7 +15,7 @@ object TransmitterManager {
 
     private fun buildBeacon(haTransmitterI: IBeaconTransmitter): Beacon {
         val builder = Beacon.Builder()
-        builder.setTxPower(getReferencePowerInDbs(haTransmitterI))
+        builder.setTxPower(haTransmitterI.measuredPowerSetting)
         builder.setId1(haTransmitterI.uuid)
         builder.setId2(haTransmitterI.major)
         builder.setId3(haTransmitterI.minor)
@@ -31,11 +31,11 @@ object TransmitterManager {
     private fun validateInputs(haTransmitter: IBeaconTransmitter): Boolean {
         try {
             UUID.fromString(haTransmitter.uuid)
-            if (haTransmitter.major.toInt() < 0 || haTransmitter.major.toInt() > 65535 || haTransmitter.minor.toInt() < 0 || haTransmitter.minor.toInt() > 65535)
+            if (haTransmitter.major.toInt() < 0 || haTransmitter.major.toInt() > 65535 || haTransmitter.minor.toInt() < 0 || haTransmitter.minor.toInt() > 65535 || haTransmitter.measuredPowerSetting >= 0)
                 throw IllegalArgumentException("Invalid Major or Minor")
         } catch (e: IllegalArgumentException) {
             stopTransmitting(haTransmitter)
-            haTransmitter.state = "Invalid parameters, check UUID, Major and Minor"
+            haTransmitter.state = "Invalid parameters, check UUID, Major and Minor, and Measured Power settings."
             return false
         }
         return true
@@ -101,15 +101,6 @@ object TransmitterManager {
             "medium" -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
             "low" -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
             else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
-        }
-
-    private fun getReferencePowerInDbs(haTransmitter: IBeaconTransmitter) =
-        // from https://github.com/home-assistant/android/issues/1715, below values correspond to the PowerLevels, using reference phone of S5
-        when (haTransmitter.transmitPowerSetting) {
-            "high" -> -74
-            "medium" -> -84
-            "low" -> -90
-            else -> -94
         }
 
     fun stopTransmitting(haTransmitter: IBeaconTransmitter) {

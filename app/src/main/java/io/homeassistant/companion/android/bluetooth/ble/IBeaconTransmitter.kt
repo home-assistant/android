@@ -8,6 +8,7 @@ data class IBeaconTransmitter(
     var transmitRequested: Boolean = false,
     var state: String,
     var transmitPowerSetting: String,
+    var measuredPowerSetting: Int,
     var advertiseModeSetting: String,
     var restartRequired: Boolean = false,
     val manufacturer: Int = 0x004c,
