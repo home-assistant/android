@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "io.homeassistant.companion.android"
-        minSdk = 23
+        minSdk = 25
         targetSdk = 30
 
         versionName = System.getenv("VERSION") ?: "LOCAL"
@@ -26,6 +26,11 @@ android {
 
     buildFeatures {
         viewBinding = true
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.0.4"
     }
 
     compileOptions {
@@ -74,7 +79,7 @@ play {
 dependencies {
     implementation(project(":common"))
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
 
     implementation("com.google.android.material:material:1.4.0")
 
@@ -89,4 +94,11 @@ dependencies {
     implementation("com.mikepenz:iconics-core:5.3.2")
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
+    implementation("com.mikepenz:iconics-compose:5.3.2")
+
+    implementation("androidx.activity:activity-compose:1.4.0")
+    implementation("androidx.compose.compiler:compiler:1.0.4")
+    implementation("androidx.compose.foundation:foundation:1.0.4")
+    implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha09")
+    implementation("androidx.wear.compose:compose-material:1.0.0-alpha09")
 }

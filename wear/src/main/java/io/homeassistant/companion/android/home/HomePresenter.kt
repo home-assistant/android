@@ -6,7 +6,6 @@ interface HomePresenter {
 
     fun onViewReady()
     fun onEntityClicked(entity: Entity<Any>)
-    fun onButtonClicked(id: String)
     fun onLogoutClicked()
     fun onFinish()
 }
