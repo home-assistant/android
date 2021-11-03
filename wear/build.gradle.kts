@@ -89,7 +89,7 @@ dependencies {
     compileOnly("com.google.android.wearable:wearable:2.8.1")
 
     implementation("com.google.dagger:dagger:2.40")
-    kapt("com.google.dagger:dagger-compiler:2.39.1")
+    kapt("com.google.dagger:dagger-compiler:2.40")
 
     implementation("com.mikepenz:iconics-core:5.3.2")
     implementation("androidx.appcompat:appcompat:1.3.1")
