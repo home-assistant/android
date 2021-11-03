@@ -21,7 +21,7 @@ class HomePresenterImpl @Inject constructor(
 ) : HomePresenter {
 
     companion object {
-        private val toggleDomains = listOf(
+        val toggleDomains = listOf(
             "cover", "fan", "humidifier", "input_boolean", "light",
             "media_player", "remote", "siren", "switch"
         )
@@ -40,6 +40,15 @@ class HomePresenterImpl @Inject constructor(
             } else {
                 view.displayOnBoarding()
             }
+        }
+    }
+
+    override suspend fun getEntities(): Array<Entity<Any>> {
+        return try {
+            integrationUseCase.getEntities()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get entities", e)
+            emptyArray()
         }
     }
 
