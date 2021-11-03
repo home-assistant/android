@@ -41,7 +41,9 @@ data class SensorWithAttributes(
             attributes,
             sensor.name,
             sensor.deviceClass,
-            sensor.unitOfMeasurement
+            sensor.unitOfMeasurement,
+            sensor.stateClass,
+            sensor.entityCategory
         )
     }
 }

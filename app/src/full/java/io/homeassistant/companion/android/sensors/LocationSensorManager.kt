@@ -88,7 +88,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             "high_accuracy_mode",
             "binary_sensor",
             R.string.basic_sensor_name_high_accuracy_mode,
-            R.string.sensor_description_high_accuracy_mode
+            R.string.sensor_description_high_accuracy_mode,
+            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         internal const val TAG = "LocBroadcastReceiver"
 

@@ -20,7 +20,8 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
             "proximity_sensor",
             "sensor",
             R.string.sensor_name_proximity,
-            R.string.sensor_description_proximity_sensor
+            R.string.sensor_description_proximity_sensor,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 

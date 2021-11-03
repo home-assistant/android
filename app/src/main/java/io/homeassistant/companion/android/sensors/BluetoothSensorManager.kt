@@ -38,19 +38,22 @@ class BluetoothSensorManager : SensorManager {
             "sensor",
             R.string.basic_sensor_name_bluetooth,
             R.string.sensor_description_bluetooth_connection,
-            unitOfMeasurement = "connection(s)"
+            unitOfMeasurement = "connection(s)",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
         val bluetoothState = SensorManager.BasicSensor(
             "bluetooth_state",
             "binary_sensor",
             R.string.basic_sensor_name_bluetooth_state,
-            R.string.sensor_description_bluetooth_state
+            R.string.sensor_description_bluetooth_state,
+            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         val bleTransmitter = SensorManager.BasicSensor(
             "ble_emitter",
             "sensor",
             R.string.basic_sensor_name_bluetooth_ble_emitter,
-            R.string.sensor_description_bluetooth_ble_emitter
+            R.string.sensor_description_bluetooth_ble_emitter,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
         fun enableDisableBLETransmitter(context: Context, transmitEnabled: Boolean) {

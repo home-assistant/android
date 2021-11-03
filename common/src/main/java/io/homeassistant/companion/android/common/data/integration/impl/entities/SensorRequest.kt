@@ -11,6 +11,7 @@ data class SensorRequest<T>(
     val attributes: Map<String, Any>,
     val name: String? = null,
     val deviceClass: String? = null,
-    val unitOfMeasurement: String? = null
-
+    val unitOfMeasurement: String? = null,
+    val stateClass: String? = null,
+    val entityCategory: String? = null
 )

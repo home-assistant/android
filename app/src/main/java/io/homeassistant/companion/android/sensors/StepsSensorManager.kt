@@ -23,7 +23,8 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             "sensor",
             R.string.sensor_name_steps,
             R.string.sensor_description_steps_sensor,
-            unitOfMeasurement = "steps"
+            unitOfMeasurement = "steps",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING
         )
     }
 
