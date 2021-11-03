@@ -143,7 +143,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
 
-    implementation("com.google.dagger:dagger:2.39.1")
+    implementation("com.google.dagger:dagger:2.40")
     kapt("com.google.dagger:dagger-compiler:2.39.1")
 
     implementation("androidx.appcompat:appcompat:1.3.1")
