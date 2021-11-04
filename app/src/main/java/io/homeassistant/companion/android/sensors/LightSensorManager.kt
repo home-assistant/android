@@ -82,7 +82,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event != null && event.sensor.type == Sensor.TYPE_LIGHT) {
+        if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
             onSensorUpdated(
                 latestContext,
                 lightSensor,

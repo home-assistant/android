@@ -93,7 +93,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event != null && event.sensor.type == Sensor.TYPE_STEP_COUNTER) {
+        if (event?.sensor?.type == Sensor.TYPE_STEP_COUNTER) {
             onSensorUpdated(
                 latestContext,
                 stepsSensor,

@@ -80,7 +80,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event != null && event.sensor.type == Sensor.TYPE_PROXIMITY) {
+        if (event?.sensor?.type == Sensor.TYPE_PROXIMITY) {
             val sensorValue = event.values[0].roundToInt()
             val state =
                 when {
