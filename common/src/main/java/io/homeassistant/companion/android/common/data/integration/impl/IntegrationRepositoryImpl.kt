@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import okhttp3.HttpUrl.Companion.get
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
 import kotlin.Exception
@@ -64,6 +65,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
+
+        private val VERSION_PATTERN = Pattern.compile("([0-9]{4})\\.([0-9]{1,2})\\.([0-9]{1,2}).*")
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -397,9 +400,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         val current = System.currentTimeMillis()
         val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
-        if (current > next)
-            localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (14400000)) // 4 hours
-        else
+        if (current <= next)
             return localStorage.getString(PREF_HA_VERSION) ?: "" // Skip checking HA version as it has not been 4 hours yet
 
         for (it in urlRepository.getApiUrls()) {
@@ -412,6 +413,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
             if (response != null) {
                 localStorage.putString(PREF_HA_VERSION, response.version)
+                localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (14400000)) // 4 hours
                 return response.version
             }
         }
@@ -461,12 +463,13 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
-        val version = getHomeAssistantVersion().split(".")
+        val version = getHomeAssistantVersion()
+        val matches = VERSION_PATTERN.matcher(version)
         var canRegisterCategoryStateClass = false
-        if (version.size >= 3) {
-            val year = Integer.parseInt(version[0])
-            val month = Integer.parseInt(version[1])
-            val release = Integer.parseInt(version[2])
+        if (matches.find() && matches.matches()) {
+            val year = Integer.parseInt(matches.group(1) ?: "0")
+            val month = Integer.parseInt(matches.group(2) ?: "0")
+            val release = Integer.parseInt(matches.group(3) ?: "0")
             canRegisterCategoryStateClass =
                 year > 2021 || (year == 2021 && month >= 11 && release >= 0)
         }
