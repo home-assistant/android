@@ -8,15 +8,14 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.lifecycle.ViewModelProvider
+import androidx.activity.viewModels
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.UrlHandler
 
 class NfcSetupActivity : BaseActivity() {
 
-    // private val viewModel: NfcViewModel by viewModels()
-    private lateinit var viewModel: NfcViewModel
+    private val viewModel: NfcViewModel by viewModels()
     private var mNfcAdapter: NfcAdapter? = null
     private var simpleWrite = false
     private var messageId: Int = -1
@@ -43,7 +42,6 @@ class NfcSetupActivity : BaseActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this)
-        viewModel = ViewModelProvider(this).get(NfcViewModel::class.java)
 
         intent.getStringExtra(EXTRA_TAG_VALUE)?.let {
             simpleWrite = true

@@ -10,9 +10,8 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.databinding.ActivityMyBinding
 import io.homeassistant.companion.android.webview.WebViewActivity
-import kotlinx.android.synthetic.main.activity_webview.webview
 
 class MyActivity : BaseActivity() {
     companion object {
@@ -28,7 +27,9 @@ class MyActivity : BaseActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_my)
+
+        val binding = ActivityMyBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         if (Intent.ACTION_VIEW == intent?.action && intent.data != null) {
             if (intent.data?.getQueryParameter("mobile")?.equals("1") == true) {
@@ -41,7 +42,7 @@ class MyActivity : BaseActivity() {
                 WebView.setWebContentsDebuggingEnabled(true)
             }
 
-            webview.apply {
+            binding.webview.apply {
                 settings.javaScriptEnabled = true
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(
@@ -58,7 +59,7 @@ class MyActivity : BaseActivity() {
                     }
                 }
             }
-            webview.loadUrl(newUri.toString())
+            binding.webview.loadUrl(newUri.toString())
         }
     }
 }

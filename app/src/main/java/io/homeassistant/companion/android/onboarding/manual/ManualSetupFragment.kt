@@ -7,16 +7,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.webkit.URLUtil
-import android.widget.Button
-import android.widget.EditText
-import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import com.google.android.material.textfield.TextInputLayout
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.databinding.FragmentManualSetupBinding
 import javax.inject.Inject
 
 class ManualSetupFragment : Fragment(), ManualSetupView {
@@ -29,6 +26,8 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
 
     @Inject
     lateinit var presenter: ManualSetupPresenter
+
+    private var binding: FragmentManualSetupBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,26 +44,29 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_manual_setup, container, false).apply {
-            findViewById<AppCompatEditText>(R.id.home_assistant_url).addTextChangedListener { text ->
-                findViewById<Button>(R.id.ok).isEnabled = URLUtil.isValidUrl(text.toString()) && Patterns.WEB_URL.matcher(text.toString()).matches()
-            }
-            findViewById<AppCompatEditText>(R.id.home_assistant_url).setOnEditorActionListener { _, actionId, _ ->
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    submitForm()
-                    return@setOnEditorActionListener true
-                }
-                return@setOnEditorActionListener false
-            }
-            findViewById<Button>(R.id.ok).setOnClickListener {
-                submitForm()
-            }
+    ): View {
+        val binding = FragmentManualSetupBinding.inflate(inflater, container, false)
+
+        binding.homeAssistantUrl.addTextChangedListener { text ->
+            binding.ok.isEnabled = URLUtil.isValidUrl(text.toString()) && Patterns.WEB_URL.matcher(text.toString()).matches()
         }
+        binding.homeAssistantUrl.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                submitForm()
+                return@setOnEditorActionListener true
+            }
+            return@setOnEditorActionListener false
+        }
+        binding.ok.setOnClickListener {
+            submitForm()
+        }
+
+        this.binding = binding
+        return binding.root
     }
 
-    private fun View.submitForm() {
-        presenter.onClickOk(findViewById<EditText>(R.id.home_assistant_url).text.toString())
+    private fun submitForm() {
+        presenter.onClickOk(binding!!.homeAssistantUrl.text.toString())
     }
 
     override fun urlSaved() {
@@ -72,8 +74,13 @@ class ManualSetupFragment : Fragment(), ManualSetupView {
     }
 
     override fun displayUrlError() {
-        view?.findViewById<TextInputLayout>(R.id.url_text_layout)?.error =
+        binding?.urlTextLayout?.error =
             getString(R.string.url_parse_error)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
     }
 
     override fun onDestroy() {

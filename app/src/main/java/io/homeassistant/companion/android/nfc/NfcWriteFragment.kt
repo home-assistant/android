@@ -5,34 +5,34 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import io.homeassistant.companion.android.R
-import kotlinx.android.synthetic.main.fragment_nfc_write.*
+import io.homeassistant.companion.android.databinding.FragmentNfcWriteBinding
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
  */
 class NfcWriteFragment : Fragment() {
 
-    private lateinit var viewModel: NfcViewModel
+    private var _binding: FragmentNfcWriteBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: NfcViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        viewModel = ViewModelProvider(requireActivity()).get(NfcViewModel::class.java)
-
-        return inflater.inflate(R.layout.fragment_nfc_write, container, false)
+    ): View {
+        _binding = FragmentNfcWriteBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
         val nfcWriteTagObserver = Observer<String> {
-            tv_instructions_write_nfc.text = getString(R.string.nfc_write_tag_instructions, it)
+            binding.tvInstructionsWriteNfc.text = getString(R.string.nfc_write_tag_instructions, it)
         }
         viewModel.nfcWriteTagEvent.observe(viewLifecycleOwner, nfcWriteTagObserver)
 
@@ -40,5 +40,10 @@ class NfcWriteFragment : Fragment() {
             findNavController().navigate(R.id.action_NFC_EDIT)
         }
         viewModel.nfcWriteTagDoneEvent.observe(viewLifecycleOwner, nfcWriteTagDoneObserver)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

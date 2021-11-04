@@ -38,9 +38,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.CheckBox
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -56,7 +54,6 @@ import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.video.VideoSize
-import com.google.android.material.textfield.TextInputEditText
 import eightbitlab.com.blurview.RenderScriptBlur
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
@@ -68,6 +65,10 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
+import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
+import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
+import io.homeassistant.companion.android.databinding.ExoPlayerControlViewBinding
+import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -77,9 +78,6 @@ import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
-import kotlinx.android.synthetic.main.activity_webview.*
-import kotlinx.android.synthetic.main.exo_player_control_view.*
-import kotlinx.android.synthetic.main.exo_player_view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -131,12 +129,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @Inject
     lateinit var urlRepository: UrlRepository
 
+    private lateinit var binding: ActivityWebviewBinding
     private lateinit var webView: WebView
     private lateinit var loadedUrl: String
     private lateinit var decor: FrameLayout
     private lateinit var myCustomView: View
     private lateinit var authenticator: Authenticator
     private lateinit var exoPlayerView: PlayerView
+    private lateinit var playerBinding: ExoPlayerViewBinding
+    private lateinit var playerControllerBinding: ExoPlayerControlViewBinding
     private lateinit var currentLang: String
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
@@ -162,6 +163,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        binding = ActivityWebviewBinding.inflate(layoutInflater)
         setContentView(R.layout.activity_webview)
 
         DaggerPresenterComponent
@@ -175,31 +178,35 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             WebView.setWebContentsDebuggingEnabled(true)
         }
 
-        blurView.setupWith(root)
+        binding.blurView.setupWith(binding.root)
             .setBlurAlgorithm(RenderScriptBlur(this))
             .setBlurRadius(5f)
             .setHasFixedTransformationMatrix(false)
 
-        exoPlayerView = findViewById(R.id.exoplayerView)
+        exoPlayerView = binding.exoplayerView
         exoPlayerView.visibility = View.GONE
         exoPlayerView.setBackgroundColor(Color.BLACK)
         exoPlayerView.alpha = 1f
         exoPlayerView.setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
         exoPlayerView.controllerHideOnTouch = true
         exoPlayerView.controllerShowTimeoutMs = 2000
-        exo_fullscreen_icon.setOnClickListener(object : View.OnClickListener {
+
+        playerBinding = ExoPlayerViewBinding.bind(exoPlayerView)
+        playerControllerBinding = ExoPlayerControlViewBinding.bind(exoPlayerView)
+
+        playerControllerBinding.exoFullscreenIcon.setOnClickListener(object : View.OnClickListener {
             override fun onClick(view: View) {
                 isExoFullScreen = !isExoFullScreen
                 exoResizeLayout()
             }
         })
-        exo_mute_icon.setOnClickListener(object : View.OnClickListener {
+        playerControllerBinding.exoMuteIcon.setOnClickListener(object : View.OnClickListener {
             override fun onClick(view: View) {
                 exoToggleMute()
             }
         })
         if (!presenter.isLockEnabled()) {
-            blurView.setBlurEnabled(false)
+            binding.blurView.setBlurEnabled(false)
             unlocked = true
         }
 
@@ -207,7 +214,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         decor = window.decorView as FrameLayout
 
-        webView = findViewById(R.id.webview)
+        webView = binding.webview
         webView.apply {
             setOnTouchListener { _, motionEvent ->
                 if (motionEvent.pointerCount == 3 && motionEvent.action == MotionEvent.ACTION_POINTER_3_DOWN) {
@@ -588,7 +595,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             (!unlocked && presenter.isLockEnabled() && System.currentTimeMillis() < presenter.getSessionExpireMillis())
         ) {
             unlocked = true
-            blurView.setBlurEnabled(false)
+            binding.blurView.setBlurEnabled(false)
         }
 
         if (presenter.isKeepScreenOnEnabled())
@@ -733,7 +740,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoMute = !exoMute
         if (exoMute) {
             exoPlayer?.volume = 0f
-            exo_mute_icon.setImageDrawable(
+            playerControllerBinding.exoMuteIcon.setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
                     R.drawable.ic_baseline_volume_off_24
@@ -741,7 +748,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             )
         } else {
             exoPlayer?.volume = 1f
-            exo_mute_icon.setImageDrawable(
+            playerControllerBinding.exoMuteIcon.setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
                     R.drawable.ic_baseline_volume_up_24
@@ -754,14 +761,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val exoLayoutParams = exoPlayerView.layoutParams as FrameLayout.LayoutParams
         if (isExoFullScreen) {
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                exo_content_frame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+                playerBinding.exoContentFrame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
             } else {
-                exo_content_frame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
+                playerBinding.exoContentFrame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
             }
             exoLayoutParams.setMargins(0, 0, 0, 0)
             exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
             exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
-            exo_fullscreen_icon.setImageDrawable(
+            playerControllerBinding.exoFullscreenIcon.setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
                     R.drawable.ic_baseline_fullscreen_exit_24
@@ -769,7 +776,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             )
             hideSystemUI()
         } else {
-            exo_content_frame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+            playerBinding.exoContentFrame.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
             exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.WRAP_CONTENT
             exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
             val screenWidth: Int = resources.displayMetrics.widthPixels
@@ -780,7 +787,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 maxOf(screenWidth - exoRight, 0),
                 maxOf(screenHeight - exoBottom, 0)
             )
-            exo_fullscreen_icon.setImageDrawable(
+            playerControllerBinding.exoFullscreenIcon.setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
                     R.drawable.ic_baseline_fullscreen_24
@@ -836,7 +843,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             Authenticator.SUCCESS -> {
                 Log.d(TAG, "Authentication successful, unlocking app")
                 unlocked = true
-                blurView.setBlurEnabled(false)
+                binding.blurView.setBlurEnabled(false)
             }
             Authenticator.CANCELED -> {
                 Log.d(TAG, "Authentication canceled by user, closing activity")
@@ -851,10 +858,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (hasFocus) {
             if (presenter.isLockEnabled() && !unlocked)
                 if ((System.currentTimeMillis() > presenter.getSessionExpireMillis())) {
-                    blurView.setBlurEnabled(true)
+                    binding.blurView.setBlurEnabled(true)
                     authenticator.authenticate(getString(R.string.biometric_title))
                 } else {
-                    blurView.setBlurEnabled(false)
+                    binding.blurView.setBlurEnabled(false)
                 }
 
             val path = intent.getStringExtra(EXTRA_PATH)
@@ -1136,12 +1143,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val authenticationDao = AppDatabase.getInstance(applicationContext).authenticationDao()
         val httpAuth = authenticationDao.get((resourceURL + realm))
 
-        val inflater = layoutInflater
-        val dialogLayout = inflater.inflate(R.layout.dialog_authentication, null)
-        val username = dialogLayout.findViewById<TextInputEditText>(R.id.username)
-        val password = dialogLayout.findViewById<TextInputEditText>(R.id.password)
-        val remember = dialogLayout.findViewById<CheckBox>(R.id.checkBox)
-        val viewPassword = dialogLayout.findViewById<ImageView>(R.id.viewPassword)
+        val dialogLayout = DialogAuthenticationBinding.inflate(layoutInflater)
+        val username = dialogLayout.username
+        val password = dialogLayout.password
+        val remember = dialogLayout.checkBox
+        val viewPassword = dialogLayout.viewPassword
         var autoAuth = false
 
         viewPassword.setOnClickListener {
@@ -1175,7 +1181,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             AlertDialog.Builder(this, R.style.Authentication_Dialog)
                 .setTitle(R.string.auth_request)
                 .setMessage(message)
-                .setView(dialogLayout)
+                .setView(dialogLayout.root)
                 .setPositiveButton(android.R.string.ok) { _, _ ->
                     if (username.text.toString() != "" && password.text.toString() != "") {
                         if (remember.isChecked) {

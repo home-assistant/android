@@ -58,7 +58,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
         binding = ActivitySettingsWearBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setSupportActionBar(findViewById(R.id.toolbar))
+        setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         capabilityClient = Wearable.getCapabilityClient(this)
         nodeClient = Wearable.getNodeClient(this)

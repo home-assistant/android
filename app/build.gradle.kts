@@ -5,7 +5,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("kotlin-kapt")
-    id("kotlin-android-extensions")
+    id("kotlin-parcelize")
     id("com.google.firebase.appdistribution")
     id("com.github.triplet.play")
     id("com.google.gms.google-services")
