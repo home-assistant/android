@@ -32,6 +32,8 @@ import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.ToggleChip
+import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
@@ -44,6 +46,10 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import io.homeassistant.companion.android.viewModels.EntityViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class HomeActivity : ComponentActivity(), HomeView {
@@ -52,6 +58,7 @@ class HomeActivity : ComponentActivity(), HomeView {
     lateinit var presenter: HomePresenter
 
     private val entityViewModel by viewModels<EntityViewModel>()
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     companion object {
         private const val TAG = "HomeActivity"
@@ -72,9 +79,9 @@ class HomeActivity : ComponentActivity(), HomeView {
             .inject(this)
 
         presenter.onViewReady()
+        updateEntities()
         setContent {
             LoadHomePage(entities = entityViewModel.entitiesResponse)
-            entityViewModel.getEntities(applicationContext)
         }
     }
 
@@ -235,26 +242,58 @@ class HomeActivity : ComponentActivity(), HomeView {
                 }
             }
 
-        Chip(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = if (index == 0) 30.dp else 10.dp),
-            icon = {
-                if (iconBitmap != null) {
-                    Image(asset = iconBitmap)
-                } else
-                    Image(asset = CommunityMaterial.Icon.cmd_cellphone)
-            },
-            label = {
-                Text(
-                    text = attributes["friendly_name"].toString(),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+        if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
+            ToggleChip(
+                checked = entity.state == "on",
+                onCheckedChange = {
+                    presenter.onEntityClicked(entity)
+                    updateEntities()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = if (index == 0) 30.dp else 10.dp),
+                appIcon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
+                label = {
+                    Text(
+                        text = attributes["friendly_name"].toString(),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                enabled = entity.state != "unavailable",
+                toggleIcon = { ToggleChipDefaults.SwitchIcon(entity.state == "on") },
+                colors = ToggleChipDefaults.toggleChipColors(
+                    checkedStartBackgroundColor = colorResource(id = R.color.colorAccent),
+                    checkedEndBackgroundColor = colorResource(id = R.color.colorAccent),
+                    uncheckedStartBackgroundColor = colorResource(id = R.color.colorAccent),
+                    uncheckedEndBackgroundColor = colorResource(id = R.color.colorAccent),
+                    checkedContentColor = Color.Black,
+                    uncheckedContentColor = Color.Black,
+                    checkedToggleIconTintColor = Color.Yellow,
+                    uncheckedToggleIconTintColor = Color.DarkGray
                 )
-            },
-            onClick = { presenter.onEntityClicked(entity) },
-            colors = setChipDefaults()
-        )
+            )
+        } else {
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = if (index == 0) 30.dp else 10.dp),
+                icon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
+                label = {
+                    Text(
+                        text = attributes["friendly_name"].toString(),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                enabled = entity.state != "unavailable",
+                onClick = {
+                    presenter.onEntityClicked(entity)
+                    updateEntities()
+                },
+                colors = setChipDefaults()
+            )
+        }
     }
 
     @Composable
@@ -275,5 +314,11 @@ class HomeActivity : ComponentActivity(), HomeView {
             backgroundColor = colorResource(id = R.color.colorAccent),
             contentColor = Color.Black
         )
+    }
+
+    private fun updateEntities() {
+        mainScope.launch {
+            entityViewModel.entitiesResponse = presenter.getEntities()
+        }
     }
 }

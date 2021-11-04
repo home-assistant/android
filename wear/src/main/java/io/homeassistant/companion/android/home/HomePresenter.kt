@@ -8,4 +8,5 @@ interface HomePresenter {
     fun onEntityClicked(entity: Entity<Any>)
     fun onLogoutClicked()
     fun onFinish()
+    suspend fun getEntities(): Array<Entity<Any>>
 }
