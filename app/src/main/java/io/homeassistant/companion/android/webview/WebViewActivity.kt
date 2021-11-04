@@ -39,6 +39,7 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
@@ -67,7 +68,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
-import io.homeassistant.companion.android.databinding.ExoPlayerControlViewBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
@@ -137,7 +137,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private lateinit var authenticator: Authenticator
     private lateinit var exoPlayerView: PlayerView
     private lateinit var playerBinding: ExoPlayerViewBinding
-    private lateinit var playerControllerBinding: ExoPlayerControlViewBinding
     private lateinit var currentLang: String
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
@@ -165,7 +164,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         super.onCreate(savedInstanceState)
 
         binding = ActivityWebviewBinding.inflate(layoutInflater)
-        setContentView(R.layout.activity_webview)
+        setContentView(binding.root)
 
         DaggerPresenterComponent
             .builder()
@@ -192,19 +191,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoPlayerView.controllerShowTimeoutMs = 2000
 
         playerBinding = ExoPlayerViewBinding.bind(exoPlayerView)
-        playerControllerBinding = ExoPlayerControlViewBinding.bind(exoPlayerView)
 
-        playerControllerBinding.exoFullscreenIcon.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(view: View) {
-                isExoFullScreen = !isExoFullScreen
-                exoResizeLayout()
-            }
-        })
-        playerControllerBinding.exoMuteIcon.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(view: View) {
-                exoToggleMute()
-            }
-        })
         if (!presenter.isLockEnabled()) {
             binding.blurView.setBlurEnabled(false)
             unlocked = true
@@ -694,6 +681,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoToggleMute()
             exoPlayerView.setPlayer(exoPlayer)
             exoPlayerView.visibility = View.VISIBLE
+
+            findViewById<ImageView>(R.id.exo_fullscreen_icon).setOnClickListener {
+                isExoFullScreen = !isExoFullScreen
+                exoResizeLayout()
+            }
+            findViewById<ImageView>(R.id.exo_mute_icon).setOnClickListener { exoToggleMute() }
         }
         val script = "externalBus(" + "${
         JSONObject(
@@ -740,7 +733,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         exoMute = !exoMute
         if (exoMute) {
             exoPlayer?.volume = 0f
-            playerControllerBinding.exoMuteIcon.setImageDrawable(
+            findViewById<ImageView>(R.id.exo_mute_icon).setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
                     R.drawable.ic_baseline_volume_off_24
@@ -748,7 +741,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             )
         } else {
             exoPlayer?.volume = 1f
-            playerControllerBinding.exoMuteIcon.setImageDrawable(
+            findViewById<ImageView>(R.id.exo_mute_icon).setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
                     R.drawable.ic_baseline_volume_up_24
@@ -768,7 +761,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             exoLayoutParams.setMargins(0, 0, 0, 0)
             exoPlayerView.layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
             exoPlayerView.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
-            playerControllerBinding.exoFullscreenIcon.setImageDrawable(
+            findViewById<ImageView>(R.id.exo_fullscreen_icon).setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
                     R.drawable.ic_baseline_fullscreen_exit_24
@@ -787,7 +780,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 maxOf(screenWidth - exoRight, 0),
                 maxOf(screenHeight - exoBottom, 0)
             )
-            playerControllerBinding.exoFullscreenIcon.setImageDrawable(
+            findViewById<ImageView>(R.id.exo_fullscreen_icon).setImageDrawable(
                 ContextCompat.getDrawable(
                     applicationContext,
                     R.drawable.ic_baseline_fullscreen_24
