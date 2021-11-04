@@ -79,9 +79,7 @@ class HomeActivity : ComponentActivity(), HomeView {
             .inject(this)
 
         presenter.onViewReady()
-        mainScope.launch {
-            entityViewModel.entitiesResponse = presenter.getEntities()
-        }
+        updateEntities()
         setContent {
             LoadHomePage(entities = entityViewModel.entitiesResponse)
         }
@@ -249,19 +247,12 @@ class HomeActivity : ComponentActivity(), HomeView {
                 checked = entity.state == "on",
                 onCheckedChange = {
                     presenter.onEntityClicked(entity)
-                    mainScope.launch {
-                        entityViewModel.entitiesResponse = presenter.getEntities()
-                    }
+                    updateEntities()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = if (index == 0) 30.dp else 10.dp),
-                appIcon = {
-                    if (iconBitmap != null) {
-                        Image(asset = iconBitmap)
-                    } else
-                        Image(asset = CommunityMaterial.Icon.cmd_cellphone)
-                },
+                appIcon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
                 label = {
                     Text(
                         text = attributes["friendly_name"].toString(),
@@ -287,12 +278,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = if (index == 0) 30.dp else 10.dp),
-                icon = {
-                    if (iconBitmap != null) {
-                        Image(asset = iconBitmap)
-                    } else
-                        Image(asset = CommunityMaterial.Icon.cmd_cellphone)
-                },
+                icon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
                 label = {
                     Text(
                         text = attributes["friendly_name"].toString(),
@@ -303,9 +289,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                 enabled = entity.state != "unavailable",
                 onClick = {
                     presenter.onEntityClicked(entity)
-                    mainScope.launch {
-                        entityViewModel.entitiesResponse = presenter.getEntities()
-                    }
+                    updateEntities()
                 },
                 colors = setChipDefaults()
             )
@@ -330,5 +314,11 @@ class HomeActivity : ComponentActivity(), HomeView {
             backgroundColor = colorResource(id = R.color.colorAccent),
             contentColor = Color.Black
         )
+    }
+
+    private fun updateEntities() {
+        mainScope.launch {
+            entityViewModel.entitiesResponse = presenter.getEntities()
+        }
     }
 }
