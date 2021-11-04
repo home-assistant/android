@@ -49,6 +49,7 @@ import io.homeassistant.companion.android.viewModels.EntityViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -318,6 +319,8 @@ class HomeActivity : ComponentActivity(), HomeView {
 
     private fun updateEntities() {
         mainScope.launch {
+            entityViewModel.entitiesResponse = presenter.getEntities()
+            delay(5000L)
             entityViewModel.entitiesResponse = presenter.getEntities()
         }
     }
