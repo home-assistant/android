@@ -9,9 +9,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketReposit
 import kotlinx.coroutines.*
 import okhttp3.*
 import okhttp3.internal.notify
-import okhttp3.internal.wait
 import okio.ByteString
-import java.util.concurrent.ConcurrentLinkedQueue
 import javax.inject.Inject
 
 class WebSocketRepositoryImpl @Inject constructor(
@@ -29,7 +27,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val callbacks = mutableMapOf<Int, (Boolean) -> Unit>()
     private var id = 1
     private var connection: WebSocket? = null
-    private var connected = false
+    private var connected = Job()
 
 
     override suspend fun sendPing(callback: (successful: Boolean) -> Unit) {
@@ -60,7 +58,7 @@ class WebSocketRepositoryImpl @Inject constructor(
      */
     @Synchronized
     private suspend fun connect() {
-        if (connection != null && connected) {
+        if (connection != null && connected.isCompleted) {
             return
         }
 
@@ -75,11 +73,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             this
         )
 
-        synchronized(this) {
-            while (!connected) {
-                wait()
-            }
-        }
+        connected.join()
 
     }
 
@@ -95,10 +89,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     private fun handleAuthSuccess() {
-        connected = true
-        synchronized(this) {
-            notify()
-        }
+        connected.complete()
     }
 
     private fun handlePong(response: Map<String, Any>) {
@@ -135,7 +126,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         Log.d(TAG, "Websocket: onClosed")
-        connected = false
+        connected = Job()
         connection = null
     }
 

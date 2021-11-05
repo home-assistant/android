@@ -1,5 +1,5 @@
 package io.homeassistant.companion.android.common.data.websocket
 
 interface WebSocketRepository {
-    suspend fun sendPing(response: (successful: Boolean)->Unit)
+    suspend fun sendPing(callback: (successful: Boolean)->Unit)
 }
