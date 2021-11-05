@@ -423,7 +423,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                         text = stringResource(id = R.string.settings)
                     )
                 },
-                onClick = { swipeDismissableNavController.navigate("Settings") },
+                onClick = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
                 colors = ChipDefaults.primaryChipColors(
                     contentColor = Color.Black
                 )
