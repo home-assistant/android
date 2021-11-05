@@ -24,14 +24,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ChipColors
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.MaterialTheme
@@ -46,9 +43,7 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
-import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.compose.Image
-import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
@@ -61,6 +56,8 @@ import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
+import io.homeassistant.companion.android.settings.SettingsComposable
+import io.homeassistant.companion.android.util.CommonFunctions
 import io.homeassistant.companion.android.viewModels.EntityViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,8 +77,8 @@ class HomeActivity : ComponentActivity(), HomeView {
     companion object {
         private const val TAG = "HomeActivity"
         private const val SCREEN_LANDING = "landing"
-        private const val SCREEN_SETTINGS = "settings"
-        private const val SCREEN_SET_FAVORITES = "set_favorites"
+        const val SCREEN_SETTINGS = "settings"
+        const val SCREEN_SET_FAVORITES = "set_favorites"
 
         fun newInstance(context: Context): Intent {
             return Intent(context, HomeActivity::class.java)
@@ -101,7 +98,7 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         presenter.onViewReady()
         updateEntities()
-        updateFavorites()
+        CommonFunctions().updateFavorites(entityViewModel, presenter)
         setContent {
             LoadHomePage(entities = entityViewModel.entitiesResponse, entityViewModel.favoriteEntities)
         }
@@ -137,7 +134,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                         .fillMaxWidth()
                         .padding(top = 10.dp)
                 )
-                SetTitle(id = R.string.loading)
+                CommonFunctions().SetTitle(id = R.string.loading)
                 Chip(
                     modifier = Modifier
                         .padding(top = 50.dp, start = 10.dp, end = 10.dp),
@@ -148,11 +145,11 @@ class HomeActivity : ComponentActivity(), HomeView {
                         )
                     },
                     onClick = { /* No op */ },
-                    colors = setChipDefaults()
+                    colors = CommonFunctions().setChipDefaults()
                 )
             }
         } else {
-            updateFavorites()
+            CommonFunctions().updateFavorites(entityViewModel, presenter)
             val validEntities =
                 entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] in HomePresenterImpl.supportedDomains }
             val scenes =
@@ -291,7 +288,6 @@ class HomeActivity : ComponentActivity(), HomeView {
                                         items(scenes.size) { index ->
                                             if (index == 0)
                                                 SetTitle(R.string.scenes)
-
                                             SetEntityUI(scenes[index], index)
                                         }
                                     }
@@ -331,7 +327,7 @@ class HomeActivity : ComponentActivity(), HomeView {
     @Composable
     private fun SetEntityUI(entity: Entity<Any>, index: Int) {
         val attributes = entity.attributes as Map<String, String>
-        val iconBitmap = getIcon(attributes["icon"], entity.entityId.split(".")[0])
+        val iconBitmap = CommonFunctions().getIcon(attributes["icon"], entity.entityId.split(".")[0], baseContext)
 
         if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
             ToggleChip(
@@ -382,35 +378,15 @@ class HomeActivity : ComponentActivity(), HomeView {
                     presenter.onEntityClicked(entity.entityId)
                     updateEntities()
                 },
-                colors = setChipDefaults()
+                colors = CommonFunctions().setChipDefaults()
             )
         }
     }
 
     @Composable
-    private fun SetTitle(id: Int) {
-        Text(
-            text = stringResource(id = id),
-            textAlign = TextAlign.Center,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .fillMaxWidth()
-        )
-    }
-
-    @Composable
-    private fun setChipDefaults(): ChipColors {
-        return ChipDefaults.primaryChipColors(
-            backgroundColor = colorResource(id = R.color.colorAccent),
-            contentColor = Color.Black
-        )
-    }
-
-    @Composable
     private fun LoadOtherSection(swipeDismissableNavController: NavHostController) {
         Column {
-            SetTitle(R.string.other)
+            CommonFunctions().SetTitle(R.string.other)
             Chip(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -449,148 +425,11 @@ class HomeActivity : ComponentActivity(), HomeView {
         }
     }
 
-    @Composable
-    private fun ScreenSettings(swipeDismissableNavController: NavHostController) {
-        Column {
-            Spacer(modifier = Modifier.height(20.dp))
-            SetTitle(id = R.string.settings)
-            Chip(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp),
-                icon = {
-                    Image(asset = CommunityMaterial.Icon3.cmd_star)
-                },
-                label = {
-                    Text(
-                        text = stringResource(id = R.string.favorite)
-                    )
-                },
-                onClick = {
-                    swipeDismissableNavController.navigate(
-                        SCREEN_SET_FAVORITES
-                    )
-                },
-                colors = ChipDefaults.primaryChipColors(
-                    contentColor = Color.Black
-                )
-            )
-            Chip(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
-                icon = {
-                    Image(asset = CommunityMaterial.Icon.cmd_delete)
-                },
-                label = {
-                    Text(
-                        text = stringResource(id = R.string.clear_favorites),
-                    )
-                },
-                onClick = {
-                    entityViewModel.favoriteEntities = mutableSetOf()
-                    saveFavorites(entityViewModel.favoriteEntities.toMutableSet())
-                },
-                colors = ChipDefaults.primaryChipColors(
-                    contentColor = Color.Black
-                ),
-                secondaryLabel = {
-                    Text(
-                        text = stringResource(id = R.string.irreverisble)
-                    )
-                },
-                enabled = entityViewModel.favoriteEntities.isNotEmpty()
-            )
-        }
-    }
-
-    @Composable
-    private fun ScreenSetFavorites(validEntities: List<Entity<Any>>, scalingLazyListState: ScalingLazyListState) {
-        ScalingLazyColumn(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentPadding = PaddingValues(
-                top = 10.dp,
-                start = 10.dp,
-                end = 10.dp,
-                bottom = 40.dp
-            ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            state = scalingLazyListState
-        ) {
-            items(validEntities.size) { index ->
-                val attributes = validEntities[index].attributes as Map<String, String>
-                val iconBitmap = getIcon(attributes["icon"], validEntities[index].entityId.split(".")[0])
-                if (index == 0)
-                    SetTitle(id = R.string.set_favorite)
-                val elementString = "${validEntities[index].entityId},${attributes["friendly_name"]},${attributes["icon"]}"
-                var checked by rememberSaveable { mutableStateOf(entityViewModel.favoriteEntities.contains(elementString)) }
-                ToggleChip(
-                    checked = checked,
-                    onCheckedChange = {
-                        checked = it
-                        if (it) {
-                            entityViewModel.favoriteEntities.add(elementString)
-                        } else {
-                            entityViewModel.favoriteEntities.remove(elementString)
-                        }
-                        saveFavorites(entityViewModel.favoriteEntities.toMutableSet())
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = if (index == 0) 30.dp else 10.dp),
-                    appIcon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
-                    label = {
-                        Text(
-                            text = attributes["friendly_name"].toString(),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    toggleIcon = { ToggleChipDefaults.SwitchIcon(checked) },
-                    colors = ToggleChipDefaults.toggleChipColors(
-                        checkedStartBackgroundColor = colorResource(id = R.color.colorAccent),
-                        checkedEndBackgroundColor = colorResource(id = R.color.colorAccent),
-                        uncheckedStartBackgroundColor = colorResource(id = R.color.colorAccent),
-                        uncheckedEndBackgroundColor = colorResource(id = R.color.colorAccent),
-                        checkedContentColor = Color.Black,
-                        uncheckedContentColor = Color.Black,
-                        checkedToggleIconTintColor = Color.Yellow,
-                        uncheckedToggleIconTintColor = Color.DarkGray
-                    )
-                )
-            }
-        }
-    }
-
     private fun updateEntities() {
         mainScope.launch {
             entityViewModel.entitiesResponse = presenter.getEntities()
             delay(5000L)
             entityViewModel.entitiesResponse = presenter.getEntities()
-        }
-    }
-
-    private fun updateFavorites() {
-        mainScope.launch { entityViewModel.favoriteEntities = presenter.getWearHomeFavorites().toMutableSet() }
-    }
-
-    private fun saveFavorites(favorites: Set<String>) {
-        mainScope.launch { presenter.setWearHomeFavorites(favorites.toSet()) }
-    }
-
-    private fun getIcon(icon: String?, domain: String): IIcon? {
-        return if (icon?.startsWith("mdi") == true) {
-            val mdiIcon = icon.split(":")[1]
-            IconicsDrawable(baseContext, "cmd-$mdiIcon").icon
-        } else {
-            when (domain) {
-                "input_boolean", "switch" -> CommunityMaterial.Icon2.cmd_light_switch
-                "light" -> CommunityMaterial.Icon2.cmd_lightbulb
-                "script" -> CommunityMaterial.Icon3.cmd_script_text_outline
-                "scene" -> CommunityMaterial.Icon3.cmd_palette_outline
-                else -> CommunityMaterial.Icon.cmd_cellphone
-            }
         }
     }
 }
