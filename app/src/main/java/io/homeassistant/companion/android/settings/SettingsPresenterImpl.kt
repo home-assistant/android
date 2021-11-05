@@ -155,7 +155,12 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.launch {
 
             handleInternalUrlStatus(urlUseCase.getHomeWifiSsids())
-            Log.d(TAG, "Ping: ${webSocketRepository.sendPing()}")
+
+            // TODO: Remove me
+            Log.d(TAG, "Ping sent")
+            webSocketRepository.sendPing {
+                Log.d(TAG, "Pong received? $it")
+            }
         }
     }
 

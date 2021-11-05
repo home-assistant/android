@@ -6,9 +6,12 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import okhttp3.*
+import okhttp3.internal.notify
+import okhttp3.internal.wait
 import okio.ByteString
+import java.util.concurrent.ConcurrentLinkedQueue
 import javax.inject.Inject
 
 class WebSocketRepositoryImpl @Inject constructor(
@@ -21,16 +24,67 @@ class WebSocketRepositoryImpl @Inject constructor(
         private const val TAG = "WebSocketRepository"
     }
 
+    private val ioScope = CoroutineScope(Dispatchers.IO + Job())
     private val mapper = jacksonObjectMapper()
-    private var webSocket: WebSocket? = null
+    private val callbacks = mutableMapOf<Int, (Boolean) -> Unit>()
+    private var id = 1
+    private var connection: WebSocket? = null
+    private var connected = false
 
-    override suspend fun sendPing(): Boolean {
+
+    override suspend fun sendPing(callback: (successful: Boolean) -> Unit) {
         connect()
-        return true
+
+        val id = getNextId()
+
+        callbacks[id] = callback
+
+        connection!!.send(
+            mapper.writeValueAsString(
+                mapOf(
+                    "id" to id,
+                    "type" to "ping"
+                )
+            )
+        )
+    }
+
+    @Synchronized
+    private fun getNextId(): Int {
+        return id++
+    }
+
+
+    /**
+     * This method will
+     */
+    @Synchronized
+    private suspend fun connect() {
+        if (connection != null && connected) {
+            return
+        }
+
+        val url = urlRepository.getUrl() ?: return
+        val urlString = url.toString()
+            .replace("https://", "wss://")
+            .replace("http://", "ws://")
+            .plus("api/websocket")
+
+        connection = okHttpClient.newWebSocket(
+            Request.Builder().url(urlString).build(),
+            this
+        )
+
+        synchronized(this) {
+            while (!connected) {
+                wait()
+            }
+        }
+
     }
 
     private suspend fun handleAuth() {
-        webSocket!!.send(
+        connection!!.send(
             mapper.writeValueAsString(
                 mapOf(
                     "type" to "auth",
@@ -40,17 +94,17 @@ class WebSocketRepositoryImpl @Inject constructor(
         )
     }
 
-    private suspend fun connect() {
-        val url = urlRepository.getUrl() ?: return
-        val urlString = url.toString()
-            .replace("https://", "wss://")
-            .replace("http://", "ws://")
-            .plus("api/websocket")
+    private fun handleAuthSuccess() {
+        connected = true
+        synchronized(this) {
+            notify()
+        }
+    }
 
-        webSocket = okHttpClient.newWebSocket(
-            Request.Builder().url(urlString).build(),
-            this
-        )
+    private fun handlePong(response: Map<String, Any>) {
+        val id = response["id"] as Int
+        callbacks[id]?.invoke(true)
+        callbacks.remove(id)
     }
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -61,9 +115,11 @@ class WebSocketRepositoryImpl @Inject constructor(
         Log.d(TAG, "Websocket: onMessage (text)")
         val message: Map<String, Any> = mapper.readValue(text)
 
-        runBlocking {
+        ioScope.launch {
             when (message["type"] as? String) {
                 "auth_required" -> handleAuth()
+                "auth_ok" -> handleAuthSuccess()
+                "pong" -> handlePong(message)
                 else -> Log.d(TAG, "Unknown message type: $text")
             }
         }
@@ -79,6 +135,8 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         Log.d(TAG, "Websocket: onClosed")
+        connected = false
+        connection = null
     }
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {

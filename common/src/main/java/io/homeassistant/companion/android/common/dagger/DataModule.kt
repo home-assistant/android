@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.common.data.url.UrlRepositoryImpl
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
-import io.ktor.client.*
 import okhttp3.OkHttpClient
 import javax.inject.Named
 
