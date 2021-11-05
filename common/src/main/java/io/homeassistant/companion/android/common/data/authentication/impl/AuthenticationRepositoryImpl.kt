@@ -71,6 +71,10 @@ class AuthenticationRepositoryImpl @Inject constructor(
         return convertSession(ensureValidSession(forceRefresh))
     }
 
+    override suspend fun retrieveAccessToken(): String {
+        return ensureValidSession(false).accessToken
+    }
+
     override suspend fun revokeSession() {
         val session = retrieveSession() ?: throw AuthorizationException()
         authenticationService.revokeToken(session.refreshToken, AuthenticationService.REVOKE_ACTION)

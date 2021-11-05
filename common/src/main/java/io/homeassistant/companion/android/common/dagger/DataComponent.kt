@@ -5,6 +5,7 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 
 @Component(modules = [DataModule::class])
 interface DataComponent {
@@ -16,4 +17,6 @@ interface DataComponent {
     fun integrationRepository(): IntegrationRepository
 
     fun prefsRepository(): PrefsRepository
+
+    fun webSocketRepository(): WebSocketRepository
 }
