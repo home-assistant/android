@@ -24,7 +24,6 @@ import androidx.navigation.NavHostController
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ScalingLazyColumn
-import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
@@ -97,7 +96,6 @@ class SettingsComposable {
     @Composable
     fun ScreenSetFavorites(
         validEntities: List<Entity<Any>>,
-        scalingLazyListState: ScalingLazyListState,
         entityViewModel: EntityViewModel,
         context: Context,
         presenter: HomePresenter
@@ -111,8 +109,7 @@ class SettingsComposable {
                 end = 10.dp,
                 bottom = 40.dp
             ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            state = scalingLazyListState
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             items(validEntities.size) { index ->
                 val attributes = validEntities[index].attributes as Map<String, String>
