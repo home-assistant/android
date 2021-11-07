@@ -382,7 +382,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
 
             if (response != null)
-                return response.themeColor
+                return response.themeColor!!
         }
 
         if (causeException != null) throw IntegrationException(causeException)

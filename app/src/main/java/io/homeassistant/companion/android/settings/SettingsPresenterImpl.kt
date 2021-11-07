@@ -158,9 +158,8 @@ class SettingsPresenterImpl @Inject constructor(
 
             // TODO: Remove me
             Log.d(TAG, "Ping sent")
-            webSocketRepository.sendPing {
-                Log.d(TAG, "Pong received? $it")
-            }
+            webSocketRepository.getConfig()
+            Log.d(TAG, "Pong received")
         }
     }
 

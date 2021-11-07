@@ -1,15 +1,22 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
 import android.util.Log
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.impl.entities.DomainResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.websocket.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import kotlinx.coroutines.*
 import okhttp3.*
-import okhttp3.internal.notify
 import okio.ByteString
+import java.lang.Exception
 import javax.inject.Inject
 
 class WebSocketRepositoryImpl @Inject constructor(
@@ -23,20 +30,17 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
-    private val mapper = jacksonObjectMapper()
-    private val callbacks = mutableMapOf<Int, (Boolean) -> Unit>()
-    private var id = 1
+    private val mapper = jacksonObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+    private val responseCallbackJobs = mutableMapOf<Long, CancellableContinuation<SocketResponse>>()
+    private val subscriptionCallbacks = mutableMapOf<Long, (Boolean) -> Unit>()
+    private var id = 1L
     private var connection: WebSocket? = null
     private var connected = Job()
 
-
-    override suspend fun sendPing(callback: (successful: Boolean) -> Unit) {
+    override suspend fun sendPing(): Boolean {
         connect()
 
         val id = getNextId()
-
-        callbacks[id] = callback
-
         connection!!.send(
             mapper.writeValueAsString(
                 mapOf(
@@ -45,10 +49,50 @@ class WebSocketRepositoryImpl @Inject constructor(
                 )
             )
         )
+
+        val continuation = suspendCancellableCoroutine<Any> { cont -> responseCallbackJobs[id] = cont }
+
+        return true
+    }
+
+    override suspend fun getConfig(): GetConfigResponse {
+        connect()
+
+        val id = getNextId()
+        connection!!.send(
+            mapper.writeValueAsString(
+                mapOf(
+                    "id" to id,
+                    "type" to "get_config"
+                )
+            )
+        )
+
+        val socketResponse = suspendCancellableCoroutine<SocketResponse> { cont -> responseCallbackJobs[id] = cont }
+
+        val result: GetConfigResponse = mapper.convertValue(socketResponse.result!!, GetConfigResponse::class.java)
+
+        return result
+    }
+
+    override suspend fun getStates(): List<EntityResponse<Any>> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getServices(): List<DomainResponse> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getPanels(): List<String> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun callService(request: ServiceCallRequest) {
+        TODO("Not yet implemented")
     }
 
     @Synchronized
-    private fun getNextId(): Int {
+    private fun getNextId(): Long {
         return id++
     }
 
@@ -73,7 +117,12 @@ class WebSocketRepositoryImpl @Inject constructor(
             this
         )
 
-        connected.join()
+        handleAuth()
+
+        // Wait up to 30 seconds for auth
+        withTimeout(30000) {
+            connected.join()
+        }
 
     }
 
@@ -88,14 +137,17 @@ class WebSocketRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun handleAuthSuccess() {
-        connected.complete()
+    private fun handleAuthComplete(successful: Boolean) {
+        if (successful)
+            connected.complete()
+        else
+            connected.completeExceptionally(Exception("Authentication Error"))
     }
 
-    private fun handlePong(response: Map<String, Any>) {
-        val id = response["id"] as Int
-        callbacks[id]?.invoke(true)
-        callbacks.remove(id)
+    private fun handleMessage(response: SocketResponse) {
+        val id = response.id!!
+        responseCallbackJobs[id]?.resumeWith(Result.success(response))
+        responseCallbackJobs.remove(id)
     }
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
@@ -104,13 +156,14 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override fun onMessage(webSocket: WebSocket, text: String) {
         Log.d(TAG, "Websocket: onMessage (text)")
-        val message: Map<String, Any> = mapper.readValue(text)
+        val message: SocketResponse = mapper.readValue(text)
 
         ioScope.launch {
-            when (message["type"] as? String) {
-                "auth_required" -> handleAuth()
-                "auth_ok" -> handleAuthSuccess()
-                "pong" -> handlePong(message)
+            when (message.type) {
+                "auth_required" -> Log.d(TAG, "Auth Requested")
+                "auth_ok" -> handleAuthComplete(true)
+                "auth_invalid" -> handleAuthComplete(false)
+                "pong", "result" -> handleMessage(message)
                 else -> Log.d(TAG, "Unknown message type: $text")
             }
         }
