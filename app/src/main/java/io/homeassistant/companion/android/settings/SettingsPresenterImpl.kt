@@ -153,13 +153,7 @@ class SettingsPresenterImpl @Inject constructor(
 
     override fun onCreate() {
         mainScope.launch {
-
             handleInternalUrlStatus(urlUseCase.getHomeWifiSsids())
-
-            // TODO: Remove me
-            Log.d(TAG, "Ping sent")
-            webSocketRepository.getConfig()
-            Log.d(TAG, "Pong received")
         }
     }
 
