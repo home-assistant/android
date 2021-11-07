@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.webview
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
-import androidx.core.graphics.ColorUtils
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
