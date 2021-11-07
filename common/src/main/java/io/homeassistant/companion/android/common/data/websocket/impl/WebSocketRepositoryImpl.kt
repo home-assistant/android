@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 
 import android.util.Log
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
@@ -13,10 +12,19 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
-import kotlinx.coroutines.*
-import okhttp3.*
+import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
 import okio.ByteString
-import java.lang.Exception
 import javax.inject.Inject
 
 class WebSocketRepositoryImpl @Inject constructor(
@@ -96,7 +104,6 @@ class WebSocketRepositoryImpl @Inject constructor(
         return id++
     }
 
-
     /**
      * This method will
      */
@@ -123,7 +130,6 @@ class WebSocketRepositoryImpl @Inject constructor(
         withTimeout(30000) {
             connected.join()
         }
-
     }
 
     private suspend fun handleAuth() {
