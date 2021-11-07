@@ -210,9 +210,6 @@ class WebViewPresenterImpl @Inject constructor(
             }
         }
 
-        // Darken the found color a bit
-        statusbarNavBarColor = ColorUtils.blendARGB(statusbarNavBarColor, Color.BLACK, 0.1f)
-
         return@withContext statusbarNavBarColor
     }
 
