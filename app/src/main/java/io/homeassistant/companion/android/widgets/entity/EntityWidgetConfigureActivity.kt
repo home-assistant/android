@@ -98,12 +98,13 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                 }
             }
 
-            if (!staticWidget.attributeIds.isNullOrEmpty()) {
+            val attributeIds = staticWidget.attributeIds
+            if (!attributeIds.isNullOrEmpty()) {
                 binding.appendAttributeValueCheckbox.isChecked = true
                 appendAttributes = true
-                for (item in staticWidget.attributeIds.split(','))
+                for (item in attributeIds.split(','))
                     selectedAttributeIds.add(item)
-                binding.widgetTextConfigAttribute.setText(staticWidget.attributeIds.replace(",", ", "))
+                binding.widgetTextConfigAttribute.setText(attributeIds.replace(",", ", "))
                 binding.attributeValueLinearLayout.visibility = VISIBLE
                 binding.attributeSeparator.setText(staticWidget.attributeSeparator)
             }

@@ -368,7 +368,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                 if (bitmap != null)
                     Icon.createWithBitmap(bitmap)
                 else
-                    Icon.createWithResource(requireContext(), R.drawable.ic_stat_ic_notification_blue)
+                    Icon.createWithResource(requireContext(), io.homeassistant.companion.android.common.R.drawable.ic_stat_ic_notification_blue)
             )
             .setIntent(intent)
             .build()

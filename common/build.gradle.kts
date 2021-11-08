@@ -27,6 +27,20 @@ android {
             }
         }
     }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    compileOptions {
+        sourceCompatibility(JavaVersion.VERSION_11)
+        targetCompatibility(JavaVersion.VERSION_11)
+    }
+
+    lint {
+        isAbortOnError = false
+        disable("MissingTranslation")
+    }
 }
 
 dependencies {

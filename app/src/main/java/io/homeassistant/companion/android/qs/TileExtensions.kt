@@ -75,8 +75,9 @@ abstract class TileExtensions : TileService() {
                         tile.state = if (state.state == "on" || state.state == "open") Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                     } else
                         tile.state = Tile.STATE_INACTIVE
-                    if (tileData.iconId != null) {
-                        val icon = getTileIcon(tileData.iconId, context)
+                    val iconId = tileData.iconId
+                    if (iconId != null) {
+                        val icon = getTileIcon(iconId, context)
                         tile.icon = Icon.createWithBitmap(icon)
                     }
                     tile.updateTile()

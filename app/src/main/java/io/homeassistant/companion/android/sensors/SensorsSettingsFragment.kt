@@ -293,7 +293,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(R.string.sensors)
+        activity?.title = getString(io.homeassistant.companion.android.common.R.string.sensors)
         filterSensors()
         handler.postDelayed(refresh, 0)
     }

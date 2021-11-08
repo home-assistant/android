@@ -134,7 +134,7 @@ class SettingsFragment constructor(
             parentFragmentManager
                 .beginTransaction()
                 .replace(R.id.content, SensorsSettingsFragment.newInstance())
-                .addToBackStack(getString(R.string.sensors))
+                .addToBackStack(getString(io.homeassistant.companion.android.common.R.string.sensors))
                 .commit()
             return@setOnPreferenceClickListener true
         }
