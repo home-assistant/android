@@ -83,10 +83,22 @@ class BluetoothSensorManager : SensorManager {
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_CONNECT)
-        } else
-            arrayOf(Manifest.permission.BLUETOOTH)
+        return when {
+            (sensorId == bleTransmitter.id && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+                arrayOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_ADVERTISE,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                )
+            }
+            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+                arrayOf(
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                )
+            }
+            else -> arrayOf(Manifest.permission.BLUETOOTH)
+        }
     }
 
     override fun requestSensorUpdate(
