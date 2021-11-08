@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,6 +46,10 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
+import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
+import io.homeassistant.companion.android.util.RotaryEventDispatcher
+import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
+import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.viewModels.EntityViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -106,6 +111,7 @@ class HomeActivity : ComponentActivity(), HomeView {
     @Composable
     private fun LoadHomePage(entities: Array<Entity<Any>>) {
 
+        val rotaryEventDispatcher = RotaryEventDispatcher()
         if (entities.isNullOrEmpty()) {
             Column {
                 Spacer(
@@ -140,6 +146,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                 entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "switch" }
 
             val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+            RotaryEventDispatcher(scalingLazyListState)
 
             MaterialTheme {
                 Scaffold(
@@ -148,76 +155,82 @@ class HomeActivity : ComponentActivity(), HomeView {
                             PositionIndicator(scalingLazyListState = scalingLazyListState)
                     }
                 ) {
-                    ScalingLazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            top = 10.dp,
-                            start = 10.dp,
-                            end = 10.dp,
-                            bottom = 40.dp
-                        ),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        state = scalingLazyListState
+                    CompositionLocalProvider(
+                        LocalRotaryEventDispatcher provides rotaryEventDispatcher
                     ) {
-                        if (inputBooleans.isNotEmpty()) {
-                            items(inputBooleans.size) { index ->
-                                if (index == 0)
-                                    SetTitle(R.string.input_booleans)
-                                SetEntityUI(inputBooleans[index], index)
+                        RotaryEventHandlerSetup(rotaryEventDispatcher)
+                        RotaryEventState(scrollState = scalingLazyListState)
+                        ScalingLazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize(),
+                            contentPadding = PaddingValues(
+                                top = 10.dp,
+                                start = 10.dp,
+                                end = 10.dp,
+                                bottom = 40.dp
+                            ),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            state = scalingLazyListState
+                        ) {
+                            if (inputBooleans.isNotEmpty()) {
+                                items(inputBooleans.size) { index ->
+                                    if (index == 0)
+                                        SetTitle(R.string.input_booleans)
+                                    SetEntityUI(inputBooleans[index], index)
+                                }
                             }
-                        }
-                        if (lights.isNotEmpty()) {
-                            items(lights.size) { index ->
-                                if (index == 0)
-                                    SetTitle(R.string.lights)
-                                SetEntityUI(lights[index], index)
+                            if (lights.isNotEmpty()) {
+                                items(lights.size) { index ->
+                                    if (index == 0)
+                                        SetTitle(R.string.lights)
+                                    SetEntityUI(lights[index], index)
+                                }
                             }
-                        }
-                        if (scenes.isNotEmpty()) {
-                            items(scenes.size) { index ->
-                                if (index == 0)
-                                    SetTitle(R.string.scenes)
+                            if (scenes.isNotEmpty()) {
+                                items(scenes.size) { index ->
+                                    if (index == 0)
+                                        SetTitle(R.string.scenes)
 
-                                SetEntityUI(scenes[index], index)
+                                    SetEntityUI(scenes[index], index)
+                                }
                             }
-                        }
-                        if (scripts.isNotEmpty()) {
-                            items(scripts.size) { index ->
-                                if (index == 0)
-                                    SetTitle(R.string.scripts)
-                                SetEntityUI(scripts[index], index)
+                            if (scripts.isNotEmpty()) {
+                                items(scripts.size) { index ->
+                                    if (index == 0)
+                                        SetTitle(R.string.scripts)
+                                    SetEntityUI(scripts[index], index)
+                                }
                             }
-                        }
-                        if (switches.isNotEmpty()) {
-                            items(switches.size) { index ->
-                                if (index == 0)
-                                    SetTitle(R.string.switches)
-                                SetEntityUI(switches[index], index)
+                            if (switches.isNotEmpty()) {
+                                items(switches.size) { index ->
+                                    if (index == 0)
+                                        SetTitle(R.string.switches)
+                                    SetEntityUI(switches[index], index)
+                                }
                             }
-                        }
 
-                        item {
-                            Column {
-                                SetTitle(R.string.other)
-                                Chip(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 10.dp),
-                                    icon = {
-                                        Image(asset = CommunityMaterial.Icon.cmd_exit_run)
-                                    },
-                                    label = {
-                                        Text(
-                                            text = stringResource(id = R.string.logout)
+                            item {
+                                Column {
+                                    SetTitle(R.string.other)
+                                    Chip(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 10.dp),
+                                        icon = {
+                                            Image(asset = CommunityMaterial.Icon.cmd_exit_run)
+                                        },
+                                        label = {
+                                            Text(
+                                                text = stringResource(id = R.string.logout)
+                                            )
+                                        },
+                                        onClick = { presenter.onLogoutClicked() },
+                                        colors = ChipDefaults.primaryChipColors(
+                                            backgroundColor = Color.Red,
+                                            contentColor = Color.Black
                                         )
-                                    },
-                                    onClick = { presenter.onLogoutClicked() },
-                                    colors = ChipDefaults.primaryChipColors(
-                                        backgroundColor = Color.Red,
-                                        contentColor = Color.Black
                                     )
-                                )
+                                }
                             }
                         }
                     }
