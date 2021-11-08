@@ -93,16 +93,14 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event != null) {
-            if (event.sensor.type == Sensor.TYPE_STEP_COUNTER) {
-                onSensorUpdated(
-                    latestContext,
-                    stepsSensor,
-                    event.values[0].roundToInt().toString(),
-                    "mdi:walk",
-                    mapOf()
-                )
-            }
+        if (event?.sensor?.type == Sensor.TYPE_STEP_COUNTER) {
+            onSensorUpdated(
+                latestContext,
+                stepsSensor,
+                event.values[0].roundToInt().toString(),
+                "mdi:walk",
+                mapOf()
+            )
         }
         mySensorManager.unregisterListener(this)
         Log.d(TAG, "Steps sensor listener unregistered")

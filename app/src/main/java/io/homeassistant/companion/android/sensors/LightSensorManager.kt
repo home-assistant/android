@@ -82,16 +82,14 @@ class LightSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event != null) {
-            if (event.sensor.type == Sensor.TYPE_LIGHT) {
-                onSensorUpdated(
-                    latestContext,
-                    lightSensor,
-                    event.values[0].roundToInt().toString(),
-                    "mdi:brightness-5",
-                    mapOf()
-                )
-            }
+        if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
+            onSensorUpdated(
+                latestContext,
+                lightSensor,
+                event.values[0].roundToInt().toString(),
+                "mdi:brightness-5",
+                mapOf()
+            )
         }
         mySensorManager.unregisterListener(this)
         Log.d(TAG, "Light sensor listener unregistered")

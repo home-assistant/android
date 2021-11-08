@@ -43,7 +43,7 @@ class LightControl {
             // On HA Core 2021.5 and later brightness detection has changed
             // to simplify things in the app lets use both methods for now
             val supportedColorModes = entity.attributes["supported_color_modes"] as? List<String>
-            val supportsBrightness = if (supportedColorModes == null) false else !(supportedColorModes - NO_BRIGHTNESS_SUPPORT).isEmpty()
+            val supportsBrightness = if (supportedColorModes == null) false else (supportedColorModes - NO_BRIGHTNESS_SUPPORT).isNotEmpty()
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
             control.setZone(context.getString(R.string.domain_light))
