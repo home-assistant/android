@@ -69,6 +69,10 @@ android {
     lint {
         disable("MissingTranslation")
     }
+
+    kapt {
+        correctErrorTypes = true
+    }
 }
 
 play {
@@ -102,6 +106,7 @@ dependencies {
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.3.3")
 
+    implementation("androidx.activity:activity:1.4.0")
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.compose.compiler:compiler:1.0.5")
     implementation("androidx.compose.foundation:foundation:1.0.5")

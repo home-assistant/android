@@ -113,6 +113,10 @@ android {
         isAbortOnError = false
         disable("MissingTranslation")
     }
+
+    kapt {
+        correctErrorTypes = true
+    }
 }
 
 play {
