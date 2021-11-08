@@ -20,54 +20,47 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.home.HomePresenter
 import io.homeassistant.companion.android.viewModels.EntityViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-class CommonFunctions {
+@Composable
+fun SetTitle(id: Int) {
+    Text(
+        text = stringResource(id = id),
+        textAlign = TextAlign.Center,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier
+            .fillMaxWidth()
+    )
+}
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+@Composable
+fun setChipDefaults(): ChipColors {
+    return ChipDefaults.primaryChipColors(
+        backgroundColor = colorResource(id = R.color.colorAccent),
+        contentColor = Color.Black
+    )
+}
 
-    @Composable
-    fun SetTitle(id: Int) {
-        Text(
-            text = stringResource(id = id),
-            textAlign = TextAlign.Center,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .fillMaxWidth()
-        )
-    }
+fun updateFavorites(entityViewModel: EntityViewModel, presenter: HomePresenter, mainScope: CoroutineScope) {
+    mainScope.launch { entityViewModel.favoriteEntities = presenter.getWearHomeFavorites().toMutableSet() }
+}
 
-    @Composable
-    fun setChipDefaults(): ChipColors {
-        return ChipDefaults.primaryChipColors(
-            backgroundColor = colorResource(id = R.color.colorAccent),
-            contentColor = Color.Black
-        )
-    }
+fun saveFavorites(favorites: Set<String>, presenter: HomePresenter, mainScope: CoroutineScope) {
+    mainScope.launch { presenter.setWearHomeFavorites(favorites.toSet()) }
+}
 
-    fun updateFavorites(entityViewModel: EntityViewModel, presenter: HomePresenter) {
-        mainScope.launch { entityViewModel.favoriteEntities = presenter.getWearHomeFavorites().toMutableSet() }
-    }
-
-    fun saveFavorites(favorites: Set<String>, presenter: HomePresenter) {
-        mainScope.launch { presenter.setWearHomeFavorites(favorites.toSet()) }
-    }
-
-    fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
-        return if (icon?.startsWith("mdi") == true) {
-            val mdiIcon = icon.split(":")[1]
-            IconicsDrawable(context, "cmd-$mdiIcon").icon
-        } else {
-            when (domain) {
-                "input_boolean", "switch" -> CommunityMaterial.Icon2.cmd_light_switch
-                "light" -> CommunityMaterial.Icon2.cmd_lightbulb
-                "script" -> CommunityMaterial.Icon3.cmd_script_text_outline
-                "scene" -> CommunityMaterial.Icon3.cmd_palette_outline
-                else -> CommunityMaterial.Icon.cmd_cellphone
-            }
+fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
+    return if (icon?.startsWith("mdi") == true) {
+        val mdiIcon = icon.split(":")[1]
+        IconicsDrawable(context, "cmd-$mdiIcon").icon
+    } else {
+        when (domain) {
+            "input_boolean", "switch" -> CommunityMaterial.Icon2.cmd_light_switch
+            "light" -> CommunityMaterial.Icon2.cmd_lightbulb
+            "script" -> CommunityMaterial.Icon3.cmd_script_text_outline
+            "scene" -> CommunityMaterial.Icon3.cmd_palette_outline
+            else -> CommunityMaterial.Icon.cmd_cellphone
         }
     }
 }

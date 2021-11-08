@@ -14,11 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,12 +47,12 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
-import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
-import io.homeassistant.companion.android.util.RotaryEventState
-import io.homeassistant.companion.android.settings.SettingsComposable
-import io.homeassistant.companion.android.util.CommonFunctions
+import io.homeassistant.companion.android.settings.ScreenSetFavorites
+import io.homeassistant.companion.android.settings.ScreenSettings
+import io.homeassistant.companion.android.util.SetTitle
+import io.homeassistant.companion.android.util.getIcon
+import io.homeassistant.companion.android.util.setChipDefaults
+import io.homeassistant.companion.android.util.updateFavorites
 import io.homeassistant.companion.android.viewModels.EntityViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -98,7 +93,7 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         presenter.onViewReady()
         updateEntities()
-        CommonFunctions().updateFavorites(entityViewModel, presenter)
+        updateFavorites(entityViewModel, presenter, mainScope)
         setContent {
             LoadHomePage(entities = entityViewModel.entitiesResponse, entityViewModel.favoriteEntities)
         }
@@ -125,8 +120,6 @@ class HomeActivity : ComponentActivity(), HomeView {
     @Composable
     private fun LoadHomePage(entities: Array<Entity<Any>>, favorites: MutableSet<String>) {
 
-        val rotaryEventDispatcher = RotaryEventDispatcher()
-
         if (entities.isNullOrEmpty() && favorites.isNullOrEmpty()) {
             Column {
                 Spacer(
@@ -134,7 +127,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                         .fillMaxWidth()
                         .padding(top = 10.dp)
                 )
-                CommonFunctions().SetTitle(id = R.string.loading)
+                SetTitle(id = R.string.loading)
                 Chip(
                     modifier = Modifier
                         .padding(top = 50.dp, start = 10.dp, end = 10.dp),
@@ -145,11 +138,11 @@ class HomeActivity : ComponentActivity(), HomeView {
                         )
                     },
                     onClick = { /* No op */ },
-                    colors = CommonFunctions().setChipDefaults()
+                    colors = setChipDefaults()
                 )
             }
         } else {
-            CommonFunctions().updateFavorites(entityViewModel, presenter)
+            updateFavorites(entityViewModel, presenter, mainScope)
             val validEntities =
                 entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] in HomePresenterImpl.supportedDomains }
             val scenes =
@@ -164,7 +157,6 @@ class HomeActivity : ComponentActivity(), HomeView {
                 entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "switch" }
 
             val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
-            RotaryEventDispatcher(scalingLazyListState)
             val swipeDismissableNavController = rememberSwipeDismissableNavController()
 
             MaterialTheme {
@@ -174,149 +166,136 @@ class HomeActivity : ComponentActivity(), HomeView {
                             PositionIndicator(scalingLazyListState = scalingLazyListState)
                     }
                 ) {
-                    CompositionLocalProvider(
-                        LocalRotaryEventDispatcher provides rotaryEventDispatcher
+                    SwipeDismissableNavHost(
+                        navController = swipeDismissableNavController,
+                        startDestination = SCREEN_LANDING
                     ) {
-                        RotaryEventHandlerSetup(rotaryEventDispatcher)
-                        RotaryEventState(scrollState = scalingLazyListState)
-                        SwipeDismissableNavHost(
-                            navController = swipeDismissableNavController,
-                            startDestination = SCREEN_LANDING
-                        ) {
-                            composable(SCREEN_LANDING) {
-                                ScalingLazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxSize(),
-                                    contentPadding = PaddingValues(
-                                        top = 10.dp,
-                                        start = 10.dp,
-                                        end = 10.dp,
-                                        bottom = 40.dp
-                                    ),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    state = scalingLazyListState
-                                ) {
-                                    if (favorites.isNotEmpty()) {
-                                        val favoriteArray = favorites.toTypedArray()
-                                        items(favoriteArray.size) { index ->
-                                            Spacer(modifier = Modifier.height(10.dp))
-                                            if (index == 0)
-                                                SetTitle(id = R.string.favorites)
-                                            val favoriteEntityID =
-                                                favoriteArray[index].split(",")[0]
-                                            val favoriteName = favoriteArray[index].split(",")[1]
-                                            val favoriteIcon = favoriteArray[index].split(",")[2]
-                                            if (entities.isNullOrEmpty()) {
-                                                // Use a normal chip when we don't have the state of the entity
-                                                Chip(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .padding(top = if (index == 0) 30.dp else 10.dp),
-                                                    icon = {
-                                                        Image(
-                                                            asset = getIcon(
-                                                                favoriteIcon,
-                                                                favoriteEntityID.split(".")[0]
-                                                            )
-                                                                ?: CommunityMaterial.Icon.cmd_cellphone
+                        composable(SCREEN_LANDING) {
+                            ScalingLazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                contentPadding = PaddingValues(
+                                    top = 10.dp,
+                                    start = 10.dp,
+                                    end = 10.dp,
+                                    bottom = 40.dp
+                                ),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                state = scalingLazyListState
+                            ) {
+                                if (favorites.isNotEmpty()) {
+                                    val favoriteArray = favorites.toTypedArray()
+                                    items(favoriteArray.size) { index ->
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                        if (index == 0)
+                                            SetTitle(id = R.string.favorites)
+                                        val favoriteEntityID = favoriteArray[index].split(",")[0]
+                                        val favoriteName = favoriteArray[index].split(",")[1]
+                                        val favoriteIcon = favoriteArray[index].split(",")[2]
+                                        if (entities.isNullOrEmpty()) {
+                                            // Use a normal chip when we don't have the state of the entity
+                                            Chip(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(top = if (index == 0) 30.dp else 10.dp),
+                                                icon = {
+                                                    Image(
+                                                        asset = getIcon(
+                                                            favoriteIcon,
+                                                            favoriteEntityID.split(".")[0],
+                                                            baseContext
                                                         )
-                                                    },
-                                                    label = {
-                                                        Text(
-                                                            text = favoriteName,
-                                                            maxLines = 2,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        presenter.onEntityClicked(
-                                                            favoriteEntityID
-                                                        )
-                                                    },
-                                                    colors = ChipDefaults.primaryChipColors(
-                                                        backgroundColor = colorResource(id = R.color.colorAccent),
-                                                        contentColor = Color.Black
+                                                            ?: CommunityMaterial.Icon.cmd_cellphone
                                                     )
+                                                },
+                                                label = {
+                                                    Text(
+                                                        text = favoriteName,
+                                                        maxLines = 2,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                },
+                                                onClick = { presenter.onEntityClicked(favoriteEntityID) },
+                                                colors = ChipDefaults.primaryChipColors(
+                                                    backgroundColor = colorResource(id = R.color.colorAccent),
+                                                    contentColor = Color.Black
                                                 )
-                                            } else {
-                                                for (entity in entities) {
-                                                    if (entity.entityId == favoriteEntityID) {
-                                                        SetEntityUI(entity = entity, index = index)
-                                                    }
+                                            )
+                                        } else {
+                                            for (entity in entities) {
+                                                if (entity.entityId == favoriteEntityID) {
+                                                    SetEntityUI(entity = entity, index = index)
                                                 }
                                             }
                                         }
                                     }
-                                    if (entities.isNullOrEmpty()) {
-                                        item {
-                                            Column {
-                                                SetTitle(id = R.string.loading)
-                                                Chip(
-                                                    modifier = Modifier
-                                                        .padding(
-                                                            top = 10.dp,
-                                                            start = 10.dp,
-                                                            end = 10.dp
-                                                        ),
-                                                    label = {
-                                                        Text(
-                                                            text = stringResource(R.string.loading_entities),
-                                                            textAlign = TextAlign.Center
-                                                        )
-                                                    },
-                                                    onClick = { /* No op */ },
-                                                    colors = setChipDefaults()
-                                                )
-                                            }
-                                        }
-                                    }
-                                    if (inputBooleans.isNotEmpty()) {
-                                        items(inputBooleans.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.input_booleans)
-                                            SetEntityUI(inputBooleans[index], index)
-                                        }
-                                    }
-                                    if (lights.isNotEmpty()) {
-                                        items(lights.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.lights)
-                                            SetEntityUI(lights[index], index)
-                                        }
-                                    }
-                                    if (scenes.isNotEmpty()) {
-                                        items(scenes.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.scenes)
-                                            SetEntityUI(scenes[index], index)
-                                        }
-                                    }
-                                    if (scripts.isNotEmpty()) {
-                                        items(scripts.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.scripts)
-                                            SetEntityUI(scripts[index], index)
-                                        }
-                                    }
-                                    if (switches.isNotEmpty()) {
-                                        items(switches.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.switches)
-                                            SetEntityUI(switches[index], index)
-                                        }
-                                    }
-
+                                }
+                                if (entities.isNullOrEmpty()) {
                                     item {
-                                        LoadOtherSection(swipeDismissableNavController)
+                                        Column {
+                                            SetTitle(id = R.string.loading)
+                                            Chip(
+                                                modifier = Modifier
+                                                    .padding(top = 10.dp, start = 10.dp, end = 10.dp),
+                                                label = {
+                                                    Text(
+                                                        text = stringResource(R.string.loading_entities),
+                                                        textAlign = TextAlign.Center
+                                                    )
+                                                },
+                                                onClick = { /* No op */ },
+                                                colors = setChipDefaults()
+                                            )
+                                        }
                                     }
                                 }
+                                if (inputBooleans.isNotEmpty()) {
+                                    items(inputBooleans.size) { index ->
+                                        if (index == 0)
+                                            SetTitle(R.string.input_booleans)
+                                        SetEntityUI(inputBooleans[index], index)
+                                    }
+                                }
+                                if (lights.isNotEmpty()) {
+                                    items(lights.size) { index ->
+                                        if (index == 0)
+                                            SetTitle(R.string.lights)
+                                        SetEntityUI(lights[index], index)
+                                    }
+                                }
+                                if (scenes.isNotEmpty()) {
+                                    items(scenes.size) { index ->
+                                        if (index == 0)
+                                            SetTitle(R.string.scenes)
+
+                                        SetEntityUI(scenes[index], index)
+                                    }
+                                }
+                                if (scripts.isNotEmpty()) {
+                                    items(scripts.size) { index ->
+                                        if (index == 0)
+                                            SetTitle(R.string.scripts)
+                                        SetEntityUI(scripts[index], index)
+                                    }
+                                }
+                                if (switches.isNotEmpty()) {
+                                    items(switches.size) { index ->
+                                        if (index == 0)
+                                            SetTitle(R.string.switches)
+                                        SetEntityUI(switches[index], index)
+                                    }
+                                }
+
+                                item {
+                                    LoadOtherSection(swipeDismissableNavController)
+                                }
                             }
-                            composable(SCREEN_SETTINGS) {
-                                ScreenSettings(swipeDismissableNavController)
-                            }
-                            composable(SCREEN_SET_FAVORITES) {
-                                ScreenSetFavorites(validEntities, scalingLazyListState)
-                            }
+                        }
+                        composable(SCREEN_SETTINGS) {
+                            ScreenSettings(swipeDismissableNavController, entityViewModel, presenter)
+                        }
+                        composable(SCREEN_SET_FAVORITES) {
+                            ScreenSetFavorites(validEntities, entityViewModel, baseContext, presenter)
                         }
                     }
                 }
@@ -327,7 +306,7 @@ class HomeActivity : ComponentActivity(), HomeView {
     @Composable
     private fun SetEntityUI(entity: Entity<Any>, index: Int) {
         val attributes = entity.attributes as Map<String, String>
-        val iconBitmap = CommonFunctions().getIcon(attributes["icon"], entity.entityId.split(".")[0], baseContext)
+        val iconBitmap = getIcon(attributes["icon"], entity.entityId.split(".")[0], baseContext)
 
         if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
             ToggleChip(
@@ -378,7 +357,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                     presenter.onEntityClicked(entity.entityId)
                     updateEntities()
                 },
-                colors = CommonFunctions().setChipDefaults()
+                colors = setChipDefaults()
             )
         }
     }
@@ -386,7 +365,7 @@ class HomeActivity : ComponentActivity(), HomeView {
     @Composable
     private fun LoadOtherSection(swipeDismissableNavController: NavHostController) {
         Column {
-            CommonFunctions().SetTitle(R.string.other)
+            SetTitle(R.string.other)
             Chip(
                 modifier = Modifier
                     .fillMaxWidth()
