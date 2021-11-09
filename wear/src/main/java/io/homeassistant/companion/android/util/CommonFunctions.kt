@@ -56,9 +56,9 @@ fun updateTileShortcuts(entityViewModel: EntityViewModel, presenter: HomePresent
     }
 }
 
-fun saveTileShortcuts(shortcutEntities: List<String>, presenter: HomePresenter, mainScope: CoroutineScope) {
+fun saveTileShortcuts(shortcutEntities: List<String>, presenter: HomePresenter, context: Context, mainScope: CoroutineScope) {
     mainScope.launch {
-        presenter.setTileShortcuts(shortcutEntities)
+        presenter.setTileShortcuts(shortcutEntities, context)
     }
 }
 

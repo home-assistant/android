@@ -62,7 +62,7 @@ class FavoriteEntitiesTile : TileService() {
             val entities = getEntities()
 
             Tile.Builder()
-                .setResourcesVersion(RESOURCES_VERSION)
+                .setResourcesVersion(entities.toString())
                 .setTimeline(
                     Timeline.Builder().addTimelineEntry(
                         TimelineEntry.Builder().setLayout(
@@ -81,7 +81,7 @@ class FavoriteEntitiesTile : TileService() {
             val entities = getEntities()
 
             Resources.Builder()
-                .setVersion(RESOURCES_VERSION)
+                .setVersion(entities.toString())
                 .apply {
                     entities.map { entity ->
                         val entityId = entity.split(",")[0]
@@ -140,14 +140,20 @@ class FavoriteEntitiesTile : TileService() {
     }
 
     fun layout(entities: List<String>): LayoutElement = Column.Builder().apply {
-        if (entities.isNotEmpty()) {
+        if (entities.isEmpty()) {
+            addContent(LayoutElementBuilders.Text.Builder()
+                .setText("Choose entities in settings")
+                .build())
+        } else {
             addContent(rowLayout(entities.subList(0, min(2, entities.size))))
-        }
-        if (entities.size > 2) {
-            addContent(rowLayout(entities.subList(2, min(5, entities.size))))
-        }
-        if (entities.size > 5) {
-            addContent(rowLayout(entities.subList(5, min(7, entities.size))))
+            if (entities.size > 2) {
+                addContent(Spacer.Builder().setHeight(dp(SPACING)).build())
+                addContent(rowLayout(entities.subList(2, min(5, entities.size))))
+            }
+            if (entities.size > 5) {
+                addContent(Spacer.Builder().setHeight(dp(SPACING)).build())
+                addContent(rowLayout(entities.subList(5, min(7, entities.size))))
+            }
         }
     }
         .build()

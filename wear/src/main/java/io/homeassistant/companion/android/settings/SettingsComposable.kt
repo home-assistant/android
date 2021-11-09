@@ -334,7 +334,7 @@ fun ScreenChooseEntity(
                 onClick = {
                     if (entitySelectionIndex < entitiesList.size) {
                         entitiesList.removeAt(entitySelectionIndex)
-                        saveTileShortcuts(entitiesList, presenter, mainScope)
+                        saveTileShortcuts(entitiesList, presenter, context, mainScope)
                     }
                     swipeDismissableNavController.navigateUp()
                 },
@@ -366,7 +366,7 @@ fun ScreenChooseEntity(
                     } else {
                         entitiesList.add(elementString)
                     }
-                    saveTileShortcuts(entitiesList, presenter, mainScope)
+                    saveTileShortcuts(entitiesList, presenter, context, mainScope)
                     swipeDismissableNavController.navigateUp()
                 },
                 colors = setChipDefaults()
