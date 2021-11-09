@@ -91,7 +91,7 @@ object DisabledLocationHandler {
                 )
 
                 val notificationBuilder = NotificationCompat.Builder(activity, channelID)
-                    .setSmallIcon(io.homeassistant.companion.android.common.R.drawable.ic_stat_ic_notification)
+                    .setSmallIcon(R.drawable.ic_stat_ic_notification)
                     .setColor(Color.RED)
                     .setOngoing(true)
                     .setContentTitle(activity.applicationContext.getString(R.string.location_disabled_title))

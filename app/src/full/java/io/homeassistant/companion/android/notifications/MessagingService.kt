@@ -763,7 +763,7 @@ class MessagingService : FirebaseMessagingService() {
                 IconicsDrawable(applicationContext, "cmd-$iconName").toAndroidIconCompat()
             builder.setSmallIcon(iconDrawable)
         } else
-            builder.setSmallIcon(io.homeassistant.companion.android.common.R.drawable.ic_stat_ic_notification)
+            builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
     }
 
     private fun handleContentIntent(
@@ -1119,7 +1119,7 @@ class MessagingService : FirebaseMessagingService() {
                         if (notificationAction.key == "URI")
                             R.drawable.ic_globe
                         else
-                            io.homeassistant.companion.android.common.R.drawable.ic_stat_ic_notification
+                            R.drawable.ic_stat_ic_notification
                     builder.addAction(icon, notificationAction.title, actionPendingIntent)
                 } else {
                     val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {

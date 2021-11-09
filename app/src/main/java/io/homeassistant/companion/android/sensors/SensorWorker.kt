@@ -62,7 +62,7 @@ class SensorWorker(
             Log.d(TAG, "Updating all Sensors.")
             createNotificationChannel()
             val notification = NotificationCompat.Builder(applicationContext, channelId)
-                .setSmallIcon(io.homeassistant.companion.android.common.R.drawable.ic_stat_ic_notification)
+                .setSmallIcon(R.drawable.ic_stat_ic_notification)
                 .setContentTitle(appContext.getString(R.string.updating_sensors))
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build()
