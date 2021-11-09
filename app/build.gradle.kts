@@ -5,7 +5,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("kotlin-kapt")
-    id("kotlin-android-extensions")
+    id("kotlin-parcelize")
     id("com.google.firebase.appdistribution")
     id("com.github.triplet.play")
     id("com.google.gms.google-services")
@@ -143,11 +143,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
 
-    implementation("com.google.dagger:dagger:2.39.1")
-    kapt("com.google.dagger:dagger-compiler:2.39.1")
+    implementation("com.google.dagger:dagger:2.40")
+    kapt("com.google.dagger:dagger-compiler:2.40")
 
     implementation("androidx.appcompat:appcompat:1.3.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.1")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.1.1")
@@ -156,7 +156,6 @@ dependencies {
     implementation("com.google.android.material:material:1.4.0")
 
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0-rc01")
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
 
     implementation("androidx.room:room-runtime:2.3.0")
@@ -168,10 +167,10 @@ dependencies {
     implementation("com.squareup.picasso:picasso:2.8")
 
     "fullImplementation"("com.google.android.gms:play-services-location:18.0.0")
-    "fullImplementation"("com.google.firebase:firebase-core:19.0.2")
+    "fullImplementation"("com.google.firebase:firebase-core:20.0.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
-    "fullImplementation"("com.google.firebase:firebase-messaging:22.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.2.4")
+    "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
+    "fullImplementation"("io.sentry:sentry-android:5.3.0")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
     implementation("androidx.work:work-runtime-ktx:2.7.0")
@@ -183,18 +182,21 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
     implementation("com.google.android.exoplayer:extension-cronet:2.15.1")
 
-    implementation("androidx.compose.animation:animation:1.0.4")
-    implementation("androidx.compose.compiler:compiler:1.0.4")
-    implementation("androidx.compose.foundation:foundation:1.0.4")
-    implementation("androidx.compose.material:material:1.0.4")
-    implementation("androidx.compose.material:material-icons-core:1.0.4")
-    implementation("androidx.compose.material:material-icons-extended:1.0.4")
-    implementation("androidx.compose.runtime:runtime:1.0.4")
-    implementation("androidx.compose.ui:ui:1.0.4")
-    implementation("androidx.compose.ui:ui-tooling:1.0.4")
-    implementation("androidx.activity:activity-compose:1.3.1")
+    implementation("androidx.compose.animation:animation:1.0.5")
+    implementation("androidx.compose.compiler:compiler:1.0.5")
+    implementation("androidx.compose.foundation:foundation:1.0.5")
+    implementation("androidx.compose.material:material:1.0.5")
+    implementation("androidx.compose.material:material-icons-core:1.0.5")
+    implementation("androidx.compose.material:material-icons-extended:1.0.5")
+    implementation("androidx.compose.runtime:runtime:1.0.5")
+    implementation("androidx.compose.ui:ui:1.0.5")
+    implementation("androidx.compose.ui:ui-tooling:1.0.5")
+    implementation("androidx.activity:activity-compose:1.4.0")
     implementation("com.google.android.material:compose-theme-adapter:1.0.4")
-    implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.0")
+    implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.2")
+
+    implementation("com.mikepenz:iconics-core:5.3.2")
+    implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

@@ -38,7 +38,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             R.string.basic_sensor_name_active_notification_count,
             R.string.sensor_description_active_notification_count,
             unitOfMeasurement = "notifications",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
         private val mediaSession = SensorManager.BasicSensor(
             "media_session",

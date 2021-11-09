@@ -21,6 +21,13 @@ class HomePresenterImpl @Inject constructor(
 ) : HomePresenter {
 
     companion object {
+        val toggleDomains = listOf(
+            "cover", "fan", "humidifier", "input_boolean", "light",
+            "media_player", "remote", "siren", "switch"
+        )
+        val supportedDomains = listOf(
+            "input_boolean", "light", "switch", "script", "scene"
+        )
         const val TAG = "HomePresenter"
     }
 
@@ -31,8 +38,6 @@ class HomePresenterImpl @Inject constructor(
             val sessionValid = authenticationUseCase.getSessionState() == SessionState.CONNECTED
             if (sessionValid && integrationUseCase.isRegistered()) {
                 resyncRegistration()
-                // We'll stay on HomeActivity, so start loading entities
-                processEntities(integrationUseCase.getEntities())
             } else if (sessionValid) {
                 view.displayMobileAppIntegration()
             } else {
@@ -41,30 +46,33 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override fun onEntityClicked(entity: Entity<Any>) {
+    override suspend fun getEntities(): Array<Entity<Any>> {
+        return try {
+            integrationUseCase.getEntities()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get entities", e)
+            emptyArray()
+        }
+    }
 
-        if (entity.entityId.split(".")[0] == "light") {
+    override fun onEntityClicked(entityId: String) {
+
+        if (entityId.split(".")[0] in toggleDomains) {
             mainScope.launch {
                 integrationUseCase.callService(
-                    entity.entityId.split(".")[0],
+                    entityId.split(".")[0],
                     "toggle",
-                    hashMapOf("entity_id" to entity.entityId)
+                    hashMapOf("entity_id" to entityId)
                 )
             }
         } else {
             mainScope.launch {
                 integrationUseCase.callService(
-                    entity.entityId.split(".")[0],
+                    entityId.split(".")[0],
                     "turn_on",
-                    hashMapOf("entity_id" to entity.entityId)
+                    hashMapOf("entity_id" to entityId)
                 )
             }
-        }
-    }
-
-    override fun onButtonClicked(id: String) {
-        if (id == HomeListAdapter.BUTTON_ID_LOGOUT) {
-            onLogoutClicked()
         }
     }
 
@@ -77,14 +85,6 @@ class HomePresenterImpl @Inject constructor(
 
     override fun onFinish() {
         mainScope.cancel()
-    }
-
-    private fun processEntities(entities: Array<Entity<Any>>) {
-        val scenes = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
-        val scripts = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "script" }
-        val lights = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "light" }
-        val covers = entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "cover" }
-        view.showHomeList(scenes, scripts, lights, covers)
     }
 
     private fun resyncRegistration() {
@@ -101,5 +101,13 @@ class HomePresenterImpl @Inject constructor(
                 Log.e(TAG, "Issue updating Registration", e)
             }
         }
+    }
+
+    override suspend fun getWearHomeFavorites(): Set<String> {
+        return integrationUseCase.getWearHomeFavorites()
+    }
+
+    override suspend fun setWearHomeFavorites(favorites: Set<String>) {
+        integrationUseCase.setWearHomeFavorites(favorites)
     }
 }

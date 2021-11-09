@@ -16,32 +16,38 @@ class BatterySensorManager : SensorManager {
             R.string.basic_sensor_name_battery_level,
             R.string.sensor_description_battery_level,
             "battery",
-            "%"
+            "%",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val batteryState = SensorManager.BasicSensor(
             "battery_state",
             "sensor",
             R.string.basic_sensor_name_battery_state,
-            R.string.sensor_description_battery_state
+            R.string.sensor_description_battery_state,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
             R.string.basic_sensor_name_charging,
             R.string.sensor_description_charging,
-            "plug"
+            "plug",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
             "sensor",
             R.string.basic_sensor_name_charger_type,
-            R.string.sensor_description_charger_type
+            R.string.sensor_description_charger_type,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
             "sensor",
             R.string.basic_sensor_name_battery_health,
-            R.string.sensor_description_battery_health
+            R.string.sensor_description_battery_health,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
         private val batteryTemperature = SensorManager.BasicSensor(
@@ -50,7 +56,9 @@ class BatterySensorManager : SensorManager {
             R.string.basic_sensor_name_battery_temperature,
             R.string.sensor_description_battery_temperature,
             "temperature",
-            "°C"
+            "°C",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 

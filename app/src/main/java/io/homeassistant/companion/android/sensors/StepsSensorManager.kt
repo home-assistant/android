@@ -23,7 +23,8 @@ class StepsSensorManager : SensorManager, SensorEventListener {
             "sensor",
             R.string.sensor_name_steps,
             R.string.sensor_description_steps_sensor,
-            unitOfMeasurement = "steps"
+            unitOfMeasurement = "steps",
+            stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING
         )
     }
 
@@ -92,16 +93,14 @@ class StepsSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event != null) {
-            if (event.sensor.type == Sensor.TYPE_STEP_COUNTER) {
-                onSensorUpdated(
-                    latestContext,
-                    stepsSensor,
-                    event.values[0].roundToInt().toString(),
-                    "mdi:walk",
-                    mapOf()
-                )
-            }
+        if (event?.sensor?.type == Sensor.TYPE_STEP_COUNTER) {
+            onSensorUpdated(
+                latestContext,
+                stepsSensor,
+                event.values[0].roundToInt().toString(),
+                "mdi:walk",
+                mapOf()
+            )
         }
         mySensorManager.unregisterListener(this)
         Log.d(TAG, "Steps sensor listener unregistered")

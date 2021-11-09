@@ -10,13 +10,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import kotlinx.android.synthetic.main.fragment_nfc_edit.*
+import io.homeassistant.companion.android.databinding.FragmentNfcEditBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,7 +33,10 @@ class NfcEditFragment : Fragment() {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    private lateinit var viewModel: NfcViewModel
+    private var _binding: FragmentNfcEditBinding? = null
+    private val binding get() = _binding!!
+
+    private val viewModel: NfcViewModel by activityViewModels()
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
@@ -42,9 +45,7 @@ class NfcEditFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        viewModel = ViewModelProvider(requireActivity()).get(NfcViewModel::class.java)
-
+    ): View {
         // Inject components
         DaggerProviderComponent
             .builder()
@@ -53,28 +54,25 @@ class NfcEditFragment : Fragment() {
             .inject(this)
 
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_nfc_edit, container, false)
+        _binding = FragmentNfcEditBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     @SuppressLint("SetTextI18n", "HardwareIds")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
         val nfcReadObserver = Observer<String> { uuid ->
-            mainScope.launch {
-                et_tag_identifier_content.setText(uuid)
-                val deviceId = Settings.Secure.getString(requireActivity().contentResolver, Settings.Secure.ANDROID_ID)
-                et_tag_example_trigger_content.setText("- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: $uuid")
-            }
+            binding.etTagIdentifierContent.setText(uuid)
+            val deviceId = Settings.Secure.getString(requireActivity().contentResolver, Settings.Secure.ANDROID_ID)
+            binding.etTagExampleTriggerContent.setText("- platform: event\n  event_type: tag_scanned\n  event_data:\n    device_id: $deviceId\n    tag_id: $uuid")
         }
         viewModel.nfcReadEvent.observe(viewLifecycleOwner, nfcReadObserver)
 
-        btn_tag_duplicate.setOnClickListener {
-            viewModel.nfcWriteTagEvent.postValue(et_tag_identifier_content.text.toString())
+        binding.btnTagDuplicate.setOnClickListener {
+            viewModel.nfcWriteTagEvent.postValue(binding.etTagIdentifierContent.text.toString())
             findNavController().navigate(R.id.action_NFC_WRITE)
         }
 
-        btn_tag_fire_event.setOnClickListener {
+        binding.btnTagFireEvent.setOnClickListener {
             mainScope.launch {
                 val uuid: String = viewModel.nfcReadEvent.value.toString()
                 try {
@@ -91,15 +89,20 @@ class NfcEditFragment : Fragment() {
             }
         }
 
-        btn_tag_share_example_trigger.setOnClickListener {
+        binding.btnTagShareExampleTrigger.setOnClickListener {
             val sendIntent: Intent = Intent().apply {
                 action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, et_tag_example_trigger_content.text)
+                putExtra(Intent.EXTRA_TEXT, binding.etTagExampleTriggerContent.text)
                 type = "text/plain"
             }
             val shareIntent = Intent.createChooser(sendIntent, null)
             startActivity(shareIntent)
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     override fun onDestroy() {

@@ -15,7 +15,7 @@ object TransmitterManager {
 
     private fun buildBeacon(haTransmitterI: IBeaconTransmitter): Beacon {
         val builder = Beacon.Builder()
-        builder.setTxPower(getReferencePowerInDbs(haTransmitterI))
+        builder.setTxPower(haTransmitterI.measuredPowerSetting)
         builder.setId1(haTransmitterI.uuid)
         builder.setId2(haTransmitterI.major)
         builder.setId3(haTransmitterI.minor)
@@ -31,11 +31,11 @@ object TransmitterManager {
     private fun validateInputs(haTransmitter: IBeaconTransmitter): Boolean {
         try {
             UUID.fromString(haTransmitter.uuid)
-            if (haTransmitter.major.toInt() < 0 || haTransmitter.major.toInt() > 65535 || haTransmitter.minor.toInt() < 0 || haTransmitter.minor.toInt() > 65535)
+            if (haTransmitter.major.toInt() < 0 || haTransmitter.major.toInt() > 65535 || haTransmitter.minor.toInt() < 0 || haTransmitter.minor.toInt() > 65535 || haTransmitter.measuredPowerSetting >= 0)
                 throw IllegalArgumentException("Invalid Major or Minor")
         } catch (e: IllegalArgumentException) {
             stopTransmitting(haTransmitter)
-            haTransmitter.state = "Invalid parameters, check UUID, Major and Minor"
+            haTransmitter.state = "Invalid parameters, check UUID, Major and Minor, and Measured Power settings."
             return false
         }
         return true
@@ -52,14 +52,13 @@ object TransmitterManager {
         if (!this::physicalTransmitter.isInitialized) {
             val parser = BeaconParser().setBeaconLayout(haTransmitter.beaconLayout)
             physicalTransmitter = BeaconTransmitter(context, parser)
-            // this setting is how frequently we emit, low power mode is 1hz, could be a setting to make faster.
-            physicalTransmitter.advertiseMode = AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
         }
         val bluetoothOn = BluetoothAdapter.getDefaultAdapter().isEnabled
         if (bluetoothOn) {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {
                 physicalTransmitter.advertiseTxPowerLevel = getPowerLevel(haTransmitter)
+                physicalTransmitter.advertiseMode = getAdvertiseMode(haTransmitter)
                 physicalTransmitter.startAdvertising(
                     beacon,
                     object : AdvertiseCallback() {
@@ -88,21 +87,20 @@ object TransmitterManager {
         }
     }
 
+    private fun getAdvertiseMode(haTransmitter: IBeaconTransmitter) =
+        when (haTransmitter.advertiseModeSetting) {
+            "lowLatency" -> AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY
+            "balanced" -> AdvertiseSettings.ADVERTISE_MODE_BALANCED
+            "lowPower" -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER // explicit for code readability
+            else -> AdvertiseSettings.ADVERTISE_MODE_LOW_POWER
+        }
+
     private fun getPowerLevel(haTransmitter: IBeaconTransmitter) =
         when (haTransmitter.transmitPowerSetting) {
             "high" -> AdvertiseSettings.ADVERTISE_TX_POWER_HIGH
             "medium" -> AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM
             "low" -> AdvertiseSettings.ADVERTISE_TX_POWER_LOW
             else -> AdvertiseSettings.ADVERTISE_TX_POWER_ULTRA_LOW
-        }
-
-    private fun getReferencePowerInDbs(haTransmitter: IBeaconTransmitter) =
-        // from https://github.com/home-assistant/android/issues/1715, below values correspond to the PowerLevels, using reference phone of S5
-        when (haTransmitter.transmitPowerSetting) {
-            "high" -> -74
-            "medium" -> -84
-            "low" -> -90
-            else -> -94
         }
 
     fun stopTransmitting(haTransmitter: IBeaconTransmitter) {

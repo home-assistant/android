@@ -10,7 +10,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.RecyclerView
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.Service
-import kotlinx.android.synthetic.main.widget_button_configure_dynamic_field.view.*
+import io.homeassistant.companion.android.databinding.WidgetButtonConfigureDynamicFieldBinding
 import kotlin.Exception
 
 class WidgetDynamicFieldAdapter(
@@ -18,7 +18,10 @@ class WidgetDynamicFieldAdapter(
     private val entities: HashMap<String, Entity<Any>>,
     private val serviceFieldList: ArrayList<ServiceFieldBinder>
 ) : RecyclerView.Adapter<WidgetDynamicFieldAdapter.ViewHolder>() {
-    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+
+    class ViewHolder(
+        val binding: WidgetButtonConfigureDynamicFieldBinding
+    ) : RecyclerView.ViewHolder(binding.root)
 
     private val TAG = "WidgetField"
     private val dropDownOnFocus = View.OnFocusChangeListener { view, hasFocus ->
@@ -34,26 +37,22 @@ class WidgetDynamicFieldAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
 
-        val dynamicFieldLayout = inflater.inflate(
-            io.homeassistant.companion.android.R.layout.widget_button_configure_dynamic_field,
-            parent,
-            false
-        )
+        val binding = WidgetButtonConfigureDynamicFieldBinding.inflate(inflater, parent, false)
 
-        return ViewHolder(dynamicFieldLayout)
+        return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val dynamicFieldLayout = holder.itemView
-        val autoCompleteTextView = dynamicFieldLayout.dynamic_autocomplete_textview
-        val context = dynamicFieldLayout.context
+        val binding = holder.binding
+        val autoCompleteTextView = binding.dynamicAutocompleteTextview
+        val context = holder.itemView.context
 
         val serviceText: String = serviceFieldList[position].service
         val fieldKey = serviceFieldList[position].field
 
         // Set label for the text view
         // Reformat text to "Capital Words" instead of "capital_words"
-        dynamicFieldLayout.dynamic_autocomplete_label.text =
+        binding.dynamicAutocompleteLabel.text =
             fieldKey.split("_").map {
                 if (it == "id") it.toUpperCase()
                 else it.capitalize()

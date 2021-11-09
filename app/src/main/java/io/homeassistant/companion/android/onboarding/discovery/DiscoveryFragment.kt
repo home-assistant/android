@@ -10,16 +10,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ListView
 import android.widget.Toast
-import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import io.homeassistant.companion.android.databinding.FragmentDiscoveryBinding
+import io.homeassistant.companion.android.databinding.InstanceItemBinding
 import javax.inject.Inject
 
 class DiscoveryFragment : Fragment(), DiscoveryView {
@@ -62,45 +61,48 @@ class DiscoveryFragment : Fragment(), DiscoveryView {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(requireContext(), R.layout.instance_item, instances) {
             @SuppressLint("InflateParams")
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val v = convertView ?: LayoutInflater.from(context).inflate(
-                    R.layout.instance_item,
-                    null
-                )
+                val binding = if (convertView != null) {
+                    InstanceItemBinding.bind(convertView)
+                } else {
+                    InstanceItemBinding.inflate(LayoutInflater.from(context))
+                }
                 getItem(position)?.let {
-                    v.findViewById<AppCompatTextView>(R.id.name).text = it.name
-                    v.findViewById<AppCompatTextView>(R.id.url).text = it.url.toString()
+                    binding.name.text = it.name
+                    binding.url.text = it.url.toString()
                 }
 
-                return v
+                return binding.root
             }
         }
 
-        return inflater.inflate(R.layout.fragment_discovery, container, false).apply {
-            findViewById<ListView>(R.id.instance_list_view)?.apply {
-                adapter = listViewAdapter
-                setOnItemClickListener { _, _, position, _ -> presenter.onUrlSelected(instances[position].url) }
-            }
-            findViewById<Button>(R.id.what_is_this)?.apply {
-                setOnClickListener {
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = Uri.parse(HOME_ASSISTANT)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    try {
-                        startActivity(intent)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Unable to load Home Assistant home page", e)
-                        Toast.makeText(context, R.string.what_is_this_crash, Toast.LENGTH_LONG).show()
-                    }
+        val binding = FragmentDiscoveryBinding.inflate(inflater, container, false)
+
+        binding.instanceListView.apply {
+            adapter = listViewAdapter
+            setOnItemClickListener { _, _, position, _ -> presenter.onUrlSelected(instances[position].url) }
+        }
+        binding.whatIsThis.apply {
+            setOnClickListener {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(HOME_ASSISTANT)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to load Home Assistant home page", e)
+                    Toast.makeText(context, R.string.what_is_this_crash, Toast.LENGTH_LONG).show()
                 }
             }
-            this.findViewById<Button>(R.id.manual_setup)
-                .setOnClickListener { (activity as DiscoveryListener).onSelectManualSetup() }
         }
+        binding.manualSetup
+            .setOnClickListener { (activity as DiscoveryListener).onSelectManualSetup() }
+
+        return binding.root
     }
 
     override fun onResume() {

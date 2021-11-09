@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.notifications
 
+import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -38,6 +39,8 @@ import androidx.core.text.HtmlCompat
 import androidx.core.text.isDigitsOnly
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
@@ -60,7 +63,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 import java.net.URL
 import java.util.Locale
 import javax.inject.Inject
@@ -84,6 +89,7 @@ class MessagingService : FirebaseMessagingService() {
         const val KEY_TEXT_REPLY = "key_text_reply"
         const val ALERT_ONCE = "alert_once"
         const val INTENT_CLASS_NAME = "intent_class_name"
+        const val NOTIFICATION_ICON = "notification_icon"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -178,9 +184,11 @@ class MessagingService : FirebaseMessagingService() {
         // Check if message contains a data payload.
         remoteMessage.data.let {
             Log.d(TAG, "Message data payload: " + remoteMessage.data)
+            val jsonData: Map<String, String> = it
+            val jsonObject = JSONObject(jsonData)
             val notificationDao = AppDatabase.getInstance(applicationContext).notificationDao()
             val now = System.currentTimeMillis()
-            val notificationRow = NotificationItem(0, now, it[MESSAGE].toString(), it.toString())
+            val notificationRow = NotificationItem(0, now, it[MESSAGE].toString(), jsonObject.toString())
             notificationDao.add(notificationRow)
 
             when {
@@ -417,7 +425,7 @@ class MessagingService : FirebaseMessagingService() {
                     val notificationManager =
                         applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
-                        requestDNDPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         when (title) {
                             DND_ALARMS_ONLY -> notificationManager.setInterruptionFilter(
@@ -441,7 +449,7 @@ class MessagingService : FirebaseMessagingService() {
                     val notificationManager =
                         applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
-                        requestDNDPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         processRingerMode(audioManager, title)
                     }
@@ -494,7 +502,7 @@ class MessagingService : FirebaseMessagingService() {
                     val notificationManager =
                         applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
-                        requestDNDPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         processStreamVolume(
                             audioManager,
@@ -531,13 +539,14 @@ class MessagingService : FirebaseMessagingService() {
                     LocationSensorManager.setHighAccuracyModeSetting(applicationContext, true)
                 }
                 val intent = Intent(this, LocationSensorManager::class.java)
-                intent.action = LocationSensorManager.ACTION_REQUEST_LOCATION_UPDATES
+                intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY
+                intent.putExtra("command", title)
                 applicationContext.sendBroadcast(intent)
             }
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(applicationContext))
-                        requestSystemAlertPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     else
                         processActivityCommand(data)
                 } else
@@ -546,7 +555,7 @@ class MessagingService : FirebaseMessagingService() {
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(applicationContext))
-                        requestSystemAlertPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     else
                         openWebview(title)
                 } else
@@ -574,7 +583,7 @@ class MessagingService : FirebaseMessagingService() {
             COMMAND_MEDIA -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (!NotificationManagerCompat.getEnabledListenerPackages(applicationContext).contains(applicationContext.packageName))
-                        requestNotificationPermission()
+                        notifyMissingPermission(data[MESSAGE].toString())
                     else {
                         processMediaCommand(data)
                     }
@@ -614,7 +623,8 @@ class MessagingService : FirebaseMessagingService() {
         val channelId = handleChannel(notificationManagerCompat, data)
 
         val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_stat_ic_notification)
+
+        handleSmallIcon(notificationBuilder, data)
 
         handleSound(notificationBuilder, data)
 
@@ -688,6 +698,18 @@ class MessagingService : FirebaseMessagingService() {
         }
     }
 
+    private fun handleSmallIcon(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        if (data[NOTIFICATION_ICON]?.startsWith("mdi") == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val iconName = data[NOTIFICATION_ICON]!!.split(":")[1]
+            val iconDrawable = IconicsDrawable(applicationContext, "cmd-$iconName").toAndroidIconCompat()
+            builder.setSmallIcon(iconDrawable)
+        } else
+            builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
+    }
+
     private fun handleContentIntent(
         builder: NotificationCompat.Builder,
         messageId: Int,
@@ -753,7 +775,6 @@ class MessagingService : FirebaseMessagingService() {
     ): NotificationCompat.Builder {
 
         val groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .setSummaryText(
@@ -766,6 +787,7 @@ class MessagingService : FirebaseMessagingService() {
         if (data[ALERT_ONCE].toBoolean())
             groupNotificationBuilder.setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
         handleColor(groupNotificationBuilder, data)
+        handleSmallIcon(groupNotificationBuilder, data)
         return groupNotificationBuilder
     }
 
@@ -1339,6 +1361,38 @@ class MessagingService : FirebaseMessagingService() {
             Log.e(TAG, "Unable to open webview", e)
         }
     }
+
+    private fun notifyMissingPermission(type: String) {
+        val appManager =
+            applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val currentProcess = appManager.runningAppProcesses
+        if (currentProcess != null) {
+            for (item in currentProcess) {
+                if (applicationContext.applicationInfo.processName == item.processName) {
+                    if (item.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                        val data =
+                            mutableMapOf(MESSAGE to getString(R.string.missing_command_permission))
+                        runBlocking {
+                            sendNotification(data)
+                        }
+                    } else {
+                        when (type) {
+                            COMMAND_WEBVIEW, COMMAND_ACTIVITY -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                requestSystemAlertPermission()
+                            }
+                            COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                requestDNDPermission()
+                            }
+                            COMMAND_MEDIA -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                                requestNotificationPermission()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Called if InstanceID token is updated. This may occur if the security of
      * the previous token had been compromised. Note that this is called when the InstanceID token
