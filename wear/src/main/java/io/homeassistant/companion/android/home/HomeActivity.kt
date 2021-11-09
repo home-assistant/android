@@ -6,15 +6,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,6 +31,7 @@ import androidx.navigation.NavHostController
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
+import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -73,6 +78,13 @@ class HomeActivity : ComponentActivity(), HomeView {
 
     private val entityViewModel by viewModels<EntityViewModel>()
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    var expandedFavorites: Boolean by mutableStateOf(true)
+    var expandedInputBooleans: Boolean by mutableStateOf(true)
+    var expandedLights: Boolean by mutableStateOf(true)
+    var expandedScenes: Boolean by mutableStateOf(true)
+    var expandedScripts: Boolean by mutableStateOf(true)
+    var expandedSwitches: Boolean by mutableStateOf(true)
 
     companion object {
         private const val TAG = "HomeActivity"
@@ -196,52 +208,62 @@ class HomeActivity : ComponentActivity(), HomeView {
                                     state = scalingLazyListState
                                 ) {
                                     if (favorites.isNotEmpty()) {
+                                        item {
+                                            SetListHeader(
+                                                id = R.string.favorites,
+                                                expanded = expandedFavorites
+                                            )
+                                        }
                                         val favoriteArray = favorites.toTypedArray()
-                                        items(favoriteArray.size) { index ->
-                                            Spacer(modifier = Modifier.height(10.dp))
-                                            if (index == 0)
-                                                SetTitle(id = R.string.favorites)
-                                            val favoriteEntityID =
-                                                favoriteArray[index].split(",")[0]
-                                            val favoriteName = favoriteArray[index].split(",")[1]
-                                            val favoriteIcon = favoriteArray[index].split(",")[2]
-                                            if (entities.isNullOrEmpty()) {
-                                                // Use a normal chip when we don't have the state of the entity
-                                                Chip(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .padding(top = if (index == 0) 30.dp else 10.dp),
-                                                    icon = {
-                                                        Image(
-                                                            asset = getIcon(
-                                                                favoriteIcon,
-                                                                favoriteEntityID.split(".")[0],
-                                                                baseContext
+                                        if (expandedFavorites) {
+                                            items(favoriteArray.size) { index ->
+                                                val favoriteEntityID =
+                                                    favoriteArray[index].split(",")[0]
+                                                val favoriteName =
+                                                    favoriteArray[index].split(",")[1]
+                                                val favoriteIcon =
+                                                    favoriteArray[index].split(",")[2]
+                                                if (entities.isNullOrEmpty()) {
+                                                    // Use a normal chip when we don't have the state of the entity
+                                                    Chip(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(top = if (index == 0) 0.dp else 10.dp),
+                                                        icon = {
+                                                            Image(
+                                                                asset = getIcon(
+                                                                    favoriteIcon,
+                                                                    favoriteEntityID.split(".")[0],
+                                                                    baseContext
+                                                                )
+                                                                    ?: CommunityMaterial.Icon.cmd_cellphone
                                                             )
-                                                                ?: CommunityMaterial.Icon.cmd_cellphone
+                                                        },
+                                                        label = {
+                                                            Text(
+                                                                text = favoriteName,
+                                                                maxLines = 2,
+                                                                overflow = TextOverflow.Ellipsis
+                                                            )
+                                                        },
+                                                        onClick = {
+                                                            presenter.onEntityClicked(
+                                                                favoriteEntityID
+                                                            )
+                                                        },
+                                                        colors = ChipDefaults.primaryChipColors(
+                                                            backgroundColor = colorResource(id = R.color.colorAccent),
+                                                            contentColor = Color.Black
                                                         )
-                                                    },
-                                                    label = {
-                                                        Text(
-                                                            text = favoriteName,
-                                                            maxLines = 2,
-                                                            overflow = TextOverflow.Ellipsis
-                                                        )
-                                                    },
-                                                    onClick = {
-                                                        presenter.onEntityClicked(
-                                                            favoriteEntityID
-                                                        )
-                                                    },
-                                                    colors = ChipDefaults.primaryChipColors(
-                                                        backgroundColor = colorResource(id = R.color.colorAccent),
-                                                        contentColor = Color.Black
                                                     )
-                                                )
-                                            } else {
-                                                for (entity in entities) {
-                                                    if (entity.entityId == favoriteEntityID) {
-                                                        SetEntityUI(entity = entity, index = index)
+                                                } else {
+                                                    for (entity in entities) {
+                                                        if (entity.entityId == favoriteEntityID) {
+                                                            SetEntityUI(
+                                                                entity = entity,
+                                                                index = index
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
@@ -271,42 +293,70 @@ class HomeActivity : ComponentActivity(), HomeView {
                                         }
                                     }
                                     if (inputBooleans.isNotEmpty()) {
-                                        items(inputBooleans.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.input_booleans)
-                                            SetEntityUI(inputBooleans[index], index)
+                                        item {
+                                            SetListHeader(
+                                                id = R.string.input_booleans,
+                                                expanded = expandedInputBooleans
+                                            )
+                                        }
+                                        if (expandedInputBooleans) {
+                                            items(inputBooleans.size) { index ->
+                                                SetEntityUI(inputBooleans[index], index)
+                                            }
                                         }
                                     }
                                     if (lights.isNotEmpty()) {
-                                        items(lights.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.lights)
-                                            SetEntityUI(lights[index], index)
+                                        item {
+                                            SetListHeader(
+                                                id = R.string.lights,
+                                                expanded = expandedLights
+                                            )
+                                        }
+                                        if (expandedLights) {
+                                            items(lights.size) { index ->
+                                                SetEntityUI(lights[index], index)
+                                            }
                                         }
                                     }
                                     if (scenes.isNotEmpty()) {
-                                        items(scenes.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.scenes)
-
-                                            SetEntityUI(scenes[index], index)
+                                        item {
+                                            SetListHeader(
+                                                id = R.string.scenes,
+                                                expanded = expandedScenes
+                                            )
+                                        }
+                                        if (expandedScenes) {
+                                            items(scenes.size) { index ->
+                                                SetEntityUI(scenes[index], index)
+                                            }
                                         }
                                     }
                                     if (scripts.isNotEmpty()) {
-                                        items(scripts.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.scripts)
-                                            SetEntityUI(scripts[index], index)
+                                        item {
+                                            SetListHeader(
+                                                id = R.string.scripts,
+                                                expanded = expandedScripts
+                                            )
+                                        }
+                                        if (expandedScripts) {
+                                            items(scripts.size) { index ->
+                                                SetEntityUI(scripts[index], index)
+                                            }
                                         }
                                     }
                                     if (switches.isNotEmpty()) {
-                                        items(switches.size) { index ->
-                                            if (index == 0)
-                                                SetTitle(R.string.switches)
-                                            SetEntityUI(switches[index], index)
+                                        item {
+                                            SetListHeader(
+                                                id = R.string.switches,
+                                                expanded = expandedSwitches
+                                            )
+                                        }
+                                        if (expandedSwitches) {
+                                            items(switches.size) { index ->
+                                                SetEntityUI(switches[index], index)
+                                            }
                                         }
                                     }
-
                                     item {
                                         LoadOtherSection(swipeDismissableNavController)
                                     }
@@ -348,7 +398,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = if (index == 0) 30.dp else 10.dp),
+                    .padding(top = if (index == 0) 0.dp else 10.dp),
                 appIcon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
                 label = {
                     Text(
@@ -374,7 +424,7 @@ class HomeActivity : ComponentActivity(), HomeView {
             Chip(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = if (index == 0) 30.dp else 10.dp),
+                    .padding(top = if (index == 0) 0.dp else 10.dp),
                 icon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
                 label = {
                     Text(
@@ -440,6 +490,30 @@ class HomeActivity : ComponentActivity(), HomeView {
             entityViewModel.entitiesResponse = presenter.getEntities()
             delay(5000L)
             entityViewModel.entitiesResponse = presenter.getEntities()
+        }
+    }
+
+    @Composable
+    private fun SetListHeader(id: Int, expanded: Boolean) {
+        ListHeader(
+            modifier = Modifier
+                .clickable {
+                    when (id) {
+                        R.string.favorites -> expandedFavorites = !expanded
+                        R.string.input_booleans -> expandedInputBooleans = !expanded
+                        R.string.lights -> expandedLights = !expanded
+                        R.string.scenes -> expandedScenes = !expanded
+                        R.string.scripts -> expandedScripts = !expanded
+                        R.string.switches -> expandedSwitches = !expanded
+                    }
+                }
+        ) {
+            Row {
+                Text(
+                    text = stringResource(id = id) + if (expanded) " -" else " +",
+                    color = Color.White
+                )
+            }
         }
     }
 }
