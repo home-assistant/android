@@ -25,6 +25,9 @@ class HomePresenterImpl @Inject constructor(
             "cover", "fan", "humidifier", "input_boolean", "light",
             "media_player", "remote", "siren", "switch"
         )
+        val supportedDomains = listOf(
+            "input_boolean", "light", "switch", "script", "scene"
+        )
         const val TAG = "HomePresenter"
     }
 
@@ -52,22 +55,22 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override fun onEntityClicked(entity: Entity<Any>) {
+    override fun onEntityClicked(entityId: String) {
 
-        if (entity.entityId.split(".")[0] in toggleDomains) {
+        if (entityId.split(".")[0] in toggleDomains) {
             mainScope.launch {
                 integrationUseCase.callService(
-                    entity.entityId.split(".")[0],
+                    entityId.split(".")[0],
                     "toggle",
-                    hashMapOf("entity_id" to entity.entityId)
+                    hashMapOf("entity_id" to entityId)
                 )
             }
         } else {
             mainScope.launch {
                 integrationUseCase.callService(
-                    entity.entityId.split(".")[0],
+                    entityId.split(".")[0],
                     "turn_on",
-                    hashMapOf("entity_id" to entity.entityId)
+                    hashMapOf("entity_id" to entityId)
                 )
             }
         }
@@ -98,5 +101,13 @@ class HomePresenterImpl @Inject constructor(
                 Log.e(TAG, "Issue updating Registration", e)
             }
         }
+    }
+
+    override suspend fun getWearHomeFavorites(): Set<String> {
+        return integrationUseCase.getWearHomeFavorites()
+    }
+
+    override suspend fun setWearHomeFavorites(favorites: Set<String>) {
+        integrationUseCase.setWearHomeFavorites(favorites)
     }
 }

@@ -34,4 +34,10 @@
     <string name="input_booleans">Input Booleans</string>
     <string name="switches">Switches</string>
     <string name="loading_entities">Please wait while we load your entities</string>
+    <string name="favorite">Set Favorite Entities</string>
+    <string name="settings">Settings</string>
+    <string name="favorites">Favorites</string>
+    <string name="set_favorite">Set Favorites</string>
+    <string name="clear_favorites">Clear Favorites</string>
+    <string name="irreverisble">This action is irreversible</string>
 </resources>
