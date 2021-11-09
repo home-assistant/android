@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -79,13 +80,6 @@ class HomeActivity : ComponentActivity(), HomeView {
     private val entityViewModel by viewModels<EntityViewModel>()
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    var expandedFavorites: Boolean by mutableStateOf(true)
-    var expandedInputBooleans: Boolean by mutableStateOf(true)
-    var expandedLights: Boolean by mutableStateOf(true)
-    var expandedScenes: Boolean by mutableStateOf(true)
-    var expandedScripts: Boolean by mutableStateOf(true)
-    var expandedSwitches: Boolean by mutableStateOf(true)
-
     companion object {
         private const val TAG = "HomeActivity"
         private const val SCREEN_LANDING = "landing"
@@ -136,6 +130,12 @@ class HomeActivity : ComponentActivity(), HomeView {
     @ExperimentalWearMaterialApi
     @Composable
     private fun LoadHomePage(entities: Array<Entity<Any>>, favorites: MutableSet<String>) {
+        var expandedFavorites: Boolean by rememberSaveable{mutableStateOf(true)}
+        var expandedInputBooleans: Boolean by rememberSaveable{mutableStateOf(true)}
+        var expandedLights: Boolean by rememberSaveable{mutableStateOf(true)}
+        var expandedScenes: Boolean by rememberSaveable{mutableStateOf(true)}
+        var expandedScripts: Boolean by rememberSaveable{mutableStateOf(true)}
+        var expandedSwitches: Boolean by rememberSaveable{mutableStateOf(true)}
 
         val rotaryEventDispatcher = RotaryEventDispatcher()
         if (entities.isNullOrEmpty() && favorites.isNullOrEmpty()) {
@@ -210,8 +210,9 @@ class HomeActivity : ComponentActivity(), HomeView {
                                     if (favorites.isNotEmpty()) {
                                         item {
                                             SetListHeader(
-                                                id = R.string.favorites,
-                                                expanded = expandedFavorites
+                                                stringId = R.string.favorites,
+                                                expanded = expandedFavorites,
+                                                onExpandChanged = { expandedFavorites = it }
                                             )
                                         }
                                         val favoriteArray = favorites.toTypedArray()
@@ -295,8 +296,9 @@ class HomeActivity : ComponentActivity(), HomeView {
                                     if (inputBooleans.isNotEmpty()) {
                                         item {
                                             SetListHeader(
-                                                id = R.string.input_booleans,
-                                                expanded = expandedInputBooleans
+                                                stringId = R.string.input_booleans,
+                                                expanded = expandedInputBooleans,
+                                                onExpandChanged = { expandedInputBooleans = it }
                                             )
                                         }
                                         if (expandedInputBooleans) {
@@ -308,8 +310,9 @@ class HomeActivity : ComponentActivity(), HomeView {
                                     if (lights.isNotEmpty()) {
                                         item {
                                             SetListHeader(
-                                                id = R.string.lights,
-                                                expanded = expandedLights
+                                                stringId = R.string.lights,
+                                                expanded = expandedLights,
+                                                onExpandChanged = { expandedLights = it }
                                             )
                                         }
                                         if (expandedLights) {
@@ -321,8 +324,9 @@ class HomeActivity : ComponentActivity(), HomeView {
                                     if (scenes.isNotEmpty()) {
                                         item {
                                             SetListHeader(
-                                                id = R.string.scenes,
-                                                expanded = expandedScenes
+                                                stringId = R.string.scenes,
+                                                expanded = expandedScenes,
+                                                onExpandChanged = { expandedScenes = it }
                                             )
                                         }
                                         if (expandedScenes) {
@@ -334,8 +338,9 @@ class HomeActivity : ComponentActivity(), HomeView {
                                     if (scripts.isNotEmpty()) {
                                         item {
                                             SetListHeader(
-                                                id = R.string.scripts,
-                                                expanded = expandedScripts
+                                                stringId = R.string.scripts,
+                                                expanded = expandedScripts,
+                                                onExpandChanged = { expandedScripts = it }
                                             )
                                         }
                                         if (expandedScripts) {
@@ -347,8 +352,9 @@ class HomeActivity : ComponentActivity(), HomeView {
                                     if (switches.isNotEmpty()) {
                                         item {
                                             SetListHeader(
-                                                id = R.string.switches,
-                                                expanded = expandedSwitches
+                                                stringId = R.string.switches,
+                                                expanded = expandedSwitches,
+                                                onExpandChanged = { expandedSwitches = it }
                                             )
                                         }
                                         if (expandedSwitches) {
@@ -494,23 +500,18 @@ class HomeActivity : ComponentActivity(), HomeView {
     }
 
     @Composable
-    private fun SetListHeader(id: Int, expanded: Boolean) {
+    private fun SetListHeader(
+        stringId: Int,
+        expanded: Boolean,
+        onExpandChanged: (Boolean)->Unit
+    ) {
         ListHeader(
             modifier = Modifier
-                .clickable {
-                    when (id) {
-                        R.string.favorites -> expandedFavorites = !expanded
-                        R.string.input_booleans -> expandedInputBooleans = !expanded
-                        R.string.lights -> expandedLights = !expanded
-                        R.string.scenes -> expandedScenes = !expanded
-                        R.string.scripts -> expandedScripts = !expanded
-                        R.string.switches -> expandedSwitches = !expanded
-                    }
-                }
+                .clickable { onExpandChanged(!expanded) }
         ) {
             Row {
                 Text(
-                    text = stringResource(id = id) + if (expanded) " -" else " +",
+                    text = stringResource(id = stringId) + if (expanded) " -" else " +",
                     color = Color.White
                 )
             }
