@@ -37,7 +37,7 @@ interface IntegrationRepository {
 
     suspend fun getHomeAssistantVersion(): String
 
-    suspend fun getServices(): Array<Service>
+    suspend fun getServices(): List<Service>
 
     suspend fun getEntities(): Array<Entity<Any>>
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>

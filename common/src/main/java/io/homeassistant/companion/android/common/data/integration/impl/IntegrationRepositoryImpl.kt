@@ -386,14 +386,14 @@ class IntegrationRepositoryImpl @Inject constructor(
         return response.version
     }
 
-    override suspend fun getServices(): Array<Service> {
-        val response = integrationService.getServices(authenticationRepository.buildBearerToken())
+    override suspend fun getServices(): List<Service> {
+        val response = webSocketRepository.getServices()
 
         return response.flatMap {
             it.services.map { service ->
                 Service(it.domain, service.key, service.value)
             }
-        }.toTypedArray()
+        }.toList()
     }
 
     override suspend fun getEntities(): Array<Entity<Any>> {

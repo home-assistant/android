@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.common.data.integration.impl
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.CheckRateLimits
 import io.homeassistant.companion.android.common.data.integration.impl.entities.DiscoveryInfoResponse
-import io.homeassistant.companion.android.common.data.integration.impl.entities.DomainResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
@@ -31,11 +30,6 @@ interface IntegrationService {
         @Header("Authorization") auth: String,
         @Body request: RegisterDeviceRequest
     ): RegisterDeviceResponse
-
-    @GET("/api/services")
-    suspend fun getServices(
-        @Header("Authorization") auth: String
-    ): Array<DomainResponse>
 
     @GET("/api/states")
     suspend fun getStates(

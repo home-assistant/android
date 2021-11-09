@@ -1,15 +1,17 @@
 package io.homeassistant.companion.android.common.data.websocket.impl
 
 import android.util.Log
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.integration.impl.entities.DomainResponse
+import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import kotlinx.coroutines.CancellableContinuation
@@ -68,11 +70,33 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getStates(): List<EntityResponse<Any>> {
-        TODO("Not yet implemented")
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "get_config"
+            )
+        )
+
+        return mapper.convertValue(
+            socketResponse.result!!,
+            object : TypeReference<List<EntityResponse<Any>>>() {}
+        )
     }
 
     override suspend fun getServices(): List<DomainResponse> {
-        TODO("Not yet implemented")
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "get_services"
+            )
+        )
+
+        val response = mapper.convertValue(
+            socketResponse.result!!,
+            object : TypeReference<Map<String, Map<String, ServiceData>>>() {}
+        )
+
+        return response.map {
+            DomainResponse(it.key, it.value)
+        }
     }
 
     override suspend fun getPanels(): List<String> {
@@ -164,7 +188,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     override fun onMessage(webSocket: WebSocket, text: String) {
         Log.d(TAG, "Websocket: onMessage (text)")
         val message: SocketResponse = mapper.readValue(text)
-        Log.d(TAG, "Message number ${message.id} received")
+        Log.d(TAG, "Message number ${message.id} received: $text")
 
         ioScope.launch {
             when (message.type) {
