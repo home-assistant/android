@@ -228,7 +228,7 @@ class HomeActivity : ComponentActivity(), HomeView {
                                                     Chip(
                                                         modifier = Modifier
                                                             .fillMaxWidth()
-                                                            .padding(top = if (index == 0) 30.dp else 10.dp),
+                                                            .padding(top = if (index == 0) 0.dp else 10.dp),
                                                         icon = {
                                                             Image(
                                                                 asset = getIcon(
