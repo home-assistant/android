@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.home.HomePresenterImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -41,11 +42,19 @@ class TileActionActivity : Activity() {
 
         if (entityId != null) {
             mainScope.launch {
-                integrationUseCase.callService(
-                    entityId.split(".")[0],
-                    "turn_on",
-                    hashMapOf("entity_id" to entityId)
-                )
+                if (entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
+                    integrationUseCase.callService(
+                        entityId.split(".")[0],
+                        "toggle",
+                        hashMapOf("entity_id" to entityId)
+                    )
+                } else {
+                    integrationUseCase.callService(
+                        entityId.split(".")[0],
+                        "turn_on",
+                        hashMapOf("entity_id" to entityId)
+                    )
+                }
 
                 finish()
             }

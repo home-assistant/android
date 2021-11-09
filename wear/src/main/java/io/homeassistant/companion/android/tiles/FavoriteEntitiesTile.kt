@@ -32,7 +32,6 @@ import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -141,9 +140,11 @@ class FavoriteEntitiesTile : TileService() {
 
     fun layout(entities: List<String>): LayoutElement = Column.Builder().apply {
         if (entities.isEmpty()) {
-            addContent(LayoutElementBuilders.Text.Builder()
-                .setText("Choose entities in settings")
-                .build())
+            addContent(
+                LayoutElementBuilders.Text.Builder()
+                    .setText("Choose entities in settings")
+                    .build()
+            )
         } else {
             addContent(rowLayout(entities.subList(0, min(2, entities.size))))
             if (entities.size > 2) {
