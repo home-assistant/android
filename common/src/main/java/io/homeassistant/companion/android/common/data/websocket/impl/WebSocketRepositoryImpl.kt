@@ -25,6 +25,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 
 class WebSocketRepositoryImpl @Inject constructor(
@@ -38,49 +39,32 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
-    private val mapper = jacksonObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+    private val mapper = jacksonObjectMapper()
+        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
     private val responseCallbackJobs = mutableMapOf<Long, CancellableContinuation<SocketResponse>>()
     private val subscriptionCallbacks = mutableMapOf<Long, (Boolean) -> Unit>()
-    private var id = 1L
+    private val id = AtomicLong(1)
     private var connection: WebSocket? = null
     private var connected = Job()
 
     override suspend fun sendPing(): Boolean {
-        connect()
-
-        val id = getNextId()
-        connection!!.send(
-            mapper.writeValueAsString(
-                mapOf(
-                    "id" to id,
-                    "type" to "ping"
-                )
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "ping"
             )
         )
 
-        val continuation = suspendCancellableCoroutine<Any> { cont -> responseCallbackJobs[id] = cont }
-
-        return true
+        return socketResponse.type == "pong"
     }
 
     override suspend fun getConfig(): GetConfigResponse {
-        connect()
-
-        val id = getNextId()
-        connection!!.send(
-            mapper.writeValueAsString(
-                mapOf(
-                    "id" to id,
-                    "type" to "get_config"
-                )
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "get_config"
             )
         )
 
-        val socketResponse = suspendCancellableCoroutine<SocketResponse> { cont -> responseCallbackJobs[id] = cont }
-
-        val result: GetConfigResponse = mapper.convertValue(socketResponse.result!!, GetConfigResponse::class.java)
-
-        return result
+        return mapper.convertValue(socketResponse.result!!, GetConfigResponse::class.java)
     }
 
     override suspend fun getStates(): List<EntityResponse<Any>> {
@@ -99,11 +83,6 @@ class WebSocketRepositoryImpl @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    @Synchronized
-    private fun getNextId(): Long {
-        return id++
-    }
-
     /**
      * This method will
      */
@@ -113,7 +92,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             return
         }
 
-        val url = urlRepository.getUrl() ?: return
+        val url = urlRepository.getUrl() ?: throw Exception("Unable to get URL for WebSocket")
         val urlString = url.toString()
             .replace("https://", "wss://")
             .replace("http://", "ws://")
@@ -124,15 +103,37 @@ class WebSocketRepositoryImpl @Inject constructor(
             this
         )
 
-        handleAuth()
+        // Preemptively send auth
+        authenticate()
 
-        // Wait up to 30 seconds for auth
+        // Wait up to 30 seconds for auth response
         withTimeout(30000) {
             connected.join()
         }
     }
 
-    private suspend fun handleAuth() {
+    private suspend fun sendMessage(request: Map<*, *>): SocketResponse {
+        for (i in 0..1) {
+            val requestId = id.getAndIncrement()
+            val outbound = request.plus("id" to requestId)
+            Log.d(TAG, "Sending message number $requestId: $outbound")
+            connect()
+            try {
+                return withTimeout(30000) {
+                    suspendCancellableCoroutine { cont ->
+                        responseCallbackJobs[requestId] = cont
+                        connection!!.send(mapper.writeValueAsString(outbound))
+                        Log.d(TAG, "Message number $requestId sent")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error sending request number $requestId", e)
+            }
+        }
+        throw Exception("Unable to send message: $request")
+    }
+
+    private suspend fun authenticate() {
         connection!!.send(
             mapper.writeValueAsString(
                 mapOf(
@@ -163,6 +164,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     override fun onMessage(webSocket: WebSocket, text: String) {
         Log.d(TAG, "Websocket: onMessage (text)")
         val message: SocketResponse = mapper.readValue(text)
+        Log.d(TAG, "Message number ${message.id} received")
 
         ioScope.launch {
             when (message.type) {
@@ -180,7 +182,9 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-        Log.d(TAG, "Websocket: onClosing")
+        Log.d(TAG, "Websocket: onClosing code: $code, reason: $reason")
+        connected = Job()
+        connection = null
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
@@ -191,5 +195,6 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         Log.d(TAG, "Websocket: onFailure")
+        Log.e(TAG, "Failure in websocket", t)
     }
 }
