@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,6 +55,8 @@ fun LoadHomePage(
         }
     } else {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
+        val haptic = LocalHapticFeedback.current
+        val context = LocalContext.current
         MaterialTheme {
             CompositionLocalProvider(
                 LocalRotaryEventDispatcher provides rotaryEventDispatcher
@@ -68,14 +72,20 @@ fun LoadHomePage(
                             mainViewModel.favoriteEntityIds,
                             { mainViewModel.toggleEntity(it) },
                             { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                            { mainViewModel.logout() }
+                            { mainViewModel.logout() },
+                            mainViewModel.isHapticEnabled.value,
+                            mainViewModel.isToastEnabled.value
                         )
                     }
                     composable(SCREEN_SETTINGS) {
                         SettingsView(
                             mainViewModel.favoriteEntityIds,
                             { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
-                            { mainViewModel.clearFavorites() }
+                            { mainViewModel.clearFavorites() },
+                            mainViewModel.isHapticEnabled.value,
+                            mainViewModel.isToastEnabled.value,
+                            { mainViewModel.setHapticEnabled(it) },
+                            { mainViewModel.setToastEnabled(it) }
                         )
                     }
                     composable(SCREEN_SET_FAVORITES) {

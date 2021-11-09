@@ -11,4 +11,9 @@ interface HomePresenter {
     suspend fun getEntities(): List<Entity<*>>
     suspend fun getWearHomeFavorites(): List<String>
     suspend fun setWearHomeFavorites(favorites: List<String>)
+
+    suspend fun getWearHapticFeedback(): Boolean
+    suspend fun setWearHapticFeedback(enabled: Boolean)
+    suspend fun getWearToastConfirmation(): Boolean
+    suspend fun setWearToastConfirmation(enabled: Boolean)
 }
