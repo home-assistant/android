@@ -24,15 +24,18 @@ import androidx.navigation.NavHostController
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ScalingLazyColumn
+import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenter
+import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.saveFavorites
@@ -105,6 +108,8 @@ fun ScreenSetFavorites(
     context: Context,
     presenter: HomePresenter
 ) {
+    val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+    RotaryEventState(scrollState = scalingLazyListState)
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize(),
@@ -114,7 +119,8 @@ fun ScreenSetFavorites(
             end = 10.dp,
             bottom = 40.dp
         ),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        state = scalingLazyListState
     ) {
         items(validEntities.size) { index ->
             val attributes = validEntities[index].attributes as Map<String, String>

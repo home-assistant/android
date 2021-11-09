@@ -177,12 +177,12 @@ class HomeActivity : ComponentActivity(), HomeView {
                         LocalRotaryEventDispatcher provides rotaryEventDispatcher
                     ) {
                         RotaryEventHandlerSetup(rotaryEventDispatcher)
-                        RotaryEventState(scrollState = scalingLazyListState)
                         SwipeDismissableNavHost(
                             navController = swipeDismissableNavController,
                             startDestination = SCREEN_LANDING
                         ) {
                             composable(SCREEN_LANDING) {
+                                RotaryEventState(scrollState = scalingLazyListState)
                                 ScalingLazyColumn(
                                     modifier = Modifier
                                         .fillMaxSize(),
