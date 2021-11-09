@@ -360,7 +360,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         var causeException: Exception? = null
 
         try {
-            checkRateLimits = integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
+            checkRateLimits =
+                integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
         } catch (e: Exception) {
             causeException = e
             Log.e(TAG, "Unable to get notification rate limits", e)
@@ -377,7 +378,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         val current = System.currentTimeMillis()
         val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
         if (current <= next)
-            return localStorage.getString(PREF_HA_VERSION) ?: "" // Skip checking HA version as it has not been 4 hours yet
+            return localStorage.getString(PREF_HA_VERSION)
+                ?: "" // Skip checking HA version as it has not been 4 hours yet
 
         val response: GetConfigResponse = webSocketRepository.getConfig()
 
@@ -396,19 +398,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         }.toList()
     }
 
-    override suspend fun getEntities(): Array<Entity<Any>> {
-        val response = integrationService.getStates(authenticationRepository.buildBearerToken())
+    override suspend fun getEntities(): List<Entity<Any>> {
+        val response = webSocketRepository.getStates()
 
-        return response.map {
-            Entity(
-                it.entityId,
-                it.state,
-                it.attributes,
-                it.lastChanged,
-                it.lastUpdated,
-                it.context
-            )
-        }.toTypedArray()
+        return response
+            .map {
+                Entity(
+                    it.entityId,
+                    it.state,
+                    it.attributes,
+                    it.lastChanged,
+                    it.lastUpdated,
+                    it.context
+                )
+            }
+            .sortedBy { it.entityId }
+            .toList()
     }
 
     override suspend fun getEntity(entityId: String): Entity<Map<String, Any>> {

@@ -26,11 +26,6 @@ interface IntegrationService {
         @Body request: RegisterDeviceRequest
     ): RegisterDeviceResponse
 
-    @GET("/api/states")
-    suspend fun getStates(
-        @Header("Authorization") auth: String
-    ): Array<EntityResponse<Any>>
-
     @GET("/api/states/{entityId}")
     suspend fun getState(
         @Header("Authorization") auth: String,

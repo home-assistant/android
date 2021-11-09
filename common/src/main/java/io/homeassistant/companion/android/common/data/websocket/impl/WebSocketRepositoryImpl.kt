@@ -72,7 +72,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     override suspend fun getStates(): List<EntityResponse<Any>> {
         val socketResponse = sendMessage(
             mapOf(
-                "type" to "get_config"
+                "type" to "get_states"
             )
         )
 
