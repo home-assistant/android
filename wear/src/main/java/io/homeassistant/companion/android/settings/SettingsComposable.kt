@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -272,7 +271,6 @@ fun ScreenSetTileShortcuts(
                     )
                 },
                 onClick = {
-                    Log.d("SettingsComposable", "Change shortcut $index")
                     onShortcutEntitySelectionChange(index)
                     swipeDismissableNavController.navigate(
                         HomeActivity.SCREEN_SELECT_TILE_SHORTCUT
@@ -287,7 +285,6 @@ fun ScreenSetTileShortcuts(
                     modifier = Modifier
                         .padding(top = 4.dp),
                     onClick = {
-                        Log.d("SettingsComposable", "Add shortcut at ${shortcutEntities.size}")
                         onShortcutEntitySelectionChange(shortcutEntities.size)
                         swipeDismissableNavController.navigate(
                             HomeActivity.SCREEN_SELECT_TILE_SHORTCUT
@@ -335,7 +332,6 @@ fun ScreenChooseEntity(
                 icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
                 label = { Text(text = "None") },
                 onClick = {
-                    Log.d("SettingsComposable", "Select None for index $entitySelectionIndex where list is ${entitiesList.size}")
                     if (entitySelectionIndex < entitiesList.size) {
                         entitiesList.removeAt(entitySelectionIndex)
                         saveTileShortcuts(entitiesList, presenter, mainScope)
@@ -364,7 +360,6 @@ fun ScreenChooseEntity(
                 },
                 enabled = validEntities[index].state != "unavailable",
                 onClick = {
-                    Log.d("SettingsComposable", "Select something for index $entitySelectionIndex where list is ${entitiesList.size}")
                     val elementString = "${validEntities[index].entityId},${attributes["friendly_name"]},${attributes["icon"]}"
                     if (entitySelectionIndex < entitiesList.size) {
                         entitiesList[entitySelectionIndex] = elementString
