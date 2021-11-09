@@ -55,7 +55,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SECRET = "secret"
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
-        private const val PREF_INSTALLED_APP_VERSION = "installed_app_version"
+        private const val PREF_WEAR_HOME_FAVORITES = "wear_home_favorites"
         private const val PREF_HA_VERSION = "ha_version"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
@@ -341,6 +341,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getSessionExpireMillis(): Long {
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
+    }
+
+    override suspend fun setWearHomeFavorites(favorites: Set<String>) {
+        localStorage.putStringSet(PREF_WEAR_HOME_FAVORITES, favorites)
+    }
+
+    override suspend fun getWearHomeFavorites(): Set<String> {
+        return localStorage.getStringSet(PREF_WEAR_HOME_FAVORITES) ?: setOf()
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {

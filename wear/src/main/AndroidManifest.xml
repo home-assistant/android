@@ -26,7 +26,9 @@
             android:name="com.google.android.wearable.standalone"
             android:value="true" />
 
-        <activity android:name=".home.HomeActivity"
+        <activity android:name=".home.HomeActivity" />
+        <activity android:name=".splash.SplashActivity"
+            android:theme="@style/SplashTheme"
             android:label="@string/app_name"
             android:exported="true">
             <intent-filter>
