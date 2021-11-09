@@ -175,15 +175,15 @@ class WebViewPresenterImpl @Inject constructor(
     }
 
     override suspend fun getStatusBarAndNavigationBarColor(webViewColor: String): Int = withContext(Dispatchers.IO) {
-        var statusbarNavBarColor = 0
+        var statusBarNavBarColor = 0
 
         Log.d(TAG, "Try getting status bar/navigation bar color from webviews color \"$webViewColor\"")
         if (!webViewColor.isNullOrEmpty() && webViewColor != "null" && webViewColor.length >= 2) {
             val trimmedColorString = webViewColor.substring(1, webViewColor.length - 1).trim()
             Log.d(TAG, "Color from webview is \"$trimmedColorString\"")
             try {
-                statusbarNavBarColor = parseColorWithRgb(trimmedColorString)
-                Log.i(TAG, "Found color $statusbarNavBarColor for status bar/navigation bar")
+                statusBarNavBarColor = parseColorWithRgb(trimmedColorString)
+                Log.i(TAG, "Found color $statusBarNavBarColor for status bar/navigation bar")
             } catch (e: Exception) {
                 Log.w(TAG, "Could not get status bar/navigation bar color from webview. Try getting status bar/navigation bar color from HA", e)
             }
@@ -191,25 +191,11 @@ class WebViewPresenterImpl @Inject constructor(
             Log.w(TAG, "Could not get status bar/navigation bar color from webview. Color \"$webViewColor\" is not a valid color. Try getting status bar/navigation bar color from HA")
         }
 
-        if (statusbarNavBarColor == 0) {
-            Log.d(TAG, "Try getting status bar/navigation bar color from HA")
-            runBlocking {
-                try {
-                    val colorString = integrationUseCase.getThemeColor()
-                    Log.d(TAG, "Color from HA is \"$colorString\"")
-                    if (!colorString.isNullOrEmpty()) {
-                        statusbarNavBarColor = parseColorWithRgb(colorString)
-                        Log.i(TAG, "Found color $statusbarNavBarColor for status bar/navigation bar")
-                    } else {
-                        Log.e(TAG, "Could not get status bar/navigation bar color from HA. No theme color defined in theme variable \"app-header-background-color\"")
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Could not get status bar/navigation bar color from HA.", e)
-                }
-            }
+        if (statusBarNavBarColor == 0) {
+            Log.w(TAG, "Couldn't get color for status bar.")
         }
 
-        return@withContext statusbarNavBarColor
+        return@withContext statusBarNavBarColor
     }
 
     private fun parseColorWithRgb(colorString: String): Int {

@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.common.data.websocket
 
 import io.homeassistant.companion.android.common.data.integration.impl.entities.DomainResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
-import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 
 interface WebSocketRepository {
     suspend fun sendPing(): Boolean

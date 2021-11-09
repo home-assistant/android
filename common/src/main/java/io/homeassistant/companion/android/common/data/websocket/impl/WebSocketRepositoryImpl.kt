@@ -7,11 +7,11 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.entities.DomainResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
-import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import io.homeassistant.companion.android.common.data.websocket.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -35,8 +35,6 @@ interface IntegrationRepository {
     suspend fun setWearHomeFavorites(favorites: Set<String>)
     suspend fun getWearHomeFavorites(): Set<String>
 
-    suspend fun getThemeColor(): String
-
     suspend fun getHomeAssistantVersion(): String
 
     suspend fun getServices(): Array<Service>

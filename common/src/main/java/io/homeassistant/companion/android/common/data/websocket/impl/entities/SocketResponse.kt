@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.common.data.websocket
+package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.databind.JsonNode

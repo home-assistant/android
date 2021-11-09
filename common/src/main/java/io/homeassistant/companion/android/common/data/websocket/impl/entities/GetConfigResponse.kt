@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.common.data.integration.impl.entities
+package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
@@ -12,6 +12,4 @@ data class GetConfigResponse(
     val timeZone: String,
     val components: List<String>,
     val version: String,
-    // This doesn't come back from web socket
-    val themeColor: String?
 )
