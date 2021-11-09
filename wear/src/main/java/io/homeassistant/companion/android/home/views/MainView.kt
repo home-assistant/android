@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,6 +36,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventState
+import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.setChipDefaults
 
 @ExperimentalWearMaterialApi
@@ -43,7 +46,9 @@ fun MainView(
     favoriteEntityIds: List<String>,
     onEntityClicked: (String) -> Unit,
     onSettingsClicked: () -> Unit,
-    onLogoutClicked: () -> Unit
+    onLogoutClicked: () -> Unit,
+    isHapticEnabled: Boolean,
+    isToastEnabled: Boolean
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
 
@@ -62,6 +67,8 @@ fun MainView(
     val inputBooleans = entities.filter { it.entityId.split(".")[0] == "input_boolean" }
     val switches = entities.filter { it.entityId.split(".")[0] == "switch" }
 
+    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     RotaryEventDispatcher(scalingLazyListState)
     RotaryEventState(scrollState = scalingLazyListState)
 
@@ -116,7 +123,10 @@ fun MainView(
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 },
-                                onClick = { onEntityClicked(favoriteEntityID) },
+                                onClick = {
+                                    onEntityClicked(favoriteEntityID)
+                                    onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
+                                },
                                 colors = ChipDefaults.primaryChipColors(
                                     backgroundColor = colorResource(id = R.color.colorAccent),
                                     contentColor = Color.Black
@@ -125,7 +135,9 @@ fun MainView(
                         } else {
                             EntityUi(
                                 entityMap[favoriteEntityID]!!,
-                                onEntityClicked
+                                onEntityClicked,
+                                isHapticEnabled,
+                                isToastEnabled
                             )
                         }
                     }
@@ -164,7 +176,7 @@ fun MainView(
                 }
                 if (expandedInputBooleans) {
                     items(inputBooleans.size) { index ->
-                        EntityUi(inputBooleans[index], onEntityClicked)
+                        EntityUi(inputBooleans[index], onEntityClicked, isHapticEnabled, isToastEnabled)
                     }
                 }
             }
@@ -178,7 +190,7 @@ fun MainView(
                 }
                 if (expandedLights) {
                     items(lights.size) { index ->
-                        EntityUi(lights[index], onEntityClicked)
+                        EntityUi(lights[index], onEntityClicked, isHapticEnabled, isToastEnabled)
                     }
                 }
             }
@@ -192,7 +204,7 @@ fun MainView(
                 }
                 if (expandedScenes) {
                     items(scenes.size) { index ->
-                        EntityUi(scenes[index], onEntityClicked)
+                        EntityUi(scenes[index], onEntityClicked, isHapticEnabled, isToastEnabled)
                     }
                 }
             }
@@ -206,7 +218,7 @@ fun MainView(
                 }
                 if (expandedScripts) {
                     items(scripts.size) { index ->
-                        EntityUi(scripts[index], onEntityClicked)
+                        EntityUi(scripts[index], onEntityClicked, isHapticEnabled, isToastEnabled)
                     }
                 }
             }
@@ -220,7 +232,7 @@ fun MainView(
                 }
                 if (expandedSwitches) {
                     items(switches.size) { index ->
-                        EntityUi(switches[index], onEntityClicked)
+                        EntityUi(switches[index], onEntityClicked, isHapticEnabled, isToastEnabled)
                     }
                 }
             }

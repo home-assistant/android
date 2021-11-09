@@ -57,6 +57,8 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_WEAR_HOME_FAVORITES = "wear_home_favorites"
+        private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
+        private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_HA_VERSION = "ha_version"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
@@ -350,6 +352,22 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getWearHomeFavorites(): Set<String> {
         return localStorage.getStringSet(PREF_WEAR_HOME_FAVORITES) ?: setOf()
+    }
+
+    override suspend fun setWearHapticFeedback(enabled: Boolean) {
+        localStorage.putBoolean(PREF_WEAR_HAPTIC_FEEDBACK, enabled)
+    }
+
+    override suspend fun getWearHapticFeedback(): Boolean {
+        return localStorage.getBoolean(PREF_WEAR_HAPTIC_FEEDBACK)
+    }
+
+    override suspend fun setWearToastConfirmation(enabled: Boolean) {
+        localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, enabled)
+    }
+
+    override suspend fun getWearToastConfirmation(): Boolean {
+        return localStorage.getBoolean(PREF_WEAR_TOAST_CONFIRMATION)
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {

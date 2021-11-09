@@ -34,6 +34,10 @@ interface IntegrationRepository {
 
     suspend fun setWearHomeFavorites(favorites: Set<String>)
     suspend fun getWearHomeFavorites(): Set<String>
+    suspend fun setWearHapticFeedback(enabled: Boolean)
+    suspend fun getWearHapticFeedback(): Boolean
+    suspend fun setWearToastConfirmation(enabled: Boolean)
+    suspend fun getWearToastConfirmation(): Boolean
 
     suspend fun getHomeAssistantVersion(): String
 
