@@ -28,6 +28,14 @@ data class Sensor(
     @ColumnInfo(name = "device_class")
     var deviceClass: String? = null,
     @ColumnInfo(name = "unit_of_measurement")
-    var unitOfMeasurement: String? = null
+    var unitOfMeasurement: String? = null,
+    @ColumnInfo(name = "state_class")
+    var stateClass: String? = null,
+    @ColumnInfo(name = "entity_category")
+    var entityCategory: String? = null,
+    @ColumnInfo(name = "core_registration")
+    var coreRegistration: String? = null,
+    @ColumnInfo(name = "app_registration")
+    var appRegistration: String? = null
 
 )

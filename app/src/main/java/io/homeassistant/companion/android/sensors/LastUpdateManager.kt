@@ -15,7 +15,8 @@ class LastUpdateManager : SensorManager {
             "last_update",
             "sensor",
             R.string.basic_sensor_name_last_update,
-            R.string.sensor_description_last_update
+            R.string.sensor_description_last_update,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 

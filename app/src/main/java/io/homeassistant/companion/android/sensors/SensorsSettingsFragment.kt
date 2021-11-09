@@ -94,6 +94,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
         private var settingsWithLocation = mutableListOf<String>()
         private var enableAllSensors = false
         private var showOnlyEnabledSensors = false
+        private const val TAG = "SensorSettings"
 
         fun newInstance(): SensorsSettingsFragment {
             return SensorsSettingsFragment()

@@ -62,6 +62,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             "io.homeassistant.companion.android.background.PROCESS_UPDATES"
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
+        const val ACTION_FORCE_HIGH_ACCURACY =
+            "io.homeassistant.companion.android.background.FORCE_HIGH_ACCURACY"
 
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
@@ -86,7 +88,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             "high_accuracy_mode",
             "binary_sensor",
             R.string.basic_sensor_name_high_accuracy_mode,
-            R.string.sensor_description_high_accuracy_mode
+            R.string.sensor_description_high_accuracy_mode,
+            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         internal const val TAG = "LocBroadcastReceiver"
 
@@ -139,6 +142,13 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
             ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
+            ACTION_FORCE_HIGH_ACCURACY -> {
+                val intentData = intent.extras?.get("command")?.toString()
+                if (intentData == "turn_on")
+                    startHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
+                else if (intentData == "turn_off")
+                    stopHighAccuracyService()
+            }
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
     }

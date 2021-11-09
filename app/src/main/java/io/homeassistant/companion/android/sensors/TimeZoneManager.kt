@@ -14,7 +14,8 @@ class TimeZoneManager : SensorManager {
             "current_time_zone",
             "sensor",
             R.string.basic_sensor_name_current_time_zone,
-            R.string.sensor_description_current_time_zone
+            R.string.sensor_description_current_time_zone,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 

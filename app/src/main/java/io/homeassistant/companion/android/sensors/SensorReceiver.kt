@@ -10,6 +10,7 @@ import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.PowerManager
 import android.util.Log
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
@@ -151,6 +152,15 @@ class SensorReceiver : BroadcastReceiver() {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
 
+        val checkDeviceRegistration = integrationUseCase.getRegistration()
+        if (checkDeviceRegistration.appVersion == null) {
+            Log.w(TAG, "Device not registered, skipping sensor update/registration")
+            return
+        }
+
+        val currentAppVersion = BuildConfig.VERSION_NAME
+        val currentHAversion = integrationUseCase.getHomeAssistantVersion()
+
         MANAGERS.forEach { manager ->
             try {
                 manager.requestSensorUpdate(context)
@@ -160,9 +170,14 @@ class SensorReceiver : BroadcastReceiver() {
             manager.getAvailableSensors(context).forEach { basicSensor ->
                 val fullSensor = sensorDao.getFull(basicSensor.id)
                 val sensor = fullSensor?.sensor
+                val sensorCoreRegistration = sensor?.coreRegistration
+                val sensorAppRegistration = sensor?.appRegistration
 
-                // Register Sensors if needed
-                if (sensor?.enabled == true && !sensor.registered && !sensor.type.isBlank()) {
+                // Always register enabled sensors in case of available entity updates
+                // when app or core version change is detected every 4 hours
+                if (sensor?.enabled == true && sensor.type.isNotBlank() && sensor.icon.isNotBlank() &&
+                    (currentAppVersion != sensorAppRegistration || currentHAversion != sensorCoreRegistration || !sensor.registered)
+                ) {
                     val reg = fullSensor.toSensorRegistration()
                     val config = Configuration(context.resources.configuration)
                     config.setLocale(Locale("en"))
@@ -171,6 +186,8 @@ class SensorReceiver : BroadcastReceiver() {
                     try {
                         integrationUseCase.registerSensor(reg)
                         sensor.registered = true
+                        sensor.coreRegistration = currentHAversion
+                        sensor.appRegistration = currentAppVersion
                         sensorDao.update(sensor)
                     } catch (e: Exception) {
                         Log.e(TAG, "Issue registering sensor: ${reg.uniqueId}", e)

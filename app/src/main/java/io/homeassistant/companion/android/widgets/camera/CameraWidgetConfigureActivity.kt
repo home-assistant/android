@@ -14,10 +14,9 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.android.synthetic.main.widget_camera_configure.add_button
-import kotlinx.android.synthetic.main.widget_camera_configure.widget_text_config_entity_id
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -47,9 +46,10 @@ class CameraWidgetConfigureActivity : BaseActivity() {
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        setContentView(R.layout.widget_camera_configure)
+        val binding = WidgetCameraConfigureBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        add_button.setOnClickListener(addWidgetButtonClickListener)
+        binding.addButton.setOnClickListener(addWidgetButtonClickListener)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -74,9 +74,9 @@ class CameraWidgetConfigureActivity : BaseActivity() {
 
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
-        widget_text_config_entity_id.setAdapter(entityAdapter)
-        widget_text_config_entity_id.onFocusChangeListener = dropDownOnFocus
-        widget_text_config_entity_id.onItemClickListener = entityDropDownOnItemClick
+        binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
+        binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
+        binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
         mainScope.launch {
             try {

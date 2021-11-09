@@ -32,6 +32,9 @@ interface IntegrationRepository {
     suspend fun setSessionExpireMillis(value: Long)
     suspend fun getSessionExpireMillis(): Long
 
+    suspend fun setWearHomeFavorites(favorites: Set<String>)
+    suspend fun getWearHomeFavorites(): Set<String>
+
     suspend fun getThemeColor(): String
 
     suspend fun getHomeAssistantVersion(): String
