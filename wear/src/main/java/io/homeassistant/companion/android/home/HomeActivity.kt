@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,7 +51,9 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
+import io.homeassistant.companion.android.settings.ScreenChooseEntity
 import io.homeassistant.companion.android.settings.ScreenSetFavorites
+import io.homeassistant.companion.android.settings.ScreenSetTileShortcuts
 import io.homeassistant.companion.android.settings.ScreenSettings
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
@@ -58,6 +63,7 @@ import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.setChipDefaults
 import io.homeassistant.companion.android.util.updateFavorites
+import io.homeassistant.companion.android.util.updateTileShortcuts
 import io.homeassistant.companion.android.viewModels.EntityViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -74,11 +80,15 @@ class HomeActivity : ComponentActivity(), HomeView {
     private val entityViewModel by viewModels<EntityViewModel>()
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
+    var shortcutEntitySelectionIndex: Int by mutableStateOf(0)
+
     companion object {
         private const val TAG = "HomeActivity"
         private const val SCREEN_LANDING = "landing"
         const val SCREEN_SETTINGS = "settings"
         const val SCREEN_SET_FAVORITES = "set_favorites"
+        const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
+        const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 
         fun newInstance(context: Context): Intent {
             return Intent(context, HomeActivity::class.java)
@@ -99,6 +109,7 @@ class HomeActivity : ComponentActivity(), HomeView {
         presenter.onViewReady()
         updateEntities()
         updateFavorites(entityViewModel, presenter, mainScope)
+        updateTileShortcuts(entityViewModel, presenter, mainScope)
         setContent {
             LoadHomePage(entities = entityViewModel.entitiesResponse, entityViewModel.favoriteEntities)
         }
@@ -323,6 +334,26 @@ class HomeActivity : ComponentActivity(), HomeView {
                                 ScreenSetFavorites(
                                     validEntities,
                                     entityViewModel,
+                                    baseContext,
+                                    presenter
+                                )
+                            }
+                            composable(SCREEN_SET_TILE_SHORTCUTS) {
+                                updateTileShortcuts(entityViewModel, presenter, mainScope)
+                                ScreenSetTileShortcuts(
+                                    entityViewModel.shortcutEntities,
+                                    baseContext,
+                                    swipeDismissableNavController
+                                ) {
+                                    shortcutEntitySelectionIndex = it
+                                }
+                            }
+                            composable(SCREEN_SELECT_TILE_SHORTCUT) {
+                                ScreenChooseEntity(
+                                    entityViewModel.shortcutEntities,
+                                    shortcutEntitySelectionIndex,
+                                    validEntities,
+                                    swipeDismissableNavController,
                                     baseContext,
                                     presenter
                                 )

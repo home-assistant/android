@@ -110,4 +110,12 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun setWearHomeFavorites(favorites: Set<String>) {
         integrationUseCase.setWearHomeFavorites(favorites)
     }
+
+    override suspend fun getTileShortcuts(): List<String> {
+        return integrationUseCase.getTileShortcuts()
+    }
+
+    override suspend fun setTileShortcuts(entities: List<String>) {
+        integrationUseCase.setTileShortcuts(entities)
+    }
 }

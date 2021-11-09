@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import okhttp3.HttpUrl.Companion.get
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.json.JSONArray
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
@@ -56,6 +57,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_WEAR_HOME_FAVORITES = "wear_home_favorites"
+        private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
         private const val PREF_HA_VERSION = "ha_version"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
@@ -349,6 +351,17 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getWearHomeFavorites(): Set<String> {
         return localStorage.getStringSet(PREF_WEAR_HOME_FAVORITES) ?: setOf()
+    }
+
+    override suspend fun getTileShortcuts(): List<String> {
+        val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
+        return List(jsonArray.length()) {
+            jsonArray.getString(it)
+        }
+    }
+
+    override suspend fun setTileShortcuts(entities: List<String>) {
+        localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {

@@ -10,4 +10,5 @@ class EntityViewModel : ViewModel() {
 
     var entitiesResponse: Array<Entity<Any>> by mutableStateOf(arrayOf())
     var favoriteEntities: MutableSet<String> by mutableStateOf(mutableSetOf())
+    var shortcutEntities: MutableList<String> by mutableStateOf(mutableListOf())
 }

@@ -11,4 +11,6 @@ interface HomePresenter {
     suspend fun getEntities(): Array<Entity<Any>>
     suspend fun getWearHomeFavorites(): Set<String>
     suspend fun setWearHomeFavorites(favorites: Set<String>)
+    suspend fun getTileShortcuts(): List<String>
+    suspend fun setTileShortcuts(entities: List<String>)
 }

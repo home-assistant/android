@@ -1,12 +1,10 @@
 package io.homeassistant.companion.android.settings
 
 import android.content.Context
-import androidx.compose.foundation.layout.Column
+import android.util.Log
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,11 +14,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ScalingLazyColumn
@@ -39,6 +40,8 @@ import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.saveFavorites
+import io.homeassistant.companion.android.util.saveTileShortcuts
+import io.homeassistant.companion.android.util.setChipDefaults
 import io.homeassistant.companion.android.viewModels.EntityViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,56 +51,105 @@ private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
 @Composable
 fun ScreenSettings(swipeDismissableNavController: NavHostController, entityViewModel: EntityViewModel, presenter: HomePresenter) {
-    Column {
-        Spacer(modifier = Modifier.height(20.dp))
-        SetTitle(id = R.string.settings)
-        Chip(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp),
-            icon = {
-                Image(asset = CommunityMaterial.Icon3.cmd_star)
-            },
-            label = {
-                Text(
-                    text = stringResource(id = R.string.favorite)
+    val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+
+    ScalingLazyColumn(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentPadding = PaddingValues(
+            top = 10.dp,
+            start = 10.dp,
+            end = 10.dp,
+            bottom = 40.dp
+        ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        state = scalingLazyListState
+    ) {
+        item {
+            SetTitle(id = R.string.settings)
+        }
+        item {
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                icon = {
+                    Image(asset = CommunityMaterial.Icon3.cmd_star)
+                },
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.favorite)
+                    )
+                },
+                onClick = {
+                    swipeDismissableNavController.navigate(
+                        HomeActivity.SCREEN_SET_FAVORITES
+                    )
+                },
+                colors = ChipDefaults.primaryChipColors(
+                    contentColor = Color.Black
                 )
-            },
-            onClick = {
-                swipeDismissableNavController.navigate(
-                    HomeActivity.SCREEN_SET_FAVORITES
-                )
-            },
-            colors = ChipDefaults.primaryChipColors(
-                contentColor = Color.Black
             )
-        )
-        Chip(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            icon = {
-                Image(asset = CommunityMaterial.Icon.cmd_delete)
-            },
-            label = {
-                Text(
-                    text = stringResource(id = R.string.clear_favorites),
+        }
+        item {
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                icon = {
+                    Image(asset = CommunityMaterial.Icon.cmd_delete)
+                },
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.clear_favorites),
+                    )
+                },
+                onClick = {
+                    entityViewModel.favoriteEntities = mutableSetOf()
+                    saveFavorites(
+                        entityViewModel.favoriteEntities.toMutableSet(),
+                        presenter,
+                        mainScope
+                    )
+                },
+                colors = ChipDefaults.primaryChipColors(
+                    contentColor = Color.Black
+                ),
+                secondaryLabel = {
+                    Text(
+                        text = stringResource(id = R.string.irreverisble)
+                    )
+                },
+                enabled = entityViewModel.favoriteEntities.isNotEmpty()
+            )
+        }
+
+        item {
+            SetTitle(id = R.string.tile_settings)
+        }
+        item {
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                icon = {
+                    Image(asset = CommunityMaterial.Icon3.cmd_star_circle_outline)
+                },
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.shortcuts)
+                    )
+                },
+                onClick = {
+                    swipeDismissableNavController.navigate(
+                        HomeActivity.SCREEN_SET_TILE_SHORTCUTS
+                    )
+                },
+                colors = ChipDefaults.primaryChipColors(
+                    contentColor = Color.Black
                 )
-            },
-            onClick = {
-                entityViewModel.favoriteEntities = mutableSetOf()
-                saveFavorites(entityViewModel.favoriteEntities.toMutableSet(), presenter, mainScope)
-            },
-            colors = ChipDefaults.primaryChipColors(
-                contentColor = Color.Black
-            ),
-            secondaryLabel = {
-                Text(
-                    text = stringResource(id = R.string.irreverisble)
-                )
-            },
-            enabled = entityViewModel.favoriteEntities.isNotEmpty()
-        )
+            )
+        }
     }
 }
 
@@ -162,6 +214,167 @@ fun ScreenSetFavorites(
                     checkedToggleIconTintColor = Color.Yellow,
                     uncheckedToggleIconTintColor = Color.DarkGray
                 )
+            )
+        }
+    }
+}
+
+@Composable
+fun ScreenSetTileShortcuts(
+    shortcutEntities: MutableList<String>,
+    context: Context,
+    swipeDismissableNavController: NavHostController,
+    onShortcutEntitySelectionChange: (Int) -> Unit
+) {
+
+    val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+    ScalingLazyColumn(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentPadding = PaddingValues(
+            top = 40.dp,
+            start = 10.dp,
+            end = 10.dp,
+            bottom = 40.dp
+        ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        state = scalingLazyListState
+    ) {
+        item {
+            SetTitle(id = R.string.shortcuts)
+        }
+        items(shortcutEntities.size) { index ->
+            val favoriteEntityID = shortcutEntities[index].split(",")[0]
+            val favoriteName = shortcutEntities[index].split(",")[1]
+            val favoriteIcon = shortcutEntities[index].split(",")[2]
+
+            val iconBitmap = getIcon(favoriteIcon, favoriteEntityID.split(".")[0], context)
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                icon = {
+                    Image(
+                        iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                        colorFilter = ColorFilter.tint(Color.White)
+                    )
+                },
+                label = {
+                    Text(
+                        text = stringResource(R.string.shortcut_n, index + 1)
+                    )
+                },
+                secondaryLabel = {
+                    Text(
+                        text = favoriteName,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                onClick = {
+                    Log.d("SettingsComposable", "Change shortcut $index")
+                    onShortcutEntitySelectionChange(index)
+                    swipeDismissableNavController.navigate(
+                        HomeActivity.SCREEN_SELECT_TILE_SHORTCUT
+                    )
+                },
+                colors = ChipDefaults.secondaryChipColors()
+            )
+        }
+        if (shortcutEntities.size < 7) {
+            item {
+                Button(
+                    modifier = Modifier
+                        .padding(top = 4.dp),
+                    onClick = {
+                        Log.d("SettingsComposable", "Add shortcut at ${shortcutEntities.size}")
+                        onShortcutEntitySelectionChange(shortcutEntities.size)
+                        swipeDismissableNavController.navigate(
+                            HomeActivity.SCREEN_SELECT_TILE_SHORTCUT
+                        )
+                    },
+                    colors = ButtonDefaults.primaryButtonColors()
+                ) {
+                    Image(
+                        CommunityMaterial.Icon3.cmd_plus_thick
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ScreenChooseEntity(
+    entitiesList: MutableList<String>,
+    entitySelectionIndex: Int,
+    validEntities: List<Entity<Any>>,
+    swipeDismissableNavController: NavHostController,
+    context: Context,
+    presenter: HomePresenter
+) {
+    val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+    ScalingLazyColumn(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentPadding = PaddingValues(
+            top = 10.dp,
+            start = 10.dp,
+            end = 10.dp,
+            bottom = 40.dp
+        ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        state = scalingLazyListState
+    ) {
+        item {
+            SetTitle(id = R.string.shortcuts)
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 30.dp),
+                icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
+                label = { Text(text = "None") },
+                onClick = {
+                    Log.d("SettingsComposable", "Select None for index $entitySelectionIndex where list is ${entitiesList.size}")
+                    if (entitySelectionIndex < entitiesList.size) {
+                        entitiesList.removeAt(entitySelectionIndex)
+                        saveTileShortcuts(entitiesList, presenter, mainScope)
+                    }
+                    swipeDismissableNavController.navigateUp()
+                },
+                colors = ChipDefaults.primaryChipColors(
+                    contentColor = Color.Black
+                )
+            )
+        }
+        items(validEntities.size) { index ->
+            val attributes = validEntities[index].attributes as Map<String, String>
+            val iconBitmap = getIcon(attributes["icon"], validEntities[index].entityId.split(".")[0], context)
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = if (index == 0) 30.dp else 10.dp),
+                icon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
+                label = {
+                    Text(
+                        text = attributes["friendly_name"].toString(),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
+                enabled = validEntities[index].state != "unavailable",
+                onClick = {
+                    Log.d("SettingsComposable", "Select something for index $entitySelectionIndex where list is ${entitiesList.size}")
+                    val elementString = "${validEntities[index].entityId},${attributes["friendly_name"]},${attributes["icon"]}"
+                    if (entitySelectionIndex < entitiesList.size) {
+                        entitiesList[entitySelectionIndex] = elementString
+                    } else {
+                        entitiesList.add(elementString)
+                    }
+                    saveTileShortcuts(entitiesList, presenter, mainScope)
+                    swipeDismissableNavController.navigateUp()
+                },
+                colors = setChipDefaults()
             )
         }
     }

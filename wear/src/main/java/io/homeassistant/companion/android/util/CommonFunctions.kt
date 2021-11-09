@@ -50,6 +50,18 @@ fun saveFavorites(favorites: Set<String>, presenter: HomePresenter, mainScope: C
     mainScope.launch { presenter.setWearHomeFavorites(favorites.toSet()) }
 }
 
+fun updateTileShortcuts(entityViewModel: EntityViewModel, presenter: HomePresenter, mainScope: CoroutineScope) {
+    mainScope.launch {
+        entityViewModel.shortcutEntities = presenter.getTileShortcuts().toMutableList()
+    }
+}
+
+fun saveTileShortcuts(shortcutEntities: List<String>, presenter: HomePresenter, mainScope: CoroutineScope) {
+    mainScope.launch {
+        presenter.setTileShortcuts(shortcutEntities)
+    }
+}
+
 fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
     return if (icon?.startsWith("mdi") == true) {
         val mdiIcon = icon.split(":")[1]

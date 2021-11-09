@@ -34,6 +34,8 @@ interface IntegrationRepository {
 
     suspend fun setWearHomeFavorites(favorites: Set<String>)
     suspend fun getWearHomeFavorites(): Set<String>
+    suspend fun getTileShortcuts(): List<String>
+    suspend fun setTileShortcuts(entities: List<String>)
 
     suspend fun getThemeColor(): String
 

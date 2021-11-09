@@ -29,6 +29,9 @@
     <string name="scene">Scene</string>
     <string name="scenes">Scenes</string>
     <string name="scripts">Scripts</string>
+    <string name="shortcuts">Shortcuts</string>
+    <string name="shortcut_n">Shortcut %d</string>
+    <string name="tile_settings">Tile settings</string>
     <string name="username">Username</string>
     <string name="version">Version: %s</string>
     <string name="lights">Lights</string>

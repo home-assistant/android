@@ -105,5 +105,5 @@ dependencies {
     implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha10")
 
     implementation("com.google.guava:guava:31.0.1-android")
-    implementation("androidx.wear.tiles:tiles:1.0.0-beta01")
+    implementation("androidx.wear.tiles:tiles:1.0.0")
 }
