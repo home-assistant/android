@@ -20,11 +20,6 @@ import retrofit2.http.Url
 
 interface IntegrationService {
 
-    @GET("/api/discovery_info")
-    suspend fun discoveryInfo(
-        @Header("Authorization") auth: String
-    ): DiscoveryInfoResponse
-
     @POST("/api/mobile_app/registrations")
     suspend fun registerDevice(
         @Header("Authorization") auth: String,
