@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.common.data.integration.impl
 
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.CheckRateLimits
-import io.homeassistant.companion.android.common.data.integration.impl.entities.DiscoveryInfoResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
