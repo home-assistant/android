@@ -21,6 +21,9 @@ class HomeAssistantApis @Inject constructor(private val urlRepository: UrlReposi
         private const val LOCAL_HOST = "http://localhost/"
         private const val USER_AGENT = "User-Agent"
         private const val USER_AGENT_STRING = "HomeAssistant/Android"
+
+        private val CALL_TIMEOUT = 30L
+        private val READ_TIMEOUT = 30L
     }
 
     private fun configureOkHttpClient(builder: OkHttpClient.Builder): OkHttpClient.Builder {
@@ -62,8 +65,8 @@ class HomeAssistantApis @Inject constructor(private val urlRepository: UrlReposi
         if (cookieManager != null) {
             builder.cookieJar(CookieJarCookieManagerShim())
         }
-        builder.callTimeout(30L, TimeUnit.SECONDS)
-        builder.readTimeout(30L, TimeUnit.SECONDS)
+        builder.callTimeout(CALL_TIMEOUT, TimeUnit.SECONDS)
+        builder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
 
         return builder
     }
