@@ -8,6 +8,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 
 class EntityViewModel : ViewModel() {
 
-    var entitiesResponse: Array<Entity<Any>> by mutableStateOf(arrayOf())
+    var entitiesResponse: List<Entity<Any>> by mutableStateOf(mutableListOf())
     var favoriteEntities: MutableSet<String> by mutableStateOf(mutableSetOf())
 }

@@ -46,12 +46,12 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getEntities(): Array<Entity<Any>> {
+    override suspend fun getEntities(): List<Entity<Any>> {
         return try {
             integrationUseCase.getEntities()
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get entities", e)
-            emptyArray()
+            emptyList()
         }
     }
 

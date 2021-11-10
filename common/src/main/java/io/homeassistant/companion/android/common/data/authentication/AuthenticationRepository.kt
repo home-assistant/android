@@ -14,6 +14,8 @@ interface AuthenticationRepository {
 
     suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String
 
+    suspend fun retrieveAccessToken(): String
+
     suspend fun revokeSession()
 
     suspend fun getSessionState(): SessionState

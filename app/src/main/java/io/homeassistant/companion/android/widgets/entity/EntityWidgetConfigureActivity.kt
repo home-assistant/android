@@ -122,9 +122,9 @@ class EntityWidgetConfigureActivity : BaseActivity() {
         }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
-        binding.widgetTextConfigAttribute.setAdapter(entityAdapter)
-        binding.widgetTextConfigAttribute.onFocusChangeListener = dropDownOnFocus
-        binding.widgetTextConfigAttribute.onItemClickListener = entityDropDownOnItemClick
+        binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
+        binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
+        binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
         binding.widgetTextConfigAttribute.onFocusChangeListener = dropDownOnFocus
         binding.widgetTextConfigAttribute.onItemClickListener = attributeDropDownOnItemClick
         binding.widgetTextConfigAttribute.setOnClickListener {
@@ -140,7 +140,6 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             try {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
-                fetchedEntities.sortBy { e -> e.entityId }
                 fetchedEntities.forEach {
                     entities[it.entityId] = it
                 }
