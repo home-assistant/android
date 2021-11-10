@@ -46,7 +46,7 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getEntities(): List<Entity<Any>> {
+    override suspend fun getEntities(): List<Entity<*>> {
         return try {
             integrationUseCase.getEntities()
         } catch (e: Exception) {
@@ -55,24 +55,20 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override fun onEntityClicked(entityId: String) {
+    override suspend fun onEntityClicked(entityId: String) {
 
         if (entityId.split(".")[0] in toggleDomains) {
-            mainScope.launch {
-                integrationUseCase.callService(
-                    entityId.split(".")[0],
-                    "toggle",
-                    hashMapOf("entity_id" to entityId)
-                )
-            }
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "toggle",
+                hashMapOf("entity_id" to entityId)
+            )
         } else {
-            mainScope.launch {
-                integrationUseCase.callService(
-                    entityId.split(".")[0],
-                    "turn_on",
-                    hashMapOf("entity_id" to entityId)
-                )
-            }
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "turn_on",
+                hashMapOf("entity_id" to entityId)
+            )
         }
     }
 
@@ -103,11 +99,11 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getWearHomeFavorites(): Set<String> {
-        return integrationUseCase.getWearHomeFavorites()
+    override suspend fun getWearHomeFavorites(): List<String> {
+        return integrationUseCase.getWearHomeFavorites().toList()
     }
 
-    override suspend fun setWearHomeFavorites(favorites: Set<String>) {
-        integrationUseCase.setWearHomeFavorites(favorites)
+    override suspend fun setWearHomeFavorites(favorites: List<String>) {
+        integrationUseCase.setWearHomeFavorites(favorites.toSet())
     }
 }
