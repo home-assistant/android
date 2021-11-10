@@ -26,7 +26,6 @@ import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.getIcon
 
-
 @Composable
 fun SetFavoritesView(
     validEntities: List<Entity<*>>,

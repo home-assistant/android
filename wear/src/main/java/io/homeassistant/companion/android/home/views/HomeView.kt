@@ -19,12 +19,12 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.home.HomePresenterImpl
+import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.setChipDefaults
-import io.homeassistant.companion.android.home.MainViewModel
 
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_SETTINGS = "settings"
