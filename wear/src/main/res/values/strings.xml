@@ -13,7 +13,6 @@
     <string name="failed_authentication">Could not authenticate</string>
     <string name="failed_connection">Could not connect</string>
     <string name="failed_registration">Could not register</string>
-    <string name="favorite_entities">Favorite entities</string>
     <string name="finish">Finish</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="input_url_hint">https://example.duckdns.org:8123</string>
@@ -31,6 +30,7 @@
     <string name="scripts">Scripts</string>
     <string name="shortcuts">Shortcuts</string>
     <string name="shortcut_n">Shortcut %d</string>
+    <string name="shortcuts_tile_description">Select up to 7 entities</string>
     <string name="tile_settings">Tile settings</string>
     <string name="username">Username</string>
     <string name="version">Version: %s</string>

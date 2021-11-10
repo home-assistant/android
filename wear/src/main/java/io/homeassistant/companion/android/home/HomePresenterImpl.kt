@@ -9,7 +9,7 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.tiles.FavoriteEntitiesTile
+import io.homeassistant.companion.android.tiles.ShortcutsTile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -121,6 +121,6 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun setTileShortcuts(entities: List<String>, context: Context) {
         integrationUseCase.setTileShortcuts(entities)
         TileService.getUpdater(context)
-            .requestUpdate(FavoriteEntitiesTile::class.java)
+            .requestUpdate(ShortcutsTile::class.java)
     }
 }

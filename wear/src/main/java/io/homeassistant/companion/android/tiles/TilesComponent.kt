@@ -6,7 +6,7 @@ import io.homeassistant.companion.android.common.dagger.AppComponent
 @Component(dependencies = [AppComponent::class])
 interface TilesComponent {
 
-    fun inject(favoriteEntitiesTile: FavoriteEntitiesTile)
+    fun inject(shortcutsTile: ShortcutsTile)
 
     fun inject(tileActionActivity: TileActionActivity)
 }

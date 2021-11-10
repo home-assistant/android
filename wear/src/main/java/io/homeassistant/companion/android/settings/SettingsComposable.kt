@@ -51,6 +51,7 @@ private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 @Composable
 fun ScreenSettings(swipeDismissableNavController: NavHostController, entityViewModel: EntityViewModel, presenter: HomePresenter) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+    RotaryEventState(scrollState = scalingLazyListState)
 
     ScalingLazyColumn(
         modifier = Modifier
@@ -227,6 +228,7 @@ fun ScreenSetTileShortcuts(
 ) {
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+    RotaryEventState(scrollState = scalingLazyListState)
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize(),
@@ -311,6 +313,7 @@ fun ScreenChooseEntity(
     presenter: HomePresenter
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+    RotaryEventState(scrollState = scalingLazyListState)
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize(),

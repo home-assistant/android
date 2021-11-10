@@ -49,7 +49,7 @@ private const val CIRCLE_SIZE = 56f
 private const val ICON_SIZE = 48f * 0.7071f // square that fits in 48dp circle
 private const val SPACING = 8f
 
-class FavoriteEntitiesTile : TileService() {
+class ShortcutsTile : TileService() {
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
 
@@ -94,7 +94,7 @@ class FavoriteEntitiesTile : TileService() {
                         }
 
                         // Create Bitmap from icon name
-                        val iconBitmap = IconicsDrawable(this@FavoriteEntitiesTile, "cmd-$iconName").apply {
+                        val iconBitmap = IconicsDrawable(this@ShortcutsTile, "cmd-$iconName").apply {
                             colorInt = Color.WHITE
                             sizeDp = ICON_SIZE.roundToInt()
                             backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
@@ -133,7 +133,7 @@ class FavoriteEntitiesTile : TileService() {
         DaggerTilesComponent.builder()
             .appComponent((applicationContext as GraphComponentAccessor).appComponent)
             .build()
-            .inject(this@FavoriteEntitiesTile)
+            .inject(this@ShortcutsTile)
 
         return integrationUseCase.getTileShortcuts()
     }
@@ -195,7 +195,7 @@ class FavoriteEntitiesTile : TileService() {
                                 .setAndroidActivity(
                                     ActionBuilders.AndroidActivity.Builder()
                                         .setClassName(TileActionActivity::class.java.name)
-                                        .setPackageName(this@FavoriteEntitiesTile.packageName)
+                                        .setPackageName(this@ShortcutsTile.packageName)
                                         .addKeyToExtraMapping("entity_id", ActionBuilders.stringExtra(entityId))
                                         .build()
                                 )
