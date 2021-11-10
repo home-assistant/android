@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings
 
-import android.content.Context
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -105,7 +105,6 @@ fun ScreenSettings(swipeDismissableNavController: NavHostController, entityViewM
 fun ScreenSetFavorites(
     validEntities: List<Entity<Any>>,
     entityViewModel: EntityViewModel,
-    context: Context,
     presenter: HomePresenter
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
@@ -123,8 +122,8 @@ fun ScreenSetFavorites(
         state = scalingLazyListState
     ) {
         items(validEntities.size) { index ->
-            val attributes = validEntities[index].attributes as Map<String, String>
-            val iconBitmap = getIcon(attributes["icon"], validEntities[index].entityId.split(".")[0], context)
+            val attributes = validEntities[index].attributes as Map<*, *>
+            val iconBitmap = getIcon(attributes["icon"] as String?, validEntities[index].entityId.split(".")[0], LocalContext.current)
             if (index == 0)
                 SetTitle(id = R.string.set_favorite)
             val elementString = "${validEntities[index].entityId},${attributes["friendly_name"]},${attributes["icon"]}"
