@@ -27,3 +27,15 @@ fun ListHeader(
         }
     }
 }
+
+@Composable
+fun ListHeader(id: Int) {
+    ListHeader {
+        Row {
+            Text(
+                text = stringResource(id = id),
+                color = Color.White
+            )
+        }
+    }
+}

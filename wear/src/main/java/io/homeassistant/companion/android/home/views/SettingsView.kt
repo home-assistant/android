@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,7 +14,6 @@ import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.util.SetTitle
 
 @Composable
 fun SettingsView(
@@ -25,12 +22,10 @@ fun SettingsView(
     onClearFavorites: () -> Unit
 ) {
     Column {
-        Spacer(modifier = Modifier.height(20.dp))
-        SetTitle(id = R.string.settings)
+        ListHeader(id = R.string.settings)
         Chip(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp),
+                .fillMaxWidth(),
             icon = {
                 Image(asset = CommunityMaterial.Icon3.cmd_star)
             },
