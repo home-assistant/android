@@ -21,7 +21,6 @@ import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.setChipDefaults
 
-
 @Composable
 fun EntityUi(
     entity: Entity<*>,

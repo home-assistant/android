@@ -42,7 +42,6 @@ class HomeActivity : ComponentActivity(), HomeView {
             .build()
             .inject(this)
 
-
         presenter.onViewReady()
         setContent {
             LoadHomePage(mainViewModel)
@@ -67,5 +66,4 @@ class HomeActivity : ComponentActivity(), HomeView {
         startActivity(intent)
         finish()
     }
-
 }

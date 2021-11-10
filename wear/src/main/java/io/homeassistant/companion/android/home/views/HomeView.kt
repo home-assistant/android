@@ -18,7 +18,6 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.settings.ScreenSetFavorites
 import io.homeassistant.companion.android.settings.ScreenSettings
@@ -90,7 +89,6 @@ fun LoadHomePage(
                     }
                     composable(SCREEN_SET_FAVORITES) {
                         val validEntities = mainViewModel.entities
-                            .sortedBy { it.entityId }
                             .filter { it.entityId.split(".")[0] in HomePresenterImpl.supportedDomains }
                         ScreenSetFavorites(
                             validEntities,
@@ -105,7 +103,6 @@ fun LoadHomePage(
                     }
                 }
             }
-
         }
     }
 }

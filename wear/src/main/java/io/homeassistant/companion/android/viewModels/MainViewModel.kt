@@ -32,8 +32,11 @@ class MainViewModel : ViewModel() {
     fun toggleEntity(entityId: String) {
         viewModelScope.launch {
             homePresenter.onEntityClicked(entityId)
-            entities.removeIf { it.entityId == entityId }
-            homePresenter.getEntities().find { it.entityId == entityId }?.let { entities.add(it) }
+            val updatedEntities = homePresenter.getEntities()
+            // This should be better....
+            for (i in updatedEntities.indices) {
+                entities[i] = updatedEntities[i]
+            }
         }
     }
 

@@ -16,7 +16,6 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.SetTitle
 
-
 @Composable
 fun LoadOtherSection(
     onSettingsClicked: () -> Unit,

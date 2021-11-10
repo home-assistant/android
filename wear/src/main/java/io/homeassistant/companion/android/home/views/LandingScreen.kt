@@ -47,16 +47,11 @@ fun LandingScreen(
 
     val entityMap: Map<String, Entity<*>> = entities.map { it.entityId to it }.toMap()
 
-    val scenes =
-        entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
-    val scripts =
-        entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "script" }
-    val lights =
-        entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "light" }
-    val inputBooleans =
-        entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "input_boolean" }
-    val switches =
-        entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "switch" }
+    val scenes = entities.filter { it.entityId.split(".")[0] == "scene" }
+    val scripts = entities.filter { it.entityId.split(".")[0] == "script" }
+    val lights = entities.filter { it.entityId.split(".")[0] == "light" }
+    val inputBooleans = entities.filter { it.entityId.split(".")[0] == "input_boolean" }
+    val switches = entities.filter { it.entityId.split(".")[0] == "switch" }
 
     RotaryEventDispatcher(scalingLazyListState)
     RotaryEventState(scrollState = scalingLazyListState)
@@ -90,6 +85,7 @@ fun LandingScreen(
                 if (expandedFavorites) {
                     items(favoriteEntityIds.size) { index ->
                         EntityUi(
+                            // This is here to not break existing favorites.....
                             entityMap[favoriteEntityIds[index].split(",")[0]]!!,
                             onEntityClicked
                         )
