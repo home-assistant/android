@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -14,6 +15,7 @@ import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.util.previewFavoritesList
 
 @Composable
 fun SettingsView(
@@ -63,4 +65,14 @@ fun SettingsView(
             enabled = favorites.isNotEmpty()
         )
     }
+}
+
+@Preview
+@Composable
+private fun PreviewSettingsView() {
+    SettingsView(
+        favorites = previewFavoritesList,
+        onClickSetFavorites = { /*TODO*/ },
+        onClearFavorites = {}
+    )
 }

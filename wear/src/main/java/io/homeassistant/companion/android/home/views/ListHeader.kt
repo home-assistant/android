@@ -6,8 +6,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
+import io.homeassistant.companion.android.R
 
 @Composable
 fun ListHeader(
@@ -38,4 +40,14 @@ fun ListHeader(id: Int) {
             )
         }
     }
+}
+
+@Preview
+@Composable
+private fun PreviewListHeader() {
+    ListHeader(
+        stringId = R.string.other,
+        expanded = true,
+        onExpandChanged = {}
+    )
 }

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -8,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.Text
@@ -19,6 +21,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.util.getIcon
+import io.homeassistant.companion.android.util.previewEntity1
+import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.setChipDefaults
 
 @Composable
@@ -73,6 +77,21 @@ fun EntityUi(
             enabled = entity.state != "unavailable",
             onClick = { onEntityClicked(entity.entityId) },
             colors = setChipDefaults()
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewEntityUI() {
+    Column {
+        EntityUi(
+            entity = previewEntity1,
+            onEntityClicked = {}
+        )
+        EntityUi(
+            entity = previewEntity2,
+            onEntityClicked = {}
         )
     }
 }
