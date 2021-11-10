@@ -3,10 +3,10 @@
 
     <item android:drawable="@color/black" />
 
-    <item>
-        <bitmap
-            android:gravity="center"
-            android:src="@drawable/logo" />
-    </item>
+    <item
+        android:drawable="@drawable/logo_rounded"
+        android:width="200px"
+        android:height="200px"
+        android:gravity="center"/>
 
 </layer-list>
