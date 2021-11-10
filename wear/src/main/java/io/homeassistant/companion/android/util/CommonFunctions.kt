@@ -17,10 +17,6 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.home.HomePresenter
-import io.homeassistant.companion.android.viewModels.EntityViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 @Composable
 fun SetTitle(id: Int) {
@@ -40,14 +36,6 @@ fun setChipDefaults(): ChipColors {
         backgroundColor = colorResource(id = R.color.colorAccent),
         contentColor = Color.Black
     )
-}
-
-fun updateFavorites(entityViewModel: EntityViewModel, presenter: HomePresenter, mainScope: CoroutineScope) {
-    mainScope.launch { entityViewModel.favoriteEntities = presenter.getWearHomeFavorites().toMutableSet() }
-}
-
-fun saveFavorites(favorites: Set<String>, presenter: HomePresenter, mainScope: CoroutineScope) {
-    mainScope.launch { presenter.setWearHomeFavorites(favorites.toSet()) }
 }
 
 fun getIcon(icon: String?, domain: String, context: Context): IIcon? {

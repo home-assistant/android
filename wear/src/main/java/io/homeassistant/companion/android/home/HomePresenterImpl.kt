@@ -46,7 +46,7 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getEntities(): List<Entity<Any>> {
+    override suspend fun getEntities(): List<Entity<*>> {
         return try {
             integrationUseCase.getEntities()
         } catch (e: Exception) {
@@ -103,11 +103,11 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getWearHomeFavorites(): Set<String> {
-        return integrationUseCase.getWearHomeFavorites()
+    override suspend fun getWearHomeFavorites(): List<String> {
+        return integrationUseCase.getWearHomeFavorites().toList()
     }
 
-    override suspend fun setWearHomeFavorites(favorites: Set<String>) {
-        integrationUseCase.setWearHomeFavorites(favorites)
+    override suspend fun setWearHomeFavorites(favorites: List<String>) {
+        integrationUseCase.setWearHomeFavorites(favorites.toSet())
     }
 }

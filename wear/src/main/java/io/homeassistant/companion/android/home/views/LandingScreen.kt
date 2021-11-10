@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -24,8 +23,6 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberScalingLazyListState
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.home.HomeActivity
-import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.SetTitle
@@ -33,8 +30,8 @@ import io.homeassistant.companion.android.util.setChipDefaults
 
 @Composable
 fun LandingScreen(
-    entities: MutableList<Entity<Any>>,
-    favorites: MutableSet<String>,
+    entities: List<Entity<*>>,
+    favoriteEntityIds: List<String>,
     onEntityClicked: (String) -> Unit,
     onSettingsClicked: () -> Unit,
     onLogoutClicked: () -> Unit
@@ -47,6 +44,8 @@ fun LandingScreen(
     var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
+
+    val entityMap: Map<String, Entity<*>> = entities.map { it.entityId to it }.toMap()
 
     val scenes =
         entities.sortedBy { it.entityId }.filter { it.entityId.split(".")[0] == "scene" }
@@ -80,7 +79,7 @@ fun LandingScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             state = scalingLazyListState
         ) {
-            if (favorites.isNotEmpty()) {
+            if (favoriteEntityIds.isNotEmpty()) {
                 item {
                     SetListHeader(
                         stringId = R.string.favorites,
@@ -88,12 +87,10 @@ fun LandingScreen(
                         onExpandChanged = { expandedFavorites = it }
                     )
                 }
-                val favoriteArray = favorites.toTypedArray()
                 if (expandedFavorites) {
-                    items(favoriteArray.size) { index ->
-                        FavoriteEntities(
-                            favoriteArray[index],
-                            null,
+                    items(favoriteEntityIds.size) { index ->
+                        EntityUi(
+                            entityMap[favoriteEntityIds[index].split(",")[0]]!!,
                             onEntityClicked
                         )
                     }
