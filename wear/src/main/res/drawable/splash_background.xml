@@ -4,7 +4,7 @@
     <item android:drawable="@color/black" />
 
     <item
-        android:drawable="@drawable/logoRounded"
+        android:drawable="@drawable/logo_rounded"
         android:width="200px"
         android:height="200px"
         android:gravity="center"/>
