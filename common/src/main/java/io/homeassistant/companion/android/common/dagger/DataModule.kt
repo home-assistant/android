@@ -4,7 +4,7 @@ import android.os.Build
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
-import io.homeassistant.companion.android.common.data.HomeAssistantRetrofit
+import io.homeassistant.companion.android.common.data.HomeAssistantApis
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationRepositoryImpl
@@ -16,7 +16,10 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepositoryImpl
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepositoryImpl
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
 import io.homeassistant.companion.android.common.data.wifi.WifiHelper
+import okhttp3.OkHttpClient
 import javax.inject.Named
 
 @Module(includes = [DataModule.Declaration::class])
@@ -30,12 +33,16 @@ class DataModule(
 ) {
 
     @Provides
-    fun provideAuthenticationService(homeAssistantRetrofit: HomeAssistantRetrofit): AuthenticationService =
-        homeAssistantRetrofit.retrofit.create(AuthenticationService::class.java)
+    fun provideAuthenticationService(homeAssistantApis: HomeAssistantApis): AuthenticationService =
+        homeAssistantApis.retrofit.create(AuthenticationService::class.java)
 
     @Provides
-    fun providesIntegrationService(homeAssistantRetrofit: HomeAssistantRetrofit): IntegrationService =
-        homeAssistantRetrofit.retrofit.create(IntegrationService::class.java)
+    fun providesIntegrationService(homeAssistantApis: HomeAssistantApis): IntegrationService =
+        homeAssistantApis.retrofit.create(IntegrationService::class.java)
+
+    @Provides
+    fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient =
+        homeAssistantApis.okHttpClient
 
     @Provides
     fun providesWifiHelper() = wifiHelper
@@ -85,5 +92,8 @@ class DataModule(
 
         @Binds
         fun bindPrefsRepositoryImpl(repository: PrefsRepositoryImpl): PrefsRepository
+
+        @Binds
+        fun bindWebSocketRepositoryImpl(repository: WebSocketRepositoryImpl): WebSocketRepository
     }
 }

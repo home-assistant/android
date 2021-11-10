@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.common.data.integration.impl.entities
+package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
 import io.homeassistant.companion.android.common.data.integration.ServiceData
 

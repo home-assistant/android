@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
-import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
@@ -24,7 +23,8 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
-import okhttp3.HttpUrl.Companion.get
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.regex.Pattern
 import javax.inject.Inject
@@ -35,6 +35,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
     private val authenticationRepository: AuthenticationRepository,
     private val urlRepository: UrlRepository,
+    private val webSocketRepository: WebSocketRepository,
     @Named("integration") private val localStorage: LocalStorage,
     @Named("manufacturer") private val manufacturer: String,
     @Named("model") private val model: String,
@@ -359,7 +360,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         var causeException: Exception? = null
 
         try {
-            checkRateLimits = integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
+            checkRateLimits =
+                integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
         } catch (e: Exception) {
             causeException = e
             Log.e(TAG, "Unable to get notification rate limits", e)
@@ -371,88 +373,47 @@ class IntegrationRepositoryImpl @Inject constructor(
         else throw IntegrationException("Error calling checkRateLimits")
     }
 
-    override suspend fun getThemeColor(): String {
-        val getConfigRequest =
-            IntegrationRequest(
-                "get_config",
-                null
-            )
-
-        var response: GetConfigResponse? = null
-        var causeException: Exception? = null
-
-        for (it in urlRepository.getApiUrls()) {
-            try {
-                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
-
-            if (response != null)
-                return response.themeColor
-        }
-
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request get_config/themeColor")
-    }
-
     override suspend fun getHomeAssistantVersion(): String {
-        val getConfigRequest =
-            IntegrationRequest(
-                "get_config",
-                null
-            )
-        var response: GetConfigResponse? = null
-        var causeException: Exception? = null
 
         val current = System.currentTimeMillis()
         val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
         if (current <= next)
-            return localStorage.getString(PREF_HA_VERSION) ?: "" // Skip checking HA version as it has not been 4 hours yet
+            return localStorage.getString(PREF_HA_VERSION)
+                ?: "" // Skip checking HA version as it has not been 4 hours yet
 
-        for (it in urlRepository.getApiUrls()) {
-            try {
-                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
+        val response: GetConfigResponse = webSocketRepository.getConfig()
 
-            if (response != null) {
-                localStorage.putString(PREF_HA_VERSION, response.version)
-                localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (14400000)) // 4 hours
-                return response.version
-            }
-        }
-
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request get_config/version")
+        localStorage.putString(PREF_HA_VERSION, response.version)
+        localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (14400000)) // 4 hours
+        return response.version
     }
 
-    override suspend fun getServices(): Array<Service> {
-        val response = integrationService.getServices(authenticationRepository.buildBearerToken())
+    override suspend fun getServices(): List<Service> {
+        val response = webSocketRepository.getServices()
 
         return response.flatMap {
             it.services.map { service ->
                 Service(it.domain, service.key, service.value)
             }
-        }.toTypedArray()
+        }.toList()
     }
 
-    override suspend fun getEntities(): Array<Entity<Any>> {
-        val response = integrationService.getStates(authenticationRepository.buildBearerToken())
+    override suspend fun getEntities(): List<Entity<Any>> {
+        val response = webSocketRepository.getStates()
 
-        return response.map {
-            Entity(
-                it.entityId,
-                it.state,
-                it.attributes,
-                it.lastChanged,
-                it.lastUpdated,
-                it.context
-            )
-        }.toTypedArray()
+        return response
+            .map {
+                Entity(
+                    it.entityId,
+                    it.state,
+                    it.attributes,
+                    it.lastChanged,
+                    it.lastUpdated,
+                    it.context
+                )
+            }
+            .sortedBy { it.entityId }
+            .toList()
     }
 
     override suspend fun getEntity(entityId: String): Entity<Map<String, Any>> {

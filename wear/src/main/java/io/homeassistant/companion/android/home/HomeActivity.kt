@@ -135,7 +135,7 @@ class HomeActivity : ComponentActivity(), HomeView {
 
     @ExperimentalWearMaterialApi
     @Composable
-    private fun LoadHomePage(entities: Array<Entity<Any>>, favorites: MutableSet<String>) {
+    private fun LoadHomePage(entities: List<Entity<Any>>, favorites: MutableSet<String>) {
 
         val rotaryEventDispatcher = RotaryEventDispatcher()
         if (entities.isNullOrEmpty() && favorites.isNullOrEmpty()) {
