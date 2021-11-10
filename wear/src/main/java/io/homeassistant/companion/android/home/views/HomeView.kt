@@ -41,7 +41,7 @@ private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 fun LoadHomePage(
     mainViewModel: MainViewModel
 ) {
-    var shortcutEntitySelectionIndex: Int by remember{ mutableStateOf(0) }
+    var shortcutEntitySelectionIndex: Int by remember { mutableStateOf(0) }
 
     val rotaryEventDispatcher = RotaryEventDispatcher()
     if (mainViewModel.entities.isNullOrEmpty() && mainViewModel.favoriteEntityIds.isNullOrEmpty()) {

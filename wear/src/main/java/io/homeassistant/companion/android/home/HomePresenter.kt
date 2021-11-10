@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.home
 
-import android.content.Context
 import io.homeassistant.companion.android.common.data.integration.Entity
 
 interface HomePresenter {

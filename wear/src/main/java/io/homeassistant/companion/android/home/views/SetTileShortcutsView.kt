@@ -59,7 +59,8 @@ fun SetTileShortcutsView(
             val iconBitmap = getIcon(
                 favoriteIcon,
                 favoriteEntityID.split(".")[0],
-                LocalContext.current)
+                LocalContext.current
+            )
 
             Chip(
                 modifier = Modifier

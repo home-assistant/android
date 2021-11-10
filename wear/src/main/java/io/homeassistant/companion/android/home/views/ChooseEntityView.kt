@@ -65,7 +65,8 @@ fun ChooseEntityView(
             val iconBitmap = getIcon(
                 attributes["icon"] as String?,
                 validEntities[index].entityId.split(".")[0],
-                LocalContext.current)
+                LocalContext.current
+            )
             Chip(
                 modifier = Modifier
                     .fillMaxWidth()
