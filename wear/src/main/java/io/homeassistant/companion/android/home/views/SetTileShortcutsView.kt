@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,10 +42,11 @@ fun SetTileShortcutsView(
             .fillMaxSize(),
         contentPadding = PaddingValues(
             top = 40.dp,
-            start = 10.dp,
-            end = 10.dp,
+            start = 8.dp,
+            end = 8.dp,
             bottom = 40.dp
         ),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         state = scalingLazyListState
     ) {
@@ -64,8 +66,7 @@ fun SetTileShortcutsView(
 
             Chip(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
+                    .fillMaxWidth(),
                 icon = {
                     Image(
                         iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
@@ -91,8 +92,7 @@ fun SetTileShortcutsView(
         if (shortcutEntities.size < 7) {
             item {
                 Button(
-                    modifier = Modifier
-                        .padding(top = 4.dp),
+                    modifier = Modifier.padding(top = 16.dp),
                     onClick = { onShortcutEntitySelectionChange(shortcutEntities.size) },
                     colors = ButtonDefaults.primaryButtonColors()
                 ) {

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.util
 
 import android.content.Context
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -9,6 +10,8 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.ChipColors
 import androidx.wear.compose.material.ChipDefaults
@@ -19,7 +22,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 
 @Composable
-fun SetTitle(id: Int) {
+fun SetTitle(id: Int, topPadding: Dp = 0.dp) {
     Text(
         text = stringResource(id = id),
         textAlign = TextAlign.Center,
@@ -27,6 +30,7 @@ fun SetTitle(id: Int) {
         fontWeight = FontWeight.Bold,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(top = topPadding)
     )
 }
 

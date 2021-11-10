@@ -1,9 +1,9 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,11 +36,12 @@ fun SettingsView(
         modifier = Modifier
             .fillMaxSize(),
         contentPadding = PaddingValues(
-            top = 10.dp,
-            start = 10.dp,
-            end = 10.dp,
+            top = 40.dp,
+            start = 8.dp,
+            end = 8.dp,
             bottom = 40.dp
         ),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         state = scalingLazyListState
     ) {
@@ -50,8 +51,7 @@ fun SettingsView(
         item {
             Chip(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp),
+                    .fillMaxWidth(),
                 icon = {
                     Image(asset = CommunityMaterial.Icon3.cmd_star)
                 },
@@ -69,8 +69,7 @@ fun SettingsView(
         item {
             Chip(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
+                    .fillMaxWidth(),
                 icon = {
                     Image(asset = CommunityMaterial.Icon.cmd_delete)
                 },
@@ -93,13 +92,12 @@ fun SettingsView(
         }
 
         item {
-            SetTitle(id = R.string.tile_settings)
+            SetTitle(id = R.string.tile_settings, topPadding = 16.dp)
         }
         item {
             Chip(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
+                    .fillMaxWidth(),
                 icon = {
                     Image(asset = CommunityMaterial.Icon3.cmd_star_circle_outline)
                 },

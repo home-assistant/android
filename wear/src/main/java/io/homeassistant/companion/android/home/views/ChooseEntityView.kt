@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -24,7 +26,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.setChipDefaults
 
 @Composable
 fun ChooseEntityView(
@@ -38,20 +39,23 @@ fun ChooseEntityView(
         modifier = Modifier
             .fillMaxSize(),
         contentPadding = PaddingValues(
-            top = 10.dp,
-            start = 10.dp,
-            end = 10.dp,
+            top = 40.dp,
+            start = 8.dp,
+            end = 8.dp,
             bottom = 40.dp
         ),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         state = scalingLazyListState
     ) {
         item {
             SetTitle(id = R.string.shortcuts)
+        }
+        item {
             Chip(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 30.dp),
+                    .padding(bottom = 16.dp),
                 icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
                 label = { Text(text = "None") },
                 onClick = onNoneClicked,
@@ -69,9 +73,13 @@ fun ChooseEntityView(
             )
             Chip(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = if (index == 0) 30.dp else 10.dp),
-                icon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
+                    .fillMaxWidth(),
+                icon = {
+                    Image(
+                        asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                        colorFilter = ColorFilter.tint(Color.White)
+                    )
+                },
                 label = {
                     Text(
                         text = attributes["friendly_name"].toString(),
@@ -84,7 +92,7 @@ fun ChooseEntityView(
                     val elementString = "${validEntities[index].entityId},${attributes["friendly_name"]},${attributes["icon"]}"
                     onEntitySelected(elementString)
                 },
-                colors = setChipDefaults()
+                colors = ChipDefaults.secondaryChipColors()
             )
         }
     }
