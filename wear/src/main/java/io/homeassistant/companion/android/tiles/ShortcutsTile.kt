@@ -142,7 +142,7 @@ class ShortcutsTile : TileService() {
         if (entities.isEmpty()) {
             addContent(
                 LayoutElementBuilders.Text.Builder()
-                    .setText("Choose entities in settings")
+                    .setText(getString(R.string.shortcuts_tile_empty))
                     .build()
             )
         } else {
