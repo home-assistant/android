@@ -19,14 +19,12 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.home.HomePresenterImpl
-import io.homeassistant.companion.android.settings.ScreenSetFavorites
-import io.homeassistant.companion.android.settings.ScreenSettings
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.setChipDefaults
-import io.homeassistant.companion.android.viewModels.MainViewModel
+import io.homeassistant.companion.android.home.MainViewModel
 
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_SETTINGS = "settings"
@@ -72,7 +70,7 @@ fun LoadHomePage(
                     startDestination = SCREEN_LANDING
                 ) {
                     composable(SCREEN_LANDING) {
-                        LandingScreen(
+                        MainView(
                             mainViewModel.entities,
                             mainViewModel.favoriteEntityIds,
                             { mainViewModel.toggleEntity(it) },
@@ -81,7 +79,7 @@ fun LoadHomePage(
                         )
                     }
                     composable(SCREEN_SETTINGS) {
-                        ScreenSettings(
+                        SettingsView(
                             mainViewModel.favoriteEntityIds,
                             { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
                             { mainViewModel.clearFavorites() }
@@ -90,7 +88,7 @@ fun LoadHomePage(
                     composable(SCREEN_SET_FAVORITES) {
                         val validEntities = mainViewModel.entities
                             .filter { it.entityId.split(".")[0] in HomePresenterImpl.supportedDomains }
-                        ScreenSetFavorites(
+                        SetFavoritesView(
                             validEntities,
                             mainViewModel.favoriteEntityIds
                         ) { entityId, isSelected ->

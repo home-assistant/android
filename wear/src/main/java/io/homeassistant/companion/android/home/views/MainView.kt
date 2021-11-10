@@ -29,7 +29,7 @@ import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.setChipDefaults
 
 @Composable
-fun LandingScreen(
+fun MainView(
     entities: List<Entity<*>>,
     favoriteEntityIds: List<String>,
     onEntityClicked: (String) -> Unit,
@@ -76,7 +76,7 @@ fun LandingScreen(
         ) {
             if (favoriteEntityIds.isNotEmpty()) {
                 item {
-                    SetListHeader(
+                    ListHeader(
                         stringId = R.string.favorites,
                         expanded = expandedFavorites,
                         onExpandChanged = { expandedFavorites = it }
@@ -117,7 +117,7 @@ fun LandingScreen(
             }
             if (inputBooleans.isNotEmpty()) {
                 item {
-                    SetListHeader(
+                    ListHeader(
                         stringId = R.string.input_booleans,
                         expanded = expandedInputBooleans,
                         onExpandChanged = { expandedInputBooleans = it }
@@ -131,7 +131,7 @@ fun LandingScreen(
             }
             if (lights.isNotEmpty()) {
                 item {
-                    SetListHeader(
+                    ListHeader(
                         stringId = R.string.lights,
                         expanded = expandedLights,
                         onExpandChanged = { expandedLights = it }
@@ -145,7 +145,7 @@ fun LandingScreen(
             }
             if (scenes.isNotEmpty()) {
                 item {
-                    SetListHeader(
+                    ListHeader(
                         stringId = R.string.scenes,
                         expanded = expandedScenes,
                         onExpandChanged = { expandedScenes = it }
@@ -159,7 +159,7 @@ fun LandingScreen(
             }
             if (scripts.isNotEmpty()) {
                 item {
-                    SetListHeader(
+                    ListHeader(
                         stringId = R.string.scripts,
                         expanded = expandedScripts,
                         onExpandChanged = { expandedScripts = it }
@@ -173,7 +173,7 @@ fun LandingScreen(
             }
             if (switches.isNotEmpty()) {
                 item {
-                    SetListHeader(
+                    ListHeader(
                         stringId = R.string.switches,
                         expanded = expandedSwitches,
                         onExpandChanged = { expandedSwitches = it }
@@ -186,7 +186,7 @@ fun LandingScreen(
                 }
             }
             item {
-                LoadOtherSection(
+                OtherSection(
                     onSettingsClicked = onSettingsClicked,
                     onLogoutClicked = onLogoutClicked
                 )

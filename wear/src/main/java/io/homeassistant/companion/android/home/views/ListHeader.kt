@@ -10,7 +10,7 @@ import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
 
 @Composable
-fun SetListHeader(
+fun ListHeader(
     stringId: Int,
     expanded: Boolean,
     onExpandChanged: (Boolean) -> Unit

@@ -1,10 +1,9 @@
-package io.homeassistant.companion.android.viewModels
+package io.homeassistant.companion.android.home
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.home.HomePresenter
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {

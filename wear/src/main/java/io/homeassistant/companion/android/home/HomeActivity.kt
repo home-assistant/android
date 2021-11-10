@@ -13,7 +13,6 @@ import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
-import io.homeassistant.companion.android.viewModels.MainViewModel
 import javax.inject.Inject
 
 class HomeActivity : ComponentActivity(), HomeView {

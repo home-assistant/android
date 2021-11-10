@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -17,25 +19,27 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.SetTitle
 
 @Composable
-fun OtherSection(
-    onSettingsClicked: () -> Unit,
-    onLogoutClicked: () -> Unit
+fun SettingsView(
+    favorites: List<String>,
+    onClickSetFavorites: () -> Unit,
+    onClearFavorites: () -> Unit
 ) {
     Column {
-        SetTitle(R.string.other)
+        Spacer(modifier = Modifier.height(20.dp))
+        SetTitle(id = R.string.settings)
         Chip(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
+                .padding(top = 20.dp),
             icon = {
-                Image(asset = CommunityMaterial.Icon.cmd_cog)
+                Image(asset = CommunityMaterial.Icon3.cmd_star)
             },
             label = {
                 Text(
-                    text = stringResource(id = R.string.settings)
+                    text = stringResource(id = R.string.favorite)
                 )
             },
-            onClick = onSettingsClicked,
+            onClick = onClickSetFavorites,
             colors = ChipDefaults.primaryChipColors(
                 contentColor = Color.Black
             )
@@ -45,18 +49,23 @@ fun OtherSection(
                 .fillMaxWidth()
                 .padding(top = 10.dp),
             icon = {
-                Image(asset = CommunityMaterial.Icon.cmd_exit_run)
+                Image(asset = CommunityMaterial.Icon.cmd_delete)
             },
             label = {
                 Text(
-                    text = stringResource(id = R.string.logout)
+                    text = stringResource(id = R.string.clear_favorites),
                 )
             },
-            onClick = onLogoutClicked,
+            onClick = onClearFavorites,
             colors = ChipDefaults.primaryChipColors(
-                backgroundColor = Color.Red,
                 contentColor = Color.Black
-            )
+            ),
+            secondaryLabel = {
+                Text(
+                    text = stringResource(id = R.string.irreverisble)
+                )
+            },
+            enabled = favorites.isNotEmpty()
         )
     }
 }
