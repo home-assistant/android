@@ -82,7 +82,6 @@ class CameraWidgetConfigureActivity : BaseActivity() {
             try {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
-                fetchedEntities.sortBy { e -> e.entityId }
                 fetchedEntities.forEach {
                     val entityId = it.entityId
                     val domain = entityId.split(".")[0]

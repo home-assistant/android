@@ -1,0 +1,121 @@
+package io.homeassistant.companion.android.home.views
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.ScalingLazyColumn
+import androidx.wear.compose.material.ScalingLazyListState
+import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.rememberScalingLazyListState
+import com.mikepenz.iconics.compose.Image
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
+import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.util.RotaryEventState
+import io.homeassistant.companion.android.util.SetTitle
+
+@Composable
+fun SettingsView(
+    favorites: List<String>,
+    onClickSetFavorites: () -> Unit,
+    onClearFavorites: () -> Unit,
+    onClickSetShortcuts: () -> Unit
+) {
+    val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
+    RotaryEventState(scrollState = scalingLazyListState)
+
+    ScalingLazyColumn(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentPadding = PaddingValues(
+            top = 10.dp,
+            start = 10.dp,
+            end = 10.dp,
+            bottom = 40.dp
+        ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        state = scalingLazyListState
+    ) {
+        item {
+            SetTitle(id = R.string.settings)
+        }
+        item {
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
+                icon = {
+                    Image(asset = CommunityMaterial.Icon3.cmd_star)
+                },
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.favorite)
+                    )
+                },
+                onClick = onClickSetFavorites,
+                colors = ChipDefaults.primaryChipColors(
+                    contentColor = Color.Black
+                )
+            )
+        }
+        item {
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 10.dp),
+                icon = {
+                    Image(asset = CommunityMaterial.Icon.cmd_delete)
+                },
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.clear_favorites),
+                    )
+                },
+                onClick = onClearFavorites,
+                colors = ChipDefaults.primaryChipColors(
+                    contentColor = Color.Black
+                ),
+                secondaryLabel = {
+                    Text(
+                        text = stringResource(id = R.string.irreverisble)
+                    )
+                },
+                enabled = favorites.isNotEmpty()
+            )
+        }
+
+        item {
+            SetTitle(id = R.string.tile_settings)
+        }
+        item {
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                icon = {
+                    Image(asset = CommunityMaterial.Icon3.cmd_star_circle_outline)
+                },
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.shortcuts)
+                    )
+                },
+                onClick = onClickSetShortcuts,
+                colors = ChipDefaults.primaryChipColors(
+                    contentColor = Color.Black
+                )
+            )
+        }
+    }
+}

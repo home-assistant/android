@@ -49,33 +49,29 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getEntities(): Array<Entity<Any>> {
+    override suspend fun getEntities(): List<Entity<*>> {
         return try {
             integrationUseCase.getEntities()
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get entities", e)
-            emptyArray()
+            emptyList()
         }
     }
 
-    override fun onEntityClicked(entityId: String) {
+    override suspend fun onEntityClicked(entityId: String) {
 
         if (entityId.split(".")[0] in toggleDomains) {
-            mainScope.launch {
-                integrationUseCase.callService(
-                    entityId.split(".")[0],
-                    "toggle",
-                    hashMapOf("entity_id" to entityId)
-                )
-            }
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "toggle",
+                hashMapOf("entity_id" to entityId)
+            )
         } else {
-            mainScope.launch {
-                integrationUseCase.callService(
-                    entityId.split(".")[0],
-                    "turn_on",
-                    hashMapOf("entity_id" to entityId)
-                )
-            }
+            integrationUseCase.callService(
+                entityId.split(".")[0],
+                "turn_on",
+                hashMapOf("entity_id" to entityId)
+            )
         }
     }
 
@@ -106,21 +102,20 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getWearHomeFavorites(): Set<String> {
-        return integrationUseCase.getWearHomeFavorites()
+    override suspend fun getWearHomeFavorites(): List<String> {
+        return integrationUseCase.getWearHomeFavorites().toList()
     }
 
-    override suspend fun setWearHomeFavorites(favorites: Set<String>) {
-        integrationUseCase.setWearHomeFavorites(favorites)
+    override suspend fun setWearHomeFavorites(favorites: List<String>) {
+        integrationUseCase.setWearHomeFavorites(favorites.toSet())
     }
 
     override suspend fun getTileShortcuts(): List<String> {
         return integrationUseCase.getTileShortcuts()
     }
 
-    override suspend fun setTileShortcuts(entities: List<String>, context: Context) {
+    override suspend fun setTileShortcuts(entities: List<String>) {
         integrationUseCase.setTileShortcuts(entities)
-        TileService.getUpdater(context)
-            .requestUpdate(ShortcutsTile::class.java)
+        view.refreshShortcutsTile()
     }
 }

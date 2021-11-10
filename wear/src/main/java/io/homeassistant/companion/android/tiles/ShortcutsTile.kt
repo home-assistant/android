@@ -87,8 +87,8 @@ class ShortcutsTile : TileService() {
                         val entityIcon = entity.split(",")[2]
 
                         // Find icon name
-                        val iconName: String = if (entityIcon?.startsWith("mdi")) {
-                            entityIcon!!.split(":")[1]
+                        val iconName: String = if (entityIcon.startsWith("mdi")) {
+                            entityIcon.split(":")[1]
                         } else {
                             "palette" // Default scene icon
                         }

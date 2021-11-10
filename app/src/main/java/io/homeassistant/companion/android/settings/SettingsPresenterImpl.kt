@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +27,8 @@ class SettingsPresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationRepository,
     private val prefsRepository: PrefsRepository,
     private val themesManager: ThemesManager,
-    private val langsManager: LanguagesManager
+    private val langsManager: LanguagesManager,
+    private val webSocketRepository: WebSocketRepository
 ) : SettingsPresenter, PreferenceDataStore() {
 
     companion object {

@@ -37,13 +37,11 @@ interface IntegrationRepository {
     suspend fun getTileShortcuts(): List<String>
     suspend fun setTileShortcuts(entities: List<String>)
 
-    suspend fun getThemeColor(): String
-
     suspend fun getHomeAssistantVersion(): String
 
-    suspend fun getServices(): Array<Service>
+    suspend fun getServices(): List<Service>
 
-    suspend fun getEntities(): Array<Entity<Any>>
+    suspend fun getEntities(): List<Entity<Any>>
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>
 
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
