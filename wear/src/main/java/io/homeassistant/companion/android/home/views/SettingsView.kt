@@ -20,7 +20,6 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.RotaryEventState
-import io.homeassistant.companion.android.util.SetTitle
 
 @Composable
 fun SettingsView(
@@ -46,7 +45,7 @@ fun SettingsView(
         state = scalingLazyListState
     ) {
         item {
-            SetTitle(id = R.string.settings)
+            ListHeader(id = R.string.settings)
         }
         item {
             Chip(
@@ -92,7 +91,10 @@ fun SettingsView(
         }
 
         item {
-            SetTitle(id = R.string.tile_settings, topPadding = 16.dp)
+            ListHeader(
+                id = R.string.tile_settings,
+                topPadding = 16.dp
+            )
         }
         item {
             Chip(

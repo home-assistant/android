@@ -14,7 +14,6 @@ import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.util.SetTitle
 
 @Composable
 fun OtherSection(
@@ -22,7 +21,7 @@ fun OtherSection(
     onLogoutClicked: () -> Unit
 ) {
     Column {
-        SetTitle(R.string.other)
+        ListHeader(id = R.string.other)
         Chip(
             modifier = Modifier
                 .fillMaxWidth()

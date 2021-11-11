@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.home
 
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -27,9 +25,9 @@ class MainViewModel : ViewModel() {
 
     fun loadEntities() {
         viewModelScope.launch {
-            entities.addAll(homePresenter.getEntities())
             favoriteEntityIds.addAll(homePresenter.getWearHomeFavorites())
             shortcutEntities.addAll(homePresenter.getTileShortcuts())
+            entities.addAll(homePresenter.getEntities())
         }
     }
 
