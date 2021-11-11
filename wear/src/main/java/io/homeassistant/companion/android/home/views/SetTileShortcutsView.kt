@@ -25,12 +25,13 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
 
 @Composable
 fun SetTileShortcutsView(
-    shortcutEntities: MutableList<String>,
+    shortcutEntities: MutableList<SimplifiedEntity>,
     onShortcutEntitySelectionChange: (Int) -> Unit
 ) {
 
@@ -53,13 +54,10 @@ fun SetTileShortcutsView(
             ListHeader(id = R.string.shortcuts)
         }
         items(shortcutEntities.size) { index ->
-            val favoriteEntityID = shortcutEntities[index].split(",")[0]
-            val favoriteName = shortcutEntities[index].split(",")[1]
-            val favoriteIcon = shortcutEntities[index].split(",")[2]
 
             val iconBitmap = getIcon(
-                favoriteIcon,
-                favoriteEntityID.split(".")[0],
+                shortcutEntities[index].icon,
+                shortcutEntities[index].entityId.split(".")[0],
                 LocalContext.current
             )
 
@@ -79,7 +77,7 @@ fun SetTileShortcutsView(
                 },
                 secondaryLabel = {
                     Text(
-                        text = favoriteName,
+                        text = shortcutEntities[index].friendlyName,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )

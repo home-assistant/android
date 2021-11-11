@@ -33,6 +33,7 @@ import com.mikepenz.iconics.utils.sizeDp
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -83,12 +84,9 @@ class ShortcutsTile : TileService() {
                 .setVersion(entities.toString())
                 .apply {
                     entities.map { entity ->
-                        val entityId = entity.split(",")[0]
-                        val entityIcon = entity.split(",")[2]
-
                         // Find icon name
-                        val iconName: String = if (entityIcon.startsWith("mdi")) {
-                            entityIcon.split(":")[1]
+                        val iconName: String = if (entity.icon.startsWith("mdi")) {
+                            entity.icon.split(":")[1]
                         } else {
                             "palette" // Default scene icon
                         }
@@ -106,7 +104,7 @@ class ShortcutsTile : TileService() {
                         }.array()
 
                         // link the entity id to the bitmap data array
-                        entityId to ResourceBuilders.ImageResource.Builder()
+                        entity.entityId to ResourceBuilders.ImageResource.Builder()
                             .setInlineResource(
                                 ResourceBuilders.InlineImageResource.Builder()
                                     .setData(bitmapData)
@@ -129,16 +127,16 @@ class ShortcutsTile : TileService() {
         serviceJob.cancel()
     }
 
-    private suspend fun getEntities(): List<String> {
+    private suspend fun getEntities(): List<SimplifiedEntity> {
         DaggerTilesComponent.builder()
             .appComponent((applicationContext as GraphComponentAccessor).appComponent)
             .build()
             .inject(this@ShortcutsTile)
 
-        return integrationUseCase.getTileShortcuts()
+        return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
     }
 
-    fun layout(entities: List<String>): LayoutElement = Column.Builder().apply {
+    fun layout(entities: List<SimplifiedEntity>): LayoutElement = Column.Builder().apply {
         if (entities.isEmpty()) {
             addContent(
                 LayoutElementBuilders.Text.Builder()
@@ -159,7 +157,7 @@ class ShortcutsTile : TileService() {
     }
         .build()
 
-    private fun rowLayout(entities: List<String>): LayoutElement = Row.Builder().apply {
+    private fun rowLayout(entities: List<SimplifiedEntity>): LayoutElement = Row.Builder().apply {
         addContent(iconLayout(entities[0]))
         entities.drop(1).forEach { entity ->
             addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
@@ -168,9 +166,7 @@ class ShortcutsTile : TileService() {
     }
         .build()
 
-    private fun iconLayout(entity: String): LayoutElement = Box.Builder().apply {
-        val entityId = entity.split(",")[0]
-
+    private fun iconLayout(entity: SimplifiedEntity): LayoutElement = Box.Builder().apply {
         setWidth(dp(CIRCLE_SIZE))
         setHeight(dp(CIRCLE_SIZE))
         setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
@@ -196,7 +192,7 @@ class ShortcutsTile : TileService() {
                                     ActionBuilders.AndroidActivity.Builder()
                                         .setClassName(TileActionActivity::class.java.name)
                                         .setPackageName(this@ShortcutsTile.packageName)
-                                        .addKeyToExtraMapping("entity_id", ActionBuilders.stringExtra(entityId))
+                                        .addKeyToExtraMapping("entity_id", ActionBuilders.stringExtra(entity.entityId))
                                         .build()
                                 )
                                 .build()
@@ -208,7 +204,7 @@ class ShortcutsTile : TileService() {
         addContent(
             // Add icon
             LayoutElementBuilders.Image.Builder()
-                .setResourceId(entityId)
+                .setResourceId(entity.entityId)
                 .setWidth(dp(ICON_SIZE))
                 .setHeight(dp(ICON_SIZE))
                 .build()

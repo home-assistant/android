@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
@@ -20,7 +21,7 @@ class MainViewModel : ViewModel() {
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
-    var shortcutEntities = mutableStateListOf<String>()
+    var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
         private set
 
     fun loadEntities() {
@@ -65,7 +66,7 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun setTileShortcut(index: Int, entity: String) {
+    fun setTileShortcut(index: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
             if (index < shortcutEntities.size) {
                 shortcutEntities[index] = entity

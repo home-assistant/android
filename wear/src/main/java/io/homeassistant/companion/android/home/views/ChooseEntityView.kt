@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
@@ -23,6 +24,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
 
@@ -30,7 +32,7 @@ import io.homeassistant.companion.android.util.getIcon
 fun ChooseEntityView(
     validEntities: List<Entity<*>>,
     onNoneClicked: () -> Unit,
-    onEntitySelected: (entityId: String) -> Unit
+    onEntitySelected: (entity: SimplifiedEntity) -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
@@ -56,7 +58,7 @@ fun ChooseEntityView(
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
                 icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
-                label = { Text(text = "None") },
+                label = { Text(stringResource(id = R.string.none)) },
                 onClick = onNoneClicked,
                 colors = ChipDefaults.primaryChipColors(
                     contentColor = Color.Black
@@ -88,8 +90,13 @@ fun ChooseEntityView(
                 },
                 enabled = validEntities[index].state != "unavailable",
                 onClick = {
-                    val elementString = "${validEntities[index].entityId},${attributes["friendly_name"]},${attributes["icon"]}"
-                    onEntitySelected(elementString)
+                    onEntitySelected(
+                        SimplifiedEntity(
+                            validEntities[index].entityId,
+                            attributes["friendly_name"] as String,
+                            attributes["icon"] as String
+                        )
+                    )
                 },
                 colors = ChipDefaults.secondaryChipColors()
             )
