@@ -26,12 +26,12 @@ class MainViewModel : ViewModel() {
     var isToastEnabled = mutableStateOf(false)
         private set
 
-    fun loadEntities() {
+    private fun loadEntities() {
         viewModelScope.launch {
             favoriteEntityIds.addAll(homePresenter.getWearHomeFavorites())
             entities.addAll(homePresenter.getEntities())
-            isHapticEnabled()
-            isToastEnabled()
+            isHapticEnabled.value = homePresenter.getWearHapticFeedback()
+            isToastEnabled.value = homePresenter.getWearToastConfirmation()
         }
     }
 
@@ -69,25 +69,17 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun isHapticEnabled() = viewModelScope.launch {
-        isHapticEnabled = mutableStateOf(homePresenter.getWearHapticFeedback())
-    }
-
-    fun isToastEnabled() = viewModelScope.launch {
-        isToastEnabled = mutableStateOf(homePresenter.getWearToastConfirmation())
-    }
-
     fun setHapticEnabled(enabled: Boolean) {
         viewModelScope.launch {
             homePresenter.setWearHapticFeedback(enabled)
-            isHapticEnabled = mutableStateOf(enabled)
+            isHapticEnabled.value = enabled
         }
     }
 
     fun setToastEnabled(enabled: Boolean) {
         viewModelScope.launch {
             homePresenter.setWearToastConfirmation(enabled)
-            isToastEnabled = mutableStateOf(enabled)
+            isToastEnabled.value = enabled
         }
     }
 

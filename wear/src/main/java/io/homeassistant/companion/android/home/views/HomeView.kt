@@ -55,8 +55,8 @@ fun LoadHomePage(
         }
     } else {
         val swipeDismissableNavController = rememberSwipeDismissableNavController()
-        val haptic = LocalHapticFeedback.current
-        val context = LocalContext.current
+       // val haptic = LocalHapticFeedback.current
+       // val context = LocalContext.current
         MaterialTheme {
             CompositionLocalProvider(
                 LocalRotaryEventDispatcher provides rotaryEventDispatcher
