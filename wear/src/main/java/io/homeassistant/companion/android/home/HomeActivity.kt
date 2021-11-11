@@ -7,14 +7,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
-import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.DaggerPresenterComponent
 import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
-import io.homeassistant.companion.android.tiles.ShortcutsTile
 import javax.inject.Inject
 
 class HomeActivity : ComponentActivity(), HomeView {

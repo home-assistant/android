@@ -23,9 +23,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
-import io.homeassistant.companion.android.home.HomeView
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
