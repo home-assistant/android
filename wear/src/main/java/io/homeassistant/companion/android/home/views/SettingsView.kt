@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -105,14 +103,12 @@ fun SettingsView(
 
         item {
             val haptic = LocalHapticFeedback.current
-            var checked by rememberSaveable { mutableStateOf(isHapticEnabled) }
             ToggleChip(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
-                checked = checked,
+                checked = isHapticEnabled,
                 onCheckedChange = {
-                    checked = it
                     onHapticEnabled(it)
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
@@ -122,7 +118,7 @@ fun SettingsView(
                 appIcon = {
                     Image(
                         asset =
-                        if (checked)
+                        if (isHapticEnabled)
                             CommunityMaterial.Icon3.cmd_watch_vibrate
                         else
                             CommunityMaterial.Icon3.cmd_watch_vibrate_off
@@ -139,14 +135,12 @@ fun SettingsView(
             )
         }
         item {
-            var checked by rememberSaveable { mutableStateOf(isToastEnabled) }
             ToggleChip(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp),
-                checked = checked,
+                checked = isToastEnabled,
                 onCheckedChange = {
-                    checked = it
                     onToastEnabled(it)
                 },
                 label = {
@@ -155,7 +149,7 @@ fun SettingsView(
                 appIcon = {
                     Image(
                         asset =
-                        if (checked)
+                        if (isToastEnabled)
                             CommunityMaterial.Icon3.cmd_message
                         else
                             CommunityMaterial.Icon3.cmd_message_off
