@@ -45,7 +45,7 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         presenter.onViewReady()
         setContent {
-            LoadHomePage(mainViewModel, this)
+            LoadHomePage(mainViewModel)
         }
 
         mainViewModel.init(presenter)
@@ -66,10 +66,5 @@ class HomeActivity : ComponentActivity(), HomeView {
         val intent = MobileAppIntegrationActivity.newInstance(this)
         startActivity(intent)
         finish()
-    }
-
-    override fun refreshShortcutsTile() {
-        TileService.getUpdater(this)
-            .requestUpdate(ShortcutsTile::class.java)
     }
 }

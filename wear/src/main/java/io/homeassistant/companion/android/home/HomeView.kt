@@ -4,5 +4,4 @@ interface HomeView {
 
     fun displayOnBoarding()
     fun displayMobileAppIntegration()
-    fun refreshShortcutsTile()
 }

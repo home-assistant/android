@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,11 +21,13 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.home.HomeView
 import io.homeassistant.companion.android.home.MainViewModel
+import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
@@ -39,10 +42,10 @@ private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 @ExperimentalWearMaterialApi
 @Composable
 fun LoadHomePage(
-    mainViewModel: MainViewModel,
-    homeView: HomeView
+    mainViewModel: MainViewModel
 ) {
     var shortcutEntitySelectionIndex: Int by remember { mutableStateOf(0) }
+    val context = LocalContext.current
 
     val rotaryEventDispatcher = RotaryEventDispatcher()
     if (mainViewModel.entities.isNullOrEmpty() && mainViewModel.favoriteEntityIds.isNullOrEmpty()) {
@@ -124,12 +127,12 @@ fun LoadHomePage(
                             validEntities,
                             {
                                 mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
-                                homeView.refreshShortcutsTile()
+                                TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
                                 swipeDismissableNavController.navigateUp()
                             },
                             { entity ->
                                 mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
-                                homeView.refreshShortcutsTile()
+                                TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
                                 swipeDismissableNavController.navigateUp()
                             }
                         )
@@ -144,5 +147,5 @@ fun LoadHomePage(
 @Preview
 @Composable
 private fun PreviewHomeView() {
-    LoadHomePage(mainViewModel = MainViewModel(), homeView = HomeActivity())
+    LoadHomePage(mainViewModel = MainViewModel())
 }
