@@ -27,8 +27,8 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
-import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.util.RotaryEventState
+import io.homeassistant.companion.android.util.previewFavoritesList
 
 @Composable
 fun SettingsView(

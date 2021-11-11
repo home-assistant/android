@@ -29,6 +29,8 @@ class MainViewModel : ViewModel() {
     private fun loadEntities() {
         viewModelScope.launch {
             favoriteEntityIds.addAll(homePresenter.getWearHomeFavorites())
+            isHapticEnabled.value = homePresenter.getWearHapticFeedback()
+            isToastEnabled.value = homePresenter.getWearToastConfirmation()
             entities.addAll(homePresenter.getEntities())
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
