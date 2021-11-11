@@ -39,10 +39,11 @@ import io.homeassistant.companion.android.util.previewFavoritesList
 @ExperimentalWearMaterialApi
 @Composable
 fun SetFavoritesView(
-    validEntities: List<Entity<*>>,
+    validEntities: Map<String, Entity<*>>,
     favoriteEntityIds: List<String>,
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
 ) {
+    val validEntityList = validEntities.values.toList()
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
     Scaffold(
@@ -67,17 +68,17 @@ fun SetFavoritesView(
             horizontalAlignment = Alignment.CenterHorizontally,
             state = scalingLazyListState
         ) {
-            items(validEntities.size) { index ->
-                val attributes = validEntities[index].attributes as Map<*, *>
+            items(validEntityList.size) { index ->
+                val attributes = validEntityList[index].attributes as Map<*, *>
                 val iconBitmap = getIcon(
                     attributes["icon"] as String?,
-                    validEntities[index].entityId.split(".")[0],
+                    validEntityList[index].entityId.split(".")[0],
                     LocalContext.current
                 )
                 if (index == 0)
                     ListHeader(R.string.set_favorite)
 
-                val entityId = validEntities[index].entityId
+                val entityId = validEntityList[index].entityId
                 val checked = favoriteEntityIds.contains(entityId)
                 ToggleChip(
                     checked = checked,

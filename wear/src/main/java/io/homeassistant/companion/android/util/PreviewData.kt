@@ -13,8 +13,9 @@ private val calendar: Calendar = Calendar.getInstance()
 val previewEntity1 = Entity("light.test", "on", attributes, calendar, calendar, mapOf())
 val previewEntity2 = Entity("scene.test", "on", attributes, calendar, calendar, mapOf())
 
-val previewEntityList = listOf(
-    previewEntity1, previewEntity2
+val previewEntityList = mapOf(
+    previewEntity1.entityId to previewEntity1,
+    previewEntity2.entityId to previewEntity2
 )
 
 val previewFavoritesList = listOf("light.test")

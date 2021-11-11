@@ -1,11 +1,13 @@
 package io.homeassistant.companion.android.home
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
@@ -18,7 +20,7 @@ class MainViewModel : ViewModel() {
         loadEntities()
     }
 
-    var entities = mutableStateListOf<Entity<*>>()
+    var entities = mutableStateMapOf<String, Entity<*>>()
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
@@ -35,18 +37,18 @@ class MainViewModel : ViewModel() {
             shortcutEntities.addAll(homePresenter.getTileShortcuts())
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
-            entities.addAll(homePresenter.getEntities())
+            homePresenter.getEntities().forEach {
+                entities[it.entityId] = it
+            }
+            homePresenter.getEntityUpdates().collect {
+                entities[it.entityId] = it
+            }
         }
     }
 
     fun toggleEntity(entityId: String) {
         viewModelScope.launch {
             homePresenter.onEntityClicked(entityId)
-            val updatedEntities = homePresenter.getEntities()
-            // This should be better....
-            for (i in updatedEntities.indices) {
-                entities[i] = updatedEntities[i]
-            }
         }
     }
 
