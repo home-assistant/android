@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.notification.views
 
-import android.os.Parcelable
 import android.text.Html
 import android.widget.TextView
 import androidx.compose.foundation.layout.Column
@@ -9,7 +8,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -22,18 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.util.notificationItem
-import kotlinx.android.parcel.Parcelize
 import java.util.Calendar
 import java.util.GregorianCalendar
 
-@Parcelize
-data class NotificationData(val received: Long, val message: String, val data: String) : Parcelable
-
 @Composable
 fun LoadNotification(notification: NotificationItem) {
-    val notificationItem = rememberSaveable {
-        NotificationData(notification.received, notification.message, notification.data)
-    }
 
     val scrollState = rememberScrollState()
     Column(modifier = Modifier.verticalScroll(scrollState)) {
@@ -45,7 +36,7 @@ fun LoadNotification(notification: NotificationItem) {
                 .padding(top = 30.dp, bottom = 20.dp, start = 10.dp)
         )
         val cal: Calendar = GregorianCalendar()
-        cal.timeInMillis = notificationItem.received
+        cal.timeInMillis = notification.received
         Text(
             text = cal.time.toString(),
             modifier = Modifier
@@ -60,7 +51,7 @@ fun LoadNotification(notification: NotificationItem) {
         )
         AndroidView(factory = { context ->
             TextView(context).apply {
-                text = Html.fromHtml(notificationItem.message)
+                text = Html.fromHtml(notification.message)
                 setPadding(80, 0, 0, 0)
                 textSize = 16f
             }
@@ -76,10 +67,10 @@ fun LoadNotification(notification: NotificationItem) {
             try {
                 val mapper = ObjectMapper()
                 mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
-                val jsonObject = mapper.readValue(notificationItem.data, Object::class.java)
+                val jsonObject = mapper.readValue(notification.data, Object::class.java)
                 mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject)
             } catch (e: Exception) {
-                notificationItem.data
+                notification.data
             }
 
         Text(
