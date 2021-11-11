@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
@@ -37,6 +38,9 @@ class MainViewModel : ViewModel() {
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             homePresenter.getEntities().forEach {
+                entities[it.entityId] = it
+            }
+            homePresenter.getEntityUpdates().collect {
                 entities[it.entityId] = it
             }
         }

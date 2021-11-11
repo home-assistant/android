@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -54,6 +55,10 @@ class HomePresenterImpl @Inject constructor(
             Log.e(TAG, "Unable to get entities", e)
             emptyList()
         }
+    }
+
+    override suspend fun getEntityUpdates(): Flow<Entity<*>> {
+        return integrationUseCase.getEntityUpdates()
     }
 
     override suspend fun onEntityClicked(entityId: String) {
