@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.home
 
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.data.SimplifiedEntity
 
 interface HomePresenter {
 
@@ -11,6 +12,8 @@ interface HomePresenter {
     suspend fun getEntities(): List<Entity<*>>
     suspend fun getWearHomeFavorites(): List<String>
     suspend fun setWearHomeFavorites(favorites: List<String>)
+    suspend fun getTileShortcuts(): List<SimplifiedEntity>
+    suspend fun setTileShortcuts(entities: List<SimplifiedEntity>)
 
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearHapticFeedback(enabled: Boolean)

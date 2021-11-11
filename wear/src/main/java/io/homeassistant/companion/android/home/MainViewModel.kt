@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
@@ -21,6 +22,8 @@ class MainViewModel : ViewModel() {
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
+    var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
+        private set
     var isHapticEnabled = mutableStateOf(false)
         private set
     var isToastEnabled = mutableStateOf(false)
@@ -29,6 +32,7 @@ class MainViewModel : ViewModel() {
     private fun loadEntities() {
         viewModelScope.launch {
             favoriteEntityIds.addAll(homePresenter.getWearHomeFavorites())
+            shortcutEntities.addAll(homePresenter.getTileShortcuts())
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             entities.addAll(homePresenter.getEntities())
@@ -66,6 +70,26 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             favoriteEntityIds.clear()
             homePresenter.setWearHomeFavorites(favoriteEntityIds)
+        }
+    }
+
+    fun setTileShortcut(index: Int, entity: SimplifiedEntity) {
+        viewModelScope.launch {
+            if (index < shortcutEntities.size) {
+                shortcutEntities[index] = entity
+            } else {
+                shortcutEntities.add(entity)
+            }
+            homePresenter.setTileShortcuts(shortcutEntities)
+        }
+    }
+
+    fun clearTileShortcut(index: Int) {
+        viewModelScope.launch {
+            if (index < shortcutEntities.size) {
+                shortcutEntities.removeAt(index)
+                homePresenter.setTileShortcuts(shortcutEntities)
+            }
         }
     }
 

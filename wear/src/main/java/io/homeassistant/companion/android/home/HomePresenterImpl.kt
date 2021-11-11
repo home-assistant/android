@@ -7,6 +7,7 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -105,6 +106,14 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun setWearHomeFavorites(favorites: List<String>) {
         integrationUseCase.setWearHomeFavorites(favorites.toSet())
+    }
+
+    override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
+        return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
+    }
+
+    override suspend fun setTileShortcuts(entities: List<SimplifiedEntity>) {
+        integrationUseCase.setTileShortcuts(entities.map { it.entityString })
     }
 
     override suspend fun getWearHapticFeedback(): Boolean {

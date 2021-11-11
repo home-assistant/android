@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +36,7 @@ fun SettingsView(
     favorites: List<String>,
     onClickSetFavorites: () -> Unit,
     onClearFavorites: () -> Unit,
+    onClickSetShortcuts: () -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
@@ -42,27 +44,27 @@ fun SettingsView(
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
+
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize(),
         contentPadding = PaddingValues(
-            top = 10.dp,
-            start = 5.dp,
-            end = 5.dp,
+            top = 40.dp,
+            start = 8.dp,
+            end = 8.dp,
             bottom = 40.dp
         ),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         state = scalingLazyListState
     ) {
         item {
             ListHeader(id = R.string.settings)
         }
-
         item {
             Chip(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 20.dp),
+                    .fillMaxWidth(),
                 icon = {
                     Image(asset = CommunityMaterial.Icon3.cmd_star)
                 },
@@ -77,12 +79,10 @@ fun SettingsView(
                 )
             )
         }
-
         item {
             Chip(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp),
+                    .fillMaxWidth(),
                 icon = {
                     Image(asset = CommunityMaterial.Icon.cmd_delete)
                 },
@@ -168,6 +168,32 @@ fun SettingsView(
                 )
             )
         }
+
+        item {
+            ListHeader(
+                id = R.string.tile_settings,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+        }
+        item {
+            Chip(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                icon = {
+                    Image(asset = CommunityMaterial.Icon3.cmd_star_circle_outline)
+                },
+                label = {
+                    Text(
+                        text = stringResource(id = R.string.shortcuts)
+                    )
+                },
+                onClick = onClickSetShortcuts,
+                colors = ChipDefaults.primaryChipColors(
+                    contentColor = Color.Black
+
+                )
+            )
+        }
     }
 }
 
@@ -183,6 +209,7 @@ private fun PreviewSettingsView() {
             favorites = previewFavoritesList,
             onClickSetFavorites = { /*TODO*/ },
             onClearFavorites = {},
+            onClickSetShortcuts = {},
             isHapticEnabled = true,
             isToastEnabled = false,
             {},

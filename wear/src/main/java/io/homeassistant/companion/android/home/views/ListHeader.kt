@@ -31,12 +31,13 @@ fun ListHeader(
 }
 
 @Composable
-fun ListHeader(id: Int) {
+fun ListHeader(id: Int, modifier: Modifier = Modifier) {
     ListHeader {
         Row {
             Text(
                 text = stringResource(id = id),
-                color = Color.White
+                color = Color.White,
+                modifier = modifier
             )
         }
     }

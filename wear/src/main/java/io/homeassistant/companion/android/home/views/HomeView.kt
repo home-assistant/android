@@ -4,7 +4,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -16,9 +21,11 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.home.MainViewModel
+import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
@@ -27,12 +34,16 @@ import io.homeassistant.companion.android.util.setChipDefaults
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
+private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
+private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 
 @ExperimentalWearMaterialApi
 @Composable
 fun LoadHomePage(
     mainViewModel: MainViewModel
 ) {
+    var shortcutEntitySelectionIndex: Int by remember { mutableStateOf(0) }
+    val context = LocalContext.current
 
     val rotaryEventDispatcher = RotaryEventDispatcher()
     if (mainViewModel.entities.isNullOrEmpty() && mainViewModel.favoriteEntityIds.isNullOrEmpty()) {
@@ -78,6 +89,7 @@ fun LoadHomePage(
                             mainViewModel.favoriteEntityIds,
                             { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
                             { mainViewModel.clearFavorites() },
+                            { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) },
                             mainViewModel.isHapticEnabled.value,
                             mainViewModel.isToastEnabled.value,
                             { mainViewModel.setHapticEnabled(it) },
@@ -97,6 +109,31 @@ fun LoadHomePage(
                                 mainViewModel.removeFavorite(entityId)
                             }
                         }
+                    }
+                    composable(SCREEN_SET_TILE_SHORTCUTS) {
+                        SetTileShortcutsView(
+                            mainViewModel.shortcutEntities
+                        ) {
+                            shortcutEntitySelectionIndex = it
+                            swipeDismissableNavController.navigate(SCREEN_SELECT_TILE_SHORTCUT)
+                        }
+                    }
+                    composable(SCREEN_SELECT_TILE_SHORTCUT) {
+                        val validEntities = mainViewModel.entities
+                            .filter { it.entityId.split(".")[0] in HomePresenterImpl.supportedDomains }
+                        ChooseEntityView(
+                            validEntities,
+                            {
+                                mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
+                                TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                                swipeDismissableNavController.navigateUp()
+                            },
+                            { entity ->
+                                mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
+                                TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                                swipeDismissableNavController.navigateUp()
+                            }
+                        )
                     }
                 }
             }
