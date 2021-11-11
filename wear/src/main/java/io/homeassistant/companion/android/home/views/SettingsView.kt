@@ -44,7 +44,7 @@ fun SettingsView(
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
-    
+
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize(),
@@ -169,8 +169,6 @@ fun SettingsView(
             )
         }
 
-                  
-
         item {
             ListHeader(
                 id = R.string.tile_settings,
@@ -192,7 +190,7 @@ fun SettingsView(
                 onClick = onClickSetShortcuts,
                 colors = ChipDefaults.primaryChipColors(
                     contentColor = Color.Black
-                  
+
                 )
             )
         }

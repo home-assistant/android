@@ -92,7 +92,7 @@ class MainViewModel : ViewModel() {
             }
         }
     }
-    
+
     fun setHapticEnabled(enabled: Boolean) {
         viewModelScope.launch {
             homePresenter.setWearHapticFeedback(enabled)

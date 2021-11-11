@@ -115,7 +115,7 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun setTileShortcuts(entities: List<SimplifiedEntity>) {
         integrationUseCase.setTileShortcuts(entities.map { it.entityString })
     }
-    
+
     override suspend fun getWearHapticFeedback(): Boolean {
         return integrationUseCase.getWearHapticFeedback()
     }

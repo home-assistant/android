@@ -366,7 +366,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     override suspend fun setTileShortcuts(entities: List<String>) {
         localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
     }
-    
+
     override suspend fun setWearHapticFeedback(enabled: Boolean) {
         localStorage.putBoolean(PREF_WEAR_HAPTIC_FEEDBACK, enabled)
     }
