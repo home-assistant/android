@@ -1,6 +1,10 @@
 package io.homeassistant.companion.android.data
 
-data class SimplifiedEntity(var entityId: String, var friendlyName: String, var icon: String) {
+data class SimplifiedEntity(
+    var entityId: String,
+    var friendlyName: String = entityId,
+    var icon: String = ""
+) {
     constructor(entityString: String) : this(
         entityString.split(",")[0],
         entityString.split(",")[1],

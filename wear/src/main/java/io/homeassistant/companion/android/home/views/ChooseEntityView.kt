@@ -93,8 +93,8 @@ fun ChooseEntityView(
                     onEntitySelected(
                         SimplifiedEntity(
                             validEntities[index].entityId,
-                            attributes["friendly_name"] as String,
-                            attributes["icon"] as String
+                            attributes["friendly_name"] as String? ?: validEntities[index].entityId,
+                            attributes["icon"] as String? ?: ""
                         )
                     )
                 },
