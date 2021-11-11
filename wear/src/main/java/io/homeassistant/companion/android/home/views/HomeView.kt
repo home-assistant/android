@@ -21,6 +21,7 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.home.HomeView
 import io.homeassistant.companion.android.home.MainViewModel
@@ -137,5 +138,5 @@ fun LoadHomePage(
 @Preview
 @Composable
 private fun PreviewHomeView() {
-    LoadHomePage(mainViewModel = MainViewModel())
+    LoadHomePage(mainViewModel = MainViewModel(), homeView = HomeActivity())
 }

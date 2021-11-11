@@ -126,6 +126,7 @@ private fun PreviewSettingsView() {
     SettingsView(
         favorites = previewFavoritesList,
         onClickSetFavorites = { /*TODO*/ },
-        onClearFavorites = {}
+        onClearFavorites = {},
+        onClickSetShortcuts = {}
     )
 }
