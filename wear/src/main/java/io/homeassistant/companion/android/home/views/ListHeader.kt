@@ -32,13 +32,13 @@ fun ListHeader(
 }
 
 @Composable
-fun ListHeader(id: Int, topPadding: Dp = 0.dp) {
+fun ListHeader(id: Int, modifier: Modifier = Modifier) {
     ListHeader {
         Row {
             Text(
                 text = stringResource(id = id),
                 color = Color.White,
-                modifier = Modifier.padding(top = topPadding)
+                modifier = modifier
             )
         }
     }

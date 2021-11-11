@@ -45,7 +45,7 @@ class HomeActivity : ComponentActivity(), HomeView {
 
         presenter.onViewReady()
         setContent {
-            LoadHomePage(mainViewModel)
+            LoadHomePage(mainViewModel, this)
         }
 
         mainViewModel.init(presenter)

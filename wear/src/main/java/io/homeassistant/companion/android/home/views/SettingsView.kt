@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -93,7 +94,7 @@ fun SettingsView(
         item {
             ListHeader(
                 id = R.string.tile_settings,
-                topPadding = 16.dp
+                modifier = Modifier.padding(top = 16.dp)
             )
         }
         item {

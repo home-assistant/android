@@ -21,6 +21,7 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.home.HomePresenterImpl
+import io.homeassistant.companion.android.home.HomeView
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
@@ -36,7 +37,8 @@ private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 @ExperimentalWearMaterialApi
 @Composable
 fun LoadHomePage(
-    mainViewModel: MainViewModel
+    mainViewModel: MainViewModel,
+    homeView: HomeView
 ) {
     var shortcutEntitySelectionIndex: Int by remember { mutableStateOf(0) }
 
@@ -114,10 +116,12 @@ fun LoadHomePage(
                             validEntities,
                             {
                                 mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
+                                homeView.refreshShortcutsTile()
                                 swipeDismissableNavController.navigateUp()
                             },
                             { entity ->
                                 mainViewModel.setTileShortcut(shortcutEntitySelectionIndex, entity)
+                                homeView.refreshShortcutsTile()
                                 swipeDismissableNavController.navigateUp()
                             }
                         )
