@@ -23,8 +23,8 @@ class MainViewModel : ViewModel() {
 
     fun loadEntities() {
         viewModelScope.launch {
-            entities.addAll(homePresenter.getEntities())
             favoriteEntityIds.addAll(homePresenter.getWearHomeFavorites())
+            entities.addAll(homePresenter.getEntities())
         }
     }
 
