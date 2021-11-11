@@ -26,7 +26,6 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.RotaryEventState
-import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.getIcon
 
 @Composable
@@ -51,7 +50,7 @@ fun SetTileShortcutsView(
         state = scalingLazyListState
     ) {
         item {
-            SetTitle(id = R.string.shortcuts)
+            ListHeader(id = R.string.shortcuts)
         }
         items(shortcutEntities.size) { index ->
             val favoriteEntityID = shortcutEntities[index].split(",")[0]

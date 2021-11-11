@@ -24,7 +24,6 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.util.RotaryEventState
-import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.getIcon
 
 @Composable
@@ -49,7 +48,7 @@ fun ChooseEntityView(
         state = scalingLazyListState
     ) {
         item {
-            SetTitle(id = R.string.shortcuts)
+            ListHeader(id = R.string.shortcuts)
         }
         item {
             Chip(
