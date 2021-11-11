@@ -98,7 +98,7 @@ fun LoadHomePage(
                     }
                     composable(SCREEN_SET_FAVORITES) {
                         val validEntities = mainViewModel.entities
-                            .filter { it.entityId.split(".")[0] in HomePresenterImpl.supportedDomains }
+                            .filter { it.key.split(".")[0] in HomePresenterImpl.supportedDomains }
                         SetFavoritesView(
                             validEntities,
                             mainViewModel.favoriteEntityIds
@@ -120,7 +120,7 @@ fun LoadHomePage(
                     }
                     composable(SCREEN_SELECT_TILE_SHORTCUT) {
                         val validEntities = mainViewModel.entities
-                            .filter { it.entityId.split(".")[0] in HomePresenterImpl.supportedDomains }
+                            .filter { it.key.split(".")[0] in HomePresenterImpl.supportedDomains }
                         ChooseEntityView(
                             validEntities,
                             {

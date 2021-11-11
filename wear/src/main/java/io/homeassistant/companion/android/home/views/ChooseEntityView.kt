@@ -30,10 +30,11 @@ import io.homeassistant.companion.android.util.getIcon
 
 @Composable
 fun ChooseEntityView(
-    validEntities: List<Entity<*>>,
+    validEntities: Map<String, Entity<*>>,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit
 ) {
+    val validEntityList = validEntities.values.toList()
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
     ScalingLazyColumn(
@@ -65,11 +66,11 @@ fun ChooseEntityView(
                 )
             )
         }
-        items(validEntities.size) { index ->
-            val attributes = validEntities[index].attributes as Map<*, *>
+        items(validEntityList.size) { index ->
+            val attributes = validEntityList[index].attributes as Map<*, *>
             val iconBitmap = getIcon(
                 attributes["icon"] as String?,
-                validEntities[index].entityId.split(".")[0],
+                validEntityList[index].entityId.split(".")[0],
                 LocalContext.current
             )
             Chip(
@@ -88,12 +89,12 @@ fun ChooseEntityView(
                         overflow = TextOverflow.Ellipsis
                     )
                 },
-                enabled = validEntities[index].state != "unavailable",
+                enabled = validEntityList[index].state != "unavailable",
                 onClick = {
                     onEntitySelected(
                         SimplifiedEntity(
-                            validEntities[index].entityId,
-                            attributes["friendly_name"] as String? ?: validEntities[index].entityId,
+                            validEntityList[index].entityId,
+                            attributes["friendly_name"] as String? ?: validEntityList[index].entityId,
                             attributes["icon"] as String? ?: ""
                         )
                     )

@@ -47,7 +47,7 @@ import io.homeassistant.companion.android.util.setChipDefaults
 @ExperimentalWearMaterialApi
 @Composable
 fun MainView(
-    entities: List<Entity<*>>,
+    entities: Map<String, Entity<*>>,
     favoriteEntityIds: List<String>,
     onEntityClicked: (String) -> Unit,
     onSettingsClicked: () -> Unit,
@@ -64,13 +64,11 @@ fun MainView(
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
 
-    val entityMap: Map<String, Entity<*>> = entities.map { it.entityId to it }.toMap()
-
-    val scenes = entities.filter { it.entityId.split(".")[0] == "scene" }
-    val scripts = entities.filter { it.entityId.split(".")[0] == "script" }
-    val lights = entities.filter { it.entityId.split(".")[0] == "light" }
-    val inputBooleans = entities.filter { it.entityId.split(".")[0] == "input_boolean" }
-    val switches = entities.filter { it.entityId.split(".")[0] == "switch" }
+    val scenes = entities.filter { it.key.split(".")[0] == "scene" }.values.toList()
+    val scripts = entities.filter { it.key.split(".")[0] == "script" }.values.toList()
+    val lights = entities.filter { it.key.split(".")[0] == "light" }.values.toList()
+    val inputBooleans = entities.filter { it.key.split(".")[0] == "input_boolean" }.values.toList()
+    val switches = entities.filter { it.key.split(".")[0] == "switch" }.values.toList()
 
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -139,7 +137,7 @@ fun MainView(
                             )
                         } else {
                             EntityUi(
-                                entityMap[favoriteEntityID]!!,
+                                entities[favoriteEntityID]!!,
                                 onEntityClicked,
                                 isHapticEnabled,
                                 isToastEnabled
