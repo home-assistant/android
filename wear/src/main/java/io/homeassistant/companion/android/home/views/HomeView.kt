@@ -78,7 +78,9 @@ fun LoadHomePage(
                             mainViewModel.favoriteEntityIds,
                             { mainViewModel.toggleEntity(it) },
                             { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                            { mainViewModel.logout() }
+                            { mainViewModel.logout() },
+                            mainViewModel.isHapticEnabled.value,
+                            mainViewModel.isToastEnabled.value
                         )
                     }
                     composable(SCREEN_SETTINGS) {
@@ -86,7 +88,11 @@ fun LoadHomePage(
                             mainViewModel.favoriteEntityIds,
                             { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
                             { mainViewModel.clearFavorites() },
-                            { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) }
+                            { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) },
+                            mainViewModel.isHapticEnabled.value,
+                            mainViewModel.isToastEnabled.value,
+                            { mainViewModel.setHapticEnabled(it) },
+                            { mainViewModel.setToastEnabled(it) }
                         )
                     }
                     composable(SCREEN_SET_FAVORITES) {

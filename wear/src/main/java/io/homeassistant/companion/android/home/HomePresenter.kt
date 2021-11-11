@@ -14,4 +14,9 @@ interface HomePresenter {
     suspend fun setWearHomeFavorites(favorites: List<String>)
     suspend fun getTileShortcuts(): List<SimplifiedEntity>
     suspend fun setTileShortcuts(entities: List<SimplifiedEntity>)
+
+    suspend fun getWearHapticFeedback(): Boolean
+    suspend fun setWearHapticFeedback(enabled: Boolean)
+    suspend fun getWearToastConfirmation(): Boolean
+    suspend fun setWearToastConfirmation(enabled: Boolean)
 }
