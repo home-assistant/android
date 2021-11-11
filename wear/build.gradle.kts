@@ -99,6 +99,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.compose.compiler:compiler:1.0.5")
     implementation("androidx.compose.foundation:foundation:1.0.5")
+    implementation("androidx.compose.ui:ui-tooling:1.0.5")
     implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha10")
     implementation("androidx.wear.compose:compose-material:1.0.0-alpha10")
     implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha10")
