@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -23,7 +21,6 @@ import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
-import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.setChipDefaults
 
 private const val SCREEN_LANDING = "landing"
@@ -39,15 +36,10 @@ fun LoadHomePage(
     val rotaryEventDispatcher = RotaryEventDispatcher()
     if (mainViewModel.entities.isNullOrEmpty() && mainViewModel.favoriteEntityIds.isNullOrEmpty()) {
         Column {
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp)
-            )
-            SetTitle(id = R.string.loading)
+            ListHeader(id = R.string.loading)
             Chip(
                 modifier = Modifier
-                    .padding(top = 50.dp, start = 10.dp, end = 10.dp),
+                    .padding(top = 30.dp, start = 10.dp, end = 10.dp),
                 label = {
                     Text(
                         text = stringResource(R.string.loading_entities),

@@ -15,19 +15,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.rememberScalingLazyListState
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventState
-import io.homeassistant.companion.android.util.SetTitle
 import io.homeassistant.companion.android.util.setChipDefaults
 
+@ExperimentalWearMaterialApi
 @Composable
 fun MainView(
     entities: List<Entity<*>>,
@@ -60,6 +62,10 @@ fun MainView(
         positionIndicator = {
             if (scalingLazyListState.isScrollInProgress)
                 PositionIndicator(scalingLazyListState = scalingLazyListState)
+        },
+        timeText = {
+            if (!scalingLazyListState.isScrollInProgress)
+                TimeText()
         }
     ) {
         ScalingLazyColumn(
@@ -95,7 +101,7 @@ fun MainView(
             if (entities.isNullOrEmpty()) {
                 item {
                     Column {
-                        SetTitle(id = R.string.loading)
+                        ListHeader(id = R.string.loading)
                         Chip(
                             modifier = Modifier
                                 .padding(
