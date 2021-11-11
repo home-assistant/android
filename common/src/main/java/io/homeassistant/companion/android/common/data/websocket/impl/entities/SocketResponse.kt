@@ -8,5 +8,6 @@ data class SocketResponse(
     val id: Long?,
     val type: String,
     val success: Boolean?,
-    val result: JsonNode?
+    val result: JsonNode?,
+    val event: JsonNode?
 )

@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.integration
 
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import kotlinx.coroutines.flow.Flow
 
 interface IntegrationRepository {
 
@@ -47,6 +48,7 @@ interface IntegrationRepository {
 
     suspend fun getEntities(): List<Entity<Any>>
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>
+    suspend fun getEntityUpdates(): Flow<Entity<*>>
 
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 

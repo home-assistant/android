@@ -12,12 +12,22 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
@@ -44,10 +54,13 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val mapper = jacksonObjectMapper()
         .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
     private val responseCallbackJobs = mutableMapOf<Long, CancellableContinuation<SocketResponse>>()
-    private val subscriptionCallbacks = mutableMapOf<Long, (Boolean) -> Unit>()
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null
     private var connected = Job()
+    private var stateChangedFlow: SharedFlow<StateChangedEvent>? = null
+
+    @ExperimentalCoroutinesApi
+    private var producerScope: ProducerScope<StateChangedEvent>? = null
 
     override suspend fun sendPing(): Boolean {
         val socketResponse = sendMessage(
@@ -105,6 +118,38 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override suspend fun callService(request: ServiceCallRequest) {
         TODO("Not yet implemented")
+    }
+
+    @ExperimentalCoroutinesApi
+    override suspend fun getStateChanges(): Flow<StateChangedEvent> {
+        if (stateChangedFlow == null) {
+
+            val response = sendMessage(
+                mapOf(
+                    "type" to "subscribe_events",
+                    "event_type" to "state_changed"
+                )
+            )
+
+            stateChangedFlow = callbackFlow {
+                producerScope = this
+                awaitClose {
+                    Log.d(TAG, "Unsubscribing from state_changes")
+                    ioScope.launch {
+                        sendMessage(
+                            mapOf(
+                                "type" to "unsubscribe_events",
+                                "subscription" to response.id
+                            )
+                        )
+                    }
+                    producerScope = null
+                    stateChangedFlow = null
+                }
+            }.shareIn(ioScope, SharingStarted.WhileSubscribed())
+        }
+
+        return stateChangedFlow!!
     }
 
     /**
@@ -181,6 +226,15 @@ class WebSocketRepositoryImpl @Inject constructor(
         responseCallbackJobs.remove(id)
     }
 
+    @ExperimentalCoroutinesApi
+    private suspend fun handleEvent(response: SocketResponse) {
+        val eventResponse = mapper.convertValue(
+            response.event,
+            object : TypeReference<EventResponse>() {}
+        )
+        producerScope?.send(eventResponse.data)
+    }
+
     override fun onOpen(webSocket: WebSocket, response: Response) {
         Log.d(TAG, "Websocket: onOpen")
     }
@@ -196,6 +250,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                 "auth_ok" -> handleAuthComplete(true)
                 "auth_invalid" -> handleAuthComplete(false)
                 "pong", "result" -> handleMessage(message)
+                "event" -> handleEvent(message)
                 else -> Log.d(TAG, "Unknown message type: $text")
             }
         }
