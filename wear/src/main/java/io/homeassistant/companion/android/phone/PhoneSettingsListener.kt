@@ -38,7 +38,7 @@ class PhoneSettingsListener : WearableListenerService() {
 
     private fun sendHomeFavorites(nodeId: String) = runBlocking {
         Log.d(TAG, "sendHomeFavorites to: $nodeId")
-        val currentFavorites = integrationUseCase.getWearHomeFavorites()
+        val currentFavorites = integrationUseCase.getWearHomeFavorites().toList()
 
         val putDataRequest = PutDataMapRequest.create("/home_favorites").run {
             dataMap.putString("favorites", currentFavorites.toString())

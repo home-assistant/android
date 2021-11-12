@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings
 
 import androidx.preference.PreferenceDataStore
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 
 interface SettingsPresenter {
@@ -16,4 +17,6 @@ interface SettingsPresenter {
     fun getSessionExpireMillis(): Long
     fun isSsidUsed(): Boolean
     fun clearSsids()
+
+    suspend fun getEntities(): List<Entity<*>>
 }
