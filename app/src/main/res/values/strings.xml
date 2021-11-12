@@ -647,4 +647,7 @@ like to connect to:</string>
   <string name="media_player_widget_desc">Control any media player and see current now playing image</string>
   <string name="template_widget_desc">Render any template with HTML formatting</string>
   <string name="missing_command_permission">Please open the Home Assistant app and send the command again in order to grant the proper permissions.</string>
+  <string name="wear_favorite_entities">Wear Favorite Entities</string>
+  <string name="wear_set_favorites">Select your favorite entities to appear at the top of the wear home screen</string>
+  <string name="help">Help</string>
 </resources>

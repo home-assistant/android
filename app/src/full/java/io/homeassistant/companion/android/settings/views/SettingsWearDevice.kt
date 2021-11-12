@@ -8,18 +8,27 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Checkbox
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.CapabilityClient
@@ -31,6 +40,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.material.composethemeadapter.MdcTheme
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.DaggerSettingsWearComponent
@@ -48,6 +58,7 @@ class SettingsWearDevice : AppCompatActivity(), DataClient.OnDataChangedListener
     companion object {
         private const val TAG = "SettingsWearDevice"
         private const val CAPABILITY_WEAR_FAVORITES = "send_home_favorites"
+        private const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/wear-os"
         val supportedDomains = listOf(
             "input_boolean", "light", "switch", "script", "scene"
         )
@@ -160,79 +171,99 @@ class SettingsWearDevice : AppCompatActivity(), DataClient.OnDataChangedListener
         }
     }
 
+    private fun onEntitySelected(checked: Boolean, entityId: String) {
+        if (checked)
+            settingsWearViewModel.favoriteEntityIds.add(entityId)
+        else
+            settingsWearViewModel.favoriteEntityIds.remove(entityId)
+        sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
+    }
+
     @Composable
     private fun LoadWearSettings(settingsWearViewModel: SettingsWearViewModel) {
         val entities = settingsWearViewModel.entities
         val favoritesList = settingsWearViewModel.favoriteEntityIds.toList()
-        Log.d(TAG, "Found a total entities of ${settingsWearViewModel.entities.size}")
         val validEntities = entities.filter { it.key.split(".")[0] in supportedDomains }.values.sortedBy { it.entityId }.toList()
-        Log.d(TAG, "Found a total valid entities of ${validEntities.size}")
-        Log.d(TAG, "favorites list: $favoritesList")
-        LazyColumn(
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(top = 50.dp, start = 20.dp, end = 20.dp)
-        ) {
-            item {
-                Text(
-                    text =
-                    if (favoritesList.isNotEmpty())
-                        "Found a total of: ${favoritesList.size} favorites"
-                    else
-                        "You have no favorite entities saved in the wear app"
-                )
-            }
-            items(favoritesList.size) { index ->
-                var checked by rememberSaveable {
-                    mutableStateOf(
-                        favoritesList.contains(
-                            favoritesList[index]
-                        )
-                    )
-                }
-                Row(
-                    modifier = Modifier.padding(15.dp)
-                ) {
-                    Checkbox(
-                        checked = checked,
-                        onCheckedChange = {
-                            checked = it
-                            if (it)
-                                settingsWearViewModel.favoriteEntityIds.add(favoritesList[index])
-                            else
-                                settingsWearViewModel.favoriteEntityIds.remove(favoritesList[index])
-                            sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
-                        },
-                        modifier = Modifier.padding(end = 5.dp)
-                    )
-                    Text(
-                        text = favoritesList[index].replace("[", "").replace("]", "")
-                    )
-                }
-            }
-            if (!validEntities.isNullOrEmpty()) {
-                items(validEntities.size - favoritesList.size) { index ->
-                    val item = validEntities[index]
-                    if (!favoritesList.contains(item.entityId)) {
-                        Row(
-                            modifier = Modifier.padding(15.dp)
-                        ) {
-                            Checkbox(
-                                checked = false,
-                                onCheckedChange = {
-                                    if (it)
-                                        settingsWearViewModel.favoriteEntityIds.add(item.entityId)
-                                    else
-                                        settingsWearViewModel.favoriteEntityIds.remove(item.entityId)
-                                    sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
-                                },
-                                modifier = Modifier.padding(end = 5.dp)
-                            )
-                            Text(
-                                text = item.entityId
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.wear_favorite_entities)) },
+                    actions = {
+                        IconButton(onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(WEAR_DOCS_LINK))
+                            startActivity(intent)
+                        }) {
+                            Icon(
+                                Icons.Filled.HelpOutline,
+                                contentDescription = stringResource(id = R.string.help)
                             )
                         }
-                        if (favoritesList.contains(item.entityId))
-                            Log.d(TAG, "We found a favorite entity: ${item.entityId}")
+                    }
+                )
+            }
+        ) {
+            LazyColumn(
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(top = 10.dp, start = 20.dp, end = 20.dp)
+            ) {
+                item {
+                    Text(
+                        text = stringResource(R.string.wear_set_favorites),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                items(favoritesList.size) { index ->
+                    var checked by rememberSaveable {
+                        mutableStateOf(
+                            favoritesList.contains(
+                                favoritesList[index]
+                            )
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .padding(15.dp)
+                            .clickable {
+                                checked = !checked
+                                onEntitySelected(checked, favoritesList[index])
+                            }
+                    ) {
+                        Checkbox(
+                            checked = checked,
+                            onCheckedChange = {
+                                checked = it
+                                onEntitySelected(it, favoritesList[index])
+                            },
+                            modifier = Modifier.padding(end = 5.dp)
+                        )
+                        Text(
+                            text = favoritesList[index].replace("[", "").replace("]", "")
+                        )
+                    }
+                }
+                if (!validEntities.isNullOrEmpty()) {
+                    items(validEntities.size - favoritesList.size) { index ->
+                        val item = validEntities[index]
+                        if (!favoritesList.contains(item.entityId)) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(15.dp)
+                                    .clickable {
+                                        onEntitySelected(true, item.entityId)
+                                    }
+                            ) {
+                                Checkbox(
+                                    checked = false,
+                                    onCheckedChange = {
+                                        onEntitySelected(it, item.entityId)
+                                    },
+                                    modifier = Modifier.padding(end = 5.dp)
+                                )
+                                Text(
+                                    text = item.entityId
+                                )
+                            }
+                        }
                     }
                 }
             }
