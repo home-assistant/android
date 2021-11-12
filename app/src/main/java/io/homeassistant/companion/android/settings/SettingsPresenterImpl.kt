@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
@@ -217,15 +216,6 @@ class SettingsPresenterImpl @Inject constructor(
     override fun isSsidUsed(): Boolean {
         return runBlocking {
             urlUseCase.getHomeWifiSsids().isNotEmpty()
-        }
-    }
-
-    override suspend fun getEntities(): List<Entity<*>> {
-        return try {
-            integrationUseCase.getEntities()
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get entities", e)
-            emptyList()
         }
     }
 }
