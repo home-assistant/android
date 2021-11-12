@@ -32,7 +32,7 @@ import com.google.android.gms.wearable.Wearable
 import com.google.android.material.composethemeadapter.MdcTheme
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.settings.DaggerSettingsComponent
+import io.homeassistant.companion.android.settings.DaggerSettingsWearComponent
 import io.homeassistant.companion.android.settings.SettingsWearViewModel
 import javax.inject.Inject
 
@@ -58,7 +58,7 @@ class SettingsWearDevice : AppCompatActivity(), DataClient.OnDataChangedListener
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        DaggerSettingsComponent.builder()
+        DaggerSettingsWearComponent.builder()
             .appComponent((application as GraphComponentAccessor).appComponent)
             .build()
             .inject(this)
