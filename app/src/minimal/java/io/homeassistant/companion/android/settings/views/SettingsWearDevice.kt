@@ -14,4 +14,8 @@ class SettingsWearDevice : AppCompatActivity(), DataClient.OnDataChangedListener
             return Intent(context, SettingsWearDevice::class.java)
         }
     }
+
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        // No op
+    }
 }
