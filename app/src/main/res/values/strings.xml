@@ -650,4 +650,7 @@ like to connect to:</string>
   <string name="wear_favorite_entities">Wear Favorite Entities</string>
   <string name="wear_set_favorites">Select your favorite entities to appear at the top of the wear home screen</string>
   <string name="help">Help</string>
+  <string name="wear_settings">Wear Device Settings</string>
+  <string name="set_favorites_on_device">Set Favorites on Wear OS Device</string>
+  <string name="manage_favorites_device">Manage Favorites on device %1$s</string>
 </resources>

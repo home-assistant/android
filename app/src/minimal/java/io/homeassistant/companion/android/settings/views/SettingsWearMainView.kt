@@ -6,13 +6,13 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEventBuffer
 
-class SettingsWearDevice : AppCompatActivity(), DataClient.OnDataChangedListener {
+class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListener {
 
     companion object {
-        private const val TAG = "SettingsWearDevice"
+        private const val TAG = "SettingsWearMainView"
 
         fun newInstance(context: Context): Intent {
-            return Intent(context, SettingsWearDevice::class.java)
+            return Intent(context, SettingsWearMainView::class.java)
         }
     }
 

@@ -262,7 +262,7 @@
             android:configChanges="orientation|screenSize" />
 
         <activity
-            android:name=".settings.views.SettingsWearDevice"
+            android:name=".settings.views.SettingsWearMainView"
             android:parentActivityName=".settings.SettingsActivity"
             android:configChanges="orientation|screenSize" />
 

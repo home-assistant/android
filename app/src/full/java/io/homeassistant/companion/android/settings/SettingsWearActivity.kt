@@ -21,7 +21,7 @@ import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.Wearable
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.ActivitySettingsWearBinding
-import io.homeassistant.companion.android.settings.views.SettingsWearDevice
+import io.homeassistant.companion.android.settings.views.SettingsWearMainView
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
@@ -173,14 +173,14 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                 // TODO: Add your code to communicate with the wear app(s) via Wear APIs
                 //       (MessageClient, DataClient, etc.)
                 Log.d(TAG, "Installed on some devices")
-                startActivity(SettingsWearDevice.newInstance(applicationContext))
+                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
                 finish()
             }
             else -> {
                 // TODO: Add your code to communicate with the wear app(s) via Wear APIs
                 //       (MessageClient, DataClient, etc.)
                 Log.d(TAG, "Installed on all devices")
-                startActivity(SettingsWearDevice.newInstance(applicationContext))
+                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
                 finish()
             }
         }
