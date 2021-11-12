@@ -170,15 +170,11 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                 binding.remoteOpenButton.isVisible = true
             }
             wearNodesWithApp.size < allConnectedNodes.size -> {
-                // TODO: Add your code to communicate with the wear app(s) via Wear APIs
-                //       (MessageClient, DataClient, etc.)
                 Log.d(TAG, "Installed on some devices")
                 startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
                 finish()
             }
             else -> {
-                // TODO: Add your code to communicate with the wear app(s) via Wear APIs
-                //       (MessageClient, DataClient, etc.)
                 Log.d(TAG, "Installed on all devices")
                 startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
                 finish()
