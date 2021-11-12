@@ -21,9 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.util.previewEntityList
+import io.homeassistant.companion.android.util.previewFavoritesList
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/wear-os"
 val supportedDomains = listOf(
@@ -74,7 +77,11 @@ fun LoadWearFavoritesSettings(
                     modifier = Modifier
                         .padding(15.dp)
                         .clickable {
-                            onEntitySelected(isFavoriteSelected(index), favoritesList[index], activity)
+                            onEntitySelected(
+                                isFavoriteSelected(index),
+                                favoritesList[index],
+                                activity
+                            )
                         }
                 ) {
                     Checkbox(
@@ -91,7 +98,7 @@ fun LoadWearFavoritesSettings(
                 }
             }
             if (!validEntities.isNullOrEmpty()) {
-                items(validEntities.size - favoritesList.size) { index ->
+                items(validEntities.size) { index ->
                     val item = validEntities[index]
                     if (!favoritesList.contains(item.entityId)) {
                         Row(
@@ -118,4 +125,16 @@ fun LoadWearFavoritesSettings(
             }
         }
     }
+}
+
+@Preview
+@Composable
+private fun PreviewLoadWearFavoritesSettings() {
+    LoadWearFavoritesSettings(
+        entities = previewEntityList,
+        favoritesList = previewFavoritesList,
+        onEntitySelected = { _, _, _ -> },
+        isFavoriteSelected = { true },
+        Activity()
+    )
 }

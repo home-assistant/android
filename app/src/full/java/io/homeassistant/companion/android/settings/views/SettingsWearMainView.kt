@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.views
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -8,17 +7,12 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.Wearable
-import com.google.android.material.composethemeadapter.MdcTheme
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.DaggerSettingsWearComponent
@@ -54,28 +48,7 @@ class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListen
 
         val activity = this
         setContent {
-            val context = LocalContext.current
-            MdcTheme {
-                val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = LANDING) {
-                    composable(FAVORITES) {
-                        LoadWearFavoritesSettings(
-                            settingsWearViewModel.entities,
-                            settingsWearViewModel.favoriteEntityIds.toList(),
-                            { b: Boolean, s: String, a: Activity -> settingsWearViewModel.onEntitySelected(b, s, a) },
-                            {
-                                settingsWearViewModel.favoriteEntityIds.toList().contains(
-                                    settingsWearViewModel.favoriteEntityIds.toList()[it]
-                                )
-                            },
-                            activity
-                        )
-                    }
-                    composable(LANDING) {
-                        SettingWearLandingView(context, currentNodes, navController)
-                    }
-                }
-            }
+            LoadSettingsHomeView(settingsWearViewModel, currentNodes.first().displayName, activity)
         }
         settingsWearViewModel.init(integrationUseCase)
     }

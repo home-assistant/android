@@ -16,16 +16,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import com.google.android.gms.wearable.Node
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.settings.views.SettingsWearMainView.Companion.FAVORITES
+import io.homeassistant.companion.android.util.wearDeviceName
 
 @Composable
-fun SettingWearLandingView(context: Context, currentNodes: Set<Node>, navController: NavController) {
+fun SettingWearLandingView(
+    context: Context,
+    deviceName: String,
+    navigateFavorites: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -53,11 +57,11 @@ fun SettingWearLandingView(context: Context, currentNodes: Set<Node>, navControl
                 .padding(start = 20.dp, top = 10.dp, end = 20.dp)
         ) {
             Text(
-                text = stringResource(id = R.string.manage_favorites_device, currentNodes.first().displayName),
+                text = stringResource(id = R.string.manage_favorites_device, deviceName),
                 textAlign = TextAlign.Center
             )
             Button(
-                onClick = { navController.navigate(FAVORITES) },
+                onClick = navigateFavorites,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 10.dp, end = 10.dp)
@@ -66,4 +70,10 @@ fun SettingWearLandingView(context: Context, currentNodes: Set<Node>, navControl
             }
         }
     }
+}
+
+@Preview
+@Composable
+private fun PreviewSettingWearLandingView() {
+    SettingWearLandingView(LocalContext.current, wearDeviceName) {}
 }
