@@ -64,11 +64,11 @@ fun MainView(
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
 
-    val scenes = entities.filter { it.key.split(".")[0] == "scene" }.values.toList()
-    val scripts = entities.filter { it.key.split(".")[0] == "script" }.values.toList()
-    val lights = entities.filter { it.key.split(".")[0] == "light" }.values.toList()
-    val inputBooleans = entities.filter { it.key.split(".")[0] == "input_boolean" }.values.toList()
-    val switches = entities.filter { it.key.split(".")[0] == "switch" }.values.toList()
+    val scenes = entities.filter { it.key.split(".")[0] == "scene" }.values.toList().sortedBy { it.entityId }
+    val scripts = entities.filter { it.key.split(".")[0] == "script" }.values.toList().sortedBy { it.entityId }
+    val lights = entities.filter { it.key.split(".")[0] == "light" }.values.toList().sortedBy { it.entityId }
+    val inputBooleans = entities.filter { it.key.split(".")[0] == "input_boolean" }.values.toList().sortedBy { it.entityId }
+    val switches = entities.filter { it.key.split(".")[0] == "switch" }.values.toList().sortedBy { it.entityId }
 
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
