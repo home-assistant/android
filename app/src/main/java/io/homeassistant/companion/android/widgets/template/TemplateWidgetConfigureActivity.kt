@@ -15,6 +15,8 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
+import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -92,7 +94,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
 
         binding.addButton.setOnClickListener {
             val createIntent = Intent().apply {
-                action = TemplateWidget.RECEIVE_DATA
+                action = BaseWidgetProvider.RECEIVE_DATA
                 component = ComponentName(applicationContext, TemplateWidget::class.java)
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 putExtra(TemplateWidget.EXTRA_TEMPLATE, binding.templateText.text.toString())
