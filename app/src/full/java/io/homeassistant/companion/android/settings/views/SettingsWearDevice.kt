@@ -28,12 +28,14 @@ import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.material.composethemeadapter.MdcTheme
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.DaggerSettingsWearComponent
 import io.homeassistant.companion.android.settings.SettingsWearViewModel
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class SettingsWearDevice : AppCompatActivity(), DataClient.OnDataChangedListener {
@@ -143,6 +145,21 @@ class SettingsWearDevice : AppCompatActivity(), DataClient.OnDataChangedListener
         }
     }
 
+    private fun sendHomeFavorites(favoritesList: List<String>) = runBlocking {
+        Log.d(TAG, "sendHomeFavorites")
+
+        val putDataRequest = PutDataMapRequest.create("/save_home_favorites").run {
+            dataMap.putString("favorites", favoritesList.toString())
+            setUrgent()
+            asPutDataRequest()
+        }
+
+        Wearable.getDataClient(this@SettingsWearDevice).putDataItem(putDataRequest).apply {
+            addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to wear") }
+            addOnFailureListener { Log.d(TAG, "Failed to send favorites to wear") }
+        }
+    }
+
     @Composable
     private fun LoadWearSettings(settingsWearViewModel: SettingsWearViewModel) {
         val entities = settingsWearViewModel.entities
@@ -180,9 +197,10 @@ class SettingsWearDevice : AppCompatActivity(), DataClient.OnDataChangedListener
                         onCheckedChange = {
                             checked = it
                             if (it)
-                                favoritesList.toMutableSet().add(favoritesList[index])
+                                settingsWearViewModel.favoriteEntityIds.add(favoritesList[index])
                             else
-                                favoritesList.toMutableSet().remove(favoritesList[index])
+                                settingsWearViewModel.favoriteEntityIds.remove(favoritesList[index])
+                            sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
                         },
                         modifier = Modifier.padding(end = 5.dp)
                     )
@@ -202,9 +220,10 @@ class SettingsWearDevice : AppCompatActivity(), DataClient.OnDataChangedListener
                                 checked = false,
                                 onCheckedChange = {
                                     if (it)
-                                        favoritesList.toMutableSet().add(favoritesList[index])
+                                        settingsWearViewModel.favoriteEntityIds.add(item.entityId)
                                     else
-                                        favoritesList.toMutableSet().remove(favoritesList[index])
+                                        settingsWearViewModel.favoriteEntityIds.remove(item.entityId)
+                                    sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
                                 },
                                 modifier = Modifier.padding(end = 5.dp)
                             )
