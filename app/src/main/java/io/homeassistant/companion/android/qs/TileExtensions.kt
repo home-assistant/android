@@ -83,7 +83,7 @@ abstract class TileExtensions : TileService() {
                     }
                     if (tileData.entityId.split('.')[0] in toggleDomains) {
                         val state = runBlocking { integrationUseCase.getEntity(tileData.entityId) }
-                        tile.state = if (state.state == "on") Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                        tile.state = if (state.state == "on" || state.state == "open") Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                     } else
                         tile.state = Tile.STATE_INACTIVE
                     if (tileData.iconId != null) {
