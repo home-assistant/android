@@ -49,4 +49,6 @@
     <string name="toast_message">%1$s was selected</string>
     <string name="setting_toast_label">Enable Toast Confirmation</string>
     <string name="setting_haptic_label">Enable Haptic Feeback</string>
+    <string name="feedback_settings">Feedback Settings</string>
+    <string name="favorite_settings">Favorite Settings</string>
 </resources>
