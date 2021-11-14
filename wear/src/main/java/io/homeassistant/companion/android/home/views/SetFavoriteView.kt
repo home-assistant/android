@@ -6,6 +6,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,7 +47,19 @@ fun SetFavoritesView(
     favoriteEntityIds: List<String>,
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
 ) {
-    val validEntityList = validEntities.values.toList()
+    var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
+
+    val validEntityList = validEntities.values.toList().sortedBy { it.entityId }
+    val scenes = validEntityList.filter { it.entityId.split(".")[0] == "scene" }
+    val scripts = validEntityList.filter { it.entityId.split(".")[0] == "script" }
+    val lights = validEntityList.filter { it.entityId.split(".")[0] == "light" }
+    val inputBooleans = validEntityList.filter { it.entityId.split(".")[0] == "input_boolean" }
+    val switches = validEntityList.filter { it.entityId.split(".")[0] == "switch" }
+
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
     Scaffold(
@@ -68,49 +84,167 @@ fun SetFavoritesView(
             horizontalAlignment = Alignment.CenterHorizontally,
             state = scalingLazyListState
         ) {
-            items(validEntityList.size) { index ->
-                val attributes = validEntityList[index].attributes as Map<*, *>
-                val iconBitmap = getIcon(
-                    attributes["icon"] as String?,
-                    validEntityList[index].entityId.split(".")[0],
-                    LocalContext.current
-                )
-                if (index == 0)
-                    ListHeader(R.string.set_favorite)
-
-                val entityId = validEntityList[index].entityId
-                val checked = favoriteEntityIds.contains(entityId)
-                ToggleChip(
-                    checked = checked,
-                    onCheckedChange = {
-                        onFavoriteSelected(entityId, it)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = if (index == 0) 40.dp else 10.dp),
-                    appIcon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
-                    label = {
-                        Text(
-                            text = attributes["friendly_name"].toString(),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    },
-                    toggleIcon = { ToggleChipDefaults.SwitchIcon(checked) },
-                    colors = ToggleChipDefaults.toggleChipColors(
-                        checkedStartBackgroundColor = colorResource(id = R.color.colorAccent),
-                        checkedEndBackgroundColor = colorResource(id = R.color.colorAccent),
-                        uncheckedStartBackgroundColor = colorResource(id = R.color.colorAccent),
-                        uncheckedEndBackgroundColor = colorResource(id = R.color.colorAccent),
-                        checkedContentColor = Color.Black,
-                        uncheckedContentColor = Color.Black,
-                        checkedToggleIconTintColor = Color.Yellow,
-                        uncheckedToggleIconTintColor = Color.DarkGray
+            item {
+                ListHeader(id = R.string.set_favorite)
+            }
+            if (favoriteEntityIds.isNotEmpty()) {
+                val favoriteEntities = mutableListOf<Entity<*>>()
+                for (entity in validEntityList) {
+                    if (favoriteEntityIds.contains(entity.entityId))
+                        favoriteEntities += listOf(entity)
+                }
+                items(favoriteEntityIds.size) { index ->
+                    FavoriteToggleChip(
+                        entityList = favoriteEntities,
+                        index = index,
+                        favoriteEntityIds = favoriteEntityIds,
+                        onFavoriteSelected = onFavoriteSelected
                     )
-                )
+                }
+            }
+            if (inputBooleans.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = R.string.input_booleans,
+                        expanded = expandedInputBooleans,
+                        onExpandChanged = { expandedInputBooleans = it }
+                    )
+                }
+                if (expandedInputBooleans) {
+                    items(inputBooleans.size) { index ->
+                        FavoriteToggleChip(
+                            entityList = inputBooleans,
+                            index = index,
+                            favoriteEntityIds = favoriteEntityIds,
+                            onFavoriteSelected = onFavoriteSelected
+                        )
+                    }
+                }
+            }
+            if (lights.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = R.string.lights,
+                        expanded = expandedLights,
+                        onExpandChanged = { expandedLights = it }
+                    )
+                }
+                if (expandedLights) {
+                    items(lights.size) { index ->
+                        FavoriteToggleChip(
+                            entityList = lights,
+                            index = index,
+                            favoriteEntityIds = favoriteEntityIds,
+                            onFavoriteSelected = onFavoriteSelected
+                        )
+                    }
+                }
+            }
+            if (scenes.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = R.string.scenes,
+                        expanded = expandedScenes,
+                        onExpandChanged = { expandedScenes = it }
+                    )
+                }
+                if (expandedScenes) {
+                    items(scenes.size) { index ->
+                        FavoriteToggleChip(
+                            entityList = scenes,
+                            index = index,
+                            favoriteEntityIds = favoriteEntityIds,
+                            onFavoriteSelected = onFavoriteSelected
+                        )
+                    }
+                }
+            }
+            if (scripts.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = R.string.scripts,
+                        expanded = expandedScripts,
+                        onExpandChanged = { expandedScripts = it }
+                    )
+                }
+                if (expandedScripts) {
+                    items(scripts.size) { index ->
+                        FavoriteToggleChip(
+                            entityList = scripts,
+                            index = index,
+                            favoriteEntityIds = favoriteEntityIds,
+                            onFavoriteSelected = onFavoriteSelected
+                        )
+                    }
+                }
+            }
+            if (switches.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = R.string.switches,
+                        expanded = expandedSwitches,
+                        onExpandChanged = { expandedSwitches = it }
+                    )
+                }
+                if (expandedSwitches) {
+                    items(switches.size) { index ->
+                        FavoriteToggleChip(
+                            entityList = switches,
+                            index = index,
+                            favoriteEntityIds = favoriteEntityIds,
+                            onFavoriteSelected = onFavoriteSelected
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+@Composable
+private fun FavoriteToggleChip(
+    entityList: List<Entity<*>>,
+    index: Int,
+    favoriteEntityIds: List<String>,
+    onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
+) {
+    val attributes = entityList[index].attributes as Map<*, *>
+    val iconBitmap = getIcon(
+        attributes["icon"] as String?,
+        entityList[index].entityId.split(".")[0],
+        LocalContext.current
+    )
+
+    val entityId = entityList[index].entityId
+    val checked = favoriteEntityIds.contains(entityId)
+    ToggleChip(
+        checked = checked,
+        onCheckedChange = {
+            onFavoriteSelected(entityId, it)
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp),
+        appIcon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
+        label = {
+            Text(
+                text = attributes["friendly_name"].toString(),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        toggleIcon = { ToggleChipDefaults.SwitchIcon(checked) },
+        colors = ToggleChipDefaults.toggleChipColors(
+            checkedStartBackgroundColor = colorResource(id = R.color.colorAccent),
+            checkedEndBackgroundColor = colorResource(id = R.color.colorAccent),
+            uncheckedStartBackgroundColor = colorResource(id = R.color.colorAccent),
+            uncheckedEndBackgroundColor = colorResource(id = R.color.colorAccent),
+            checkedContentColor = Color.Black,
+            uncheckedContentColor = Color.Black,
+            checkedToggleIconTintColor = Color.Yellow,
+            uncheckedToggleIconTintColor = Color.DarkGray
+        )
+    )
 }
 
 @ExperimentalWearMaterialApi

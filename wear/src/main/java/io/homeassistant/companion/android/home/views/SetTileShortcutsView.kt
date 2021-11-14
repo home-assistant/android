@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -13,6 +14,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
@@ -26,8 +28,12 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
+import io.homeassistant.companion.android.util.RotaryEventDispatcher
+import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
+import io.homeassistant.companion.android.util.simplifiedEntity
 
 @Composable
 fun SetTileShortcutsView(
@@ -99,5 +105,20 @@ fun SetTileShortcutsView(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun PreviewSetTileShortcutsView() {
+    val rotaryEventDispatcher = RotaryEventDispatcher()
+    CompositionLocalProvider(
+        LocalRotaryEventDispatcher provides rotaryEventDispatcher
+    ) {
+        RotaryEventHandlerSetup(rotaryEventDispatcher)
+        SetTileShortcutsView(
+            shortcutEntities = mutableListOf(simplifiedEntity),
+            onShortcutEntitySelectionChange = {}
+        )
     }
 }

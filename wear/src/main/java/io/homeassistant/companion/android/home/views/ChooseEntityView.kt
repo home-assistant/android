@@ -6,6 +6,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -13,6 +18,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -25,8 +31,12 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
+import io.homeassistant.companion.android.util.RotaryEventDispatcher
+import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
+import io.homeassistant.companion.android.util.previewEntityList
 
 @Composable
 fun ChooseEntityView(
@@ -34,7 +44,18 @@ fun ChooseEntityView(
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit
 ) {
-    val validEntityList = validEntities.values.toList()
+    var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
+
+    val validEntityList = validEntities.values.toList().sortedBy { it.entityId }
+    val scenes = validEntityList.filter { it.entityId.split(".")[0] == "scene" }
+    val scripts = validEntityList.filter { it.entityId.split(".")[0] == "script" }
+    val lights = validEntityList.filter { it.entityId.split(".")[0] == "light" }
+    val inputBooleans = validEntityList.filter { it.entityId.split(".")[0] == "input_boolean" }
+    val switches = validEntityList.filter { it.entityId.split(".")[0] == "switch" }
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
     ScalingLazyColumn(
@@ -66,41 +87,153 @@ fun ChooseEntityView(
                 )
             )
         }
-        items(validEntityList.size) { index ->
-            val attributes = validEntityList[index].attributes as Map<*, *>
-            val iconBitmap = getIcon(
-                attributes["icon"] as String?,
-                validEntityList[index].entityId.split(".")[0],
-                LocalContext.current
-            )
-            Chip(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                icon = {
-                    Image(
-                        asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
-                        colorFilter = ColorFilter.tint(Color.White)
+        if (inputBooleans.isNotEmpty()) {
+            item {
+                ListHeader(
+                    stringId = R.string.input_booleans,
+                    expanded = expandedInputBooleans,
+                    onExpandChanged = { expandedInputBooleans = it }
+                )
+            }
+            if (expandedInputBooleans) {
+                items(inputBooleans.size) { index ->
+                    ChooseEntityChip(
+                        entityList = inputBooleans,
+                        index = index,
+                        onEntitySelected = onEntitySelected
                     )
-                },
-                label = {
-                    Text(
-                        text = attributes["friendly_name"].toString(),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                enabled = validEntityList[index].state != "unavailable",
-                onClick = {
-                    onEntitySelected(
-                        SimplifiedEntity(
-                            validEntityList[index].entityId,
-                            attributes["friendly_name"] as String? ?: validEntityList[index].entityId,
-                            attributes["icon"] as String? ?: ""
-                        )
-                    )
-                },
-                colors = ChipDefaults.secondaryChipColors()
-            )
+                }
+            }
         }
+        if (lights.isNotEmpty()) {
+            item {
+                ListHeader(
+                    stringId = R.string.lights,
+                    expanded = expandedLights,
+                    onExpandChanged = { expandedLights = it }
+                )
+            }
+            if (expandedLights) {
+                items(lights.size) { index ->
+                    ChooseEntityChip(
+                        entityList = lights,
+                        index = index,
+                        onEntitySelected = onEntitySelected
+                    )
+                }
+            }
+        }
+        if (scenes.isNotEmpty()) {
+            item {
+                ListHeader(
+                    stringId = R.string.scenes,
+                    expanded = expandedScenes,
+                    onExpandChanged = { expandedScenes = it }
+                )
+            }
+            if (expandedScenes) {
+                items(scenes.size) { index ->
+                    ChooseEntityChip(
+                        entityList = scenes,
+                        index = index,
+                        onEntitySelected = onEntitySelected
+                    )
+                }
+            }
+        }
+        if (scripts.isNotEmpty()) {
+            item {
+                ListHeader(
+                    stringId = R.string.scripts,
+                    expanded = expandedScripts,
+                    onExpandChanged = { expandedScripts = it }
+                )
+            }
+            if (expandedScripts) {
+                items(scripts.size) { index ->
+                    ChooseEntityChip(
+                        entityList = scripts,
+                        index = index,
+                        onEntitySelected = onEntitySelected
+                    )
+                }
+            }
+        }
+        if (switches.isNotEmpty()) {
+            item {
+                ListHeader(
+                    stringId = R.string.switches,
+                    expanded = expandedSwitches,
+                    onExpandChanged = { expandedSwitches = it }
+                )
+            }
+            if (expandedSwitches) {
+                items(switches.size) { index ->
+                    ChooseEntityChip(
+                        entityList = switches,
+                        index = index,
+                        onEntitySelected = onEntitySelected
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChooseEntityChip(
+    entityList: List<Entity<*>>,
+    index: Int,
+    onEntitySelected: (entity: SimplifiedEntity) -> Unit
+) {
+    val attributes = entityList[index].attributes as Map<*, *>
+    val iconBitmap = getIcon(
+        attributes["icon"] as String?,
+        entityList[index].entityId.split(".")[0],
+        LocalContext.current
+    )
+    Chip(
+        modifier = Modifier
+            .fillMaxWidth(),
+        icon = {
+            Image(
+                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                colorFilter = ColorFilter.tint(Color.White)
+            )
+        },
+        label = {
+            Text(
+                text = attributes["friendly_name"].toString(),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        enabled = entityList[index].state != "unavailable",
+        onClick = {
+            onEntitySelected(
+                SimplifiedEntity(
+                    entityList[index].entityId,
+                    attributes["friendly_name"] as String? ?: entityList[index].entityId,
+                    attributes["icon"] as String? ?: ""
+                )
+            )
+        },
+        colors = ChipDefaults.secondaryChipColors()
+    )
+}
+
+@Preview
+@Composable
+private fun PreviewChooseEntityView() {
+    val rotaryEventDispatcher = RotaryEventDispatcher()
+    CompositionLocalProvider(
+        LocalRotaryEventDispatcher provides rotaryEventDispatcher
+    ) {
+        RotaryEventHandlerSetup(rotaryEventDispatcher)
+        ChooseEntityView(
+            validEntities = previewEntityList,
+            onNoneClicked = { /*TODO*/ },
+            onEntitySelected = {}
+        )
     }
 }
