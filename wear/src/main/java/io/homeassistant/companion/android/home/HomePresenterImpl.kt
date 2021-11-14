@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -58,7 +59,12 @@ class HomePresenterImpl @Inject constructor(
     }
 
     override suspend fun getEntityUpdates(): Flow<Entity<*>> {
-        return integrationUseCase.getEntityUpdates()
+        return try {
+            integrationUseCase.getEntityUpdates()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get entity updates", e)
+            emptyFlow()
+        }
     }
 
     override suspend fun onEntityClicked(entityId: String) {
