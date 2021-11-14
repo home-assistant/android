@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util
 
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.data.SimplifiedEntity
 import java.util.Calendar
 
 val attributes: Map<*, *> = mapOf(
@@ -19,3 +20,5 @@ val previewEntityList = mapOf(
 )
 
 val previewFavoritesList = listOf("light.test")
+
+val simplifiedEntity = SimplifiedEntity(previewEntity1.entityId, attributes["friendly_name"].toString(), attributes["icon"].toString())
