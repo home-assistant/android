@@ -80,7 +80,7 @@ dependencies {
     implementation(project(":common"))
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.2")
 
     implementation("com.google.android.material:material:1.4.0")
 
