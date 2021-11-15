@@ -196,7 +196,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.2")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
-    implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
+    implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
