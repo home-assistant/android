@@ -26,7 +26,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 
-    implementation("com.google.dagger:dagger:2.40")
+    implementation("com.google.dagger:dagger:2.40.1")
     kapt("com.google.dagger:dagger-compiler:2.40")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
