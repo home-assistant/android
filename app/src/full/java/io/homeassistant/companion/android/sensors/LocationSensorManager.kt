@@ -726,7 +726,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             DEFAULT_TRIGGER_RANGE_METERS.toString()
         )
 
-        var highAccuracyTriggerRangeInt = highAccuracyTriggerRange.toInt()
+        var highAccuracyTriggerRangeInt = highAccuracyTriggerRange.toIntOrNull() ?: DEFAULT_TRIGGER_RANGE_METERS
         if (highAccuracyTriggerRangeInt < 0) {
             highAccuracyTriggerRangeInt = DEFAULT_TRIGGER_RANGE_METERS
 
@@ -734,7 +734,7 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE, highAccuracyTriggerRangeInt.toString(), "number"))
         }
 
-        return highAccuracyTriggerRangeInt.toInt()
+        return highAccuracyTriggerRangeInt
     }
 
     private fun getHighAccuracyModeZones(expandedZones: Boolean): List<String> {

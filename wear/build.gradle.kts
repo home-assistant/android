@@ -80,6 +80,7 @@ dependencies {
     implementation(project(":common"))
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.1")
 
     implementation("com.google.android.material:material:1.4.0")
 
@@ -99,7 +100,11 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.compose.compiler:compiler:1.0.5")
     implementation("androidx.compose.foundation:foundation:1.0.5")
+    implementation("androidx.compose.ui:ui-tooling:1.0.5")
     implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha10")
     implementation("androidx.wear.compose:compose-material:1.0.0-alpha10")
     implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha10")
+
+    implementation("com.google.guava:guava:31.0.1-android")
+    implementation("androidx.wear.tiles:tiles:1.0.0")
 }

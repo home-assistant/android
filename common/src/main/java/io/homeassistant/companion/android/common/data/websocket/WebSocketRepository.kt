@@ -4,6 +4,8 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
+import kotlinx.coroutines.flow.Flow
 
 interface WebSocketRepository {
     suspend fun sendPing(): Boolean
@@ -12,4 +14,5 @@ interface WebSocketRepository {
     suspend fun getServices(): List<DomainResponse>
     suspend fun getPanels(): List<String>
     suspend fun callService(request: ServiceCallRequest)
+    suspend fun getStateChanges(): Flow<StateChangedEvent>
 }
