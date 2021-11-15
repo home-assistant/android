@@ -8,5 +8,5 @@ interface TilesComponent {
 
     fun inject(shortcutsTile: ShortcutsTile)
 
-    fun inject(tileActionActivity: TileActionActivity)
+    fun inject(tileActionReceiver: TileActionReceiver)
 }
