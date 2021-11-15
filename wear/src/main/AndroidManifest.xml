@@ -58,9 +58,12 @@
             <meta-data android:name="androidx.wear.tiles.PREVIEW"
                 android:resource="@drawable/favorite_entities_tile_example" />
         </service>
-        <activity android:name=".tiles.TileActionActivity"
-            android:exported="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <receiver android:name=".tiles.TileActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="io.homeassistant.companion.android.TILE_ACTION" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
