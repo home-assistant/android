@@ -195,7 +195,7 @@ dependencies {
     implementation("com.google.android.material:compose-theme-adapter:1.0.4")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.2")
 
-    implementation("com.mikepenz:iconics-core:5.3.2")
+    implementation("com.mikepenz:iconics-core:5.3.3")
     implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
 }
 
