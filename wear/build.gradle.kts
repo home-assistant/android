@@ -81,6 +81,7 @@ play {
 dependencies {
     implementation(project(":common"))
 
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.2")
 
@@ -91,8 +92,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
     compileOnly("com.google.android.wearable:wearable:2.8.1")
 
-    implementation("com.google.dagger:hilt-android:2.39.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.39.1")
+    implementation("com.google.dagger:hilt-android:2.40.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.40.1")
 
     implementation("com.squareup.okhttp3:okhttp:4.9.2")
 
