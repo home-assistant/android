@@ -94,6 +94,8 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.39.1")
     kapt("com.google.dagger:hilt-android-compiler:2.39.1")
 
+    implementation("com.squareup.okhttp3:okhttp:4.9.2")
+
     implementation("com.mikepenz:iconics-core:5.3.3")
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")

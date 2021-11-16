@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.onboarding
 
+import android.content.Context
 import android.util.Log
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
+import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -17,13 +19,15 @@ import java.net.URL
 import javax.inject.Inject
 
 class OnboardingPresenterImpl @Inject constructor(
-    private val view: OnboardingView,
+    @ActivityContext context: Context,
     private val authenticationUseCase: AuthenticationRepository,
     private val urlUseCase: UrlRepository
 ) : OnboardingPresenter {
     companion object {
         private const val TAG = "OnboardingPresenter"
     }
+
+    private val view = context as OnboardingView
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 

@@ -31,8 +31,8 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.backgroundColor
 import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +49,7 @@ private const val CIRCLE_SIZE = 56f
 private const val ICON_SIZE = 48f * 0.7071f // square that fits in 48dp circle
 private const val SPACING = 8f
 
+@AndroidEntryPoint
 class ShortcutsTile : TileService() {
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
@@ -143,11 +144,6 @@ class ShortcutsTile : TileService() {
     }
 
     private suspend fun getEntities(): List<SimplifiedEntity> {
-        DaggerTilesComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this@ShortcutsTile)
-
         return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
     }
 

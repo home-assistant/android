@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class HomePresenterImpl @Inject constructor(
-    private val view: HomeView,
     private val authenticationUseCase: AuthenticationRepository,
     private val integrationUseCase: IntegrationRepository
 ) : HomePresenter {
@@ -34,6 +33,12 @@ class HomePresenterImpl @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private lateinit var view: HomeView
+
+    override fun init(homeView: HomeView) {
+        view = homeView
+    }
 
     override fun onViewReady() {
         mainScope.launch {
@@ -103,6 +108,10 @@ class HomePresenterImpl @Inject constructor(
                 Log.e(TAG, "Issue updating Registration", e)
             }
         }
+    }
+
+    override suspend fun isConnected(): Boolean {
+        return integrationUseCase.isRegistered()
     }
 
     override suspend fun getWearHomeFavorites(): List<String> {

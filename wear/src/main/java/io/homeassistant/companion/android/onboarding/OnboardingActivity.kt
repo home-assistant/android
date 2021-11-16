@@ -15,15 +15,14 @@ import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.CapabilityInfo
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
 import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupActivity
 import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
     private lateinit var adapter: ServerListAdapter
@@ -42,13 +41,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
 
         setContentView(R.layout.activity_onboarding)
 
