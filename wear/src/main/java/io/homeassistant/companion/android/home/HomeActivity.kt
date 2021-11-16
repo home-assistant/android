@@ -43,6 +43,11 @@ class HomeActivity : ComponentActivity(), HomeView {
         mainViewModel.init(presenter)
     }
 
+    override fun onResume() {
+        mainViewModel.updateFavorites()
+        super.onResume()
+    }
+
     override fun onDestroy() {
         presenter.onFinish()
         super.onDestroy()

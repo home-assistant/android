@@ -78,7 +78,7 @@ fun LoadWearFavoritesSettings(
                         .padding(15.dp)
                         .clickable {
                             onEntitySelected(
-                                isFavoriteSelected(index),
+                                false,
                                 favoritesList[index],
                                 activity
                             )
