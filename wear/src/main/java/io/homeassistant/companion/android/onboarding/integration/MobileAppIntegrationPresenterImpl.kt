@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.onboarding.integration
 
+import android.content.Context
 import android.util.Log
+import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -12,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
-    private val view: MobileAppIntegrationView,
+    @ActivityContext context: Context,
     private val integrationUseCase: IntegrationRepository
 ) : MobileAppIntegrationPresenter {
 
@@ -20,6 +22,7 @@ class MobileAppIntegrationPresenterImpl @Inject constructor(
         internal const val TAG = "IntegrationPresenter"
     }
 
+    private val view = context as MobileAppIntegrationView
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private suspend fun createRegistration(deviceName: String): DeviceRegistration {

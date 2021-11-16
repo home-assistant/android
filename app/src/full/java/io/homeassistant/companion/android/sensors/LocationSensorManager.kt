@@ -20,9 +20,9 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.bluetooth.BluetoothUtils
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     companion object {
@@ -134,7 +135,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     override fun onReceive(context: Context, intent: Intent) {
         latestContext = context
-        ensureInjected()
 
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
@@ -150,17 +150,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                     stopHighAccuracyService()
             }
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
-        }
-    }
-
-    private fun ensureInjected() {
-        if (latestContext.applicationContext is GraphComponentAccessor) {
-            DaggerSensorComponent.builder()
-                .appComponent((latestContext.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
-        } else {
-            throw Exception("Application Context passed is not of our application!")
         }
     }
 
@@ -889,7 +878,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         context: Context
     ) {
         latestContext = context
-        ensureInjected()
         if (isEnabled(context, zoneLocation.id) || isEnabled(context, backgroundLocation.id))
             setupLocationTracking()
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()

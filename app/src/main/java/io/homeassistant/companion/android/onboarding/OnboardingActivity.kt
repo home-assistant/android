@@ -4,7 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
-import io.homeassistant.companion.android.BaseActivity
+import androidx.appcompat.app.AppCompatActivity
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
@@ -15,8 +20,9 @@ import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
 
+@AndroidEntryPoint
 class OnboardingActivity :
-    BaseActivity(),
+    AppCompatActivity(),
     DiscoveryListener,
     ManualSetupListener,
     AuthenticationListener,
@@ -33,24 +39,22 @@ class OnboardingActivity :
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val entryPoint = EntryPointAccessors.fromActivity(this, OnboardingFragmentFactoryEntryPoint::class.java)
+        supportFragmentManager.fragmentFactory = entryPoint.getFragmentFactory()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
 
         val sessionConnected = intent.extras?.getBoolean(SESSION_CONNECTED) ?: false
 
         if (sessionConnected) {
-            val mobileAppIntegrationFragment = MobileAppIntegrationFragment.newInstance()
-            mobileAppIntegrationFragment.retainInstance = true
             supportFragmentManager
                 .beginTransaction()
-                .add(R.id.content, mobileAppIntegrationFragment)
+                .add(R.id.content, MobileAppIntegrationFragment::class.java, null)
                 .commit()
         } else {
-            val welcomeFragment = WelcomeFragment.newInstance()
-            welcomeFragment.retainInstance = true
             supportFragmentManager
                 .beginTransaction()
-                .add(R.id.content, welcomeFragment)
+                .add(R.id.content, WelcomeFragment::class.java, null)
                 .commit()
         }
     }
@@ -64,41 +68,33 @@ class OnboardingActivity :
     }
 
     override fun onSelectManualSetup() {
-        val manualSetupFragment = ManualSetupFragment.newInstance()
-        manualSetupFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, manualSetupFragment)
+            .replace(R.id.content, ManualSetupFragment::class.java, null)
             .addToBackStack(null)
             .commit()
     }
 
     override fun onHomeAssistantDiscover() {
-        val authenticationFragment = AuthenticationFragment.newInstance()
-        authenticationFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, authenticationFragment, AUTHENTICATION_FRAGMENT)
+            .replace(R.id.content, AuthenticationFragment::class.java, null)
             .addToBackStack(null)
             .commit()
     }
 
     override fun onSelectUrl() {
-        val authenticationFragment = AuthenticationFragment.newInstance()
-        authenticationFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, authenticationFragment, AUTHENTICATION_FRAGMENT)
+            .replace(R.id.content, AuthenticationFragment::class.java, null)
             .addToBackStack(null)
             .commit()
     }
 
     override fun onAuthenticationSuccess() {
-        val mobileAppIntegrationFragment = MobileAppIntegrationFragment.newInstance()
-        mobileAppIntegrationFragment.retainInstance = true
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, mobileAppIntegrationFragment)
+            .replace(R.id.content, MobileAppIntegrationFragment::class.java, null)
             .addToBackStack(null)
             .commit()
     }
@@ -123,5 +119,11 @@ class OnboardingActivity :
         }
 
         return super.dispatchKeyEvent(event)
+    }
+
+    @EntryPoint
+    @InstallIn(ActivityComponent::class)
+    interface OnboardingFragmentFactoryEntryPoint {
+        fun getFragmentFactory(): OnboardingFragmentFactory
     }
 }

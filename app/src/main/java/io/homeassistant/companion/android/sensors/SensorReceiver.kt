@@ -10,8 +10,8 @@ import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.PowerManager
 import android.util.Log
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.database.AppDatabase
@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class SensorReceiver : BroadcastReceiver() {
 
     companion object {
@@ -88,11 +89,6 @@ class SensorReceiver : BroadcastReceiver() {
     )
 
     override fun onReceive(context: Context, intent: Intent) {
-
-        DaggerSensorComponent.builder()
-            .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         if (skippableActions.containsKey(intent.action)) {
             val sensor = skippableActions[intent.action]

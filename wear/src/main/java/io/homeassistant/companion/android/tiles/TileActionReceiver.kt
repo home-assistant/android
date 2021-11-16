@@ -3,24 +3,19 @@ package io.homeassistant.companion.android.tiles
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class TileActionReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
     override fun onReceive(context: Context?, intent: Intent?) {
-        DaggerTilesComponent
-            .builder()
-            .appComponent((context?.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
-
         val entityId: String? = intent?.getStringExtra("entity_id")
 
         if (entityId != null) {

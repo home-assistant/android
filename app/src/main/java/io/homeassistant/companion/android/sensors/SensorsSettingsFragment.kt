@@ -20,8 +20,8 @@ import androidx.preference.PreferenceGroup
 import androidx.preference.SwitchPreference
 import androidx.preference.forEach
 import androidx.preference.iterator
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     @Inject
@@ -102,11 +103,6 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        DaggerSensorComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         setPreferencesFromResource(R.xml.sensors, rootKey)
 

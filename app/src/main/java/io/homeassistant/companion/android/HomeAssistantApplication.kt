@@ -10,9 +10,8 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
-import io.homeassistant.companion.android.common.dagger.AppComponent
-import io.homeassistant.companion.android.common.dagger.Graph
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.android.HiltAndroidApp
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.sensors.LastUpdateManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
@@ -24,19 +23,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-open class HomeAssistantApplication : Application(), GraphComponentAccessor {
+@HiltAndroidApp
+open class HomeAssistantApplication : Application() {
 
-    lateinit var graph: Graph
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+
+    @Inject
+    lateinit var prefsRepository: PrefsRepository
 
     override fun onCreate() {
         super.onCreate()
 
-        graph = Graph(this, 0)
-
         ioScope.launch {
-            initCrashReporting(applicationContext, graph.appComponent.prefsUseCase().isCrashReporting())
+            initCrashReporting(
+                applicationContext,
+                prefsRepository.isCrashReporting()
+            )
         }
 
         val sensorReceiver = SensorReceiver()
@@ -160,7 +164,4 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
             IntentFilter(Intent.ACTION_SCREEN_ON)
         )
     }
-
-    override val appComponent: AppComponent
-        get() = graph.appComponent
 }

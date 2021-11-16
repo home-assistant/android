@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.webview
 
+import android.content.Context
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
+import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -21,7 +23,7 @@ import java.util.regex.Pattern
 import javax.inject.Inject
 
 class WebViewPresenterImpl @Inject constructor(
-    private val view: WebView,
+    @ActivityContext context: Context,
     private val urlUseCase: UrlRepository,
     private val authenticationUseCase: AuthenticationRepository,
     private val integrationUseCase: IntegrationRepository
@@ -30,6 +32,8 @@ class WebViewPresenterImpl @Inject constructor(
     companion object {
         private const val TAG = "WebViewPresenterImpl"
     }
+
+    private val view = context as WebView
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 

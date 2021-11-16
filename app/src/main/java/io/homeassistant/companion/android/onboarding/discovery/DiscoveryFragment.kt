@@ -13,43 +13,29 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.fragment.app.Fragment
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.databinding.FragmentDiscoveryBinding
 import io.homeassistant.companion.android.databinding.InstanceItemBinding
-import javax.inject.Inject
 
-class DiscoveryFragment : Fragment(), DiscoveryView {
+class DiscoveryFragment(
+    val presenter: DiscoveryPresenter
+) : Fragment(), DiscoveryView {
 
     companion object {
 
         private const val TAG = "DiscoveryFragment"
         private const val HOME_ASSISTANT = "https://www.home-assistant.io"
-        fun newInstance(): DiscoveryFragment {
-            return DiscoveryFragment()
-        }
     }
 
     private val instances = arrayListOf<HomeAssistantInstance>()
-
-    @Inject
-    lateinit var presenter: DiscoveryPresenter
 
     private lateinit var homeAssistantSearcher: HomeAssistantSearcher
 
     private lateinit var listViewAdapter: ArrayAdapter<HomeAssistantInstance>
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        presenter.init(this)
         super.onCreate(savedInstanceState)
-
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
 
         homeAssistantSearcher = HomeAssistantSearcher(
             getSystemService(requireContext(), NsdManager::class.java)!!,

@@ -16,20 +16,16 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.settings.notification.views.LoadNotification
 
-class NotificationDetailFragment(
-    private val notification: NotificationItem
-) :
-    Fragment() {
+class NotificationDetailFragment : Fragment() {
 
     companion object {
-        fun newInstance(
-            notification: NotificationItem
-        ): NotificationDetailFragment {
-            return NotificationDetailFragment(notification)
-        }
+        val ARG_NOTIF = "notification"
     }
 
+    private lateinit var notification: NotificationItem
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        notification = arguments?.get(ARG_NOTIF) as NotificationItem
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
     }

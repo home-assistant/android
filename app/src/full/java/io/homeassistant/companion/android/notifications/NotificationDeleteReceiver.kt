@@ -6,13 +6,14 @@ import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class NotificationDeleteReceiver : BroadcastReceiver() {
     companion object {
         const val EXTRA_DATA = "EXTRA_DATA"
@@ -25,11 +26,6 @@ class NotificationDeleteReceiver : BroadcastReceiver() {
     lateinit var integrationRepository: IntegrationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
-
-        DaggerServiceComponent.builder()
-            .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         val hashData = intent.getSerializableExtra(EXTRA_DATA) as HashMap<String, *>
         val group = intent.getStringExtra(EXTRA_NOTIFICATION_GROUP)

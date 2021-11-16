@@ -19,13 +19,12 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,6 +32,7 @@ import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class ButtonWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "ButtonWidget"
@@ -121,8 +121,6 @@ class ButtonWidget : AppWidgetProvider() {
                 "Broadcast action: " + action + System.lineSeparator() +
                 "AppWidgetId: " + appWidgetId
         )
-
-        ensureInjected(context)
 
         buttonWidgetDao = AppDatabase.getInstance(context).buttonWidgetDao()
         val buttonWidgetList = buttonWidgetDao.getAll()
@@ -311,17 +309,6 @@ class ButtonWidget : AppWidgetProvider() {
             // so rather than duplicating code in the ButtonWidgetConfigurationActivity,
             // it is just calling onUpdate manually here.
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
-        }
-    }
-
-    private fun ensureInjected(context: Context) {
-        if (context.applicationContext is GraphComponentAccessor) {
-            DaggerProviderComponent.builder()
-                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
-        } else {
-            throw Exception("Application Context passed is not of our application!")
         }
     }
 }

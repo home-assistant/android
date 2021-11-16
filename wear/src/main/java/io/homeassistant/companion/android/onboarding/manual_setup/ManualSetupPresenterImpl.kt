@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.onboarding.manual_setup
 
+import android.content.Context
 import android.util.Log
+import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -12,7 +14,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ManualSetupPresenterImpl @Inject constructor(
-    private val view: ManualSetupView,
+    @ActivityContext context: Context,
     private val authenticationUseCase: AuthenticationRepository,
     private val urlUseCase: UrlRepository
 ) : ManualSetupPresenter {
@@ -20,6 +22,7 @@ class ManualSetupPresenterImpl @Inject constructor(
         private const val TAG = "ManualSetupPresenter"
     }
 
+    private val view = context as ManualSetupView
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onNextClicked(url: String) {
