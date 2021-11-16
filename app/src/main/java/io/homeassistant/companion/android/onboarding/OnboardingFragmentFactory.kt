@@ -19,9 +19,9 @@ class OnboardingFragmentFactory @Inject constructor(
     private val discoveryPresenter: DiscoveryPresenter,
     private val mobileAppIntegrationPresenter: MobileAppIntegrationPresenter,
     private val manualSetupPresenter: ManualSetupPresenter
-): FragmentFactory() {
+) : FragmentFactory() {
     override fun instantiate(classLoader: ClassLoader, className: String): Fragment {
-        return when(className) {
+        return when (className) {
             AuthenticationFragment::class.java.name ->
                 AuthenticationFragment(authenticationPresenter, themesManager)
             DiscoveryFragment::class.java.name ->

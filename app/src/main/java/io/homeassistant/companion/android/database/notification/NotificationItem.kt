@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.database.notification
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.io.Serializable
 
 @Entity(tableName = "notification_history")
 data class NotificationItem(
@@ -14,4 +15,4 @@ data class NotificationItem(
     val message: String,
     @ColumnInfo(name = "data")
     val data: String
-)
+) : Serializable

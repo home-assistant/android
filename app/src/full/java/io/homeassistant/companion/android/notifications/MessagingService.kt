@@ -67,19 +67,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
-import java.util.*
+import java.util.Locale
 import javax.inject.Inject
 import kotlin.collections.HashMap
-import kotlin.collections.Map
-import kotlin.collections.contains
-import kotlin.collections.count
-import kotlin.collections.forEach
-import kotlin.collections.isNotEmpty
-import kotlin.collections.listOf
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
-import kotlin.collections.toLongArray
-import kotlin.collections.toTypedArray
 
 @AndroidEntryPoint
 class MessagingService : FirebaseMessagingService() {
@@ -632,8 +622,8 @@ class MessagingService : FirebaseMessagingService() {
                     applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
                 val wakeLock = powerManager.newWakeLock(
                     PowerManager.FULL_WAKE_LOCK or
-                            PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                            PowerManager.ON_AFTER_RELEASE,
+                        PowerManager.ACQUIRE_CAUSES_WAKEUP or
+                        PowerManager.ON_AFTER_RELEASE,
                     "HomeAssistant::NotificationScreenOnWakeLock"
                 )
                 wakeLock.acquire(1 * 30 * 1000L /*30 seconds */)
@@ -642,7 +632,7 @@ class MessagingService : FirebaseMessagingService() {
             COMMAND_MEDIA -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                     if (!NotificationManagerCompat.getEnabledListenerPackages(applicationContext)
-                            .contains(applicationContext.packageName)
+                        .contains(applicationContext.packageName)
                     )
                         notifyMissingPermission(data[MESSAGE].toString())
                     else {

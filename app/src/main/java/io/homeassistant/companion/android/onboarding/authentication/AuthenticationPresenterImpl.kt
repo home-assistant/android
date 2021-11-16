@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding.authentication
 
 import android.net.Uri
 import android.util.Log
-import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import kotlinx.coroutines.CoroutineScope

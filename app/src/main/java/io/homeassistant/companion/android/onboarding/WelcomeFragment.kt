@@ -8,14 +8,12 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import com.google.android.material.composethemeadapter.MdcTheme
-import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.views.WelcomeView
-import javax.inject.Inject
 
-class WelcomeFragment: Fragment() {
+class WelcomeFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater,

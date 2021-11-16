@@ -11,5 +11,4 @@ abstract class WebviewModule {
 
     @Binds
     abstract fun webviewPresenter(webViewPresenterImpl: WebViewPresenterImpl): WebViewPresenter
-
 }

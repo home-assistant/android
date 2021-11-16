@@ -49,9 +49,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
         private const val ENTITY_SUFFIX = "_entity_list"
         private const val ICON_PREFIX = "_icon"
         private const val TAG = "ManageShortcutFrag"
-        fun newInstance(): ManageShortcutsSettingsFragment {
-            return ManageShortcutsSettingsFragment()
-        }
     }
 
     private lateinit var iconPack: IconPack

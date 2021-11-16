@@ -10,7 +10,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
-import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
@@ -20,7 +19,6 @@ import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegr
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.webview.WebViewActivity
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class OnboardingActivity :

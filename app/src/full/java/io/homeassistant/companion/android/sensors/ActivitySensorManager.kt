@@ -215,28 +215,34 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
             Log.d(TAG, "Registering for activity updates.")
             actReg.requestActivityUpdates(120000, pendingIntent)
         }
-        if ((isEnabled(context, sleepConfidence.id) || isEnabled(
-                context,
-                sleepSegment.id
-            )) && !sleepRegistration
+        if ((
+            isEnabled(context, sleepConfidence.id) || isEnabled(
+                    context,
+                    sleepSegment.id
+                )
+            ) && !sleepRegistration
         ) {
             val pendingIntent = getSleepPendingIntent(context)
             Log.d(TAG, "Registering for sleep updates")
             val task = when {
-                (isEnabled(context, sleepConfidence.id) && !isEnabled(
-                    context,
-                    sleepSegment.id
-                )) -> {
+                (
+                    isEnabled(context, sleepConfidence.id) && !isEnabled(
+                        context,
+                        sleepSegment.id
+                    )
+                    ) -> {
                     Log.d(TAG, "Registering for sleep confidence updates only")
                     ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
                         pendingIntent,
                         SleepSegmentRequest(SleepSegmentRequest.CLASSIFY_EVENTS_ONLY)
                     )
                 }
-                (!isEnabled(context, sleepConfidence.id) && isEnabled(
-                    context,
-                    sleepSegment.id
-                )) -> {
+                (
+                    !isEnabled(context, sleepConfidence.id) && isEnabled(
+                        context,
+                        sleepSegment.id
+                    )
+                    ) -> {
                     Log.d(TAG, "Registering for sleep segment updates only")
                     ActivityRecognition.getClient(context).requestSleepSegmentUpdates(
                         pendingIntent,

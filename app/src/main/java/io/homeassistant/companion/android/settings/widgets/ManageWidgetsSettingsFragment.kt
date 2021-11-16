@@ -21,12 +21,6 @@ import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigu
 
 class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
 
-    companion object {
-        fun newInstance(): ManageWidgetsSettingsFragment {
-            return ManageWidgetsSettingsFragment()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)

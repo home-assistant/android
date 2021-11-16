@@ -25,10 +25,11 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.qs.TileEntity
 import kotlinx.coroutines.runBlocking
 import java.lang.Exception
-import javax.inject.Inject
 
 @AndroidEntryPoint
-class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
+class ManageTilesFragment constructor(
+    val integrationRepository: IntegrationRepository
+) : PreferenceFragmentCompat(), IconDialog.Callback {
 
     companion object {
         private const val TAG = "TileFragment"
@@ -36,13 +37,7 @@ class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
             "cover", "fan", "humidifier", "input_boolean", "light",
             "media_player", "remote", "siren", "scene", "script", "switch"
         )
-        fun newInstance(): ManageTilesFragment {
-            return ManageTilesFragment()
-        }
     }
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
 
     private lateinit var iconPack: IconPack
 
@@ -101,7 +96,7 @@ class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
 
         runBlocking {
             try {
-                integrationUseCase.getEntities().forEach {
+                integrationRepository.getEntities().forEach {
                     val split = it.entityId.split(".")
                     if (split[0] in validDomains)
                         entityList = entityList + it.entityId

@@ -25,7 +25,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 class SensorWorker(
     private val appContext: Context,

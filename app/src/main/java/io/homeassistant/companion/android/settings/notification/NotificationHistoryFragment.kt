@@ -23,9 +23,6 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
     companion object {
         private var filterValue = 25
-        fun newInstance(): NotificationHistoryFragment {
-            return NotificationHistoryFragment()
-        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -161,13 +158,14 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 pref.isIconSpaceReserved = false
 
                 pref.setOnPreferenceClickListener {
+                    val args = Bundle()
+                    args.putSerializable(NotificationDetailFragment.ARG_NOTIF, item)
                     parentFragmentManager
                         .beginTransaction()
                         .replace(
                             R.id.content,
-                            NotificationDetailFragment.newInstance(
-                                item
-                            )
+                            NotificationDetailFragment::class.java,
+                            args
                         )
                         .addToBackStack("Notification Detail")
                         .commit()

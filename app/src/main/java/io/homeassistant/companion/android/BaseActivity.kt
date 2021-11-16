@@ -1,9 +1,6 @@
 package io.homeassistant.companion.android
 
-import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
-import io.homeassistant.companion.android.settings.language.LanguagesManager
-import javax.inject.Inject
 
 open class BaseActivity : AppCompatActivity() {
 //

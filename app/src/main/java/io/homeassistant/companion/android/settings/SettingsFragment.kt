@@ -23,7 +23,6 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
-import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
@@ -46,28 +45,24 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import javax.inject.Inject
 
-@AndroidEntryPoint
-class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
+class SettingsFragment constructor(
+    val presenter: SettingsPresenter,
+    val langProvider: LanguagesProvider
+) : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
         private const val TAG = "SettingsFragment"
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
         private const val LOCATION_REQUEST_CODE = 0
         private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
-        fun newInstance() = SettingsFragment()
     }
 
-    @Inject
-    lateinit var presenter: SettingsPresenter
-
-    @Inject
-    lateinit var langProvider: LanguagesProvider
     private lateinit var authenticator: Authenticator
     private var setLock = false
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        presenter.init(this)
 
         authenticator = Authenticator(requireContext(), requireActivity(), ::authenticationResult)
 
@@ -147,7 +142,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, ManageWidgetsSettingsFragment.newInstance())
+                .replace(R.id.content, ManageWidgetsSettingsFragment::class.java, null)
                 .addToBackStack(getString(R.string.widgets))
                 .commit()
             return@setOnPreferenceClickListener true
@@ -160,7 +155,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
                 parentFragmentManager
                     .beginTransaction()
-                    .replace(R.id.content, ManageShortcutsSettingsFragment.newInstance())
+                    .replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
                     .addToBackStack(getString(R.string.shortcuts))
                     .commit()
                 return@setOnPreferenceClickListener true
@@ -174,7 +169,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
                 parentFragmentManager
                     .beginTransaction()
-                    .replace(R.id.content, ManageTilesFragment.newInstance())
+                    .replace(R.id.content, ManageTilesFragment::class.java, null)
                     .addToBackStack(getString(R.string.tiles))
                     .commit()
                 return@setOnPreferenceClickListener true
@@ -190,7 +185,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 it.setOnPreferenceClickListener {
                     parentFragmentManager
                         .beginTransaction()
-                        .replace(R.id.content, NotificationHistoryFragment.newInstance())
+                        .replace(R.id.content, NotificationHistoryFragment::class.java, null)
                         .addToBackStack(getString(R.string.notifications))
                         .commit()
                     return@setOnPreferenceClickListener true
@@ -265,7 +260,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("show_share_logs")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, LogFragment.newInstance())
+                .replace(R.id.content, LogFragment::class.java, null)
                 .addToBackStack(getString(R.string.log))
                 .commit()
             return@setOnPreferenceClickListener true

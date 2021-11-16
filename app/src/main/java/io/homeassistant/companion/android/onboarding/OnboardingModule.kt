@@ -6,26 +6,18 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
-import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationPresenter
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationPresenterImpl
-import io.homeassistant.companion.android.onboarding.authentication.AuthenticationView
-import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryListener
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryPresenter
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryPresenterImpl
-import io.homeassistant.companion.android.onboarding.discovery.DiscoveryView
-import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationListener
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenter
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenterImpl
-import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationView
-import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenter
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenterImpl
-import io.homeassistant.companion.android.onboarding.manual.ManualSetupView
 
 @Module
 @InstallIn(ActivityComponent::class)
@@ -46,7 +38,6 @@ abstract class OnboardingModule {
         @Provides
         fun mobileAppIntegrationListener(activity: Activity): MobileAppIntegrationListener =
             activity as MobileAppIntegrationListener
-
     }
 
     @Binds
