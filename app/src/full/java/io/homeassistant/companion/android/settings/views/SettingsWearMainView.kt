@@ -13,12 +13,12 @@ import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.Wearable
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.settings.DaggerSettingsWearComponent
 import io.homeassistant.companion.android.settings.SettingsWearViewModel
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListener {
 
     private val settingsWearViewModel by viewModels<SettingsWearViewModel>()
@@ -40,11 +40,6 @@ class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListen
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        DaggerSettingsWearComponent.builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         val activity = this
         setContent {

@@ -12,11 +12,12 @@ import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChangedListener {
 
     @Inject
@@ -29,10 +30,6 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "We have favorite message listener")
-        DaggerPhoneSettingsComponent.builder()
-            .appComponent((applicationContext.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
     }
 
     override fun onMessageReceived(event: MessageEvent) {
