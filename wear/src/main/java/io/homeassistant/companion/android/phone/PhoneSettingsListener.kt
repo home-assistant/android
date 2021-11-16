@@ -37,8 +37,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         if (event.path == "/send_home_favorites") {
             val nodeId = event.sourceNodeId
             sendHomeFavorites(nodeId)
-        } else if (event.path == "/save_home_favorites")
-            saveFavorites()
+        }
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
