@@ -6,6 +6,7 @@ import android.provider.Settings
 import android.provider.Settings.Global.getInt
 import android.telephony.TelephonyManager
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class MobileDataManager : SensorManager {
 

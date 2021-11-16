@@ -5,6 +5,7 @@ import android.os.Environment
 import android.os.StatFs
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.io.File
 import kotlin.math.roundToInt
 

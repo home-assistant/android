@@ -1,16 +1,8 @@
 package io.homeassistant.companion.android.sensors
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
-import android.content.Context.NOTIFICATION_SERVICE
-import android.os.Build
-import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.work.Constraints
-import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -19,22 +11,16 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.database.AppDatabase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
 
 class SensorWorker(
-    private val appContext: Context,
+    appContext: Context,
     workerParams: WorkerParameters
-) : CoroutineWorker(appContext, workerParams) {
-    companion object {
-        private const val TAG = "SensorWorker"
-        const val channelId = "Sensor Worker"
-        const val NOTIFICATION_ID = 42
+) : SensorWorkerBase(appContext, workerParams) {
 
+    companion object {
         fun start(context: Context) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED).build()
@@ -44,7 +30,8 @@ class SensorWorker(
                     .setConstraints(constraints)
                     .build()
 
-            WorkManager.getInstance(context).enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, sensorWorker)
+            WorkManager.getInstance(context)
+                .enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, sensorWorker)
         }
     }
     @EntryPoint
@@ -52,43 +39,14 @@ class SensorWorker(
     interface SensorWorkerEntryPoint {
         fun integrationRepository(): IntegrationRepository
     }
+    override fun doWork(): Result {
+        super.doWork()
 
-    private val notificationManager = appContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
-        val enabledSensorCount = sensorDao.getEnabledCount() ?: 0
-        if (enabledSensorCount > 0) {
-            Log.d(TAG, "Updating all Sensors.")
-            createNotificationChannel()
-            val notification = NotificationCompat.Builder(applicationContext, channelId)
-                .setSmallIcon(R.drawable.ic_stat_ic_notification)
-                .setContentTitle(appContext.getString(R.string.updating_sensors))
-                .setPriority(NotificationCompat.PRIORITY_LOW)
-                .build()
-
-            val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
-            setForeground(foregroundInfo)
-            val lastUpdateSensor = sensorDao.get(LastUpdateManager.lastUpdate.id)
-            if (lastUpdateSensor?.enabled == true) {
-                LastUpdateManager().sendLastUpdate(appContext, TAG)
-            }
-            val integrationUseCase = EntryPointAccessors.fromApplication(appContext, SensorWorkerEntryPoint::class.java).integrationRepository()
-            SensorReceiver().updateSensors(appContext, integrationUseCase)
-        }
-        Result.success()
+        val integrationUseCase = EntryPointAccessors.fromApplication(appContext, SensorWorkerEntryPoint::class.java).integrationRepository()
+        SensorReceiver().updateSensors(appContext, integrationUseCase)
     }
 
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            var notificationChannel =
-                notificationManager.getNotificationChannel(channelId)
-            if (notificationChannel == null) {
-                notificationChannel = NotificationChannel(
-                    channelId, TAG, NotificationManager.IMPORTANCE_LOW
-                )
-                notificationManager.createNotificationChannel(notificationChannel)
-            }
-        }
+    override fun createSensorReceiver(): SensorReceiverBase {
+        return SensorReceiver()
     }
 }

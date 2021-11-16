@@ -10,6 +10,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.math.RoundingMode
 
 class AppSensorManager : SensorManager {
