@@ -8,18 +8,14 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import com.google.android.material.composethemeadapter.MdcTheme
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.views.WelcomeView
+import javax.inject.Inject
 
-class WelcomeFragment : Fragment() {
-
-    companion object {
-        fun newInstance(): WelcomeFragment {
-            return WelcomeFragment()
-        }
-    }
+class WelcomeFragment: Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,19 +35,15 @@ class WelcomeFragment : Fragment() {
 
     private fun welcomeNavigation() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val discoveryFragment = DiscoveryFragment.newInstance()
-            discoveryFragment.retainInstance = true
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, discoveryFragment)
+                .replace(R.id.content, DiscoveryFragment::class.java, null)
                 .addToBackStack("Welcome")
                 .commit()
         } else {
-            val manualFragment = ManualSetupFragment.newInstance()
-            manualFragment.retainInstance = true
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, manualFragment)
+                .replace(R.id.content, ManualSetupFragment::class.java, null)
                 .addToBackStack("Welcome")
                 .commit()
         }

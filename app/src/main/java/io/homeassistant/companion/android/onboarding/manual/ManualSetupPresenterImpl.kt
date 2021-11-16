@@ -11,7 +11,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ManualSetupPresenterImpl @Inject constructor(
-    private val view: ManualSetupView,
     private val urlUseCase: UrlRepository
 ) : ManualSetupPresenter {
 
@@ -20,6 +19,12 @@ class ManualSetupPresenterImpl @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private lateinit var view: ManualSetupView
+
+    override fun init(manualSetupView: ManualSetupView) {
+        view = manualSetupView
+    }
 
     override fun onClickOk(urlString: String) {
         mainScope.launch {

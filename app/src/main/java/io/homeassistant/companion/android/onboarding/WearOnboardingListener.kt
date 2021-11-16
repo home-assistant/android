@@ -6,12 +6,13 @@ import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.PutDataRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class WearOnboardingListener : WearableListenerService() {
 
     @Inject
@@ -19,14 +20,6 @@ class WearOnboardingListener : WearableListenerService() {
 
     @Inject
     lateinit var urlUseCase: UrlRepository
-
-    override fun onCreate() {
-        super.onCreate()
-        DaggerOnboardingListenerComponent.builder()
-            .appComponent((applicationContext.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
-    }
 
     override fun onMessageReceived(event: MessageEvent) {
         Log.d("WearOnboardingListener", "onMessageReceived: $event")

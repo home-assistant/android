@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding.authentication
 
 import android.net.Uri
 import android.util.Log
+import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import kotlinx.coroutines.CoroutineScope
@@ -12,7 +13,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class AuthenticationPresenterImpl @Inject constructor(
-    private val view: AuthenticationView,
     private val authenticationUseCase: AuthenticationRepository
 ) : AuthenticationPresenter {
 
@@ -22,6 +22,13 @@ class AuthenticationPresenterImpl @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private lateinit var view: AuthenticationView
+
+    // TODO: Fix me by moving to ViewModels!
+    override fun init(authenticationView: AuthenticationView) {
+        view = authenticationView
+    }
 
     override fun onViewReady() {
         mainScope.launch {

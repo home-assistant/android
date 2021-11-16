@@ -6,9 +6,9 @@ import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.util.UrlHandler
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +18,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class TagReaderActivity : BaseActivity() {
 
     val TAG = TagReaderActivity::class.simpleName
@@ -32,13 +33,6 @@ class TagReaderActivity : BaseActivity() {
         setContentView(R.layout.activity_tag_reader)
 
         setSupportActionBar(findViewById(R.id.toolbar))
-
-        // Inject components
-        DaggerProviderComponent
-            .builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         mainScope.launch {
             if (NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {

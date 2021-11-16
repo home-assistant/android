@@ -23,12 +23,10 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
@@ -50,6 +48,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
@@ -69,12 +68,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     private var setLock = false
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
 
         authenticator = Authenticator(requireContext(), requireActivity(), ::authenticationResult)
 

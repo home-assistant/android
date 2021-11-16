@@ -14,14 +14,15 @@ import androidx.core.graphics.drawable.toBitmap
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.N)
+@AndroidEntryPoint
 abstract class TileExtensions : TileService() {
 
     abstract fun getTile(): Tile?
@@ -33,10 +34,6 @@ abstract class TileExtensions : TileService() {
 
     override fun onClick() {
         super.onClick()
-        DaggerTileComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
         if (getTile() != null) {
             setTileData(applicationContext, getTileId(), getTile()!!, integrationUseCase)
             tileClicked(applicationContext, getTileId(), getTile()!!, integrationUseCase)
@@ -45,20 +42,12 @@ abstract class TileExtensions : TileService() {
 
     override fun onTileAdded() {
         super.onTileAdded()
-        DaggerTileComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
         if (getTile() != null)
             setTileData(applicationContext, getTileId(), getTile()!!, integrationUseCase)
     }
 
     override fun onStartListening() {
         super.onStartListening()
-        DaggerTileComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
         if (getTile() != null)
             setTileData(applicationContext, getTileId(), getTile()!!, integrationUseCase)
     }

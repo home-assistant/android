@@ -18,16 +18,16 @@ import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.qs.TileEntity
-import io.homeassistant.companion.android.settings.DaggerSettingsComponent
 import kotlinx.coroutines.runBlocking
 import java.lang.Exception
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
 
     companion object {
@@ -74,11 +74,6 @@ class ManageTilesFragment : PreferenceFragmentCompat(), IconDialog.Callback {
             searchVisibility = IconDialog.SearchVisibility.ALWAYS
         }
         val iconDialog = IconDialog.newInstance(settings)
-
-        DaggerSettingsComponent.builder()
-            .appComponent((activity?.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         activity?.title = getString(R.string.tiles)
         val tileDao = AppDatabase.getInstance(requireContext()).tileDao()

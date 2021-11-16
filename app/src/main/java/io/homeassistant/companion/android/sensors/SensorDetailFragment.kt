@@ -19,9 +19,9 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import androidx.preference.contains
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.bluetooth.BluetoothUtils
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import kotlinx.coroutines.runBlocking
 
+@AndroidEntryPoint
 class SensorDetailFragment(
     private val sensorManager: SensorManager,
     private val basicSensor: SensorManager.BasicSensor,
@@ -84,11 +85,7 @@ class SensorDetailFragment(
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        DaggerSensorComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
+
         sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
         addPreferencesFromResource(R.xml.sensor_detail)

@@ -9,42 +9,21 @@ import android.view.inputmethod.EditorInfo
 import android.webkit.URLUtil
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.databinding.FragmentManualSetupBinding
-import javax.inject.Inject
 
-class ManualSetupFragment : Fragment(), ManualSetupView {
-
-    companion object {
-        fun newInstance(): ManualSetupFragment {
-            return ManualSetupFragment()
-        }
-    }
-
-    @Inject
-    lateinit var presenter: ManualSetupPresenter
+class ManualSetupFragment(
+    val presenter: ManualSetupPresenter
+) : Fragment(), ManualSetupView {
 
     private var binding: FragmentManualSetupBinding? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        presenter.init(this)
         val binding = FragmentManualSetupBinding.inflate(inflater, container, false)
 
         binding.homeAssistantUrl.addTextChangedListener { text ->
