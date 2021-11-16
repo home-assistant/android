@@ -7,14 +7,13 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.databinding.ActivityAuthenticationBinding
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
     companion object {
         private const val TAG = "AuthenticationActivity"
@@ -37,13 +36,6 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
             Log.e(TAG, "Flow id not specified, canceling authentication")
             finish()
         }
-
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
 
         binding = ActivityAuthenticationBinding.inflate(layoutInflater)
         setContentView(binding.root)

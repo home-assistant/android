@@ -9,13 +9,12 @@ import android.text.Html.fromHtml
 import android.view.View
 import android.view.View.VISIBLE
 import androidx.core.widget.doAfterTextChanged
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -23,6 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class TemplateWidgetConfigureActivity : BaseActivity() {
     companion object {
         private const val TAG: String = "TemplateWidgetConfigAct"
@@ -62,13 +62,6 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
             finish()
             return
         }
-
-        // Inject components
-        DaggerProviderComponent
-            .builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         val templateWidgetDao = AppDatabase.getInstance(applicationContext).templateWidgetDao()
         val templateWidget = templateWidgetDao.get(appWidgetId)

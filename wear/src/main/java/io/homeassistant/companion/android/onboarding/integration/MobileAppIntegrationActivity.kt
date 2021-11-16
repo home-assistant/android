@@ -7,14 +7,13 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.databinding.ActivityIntegrationBinding
 import io.homeassistant.companion.android.home.HomeActivity
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
     companion object {
         private const val TAG = "MobileAppIntegrationActivity"
@@ -30,13 +29,6 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
 
         binding = ActivityIntegrationBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -68,7 +60,10 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
     override fun showError() {
         // Show failure message
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
-            putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)
+            putExtra(
+                ConfirmationActivity.EXTRA_ANIMATION_TYPE,
+                ConfirmationActivity.FAILURE_ANIMATION
+            )
             putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_registration))
         }
         startActivity(intent)

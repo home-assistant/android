@@ -10,14 +10,13 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
     companion object {
@@ -71,12 +71,6 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             finish()
             return
         }
-
-        // Inject components
-        DaggerProviderComponent.builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(applicationContext).mediaPlayCtrlWidgetDao()
         val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)

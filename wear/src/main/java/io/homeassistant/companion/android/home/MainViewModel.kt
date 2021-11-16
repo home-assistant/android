@@ -5,12 +5,15 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MainViewModel : ViewModel() {
+@HiltViewModel
+class MainViewModel @Inject constructor() : ViewModel() {
 
     private lateinit var homePresenter: HomePresenter
 
@@ -33,6 +36,9 @@ class MainViewModel : ViewModel() {
 
     private fun loadEntities() {
         viewModelScope.launch {
+            if (!homePresenter.isConnected()) {
+                return@launch
+            }
             favoriteEntityIds.addAll(homePresenter.getWearHomeFavorites())
             shortcutEntities.addAll(homePresenter.getTileShortcuts())
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()

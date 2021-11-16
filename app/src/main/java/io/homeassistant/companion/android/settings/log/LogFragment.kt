@@ -36,12 +36,7 @@ class LogFragment : Fragment() {
 
     companion object {
         private const val TAG = "LogFragment"
-
         private const val SHARE_LOGS_REQUEST_CODE = 2
-
-        fun newInstance(): LogFragment {
-            return LogFragment()
-        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

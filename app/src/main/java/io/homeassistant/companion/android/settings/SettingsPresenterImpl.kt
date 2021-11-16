@@ -21,7 +21,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class SettingsPresenterImpl @Inject constructor(
-    private val settingsView: SettingsView,
     private val urlUseCase: UrlRepository,
     private val integrationUseCase: IntegrationRepository,
     private val authenticationUseCase: AuthenticationRepository,
@@ -36,6 +35,11 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private lateinit var settingsView: SettingsView
+
+    override fun init(settingsView: SettingsView) {
+        this.settingsView = settingsView
+    }
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean {
         return runBlocking {

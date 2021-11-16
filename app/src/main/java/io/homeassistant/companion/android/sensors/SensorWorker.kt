@@ -15,14 +15,16 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 class SensorWorker(
     private val appContext: Context,
@@ -45,18 +47,13 @@ class SensorWorker(
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, sensorWorker)
         }
     }
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface SensorWorkerEntryPoint {
+        fun integrationRepository(): IntegrationRepository
+    }
 
     private val notificationManager = appContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-
-    init {
-        DaggerSensorComponent.builder()
-            .appComponent((appContext.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
-    }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()
@@ -76,6 +73,7 @@ class SensorWorker(
             if (lastUpdateSensor?.enabled == true) {
                 LastUpdateManager().sendLastUpdate(appContext, TAG)
             }
+            val integrationUseCase = EntryPointAccessors.fromApplication(appContext, SensorWorkerEntryPoint::class.java).integrationRepository()
             SensorReceiver().updateSensors(appContext, integrationUseCase)
         }
         Result.success()

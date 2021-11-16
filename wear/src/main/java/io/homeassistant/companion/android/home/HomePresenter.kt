@@ -6,10 +6,15 @@ import kotlinx.coroutines.flow.Flow
 
 interface HomePresenter {
 
+    fun init(homeView: HomeView)
+
     fun onViewReady()
     suspend fun onEntityClicked(entityId: String)
     fun onLogoutClicked()
     fun onFinish()
+
+    suspend fun isConnected(): Boolean
+
     suspend fun getEntities(): List<Entity<*>>
     suspend fun getEntityUpdates(): Flow<Entity<*>>
     suspend fun getWearHomeFavorites(): List<String>

@@ -25,15 +25,15 @@ import com.maltaisn.icondialog.IconDialogSettings
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.settings.DaggerSettingsComponent
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import java.lang.Exception
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.Callback {
 
     companion object {
@@ -49,9 +49,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
         private const val ENTITY_SUFFIX = "_entity_list"
         private const val ICON_PREFIX = "_icon"
         private const val TAG = "ManageShortcutFrag"
-        fun newInstance(): ManageShortcutsSettingsFragment {
-            return ManageShortcutsSettingsFragment()
-        }
     }
 
     private lateinit var iconPack: IconPack
@@ -91,10 +88,6 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
         onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[iconId]!!))
 
         activity?.title = getString(R.string.shortcuts)
-        DaggerSettingsComponent.builder()
-            .appComponent((activity?.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         val addNewShortcut = findPreference<PreferenceCategory>("pinned_shortcut_category")
         val shortcutManager = requireContext().getSystemService(ShortcutManager::class.java)

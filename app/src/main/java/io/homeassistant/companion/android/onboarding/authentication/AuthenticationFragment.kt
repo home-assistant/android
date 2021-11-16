@@ -15,43 +15,21 @@ import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
-import javax.inject.Inject
 
-class AuthenticationFragment : Fragment(), AuthenticationView {
+class AuthenticationFragment(
+    val presenter: AuthenticationPresenter,
+    val themesManager: ThemesManager
+) : Fragment(), AuthenticationView {
 
     companion object {
         private const val TAG = "AuthenticationFragment"
         private const val USER_AGENT_STRING = "HomeAssistant/Android"
-
-        fun newInstance(): AuthenticationFragment {
-            return AuthenticationFragment()
-        }
     }
-
-    @Inject
-    lateinit var presenter: AuthenticationPresenter
-
-    @Inject
-    lateinit var themesManager: ThemesManager
 
     private lateinit var webView: WebView
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
-    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreateView(
@@ -59,13 +37,20 @@ class AuthenticationFragment : Fragment(), AuthenticationView {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        presenter.init(this)
         return inflater.inflate(R.layout.fragment_authentication, container, false).apply {
             webView = findViewById(R.id.webview)
-            activity?.applicationContext?.let { themesManager.setThemeForWebView(it, webView.settings) }
+            activity?.applicationContext?.let {
+                themesManager.setThemeForWebView(
+                    it,
+                    webView.settings
+                )
+            }
             webView.apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
-                settings.userAgentString = USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
+                settings.userAgentString =
+                    USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                         return presenter.onRedirectUrl(url)

@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 open class MobileAppIntegrationPresenterBase constructor(
-    private val view: MobileAppIntegrationView,
     private val integrationUseCase: IntegrationRepository
 ) : MobileAppIntegrationPresenter {
 
@@ -22,6 +21,11 @@ open class MobileAppIntegrationPresenterBase constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private lateinit var view: MobileAppIntegrationView
+
+    override fun init(mobileAppIntegrationView: MobileAppIntegrationView) {
+        view = mobileAppIntegrationView
+    }
 
     internal open suspend fun createRegistration(simple: Boolean, deviceName: String): DeviceRegistration {
         return DeviceRegistration(

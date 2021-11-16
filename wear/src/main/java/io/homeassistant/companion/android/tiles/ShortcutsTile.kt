@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.core.content.ContextCompat
@@ -30,8 +31,8 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.backgroundColor
 import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.CoroutineScope
@@ -43,13 +44,12 @@ import javax.inject.Inject
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-private const val RESOURCES_VERSION = "1"
-
 // Dimensions (dp)
 private const val CIRCLE_SIZE = 56f
 private const val ICON_SIZE = 48f * 0.7071f // square that fits in 48dp circle
 private const val SPACING = 8f
 
+@AndroidEntryPoint
 class ShortcutsTile : TileService() {
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
@@ -59,6 +59,16 @@ class ShortcutsTile : TileService() {
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
+            val state = requestParams.state
+            if (state != null && state.lastClickableId.isNotEmpty()) {
+                Intent().also { intent ->
+                    intent.action = "io.homeassistant.companion.android.TILE_ACTION"
+                    intent.putExtra("entity_id", state.lastClickableId)
+                    intent.setPackage(packageName)
+                    sendBroadcast(intent)
+                }
+            }
+
             val entities = getEntities()
 
             Tile.Builder()
@@ -87,8 +97,14 @@ class ShortcutsTile : TileService() {
                         // Find icon name
                         val iconName: String = if (entity.icon.startsWith("mdi")) {
                             entity.icon.split(":")[1]
-                        } else {
-                            "palette" // Default scene icon
+                        } else { // Default scene icon
+                            when (entity.entityId.split(":")[1]) {
+                                "input_boolean", "switch" -> "light_switch"
+                                "light" -> "lightbulb"
+                                "script" -> "script_text_outline"
+                                "scene" -> "palette_outline"
+                                else -> "cellphone"
+                            }
                         }
 
                         // Create Bitmap from icon name
@@ -128,11 +144,6 @@ class ShortcutsTile : TileService() {
     }
 
     private suspend fun getEntities(): List<SimplifiedEntity> {
-        DaggerTilesComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this@ShortcutsTile)
-
         return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
     }
 
@@ -186,16 +197,9 @@ class ShortcutsTile : TileService() {
                 // Make clickable and call activity
                 .setClickable(
                     ModifiersBuilders.Clickable.Builder()
+                        .setId(entity.entityId)
                         .setOnClick(
-                            ActionBuilders.LaunchAction.Builder()
-                                .setAndroidActivity(
-                                    ActionBuilders.AndroidActivity.Builder()
-                                        .setClassName(TileActionActivity::class.java.name)
-                                        .setPackageName(this@ShortcutsTile.packageName)
-                                        .addKeyToExtraMapping("entity_id", ActionBuilders.stringExtra(entity.entityId))
-                                        .build()
-                                )
-                                .build()
+                            ActionBuilders.LoadAction.Builder().build()
                         )
                         .build()
                 )

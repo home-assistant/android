@@ -13,8 +13,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.databinding.FragmentNfcEditBinding
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +27,7 @@ import javax.inject.Inject
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
  */
+@AndroidEntryPoint
 class NfcEditFragment : Fragment() {
 
     val TAG = NfcEditFragment::class.simpleName
@@ -46,13 +47,6 @@ class NfcEditFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // Inject components
-        DaggerProviderComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
-
         // Inflate the layout for this fragment
         _binding = FragmentNfcEditBinding.inflate(inflater, container, false)
         return binding.root

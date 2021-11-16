@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.onboarding.authentication
 
+import android.content.Context
 import android.util.Log
+import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
 import kotlinx.coroutines.CoroutineScope
@@ -11,13 +13,14 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class AuthenticationPresenterImpl @Inject constructor(
-    private val view: AuthenticationView,
+    @ActivityContext context: Context,
     private val authenticationUseCase: AuthenticationRepository
 ) : AuthenticationPresenter {
     companion object {
         private const val TAG = "AuthenticationPresenter"
     }
 
+    private val view = context as AuthenticationView
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onNextClicked(flowId: String, username: String, password: String) {

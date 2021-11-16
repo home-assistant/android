@@ -8,8 +8,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.util.NotificationActionContentHandler
 import io.homeassistant.companion.android.util.cancel
@@ -19,6 +19,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class NotificationActionReceiver : BroadcastReceiver() {
 
     companion object {
@@ -36,10 +37,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
     lateinit var integrationUseCase: IntegrationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
-        DaggerServiceComponent.builder()
-            .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         val notificationAction =
             intent.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)
@@ -74,7 +71,11 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
-            OPEN_URI -> NotificationActionContentHandler.openUri(context, notificationAction.uri, onComplete)
+            OPEN_URI -> NotificationActionContentHandler.openUri(
+                context,
+                notificationAction.uri,
+                onComplete
+            )
         }
     }
 

@@ -11,20 +11,20 @@ import android.util.Log
 import android.util.TypedValue
 import android.widget.RemoteViews
 import android.widget.Toast
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetDao
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class EntityWidget : AppWidgetProvider() {
 
     companion object {
@@ -186,8 +186,6 @@ class EntityWidget : AppWidgetProvider() {
                 "AppWidgetId: " + appWidgetId
         )
 
-        ensureInjected(context)
-
         staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
         val staticWidgetList = staticWidgetDao.getAll()
 
@@ -236,17 +234,6 @@ class EntityWidget : AppWidgetProvider() {
             )
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
-        }
-    }
-
-    private fun ensureInjected(context: Context) {
-        if (context.applicationContext is GraphComponentAccessor) {
-            DaggerProviderComponent.builder()
-                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
-        } else {
-            throw Exception("Application Context passed is not of our application!")
         }
     }
 

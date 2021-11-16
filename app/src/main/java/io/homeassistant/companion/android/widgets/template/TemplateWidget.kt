@@ -11,19 +11,19 @@ import android.text.Html.fromHtml
 import android.util.Log
 import android.widget.RemoteViews
 import android.widget.Toast
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class TemplateWidget : AppWidgetProvider() {
     companion object {
         private const val TAG = "TemplateWidget"
@@ -84,8 +84,6 @@ class TemplateWidget : AppWidgetProvider() {
                 "Broadcast action: " + lastIntent + System.lineSeparator() +
                 "AppWidgetId: " + appWidgetId
         )
-
-        ensureInjected(context)
 
         templateWidgetDao = AppDatabase.getInstance(context).templateWidgetDao()
         val templateWidgetList = templateWidgetDao.getAll()
@@ -188,17 +186,6 @@ class TemplateWidget : AppWidgetProvider() {
                 )
             )
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
-        }
-    }
-
-    private fun ensureInjected(context: Context) {
-        if (context.applicationContext is GraphComponentAccessor) {
-            DaggerProviderComponent.builder()
-                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
-        } else {
-            throw Exception("Application Context passed is not of our application!")
         }
     }
 

@@ -14,22 +14,22 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import com.squareup.picasso.Picasso
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class CameraWidget : AppWidgetProvider() {
 
     companion object {
@@ -196,8 +196,6 @@ class CameraWidget : AppWidgetProvider() {
                 "AppWidgetId: " + appWidgetId
         )
 
-        ensureInjected(context)
-
         cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
         val cameraWidgetList = cameraWidgetDao.getAll()
 
@@ -250,17 +248,6 @@ class CameraWidget : AppWidgetProvider() {
 
     override fun onDisabled(context: Context) {
         // Enter relevant functionality for when the last widget is disabled
-    }
-
-    private fun ensureInjected(context: Context) {
-        if (context.applicationContext is GraphComponentAccessor) {
-            DaggerProviderComponent.builder()
-                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
-        } else {
-            throw Exception("Application Context passed is not of our application!")
-        }
     }
 
     private fun isConnectionActive(context: Context): Boolean {

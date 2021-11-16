@@ -3,6 +3,8 @@ plugins {
     id("kotlin-android")
     id("kotlin-kapt")
     id("com.github.triplet.play")
+    kotlin("kapt")
+    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -79,8 +81,9 @@ play {
 dependencies {
     implementation(project(":common"))
 
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.5.2")
 
     implementation("com.google.android.material:material:1.4.0")
 
@@ -89,13 +92,15 @@ dependencies {
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
     compileOnly("com.google.android.wearable:wearable:2.8.1")
 
-    implementation("com.google.dagger:dagger:2.40")
-    kapt("com.google.dagger:dagger-compiler:2.40")
+    implementation("com.google.dagger:hilt-android:2.40.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.40.1")
 
-    implementation("com.mikepenz:iconics-core:5.3.2")
+    implementation("com.squareup.okhttp3:okhttp:4.9.2")
+
+    implementation("com.mikepenz:iconics-core:5.3.3")
     implementation("androidx.appcompat:appcompat:1.3.1")
-    implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
-    implementation("com.mikepenz:iconics-compose:5.3.2")
+    implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
+    implementation("com.mikepenz:iconics-compose:5.3.3")
 
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.compose.compiler:compiler:1.0.5")

@@ -6,7 +6,7 @@ import android.service.controls.ControlsProviderService
 import android.service.controls.actions.ControlAction
 import android.util.Log
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +19,7 @@ import java.util.function.Consumer
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.R)
+@AndroidEntryPoint
 class HaControlsProviderService : ControlsProviderService() {
 
     companion object {
@@ -47,15 +48,6 @@ class HaControlsProviderService : ControlsProviderService() {
         "switch" to DefaultSwitchControl,
         "vacuum" to VacuumControl
     )
-
-    override fun onCreate() {
-        super.onCreate()
-
-        DaggerControlsComponent.builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
-    }
 
     override fun createPublisherForAllAvailable(): Flow.Publisher<Control> {
         return Flow.Publisher { subscriber ->

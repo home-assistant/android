@@ -9,6 +9,8 @@ plugins {
     id("com.google.firebase.appdistribution")
     id("com.github.triplet.play")
     id("com.google.gms.google-services")
+    kotlin("kapt")
+    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -138,13 +140,13 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.31")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.5.31")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.0")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
 
-    implementation("com.google.dagger:dagger:2.40")
-    kapt("com.google.dagger:dagger-compiler:2.40")
+    implementation("com.google.dagger:hilt-android:2.40.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.40.1")
 
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
@@ -170,7 +172,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-core:20.0.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.3.0")
+    "fullImplementation"("io.sentry:sentry-android:5.4.0")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
     implementation("androidx.work:work-runtime-ktx:2.7.0")
@@ -195,8 +197,8 @@ dependencies {
     implementation("com.google.android.material:compose-theme-adapter:1.0.4")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.2")
 
-    implementation("com.mikepenz:iconics-core:5.3.2")
-    implementation("com.mikepenz:community-material-typeface:5.8.55.0-kotlin@aar")
+    implementation("com.mikepenz:iconics-core:5.3.3")
+    implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

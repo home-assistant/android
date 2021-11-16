@@ -27,15 +27,14 @@ import com.maltaisn.icondialog.data.Icon
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
@@ -46,6 +45,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
@@ -245,12 +245,6 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             finish()
             return
         }
-
-        // Inject components
-        DaggerProviderComponent.builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         val buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
         val buttonWidget = buttonWidgetDao.get(appWidgetId)

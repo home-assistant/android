@@ -15,12 +15,6 @@ import io.homeassistant.companion.android.onboarding.views.WelcomeView
 
 class WelcomeFragment : Fragment() {
 
-    companion object {
-        fun newInstance(): WelcomeFragment {
-            return WelcomeFragment()
-        }
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -39,19 +33,15 @@ class WelcomeFragment : Fragment() {
 
     private fun welcomeNavigation() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val discoveryFragment = DiscoveryFragment.newInstance()
-            discoveryFragment.retainInstance = true
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, discoveryFragment)
+                .replace(R.id.content, DiscoveryFragment::class.java, null)
                 .addToBackStack("Welcome")
                 .commit()
         } else {
-            val manualFragment = ManualSetupFragment.newInstance()
-            manualFragment.retainInstance = true
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, manualFragment)
+                .replace(R.id.content, ManualSetupFragment::class.java, null)
                 .addToBackStack("Welcome")
                 .commit()
         }

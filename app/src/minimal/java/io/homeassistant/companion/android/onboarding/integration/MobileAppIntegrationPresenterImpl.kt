@@ -4,6 +4,5 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import javax.inject.Inject
 
 class MobileAppIntegrationPresenterImpl @Inject constructor(
-    view: MobileAppIntegrationView,
     integrationUseCase: IntegrationRepository
-) : MobileAppIntegrationPresenterBase(view, integrationUseCase)
+) : MobileAppIntegrationPresenterBase(integrationUseCase)

@@ -16,19 +16,17 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.switchmaterial.SwitchMaterial
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.databinding.FragmentMobileAppIntegrationBinding
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.DisabledLocationHandler
-import javax.inject.Inject
 
-class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
+class MobileAppIntegrationFragment(
+    val presenter: MobileAppIntegrationPresenter
+) : Fragment(), MobileAppIntegrationView {
 
     companion object {
         private const val LOADING_VIEW = 1
@@ -39,34 +37,16 @@ class MobileAppIntegrationFragment : Fragment(), MobileAppIntegrationView {
         private const val LOCATION_REQUEST_CODE = 0
 
         private var dialog: AlertDialog? = null
-
-        fun newInstance(): MobileAppIntegrationFragment {
-            return MobileAppIntegrationFragment()
-        }
     }
-
-    @Inject
-    lateinit var presenter: MobileAppIntegrationPresenter
-
     private var _binding: FragmentMobileAppIntegrationBinding? = null
     private val binding get() = _binding!!
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        presenter.init(this)
         _binding = FragmentMobileAppIntegrationBinding.inflate(inflater, container, false)
         val context = binding.root.context
 

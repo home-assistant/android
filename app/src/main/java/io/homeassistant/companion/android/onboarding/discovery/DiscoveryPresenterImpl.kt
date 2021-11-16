@@ -10,11 +10,16 @@ import java.net.URL
 import javax.inject.Inject
 
 class DiscoveryPresenterImpl @Inject constructor(
-    val view: DiscoveryView,
     val urlUseCase: UrlRepository
 ) : DiscoveryPresenter {
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private lateinit var view: DiscoveryView
+
+    override fun init(discoveryView: DiscoveryView) {
+        view = discoveryView
+    }
 
     override fun onUrlSelected(url: URL) {
         mainScope.launch {
