@@ -560,7 +560,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 "[" +
                     "document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0]," +
                     "document.getElementsByTagName('html')[0].computedStyleMap().get('--primary-background-color')[0]" +
-                "].join('" + htmlArraySpacer + "')"
+                    "].join('" + htmlArraySpacer + "')"
             ) { webViewColors ->
                 GlobalScope.launch {
                     withContext(Dispatchers.Main) {
