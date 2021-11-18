@@ -29,7 +29,6 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
-
     }
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
@@ -132,7 +131,6 @@ class EntityWidget : BaseWidgetProvider() {
         return staticWidgetDao.get(appWidgetId)?.lastUpdate
     }
 
-
     override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
@@ -153,8 +151,8 @@ class EntityWidget : BaseWidgetProvider() {
             Log.d(
                 TAG,
                 "Saving entity state config data:" + System.lineSeparator() +
-                        "entity id: " + entitySelection + System.lineSeparator() +
-                        "attribute: " + (attributeSelection ?: "N/A")
+                    "entity id: " + entitySelection + System.lineSeparator() +
+                    "attribute: " + (attributeSelection ?: "N/A")
             )
             staticWidgetDao.add(
                 StaticWidgetEntity(
@@ -179,5 +177,4 @@ class EntityWidget : BaseWidgetProvider() {
             staticWidgetDao.delete(appWidgetId)
         }
     }
-
 }
