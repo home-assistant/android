@@ -28,5 +28,5 @@ interface WebViewPresenter {
 
     fun isSsidUsed(): Boolean
 
-    suspend fun getStatusBarAndNavigationBarColor(webViewColor: String): Int
+    suspend fun parseWebViewColor(webViewColor: String): Int
 }
