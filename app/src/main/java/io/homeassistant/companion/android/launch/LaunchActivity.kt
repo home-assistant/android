@@ -23,6 +23,7 @@ class LaunchActivity : BaseActivity(), LaunchView {
 
         startActivity(WebViewActivity.newInstance(this, intent.data?.path))
         finish()
+        overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
 
     override fun displayOnBoarding(sessionConnected: Boolean) {
@@ -31,6 +32,7 @@ class LaunchActivity : BaseActivity(), LaunchView {
 
         startActivity(intent)
         finish()
+        overridePendingTransition(0, 0) // Disable activity start/stop animation
     }
 
     override fun onDestroy() {
