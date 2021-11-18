@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.LaunchScreen.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:colorBackground">@color/colorLaunchScreenBackground</item>
+        <item name="android:statusBarColor">@color/colorLaunchScreenBackground</item>
+        <item name="android:navigationBarColor">@color/colorLaunchScreenBackground</item>
+    </style>
+</resources>

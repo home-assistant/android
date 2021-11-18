@@ -16,5 +16,5 @@
     <color name="colorWidgetButtonBackground">#1c1c1c</color>
     <color name="colorWidgetButtonLabel">#E6E6E6</color>
     <color name="colorActionBarPopupBackground">#2B2B2B</color>
-    <color name="colorLaunchScreenBackground">#fafafa</color>
+    <color name="colorLaunchScreenBackground">#111111</color>
 </resources>
