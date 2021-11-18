@@ -216,7 +216,8 @@
         </receiver>
 
         <activity android:name=".launch.LaunchActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.LaunchScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
