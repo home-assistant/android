@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.common.data.wifi.WifiHelper
 import io.homeassistant.companion.android.common.data.wifi.WifiHelperImpl
 import okhttp3.OkHttpClient
 import javax.inject.Named
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -35,19 +36,23 @@ abstract class DataModule {
 
     companion object {
         @Provides
+        @Singleton
         fun provideAuthenticationService(homeAssistantApis: HomeAssistantApis): AuthenticationService =
             homeAssistantApis.retrofit.create(AuthenticationService::class.java)
 
         @Provides
+        @Singleton
         fun providesIntegrationService(homeAssistantApis: HomeAssistantApis): IntegrationService =
             homeAssistantApis.retrofit.create(IntegrationService::class.java)
 
         @Provides
+        @Singleton
         fun providesOkHttpClient(homeAssistantApis: HomeAssistantApis): OkHttpClient =
             homeAssistantApis.okHttpClient
 
         @Provides
         @Named("url")
+        @Singleton
         fun provideUrlLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
             LocalStorageImpl(
                 appContext.getSharedPreferences(
@@ -58,6 +63,7 @@ abstract class DataModule {
 
         @Provides
         @Named("session")
+        @Singleton
         fun provideSessionLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
             LocalStorageImpl(
                 appContext.getSharedPreferences(
@@ -68,6 +74,7 @@ abstract class DataModule {
 
         @Provides
         @Named("integration")
+        @Singleton
         fun provideIntegrationLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
             LocalStorageImpl(
                 appContext.getSharedPreferences(
@@ -78,6 +85,7 @@ abstract class DataModule {
 
         @Provides
         @Named("themes")
+        @Singleton
         fun providePrefsLocalStorage(@ApplicationContext appContext: Context): LocalStorage =
             LocalStorageImpl(
                 appContext.getSharedPreferences(
@@ -88,43 +96,54 @@ abstract class DataModule {
 
         @Provides
         @Named("manufacturer")
+        @Singleton
         fun provideDeviceManufacturer(): String = Build.MANUFACTURER
 
         @Provides
         @Named("model")
+        @Singleton
         fun provideDeviceModel(): String = Build.MODEL
 
         @Provides
         @Named("osVersion")
+        @Singleton
         fun provideDeviceOsVersion() = Build.VERSION.SDK_INT.toString()
 
         @SuppressLint("HardwareIds")
         @Provides
         @Named("deviceId")
+        @Singleton
         fun provideDeviceId(@ApplicationContext appContext: Context) = Settings.Secure.getString(
             appContext.contentResolver,
             Settings.Secure.ANDROID_ID
         )
 
         @Provides
+        @Singleton
         fun wifiManager(@ApplicationContext appContext: Context) = appContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
     }
 
     @Binds
+    @Singleton
     abstract fun bindAuthRepository(authenticationRepository: AuthenticationRepositoryImpl): AuthenticationRepository
 
     @Binds
+    @Singleton
     abstract fun bindIntegrationRepository(integrationRepository: IntegrationRepositoryImpl): IntegrationRepository
 
     @Binds
+    @Singleton
     abstract fun bindPrefsRepository(prefsRepository: PrefsRepositoryImpl): PrefsRepository
 
     @Binds
+    @Singleton
     abstract fun bindUrlRepository(urlRepository: UrlRepositoryImpl): UrlRepository
 
     @Binds
+    @Singleton
     abstract fun bindWebSocketRepository(webSocketRepository: WebSocketRepositoryImpl): WebSocketRepository
 
     @Binds
+    @Singleton
     abstract fun bindWifiRepository(wifiHelper: WifiHelperImpl): WifiHelper
 }
