@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
@@ -235,6 +236,29 @@ class WebSocketRepositoryImpl @Inject constructor(
         producerScope?.send(eventResponse.data)
     }
 
+    @ExperimentalCoroutinesApi
+    private fun handleClosingSocket() {
+        connected = Job()
+        connection = null
+        // If we still have flows flowing
+        if (stateChangedFlow != null && ioScope.isActive) {
+            ioScope.launch {
+                try {
+                    connect()
+                    // Register for websocket events!
+                    sendMessage(
+                        mapOf(
+                            "type" to "subscribe_events",
+                            "event_type" to "state_changed"
+                        )
+                    )
+                } catch (e: Exception) {
+                    Log.e(TAG, "Issue reconnecting websocket", e)
+                }
+            }
+        }
+    }
+
     override fun onOpen(webSocket: WebSocket, response: Response) {
         Log.d(TAG, "Websocket: onOpen")
     }
@@ -262,18 +286,16 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
         Log.d(TAG, "Websocket: onClosing code: $code, reason: $reason")
-        connected = Job()
-        connection = null
+        handleClosingSocket()
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         Log.d(TAG, "Websocket: onClosed")
-        connected = Job()
-        connection = null
+        handleClosingSocket()
     }
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-        Log.d(TAG, "Websocket: onFailure")
-        Log.e(TAG, "Failure in websocket", t)
+        Log.e(TAG, "Websocket: onFailure", t)
+        handleClosingSocket()
     }
 }
