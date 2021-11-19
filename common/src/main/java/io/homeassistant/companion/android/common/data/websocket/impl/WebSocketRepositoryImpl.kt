@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -57,7 +59,9 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val responseCallbackJobs = mutableMapOf<Long, CancellableContinuation<SocketResponse>>()
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null
+    private val connectedMutex = Mutex()
     private var connected = Job()
+    private val stateChangedMutex = Mutex()
     private var stateChangedFlow: SharedFlow<StateChangedEvent>? = null
 
     @ExperimentalCoroutinesApi
@@ -123,62 +127,65 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     @ExperimentalCoroutinesApi
     override suspend fun getStateChanges(): Flow<StateChangedEvent> {
-        if (stateChangedFlow == null) {
+        stateChangedMutex.withLock {
+            if (stateChangedFlow == null) {
 
-            val response = sendMessage(
-                mapOf(
-                    "type" to "subscribe_events",
-                    "event_type" to "state_changed"
+                val response = sendMessage(
+                    mapOf(
+                        "type" to "subscribe_events",
+                        "event_type" to "state_changed"
+                    )
                 )
-            )
 
-            stateChangedFlow = callbackFlow {
-                producerScope = this
-                awaitClose {
-                    Log.d(TAG, "Unsubscribing from state_changes")
-                    ioScope.launch {
-                        sendMessage(
-                            mapOf(
-                                "type" to "unsubscribe_events",
-                                "subscription" to response.id
+                stateChangedFlow = callbackFlow {
+                    producerScope = this
+                    awaitClose {
+                        Log.d(TAG, "Unsubscribing from state_changes")
+                        ioScope.launch {
+                            sendMessage(
+                                mapOf(
+                                    "type" to "unsubscribe_events",
+                                    "subscription" to response.id
+                                )
                             )
-                        )
+                        }
+                        producerScope = null
+                        stateChangedFlow = null
                     }
-                    producerScope = null
-                    stateChangedFlow = null
-                }
-            }.shareIn(ioScope, SharingStarted.WhileSubscribed())
-        }
+                }.shareIn(ioScope, SharingStarted.WhileSubscribed())
+            }
 
-        return stateChangedFlow!!
+            return stateChangedFlow!!
+        }
     }
 
     /**
      * This method will
      */
-    @Synchronized
     private suspend fun connect() {
-        if (connection != null && connected.isCompleted) {
-            return
-        }
+        connectedMutex.withLock {
+            if (connection != null && connected.isCompleted) {
+                return
+            }
 
-        val url = urlRepository.getUrl() ?: throw Exception("Unable to get URL for WebSocket")
-        val urlString = url.toString()
-            .replace("https://", "wss://")
-            .replace("http://", "ws://")
-            .plus("api/websocket")
+            val url = urlRepository.getUrl() ?: throw Exception("Unable to get URL for WebSocket")
+            val urlString = url.toString()
+                .replace("https://", "wss://")
+                .replace("http://", "ws://")
+                .plus("api/websocket")
 
-        connection = okHttpClient.newWebSocket(
-            Request.Builder().url(urlString).build(),
-            this
-        )
+            connection = okHttpClient.newWebSocket(
+                Request.Builder().url(urlString).build(),
+                this
+            )
 
-        // Preemptively send auth
-        authenticate()
+            // Preemptively send auth
+            authenticate()
 
-        // Wait up to 30 seconds for auth response
-        withTimeout(30000) {
-            connected.join()
+            // Wait up to 30 seconds for auth response
+            withTimeout(30000) {
+                connected.join()
+            }
         }
     }
 

@@ -144,24 +144,13 @@ open class HomeAssistantApplication : Application() {
         val mediaPlayerWidget = MediaPlayerControlsWidget()
         val templateWidget = TemplateWidget()
 
-        registerReceiver(
-            buttonWidget,
-            IntentFilter(Intent.ACTION_SCREEN_ON)
-        )
+        val screenIntentFilter = IntentFilter()
+        screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
+        screenIntentFilter.addAction(Intent.ACTION_SCREEN_OFF)
 
-        registerReceiver(
-            entityWidget,
-            IntentFilter(Intent.ACTION_SCREEN_ON)
-        )
-
-        registerReceiver(
-            mediaPlayerWidget,
-            IntentFilter(Intent.ACTION_SCREEN_ON)
-        )
-
-        registerReceiver(
-            templateWidget,
-            IntentFilter(Intent.ACTION_SCREEN_ON)
-        )
+        registerReceiver(buttonWidget, screenIntentFilter)
+        registerReceiver(entityWidget, screenIntentFilter)
+        registerReceiver(mediaPlayerWidget, screenIntentFilter)
+        registerReceiver(templateWidget, screenIntentFilter)
     }
 }
