@@ -54,11 +54,14 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (lastIntent) {
             UPDATE_VIEW -> updateView(context, appWidgetId)
-            RECEIVE_DATA -> saveEntityConfiguration(
-                context,
-                intent.extras,
-                appWidgetId
-            )
+            RECEIVE_DATA -> {
+                saveEntityConfiguration(
+                    context,
+                    intent.extras,
+                    appWidgetId
+                )
+                onScreenOn(context)
+            }
             Intent.ACTION_SCREEN_ON -> onScreenOn(context)
             Intent.ACTION_SCREEN_OFF -> onScreenOff()
         }
@@ -68,6 +71,9 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         mainScope = CoroutineScope(Dispatchers.Main + Job())
         if (entityUpdates == null) {
             mainScope.launch {
+                if (!integrationUseCase.isRegistered()) {
+                    return@launch
+                }
                 updateAllWidgets(context)
                 entityUpdates = integrationUseCase.getEntityUpdates()
                 entityUpdates!!.collect {
