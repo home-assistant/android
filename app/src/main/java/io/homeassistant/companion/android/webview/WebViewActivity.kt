@@ -44,6 +44,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.DefaultLoadControl
@@ -531,7 +532,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         // Set webView background color to transparent to override default black and default white backgrounds
         // and let css draw its own background when its ready
-        webView.setBackgroundColor(resources.getColor(R.color.colorLaunchScreenBackground, theme))
+        webView.setBackgroundColor(ResourcesCompat.getColor(resources, R.color.colorLaunchScreenBackground, theme))
 
         themesManager.setThemeForWebView(this, webView.settings)
 
