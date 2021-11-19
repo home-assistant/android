@@ -4,9 +4,9 @@
     <item android:drawable="@color/colorAccent" />
 
     <item
-        android:drawable="@drawable/splash_logo"
-        android:width="200px"
-        android:height="200px"
+        android:drawable="@drawable/ic_launcher_foreground"
+        android:width="315px"
+        android:height="315px"
         android:gravity="center"/>
 
 </layer-list>
