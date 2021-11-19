@@ -3,7 +3,7 @@
     <color name="colorDialogBackground">#111111</color>
     <color name="colorDialogMessage">@android:color/white</color>
     <color name="colorDialogTitle">@android:color/white</color>
-    <color name="colorActivityBackground">#1c1c1c</color>
+    <color name="colorBackground">#1c1c1c</color>
     <color name="colorPrimary">#03A9F4</color>
     <color name="colorPrimaryDark">#111111</color>
     <color name="colorAccent">#03A9F4</color>
@@ -16,4 +16,5 @@
     <color name="colorWidgetButtonBackground">#1c1c1c</color>
     <color name="colorWidgetButtonLabel">#E6E6E6</color>
     <color name="colorActionBarPopupBackground">#2B2B2B</color>
+    <color name="colorLaunchScreenBackground">#111111</color>
 </resources>

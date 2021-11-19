@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/colorLaunchScreenBackground" />
+
+    <!-- You can insert your own image assets here -->
+    <item android:width="170dp"
+        android:height="170dp"
+        android:gravity="center"
+        android:drawable="@drawable/app_icon">
+    </item>
+</layer-list>

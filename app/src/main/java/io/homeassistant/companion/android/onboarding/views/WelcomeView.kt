@@ -38,7 +38,7 @@ fun WelcomeView(
         modifier = Modifier.verticalScroll(scrollState)
     ) {
         Image(
-            painter = painterResource(id = R.drawable.app_icon),
+            painter = painterResource(id = R.drawable.app_icon_round),
             contentDescription = stringResource(
                 id = R.string.app_name
             ),
