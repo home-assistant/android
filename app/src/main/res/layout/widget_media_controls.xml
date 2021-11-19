@@ -30,7 +30,7 @@
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"
-                android:src="@drawable/app_icon"
+                android:src="@drawable/app_icon_round"
                 android:contentDescription="@string/widget_media_image_description"
                 android:scaleType="fitCenter" />
         </FrameLayout>
