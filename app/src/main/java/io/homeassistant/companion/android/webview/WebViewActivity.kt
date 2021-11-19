@@ -531,7 +531,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         // Set webView background color to transparent to override default black and default white backgrounds
         // and let css draw its own background when its ready
-        webView.setBackgroundColor(Color.TRANSPARENT)
+        webView.setBackgroundColor(resources.getColor(R.color.colorLaunchScreenBackground, theme))
 
         themesManager.setThemeForWebView(this, webView.settings)
 
