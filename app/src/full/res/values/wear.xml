@@ -3,5 +3,7 @@
     <string-array name="android_wear_capabilities">
         <!-- IMPORTANT NOTE: Should be different than capability in Wear res/values/wear.xml. -->
         <item>verify_phone_app</item>
+        <item>request_authentication_token</item>
+        <item>request_home_assistant_instance</item>
     </string-array>
 </resources>
