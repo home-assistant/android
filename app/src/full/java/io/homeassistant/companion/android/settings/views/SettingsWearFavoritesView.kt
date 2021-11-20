@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.views
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
@@ -37,9 +36,7 @@ val supportedDomains = listOf(
 fun LoadWearFavoritesSettings(
     entities: Map<String, Entity<*>>,
     favoritesList: List<String>,
-    onEntitySelected: (Boolean, String, Activity) -> Unit,
-    isFavoriteSelected: (Int) -> Boolean,
-    activity: Activity
+    onEntitySelected: (Boolean, String) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -79,15 +76,14 @@ fun LoadWearFavoritesSettings(
                         .clickable {
                             onEntitySelected(
                                 false,
-                                favoritesList[index],
-                                activity
+                                favoritesList[index]
                             )
                         }
                 ) {
                     Checkbox(
-                        checked = isFavoriteSelected(index),
+                        checked = favoritesList.contains(favoritesList[index]),
                         onCheckedChange = {
-                            onEntitySelected(it, favoritesList[index], activity)
+                            onEntitySelected(it, favoritesList[index])
                         },
                         modifier = Modifier.padding(end = 5.dp)
                     )
@@ -105,13 +101,13 @@ fun LoadWearFavoritesSettings(
                             modifier = Modifier
                                 .padding(15.dp)
                                 .clickable {
-                                    onEntitySelected(true, item.entityId, activity)
+                                    onEntitySelected(true, item.entityId)
                                 }
                         ) {
                             Checkbox(
                                 checked = false,
                                 onCheckedChange = {
-                                    onEntitySelected(it, item.entityId, activity)
+                                    onEntitySelected(it, item.entityId)
                                 },
                                 modifier = Modifier.padding(end = 5.dp)
                             )
@@ -133,8 +129,6 @@ private fun PreviewLoadWearFavoritesSettings() {
     LoadWearFavoritesSettings(
         entities = previewEntityList,
         favoritesList = previewFavoritesList,
-        onEntitySelected = { _, _, _ -> },
-        isFavoriteSelected = { true },
-        Activity()
+        onEntitySelected = { _, _ -> }
     )
 }

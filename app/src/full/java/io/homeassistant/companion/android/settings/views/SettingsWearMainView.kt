@@ -3,14 +3,11 @@ package io.homeassistant.companion.android.settings.views
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
-import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.AndroidEntryPoint
@@ -41,9 +38,8 @@ class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListen
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val activity = this
         setContent {
-            LoadSettingsHomeView(settingsWearViewModel, currentNodes.first().displayName, activity)
+            LoadSettingsHomeView(settingsWearViewModel, currentNodes.first().displayName)
         }
         settingsWearViewModel.init(integrationUseCase)
     }
@@ -51,8 +47,8 @@ class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListen
     override fun onResume() {
         super.onResume()
         Wearable.getDataClient(this).addListener(this)
-        Thread { settingsWearViewModel.findExistingFavorites(this) }.start()
-        Thread { settingsWearViewModel.requestFavorites(this) }.start()
+        Thread { settingsWearViewModel.findExistingFavorites() }.start()
+        Thread { settingsWearViewModel.requestFavorites() }.start()
     }
 
     override fun onPause() {
@@ -61,17 +57,6 @@ class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListen
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
-        Log.d(TAG, "onDataChanged ${dataEvents.count}")
-        dataEvents.forEach { event ->
-            if (event.type == DataEvent.TYPE_CHANGED) {
-                event.dataItem.also { item ->
-                    if (item.uri.path?.compareTo("/home_favorites") == 0) {
-                        val data = settingsWearViewModel.getFavorites(DataMapItem.fromDataItem(item).dataMap)
-                        settingsWearViewModel.saveHomeFavorites(data, item)
-                        Log.d(TAG, "onDataChanged: Found home favorites: $data")
-                    }
-                }
-            }
-        }
+        // No op
     }
 }

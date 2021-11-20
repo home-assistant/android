@@ -1,25 +1,32 @@
 package io.homeassistant.companion.android.settings
 
-import android.app.Activity
+import android.app.Application
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.CapabilityClient
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataItem
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.launch
 
-class SettingsWearViewModel : ViewModel() {
+class SettingsWearViewModel(application: Application) :
+    AndroidViewModel(application),
+    DataClient.OnDataChangedListener {
 
+    val app = application
     private lateinit var integrationUseCase: IntegrationRepository
 
     private val TAG = "SettingsWearViewModel"
@@ -42,7 +49,7 @@ class SettingsWearViewModel : ViewModel() {
         }
     }
 
-    fun saveHomeFavorites(data: String, item: DataItem) {
+    private fun saveHomeFavorites(data: String, item: DataItem) {
         getFavorites(DataMapItem.fromDataItem(item).dataMap)
         favoriteEntityIds.clear()
         favoriteEntityIds.addAll(
@@ -50,15 +57,15 @@ class SettingsWearViewModel : ViewModel() {
         )
     }
 
-    fun onEntitySelected(checked: Boolean, entityId: String, activity: Activity) {
+    fun onEntitySelected(checked: Boolean, entityId: String) {
         if (checked)
             favoriteEntityIds.add(entityId)
         else
             favoriteEntityIds.remove(entityId)
-        sendHomeFavorites(favoriteEntityIds.toList(), activity)
+        sendHomeFavorites(favoriteEntityIds.toList())
     }
 
-    private fun sendHomeFavorites(favoritesList: List<String>, activity: Activity) = viewModelScope.launch {
+    private fun sendHomeFavorites(favoritesList: List<String>) = viewModelScope.launch {
         Log.d(TAG, "sendHomeFavorites")
 
         val putDataRequest = PutDataMapRequest.create("/save_home_favorites").run {
@@ -67,50 +74,78 @@ class SettingsWearViewModel : ViewModel() {
             asPutDataRequest()
         }
 
-        Wearable.getDataClient(activity).putDataItem(putDataRequest).apply {
+        Wearable.getDataClient(app).putDataItem(putDataRequest).apply {
             addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to wear") }
-            addOnFailureListener { Log.d(TAG, "Failed to send favorites to wear") }
-        }
-    }
-
-    fun findExistingFavorites(activity: Activity) {
-        Log.d(TAG, "Finding existing favorites")
-        Tasks.await(Wearable.getDataClient(activity).getDataItems(Uri.parse("wear://*/home_favorites"))).apply {
-            Log.d(TAG, "Found existing favorites: ${this.count}")
-            this.forEach {
-                val data = getFavorites(DataMapItem.fromDataItem(this.first()).dataMap)
-                Log.d(TAG, "Favorites: $data")
-                favoriteEntityIds.clear()
-                favoriteEntityIds.addAll(
-                    data.removeSurrounding("[", "]").split(", ").map { it }
-                )
+            addOnFailureListener { e ->
+                Log.e(TAG, "Failed to send favorites to wear", e)
+                Toast.makeText(app, app.getString(R.string.failure_send_favorites_wear), Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    fun getFavorites(map: DataMap): String {
-        map.apply {
-            return getString("favorites", "")
+    fun findExistingFavorites() {
+        Log.d(TAG, "Finding existing favorites")
+        viewModelScope.launch {
+            Wearable.getDataClient(app).getDataItems(Uri.parse("wear://*/home_favorites"))
+                .addOnSuccessListener { dataItemBuffer ->
+                    Log.d(TAG, "Found existing favorites: ${dataItemBuffer.count}")
+                    dataItemBuffer.forEach {
+                        val data = getFavorites(DataMapItem.fromDataItem(it).dataMap)
+                        Log.d(TAG, "Favorites: $data")
+                        favoriteEntityIds.clear()
+                        favoriteEntityIds.addAll(
+                            data.removeSurrounding("[", "]").split(", ").map { it }
+                        )
+                    }
+                }
         }
     }
 
-    fun requestFavorites(activity: Activity) {
+    private fun getFavorites(map: DataMap): String {
+        return map.getString("favorites", "")
+    }
+
+    fun requestFavorites() {
         Log.d(TAG, "Requesting favorites")
 
-        val capabilityInfo = Tasks.await(
-            Wearable.getCapabilityClient(activity)
+        viewModelScope.launch {
+            Wearable.getCapabilityClient(app)
                 .getCapability(CAPABILITY_WEAR_FAVORITES, CapabilityClient.FILTER_REACHABLE)
-        )
+                .addOnSuccessListener {
 
-        capabilityInfo.nodes.forEach { node ->
-            Log.d(TAG, "Requesting favorite data")
-            Wearable.getMessageClient(activity).sendMessage(
-                node.id,
-                "/send_home_favorites",
-                ByteArray(0)
-            ).apply {
-                addOnSuccessListener { Log.d(TAG, "Request to favorites sent successfully") }
-                addOnFailureListener { Log.d(TAG, "Failed to get favorites") }
+                    it.nodes.forEach { node ->
+                        Log.d(TAG, "Requesting favorite data")
+                        Wearable.getMessageClient(app).sendMessage(
+                            node.id,
+                            "/send_home_favorites",
+                            ByteArray(0)
+                        ).apply {
+                            addOnSuccessListener {
+                                Log.d(
+                                    TAG,
+                                    "Request to favorites sent successfully"
+                                )
+                            }
+                            addOnFailureListener { e ->
+                                Log.e(TAG, "Failed to get favorites", e)
+                            }
+                        }
+                    }
+                }
+        }
+    }
+
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        Log.d(TAG, "onDataChanged ${dataEvents.count}")
+        dataEvents.forEach { event ->
+            if (event.type == DataEvent.TYPE_CHANGED) {
+                event.dataItem.also { item ->
+                    if (item.uri.path?.compareTo("/home_favorites") == 0) {
+                        val data = getFavorites(DataMapItem.fromDataItem(item).dataMap)
+                        saveHomeFavorites(data, item)
+                        Log.d(TAG, "onDataChanged: Found home favorites: $data")
+                    }
+                }
             }
         }
     }

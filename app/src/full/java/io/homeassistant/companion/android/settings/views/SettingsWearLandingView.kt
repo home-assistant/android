@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.views
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
@@ -26,10 +25,10 @@ import io.homeassistant.companion.android.util.wearDeviceName
 
 @Composable
 fun SettingWearLandingView(
-    context: Context,
     deviceName: String,
     navigateFavorites: () -> Unit
 ) {
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
@@ -75,5 +74,5 @@ fun SettingWearLandingView(
 @Preview
 @Composable
 private fun PreviewSettingWearLandingView() {
-    SettingWearLandingView(LocalContext.current, wearDeviceName) {}
+    SettingWearLandingView(wearDeviceName) {}
 }

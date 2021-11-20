@@ -653,4 +653,5 @@ like to connect to:</string>
   <string name="wear_settings">Wear Device Settings</string>
   <string name="set_favorites_on_device">Set Favorites on Wear OS Device</string>
   <string name="manage_favorites_device">Manage Favorites on device %1$s</string>
+    <string name="failure_send_favorites_wear">Failed to send favorites selection to Wear OS</string>
 </resources>

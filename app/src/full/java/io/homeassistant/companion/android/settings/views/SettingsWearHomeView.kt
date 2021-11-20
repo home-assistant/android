@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.settings.views
 
-import android.app.Activity
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -12,28 +10,24 @@ import io.homeassistant.companion.android.settings.SettingsWearViewModel
 @Composable
 fun LoadSettingsHomeView(
     settingsWearViewModel: SettingsWearViewModel,
-    deviceName: String,
-    activity: Activity
+    deviceName: String
 ) {
-    val context = LocalContext.current
     MdcTheme {
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = SettingsWearMainView.LANDING) {
             composable(SettingsWearMainView.FAVORITES) {
                 LoadWearFavoritesSettings(
                     settingsWearViewModel.entities,
-                    settingsWearViewModel.favoriteEntityIds.toList(),
-                    { b: Boolean, s: String, a: Activity -> settingsWearViewModel.onEntitySelected(b, s, a) },
-                    {
-                        settingsWearViewModel.favoriteEntityIds.toList().contains(
-                            settingsWearViewModel.favoriteEntityIds.toList()[it]
-                        )
-                    },
-                    activity
-                )
+                    settingsWearViewModel.favoriteEntityIds.toList()
+                ) { b: Boolean, s: String ->
+                    settingsWearViewModel.onEntitySelected(
+                        b,
+                        s
+                    )
+                }
             }
             composable(SettingsWearMainView.LANDING) {
-                SettingWearLandingView(context, deviceName) {
+                SettingWearLandingView(deviceName) {
                     navController.navigate(SettingsWearMainView.FAVORITES)
                 }
             }
