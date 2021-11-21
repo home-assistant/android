@@ -42,9 +42,13 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.MediaItem
@@ -164,6 +168,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         binding = ActivityWebviewBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Initially set status and navigation bar color to colorLaunchScreenBackground to match the launch screen until the web frontend is loaded
+        val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, R.color.colorLaunchScreenBackground, theme)
+        setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
         if (BuildConfig.DEBUG) {
             WebView.setWebContentsDebuggingEnabled(true)
@@ -528,6 +536,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 "externalApp"
             )
         }
+
+        // Set WebView background color to transparent, so that the theme of the android activity has control over it.
+        // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
+        binding.webview.setBackgroundColor(Color.TRANSPARENT)
 
         themesManager.setThemeForWebView(this, webView.settings)
 
@@ -983,77 +995,22 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         waitForConnection()
     }
 
-    private fun useWindowInsets(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-
-    @Suppress("DEPRECATION")
     override fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int) {
         if (statusBarColor != 0) {
-            val darkStatusBarBackground = isColorDark(statusBarColor)
             window.statusBarColor = statusBarColor
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (useWindowInsets()) {
-                    val flags = if (darkStatusBarBackground) {
-                        // Theme color is dark, so the status bar background should be also dark
-                        // Then remove the light flag which, indicates that the status bar background is light
-                        0 // Remove light flag
-                    } else {
-                        // Theme color is light, so the status bar background should be also light
-                        // Then add the light flag, which indicates that the status bar background is light
-                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS // Add light flag
-                    }
-                    window.insetsController?.setSystemBarsAppearance(flags, WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS)
-                } else {
-                    var flags = window.decorView.systemUiVisibility
-
-                    flags = if (darkStatusBarBackground) {
-                        // Theme color is dark, so the status bar background should be also dark
-                        // Then remove the light flag which, indicates that the status bar background is light
-                        flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv() // Remove light flag
-                    } else {
-                        // Theme color is light, so the status bar background should be also light
-                        // Then add the light flag, which indicates that the status bar background is light
-                        flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR // Add light flag
-                    }
-                    window.decorView.systemUiVisibility = flags
-                }
+            ViewCompat.getWindowInsetsController(window.decorView)?.apply {
+                isAppearanceLightStatusBars = !isColorDark(statusBarColor)
             }
         } else {
             Log.e(TAG, "Cannot set status bar color $statusBarColor. Skipping coloring...")
         }
 
         if (navigationBarColor != 0) {
-            val darkNavigationBarBackground = isColorDark(navigationBarColor)
             window.navigationBarColor = navigationBarColor
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (useWindowInsets()) {
-                    val flags = if (darkNavigationBarBackground) {
-                        // Theme color is dark, so the navigation bar background should be also dark
-                        // Then remove the light flag which, indicates that the navigation bar background is light
-                        0 // Remove light flag
-                    } else {
-                        // Theme color is light, so the navigation bar background should be also light
-                        // Then add the light flag, which indicates that the navigation bar background is light
-                        WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS // Add light flag
-                    }
-                    window.insetsController?.setSystemBarsAppearance(flags, WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)
-                } else {
-                    var flags = window.decorView.systemUiVisibility
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        flags = if (darkNavigationBarBackground) {
-                            // Theme color is dark, so the navigation bar background should be also dark
-                            // Then remove the light flag which, indicates that the navigation background is light
-                            flags and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv() // Remove light flag
-                        } else {
-                            // Theme color is light, so the navigation background should be also light
-                            // Then add the light flag, which indicates that the navigation background is light
-                            flags or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR // Add light flag
-                        }
-                    }
-                    window.decorView.systemUiVisibility = flags
-                }
+            ViewCompat.getWindowInsetsController(window.decorView)?.apply {
+                isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
             }
         } else {
             Log.e(TAG, "Cannot set navigation bar color $navigationBarColor. Skipping coloring...")
