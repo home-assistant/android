@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.phone
 
 import android.net.Uri
 import android.util.Log
-import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
@@ -14,7 +13,10 @@ import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -22,6 +24,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     companion object {
         private const val TAG = "PhoneSettingsListener"
@@ -61,7 +65,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         }
     }
 
-    private fun sendHomeFavorites(nodeId: String) = runBlocking {
+    private fun sendHomeFavorites(nodeId: String) = mainScope.launch {
         Log.d(TAG, "sendHomeFavorites to: $nodeId")
         val currentFavorites = integrationUseCase.getWearHomeFavorites().toList()
 
@@ -73,23 +77,31 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
         Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).apply {
             addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to device") }
-            addOnFailureListener { Log.d(TAG, "Failed to send favorites to device") }
+            addOnFailureListener { e ->
+                Log.e(TAG, "Failed to send favorites to device", e)
+            }
         }
     }
 
     private fun saveFavorites() {
         Log.d(TAG, "Finding existing favorites")
-        Tasks.await(Wearable.getDataClient(this).getDataItems(Uri.parse("wear://*/save_home_favorites"))).apply {
-            Log.d(TAG, "Found existing favorites: ${this.count}")
-            this.forEach {
-                val data = getHomeFavorites(DataMapItem.fromDataItem(this.first()).dataMap)
-                Log.d(TAG, "Favorites: ${data.removeSurrounding("[", "]").split(", ").map { it }}")
-                runBlocking {
-                    integrationUseCase.setWearHomeFavorites(
-                        data.removeSurrounding("[", "]").split(", ").map { it }.toSet()
-                    )
+        mainScope.launch {
+            Wearable.getDataClient(applicationContext).getDataItems(Uri.parse("wear://*/save_home_favorites"))
+                .addOnSuccessListener {
+                    Log.d(TAG, "Found existing favorites: ${it.count}")
+                    it.forEach { dataItem ->
+                        val data = getHomeFavorites(DataMapItem.fromDataItem(dataItem).dataMap)
+                        Log.d(
+                            TAG,
+                            "Favorites: ${data.removeSurrounding("[", "]").split(", ").map { it }}"
+                        )
+                        mainScope.launch {
+                            integrationUseCase.setWearHomeFavorites(
+                                data.removeSurrounding("[", "]").split(", ").map { it }.toSet()
+                            )
+                        }
+                    }
                 }
-            }
         }
     }
 }
