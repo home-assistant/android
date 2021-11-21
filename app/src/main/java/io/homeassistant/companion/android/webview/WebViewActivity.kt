@@ -571,33 +571,31 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun getAndSetStatusBarNavigationBarColors() {
-        if (themesManager.getCurrentTheme() == "system") { // Only change colors, if following the colors of home assistant (system)
-            val htmlArraySpacer = "-SPACER-"
-            webView.evaluateJavascript(
-                "[" +
-                    "document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0]," +
-                    "document.getElementsByTagName('html')[0].computedStyleMap().get('--primary-background-color')[0]" +
-                    "].join('" + htmlArraySpacer + "')"
-            ) { webViewColors ->
-                GlobalScope.launch {
-                    withContext(Dispatchers.Main) {
-                        var statusBarColor = 0
-                        var navigationBarColor = 0
+        val htmlArraySpacer = "-SPACER-"
+        webView.evaluateJavascript(
+            "[" +
+                "document.getElementsByTagName('html')[0].computedStyleMap().get('--app-header-background-color')[0]," +
+                "document.getElementsByTagName('html')[0].computedStyleMap().get('--primary-background-color')[0]" +
+                "].join('" + htmlArraySpacer + "')"
+        ) { webViewColors ->
+            GlobalScope.launch {
+                withContext(Dispatchers.Main) {
+                    var statusBarColor = 0
+                    var navigationBarColor = 0
 
-                        if (!webViewColors.isNullOrEmpty() && webViewColors != "null") {
-                            val trimmedColorString = webViewColors.substring(1, webViewColors.length - 1).trim()
-                            val colors = trimmedColorString.split(htmlArraySpacer)
+                    if (!webViewColors.isNullOrEmpty() && webViewColors != "null") {
+                        val trimmedColorString = webViewColors.substring(1, webViewColors.length - 1).trim()
+                        val colors = trimmedColorString.split(htmlArraySpacer)
 
-                            for (color in colors) {
-                                Log.d(TAG, "Color from webview is \"$trimmedColorString\"")
-                            }
-
-                            statusBarColor = presenter.parseWebViewColor(colors[0].trim())
-                            navigationBarColor = presenter.parseWebViewColor(colors[1].trim())
+                        for (color in colors) {
+                            Log.d(TAG, "Color from webview is \"$trimmedColorString\"")
                         }
 
-                        setStatusBarAndNavigationBarColor(statusBarColor, navigationBarColor)
+                        statusBarColor = presenter.parseWebViewColor(colors[0].trim())
+                        navigationBarColor = presenter.parseWebViewColor(colors[1].trim())
                     }
+
+                    setStatusBarAndNavigationBarColor(statusBarColor, navigationBarColor)
                 }
             }
         }
