@@ -90,6 +90,14 @@ import org.json.JSONObject
 import java.util.concurrent.Executors
 import javax.inject.Inject
 
+import androidx.core.view.WindowInsetsControllerCompat
+
+
+
+
+
+
+
 @AndroidEntryPoint
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
 
@@ -993,12 +1001,13 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int) {
+        val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+
+        println("LOOOL: $statusBarColor")
+
         if (statusBarColor != 0) {
             window.statusBarColor = statusBarColor
-
-            ViewCompat.getWindowInsetsController(window.decorView)?.apply {
-                isAppearanceLightStatusBars = !isColorDark(statusBarColor)
-            }
+            windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         } else {
             Log.e(TAG, "Cannot set status bar color $statusBarColor. Skipping coloring...")
         }
@@ -1006,9 +1015,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         if (navigationBarColor != 0) {
             window.navigationBarColor = navigationBarColor
 
-            ViewCompat.getWindowInsetsController(window.decorView)?.apply {
-                isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
-            }
+            windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
         } else {
             Log.e(TAG, "Cannot set navigation bar color $navigationBarColor. Skipping coloring...")
         }
