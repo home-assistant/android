@@ -45,6 +45,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.webkit.WebViewCompat
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.MediaItem
@@ -88,8 +89,6 @@ import org.chromium.net.CronetEngine
 import org.json.JSONObject
 import java.util.concurrent.Executors
 import javax.inject.Inject
-
-import androidx.core.view.WindowInsetsControllerCompat
 
 @AndroidEntryPoint
 class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webview.WebView {
