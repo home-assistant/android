@@ -17,27 +17,33 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
+import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class SettingsWearViewModel(application: Application) :
+@HiltViewModel
+class SettingsWearViewModel @Inject constructor(
+    private val integrationUseCase: IntegrationRepository,
+    application: Application
+) :
     AndroidViewModel(application),
     DataClient.OnDataChangedListener {
 
-    val app = application
-    private lateinit var integrationUseCase: IntegrationRepository
-
-    private val TAG = "SettingsWearViewModel"
-    private val CAPABILITY_WEAR_FAVORITES = "send_home_favorites"
+    private val application = getApplication<HomeAssistantApplication>()
+    companion object {
+        private val TAG = "SettingsWearViewModel"
+        private val CAPABILITY_WEAR_FAVORITES = "send_home_favorites"
+    }
 
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
 
-    fun init(integrationUseCase: IntegrationRepository) {
-        this.integrationUseCase = integrationUseCase
+    fun init() {
         loadEntities()
     }
 
@@ -74,11 +80,11 @@ class SettingsWearViewModel(application: Application) :
             asPutDataRequest()
         }
 
-        Wearable.getDataClient(app).putDataItem(putDataRequest).apply {
+        Wearable.getDataClient(application).putDataItem(putDataRequest).apply {
             addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to wear") }
             addOnFailureListener { e ->
                 Log.e(TAG, "Failed to send favorites to wear", e)
-                Toast.makeText(app, app.getString(R.string.failure_send_favorites_wear), Toast.LENGTH_SHORT).show()
+                Toast.makeText(application, application.getString(R.string.failure_send_favorites_wear), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -86,7 +92,7 @@ class SettingsWearViewModel(application: Application) :
     fun findExistingFavorites() {
         Log.d(TAG, "Finding existing favorites")
         viewModelScope.launch {
-            Wearable.getDataClient(app).getDataItems(Uri.parse("wear://*/home_favorites"))
+            Wearable.getDataClient(application).getDataItems(Uri.parse("wear://*/home_favorites"))
                 .addOnSuccessListener { dataItemBuffer ->
                     Log.d(TAG, "Found existing favorites: ${dataItemBuffer.count}")
                     dataItemBuffer.forEach {
@@ -109,13 +115,13 @@ class SettingsWearViewModel(application: Application) :
         Log.d(TAG, "Requesting favorites")
 
         viewModelScope.launch {
-            Wearable.getCapabilityClient(app)
+            Wearable.getCapabilityClient(application)
                 .getCapability(CAPABILITY_WEAR_FAVORITES, CapabilityClient.FILTER_REACHABLE)
                 .addOnSuccessListener {
 
                     it.nodes.forEach { node ->
                         Log.d(TAG, "Requesting favorite data")
-                        Wearable.getMessageClient(app).sendMessage(
+                        Wearable.getMessageClient(application).sendMessage(
                             node.id,
                             "/send_home_favorites",
                             ByteArray(0)
@@ -133,6 +139,14 @@ class SettingsWearViewModel(application: Application) :
                     }
                 }
         }
+    }
+
+    fun startWearListenting() {
+        Wearable.getDataClient(application).addListener(this)
+    }
+
+    fun stopWearListening() {
+        Wearable.getDataClient(application).removeListener(this)
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {

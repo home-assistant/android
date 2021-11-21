@@ -20,12 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.util.previewEntityList
-import io.homeassistant.companion.android.util.previewFavoritesList
+import io.homeassistant.companion.android.settings.SettingsWearViewModel
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/wear-os"
 val supportedDomains = listOf(
@@ -34,13 +31,12 @@ val supportedDomains = listOf(
 
 @Composable
 fun LoadWearFavoritesSettings(
-    entities: Map<String, Entity<*>>,
-    favoritesList: List<String>,
-    onEntitySelected: (Boolean, String) -> Unit
+    settingsWearViewModel: SettingsWearViewModel
 ) {
     val context = LocalContext.current
 
-    val validEntities = entities.filter { it.key.split(".")[0] in supportedDomains }.values.sortedBy { it.entityId }.toList()
+    val validEntities = settingsWearViewModel.entities.filter { it.key.split(".")[0] in supportedDomains }.values.sortedBy { it.entityId }.toList()
+    val favoriteEntities = settingsWearViewModel.favoriteEntityIds
     Scaffold(
         topBar = {
             TopAppBar(
@@ -69,26 +65,26 @@ fun LoadWearFavoritesSettings(
                     fontWeight = FontWeight.Bold
                 )
             }
-            items(favoritesList.size) { index ->
+            items(favoriteEntities.size) { index ->
                 Row(
                     modifier = Modifier
                         .padding(15.dp)
                         .clickable {
-                            onEntitySelected(
+                            settingsWearViewModel.onEntitySelected(
                                 false,
-                                favoritesList[index]
+                                favoriteEntities[index]
                             )
                         }
                 ) {
                     Checkbox(
-                        checked = favoritesList.contains(favoritesList[index]),
+                        checked = favoriteEntities.contains(favoriteEntities[index]),
                         onCheckedChange = {
-                            onEntitySelected(it, favoritesList[index])
+                            settingsWearViewModel.onEntitySelected(it, favoriteEntities[index])
                         },
                         modifier = Modifier.padding(end = 5.dp)
                     )
                     Text(
-                        text = favoritesList[index].replace("[", "").replace("]", ""),
+                        text = favoriteEntities[index].replace("[", "").replace("]", ""),
                         modifier = Modifier.padding(top = 10.dp)
                     )
                 }
@@ -96,18 +92,18 @@ fun LoadWearFavoritesSettings(
             if (!validEntities.isNullOrEmpty()) {
                 items(validEntities.size) { index ->
                     val item = validEntities[index]
-                    if (!favoritesList.contains(item.entityId)) {
+                    if (!favoriteEntities.contains(item.entityId)) {
                         Row(
                             modifier = Modifier
                                 .padding(15.dp)
                                 .clickable {
-                                    onEntitySelected(true, item.entityId)
+                                    settingsWearViewModel.onEntitySelected(true, item.entityId)
                                 }
                         ) {
                             Checkbox(
                                 checked = false,
                                 onCheckedChange = {
-                                    onEntitySelected(it, item.entityId)
+                                    settingsWearViewModel.onEntitySelected(it, item.entityId)
                                 },
                                 modifier = Modifier.padding(end = 5.dp)
                             )
@@ -121,14 +117,4 @@ fun LoadWearFavoritesSettings(
             }
         }
     }
-}
-
-@Preview
-@Composable
-private fun PreviewLoadWearFavoritesSettings() {
-    LoadWearFavoritesSettings(
-        entities = previewEntityList,
-        favoritesList = previewFavoritesList,
-        onEntitySelected = { _, _ -> }
-    )
 }

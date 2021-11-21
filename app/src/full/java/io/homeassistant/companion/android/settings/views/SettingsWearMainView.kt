@@ -6,17 +6,14 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.wearable.DataClient
-import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.Node
-import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.settings.SettingsWearViewModel
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListener {
+class SettingsWearMainView : AppCompatActivity() {
 
     private val settingsWearViewModel by viewModels<SettingsWearViewModel>()
 
@@ -41,22 +38,18 @@ class SettingsWearMainView : AppCompatActivity(), DataClient.OnDataChangedListen
         setContent {
             LoadSettingsHomeView(settingsWearViewModel, currentNodes.first().displayName)
         }
-        settingsWearViewModel.init(integrationUseCase)
+        settingsWearViewModel.init()
     }
 
     override fun onResume() {
         super.onResume()
-        Wearable.getDataClient(this).addListener(this)
+        settingsWearViewModel.startWearListenting()
         Thread { settingsWearViewModel.findExistingFavorites() }.start()
         Thread { settingsWearViewModel.requestFavorites() }.start()
     }
 
     override fun onPause() {
         super.onPause()
-        Wearable.getDataClient(this).removeListener(this)
-    }
-
-    override fun onDataChanged(dataEvents: DataEventBuffer) {
-        // No op
+        settingsWearViewModel.stopWearListening()
     }
 }

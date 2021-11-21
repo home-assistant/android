@@ -17,14 +17,8 @@ fun LoadSettingsHomeView(
         NavHost(navController = navController, startDestination = SettingsWearMainView.LANDING) {
             composable(SettingsWearMainView.FAVORITES) {
                 LoadWearFavoritesSettings(
-                    settingsWearViewModel.entities,
-                    settingsWearViewModel.favoriteEntityIds.toList()
-                ) { b: Boolean, s: String ->
-                    settingsWearViewModel.onEntitySelected(
-                        b,
-                        s
-                    )
-                }
+                    settingsWearViewModel
+                )
             }
             composable(SettingsWearMainView.LANDING) {
                 SettingWearLandingView(deviceName) {
