@@ -43,7 +43,7 @@ class SettingsWearMainView : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        settingsWearViewModel.startWearListenting()
+        settingsWearViewModel.startWearListening()
         Thread { settingsWearViewModel.findExistingFavorites() }.start()
         Thread { settingsWearViewModel.requestFavorites() }.start()
     }

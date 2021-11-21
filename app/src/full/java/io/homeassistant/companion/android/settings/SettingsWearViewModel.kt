@@ -141,7 +141,7 @@ class SettingsWearViewModel @Inject constructor(
         }
     }
 
-    fun startWearListenting() {
+    fun startWearListening() {
         Wearable.getDataClient(application).addListener(this)
     }
 
