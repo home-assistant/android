@@ -993,8 +993,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     override fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int) {
         val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
 
-        println("LOOOL: $statusBarColor")
-
         if (statusBarColor != 0) {
             window.statusBarColor = statusBarColor
             windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
