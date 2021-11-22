@@ -98,7 +98,7 @@ class ShortcutsTile : TileService() {
                         val iconName: String = if (entity.icon.startsWith("mdi")) {
                             entity.icon.split(":")[1]
                         } else { // Default scene icon
-                            when (entity.entityId.split(":")[1]) {
+                            when (entity.entityId.split(".")[0]) {
                                 "input_boolean", "switch" -> "light_switch"
                                 "light" -> "lightbulb"
                                 "script" -> "script_text_outline"
