@@ -30,6 +30,7 @@ fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
         when (domain) {
             "input_boolean", "switch" -> CommunityMaterial.Icon2.cmd_light_switch
             "light" -> CommunityMaterial.Icon2.cmd_lightbulb
+            "lock" -> CommunityMaterial.Icon2.cmd_lock
             "script" -> CommunityMaterial.Icon3.cmd_script_text_outline
             "scene" -> CommunityMaterial.Icon3.cmd_palette_outline
             else -> CommunityMaterial.Icon.cmd_cellphone

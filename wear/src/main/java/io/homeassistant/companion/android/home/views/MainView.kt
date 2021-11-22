@@ -60,6 +60,7 @@ fun MainView(
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedLocks: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
@@ -68,6 +69,7 @@ fun MainView(
     val scenes = entitiesList.filter { it.entityId.split(".")[0] == "scene" }
     val scripts = entitiesList.filter { it.entityId.split(".")[0] == "script" }
     val lights = entitiesList.filter { it.entityId.split(".")[0] == "light" }
+    val locks = entitiesList.filter { it.entityId.split(".")[0] == "lock" }
     val inputBooleans = entitiesList.filter { it.entityId.split(".")[0] == "input_boolean" }
     val switches = entitiesList.filter { it.entityId.split(".")[0] == "switch" }
 
@@ -195,6 +197,20 @@ fun MainView(
                 if (expandedLights) {
                     items(lights.size) { index ->
                         EntityUi(lights[index], onEntityClicked, isHapticEnabled, isToastEnabled)
+                    }
+                }
+            }
+            if (locks.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = R.string.locks,
+                        expanded = expandedLocks,
+                        onExpandChanged = { expandedLocks = it }
+                    )
+                }
+                if (expandedLocks) {
+                    items(locks.size) { index ->
+                        EntityUi(locks[index], onEntityClicked, isHapticEnabled, isToastEnabled)
                     }
                 }
             }

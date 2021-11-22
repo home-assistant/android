@@ -27,7 +27,7 @@ class HomePresenterImpl @Inject constructor(
             "media_player", "remote", "siren", "switch"
         )
         val supportedDomains = listOf(
-            "input_boolean", "light", "switch", "script", "scene"
+            "input_boolean", "light", "switch", "script", "scene", "lock"
         )
         const val TAG = "HomePresenter"
     }
@@ -67,20 +67,23 @@ class HomePresenterImpl @Inject constructor(
     }
 
     override suspend fun onEntityClicked(entityId: String) {
-
-        if (entityId.split(".")[0] in toggleDomains) {
-            integrationUseCase.callService(
-                entityId.split(".")[0],
-                "toggle",
-                hashMapOf("entity_id" to entityId)
-            )
-        } else {
-            integrationUseCase.callService(
-                entityId.split(".")[0],
-                "turn_on",
-                hashMapOf("entity_id" to entityId)
-            )
+        val domain = entityId.split(".")[0]
+        val serviceName = when (domain) {
+            in toggleDomains -> "toggle"
+            "lock" -> {
+                val lockEntity = integrationUseCase.getEntity(entityId)
+                if (lockEntity.state == "locked")
+                    "unlock"
+                else
+                    "lock"
+            }
+            else -> "turn_on"
         }
+        integrationUseCase.callService(
+            domain,
+            serviceName,
+            hashMapOf("entity_id" to entityId)
+        )
     }
 
     override fun onLogoutClicked() {

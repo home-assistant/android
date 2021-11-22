@@ -20,19 +20,23 @@ class TileActionReceiver : BroadcastReceiver() {
 
         if (entityId != null) {
             runBlocking {
-                if (entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
-                    integrationUseCase.callService(
-                        entityId.split(".")[0],
-                        "toggle",
-                        hashMapOf("entity_id" to entityId)
-                    )
-                } else {
-                    integrationUseCase.callService(
-                        entityId.split(".")[0],
-                        "turn_on",
-                        hashMapOf("entity_id" to entityId)
-                    )
+                val domain = entityId.split(".")[0]
+                val serviceName = when (domain) {
+                    in HomePresenterImpl.toggleDomains -> "toggle"
+                    "lock" -> {
+                        val lockEntity = integrationUseCase.getEntity(entityId)
+                        if (lockEntity.state == "locked")
+                            "unlock"
+                        else
+                            "lock"
+                    }
+                    else -> "turn_on"
                 }
+                integrationUseCase.callService(
+                    domain,
+                    serviceName,
+                    hashMapOf("entity_id" to entityId)
+                )
             }
         }
     }
