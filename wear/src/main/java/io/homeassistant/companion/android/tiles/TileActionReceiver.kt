@@ -22,7 +22,6 @@ class TileActionReceiver : BroadcastReceiver() {
             runBlocking {
                 val domain = entityId.split(".")[0]
                 val serviceName = when (domain) {
-                    in HomePresenterImpl.toggleDomains -> "toggle"
                     "lock" -> {
                         val lockEntity = integrationUseCase.getEntity(entityId)
                         if (lockEntity.state == "locked")
@@ -30,6 +29,7 @@ class TileActionReceiver : BroadcastReceiver() {
                         else
                             "lock"
                     }
+                    in HomePresenterImpl.toggleDomains -> "toggle"
                     else -> "turn_on"
                 }
                 integrationUseCase.callService(

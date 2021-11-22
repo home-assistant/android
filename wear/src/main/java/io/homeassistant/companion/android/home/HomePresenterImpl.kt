@@ -23,11 +23,11 @@ class HomePresenterImpl @Inject constructor(
 
     companion object {
         val toggleDomains = listOf(
-            "cover", "fan", "humidifier", "input_boolean", "light",
+            "cover", "fan", "humidifier", "input_boolean", "light", "lock",
             "media_player", "remote", "siren", "switch"
         )
         val supportedDomains = listOf(
-            "input_boolean", "light", "switch", "script", "scene", "lock"
+            "input_boolean", "light", "lock", "switch", "script", "scene"
         )
         const val TAG = "HomePresenter"
     }
@@ -69,7 +69,6 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun onEntityClicked(entityId: String, state: String) {
         val domain = entityId.split(".")[0]
         val serviceName = when (domain) {
-            in toggleDomains -> "toggle"
             "lock" -> {
                 // Defaults to locking, to be save
                 if (state == "locked")
@@ -77,6 +76,7 @@ class HomePresenterImpl @Inject constructor(
                 else
                     "lock"
             }
+            in toggleDomains -> "toggle"
             else -> "turn_on"
         }
         integrationUseCase.callService(
