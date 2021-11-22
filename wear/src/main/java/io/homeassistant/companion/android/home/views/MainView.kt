@@ -49,7 +49,7 @@ import io.homeassistant.companion.android.util.setChipDefaults
 fun MainView(
     entities: Map<String, Entity<*>>,
     favoriteEntityIds: List<String>,
-    onEntityClicked: (String) -> Unit,
+    onEntityClicked: (String, String) -> Unit,
     onSettingsClicked: () -> Unit,
     onLogoutClicked: () -> Unit,
     isHapticEnabled: Boolean,
@@ -130,7 +130,7 @@ fun MainView(
                                     )
                                 },
                                 onClick = {
-                                    onEntityClicked(favoriteEntityID)
+                                    onEntityClicked(favoriteEntityID, "unknown")
                                     onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
                                 },
                                 colors = ChipDefaults.primaryChipColors(
@@ -278,7 +278,7 @@ private fun PreviewMainView() {
         MainView(
             entities = previewEntityList,
             favoriteEntityIds = previewFavoritesList,
-            onEntityClicked = {},
+            onEntityClicked = { _, _ -> },
             onSettingsClicked = {},
             onLogoutClicked = {},
             isHapticEnabled = true,

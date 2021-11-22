@@ -77,7 +77,7 @@ fun LoadHomePage(
                         MainView(
                             mainViewModel.entities,
                             mainViewModel.favoriteEntityIds,
-                            { mainViewModel.toggleEntity(it) },
+                            { id, state -> mainViewModel.toggleEntity(id, state) },
                             { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
                             { mainViewModel.logout() },
                             mainViewModel.isHapticEnabled.value,

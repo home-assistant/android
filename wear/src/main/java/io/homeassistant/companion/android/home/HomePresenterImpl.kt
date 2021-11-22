@@ -66,13 +66,13 @@ class HomePresenterImpl @Inject constructor(
         return integrationUseCase.getEntityUpdates()
     }
 
-    override suspend fun onEntityClicked(entityId: String) {
+    override suspend fun onEntityClicked(entityId: String, state: String) {
         val domain = entityId.split(".")[0]
         val serviceName = when (domain) {
             in toggleDomains -> "toggle"
             "lock" -> {
-                val lockEntity = integrationUseCase.getEntity(entityId)
-                if (lockEntity.state == "locked")
+                // Defaults to locking, to be save
+                if (state == "locked")
                     "unlock"
                 else
                     "lock"

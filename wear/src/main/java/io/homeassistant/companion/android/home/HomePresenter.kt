@@ -9,7 +9,7 @@ interface HomePresenter {
     fun init(homeView: HomeView)
 
     fun onViewReady()
-    suspend fun onEntityClicked(entityId: String)
+    suspend fun onEntityClicked(entityId: String, state: String)
     fun onLogoutClicked()
     fun onFinish()
 
