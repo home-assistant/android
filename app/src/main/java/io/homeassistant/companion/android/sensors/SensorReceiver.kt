@@ -155,9 +155,15 @@ class SensorReceiver : BroadcastReceiver() {
         }
 
         val currentAppVersion = BuildConfig.VERSION_NAME
-        val currentHAversion = integrationUseCase.getHomeAssistantVersion()
+        val currentHaVersion = integrationUseCase.getHomeAssistantVersion()
 
         MANAGERS.forEach { manager ->
+
+            // Since we don't have this manager injected it doesn't fulfil it's injects, manually
+            // inject for now I guess?
+            if (manager is LocationSensorManager)
+                manager.integrationUseCase = integrationUseCase
+
             try {
                 manager.requestSensorUpdate(context)
             } catch (e: Exception) {
@@ -172,7 +178,7 @@ class SensorReceiver : BroadcastReceiver() {
                 // Always register enabled sensors in case of available entity updates
                 // when app or core version change is detected every 4 hours
                 if (sensor?.enabled == true && sensor.type.isNotBlank() && sensor.icon.isNotBlank() &&
-                    (currentAppVersion != sensorAppRegistration || currentHAversion != sensorCoreRegistration || !sensor.registered)
+                    (currentAppVersion != sensorAppRegistration || currentHaVersion != sensorCoreRegistration || !sensor.registered)
                 ) {
                     val reg = fullSensor.toSensorRegistration()
                     val config = Configuration(context.resources.configuration)
@@ -182,7 +188,7 @@ class SensorReceiver : BroadcastReceiver() {
                     try {
                         integrationUseCase.registerSensor(reg)
                         sensor.registered = true
-                        sensor.coreRegistration = currentHAversion
+                        sensor.coreRegistration = currentHaVersion
                         sensor.appRegistration = currentAppVersion
                         sensorDao.update(sensor)
                     } catch (e: Exception) {

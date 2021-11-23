@@ -3,6 +3,7 @@
     package="io.homeassistant.companion.android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <uses-feature android:name="android.hardware.type.watch" />
@@ -64,6 +65,17 @@
                 <action android:name="io.homeassistant.companion.android.TILE_ACTION" />
             </intent-filter>
         </receiver>
+
+        <service android:name=".phone.PhoneSettingsListener" android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data android:scheme="wear" android:host="*"
+                    android:path="/send_home_favorites" />
+                <data android:scheme="wear" android:host="*"
+                    android:path="/save_home_favorites" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

@@ -4,5 +4,7 @@
     <string-array name="android_wear_capabilities">
         <item>authentication_token</item>
         <item>verify_wear_app</item>
+        <item>send_home_favorites</item>
+        <item>save_home_favorites</item>
     </string-array>
 </resources>

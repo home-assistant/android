@@ -165,7 +165,7 @@ dependencies {
     kapt("androidx.room:room-compiler:2.3.0")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
-    implementation("com.squareup.okhttp3:okhttp:4.9.2")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.squareup.picasso:picasso:2.8")
 
     "fullImplementation"("com.google.android.gms:play-services-location:18.0.0")
@@ -194,7 +194,8 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.0.5")
     implementation("androidx.compose.ui:ui-tooling:1.0.5")
     implementation("androidx.activity:activity-compose:1.4.0")
-    implementation("com.google.android.material:compose-theme-adapter:1.0.4")
+    implementation("androidx.navigation:navigation-compose:2.4.0-beta02")
+    implementation("com.google.android.material:compose-theme-adapter:1.1.0")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.2")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
