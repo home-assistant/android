@@ -142,7 +142,7 @@
                 <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
                 <action android:name="io.homeassistant.companion.android.background.REQUEST_SENSORS_UPDATE" />
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="io.homeassistant.companion.android.widgets.template.TemplateWidget.RECEIVE_DATA" />
+                <action android:name="io.homeassistant.companion.android.widgets.template.BaseWidgetProvider.RECEIVE_DATA" />
             </intent-filter>
 
             <meta-data
@@ -216,7 +216,8 @@
         </receiver>
 
         <activity android:name=".launch.LaunchActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.LaunchScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -257,6 +258,11 @@
 
         <activity
             android:name=".settings.SettingsWearActivity"
+            android:parentActivityName=".settings.SettingsActivity"
+            android:configChanges="orientation|screenSize" />
+
+        <activity
+            android:name=".settings.views.SettingsWearMainView"
             android:parentActivityName=".settings.SettingsActivity"
             android:configChanges="orientation|screenSize" />
 

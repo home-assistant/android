@@ -1,10 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Theme.LaunchScreen.Base is necessary because on higher API levels it will be overridden to paint the status or navigation bar -->
+    <style name="Theme.LaunchScreen.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar"/>
+
+    <style name="Theme.LaunchScreen" parent="Theme.LaunchScreen.Base">
+        <item name="android:background">@drawable/launch_screen_background</item>
+    </style>
+
     <style name="Theme.HomeAssistant" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="colorButtonNormal">@color/colorPrimary</item>
-        <item name="android:colorBackground">@color/colorActivityBackground</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
         <item name="android:navigationBarColor">@color/colorPrimaryDark</item>
         <item name="alertDialogTheme">@style/Theme.HomeAssistant.Dialog.Alert</item>
         <item name="actionBarPopupTheme">@style/ThemeOverlay.MaterialComponents.Dark</item>

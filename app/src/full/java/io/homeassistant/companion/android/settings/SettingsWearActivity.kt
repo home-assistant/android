@@ -21,6 +21,7 @@ import com.google.android.gms.wearable.NodeClient
 import com.google.android.gms.wearable.Wearable
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.ActivitySettingsWearBinding
+import io.homeassistant.companion.android.settings.views.SettingsWearMainView
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.guava.await
@@ -169,20 +170,14 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                 binding.remoteOpenButton.isVisible = true
             }
             wearNodesWithApp.size < allConnectedNodes.size -> {
-                // TODO: Add your code to communicate with the wear app(s) via Wear APIs
-                //       (MessageClient, DataClient, etc.)
                 Log.d(TAG, "Installed on some devices")
-                binding.informationTextView.text =
-                    getString(R.string.message_some_installed, wearNodesWithApp.toString())
-                binding.remoteOpenButton.isVisible = true
+                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
+                finish()
             }
             else -> {
-                // TODO: Add your code to communicate with the wear app(s) via Wear APIs
-                //       (MessageClient, DataClient, etc.)
                 Log.d(TAG, "Installed on all devices")
-                binding.informationTextView.text =
-                    getString(R.string.message_all_installed)
-                binding.remoteOpenButton.isInvisible = true
+                startActivity(SettingsWearMainView.newInstance(applicationContext, wearNodesWithApp))
+                finish()
             }
         }
     }

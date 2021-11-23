@@ -9,10 +9,12 @@ import android.util.Log
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.viewModels
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.UrlHandler
 
+@AndroidEntryPoint
 class NfcSetupActivity : BaseActivity() {
 
     private val viewModel: NfcViewModel by viewModels()

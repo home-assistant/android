@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetStaticConfigureBinding
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -186,7 +187,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
 
             // Set up a broadcast intent and pass the service call data as extras
             val intent = Intent()
-            intent.action = EntityWidget.RECEIVE_DATA
+            intent.action = BaseWidgetProvider.RECEIVE_DATA
             intent.component = ComponentName(context, EntityWidget::class.java)
 
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)

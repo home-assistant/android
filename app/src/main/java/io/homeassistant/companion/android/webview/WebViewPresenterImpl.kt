@@ -178,28 +178,26 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getStatusBarAndNavigationBarColor(webViewColor: String): Int = withContext(Dispatchers.IO) {
-        var statusBarNavBarColor = 0
+    override suspend fun parseWebViewColor(webViewColor: String): Int = withContext(Dispatchers.IO) {
+        var color = 0
 
-        Log.d(TAG, "Try getting status bar/navigation bar color from webviews color \"$webViewColor\"")
-        if (!webViewColor.isNullOrEmpty() && webViewColor != "null" && webViewColor.length >= 2) {
-            val trimmedColorString = webViewColor.substring(1, webViewColor.length - 1).trim()
-            Log.d(TAG, "Color from webview is \"$trimmedColorString\"")
+        Log.d(TAG, "Try getting color from webview color \"$webViewColor\".")
+        if (webViewColor.isNotEmpty() && webViewColor != "null") {
             try {
-                statusBarNavBarColor = parseColorWithRgb(trimmedColorString)
-                Log.i(TAG, "Found color $statusBarNavBarColor for status bar/navigation bar")
+                color = parseColorWithRgb(webViewColor)
+                Log.i(TAG, "Found color $color.")
             } catch (e: Exception) {
-                Log.w(TAG, "Could not get status bar/navigation bar color from webview. Try getting status bar/navigation bar color from HA", e)
+                Log.w(TAG, "Could not get color from webview.", e)
             }
         } else {
-            Log.w(TAG, "Could not get status bar/navigation bar color from webview. Color \"$webViewColor\" is not a valid color. Try getting status bar/navigation bar color from HA")
+            Log.w(TAG, "Could not get color from webview. Color \"$webViewColor\" is not a valid color.")
         }
 
-        if (statusBarNavBarColor == 0) {
-            Log.w(TAG, "Couldn't get color for status bar.")
+        if (color == 0) {
+            Log.w(TAG, "Couldn't get color.")
         }
 
-        return@withContext statusBarNavBarColor
+        return@withContext color
     }
 
     private fun parseColorWithRgb(colorString: String): Int {

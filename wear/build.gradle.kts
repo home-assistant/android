@@ -95,10 +95,10 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.40.1")
     kapt("com.google.dagger:hilt-android-compiler:2.40.1")
 
-    implementation("com.squareup.okhttp3:okhttp:4.9.2")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
-    implementation("androidx.appcompat:appcompat:1.3.1")
+    implementation("androidx.appcompat:appcompat:1.4.0")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.3.3")
 
@@ -106,9 +106,9 @@ dependencies {
     implementation("androidx.compose.compiler:compiler:1.0.5")
     implementation("androidx.compose.foundation:foundation:1.0.5")
     implementation("androidx.compose.ui:ui-tooling:1.0.5")
-    implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha10")
-    implementation("androidx.wear.compose:compose-material:1.0.0-alpha10")
-    implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha10")
+    implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha11")
+    implementation("androidx.wear.compose:compose-material:1.0.0-alpha11")
+    implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha11")
 
     implementation("com.google.guava:guava:31.0.1-android")
     implementation("androidx.wear.tiles:tiles:1.0.0")
