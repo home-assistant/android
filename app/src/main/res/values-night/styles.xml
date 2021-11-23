@@ -1,9 +1,4 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.LaunchScreen" parent="Theme.LaunchScreen.Base">
-        <item name="android:windowLightStatusBar" tools:targetApi="27">false</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
-    </style>
-
     <style name="Theme.HomeAssistant.Dialog.Alert" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
         <item name="android:textColor">@color/colorDialogTitle</item>
         <item name="buttonBarPositiveButtonStyle">@style/Alert.Button.Positive</item>
