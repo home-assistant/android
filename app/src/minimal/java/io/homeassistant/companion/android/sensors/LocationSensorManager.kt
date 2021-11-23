@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 
 class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
@@ -39,6 +40,8 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         )
         internal const val TAG = "LocBroadcastReceiver"
     }
+
+    lateinit var integrationUseCase: IntegrationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         // Noop

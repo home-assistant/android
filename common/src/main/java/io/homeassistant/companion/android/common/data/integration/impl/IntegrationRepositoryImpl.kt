@@ -414,11 +414,19 @@ class IntegrationRepositoryImpl @Inject constructor(
             return localStorage.getString(PREF_HA_VERSION)
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
 
-        val response: GetConfigResponse = webSocketRepository.getConfig()
+        try {
+            val response: GetConfigResponse = webSocketRepository.getConfig()
 
-        localStorage.putString(PREF_HA_VERSION, response.version)
-        localStorage.putLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT, current + (14400000)) // 4 hours
-        return response.version
+            localStorage.putString(PREF_HA_VERSION, response.version)
+            localStorage.putLong(
+                PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                current + (14400000)
+            ) // 4 hours
+            return response.version
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue getting new version from core.", e)
+            return return localStorage.getString(PREF_HA_VERSION) ?: ""
+        }
     }
 
     override suspend fun getServices(): List<Service> {
