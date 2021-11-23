@@ -57,9 +57,6 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         )
     }
 
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
     override fun onReceive(context: Context, intent: Intent) {
 
         when (intent.action) {
