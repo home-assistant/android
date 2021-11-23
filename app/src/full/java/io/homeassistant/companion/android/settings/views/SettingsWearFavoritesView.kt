@@ -3,11 +3,13 @@ package io.homeassistant.companion.android.settings.views
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Checkbox
+import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
@@ -23,6 +25,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.settings.SettingsWearViewModel
 import io.homeassistant.companion.android.common.R as commonR
+import org.burnoutcrew.reorderable.detectReorderAfterLongPress
+import org.burnoutcrew.reorderable.draggedItem
+import org.burnoutcrew.reorderable.rememberReorderState
+import org.burnoutcrew.reorderable.reorderable
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/wear-os"
 val supportedDomains = listOf(
@@ -34,6 +40,7 @@ fun LoadWearFavoritesSettings(
     settingsWearViewModel: SettingsWearViewModel
 ) {
     val context = LocalContext.current
+    val reorderState = rememberReorderState()
 
     val validEntities = settingsWearViewModel.entities.filter { it.key.split(".")[0] in supportedDomains }.values.sortedBy { it.entityId }.toList()
     val favoriteEntities = settingsWearViewModel.favoriteEntityIds
@@ -56,8 +63,20 @@ fun LoadWearFavoritesSettings(
         }
     ) {
         LazyColumn(
+            state = reorderState.listState,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(top = 10.dp, start = 20.dp, end = 20.dp)
+            modifier = Modifier
+                .padding(top = 10.dp, start = 20.dp, end = 20.dp)
+                .then(
+                    Modifier.reorderable(
+                        reorderState,
+                        { from, to -> settingsWearViewModel.onMove(from, to) },
+                        canDragOver = { settingsWearViewModel.canDragOver(it) },
+                        onDragEnd = { _, _ ->
+                            settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
+                        }
+                    )
+                )
         ) {
             item {
                 Text(
@@ -65,7 +84,7 @@ fun LoadWearFavoritesSettings(
                     fontWeight = FontWeight.Bold
                 )
             }
-            items(favoriteEntities.size) { index ->
+            items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 Row(
                     modifier = Modifier
                         .padding(15.dp)
@@ -75,6 +94,8 @@ fun LoadWearFavoritesSettings(
                                 favoriteEntities[index]
                             )
                         }
+                        .draggedItem(reorderState.offsetByKey(favoriteEntities[index]), Orientation.Vertical)
+                        .detectReorderAfterLongPress(reorderState)
                 ) {
                     Checkbox(
                         checked = favoriteEntities.contains(favoriteEntities[index]),
@@ -88,6 +109,9 @@ fun LoadWearFavoritesSettings(
                         modifier = Modifier.padding(top = 10.dp)
                     )
                 }
+            }
+            item {
+                Divider()
             }
             if (!validEntities.isNullOrEmpty()) {
                 items(validEntities.size) { index ->

@@ -101,6 +101,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                             )
                         }
                     }
+                    it.release()
                 }
         }
     }

@@ -22,6 +22,8 @@ import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.launch
+import org.burnoutcrew.reorderable.ItemPosition
+import org.burnoutcrew.reorderable.move
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -71,7 +73,13 @@ class SettingsWearViewModel @Inject constructor(
         sendHomeFavorites(favoriteEntityIds.toList())
     }
 
-    private fun sendHomeFavorites(favoritesList: List<String>) = viewModelScope.launch {
+    fun onMove(fromItem: ItemPosition, toItem: ItemPosition) {
+        favoriteEntityIds.move(favoriteEntityIds.indexOfFirst { it == fromItem.key }, favoriteEntityIds.indexOfFirst { it == toItem.key })
+    }
+
+    fun canDragOver(position: ItemPosition) = favoriteEntityIds.any { it == position.key }
+
+    fun sendHomeFavorites(favoritesList: List<String>) = viewModelScope.launch {
         Log.d(TAG, "sendHomeFavorites")
 
         val putDataRequest = PutDataMapRequest.create("/save_home_favorites").run {
@@ -103,6 +111,7 @@ class SettingsWearViewModel @Inject constructor(
                             data.removeSurrounding("[", "]").split(", ").map { it }
                         )
                     }
+                    dataItemBuffer.release()
                 }
         }
     }
@@ -162,5 +171,6 @@ class SettingsWearViewModel @Inject constructor(
                 }
             }
         }
+        dataEvents.release()
     }
 }

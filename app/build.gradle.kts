@@ -146,9 +146,9 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.40.2")
     kapt("com.google.dagger:hilt-android-compiler:2.40.2")
 
-    implementation("androidx.appcompat:appcompat:1.3.1")
+    implementation("androidx.appcompat:appcompat:1.4.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.2")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.1.1")
     implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
@@ -169,6 +169,7 @@ dependencies {
     "fullImplementation"("io.sentry:sentry-android:5.4.2")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
+    implementation("androidx.work:work-runtime-ktx:2.7.1")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 
@@ -193,6 +194,7 @@ dependencies {
 
     implementation("com.mikepenz:iconics-core:5.3.3")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.7.4")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.
