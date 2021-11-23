@@ -423,7 +423,7 @@ class IntegrationRepositoryImpl @Inject constructor(
                 current + (14400000)
             ) // 4 hours
             return response.version
-        }catch (e:Exception){
+        } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
             return return localStorage.getString(PREF_HA_VERSION) ?: ""
         }
