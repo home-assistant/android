@@ -261,6 +261,11 @@
             android:parentActivityName=".settings.SettingsActivity"
             android:configChanges="orientation|screenSize" />
 
+        <activity
+            android:name=".settings.views.SettingsWearMainView"
+            android:parentActivityName=".settings.SettingsActivity"
+            android:configChanges="orientation|screenSize" />
+
         <service android:name=".onboarding.WearOnboardingListener"
             android:exported="true">
             <intent-filter>

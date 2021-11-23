@@ -194,7 +194,8 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.0.5")
     implementation("androidx.compose.ui:ui-tooling:1.0.5")
     implementation("androidx.activity:activity-compose:1.4.0")
-    implementation("com.google.android.material:compose-theme-adapter:1.0.4")
+    implementation("androidx.navigation:navigation-compose:2.4.0-beta02")
+    implementation("com.google.android.material:compose-theme-adapter:1.1.0")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.2")
 
     implementation("com.mikepenz:iconics-core:5.3.3")

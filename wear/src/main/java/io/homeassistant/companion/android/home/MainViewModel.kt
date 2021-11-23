@@ -81,6 +81,14 @@ class MainViewModel @Inject constructor() : ViewModel() {
         }
     }
 
+    // TODO: Remove the below as we should save favorites to the DB so we can use a proper flow like above
+    fun updateFavorites() {
+        viewModelScope.launch {
+            favoriteEntityIds.clear()
+            favoriteEntityIds.addAll(homePresenter.getWearHomeFavorites())
+        }
+    }
+
     fun setTileShortcut(index: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
             if (index < shortcutEntities.size) {
