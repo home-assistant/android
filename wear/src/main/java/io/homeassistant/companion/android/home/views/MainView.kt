@@ -1,10 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -93,11 +89,12 @@ fun MainView(
             modifier = Modifier
                 .fillMaxSize(),
             contentPadding = PaddingValues(
-                top = 10.dp,
-                start = 10.dp,
-                end = 10.dp,
+                top = 20.dp,
+                start = 8.dp,
+                end = 8.dp,
                 bottom = 40.dp
             ),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             state = scalingLazyListState
         ) {

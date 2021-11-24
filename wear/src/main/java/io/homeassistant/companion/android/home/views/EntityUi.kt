@@ -12,20 +12,13 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.ToggleChip
-import androidx.wear.compose.material.ToggleChipDefaults
+import androidx.wear.compose.material.*
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.HomePresenterImpl
-import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.onEntityClickedFeedback
-import io.homeassistant.companion.android.util.previewEntity1
-import io.homeassistant.companion.android.util.previewEntity2
-import io.homeassistant.companion.android.util.setChipDefaults
+import io.homeassistant.companion.android.util.*
 
 @Composable
 fun EntityUi(
@@ -48,8 +41,7 @@ fun EntityUi(
                 onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, friendlyName, haptic)
             },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp),
+                .fillMaxWidth(),
             appIcon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
             label = {
                 Text(
@@ -59,23 +51,12 @@ fun EntityUi(
                 )
             },
             enabled = entity.state != "unavailable",
-            toggleIcon = { ToggleChipDefaults.SwitchIcon(entity.state == "on") },
-            colors = ToggleChipDefaults.toggleChipColors(
-                checkedStartBackgroundColor = colorResource(id = R.color.colorAccent),
-                checkedEndBackgroundColor = colorResource(id = R.color.colorAccent),
-                uncheckedStartBackgroundColor = colorResource(id = R.color.colorAccent),
-                uncheckedEndBackgroundColor = colorResource(id = R.color.colorAccent),
-                checkedContentColor = Color.Black,
-                uncheckedContentColor = Color.Black,
-                checkedToggleIconTintColor = Color.Yellow,
-                uncheckedToggleIconTintColor = Color.DarkGray
-            )
+            toggleIcon = { ToggleChipDefaults.SwitchIcon(entity.state == "on") }
         )
     } else {
         Chip(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp),
+                .fillMaxWidth(),
             icon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
             label = {
                 Text(
@@ -89,7 +70,7 @@ fun EntityUi(
                 onEntityClicked(entity.entityId, entity.state)
                 onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, friendlyName, haptic)
             },
-            colors = setChipDefaults()
+            colors = ChipDefaults.secondaryChipColors()
         )
     }
 }
@@ -105,7 +86,7 @@ private fun PreviewEntityUI() {
             isToastEnabled = false
         )
         EntityUi(
-            entity = previewEntity2,
+            entity = previewEntity3,
             onEntityClicked = { _, _ -> },
             isHapticEnabled = false,
             isToastEnabled = true
