@@ -22,7 +22,7 @@ fun ListHeader(
     ) {
         Row {
             Text(
-                text = stringResource(id = stringId) + if (expanded) " -" else " +"
+                text = stringResource(id = stringId) + if (expanded) "\u2001-" else "\u2001+"
             )
         }
     }
