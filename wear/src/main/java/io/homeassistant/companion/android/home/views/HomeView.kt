@@ -14,16 +14,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.Chip
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.*
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.home.MainViewModel
+import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
@@ -46,25 +44,26 @@ fun LoadHomePage(
     val context = LocalContext.current
 
     val rotaryEventDispatcher = RotaryEventDispatcher()
-    if (mainViewModel.entities.isNullOrEmpty() && mainViewModel.favoriteEntityIds.isNullOrEmpty()) {
-        Column {
-            ListHeader(id = commonR.string.loading)
-            Chip(
-                modifier = Modifier
-                    .padding(top = 30.dp, start = 10.dp, end = 10.dp),
-                label = {
-                    Text(
-                        text = stringResource(commonR.string.loading_entities),
-                        textAlign = TextAlign.Center
-                    )
-                },
-                onClick = { /* No op */ },
-                colors = setChipDefaults()
-            )
-        }
-    } else {
-        val swipeDismissableNavController = rememberSwipeDismissableNavController()
-        MaterialTheme {
+
+    WearAppTheme {
+        if (mainViewModel.entities.isNullOrEmpty() && mainViewModel.favoriteEntityIds.isNullOrEmpty()) {
+            Column {
+                ListHeader(id = R.string.loading)
+                Chip(
+                    modifier = Modifier
+                        .padding(top = 30.dp, start = 10.dp, end = 10.dp),
+                    label = {
+                        Text(
+                            text = stringResource(R.string.loading_entities),
+                            textAlign = TextAlign.Center
+                        )
+                    },
+                    onClick = { /* No op */ },
+                    colors = ChipDefaults.primaryChipColors()
+                )
+            }
+        } else {
+            val swipeDismissableNavController = rememberSwipeDismissableNavController()
             CompositionLocalProvider(
                 LocalRotaryEventDispatcher provides rotaryEventDispatcher
             ) {

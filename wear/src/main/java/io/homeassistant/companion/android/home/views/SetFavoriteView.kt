@@ -32,6 +32,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
@@ -65,157 +66,162 @@ fun SetFavoritesView(
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
-    Scaffold(
-        positionIndicator = {
-            if (scalingLazyListState.isScrollInProgress)
-                PositionIndicator(scalingLazyListState = scalingLazyListState)
-        },
-        timeText = {
-            if (!scalingLazyListState.isScrollInProgress)
-                TimeText()
-        }
-    ) {
-        ScalingLazyColumn(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentPadding = PaddingValues(
-                top = 10.dp,
-                start = 10.dp,
-                end = 10.dp,
-                bottom = 40.dp
-            ),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            state = scalingLazyListState
+
+    WearAppTheme {
+        Scaffold(
+            positionIndicator = {
+                if (scalingLazyListState.isScrollInProgress)
+                    PositionIndicator(scalingLazyListState = scalingLazyListState)
+            },
+            timeText = {
+                if (!scalingLazyListState.isScrollInProgress)
+                    TimeText()
+            }
         ) {
-            item {
-                ListHeader(id = commonR.string.set_favorite)
-            }
-            if (favoriteEntityIds.isNotEmpty()) {
-                val favoriteEntities = mutableListOf<Entity<*>>()
-                for (entity in validEntityList) {
-                    if (favoriteEntityIds.contains(entity.entityId))
-                        favoriteEntities += listOf(entity)
-                }
-                items(favoriteEntityIds.size) { index ->
-                    FavoriteToggleChip(
-                        entityList = favoriteEntities,
-                        index = index,
-                        favoriteEntityIds = favoriteEntityIds,
-                        onFavoriteSelected = onFavoriteSelected
-                    )
-                }
-            }
-            if (inputBooleans.isNotEmpty()) {
+            ScalingLazyColumn(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(
+                    top = 10.dp,
+                    start = 10.dp,
+                    end = 10.dp,
+                    bottom = 40.dp
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                state = scalingLazyListState
+            ) {
                 item {
-                    ListHeader(
-                        stringId = commonR.string.input_booleans,
-                        expanded = expandedInputBooleans,
-                        onExpandChanged = { expandedInputBooleans = it }
-                    )
+                    ListHeader(id = R.string.set_favorite)
                 }
-                if (expandedInputBooleans) {
-                    items(inputBooleans.size) { index ->
+                if (favoriteEntityIds.isNotEmpty()) {
+                    val favoriteEntities = mutableListOf<Entity<*>>()
+                    for (entity in validEntityList) {
+                        if (favoriteEntityIds.contains(entity.entityId))
+                            favoriteEntities += listOf(entity)
+                    }
+                    items(favoriteEntityIds.size) { index ->
                         FavoriteToggleChip(
-                            entityList = inputBooleans,
+                            entityList = favoriteEntities,
                             index = index,
                             favoriteEntityIds = favoriteEntityIds,
                             onFavoriteSelected = onFavoriteSelected
                         )
                     }
                 }
-            }
-            if (lights.isNotEmpty()) {
-                item {
-                    ListHeader(
-                        stringId = commonR.string.lights,
-                        expanded = expandedLights,
-                        onExpandChanged = { expandedLights = it }
-                    )
-                }
-                if (expandedLights) {
-                    items(lights.size) { index ->
-                        FavoriteToggleChip(
-                            entityList = lights,
-                            index = index,
-                            favoriteEntityIds = favoriteEntityIds,
-                            onFavoriteSelected = onFavoriteSelected
+                if (inputBooleans.isNotEmpty()) {
+                    item {
+                        ListHeader(
+                            stringId = R.string.input_booleans,
+                            expanded = expandedInputBooleans,
+                            onExpandChanged = { expandedInputBooleans = it }
                         )
                     }
-                }
-            }
-            if (locks.isNotEmpty()) {
-                item {
-                    ListHeader(
-                        stringId = commonR.string.locks,
-                        expanded = expandedLocks,
-                        onExpandChanged = { expandedLocks = it }
-                    )
-                }
-                if (expandedLocks) {
-                    items(locks.size) { index ->
-                        FavoriteToggleChip(
-                            entityList = locks,
-                            index = index,
-                            favoriteEntityIds = favoriteEntityIds,
-                            onFavoriteSelected = onFavoriteSelected
-                        )
+                    if (expandedInputBooleans) {
+                        items(inputBooleans.size) { index ->
+                            FavoriteToggleChip(
+                                entityList = inputBooleans,
+                                index = index,
+                                favoriteEntityIds = favoriteEntityIds,
+                                onFavoriteSelected = onFavoriteSelected
+                            )
+                        }
                     }
                 }
-            }
-            if (scenes.isNotEmpty()) {
-                item {
-                    ListHeader(
-                        stringId = commonR.string.scenes,
-                        expanded = expandedScenes,
-                        onExpandChanged = { expandedScenes = it }
-                    )
-                }
-                if (expandedScenes) {
-                    items(scenes.size) { index ->
-                        FavoriteToggleChip(
-                            entityList = scenes,
-                            index = index,
-                            favoriteEntityIds = favoriteEntityIds,
-                            onFavoriteSelected = onFavoriteSelected
+
+                if (lights.isNotEmpty()) {
+                    item {
+                        ListHeader(
+                            stringId = R.string.lights,
+                            expanded = expandedLights,
+                            onExpandChanged = { expandedLights = it }
                         )
                     }
-                }
-            }
-            if (scripts.isNotEmpty()) {
-                item {
-                    ListHeader(
-                        stringId = commonR.string.scripts,
-                        expanded = expandedScripts,
-                        onExpandChanged = { expandedScripts = it }
-                    )
-                }
-                if (expandedScripts) {
-                    items(scripts.size) { index ->
-                        FavoriteToggleChip(
-                            entityList = scripts,
-                            index = index,
-                            favoriteEntityIds = favoriteEntityIds,
-                            onFavoriteSelected = onFavoriteSelected
-                        )
+                    if (expandedLights) {
+                        items(lights.size) { index ->
+                            FavoriteToggleChip(
+                                entityList = lights,
+                                index = index,
+                                favoriteEntityIds = favoriteEntityIds,
+                                onFavoriteSelected = onFavoriteSelected
+                            )
+                        }
                     }
                 }
-            }
-            if (switches.isNotEmpty()) {
-                item {
-                    ListHeader(
-                        stringId = commonR.string.switches,
-                        expanded = expandedSwitches,
-                        onExpandChanged = { expandedSwitches = it }
-                    )
-                }
-                if (expandedSwitches) {
-                    items(switches.size) { index ->
-                        FavoriteToggleChip(
-                            entityList = switches,
-                            index = index,
-                            favoriteEntityIds = favoriteEntityIds,
-                            onFavoriteSelected = onFavoriteSelected
+                if (locks.isNotEmpty()) {
+                    item {
+                        ListHeader(
+                            stringId = commonR.string.locks,
+                            expanded = expandedLocks,
+                            onExpandChanged = { expandedLocks = it }
                         )
+                    }
+                    if (expandedLocks) {
+                        items(locks.size) { index ->
+                            FavoriteToggleChip(
+                                entityList = locks,
+                                index = index,
+                                favoriteEntityIds = favoriteEntityIds,
+                                onFavoriteSelected = onFavoriteSelected
+                            )
+                        }
+                    }
+                }
+
+                if (scenes.isNotEmpty()) {
+                    item {
+                        ListHeader(
+                            stringId = R.string.scenes,
+                            expanded = expandedScenes,
+                            onExpandChanged = { expandedScenes = it }
+                        )
+                    }
+                    if (expandedScenes) {
+                        items(scenes.size) { index ->
+                            FavoriteToggleChip(
+                                entityList = scenes,
+                                index = index,
+                                favoriteEntityIds = favoriteEntityIds,
+                                onFavoriteSelected = onFavoriteSelected
+                            )
+                        }
+                    }
+                }
+                if (scripts.isNotEmpty()) {
+                    item {
+                        ListHeader(
+                            stringId = R.string.scripts,
+                            expanded = expandedScripts,
+                            onExpandChanged = { expandedScripts = it }
+                        )
+                    }
+                    if (expandedScripts) {
+                        items(scripts.size) { index ->
+                            FavoriteToggleChip(
+                                entityList = scripts,
+                                index = index,
+                                favoriteEntityIds = favoriteEntityIds,
+                                onFavoriteSelected = onFavoriteSelected
+                            )
+                        }
+                    }
+                }
+                if (switches.isNotEmpty()) {
+                    item {
+                        ListHeader(
+                            stringId = R.string.switches,
+                            expanded = expandedSwitches,
+                            onExpandChanged = { expandedSwitches = it }
+                        )
+                    }
+                    if (expandedSwitches) {
+                        items(switches.size) { index ->
+                            FavoriteToggleChip(
+                                entityList = switches,
+                                index = index,
+                                favoriteEntityIds = favoriteEntityIds,
+                                onFavoriteSelected = onFavoriteSelected
+                            )
+                        }
                     }
                 }
             }
@@ -255,17 +261,7 @@ private fun FavoriteToggleChip(
                 overflow = TextOverflow.Ellipsis
             )
         },
-        toggleIcon = { ToggleChipDefaults.SwitchIcon(checked) },
-        colors = ToggleChipDefaults.toggleChipColors(
-            checkedStartBackgroundColor = colorResource(id = R.color.colorAccent),
-            checkedEndBackgroundColor = colorResource(id = R.color.colorAccent),
-            uncheckedStartBackgroundColor = colorResource(id = R.color.colorAccent),
-            uncheckedEndBackgroundColor = colorResource(id = R.color.colorAccent),
-            checkedContentColor = Color.Black,
-            uncheckedContentColor = Color.Black,
-            checkedToggleIconTintColor = Color.Yellow,
-            uncheckedToggleIconTintColor = Color.DarkGray
-        )
+        toggleIcon = { ToggleChipDefaults.SwitchIcon(checked) }
     )
 }
 
