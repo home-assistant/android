@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.home.views
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -12,6 +11,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,6 +31,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
@@ -80,9 +81,9 @@ fun SetFavoritesView(
                 modifier = Modifier
                     .fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = 10.dp,
-                    start = 10.dp,
-                    end = 10.dp,
+                    top = 40.dp,
+                    start = 16.dp,
+                    end = 16.dp,
                     bottom = 40.dp
                 ),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -97,7 +98,7 @@ fun SetFavoritesView(
                         if (favoriteEntityIds.contains(entity.entityId))
                             favoriteEntities += listOf(entity)
                     }
-                    items(favoriteEntityIds.size) { index ->
+                    items(favoriteEntities.size) { index ->
                         FavoriteToggleChip(
                             entityList = favoriteEntities,
                             index = index,
@@ -249,9 +250,13 @@ private fun FavoriteToggleChip(
             onFavoriteSelected(entityId, it)
         },
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 10.dp),
-        appIcon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
+            .fillMaxWidth(),
+        appIcon = {
+            Image(
+                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+            )
+        },
         label = {
             Text(
                 text = attributes["friendly_name"].toString(),

@@ -14,10 +14,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,6 +37,7 @@ import com.mikepenz.iconics.typeface.library.community.material.CommunityMateria
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventState
@@ -94,9 +94,9 @@ fun MainView(
                 modifier = Modifier
                     .fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = 20.dp,
-                    start = 8.dp,
-                    end = 8.dp,
+                    top = 40.dp,
+                    start = 16.dp,
+                    end = 16.dp,
                     bottom = 40.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -118,11 +118,11 @@ fun MainView(
                                 // Use a normal chip when we don't have the state of the entity
                                 Chip(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 0.dp),
+                                        .fillMaxWidth(),
                                     icon = {
                                         Image(
-                                            asset = CommunityMaterial.Icon.cmd_cellphone
+                                            asset = CommunityMaterial.Icon.cmd_cellphone,
+                                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                                         )
                                     },
                                     label = {
@@ -136,10 +136,7 @@ fun MainView(
                                         onEntityClicked(favoriteEntityID)
                                         onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
                                     },
-                                    colors = ChipDefaults.primaryChipColors(
-                                        backgroundColor = colorResource(id = R.color.colorAccent),
-                                        contentColor = Color.Black
-                                    )
+                                    colors = ChipDefaults.secondaryChipColors()
                                 )
                             } else {
                                 EntityUi(

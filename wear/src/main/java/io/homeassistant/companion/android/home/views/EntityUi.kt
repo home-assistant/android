@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
@@ -17,6 +18,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.HomePresenterImpl
+import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.previewEntity1
@@ -44,7 +46,12 @@ fun EntityUi(
             },
             modifier = Modifier
                 .fillMaxWidth(),
-            appIcon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
+            appIcon = {
+                Image(
+                    asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                    colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                )
+            },
             label = {
                 Text(
                     text = friendlyName,
@@ -59,7 +66,12 @@ fun EntityUi(
         Chip(
             modifier = Modifier
                 .fillMaxWidth(),
-            icon = { Image(asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone) },
+            icon = {
+                Image(
+                    asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
+                    colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                )
+            },
             label = {
                 Text(
                     text = friendlyName,

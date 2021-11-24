@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,12 +21,11 @@ fun OtherSection(
     onSettingsClicked: () -> Unit,
     onLogoutClicked: () -> Unit
 ) {
-    Column {
-        ListHeader(id = commonR.string.other)
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        ListHeader(id = R.string.other)
         Chip(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
+                .fillMaxWidth(),
             icon = {
                 Image(asset = CommunityMaterial.Icon.cmd_cog)
             },
@@ -42,8 +41,7 @@ fun OtherSection(
         )
         Chip(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
+                .fillMaxWidth(),
             icon = {
                 Image(asset = CommunityMaterial.Icon.cmd_exit_run)
             },

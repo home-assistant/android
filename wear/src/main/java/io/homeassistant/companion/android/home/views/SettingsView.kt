@@ -4,17 +4,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -28,6 +29,7 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventState
@@ -64,9 +66,9 @@ fun SettingsView(
                 modifier = Modifier
                     .fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = 20.dp,
-                    start = 8.dp,
-                    end = 8.dp,
+                    top = 40.dp,
+                    start = 16.dp,
+                    end = 16.dp,
                     bottom = 40.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -81,8 +83,12 @@ fun SettingsView(
                         modifier = Modifier
                             .fillMaxWidth(),
                         icon = {
-                            Image(asset = CommunityMaterial.Icon3.cmd_star)
+                            Image(
+                                asset = CommunityMaterial.Icon3.cmd_star,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            )
                         },
+                        colors = ChipDefaults.secondaryChipColors(),
                         label = {
                             Text(
                                 text = stringResource(id = R.string.favorite)
@@ -94,11 +100,14 @@ fun SettingsView(
                 item {
                     Chip(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp),
+                            .fillMaxWidth(),
                         icon = {
-                            Image(asset = CommunityMaterial.Icon.cmd_delete)
+                            Image(
+                                asset = CommunityMaterial.Icon.cmd_delete,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            )
                         },
+                        colors = ChipDefaults.secondaryChipColors(),
                         label = {
                             Text(
                                 text = stringResource(id = R.string.clear_favorites),
@@ -115,16 +124,14 @@ fun SettingsView(
                 }
                 item {
                     ListHeader(
-                        id = R.string.feedback_settings,
-                        modifier = Modifier.padding(top = 16.dp)
+                        id = R.string.feedback_settings
                     )
                 }
                 item {
                     val haptic = LocalHapticFeedback.current
                     ToggleChip(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp),
+                            .fillMaxWidth(),
                         checked = isHapticEnabled,
                         onCheckedChange = {
                             onHapticEnabled(it)
@@ -139,7 +146,8 @@ fun SettingsView(
                                 if (isHapticEnabled)
                                     CommunityMaterial.Icon3.cmd_watch_vibrate
                                 else
-                                    CommunityMaterial.Icon3.cmd_watch_vibrate_off
+                                    CommunityMaterial.Icon3.cmd_watch_vibrate_off,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         }
                     )
@@ -147,8 +155,7 @@ fun SettingsView(
                 item {
                     ToggleChip(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp),
+                            .fillMaxWidth(),
                         checked = isToastEnabled,
                         onCheckedChange = {
                             onToastEnabled(it)
@@ -162,7 +169,8 @@ fun SettingsView(
                                 if (isToastEnabled)
                                     CommunityMaterial.Icon3.cmd_message
                                 else
-                                    CommunityMaterial.Icon3.cmd_message_off
+                                    CommunityMaterial.Icon3.cmd_message_off,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         }
                     )
@@ -170,8 +178,7 @@ fun SettingsView(
 
                 item {
                     ListHeader(
-                        id = R.string.tile_settings,
-                        modifier = Modifier.padding(top = 16.dp)
+                        id = R.string.tile_settings
                     )
                 }
                 item {
@@ -179,8 +186,12 @@ fun SettingsView(
                         modifier = Modifier
                             .fillMaxWidth(),
                         icon = {
-                            Image(asset = CommunityMaterial.Icon3.cmd_star_circle_outline)
+                            Image(
+                                asset = CommunityMaterial.Icon3.cmd_star_circle_outline,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            )
                         },
+                        colors = ChipDefaults.secondaryChipColors(),
                         label = {
                             Text(
                                 text = stringResource(id = R.string.shortcuts)
