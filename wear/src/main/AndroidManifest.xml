@@ -19,7 +19,8 @@
         android:theme="@style/Theme.HomeAssistant"
         android:fullBackupContent="@xml/backup_rules">
         <!-- Start things like SensorWorker on device boot -->
-        <receiver android:name=".sensors.SensorReceiver">
+        <receiver android:name=".sensors.SensorReceiver"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
