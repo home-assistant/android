@@ -90,6 +90,7 @@ fun LoadHomePage(
                             { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
                             { mainViewModel.clearFavorites() },
                             { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) },
+                            { mainViewModel.logout() },
                             mainViewModel.isHapticEnabled.value,
                             mainViewModel.isToastEnabled.value,
                             { mainViewModel.setHapticEnabled(it) },

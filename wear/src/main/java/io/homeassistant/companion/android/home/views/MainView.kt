@@ -14,6 +14,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -94,10 +95,10 @@ fun MainView(
                 modifier = Modifier
                     .fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = 40.dp,
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = 40.dp
+                    top = 24.dp,
+                    start = 8.dp,
+                    end = 8.dp,
+                    bottom = 48.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -258,9 +259,22 @@ fun MainView(
                     }
                 }
                 item {
-                    OtherSection(
-                        onSettingsClicked = onSettingsClicked,
-                        onLogoutClicked = onLogoutClicked
+                    Chip(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 32.dp),
+                        icon = {
+                            Image(asset = CommunityMaterial.Icon.cmd_cog)
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(id = R.string.settings)
+                            )
+                        },
+                        onClick = onSettingsClicked,
+                        colors = ChipDefaults.primaryChipColors(
+                            contentColor = Color.Black
+                        )
                     )
                 }
             }

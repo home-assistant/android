@@ -50,10 +50,10 @@ fun SetTileShortcutsView(
             modifier = Modifier
                 .fillMaxSize(),
             contentPadding = PaddingValues(
-                top = 40.dp,
-                start = 16.dp,
-                end = 16.dp,
-                bottom = 40.dp
+                top = 24.dp,
+                start = 8.dp,
+                end = 8.dp,
+                bottom = 48.dp
             ),
             verticalArrangement = Arrangement.spacedBy(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

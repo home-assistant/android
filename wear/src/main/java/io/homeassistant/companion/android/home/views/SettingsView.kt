@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -43,6 +44,7 @@ fun SettingsView(
     onClickSetFavorites: () -> Unit,
     onClearFavorites: () -> Unit,
     onClickSetShortcuts: () -> Unit,
+    onClickLogout: () -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
@@ -66,10 +68,10 @@ fun SettingsView(
                 modifier = Modifier
                     .fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = 40.dp,
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = 40.dp
+                    top = 24.dp,
+                    start = 8.dp,
+                    end = 8.dp,
+                    bottom = 48.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -200,6 +202,31 @@ fun SettingsView(
                         onClick = onClickSetShortcuts
                     )
                 }
+
+                item {
+                    ListHeader(
+                        id = R.string.account
+                    )
+                }
+                item {
+                    Chip(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        icon = {
+                            Image(asset = CommunityMaterial.Icon.cmd_exit_run)
+                        },
+                        label = {
+                            Text(
+                                text = stringResource(id = R.string.logout)
+                            )
+                        },
+                        onClick = onClickLogout,
+                        colors = ChipDefaults.primaryChipColors(
+                            backgroundColor = Color.Red,
+                            contentColor = Color.Black
+                        )
+                    )
+                }
             }
         }
     }
@@ -219,6 +246,7 @@ private fun PreviewSettingsView() {
             onClickSetFavorites = { /*TODO*/ },
             onClearFavorites = {},
             onClickSetShortcuts = {},
+            onClickLogout = {},
             isHapticEnabled = true,
             isToastEnabled = false,
             {},
