@@ -16,32 +16,38 @@ class BatterySensorManager : SensorManager {
             R.string.basic_sensor_name_battery_level,
             R.string.sensor_description_battery_level,
             "battery",
-            "%"
+            "%",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val batteryState = SensorManager.BasicSensor(
             "battery_state",
             "sensor",
             R.string.basic_sensor_name_battery_state,
-            R.string.sensor_description_battery_state
+            R.string.sensor_description_battery_state,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
             R.string.basic_sensor_name_charging,
             R.string.sensor_description_charging,
-            "plug"
+            "plug",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
             "sensor",
             R.string.basic_sensor_name_charger_type,
-            R.string.sensor_description_charger_type
+            R.string.sensor_description_charger_type,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
             "sensor",
             R.string.basic_sensor_name_battery_health,
-            R.string.sensor_description_battery_health
+            R.string.sensor_description_battery_health,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
         private val batteryTemperature = SensorManager.BasicSensor(
@@ -50,20 +56,31 @@ class BatterySensorManager : SensorManager {
             R.string.basic_sensor_name_battery_temperature,
             R.string.sensor_description_battery_temperature,
             "temperature",
-            "°C"
+            "°C",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#battery-sensors"
     }
+
     override val enabledByDefault: Boolean
         get() = true
 
     override val name: Int
         get() = R.string.sensor_name_battery
+
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(batteryLevel, batteryState, isChargingState, chargerTypeState, batteryHealthState, batteryTemperature)
+        return listOf(
+            batteryLevel,
+            batteryState,
+            isChargingState,
+            chargerTypeState,
+            batteryHealthState,
+            batteryTemperature
+        )
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -210,7 +227,7 @@ class BatterySensorManager : SensorManager {
         val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
 
         return status == BatteryManager.BATTERY_STATUS_CHARGING ||
-            status == BatteryManager.BATTERY_STATUS_FULL
+                status == BatteryManager.BATTERY_STATUS_FULL
     }
 
     private fun getChargerType(intent: Intent): String {
