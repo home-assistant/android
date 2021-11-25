@@ -1,12 +1,12 @@
 package io.homeassistant.companion.android.sensors
 
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
-class LocationSensorManager : BroadcastReceiver(), SensorManager {
+class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
 
     companion object {
         const val MINIMUM_ACCURACY = 200
@@ -40,8 +40,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         )
         internal const val TAG = "LocBroadcastReceiver"
     }
-
-    lateinit var integrationUseCase: IntegrationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         // Noop

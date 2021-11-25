@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
+import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
@@ -37,10 +38,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import javax.inject.Inject
 
 @AndroidEntryPoint
-class LocationSensorManager : BroadcastReceiver(), SensorManager {
+class LocationSensorManager : LocationSensorManagerBase() {
 
     companion object {
         private const val SETTING_ACCURACY = "location_minimum_accuracy"
@@ -126,9 +126,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             return sensorSettings.firstOrNull { it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL }?.value?.toIntOrNull() ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
         }
     }
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 

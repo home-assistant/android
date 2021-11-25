@@ -19,14 +19,15 @@ abstract class SensorWorkerBase(
     val appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
+
+    protected abstract val integrationUseCase: IntegrationRepository
+    protected abstract val sensorReceiver: SensorReceiverBase
+
     companion object {
         const val TAG = "SensorWorker"
         const val channelId = "Sensor Worker"
         const val NOTIFICATION_ID = 42
     }
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
 
     private val notificationManager = appContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
@@ -49,7 +50,7 @@ abstract class SensorWorkerBase(
                 if (lastUpdateSensor.enabled)
                     LastUpdateManager().sendLastUpdate(appContext, TAG)
             }
-            createSensorReceiver().updateSensors(appContext, integrationUseCase)
+            sensorReceiver.updateSensors(appContext, integrationUseCase)
         }
         Result.success()
     }
@@ -66,6 +67,4 @@ abstract class SensorWorkerBase(
             }
         }
     }
-
-    protected abstract fun createSensorReceiver(): SensorReceiverBase
 }

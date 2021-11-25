@@ -2,7 +2,11 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import androidx.work.*
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 import io.homeassistant.companion.android.common.sensors.SensorWorkerBase
 import java.util.concurrent.TimeUnit
@@ -11,13 +15,6 @@ class SensorWorker(
     appContext: Context,
     workerParams: WorkerParameters
 ) : SensorWorkerBase(appContext, workerParams) {
-
-    init {
-        DaggerSensorComponent.builder()
-            .appComponent((appContext.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
-    }
 
     companion object {
         fun start(context: Context) {
@@ -34,7 +31,23 @@ class SensorWorker(
         }
     }
 
-    override fun createSensorReceiver(): SensorReceiverBase {
-        return SensorReceiver()
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface SensorWorkerEntryPoint {
+        fun integrationRepository(): IntegrationRepository
     }
+
+    override val integrationUseCase: IntegrationRepository
+        get() {
+            return EntryPointAccessors.fromApplication(
+                appContext,
+                SensorWorkerEntryPoint::class.java
+            )
+                .integrationRepository()
+        }
+
+    override val sensorReceiver: SensorReceiverBase
+        get() {
+            return SensorReceiver()
+        }
 }

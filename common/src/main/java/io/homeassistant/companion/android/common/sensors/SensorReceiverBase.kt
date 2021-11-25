@@ -3,20 +3,25 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.util.Log
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.*
+import java.util.*
 import javax.inject.Inject
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
 
     protected abstract val tag: String
+    protected abstract val currentAppVersion: String
+    protected abstract val managers: List<SensorManager>
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
     private val chargingActions = listOf(
         Intent.ACTION_BATTERY_LOW,
         Intent.ACTION_BATTERY_OKAY,
@@ -82,12 +87,91 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
     }
 
-    private fun isSensorEnabled(context: Context, id: String): Boolean {
+    protected fun isSensorEnabled(context: Context, id: String): Boolean {
         return AppDatabase.getInstance(context).sensorDao().get(id)?.enabled == true
     }
 
-    abstract suspend fun updateSensors(
+    suspend fun updateSensors(
         context: Context,
         integrationUseCase: IntegrationRepository
-    )
+    ) {
+        val sensorDao = AppDatabase.getInstance(context).sensorDao()
+        val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
+
+        val checkDeviceRegistration = integrationUseCase.getRegistration()
+        if (checkDeviceRegistration.appVersion == null) {
+            Log.w(tag, "Device not registered, skipping sensor update/registration")
+            return
+        }
+
+        val currentHAversion = integrationUseCase.getHomeAssistantVersion()
+
+        managers.forEach { manager ->
+
+            // Since we don't have this manager injected it doesn't fulfil it's injects, manually
+            // inject for now I guess?
+            if (manager is LocationSensorManagerBase)
+                manager.integrationUseCase = integrationUseCase
+
+            try {
+                manager.requestSensorUpdate(context)
+            } catch (e: Exception) {
+                Log.e(tag, "Issue requesting updates for ${context.getString(manager.name)}", e)
+            }
+            manager.getAvailableSensors(context).forEach { basicSensor ->
+                val fullSensor = sensorDao.getFull(basicSensor.id)
+                val sensor = fullSensor?.sensor
+                val sensorCoreRegistration = sensor?.coreRegistration
+                val sensorAppRegistration = sensor?.appRegistration
+
+                // Always register enabled sensors in case of available entity updates
+                // when app or core version change is detected every 4 hours
+                if (sensor?.enabled == true && sensor.type.isNotBlank() && sensor.icon.isNotBlank() &&
+                    (currentAppVersion != sensorAppRegistration || currentHAversion != sensorCoreRegistration || !sensor.registered)
+                ) {
+                    val reg = fullSensor.toSensorRegistration()
+                    val config = Configuration(context.resources.configuration)
+                    config.setLocale(Locale("en"))
+                    reg.name = context.createConfigurationContext(config).resources.getString(basicSensor.name)
+
+                    try {
+                        integrationUseCase.registerSensor(reg)
+                        sensor.registered = true
+                        sensor.coreRegistration = currentHAversion
+                        sensor.appRegistration = currentAppVersion
+                        sensorDao.update(sensor)
+                    } catch (e: Exception) {
+                        Log.e(tag, "Issue registering sensor: ${reg.uniqueId}", e)
+                    }
+                }
+                if (sensor?.enabled == true && sensor.registered && sensor.state != sensor.lastSentState) {
+                    enabledRegistrations.add(fullSensor.toSensorRegistration())
+                }
+            }
+        }
+
+        if (enabledRegistrations.isNotEmpty()) {
+            var success = false
+            try {
+                success = integrationUseCase.updateSensors(enabledRegistrations.toTypedArray())
+                enabledRegistrations.forEach {
+                    sensorDao.updateLastSendState(it.uniqueId, it.state.toString())
+                }
+            } catch (e: Exception) {
+                Log.e(tag, "Exception while updating sensors.", e)
+            }
+
+            // We failed to update a sensor, we should re register next time
+            if (!success) {
+                enabledRegistrations.forEach {
+                    val sensor = sensorDao.get(it.uniqueId)
+                    if (sensor != null) {
+                        sensor.registered = false
+                        sensor.lastSentState = ""
+                        sensorDao.update(sensor)
+                    }
+                }
+            }
+        } else Log.d(tag, "Nothing to update")
+    }
 }
