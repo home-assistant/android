@@ -1,11 +1,13 @@
 package io.homeassistant.companion.android.sensors
 
 import android.annotation.SuppressLint
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorReceiverBase
 
+@AndroidEntryPoint
 class SensorReceiver : SensorReceiverBase() {
 
     override val tag: String
@@ -52,7 +54,7 @@ class SensorReceiver : SensorReceiverBase() {
 
     // Suppress Lint because we only register for the receiver if the android version matches the intent
     @SuppressLint("InlinedApi")
-    override val skippableActions = mapOf<String, String>(/*
+    override val skippableActions = mapOf<String, String>()/*
         "android.app.action.NEXT_ALARM_CLOCK_CHANGED" to NextAlarmManager.nextAlarm.id,
         "android.bluetooth.device.action.ACL_CONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
         "android.bluetooth.device.action.ACL_DISCONNECTED" to BluetoothSensorManager.bluetoothConnection.id,
@@ -65,6 +67,5 @@ class SensorReceiver : SensorReceiverBase() {
         AudioManager.ACTION_MICROPHONE_MUTE_CHANGED to AudioSensorManager.micMuted.id,
         AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to AudioSensorManager.speakerphoneState.id,
         AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id
-    */)
-
+    )*/
 }

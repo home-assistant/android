@@ -74,5 +74,4 @@ class SensorReceiver : SensorReceiverBase() {
         AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to AudioSensorManager.speakerphoneState.id,
         AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id
     )
-
 }

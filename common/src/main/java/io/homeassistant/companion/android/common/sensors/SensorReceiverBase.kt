@@ -8,8 +8,12 @@ import android.util.Log
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.database.AppDatabase
-import kotlinx.coroutines.*
-import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 abstract class SensorReceiverBase : BroadcastReceiver() {
@@ -38,7 +42,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
                 Log.d(
                     tag,
                     String.format
-                        (
+                    (
                         "Sensor %s corresponding to received event %s is disabled, skipping sensors update",
                         sensor,
                         intent.action
