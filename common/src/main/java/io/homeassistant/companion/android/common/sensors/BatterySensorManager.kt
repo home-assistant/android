@@ -1,10 +1,10 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R
 
 class BatterySensorManager : SensorManager {
 
@@ -65,13 +65,22 @@ class BatterySensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#battery-sensors"
     }
+
     override val enabledByDefault: Boolean
         get() = true
 
     override val name: Int
         get() = R.string.sensor_name_battery
+
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(batteryLevel, batteryState, isChargingState, chargerTypeState, batteryHealthState, batteryTemperature)
+        return listOf(
+            batteryLevel,
+            batteryState,
+            isChargingState,
+            chargerTypeState,
+            batteryHealthState,
+            batteryTemperature
+        )
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {

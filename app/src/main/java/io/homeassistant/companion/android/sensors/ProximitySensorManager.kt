@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
 
 class ProximitySensorManager : SensorManager, SensorEventListener {

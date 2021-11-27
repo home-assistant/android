@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class PowerSensorManager : SensorManager {
     companion object {

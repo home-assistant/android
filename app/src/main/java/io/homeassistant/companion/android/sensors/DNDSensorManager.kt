@@ -4,6 +4,7 @@ import android.content.Context
 import android.provider.Settings.Global
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class DNDSensorManager : SensorManager {
     companion object {

@@ -128,9 +128,10 @@ class ManageTilesFragment constructor(
                         findPreference<ListPreference>("tile_entity")?.value = item.entityId
                         tileEntity = item.entityId
                         findPreference<Preference>("tile_icon")?.let {
-                            it.summary = item.iconId.toString()
-                            if (item.iconId != null) {
-                                val iconDrawable = iconPack.getIcon(item.iconId)?.drawable
+                            val iconId = item.iconId
+                            it.summary = iconId.toString()
+                            if (iconId != null) {
+                                val iconDrawable = iconPack.getIcon(iconId)?.drawable
                                 if (iconDrawable != null) {
                                     val icon = DrawableCompat.wrap(iconDrawable)
                                     icon.setColorFilter(

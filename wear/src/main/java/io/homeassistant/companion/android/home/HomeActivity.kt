@@ -11,6 +11,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.home.views.LoadHomePage
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
+import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.sensors.SensorWorker
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -46,6 +48,22 @@ class HomeActivity : ComponentActivity(), HomeView {
     override fun onResume() {
         mainViewModel.updateFavorites()
         super.onResume()
+        SensorWorker.start(this)
+
+        initAllSensors()
+    }
+
+    private fun initAllSensors() {
+        for (manager in SensorReceiver.MANAGERS) {
+            for (basicSensor in manager.getAvailableSensors(this)) {
+                manager.isEnabled(this, basicSensor.id)
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        SensorWorker.start(this)
     }
 
     override fun onDestroy() {

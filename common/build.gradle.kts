@@ -20,6 +20,30 @@ android {
         buildConfigField("String", "PUSH_URL", "\"$homeAssistantAndroidPushUrl\"")
         buildConfigField("String", "RATE_LIMIT_URL", "\"$homeAssistantAndroidRateLimitUrl\"")
         buildConfigField("String", "VERSION_NAME", "\"$versionName-$versionCode\"")
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments(mapOf("room.incremental" to "true"))
+            }
+        }
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    compileOptions {
+        sourceCompatibility(JavaVersion.VERSION_11)
+        targetCompatibility(JavaVersion.VERSION_11)
+    }
+
+    lint {
+        isAbortOnError = false
+        disable("MissingTranslation")
+    }
+
+    kapt {
+        correctErrorTypes = true
     }
 }
 
@@ -30,6 +54,12 @@ dependencies {
 
     implementation("com.google.dagger:hilt-android:2.40.1")
     kapt("com.google.dagger:hilt-android-compiler:2.40.1")
+
+    api("androidx.room:room-runtime:2.3.0")
+    api("androidx.room:room-ktx:2.3.0")
+    kapt("androidx.room:room-compiler:2.3.0")
+
+    api("androidx.work:work-runtime-ktx:2.7.0")
 
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-jackson:2.9.0")

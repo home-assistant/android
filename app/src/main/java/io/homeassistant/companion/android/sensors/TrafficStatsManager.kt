@@ -6,6 +6,7 @@ import android.net.NetworkCapabilities
 import android.net.TrafficStats
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.math.RoundingMode
 import kotlin.math.absoluteValue
 

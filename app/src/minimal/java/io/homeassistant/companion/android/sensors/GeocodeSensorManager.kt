@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class GeocodeSensorManager : SensorManager {
 

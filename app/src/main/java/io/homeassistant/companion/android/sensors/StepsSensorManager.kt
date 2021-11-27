@@ -11,6 +11,7 @@ import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
 
 class StepsSensorManager : SensorManager, SensorEventListener {

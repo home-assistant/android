@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="sensor" type="string">@string/sensor</item>
+    <item name="sensors" type="string">@string/sensors</item>
+    <item name="ic_stat_ic_notification" type="drawable">@drawable/ic_stat_ic_notification</item>
+    <item name="ic_stat_ic_notification_blue" type="drawable">@drawable/ic_stat_ic_notification_blue</item>
+</resources>

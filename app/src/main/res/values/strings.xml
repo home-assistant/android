@@ -26,15 +26,10 @@
   <string name="basic_sensor_name_app_rx_gb">App Rx GB</string>
   <string name="basic_sensor_name_app_standby">App Standby Bucket</string>
   <string name="basic_sensor_name_app_tx_gb">App Tx GB</string>
-  <string name="basic_sensor_name_battery_health">Battery Health</string>
-  <string name="basic_sensor_name_battery_level">Battery Level</string>
-  <string name="basic_sensor_name_battery_state">Battery State</string>
   <string name="basic_sensor_name_bluetooth">Bluetooth Connection</string>
   <string name="basic_sensor_name_bluetooth_ble_emitter">Ble Transmitter</string>
   <string name="basic_sensor_name_bluetooth_state">Bluetooth State</string>
   <string name="basic_sensor_name_call_number">Call Number</string>
-  <string name="basic_sensor_name_charger_type">Charger Type</string>
-  <string name="basic_sensor_name_charging">Is Charging</string>
   <string name="basic_sensor_name_current_time_zone">Current Time Zone</string>
   <string name="basic_sensor_name_current_version">Current Version</string>
   <string name="basic_sensor_name_device_locked">Device Locked</string>
@@ -49,7 +44,6 @@
   <string name="basic_sensor_name_last_notification">Last Notification</string>
   <string name="basic_sensor_name_last_reboot">Last Reboot</string>
   <string name="basic_sensor_name_last_removed_notification">Last Removed Notification</string>
-  <string name="basic_sensor_name_last_update">Last Update Trigger</string>
   <string name="basic_sensor_name_location_accurate">Single Accurate Location</string>
   <string name="basic_sensor_name_location_background">Background Location</string>
   <string name="basic_sensor_name_location_zone">Location Zone</string>
@@ -101,8 +95,6 @@ to your home internet.</string>
   <string name="crash_reporting">Crash Reporting</string>
   <string name="crash_reporting_summary">Help the developers fix bugs and crashes by leaving this enabled. If the application crashes this will automatically generate and send a report. If you notice a crash also create an issue on Github!</string>
   <string name="create_template">Create Template</string>
-  <string name="database_event_failure">Unable to send migration failure event to Home Assistant</string>
-  <string name="database_migration_failed">Database migration failed, all sensor and widget data has been reset. Please re-enable your sensors and recreate your widgets.</string>
   <string name="delete_all_notifications">Delete all notifications from history</string>
   <string name="delete_this_notification">Delete this notification from history</string>
   <string name="delete_widget">Delete Widget</string>
@@ -131,7 +123,7 @@ to your home internet.</string>
   <string name="enable_all_sensors">Enable All Sensors</string>
   <string name="enable_all_sensors_summary">All required permissions will be requested upon enabling</string>
   <string name="enable_location_tracking">Enable Location Tracking</string>
-  <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your Home Assistant server. Ensure that you enable background access to location, otherwise we cannot enable location tracking.  Your location data is sent directly to your Home Assistant server and is never sent to a 3rd party.</string>
+  <string name="enable_location_tracking_description">Enabling this sensor will allow the Home Assistant application to track you location and report it back to your instance of Home Assistant. Ensure that you enable background access to location, otherwise we cannot enable location tracking.  Your location data is sent directly to your Home Assistant instance and is never sent to a 3rd party.</string>
   <string name="enable_location_tracking_prompt">This app collects location data to enable Location Tracking, Wifi Connection Status, and URL decision making even when the app is closed or not in use.</string>
   <string name="enable_remaining_sensors">Enable %1$d Sensors</string>
   <string name="enabled_summary">When enabled values will be sent to Home Assistant</string>
@@ -142,7 +134,7 @@ to your home internet.</string>
   <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
   <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
   <string name="error_with_registration">Please check to ensure you have the mobile_app 
-integration enabled on your home assistant server.</string>
+integration enabled on your home assistant instance.</string>
   <string name="event_error">Failed to notify HA of picked option.</string>
   <string name="exit">Exit</string>
   <string name="failed_scan">Scanning for Home Assistant failed.</string>
@@ -160,7 +152,7 @@ integration enabled on your home assistant server.</string>
   <string name="high_accuracy_mode_notification_title">High accuracy (GPS) mode enabled</string>
   <string name="history">History</string>
   <string name="home_assistant_not_discover">Unable to find your 
-Home Assistant server</string>
+Home Assistant instance</string>
   <string name="icon">Icon</string>
   <string name="input_url">Home Assistant URL</string>
   <string name="input_url_hint">https://example.duckdns.org:8123</string>
@@ -283,9 +275,8 @@ for Home Assistant</string>
   <string name="security_vulnerably_understand">I Understand</string>
   <string name="security_vulnerably_view">View Bulletin</string>
   <string name="select_entity_to_display">Select Entity to display</string>
-  <string name="select_instance">Select the server you would
+  <string name="select_instance">Select the instance you would 
 like to connect to:</string>
-  <string name="sensor">Sensor</string>
   <string name="sensor_description">Description</string>
   <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
   <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be.</string>
@@ -296,15 +287,10 @@ like to connect to:</string>
   <string name="sensor_description_app_tx_gb">App Tx GB since last device reboot</string>
   <string name="sensor_description_audio_mode">The state of the devices audio mode</string>
   <string name="sensor_description_audio_sensor">The state of the devices ringer mode</string>
-  <string name="sensor_description_battery_health">The health of the battery</string>
-  <string name="sensor_description_battery_level">The current battery level of the device</string>
-  <string name="sensor_description_battery_state">The current charging state of the battery</string>
   <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\nBy default this sensor is not turned on with the Enable all toggle, to avoid battery drain, there is a setting to enable this (\"Include when enabling all sensors\").\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)#n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
   <string name="sensor_description_bluetooth_connection">Information about currently connected bluetooth devices</string>
   <string name="sensor_description_bluetooth_state">Whether or not bluetooth is enabled on the device</string>
   <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
-  <string name="sensor_description_charger_type">The type of charger plugged into the device currently</string>
-  <string name="sensor_description_charging">Whether or not the device is actively charging</string>
   <string name="sensor_description_current_time_zone">The current time zone the device is in</string>
   <string name="sensor_description_current_version">The current installed application version</string>
   <string name="sensor_description_detected_activity">The current activity type as computed by Googles Activity Recognition API</string>
@@ -322,7 +308,6 @@ like to connect to:</string>
   <string name="sensor_description_last_notification">The details of the last notification.</string>
   <string name="sensor_description_last_reboot">The date and time of the devices last reboot. The setting below will allow you to adjust the deadband in milliseconds, if you still find the value to jump incorrectly. The default value is 60000 (1 minute).</string>
   <string name="sensor_description_last_removed_notification">The details of the last removed notification. This can be any notification either cleared by the user or removed by an application.</string>
-  <string name="sensor_description_last_update">The intent for the last update that was sent, periodic updates will show as \"SensorWorker\". Enabling the \"Add New Intent\" toggle will create 1 setting to allow you to register for a broadcast intent. The toggle will switch back to off once a new setting is created so you will need to turn it back on to save more intents. You can also clear out the setting value to remove the setting in the next update. You must restart the application after making changes to these settings to take effect.</string>
   <string name="sensor_description_light_sensor">The current level of illuminance</string>
   <string name="sensor_description_location_accurate">Allow Home Assistant to send a notification to request an accurate location along with the application periodically requesting an accurate location.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.  The Minimum time between updates (in milliseconds) keeps the device from sending the accurate location too often. The Include in sensor update setting will make a location request with each sensor update.</string>
   <string name="sensor_description_location_background">Update your location behind the scenes, periodically.  The Minimum Accuracy setting will allow you to decide how accurate the device location (in meters) has to be in order to send to Home Assistant.</string>
@@ -335,7 +320,6 @@ like to connect to:</string>
   <string name="sensor_description_mobile_tx_gb">Total Tx GB on cellular data since last device reboot</string>
   <string name="sensor_description_music_active">Whether or not music is actively playing on the device</string>
   <string name="sensor_description_next_alarm">The date and time of the next scheduled alarm, any app or manufacturer can override the default behavior. The package attribute will tell you which app set the next scheduled alarm. The setting below will create an Allow List so you can specify what packages you want the alarm event from. This will ignore alarm events for packages not selected and the state will not update until the next scheduled alarm matches one of the selected packages.</string>
-  <string name="sensor_description_none">No description</string>
   <string name="sensor_description_phone_state">Whether or not the phone is ringing or in a call, no other caller information is stored</string>
   <string name="sensor_description_power_save">Whether or not the device is in Power Save mode</string>
   <string name="sensor_description_pressure_sensor">The current ambient air pressure reading</string>
@@ -368,7 +352,6 @@ like to connect to:</string>
   <string name="sensor_name_app_sensor">App Sensors</string>
   <string name="sensor_name_audio">Audio Sensors</string>
   <string name="sensor_name_audio_mode">Audio Mode</string>
-  <string name="sensor_name_battery">Battery Sensors</string>
   <string name="sensor_name_bluetooth">Bluetooth Sensors</string>
   <string name="sensor_name_dnd">Do Not Disturb Sensor</string>
   <string name="sensor_name_geolocation">Geolocation Sensors</string>
@@ -376,7 +359,6 @@ like to connect to:</string>
   <string name="sensor_name_keyguard">Keyguard Sensors</string>
   <string name="sensor_name_last_notification">Notification Sensors</string>
   <string name="sensor_name_last_reboot">Last Reboot Sensor</string>
-  <string name="sensor_name_last_update">Last Update Sensor</string>
   <string name="sensor_name_light">Light Sensor</string>
   <string name="sensor_name_location">Location Sensors</string>
   <string name="sensor_name_mic_muted">Mic Muted</string>
@@ -401,7 +383,6 @@ like to connect to:</string>
   <string name="sensor_settings">Sensor Settings</string>
   <string name="sensor_summary">Use this to manage what sensors are enabled/disabled.</string>
   <string name="sensor_title">Manage Sensors</string>
-  <string name="sensors">Sensors</string>
   <string name="sensors_with_settings">The following sensors offer custom settings: %1$s</string>
   <string name="session_timeout_title">Session TimeOut (in seconds)</string>
   <string name="set_lock_message">No biometric sensor or screenlock credential available</string>
@@ -470,7 +451,6 @@ like to connect to:</string>
   <string name="unable_to_register">Unable to Register Application</string>
   <string name="unique_id">Unique Id</string>
   <string name="update_widget">Update Widget</string>
-  <string name="updating_sensors">Updating Sensors</string>
   <string name="unknown_address">Unknown address</string>
   <string name="url_invalid">Url Invalid</string>
   <string name="url_parse_error">Unable to parse your Home Assistant URL. It should look like https://example.com</string>
@@ -517,8 +497,6 @@ like to connect to:</string>
   <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
   <string name="what_is_this">What is this?</string>
   <string name="what_is_this_crash">Unable to load Home Assistant home page, do you have a browser installed?</string>
-  <string name="basic_sensor_name_battery_temperature">Battery Temperature</string>
-  <string name="sensor_description_battery_temperature">The current battery temperature</string>
   <string name="shortcut_pinned_desc">Pinned Shortcut Description</string>
   <string name="shortcut_pinned_label">Pinned Shortcut Label</string>
   <string name="shortcut_pinned_id">Pinned Shortcut ID</string>

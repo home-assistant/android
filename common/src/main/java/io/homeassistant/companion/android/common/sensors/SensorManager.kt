@@ -1,10 +1,10 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
