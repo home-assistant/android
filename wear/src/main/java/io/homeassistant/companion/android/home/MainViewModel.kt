@@ -52,9 +52,9 @@ class MainViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun toggleEntity(entityId: String) {
+    fun toggleEntity(entityId: String, state: String) {
         viewModelScope.launch {
-            homePresenter.onEntityClicked(entityId)
+            homePresenter.onEntityClicked(entityId, state)
         }
     }
 

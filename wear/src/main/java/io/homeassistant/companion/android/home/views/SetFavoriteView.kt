@@ -49,6 +49,7 @@ fun SetFavoritesView(
 ) {
     var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedLocks: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
@@ -57,6 +58,7 @@ fun SetFavoritesView(
     val scenes = validEntityList.filter { it.entityId.split(".")[0] == "scene" }
     val scripts = validEntityList.filter { it.entityId.split(".")[0] == "script" }
     val lights = validEntityList.filter { it.entityId.split(".")[0] == "light" }
+    val locks = validEntityList.filter { it.entityId.split(".")[0] == "lock" }
     val inputBooleans = validEntityList.filter { it.entityId.split(".")[0] == "input_boolean" }
     val switches = validEntityList.filter { it.entityId.split(".")[0] == "switch" }
 
@@ -133,6 +135,25 @@ fun SetFavoritesView(
                     items(lights.size) { index ->
                         FavoriteToggleChip(
                             entityList = lights,
+                            index = index,
+                            favoriteEntityIds = favoriteEntityIds,
+                            onFavoriteSelected = onFavoriteSelected
+                        )
+                    }
+                }
+            }
+            if (locks.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = R.string.locks,
+                        expanded = expandedLocks,
+                        onExpandChanged = { expandedLocks = it }
+                    )
+                }
+                if (expandedLocks) {
+                    items(locks.size) { index ->
+                        FavoriteToggleChip(
+                            entityList = locks,
                             index = index,
                             favoriteEntityIds = favoriteEntityIds,
                             onFavoriteSelected = onFavoriteSelected

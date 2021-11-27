@@ -19,6 +19,7 @@
     <string name="list_header_instances">Instances</string>
     <string name="list_header_other">Other</string>
     <string name="loading">Loading…</string>
+    <string name="locks">Locks</string>
     <string name="login">Login</string>
     <string name="logout">Logout</string>
     <string name="manual_setup">Manual setup</string>

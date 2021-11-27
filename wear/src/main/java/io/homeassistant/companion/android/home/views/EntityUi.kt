@@ -30,7 +30,7 @@ import io.homeassistant.companion.android.util.setChipDefaults
 @Composable
 fun EntityUi(
     entity: Entity<*>,
-    onEntityClicked: (String) -> Unit,
+    onEntityClicked: (String, String) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
 ) {
@@ -44,7 +44,7 @@ fun EntityUi(
         ToggleChip(
             checked = entity.state == "on",
             onCheckedChange = {
-                onEntityClicked(entity.entityId)
+                onEntityClicked(entity.entityId, entity.state)
                 onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, friendlyName, haptic)
             },
             modifier = Modifier
@@ -86,7 +86,7 @@ fun EntityUi(
             },
             enabled = entity.state != "unavailable",
             onClick = {
-                onEntityClicked(entity.entityId)
+                onEntityClicked(entity.entityId, entity.state)
                 onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, friendlyName, haptic)
             },
             colors = setChipDefaults()
@@ -100,13 +100,13 @@ private fun PreviewEntityUI() {
     Column {
         EntityUi(
             entity = previewEntity1,
-            onEntityClicked = {},
+            onEntityClicked = { _, _ -> },
             isHapticEnabled = true,
             isToastEnabled = false
         )
         EntityUi(
             entity = previewEntity2,
-            onEntityClicked = {},
+            onEntityClicked = { _, _ -> },
             isHapticEnabled = false,
             isToastEnabled = true
         )

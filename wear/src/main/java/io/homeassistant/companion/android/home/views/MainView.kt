@@ -49,7 +49,7 @@ import io.homeassistant.companion.android.util.setChipDefaults
 fun MainView(
     entities: Map<String, Entity<*>>,
     favoriteEntityIds: List<String>,
-    onEntityClicked: (String) -> Unit,
+    onEntityClicked: (String, String) -> Unit,
     onSettingsClicked: () -> Unit,
     onLogoutClicked: () -> Unit,
     isHapticEnabled: Boolean,
@@ -60,6 +60,7 @@ fun MainView(
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedLocks: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
@@ -68,6 +69,7 @@ fun MainView(
     val scenes = entitiesList.filter { it.entityId.split(".")[0] == "scene" }
     val scripts = entitiesList.filter { it.entityId.split(".")[0] == "script" }
     val lights = entitiesList.filter { it.entityId.split(".")[0] == "light" }
+    val locks = entitiesList.filter { it.entityId.split(".")[0] == "lock" }
     val inputBooleans = entitiesList.filter { it.entityId.split(".")[0] == "input_boolean" }
     val switches = entitiesList.filter { it.entityId.split(".")[0] == "switch" }
 
@@ -128,7 +130,7 @@ fun MainView(
                                     )
                                 },
                                 onClick = {
-                                    onEntityClicked(favoriteEntityID)
+                                    onEntityClicked(favoriteEntityID, "unknown")
                                     onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
                                 },
                                 colors = ChipDefaults.primaryChipColors(
@@ -198,6 +200,20 @@ fun MainView(
                     }
                 }
             }
+            if (locks.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = R.string.locks,
+                        expanded = expandedLocks,
+                        onExpandChanged = { expandedLocks = it }
+                    )
+                }
+                if (expandedLocks) {
+                    items(locks.size) { index ->
+                        EntityUi(locks[index], onEntityClicked, isHapticEnabled, isToastEnabled)
+                    }
+                }
+            }
             if (scenes.isNotEmpty()) {
                 item {
                     ListHeader(
@@ -262,7 +278,7 @@ private fun PreviewMainView() {
         MainView(
             entities = previewEntityList,
             favoriteEntityIds = previewFavoritesList,
-            onEntityClicked = {},
+            onEntityClicked = { _, _ -> },
             onSettingsClicked = {},
             onLogoutClicked = {},
             isHapticEnabled = true,

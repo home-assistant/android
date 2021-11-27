@@ -37,19 +37,24 @@ class TileActionReceiver : BroadcastReceiver() {
                     }
                 }
 
-                if (entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
-                    integrationUseCase.callService(
-                        entityId.split(".")[0],
-                        "toggle",
-                        hashMapOf("entity_id" to entityId)
-                    )
-                } else {
-                    integrationUseCase.callService(
-                        entityId.split(".")[0],
-                        "turn_on",
-                        hashMapOf("entity_id" to entityId)
-                    )
+                val domain = entityId.split(".")[0]
+                val serviceName = when (domain) {
+                    "lock" -> {
+                        val lockEntity = integrationUseCase.getEntity(entityId)
+                        if (lockEntity.state == "locked")
+                            "unlock"
+                        else
+                            "lock"
+                    }
+                    in HomePresenterImpl.toggleDomains -> "toggle"
+                    else -> "turn_on"
                 }
+
+                integrationUseCase.callService(
+                    domain,
+                    serviceName,
+                    hashMapOf("entity_id" to entityId)
+                )
             }
         }
     }

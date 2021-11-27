@@ -101,6 +101,7 @@ class ShortcutsTile : TileService() {
                             when (entity.entityId.split(".")[0]) {
                                 "input_boolean", "switch" -> "light_switch"
                                 "light" -> "lightbulb"
+                                "lock" -> "lock"
                                 "script" -> "script_text_outline"
                                 "scene" -> "palette_outline"
                                 else -> "cellphone"
