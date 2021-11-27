@@ -30,18 +30,17 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.previewEntityList
-import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ChooseEntityView(
-    validEntities: Map<String, Entity<*>>,
+    mainViewModel: MainViewModel,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit
 ) {
@@ -52,13 +51,6 @@ fun ChooseEntityView(
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
 
-    val validEntityList = validEntities.values.toList().sortedBy { it.entityId }
-    val scenes = validEntityList.filter { it.entityId.split(".")[0] == "scene" }
-    val scripts = validEntityList.filter { it.entityId.split(".")[0] == "script" }
-    val lights = validEntityList.filter { it.entityId.split(".")[0] == "light" }
-    val locks = validEntityList.filter { it.entityId.split(".")[0] == "lock" }
-    val inputBooleans = validEntityList.filter { it.entityId.split(".")[0] == "input_boolean" }
-    val switches = validEntityList.filter { it.entityId.split(".")[0] == "switch" }
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
 
@@ -92,7 +84,7 @@ fun ChooseEntityView(
                     )
                 )
             }
-            if (inputBooleans.isNotEmpty()) {
+            if (mainViewModel.inputBooleans.isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = R.string.input_booleans,
@@ -101,34 +93,34 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedInputBooleans) {
-                    items(inputBooleans.size) { index ->
+                    items(mainViewModel.inputBooleans.size) { index ->
                         ChooseEntityChip(
-                            entityList = inputBooleans,
+                            entityList = mainViewModel.inputBooleans,
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-            if (locks.isNotEmpty()) {
+            if (mainViewModel.locks.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = commonR.string.locks,
+                        stringId = R.string.locks,
                         expanded = expandedLocks,
                         onExpandChanged = { expandedLocks = it }
                     )
                 }
                 if (expandedLocks) {
-                    items(locks.size) { index ->
+                    items(mainViewModel.locks.size) { index ->
                         ChooseEntityChip(
-                            entityList = locks,
+                            entityList = mainViewModel.locks,
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-            if (lights.isNotEmpty()) {
+            if (mainViewModel.lights.isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = R.string.lights,
@@ -137,17 +129,16 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedLights) {
-                    items(lights.size) { index ->
+                    items(mainViewModel.lights.size) { index ->
                         ChooseEntityChip(
-                            entityList = lights,
+                            entityList = mainViewModel.lights,
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-
-            if (scenes.isNotEmpty()) {
+            if (mainViewModel.scenes.isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = R.string.scenes,
@@ -156,17 +147,16 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedScenes) {
-                    items(scenes.size) { index ->
+                    items(mainViewModel.scenes.size) { index ->
                         ChooseEntityChip(
-                            entityList = scenes,
+                            entityList = mainViewModel.scenes,
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-
-            if (scripts.isNotEmpty()) {
+            if (mainViewModel.scripts.isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = R.string.scripts,
@@ -175,16 +165,16 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedScripts) {
-                    items(scripts.size) { index ->
+                    items(mainViewModel.scripts.size) { index ->
                         ChooseEntityChip(
-                            entityList = scripts,
+                            entityList = mainViewModel.scripts,
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-            if (switches.isNotEmpty()) {
+            if (mainViewModel.switches.isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = R.string.switches,
@@ -193,9 +183,9 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedSwitches) {
-                    items(switches.size) { index ->
+                    items(mainViewModel.switches.size) { index ->
                         ChooseEntityChip(
-                            entityList = switches,
+                            entityList = mainViewModel.switches,
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
@@ -257,7 +247,7 @@ private fun PreviewChooseEntityView() {
     ) {
         RotaryEventHandlerSetup(rotaryEventDispatcher)
         ChooseEntityView(
-            validEntities = previewEntityList,
+            mainViewModel = MainViewModel(),
             onNoneClicked = { /*TODO*/ },
             onEntitySelected = {}
         )

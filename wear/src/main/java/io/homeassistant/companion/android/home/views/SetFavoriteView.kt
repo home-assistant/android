@@ -30,6 +30,8 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.home.HomePresenterImpl
+import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
@@ -37,14 +39,13 @@ import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.previewEntityList
 import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalWearMaterialApi
 @Composable
 fun SetFavoritesView(
-    validEntities: Map<String, Entity<*>>,
+    mainViewModel: MainViewModel,
     favoriteEntityIds: List<String>,
     onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
 ) {
@@ -55,13 +56,9 @@ fun SetFavoritesView(
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
 
+    val validEntities = mainViewModel.entities
+        .filter { it.key.split(".")[0] in HomePresenterImpl.supportedDomains }
     val validEntityList = validEntities.values.toList().sortedBy { it.entityId }
-    val scenes = validEntityList.filter { it.entityId.split(".")[0] == "scene" }
-    val scripts = validEntityList.filter { it.entityId.split(".")[0] == "script" }
-    val lights = validEntityList.filter { it.entityId.split(".")[0] == "light" }
-    val locks = validEntityList.filter { it.entityId.split(".")[0] == "lock" }
-    val inputBooleans = validEntityList.filter { it.entityId.split(".")[0] == "input_boolean" }
-    val switches = validEntityList.filter { it.entityId.split(".")[0] == "switch" }
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
@@ -107,7 +104,7 @@ fun SetFavoritesView(
                         )
                     }
                 }
-                if (inputBooleans.isNotEmpty()) {
+                if (mainViewModel.inputBooleans.isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = R.string.input_booleans,
@@ -116,9 +113,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedInputBooleans) {
-                        items(inputBooleans.size) { index ->
+                        items(mainViewModel.inputBooleans.size) { index ->
                             FavoriteToggleChip(
-                                entityList = inputBooleans,
+                                entityList = mainViewModel.inputBooleans,
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -127,7 +124,7 @@ fun SetFavoritesView(
                     }
                 }
 
-                if (lights.isNotEmpty()) {
+                if (mainViewModel.lights.isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = R.string.lights,
@@ -136,28 +133,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedLights) {
-                        items(lights.size) { index ->
+                        items(mainViewModel.lights.size) { index ->
                             FavoriteToggleChip(
-                                entityList = lights,
-                                index = index,
-                                favoriteEntityIds = favoriteEntityIds,
-                                onFavoriteSelected = onFavoriteSelected
-                            )
-                        }
-                    }
-                }
-                if (locks.isNotEmpty()) {
-                    item {
-                        ListHeader(
-                            stringId = commonR.string.locks,
-                            expanded = expandedLocks,
-                            onExpandChanged = { expandedLocks = it }
-                        )
-                    }
-                    if (expandedLocks) {
-                        items(locks.size) { index ->
-                            FavoriteToggleChip(
-                                entityList = locks,
+                                entityList = mainViewModel.lights,
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -166,7 +144,28 @@ fun SetFavoritesView(
                     }
                 }
 
-                if (scenes.isNotEmpty()) {
+                if (mainViewModel.locks.isNotEmpty()) {
+                    item {
+                        ListHeader(
+                            stringId = commonR.string.locks,
+                            expanded = expandedLocks,
+                            onExpandChanged = { expandedLocks = it }
+                        )
+                    }
+                    if (expandedLocks) {
+                        items(mainViewModel.locks.size) { index ->
+                            FavoriteToggleChip(
+                                entityList = mainViewModel.locks,
+                                index = index,
+                                favoriteEntityIds = favoriteEntityIds,
+                                onFavoriteSelected = onFavoriteSelected
+                            )
+                        }
+                    }
+                }
+
+
+                if (mainViewModel.scenes.isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = R.string.scenes,
@@ -175,9 +174,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedScenes) {
-                        items(scenes.size) { index ->
+                        items(mainViewModel.scenes.size) { index ->
                             FavoriteToggleChip(
-                                entityList = scenes,
+                                entityList = mainViewModel.scenes,
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -185,7 +184,8 @@ fun SetFavoritesView(
                         }
                     }
                 }
-                if (scripts.isNotEmpty()) {
+
+                if (mainViewModel.scripts.isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = R.string.scripts,
@@ -194,9 +194,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedScripts) {
-                        items(scripts.size) { index ->
+                        items(mainViewModel.scripts.size) { index ->
                             FavoriteToggleChip(
-                                entityList = scripts,
+                                entityList = mainViewModel.scripts,
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -204,7 +204,8 @@ fun SetFavoritesView(
                         }
                     }
                 }
-                if (switches.isNotEmpty()) {
+
+                if (mainViewModel.switches.isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = R.string.switches,
@@ -213,9 +214,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedSwitches) {
-                        items(switches.size) { index ->
+                        items(mainViewModel.switches.size) { index ->
                             FavoriteToggleChip(
-                                entityList = switches,
+                                entityList = mainViewModel.switches,
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -278,7 +279,7 @@ private fun PreviewSetFavoriteView() {
     ) {
         RotaryEventHandlerSetup(rotaryEventDispatcher)
         SetFavoritesView(
-            validEntities = previewEntityList,
+            mainViewModel = MainViewModel(),
             favoriteEntityIds = previewFavoritesList,
             onFavoriteSelected = { _, _ -> }
         )

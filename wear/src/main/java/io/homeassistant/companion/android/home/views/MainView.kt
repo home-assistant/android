@@ -37,43 +37,30 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventState
+import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
-import io.homeassistant.companion.android.util.previewEntityList
 import io.homeassistant.companion.android.util.previewFavoritesList
 
 @ExperimentalWearMaterialApi
 @Composable
 fun MainView(
-    entities: Map<String, Entity<*>>,
+    mainViewModel: MainViewModel,
     favoriteEntityIds: List<String>,
     onEntityClicked: (String, String) -> Unit,
     onSettingsClicked: () -> Unit,
-    onLogoutClicked: () -> Unit,
+    onTestClicked: (entityLists: Map<Int, List<Entity<*>>>) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
 
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedLocks: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
-
-    val entitiesList = entities.values.toList().sortedBy { it.entityId }
-    val scenes = entitiesList.filter { it.entityId.split(".")[0] == "scene" }
-    val scripts = entitiesList.filter { it.entityId.split(".")[0] == "script" }
-    val lights = entitiesList.filter { it.entityId.split(".")[0] == "light" }
-    val locks = entitiesList.filter { it.entityId.split(".")[0] == "lock" }
-    val inputBooleans = entitiesList.filter { it.entityId.split(".")[0] == "input_boolean" }
-    val switches = entitiesList.filter { it.entityId.split(".")[0] == "switch" }
 
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
@@ -115,7 +102,7 @@ fun MainView(
                     if (expandedFavorites) {
                         items(favoriteEntityIds.size) { index ->
                             val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
-                            if (entities.isNullOrEmpty()) {
+                            if (mainViewModel.entities.isNullOrEmpty()) {
                                 // Use a normal chip when we don't have the state of the entity
                                 Chip(
                                     modifier = Modifier
@@ -141,7 +128,7 @@ fun MainView(
                                 )
                             } else {
                                 EntityUi(
-                                    entities[favoriteEntityID]!!,
+                                    mainViewModel.entities[favoriteEntityID]!!,
                                     onEntityClicked,
                                     isHapticEnabled,
                                     isToastEnabled
@@ -150,17 +137,11 @@ fun MainView(
                         }
                     }
                 }
-                if (entities.isNullOrEmpty()) {
+                if (mainViewModel.entities.isNullOrEmpty()) {
                     item {
                         Column {
                             ListHeader(id = R.string.loading)
                             Chip(
-                                modifier = Modifier
-                                    .padding(
-                                        top = 10.dp,
-                                        start = 10.dp,
-                                        end = 10.dp
-                                    ),
                                 label = {
                                     Text(
                                         text = stringResource(R.string.loading_entities),
@@ -172,99 +153,178 @@ fun MainView(
                             )
                         }
                     }
+                } else {
+                    item {
+                        ListHeader(id = R.string.more_entities)
+                    }
+                    item {
+                        Chip(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            icon = {
+                                Image(
+                                    asset = CommunityMaterial.Icon.cmd_animation
+                                )
+                            },
+                            label = {
+                                Text(text = stringResource(R.string.all_entities))
+                            },
+                            onClick = {
+                                onTestClicked(
+                                    mapOf(
+                                        R.string.scenes to mainViewModel.scenes,
+                                        R.string.input_booleans to mainViewModel.inputBooleans,
+                                        R.string.lights to mainViewModel.lights,
+                                        R.string.locks to mainViewModel.locks,
+                                        R.string.scripts to mainViewModel.scripts,
+                                        R.string.switches to mainViewModel.switches
+                                    )
+                                )
+                            },
+                            colors = ChipDefaults.primaryChipColors()
+                        )
+                    }
                 }
 
-                if (inputBooleans.isNotEmpty()) {
+                // Buttons for each existing category
+                if (mainViewModel.inputBooleans.isNotEmpty()) {
                     item {
-                        ListHeader(
-                            stringId = R.string.input_booleans,
-                            expanded = expandedInputBooleans,
-                            onExpandChanged = { expandedInputBooleans = it }
+                        Chip(
+                            modifier = Modifier.fillMaxWidth(),
+                            icon = {
+                                getIcon("", "input_boolean", context)?.let { Image(asset = it) }
+                            },
+                            label = {
+                                Text(text = stringResource(R.string.input_booleans))
+                            },
+                            onClick = {
+                                onTestClicked(
+                                    mapOf(
+                                        R.string.input_booleans to mainViewModel.inputBooleans
+                                    )
+                                )
+                            },
+                            colors = ChipDefaults.primaryChipColors()
                         )
                     }
-                    if (expandedInputBooleans) {
-                        items(inputBooleans.size) { index ->
-                            EntityUi(inputBooleans[index], onEntityClicked, isHapticEnabled, isToastEnabled)
-                        }
-                    }
                 }
-                if (lights.isNotEmpty()) {
+                if (mainViewModel.lights.isNotEmpty()) {
                     item {
-                        ListHeader(
-                            stringId = R.string.lights,
-                            expanded = expandedLights,
-                            onExpandChanged = { expandedLights = it }
+                        Chip(
+                            modifier = Modifier.fillMaxWidth(),
+                            icon = {
+                                getIcon("", "light", context)?.let { Image(asset = it) }
+                            },
+                            label = {
+                                Text(text = stringResource(R.string.lights))
+                            },
+                            onClick = {
+                                onTestClicked(
+                                    mapOf(
+                                        R.string.lights to mainViewModel.lights
+                                    )
+                                )
+                            },
+                            colors = ChipDefaults.primaryChipColors()
                         )
                     }
-                    if (expandedLights) {
-                        items(lights.size) { index ->
-                            EntityUi(lights[index], onEntityClicked, isHapticEnabled, isToastEnabled)
-                        }
-                    }
                 }
-                if (locks.isNotEmpty()) {
+                if (mainViewModel.locks.isNotEmpty()) {
                     item {
-                        ListHeader(
-                            stringId = commonR.string.locks,
-                            expanded = expandedLocks,
-                            onExpandChanged = { expandedLocks = it }
+                        Chip(
+                            modifier = Modifier.fillMaxWidth(),
+                            icon = {
+                                getIcon("", "lock", context)?.let { Image(asset = it) }
+                            },
+                            label = {
+                                Text(text = stringResource(R.string.locks))
+                            },
+                            onClick = {
+                                onTestClicked(
+                                    mapOf(
+                                        R.string.locks to mainViewModel.locks
+                                    )
+                                )
+                            },
+                            colors = ChipDefaults.primaryChipColors()
                         )
                     }
-                    if (expandedLocks) {
-                        items(locks.size) { index ->
-                            EntityUi(locks[index], onEntityClicked, isHapticEnabled, isToastEnabled)
-                        }
-                    }
                 }
-                if (scenes.isNotEmpty()) {
+                if (mainViewModel.scenes.isNotEmpty()) {
                     item {
-                        ListHeader(
-                            stringId = R.string.scenes,
-                            expanded = expandedScenes,
-                            onExpandChanged = { expandedScenes = it }
+                        Chip(
+                            modifier = Modifier.fillMaxWidth(),
+                            icon = {
+                                getIcon("", "scene", context)?.let { Image(asset = it) }
+                            },
+                            label = {
+                                Text(text = stringResource(R.string.scenes))
+                            },
+                            onClick = {
+                                onTestClicked(
+                                    mapOf(
+                                        R.string.scenes to mainViewModel.scenes
+                                    )
+                                )
+                            },
+                            colors = ChipDefaults.primaryChipColors()
                         )
                     }
-                    if (expandedScenes) {
-                        items(scenes.size) { index ->
-                            EntityUi(scenes[index], onEntityClicked, isHapticEnabled, isToastEnabled)
-                        }
-                    }
                 }
-                if (scripts.isNotEmpty()) {
+                if (mainViewModel.scripts.isNotEmpty()) {
                     item {
-                        ListHeader(
-                            stringId = R.string.scripts,
-                            expanded = expandedScripts,
-                            onExpandChanged = { expandedScripts = it }
+                        Chip(
+                            modifier = Modifier.fillMaxWidth(),
+                            icon = {
+                                getIcon("", "script", context)?.let { Image(asset = it) }
+                            },
+                            label = {
+                                Text(text = stringResource(R.string.scripts))
+                            },
+                            onClick = {
+                                onTestClicked(
+                                    mapOf(
+                                        R.string.scripts to mainViewModel.scripts
+                                    )
+                                )
+                            },
+                            colors = ChipDefaults.primaryChipColors()
                         )
                     }
-                    if (expandedScripts) {
-                        items(scripts.size) { index ->
-                            EntityUi(scripts[index], onEntityClicked, isHapticEnabled, isToastEnabled)
-                        }
-                    }
                 }
-                if (switches.isNotEmpty()) {
+                if (mainViewModel.switches.isNotEmpty()) {
                     item {
-                        ListHeader(
-                            stringId = R.string.switches,
-                            expanded = expandedSwitches,
-                            onExpandChanged = { expandedSwitches = it }
+                        Chip(
+                            modifier = Modifier.fillMaxWidth(),
+                            icon = {
+                                getIcon("", "switch", context)?.let { Image(asset = it) }
+                            },
+                            label = {
+                                Text(text = stringResource(R.string.switches))
+                            },
+                            onClick = {
+                                onTestClicked(
+                                    mapOf(
+                                        R.string.switches to mainViewModel.switches
+                                    )
+                                )
+                            },
+                            colors = ChipDefaults.primaryChipColors()
                         )
                     }
-                    if (expandedSwitches) {
-                        items(switches.size) { index ->
-                            EntityUi(switches[index], onEntityClicked, isHapticEnabled, isToastEnabled)
-                        }
-                    }
                 }
+
+                // Settings
                 item {
                     Chip(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 32.dp),
                         icon = {
-                            Image(asset = CommunityMaterial.Icon.cmd_cog)
+                            Image(
+                                asset = CommunityMaterial.Icon.cmd_cog,
+                                colorFilter = ColorFilter.tint(Color.White)
+                            )
                         },
                         label = {
                             Text(
@@ -272,9 +332,7 @@ fun MainView(
                             )
                         },
                         onClick = onSettingsClicked,
-                        colors = ChipDefaults.primaryChipColors(
-                            contentColor = Color.Black
-                        )
+                        colors = ChipDefaults.secondaryChipColors()
                     )
                 }
             }
@@ -292,11 +350,11 @@ private fun PreviewMainView() {
         LocalRotaryEventDispatcher provides rotaryEventDispatcher
     ) {
         MainView(
-            entities = previewEntityList,
+            mainViewModel = MainViewModel(),
             favoriteEntityIds = previewFavoritesList,
             onEntityClicked = { _, _ -> },
             onSettingsClicked = {},
-            onLogoutClicked = {},
+            onTestClicked = {},
             isHapticEnabled = true,
             isToastEnabled = false
         )

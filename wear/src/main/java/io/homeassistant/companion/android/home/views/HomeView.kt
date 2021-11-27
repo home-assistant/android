@@ -22,7 +22,7 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
-import io.homeassistant.companion.android.home.HomePresenterImpl
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
@@ -31,6 +31,7 @@ import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 
 private const val SCREEN_LANDING = "landing"
+private const val SCREEN_ENTITY_LIST = "entity_list"
 private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
 private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
@@ -75,13 +76,25 @@ fun LoadHomePage(
                 ) {
                     composable(SCREEN_LANDING) {
                         MainView(
-                            mainViewModel.entities,
+                            mainViewModel,
                             mainViewModel.favoriteEntityIds,
                             { id, state -> mainViewModel.toggleEntity(id, state) },
                             { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                            { mainViewModel.logout() },
+                            {
+                                mainViewModel.entityLists.clear()
+                                mainViewModel.entityLists.putAll(it)
+                                swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
+                            },
                             mainViewModel.isHapticEnabled.value,
                             mainViewModel.isToastEnabled.value
+                        )
+                    }
+                    composable(SCREEN_ENTITY_LIST) {
+                        EntityViewList(
+                            entityLists = mainViewModel.entityLists,
+                            onEntityClicked = { mainViewModel.toggleEntity(it) },
+                            isHapticEnabled = mainViewModel.isHapticEnabled.value,
+                            isToastEnabled = mainViewModel.isToastEnabled.value
                         )
                     }
                     composable(SCREEN_SETTINGS) {
@@ -98,10 +111,8 @@ fun LoadHomePage(
                         )
                     }
                     composable(SCREEN_SET_FAVORITES) {
-                        val validEntities = mainViewModel.entities
-                            .filter { it.key.split(".")[0] in HomePresenterImpl.supportedDomains }
                         SetFavoritesView(
-                            validEntities,
+                            mainViewModel,
                             mainViewModel.favoriteEntityIds
                         ) { entityId, isSelected ->
                             if (isSelected) {
@@ -120,10 +131,8 @@ fun LoadHomePage(
                         }
                     }
                     composable(SCREEN_SELECT_TILE_SHORTCUT) {
-                        val validEntities = mainViewModel.entities
-                            .filter { it.key.split(".")[0] in HomePresenterImpl.supportedDomains }
                         ChooseEntityView(
-                            validEntities,
+                            mainViewModel,
                             {
                                 mainViewModel.clearTileShortcut(shortcutEntitySelectionIndex)
                                 TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
