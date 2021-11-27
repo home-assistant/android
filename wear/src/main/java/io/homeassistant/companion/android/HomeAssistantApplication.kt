@@ -25,15 +25,5 @@ open class HomeAssistantApplication : Application() {
                 addAction(Intent.ACTION_POWER_DISCONNECTED)
             }
         )
-
-        // This will cause interactive and power save to update upon a state change
-        registerReceiver(
-            sensorReceiver,
-            IntentFilter().apply {
-                addAction(Intent.ACTION_SCREEN_OFF)
-                addAction(Intent.ACTION_SCREEN_ON)
-                addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
-            }
-        )
     }
 }
