@@ -3,7 +3,6 @@ package io.homeassistant.companion.android
 import android.app.Application
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.PowerManager
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.sensors.SensorReceiver
 
