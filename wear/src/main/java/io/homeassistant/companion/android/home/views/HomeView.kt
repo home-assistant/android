@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -37,6 +38,7 @@ private const val SCREEN_SET_FAVORITES = "set_favorites"
 private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
 private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 
+@ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
 @Composable
 fun LoadHomePage(
@@ -151,6 +153,7 @@ fun LoadHomePage(
     }
 }
 
+@ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
 @Preview
 @Composable

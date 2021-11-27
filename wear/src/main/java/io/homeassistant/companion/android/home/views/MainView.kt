@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,7 +32,6 @@ import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
@@ -47,6 +47,7 @@ import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.previewFavoritesList
 
+@ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
 @Composable
 fun MainView(
@@ -73,10 +74,7 @@ fun MainView(
                 if (scalingLazyListState.isScrollInProgress)
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
             },
-            timeText = {
-                if (!scalingLazyListState.isScrollInProgress)
-                    TimeText()
-            }
+            timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
             ScalingLazyColumn(
                 modifier = Modifier
@@ -340,6 +338,7 @@ fun MainView(
     }
 }
 
+@ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
 @Preview
 @Composable

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,7 +24,6 @@ import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
@@ -37,6 +37,7 @@ import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.common.R as commonR
 
+@ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
 @Composable
 fun SettingsView(
@@ -59,10 +60,7 @@ fun SettingsView(
                 if (scalingLazyListState.isScrollInProgress)
                     PositionIndicator(scalingLazyListState = scalingLazyListState)
             },
-            timeText = {
-                if (!scalingLazyListState.isScrollInProgress)
-                    TimeText()
-            }
+            timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
             ScalingLazyColumn(
                 modifier = Modifier
@@ -232,6 +230,7 @@ fun SettingsView(
     }
 }
 
+@ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
 @Preview
 @Composable
