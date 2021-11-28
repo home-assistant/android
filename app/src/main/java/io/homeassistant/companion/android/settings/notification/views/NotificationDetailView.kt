@@ -17,11 +17,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.util.notificationItem
 import java.util.Calendar
 import java.util.GregorianCalendar
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun LoadNotification(notification: NotificationItem) {
@@ -29,7 +29,7 @@ fun LoadNotification(notification: NotificationItem) {
     val scrollState = rememberScrollState()
     Column(modifier = Modifier.verticalScroll(scrollState)) {
         Text(
-            text = stringResource(R.string.notification_received_at),
+            text = stringResource(commonR.string.notification_received_at),
             fontWeight = FontWeight.ExtraBold,
             fontSize = 20.sp,
             modifier = Modifier
@@ -43,7 +43,7 @@ fun LoadNotification(notification: NotificationItem) {
                 .padding(start = 20.dp)
         )
         Text(
-            text = stringResource(R.string.notification_message),
+            text = stringResource(commonR.string.notification_message),
             fontWeight = FontWeight.ExtraBold,
             fontSize = 20.sp,
             modifier = Modifier
@@ -57,7 +57,7 @@ fun LoadNotification(notification: NotificationItem) {
             }
         })
         Text(
-            text = stringResource(R.string.notification_data),
+            text = stringResource(commonR.string.notification_data),
             fontWeight = FontWeight.ExtraBold,
             fontSize = 20.sp,
             modifier = Modifier

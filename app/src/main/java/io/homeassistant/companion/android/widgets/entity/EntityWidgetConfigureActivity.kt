@@ -30,6 +30,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class EntityWidgetConfigureActivity : BaseActivity() {
@@ -92,7 +93,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                     integrationUseCase.getEntity(staticWidget.entityId)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
-                    Toast.makeText(applicationContext, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
                         .show()
                     null
                 }
@@ -112,7 +113,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
                 selectedEntity = entity as Entity<Any>?
                 setupAttributes()
             }
-            binding.addButton.setText(R.string.update_widget)
+            binding.addButton.setText(commonR.string.update_widget)
             binding.deleteButton.visibility = VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
         }
@@ -243,7 +244,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
-            Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
+            Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
         }
     }
@@ -263,11 +264,11 @@ class EntityWidgetConfigureActivity : BaseActivity() {
 
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
-        builder.setTitle(R.string.confirm_delete_this_widget_title)
-        builder.setMessage(R.string.confirm_delete_this_widget_message)
+        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
+        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
 
         builder.setPositiveButton(
-            R.string.confirm_positive
+            commonR.string.confirm_positive
         ) { dialog, _ ->
             staticWidgetDao.delete(appWidgetId)
             dialog.dismiss()
@@ -275,7 +276,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
         }
 
         builder.setNegativeButton(
-            R.string.confirm_negative
+            commonR.string.confirm_negative
         ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }

@@ -13,6 +13,7 @@ import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun setChipDefaults(): ChipColors {
@@ -40,7 +41,7 @@ fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
 
 fun onEntityClickedFeedback(isToastEnabled: Boolean, isHapticEnabled: Boolean, context: Context, friendlyName: String, haptic: HapticFeedback) {
     if (isToastEnabled)
-        Toast.makeText(context, context.getString(R.string.toast_message, friendlyName), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(commonR.string.toast_message, friendlyName), Toast.LENGTH_SHORT).show()
     if (isHapticEnabled)
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
 }

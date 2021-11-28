@@ -31,6 +31,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ButtonWidget : AppWidgetProvider() {
@@ -246,7 +247,7 @@ class ButtonWidget : AppWidgetProvider() {
                     feedbackIcon = R.drawable.ic_check_black_24dp
                 } catch (e: Exception) {
                     Log.e(TAG, "Could not send service call.", e)
-                    Toast.makeText(context, R.string.service_call_failure, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_LONG).show()
                 }
             }
 

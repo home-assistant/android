@@ -13,6 +13,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class SettingsActivity : BaseActivity() {
@@ -27,7 +28,7 @@ class SettingsActivity : BaseActivity() {
         menuInflater.inflate(R.menu.menu_activity_settings, menu)
 
         (menu.findItem(R.id.action_search)?.actionView as SearchView).apply {
-            queryHint = getString(R.string.search_sensors)
+            queryHint = getString(commonR.string.search_sensors)
             maxWidth = Integer.MAX_VALUE
         }
 

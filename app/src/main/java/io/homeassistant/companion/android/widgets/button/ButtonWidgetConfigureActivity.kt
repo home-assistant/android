@@ -44,6 +44,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
@@ -130,7 +131,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
-            Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
+            Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
         }
     }
@@ -253,7 +254,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
             binding.widgetTextConfigService.setText(serviceText)
             binding.label.setText(buttonWidget.label)
-            binding.addButton.setText(R.string.update_widget)
+            binding.addButton.setText(commonR.string.update_widget)
             binding.deleteButton.visibility = VISIBLE
             binding.deleteButton.setOnClickListener(onDeleteWidget)
         }
@@ -389,11 +390,11 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
-        builder.setTitle(R.string.confirm_delete_this_widget_title)
-        builder.setMessage(R.string.confirm_delete_this_widget_message)
+        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
+        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
 
         builder.setPositiveButton(
-            R.string.confirm_positive
+            commonR.string.confirm_positive
         ) { dialog, _ ->
             buttonWidgetDao.delete(appWidgetId)
             dialog.dismiss()
@@ -401,7 +402,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         }
 
         builder.setNegativeButton(
-            R.string.confirm_negative
+            commonR.string.confirm_negative
         ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }

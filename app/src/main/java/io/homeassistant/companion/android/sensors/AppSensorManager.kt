@@ -9,9 +9,9 @@ import android.os.Process
 import android.util.Log
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.math.RoundingMode
+import io.homeassistant.companion.android.common.R as commonR
 
 class AppSensorManager : SensorManager {
     companion object {
@@ -21,8 +21,8 @@ class AppSensorManager : SensorManager {
         val currentVersion = SensorManager.BasicSensor(
             "current_version",
             "sensor",
-            R.string.basic_sensor_name_current_version,
-            R.string.sensor_description_current_version,
+            commonR.string.basic_sensor_name_current_version,
+            commonR.string.sensor_description_current_version,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#current-version-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -30,8 +30,8 @@ class AppSensorManager : SensorManager {
         val app_rx_gb = SensorManager.BasicSensor(
             "app_rx_gb",
             "sensor",
-            R.string.basic_sensor_name_app_rx_gb,
-            R.string.sensor_description_app_rx_gb,
+            commonR.string.basic_sensor_name_app_rx_gb,
+            commonR.string.sensor_description_app_rx_gb,
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -41,8 +41,8 @@ class AppSensorManager : SensorManager {
         val app_tx_gb = SensorManager.BasicSensor(
             "app_tx_gb",
             "sensor",
-            R.string.basic_sensor_name_app_tx_gb,
-            R.string.sensor_description_app_tx_gb,
+            commonR.string.basic_sensor_name_app_tx_gb,
+            commonR.string.sensor_description_app_tx_gb,
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-data-sensors",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
@@ -52,8 +52,8 @@ class AppSensorManager : SensorManager {
         val app_memory = SensorManager.BasicSensor(
             "app_memory",
             "sensor",
-            R.string.basic_sensor_name_app_memory,
-            R.string.sensor_description_app_memory,
+            commonR.string.basic_sensor_name_app_memory,
+            commonR.string.sensor_description_app_memory,
             unitOfMeasurement = "GB",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-memory-sensor",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -63,8 +63,8 @@ class AppSensorManager : SensorManager {
         val app_inactive = SensorManager.BasicSensor(
             "app_inactive",
             "binary_sensor",
-            R.string.basic_sensor_name_app_inactive,
-            R.string.sensor_description_app_inactive,
+            commonR.string.basic_sensor_name_app_inactive,
+            commonR.string.sensor_description_app_inactive,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -72,8 +72,8 @@ class AppSensorManager : SensorManager {
         val app_standby_bucket = SensorManager.BasicSensor(
             "app_standby_bucket",
             "sensor",
-            R.string.basic_sensor_name_app_standby,
-            R.string.sensor_description_app_standby,
+            commonR.string.basic_sensor_name_app_standby,
+            commonR.string.sensor_description_app_standby,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-usage-sensors",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -81,8 +81,8 @@ class AppSensorManager : SensorManager {
         val app_importance = SensorManager.BasicSensor(
             "app_importance",
             "sensor",
-            R.string.basic_sensor_name_app_importance,
-            R.string.sensor_description_app_importance,
+            commonR.string.basic_sensor_name_app_importance,
+            commonR.string.sensor_description_app_importance,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#app-importance-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -91,7 +91,7 @@ class AppSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_app_sensor
+        get() = commonR.string.sensor_name_app_sensor
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {

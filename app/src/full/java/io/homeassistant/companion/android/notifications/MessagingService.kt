@@ -70,6 +70,7 @@ import java.net.URL
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.collections.HashMap
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class MessagingService : FirebaseMessagingService() {
@@ -404,7 +405,7 @@ class MessagingService : FirebaseMessagingService() {
         val currentAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
         val maxAlarmVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
-            tts = getString(R.string.tts_no_title)
+            tts = getString(commonR.string.tts_no_title)
         textToSpeech = TextToSpeech(
             applicationContext
         ) {
@@ -455,7 +456,7 @@ class MessagingService : FirebaseMessagingService() {
                 Handler(Looper.getMainLooper()).post {
                     Toast.makeText(
                         applicationContext,
-                        getString(R.string.tts_error, tts),
+                        getString(commonR.string.tts_error, tts),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -537,7 +538,7 @@ class MessagingService : FirebaseMessagingService() {
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(
                             applicationContext,
-                            R.string.broadcast_intent_error,
+                            commonR.string.broadcast_intent_error,
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -763,7 +764,7 @@ class MessagingService : FirebaseMessagingService() {
                 IconicsDrawable(applicationContext, "cmd-$iconName").toAndroidIconCompat()
             builder.setSmallIcon(iconDrawable)
         } else
-            builder.setSmallIcon(R.drawable.ic_stat_ic_notification)
+            builder.setSmallIcon(commonR.drawable.ic_stat_ic_notification)
     }
 
     private fun handleContentIntent(
@@ -1119,11 +1120,11 @@ class MessagingService : FirebaseMessagingService() {
                         if (notificationAction.key == "URI")
                             R.drawable.ic_globe
                         else
-                            R.drawable.ic_stat_ic_notification
+                            commonR.drawable.ic_stat_ic_notification
                     builder.addAction(icon, notificationAction.title, actionPendingIntent)
                 } else {
                     val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
-                        setLabel(getString(R.string.action_reply))
+                        setLabel(getString(commonR.string.action_reply))
                         build()
                     }
                     val replyPendingIntent = PendingIntent.getBroadcast(
@@ -1451,7 +1452,7 @@ class MessagingService : FirebaseMessagingService() {
             Handler(Looper.getMainLooper()).post {
                 Toast.makeText(
                     applicationContext,
-                    R.string.activity_intent_error,
+                    commonR.string.activity_intent_error,
                     Toast.LENGTH_LONG
                 ).show()
             }
@@ -1480,7 +1481,7 @@ class MessagingService : FirebaseMessagingService() {
                 if (applicationContext.applicationInfo.processName == item.processName) {
                     if (item.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
                         val data =
-                            mutableMapOf(MESSAGE to getString(R.string.missing_command_permission))
+                            mutableMapOf(MESSAGE to getString(commonR.string.missing_command_permission))
                         runBlocking {
                             sendNotification(data)
                         }

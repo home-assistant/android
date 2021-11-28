@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.settings.notification.views.LoadNotification
+import io.homeassistant.companion.android.common.R as commonR
 
 class NotificationDetailFragment : Fragment() {
 
@@ -67,11 +68,11 @@ class NotificationDetailFragment : Fragment() {
 
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(requireContext())
 
-        builder.setTitle(R.string.confirm_delete_this_notification_title)
-        builder.setMessage(R.string.confirm_delete_this_notification_message)
+        builder.setTitle(commonR.string.confirm_delete_this_notification_title)
+        builder.setMessage(commonR.string.confirm_delete_this_notification_message)
 
         builder.setPositiveButton(
-            R.string.confirm_positive
+            commonR.string.confirm_positive
         ) { dialog, _ ->
             notificationDao.delete(notification.id)
             dialog.dismiss()
@@ -79,7 +80,7 @@ class NotificationDetailFragment : Fragment() {
         }
 
         builder.setNegativeButton(
-            R.string.confirm_negative
+            commonR.string.confirm_negative
         ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }

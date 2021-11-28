@@ -5,8 +5,8 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import android.provider.Settings.Global.getInt
 import android.telephony.TelephonyManager
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class MobileDataManager : SensorManager {
 
@@ -14,15 +14,15 @@ class MobileDataManager : SensorManager {
         val mobileDataState = SensorManager.BasicSensor(
             "mobile_data",
             "binary_sensor",
-            R.string.basic_sensor_name_mobile_data,
-            R.string.sensor_description_mobile_data,
+            commonR.string.basic_sensor_name_mobile_data,
+            commonR.string.sensor_description_mobile_data,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         val mobileDataRoaming = SensorManager.BasicSensor(
             "mobile_data_roaming",
             "binary_sensor",
-            R.string.basic_sensor_name_mobile_data_roaming,
-            R.string.sensor_description_mobile_data_roaming,
+            commonR.string.basic_sensor_name_mobile_data_roaming,
+            commonR.string.sensor_description_mobile_data_roaming,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
     }
@@ -33,7 +33,7 @@ class MobileDataManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_mobile_data
+        get() = commonR.string.sensor_name_mobile_data
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(mobileDataState, mobileDataRoaming)

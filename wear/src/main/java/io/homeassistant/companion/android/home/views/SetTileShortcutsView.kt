@@ -26,7 +26,6 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
@@ -34,6 +33,7 @@ import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.simplifiedEntity
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SetTileShortcutsView(
@@ -57,7 +57,7 @@ fun SetTileShortcutsView(
         state = scalingLazyListState
     ) {
         item {
-            ListHeader(id = R.string.shortcuts)
+            ListHeader(id = commonR.string.shortcuts)
         }
         items(shortcutEntities.size) { index ->
 
@@ -78,7 +78,7 @@ fun SetTileShortcutsView(
                 },
                 label = {
                     Text(
-                        text = stringResource(R.string.shortcut_n, index + 1)
+                        text = stringResource(commonR.string.shortcut_n, index + 1)
                     )
                 },
                 secondaryLabel = {

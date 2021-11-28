@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class SceneControl {
@@ -36,8 +37,8 @@ class SceneControl {
             control.setDeviceType(DeviceTypes.TYPE_ROUTINE)
             control.setZone(
                 when (entity.entityId.split(".")[0]) {
-                    "scene" -> context.getString(R.string.domain_scene)
-                    "script" -> context.getString(R.string.domain_script)
+                    "scene" -> context.getString(commonR.string.domain_scene)
+                    "script" -> context.getString(commonR.string.domain_script)
                     else -> entity.entityId.split(".")[0].capitalize()
                 }
             )

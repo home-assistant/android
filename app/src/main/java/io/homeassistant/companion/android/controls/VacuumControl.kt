@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class VacuumControl {
@@ -39,26 +40,26 @@ class VacuumControl {
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_VACUUM)
-            control.setZone(context.getString(R.string.domain_vacuum))
+            control.setZone(context.getString(commonR.string.domain_vacuum))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
                     when (entity.state) {
-                        "off" -> context.getString(R.string.state_off)
-                        "on" -> context.getString(R.string.state_on)
-                        "unavailable" -> context.getString(R.string.state_unavailable)
-                        else -> context.getString(R.string.state_unknown)
+                        "off" -> context.getString(commonR.string.state_off)
+                        "on" -> context.getString(commonR.string.state_on)
+                        "unavailable" -> context.getString(commonR.string.state_unavailable)
+                        else -> context.getString(commonR.string.state_unknown)
                     }
                 } else {
                     when (entity.state) {
-                        "cleaning" -> context.getString(R.string.state_cleaning)
-                        "docked" -> context.getString(R.string.state_docked)
-                        "error" -> context.getString(R.string.state_error)
-                        "idle" -> context.getString(R.string.state_idle)
-                        "paused" -> context.getString(R.string.state_paused)
-                        "returning" -> context.getString(R.string.state_returning)
-                        "unavailable" -> context.getString(R.string.state_unavailable)
-                        else -> context.getString(R.string.state_unknown)
+                        "cleaning" -> context.getString(commonR.string.state_cleaning)
+                        "docked" -> context.getString(commonR.string.state_docked)
+                        "error" -> context.getString(commonR.string.state_error)
+                        "idle" -> context.getString(commonR.string.state_idle)
+                        "paused" -> context.getString(commonR.string.state_paused)
+                        "returning" -> context.getString(commonR.string.state_returning)
+                        "unavailable" -> context.getString(commonR.string.state_unavailable)
+                        else -> context.getString(commonR.string.state_unknown)
                     }
                 }
             )

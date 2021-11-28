@@ -2,9 +2,9 @@ package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.util.Log
-import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.common.R as commonR
 
 class LastUpdateManager : SensorManager {
     companion object {
@@ -14,8 +14,8 @@ class LastUpdateManager : SensorManager {
         val lastUpdate = SensorManager.BasicSensor(
             "last_update",
             "sensor",
-            R.string.basic_sensor_name_last_update,
-            R.string.sensor_description_last_update,
+            commonR.string.basic_sensor_name_last_update,
+            commonR.string.sensor_description_last_update,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
@@ -26,7 +26,7 @@ class LastUpdateManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_last_update
+        get() = commonR.string.sensor_name_last_update
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(lastUpdate)

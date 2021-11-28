@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class MediaPlayerControlsWidget : AppWidgetProvider() {
@@ -284,7 +285,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE)
-                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             return null
         }
 
@@ -398,7 +399,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
-                    Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 return@launch
             }
 
@@ -469,7 +470,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
-                    Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 return@launch
             }
 

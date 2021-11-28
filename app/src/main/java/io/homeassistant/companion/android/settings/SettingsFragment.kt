@@ -45,6 +45,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsFragment constructor(
     val presenter: SettingsPresenter,
@@ -74,8 +75,8 @@ class SettingsFragment constructor(
             val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
             if (!isValid) {
                 AlertDialog.Builder(requireActivity())
-                    .setTitle(R.string.url_invalid)
-                    .setMessage(R.string.url_parse_error)
+                    .setTitle(commonR.string.url_invalid)
+                    .setMessage(commonR.string.url_parse_error)
                     .setPositiveButton(android.R.string.ok) { _, _ -> }
                     .show()
             }
@@ -91,12 +92,12 @@ class SettingsFragment constructor(
                 isValid = true
                 if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
                     setLock = true
-                    authenticator.authenticate(getString(R.string.biometric_set_title))
+                    authenticator.authenticate(getString(commonR.string.biometric_set_title))
                 } else {
                     isValid = false
                     AlertDialog.Builder(requireActivity())
-                        .setTitle(R.string.set_lock_title)
-                        .setMessage(R.string.set_lock_message)
+                        .setTitle(commonR.string.set_lock_title)
+                        .setMessage(commonR.string.set_lock_message)
                         .setPositiveButton(android.R.string.ok) { _, _ -> }
                         .show()
                 }
@@ -134,7 +135,7 @@ class SettingsFragment constructor(
             parentFragmentManager
                 .beginTransaction()
                 .replace(R.id.content, SensorsSettingsFragment.newInstance())
-                .addToBackStack(getString(R.string.sensors))
+                .addToBackStack(getString(commonR.string.sensors))
                 .commit()
             return@setOnPreferenceClickListener true
         }
@@ -143,7 +144,7 @@ class SettingsFragment constructor(
             parentFragmentManager
                 .beginTransaction()
                 .replace(R.id.content, ManageWidgetsSettingsFragment::class.java, null)
-                .addToBackStack(getString(R.string.widgets))
+                .addToBackStack(getString(commonR.string.widgets))
                 .commit()
             return@setOnPreferenceClickListener true
         }
@@ -156,7 +157,7 @@ class SettingsFragment constructor(
                 parentFragmentManager
                     .beginTransaction()
                     .replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
-                    .addToBackStack(getString(R.string.shortcuts))
+                    .addToBackStack(getString(commonR.string.shortcuts))
                     .commit()
                 return@setOnPreferenceClickListener true
             }
@@ -170,7 +171,7 @@ class SettingsFragment constructor(
                 parentFragmentManager
                     .beginTransaction()
                     .replace(R.id.content, ManageTilesFragment::class.java, null)
-                    .addToBackStack(getString(R.string.tiles))
+                    .addToBackStack(getString(commonR.string.tiles))
                     .commit()
                 return@setOnPreferenceClickListener true
             }
@@ -186,7 +187,7 @@ class SettingsFragment constructor(
                     parentFragmentManager
                         .beginTransaction()
                         .replace(R.id.content, NotificationHistoryFragment::class.java, null)
-                        .addToBackStack(getString(R.string.notifications))
+                        .addToBackStack(getString(commonR.string.notifications))
                         .commit()
                     return@setOnPreferenceClickListener true
                 }
@@ -208,9 +209,9 @@ class SettingsFragment constructor(
                             }
                         }
                         it.isVisible = true
-                        it.summary = "\n${getString(R.string.successful)}: ${rateLimits?.successful}       ${getString(R.string.errors)}: ${rateLimits?.errors}" +
-                            "\n\n${getString(R.string.remaining)}/${getString(R.string.maximum)}: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
-                            "\n\n${getString(R.string.resets_at)}: $formattedDate"
+                        it.summary = "\n${getString(commonR.string.successful)}: ${rateLimits?.successful}       ${getString(commonR.string.errors)}: ${rateLimits?.errors}" +
+                            "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
+                            "\n\n${getString(commonR.string.resets_at)}: $formattedDate"
                     }
                 }
             }
@@ -261,7 +262,7 @@ class SettingsFragment constructor(
             parentFragmentManager
                 .beginTransaction()
                 .replace(R.id.content, LogFragment::class.java, null)
-                .addToBackStack(getString(R.string.log))
+                .addToBackStack(getString(commonR.string.log))
                 .commit()
             return@setOnPreferenceClickListener true
         }
@@ -354,12 +355,12 @@ class SettingsFragment constructor(
                 } else openSsidDialog()
             } else {
                 if (presenter.isSsidUsed()) {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)), showAsNotification = false, withDisableOption = true) {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(commonR.string.pref_connection_wifi)), showAsNotification = false, withDisableOption = true) {
                         presenter.clearSsids()
                         preference.setSsids(emptySet())
                     }
                 } else {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)))
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(commonR.string.pref_connection_wifi)))
                 }
             }
         } else {
@@ -396,12 +397,12 @@ class SettingsFragment constructor(
     private fun updateBackgroundAccessPref() {
         findPreference<Preference>("background")?.let {
             if (isIgnoringBatteryOptimizations()) {
-                it.setSummary(R.string.background_access_enabled)
+                it.setSummary(commonR.string.background_access_enabled)
                 it.setOnPreferenceClickListener {
                     true
                 }
             } else {
-                it.setSummary(R.string.background_access_disabled)
+                it.setSummary(commonR.string.background_access_disabled)
                 it.setOnPreferenceClickListener {
                     requestBackgroundAccess()
                     true
@@ -497,6 +498,6 @@ class SettingsFragment constructor(
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(R.string.app_name)
+        activity?.title = getString(commonR.string.app_name)
     }
 }

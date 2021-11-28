@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.qs.TileEntity
 import kotlinx.coroutines.runBlocking
 import java.lang.Exception
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ManageTilesFragment constructor(
@@ -70,7 +71,7 @@ class ManageTilesFragment constructor(
         }
         val iconDialog = IconDialog.newInstance(settings)
 
-        activity?.title = getString(R.string.tiles)
+        activity?.title = getString(commonR.string.tiles)
         val tileDao = AppDatabase.getInstance(requireContext()).tileDao()
         var tileList = tileDao.getAll()
         var tileLabel = findPreference<EditTextPreference>("tile_label")?.text
@@ -200,7 +201,7 @@ class ManageTilesFragment constructor(
             )
             tileDao.add(tileData)
             tileList = tileDao.getAll()
-            Toast.makeText(requireContext(), R.string.tile_updated, Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), commonR.string.tile_updated, Toast.LENGTH_SHORT).show()
             return@setOnPreferenceClickListener true
         }
     }

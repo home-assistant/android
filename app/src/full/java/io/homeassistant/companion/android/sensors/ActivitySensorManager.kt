@@ -14,8 +14,8 @@ import com.google.android.gms.location.SleepClassifyEvent
 import com.google.android.gms.location.SleepSegmentEvent
 import com.google.android.gms.location.SleepSegmentRequest
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ActivitySensorManager : BroadcastReceiver(), SensorManager {
@@ -34,15 +34,15 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         private val activity = SensorManager.BasicSensor(
             "detected_activity",
             "sensor",
-            R.string.basic_sensor_name_activity,
-            R.string.sensor_description_detected_activity
+            commonR.string.basic_sensor_name_activity,
+            commonR.string.sensor_description_detected_activity
         )
 
         private val sleepConfidence = SensorManager.BasicSensor(
             "sleep_confidence",
             "sensor",
-            R.string.basic_sensor_name_sleep_confidence,
-            R.string.sensor_description_sleep_confidence,
+            commonR.string.basic_sensor_name_sleep_confidence,
+            commonR.string.sensor_description_sleep_confidence,
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
@@ -50,8 +50,8 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         private val sleepSegment = SensorManager.BasicSensor(
             "sleep_segment",
             "sensor",
-            R.string.basic_sensor_name_sleep_segment,
-            R.string.sensor_description_sleep_segment,
+            commonR.string.basic_sensor_name_sleep_segment,
+            commonR.string.sensor_description_sleep_segment,
             unitOfMeasurement = "ms"
         )
     }
@@ -185,7 +185,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_activity
+        get() = commonR.string.sensor_name_activity
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(activity, sleepConfidence, sleepSegment)

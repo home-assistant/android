@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class EntityWidget : BaseWidgetProvider() {
@@ -100,7 +101,7 @@ class EntityWidget : BaseWidgetProvider() {
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
             if (lastIntent == UPDATE_VIEW)
-                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
                     .show()
         }
         if (attributeIds == null) {
@@ -125,7 +126,7 @@ class EntityWidget : BaseWidgetProvider() {
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
             if (lastIntent == UPDATE_VIEW)
-                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
                     .show()
         }
         return staticWidgetDao.get(appWidgetId)?.lastUpdate

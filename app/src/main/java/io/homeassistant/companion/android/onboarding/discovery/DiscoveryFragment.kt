@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.FragmentDiscoveryBinding
 import io.homeassistant.companion.android.databinding.InstanceItemBinding
+import io.homeassistant.companion.android.common.R as commonR
 
 class DiscoveryFragment(
     val presenter: DiscoveryPresenter
@@ -81,7 +82,7 @@ class DiscoveryFragment(
                     startActivity(intent)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to load Home Assistant home page", e)
-                    Toast.makeText(context, R.string.what_is_this_crash, Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, commonR.string.what_is_this_crash, Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -121,7 +122,7 @@ class DiscoveryFragment(
     }
 
     override fun onScanError() {
-        Toast.makeText(context, R.string.failed_scan, Toast.LENGTH_LONG).show()
+        Toast.makeText(context, commonR.string.failed_scan, Toast.LENGTH_LONG).show()
         if (instances.isEmpty()) {
             (activity as DiscoveryListener).onSelectManualSetup()
         }

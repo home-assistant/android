@@ -4,8 +4,8 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class KeyguardSensorManager : SensorManager {
     companion object {
@@ -14,29 +14,29 @@ class KeyguardSensorManager : SensorManager {
         val deviceLocked = SensorManager.BasicSensor(
             "device_locked",
             "binary_sensor",
-            R.string.basic_sensor_name_device_locked,
-            R.string.sensor_description_device_locked,
+            commonR.string.basic_sensor_name_device_locked,
+            commonR.string.sensor_description_device_locked,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val deviceSecure = SensorManager.BasicSensor(
             "device_secure",
             "binary_sensor",
-            R.string.basic_sensor_name_device_secure,
-            R.string.sensor_description_device_secure,
+            commonR.string.basic_sensor_name_device_secure,
+            commonR.string.sensor_description_device_secure,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         val keyguardLocked = SensorManager.BasicSensor(
             "keyguard_locked",
             "binary_sensor",
-            R.string.basic_sensor_name_keyguard_locked,
-            R.string.sensor_description_keyguard_locked,
+            commonR.string.basic_sensor_name_keyguard_locked,
+            commonR.string.sensor_description_keyguard_locked,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val keyguardSecure = SensorManager.BasicSensor(
             "keyguard_secure",
             "binary_sensor",
-            R.string.basic_sensor_name_keyguard_secure,
-            R.string.sensor_description_keyguard_secure,
+            commonR.string.basic_sensor_name_keyguard_secure,
+            commonR.string.sensor_description_keyguard_secure,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
     }
@@ -47,7 +47,7 @@ class KeyguardSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_keyguard
+        get() = commonR.string.sensor_name_keyguard
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return when {

@@ -8,10 +8,10 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.ActivityAuthenticationBinding
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
@@ -67,7 +67,7 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
         // Show failure message
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)
-            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_authentication))
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(commonR.string.failed_authentication))
         }
         startActivity(intent)
         binding.loadingView.visibility = View.GONE

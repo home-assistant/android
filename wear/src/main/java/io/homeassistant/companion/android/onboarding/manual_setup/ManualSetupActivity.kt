@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.ActivityManualSetupBinding
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
@@ -53,7 +54,7 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
                 ConfirmationActivity.EXTRA_ANIMATION_TYPE,
                 ConfirmationActivity.FAILURE_ANIMATION
             )
-            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_connection))
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(commonR.string.failed_connection))
         }
         startActivity(intent)
         binding.loadingView.visibility = View.GONE

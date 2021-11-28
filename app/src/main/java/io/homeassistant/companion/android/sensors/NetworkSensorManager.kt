@@ -6,7 +6,6 @@ import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
@@ -18,6 +17,7 @@ import okhttp3.Response
 import okio.IOException
 import org.json.JSONException
 import org.json.JSONObject
+import io.homeassistant.companion.android.common.R as commonR
 
 class NetworkSensorManager : SensorManager {
     companion object {
@@ -25,29 +25,29 @@ class NetworkSensorManager : SensorManager {
         val wifiConnection = SensorManager.BasicSensor(
             "wifi_connection",
             "sensor",
-            R.string.basic_sensor_name_wifi,
-            R.string.sensor_description_wifi_connection,
+            commonR.string.basic_sensor_name_wifi,
+            commonR.string.sensor_description_wifi_connection,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val bssidState = SensorManager.BasicSensor(
             "wifi_bssid",
             "sensor",
-            R.string.basic_sensor_name_wifi_bssid,
-            R.string.sensor_description_wifi_bssid,
+            commonR.string.basic_sensor_name_wifi_bssid,
+            commonR.string.sensor_description_wifi_bssid,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val wifiIp = SensorManager.BasicSensor(
             "wifi_ip_address",
             "sensor",
-            R.string.basic_sensor_name_wifi_ip,
-            R.string.sensor_description_wifi_ip,
+            commonR.string.basic_sensor_name_wifi_ip,
+            commonR.string.sensor_description_wifi_ip,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val wifiLinkSpeed = SensorManager.BasicSensor(
             "wifi_link_speed",
             "sensor",
-            R.string.basic_sensor_name_wifi_link_speed,
-            R.string.sensor_description_wifi_link_speed,
+            commonR.string.basic_sensor_name_wifi_link_speed,
+            commonR.string.sensor_description_wifi_link_speed,
             unitOfMeasurement = "Mbps",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -55,15 +55,15 @@ class NetworkSensorManager : SensorManager {
         val wifiState = SensorManager.BasicSensor(
             "wifi_state",
             "binary_sensor",
-            R.string.basic_sensor_name_wifi_state,
-            R.string.sensor_description_wifi_state,
+            commonR.string.basic_sensor_name_wifi_state,
+            commonR.string.sensor_description_wifi_state,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         val wifiFrequency = SensorManager.BasicSensor(
             "wifi_frequency",
             "sensor",
-            R.string.basic_sensor_name_wifi_frequency,
-            R.string.sensor_description_wifi_frequency,
+            commonR.string.basic_sensor_name_wifi_frequency,
+            commonR.string.sensor_description_wifi_frequency,
             unitOfMeasurement = "MHz",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -71,8 +71,8 @@ class NetworkSensorManager : SensorManager {
         val wifiSignalStrength = SensorManager.BasicSensor(
             "wifi_signal_strength",
             "sensor",
-            R.string.basic_sensor_name_wifi_signal,
-            R.string.sensor_description_wifi_signal,
+            commonR.string.basic_sensor_name_wifi_signal,
+            commonR.string.sensor_description_wifi_signal,
             "signal_strength",
             unitOfMeasurement = "dBm",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -81,8 +81,8 @@ class NetworkSensorManager : SensorManager {
         val publicIp = SensorManager.BasicSensor(
             "public_ip_address",
             "sensor",
-            R.string.basic_sensor_name_public_ip,
-            R.string.sensor_description_public_ip,
+            commonR.string.basic_sensor_name_public_ip,
+            commonR.string.sensor_description_public_ip,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -95,7 +95,7 @@ class NetworkSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_network
+        get() = commonR.string.sensor_name_network
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(
             wifiConnection,

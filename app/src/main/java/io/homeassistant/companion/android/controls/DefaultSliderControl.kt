@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class DefaultSliderControl {
@@ -34,7 +35,7 @@ class DefaultSliderControl {
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_UNKNOWN)
-            control.setZone(context.getString(R.string.domain_input_number))
+            control.setZone(context.getString(commonR.string.domain_input_number))
             control.setStatus(Control.STATUS_OK)
             control.setControlTemplate(
                 RangeTemplate(

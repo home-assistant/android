@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import java.lang.Exception
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.Callback {
@@ -87,7 +88,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
         val iconId = 62017
         onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[iconId]!!))
 
-        activity?.title = getString(R.string.shortcuts)
+        activity?.title = getString(commonR.string.shortcuts)
 
         val addNewShortcut = findPreference<PreferenceCategory>("pinned_shortcut_category")
         val shortcutManager = requireContext().getSystemService(ShortcutManager::class.java)
@@ -113,7 +114,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
         }
 
         for (i in 1..MAX_SHORTCUTS) {
-            findPreference<PreferenceCategory>(SHORTCUT_PREFIX + i + CATEGORY_SUFFIX)?.title = "${getString(R.string.shortcut)} $i"
+            findPreference<PreferenceCategory>(SHORTCUT_PREFIX + i + CATEGORY_SUFFIX)?.title = "${getString(commonR.string.shortcut)} $i"
             var shortcutLabel = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + LABEL_SUFFIX)?.text
             var shortcutDesc = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + DESC_SUFFIX)?.text
             var shortcutPath = findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + PATH_SUFFIX)?.text
@@ -142,7 +143,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
 
             for (item in dynamicShortcuts) {
                 if (item.id == SHORTCUT_PREFIX + i) {
-                    addUpdatePreference?.title = getString(R.string.update_shortcut)
+                    addUpdatePreference?.title = getString(commonR.string.update_shortcut)
                     deletePreference?.isVisible = true
                 }
             }
@@ -155,8 +156,8 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
             }
 
             findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + LABEL_SUFFIX)?.let {
-                it.title = "${getString(R.string.shortcut)} $i ${getString(R.string.label)}"
-                it.dialogTitle = "${getString(R.string.shortcut)} $i ${getString(R.string.label)}"
+                it.title = "${getString(commonR.string.shortcut)} $i ${getString(commonR.string.label)}"
+                it.dialogTitle = "${getString(commonR.string.shortcut)} $i ${getString(commonR.string.label)}"
                 it.setOnPreferenceChangeListener { _, newValue ->
                     shortcutLabel = newValue.toString()
                     addUpdatePreference?.isEnabled = !shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()
@@ -165,8 +166,8 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
             }
 
             findPreference<EditTextPreference>(SHORTCUT_PREFIX + i + DESC_SUFFIX)?.let {
-                it.title = "${getString(R.string.shortcut)} $i ${getString(R.string.description)}"
-                it.dialogTitle = "${getString(R.string.shortcut)} $i ${getString(R.string.description)}"
+                it.title = "${getString(commonR.string.shortcut)} $i ${getString(commonR.string.description)}"
+                it.dialogTitle = "${getString(commonR.string.shortcut)} $i ${getString(commonR.string.description)}"
                 it.setOnPreferenceChangeListener { _, newValue ->
                     shortcutDesc = newValue.toString()
                     addUpdatePreference?.isEnabled = !shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()
@@ -185,15 +186,15 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
             addUpdatePreference?.setOnPreferenceClickListener {
                 Log.d(TAG, "Creating shortcut #: $i")
                 if (!shortcutLabel.isNullOrEmpty() && !shortcutDesc.isNullOrEmpty() && !shortcutPath.isNullOrEmpty()) {
-                    if (shortcutType?.value == getString(R.string.entity_id))
+                    if (shortcutType?.value == getString(commonR.string.entity_id))
                         shortcutPath = "entityId:${shortcutEntityList?.value}"
                     val shortcut = createShortcut(SHORTCUT_PREFIX + i, shortcutLabel!!, shortcutDesc!!, shortcutPath!!, findPreference<Preference>(SHORTCUT_PREFIX + i + ICON_PREFIX)?.icon?.toBitmap())
                     shortcutManager!!.addDynamicShortcuts(listOf(shortcut))
                 }
                 dynamicShortcuts = shortcutManager.dynamicShortcuts
-                if (it.title == getString(R.string.update_shortcut))
-                    Toast.makeText(requireContext(), R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
-                it.title = getString(R.string.update_shortcut)
+                if (it.title == getString(commonR.string.update_shortcut))
+                    Toast.makeText(requireContext(), commonR.string.shortcut_updated, Toast.LENGTH_SHORT).show()
+                it.title = getString(commonR.string.update_shortcut)
                 deletePreference?.isVisible = true
                 return@setOnPreferenceClickListener true
             }
@@ -202,7 +203,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                 Log.d(TAG, "Attempting to delete shortcut #: $i")
                 shortcutManager.removeDynamicShortcuts(listOf(SHORTCUT_PREFIX + i))
                 dynamicShortcuts = shortcutManager.dynamicShortcuts
-                addUpdatePreference?.title = getString(R.string.add_shortcut)
+                addUpdatePreference?.title = getString(commonR.string.add_shortcut)
                 it.isVisible = false
                 return@setOnPreferenceClickListener true
             }
@@ -253,15 +254,15 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                                 val entityId = item.intent?.action?.removePrefix("entityId:")
                                 pinnedShortcutPath = entityId
                                 pinnedShortcutEntityList?.value = entityId
-                                pinnedShortcutType?.value = getString(R.string.entity_id)
-                                setPinnedShortcutType(getString(R.string.entity_id))
+                                pinnedShortcutType?.value = getString(commonR.string.entity_id)
+                                setPinnedShortcutType(getString(commonR.string.entity_id))
                             } else {
                                 findPreference<EditTextPreference>("pinned_shortcut_path")?.text = item.intent?.action
                                 pinnedShortcutPath = item.intent?.action
-                                pinnedShortcutType?.value = getString(R.string.lovelace)
-                                setPinnedShortcutType(getString(R.string.lovelace))
+                                pinnedShortcutType?.value = getString(commonR.string.lovelace)
+                                setPinnedShortcutType(getString(commonR.string.lovelace))
                             }
-                            pinnedShortcutPref?.title = getString(R.string.update_pinned_shortcut)
+                            pinnedShortcutPref?.title = getString(commonR.string.update_pinned_shortcut)
                             pinnedShortcutPref?.isEnabled = true
                         }
                     }
@@ -273,7 +274,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
 
             for (item in pinnedShortcuts) {
                 if (item.id == pinnedShortcutId)
-                    pinnedShortcutPref?.title = getString(R.string.update_pinned_shortcut)
+                    pinnedShortcutPref?.title = getString(commonR.string.update_pinned_shortcut)
             }
 
             findPreference<EditTextPreference>("pinned_shortcut_id")?.let {
@@ -283,11 +284,11 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                     for (item in pinnedShortcuts) {
                         if (item.id == pinnedShortcutId) {
                             hasId = true
-                            pinnedShortcutPref?.title = getString(R.string.update_pinned_shortcut)
+                            pinnedShortcutPref?.title = getString(commonR.string.update_pinned_shortcut)
                         }
                     }
                     if (!hasId)
-                        pinnedShortcutPref?.title = getString(R.string.pin_shortcut)
+                        pinnedShortcutPref?.title = getString(commonR.string.pin_shortcut)
                     pinnedShortcutPref?.isEnabled = !pinnedShortcutId.isNullOrEmpty() && !pinnedShortcutLabel.isNullOrEmpty() && !pinnedShortcutDesc.isNullOrEmpty() && !pinnedShortcutPath.isNullOrEmpty()
                     return@setOnPreferenceChangeListener true
                 }
@@ -328,7 +329,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                 it.setOnPreferenceClickListener {
 
                     Log.d(TAG, "Attempt to add $pinnedShortcutId")
-                    if (pinnedShortcutType?.value == getString(R.string.entity_id))
+                    if (pinnedShortcutType?.value == getString(commonR.string.entity_id))
                         pinnedShortcutPath = "entityId:${pinnedShortcutEntityList?.value}"
                     val shortcut = createShortcut(pinnedShortcutId!!, pinnedShortcutLabel!!, pinnedShortcutDesc!!, pinnedShortcutPath!!, findPreference<Preference>("pinned_shortcut_icon")?.icon?.toBitmap())
                     var isNewPinned = true
@@ -338,7 +339,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                             isNewPinned = false
                             Log.d(TAG, "Updating pinned shortcut $pinnedShortcutId")
                             shortcutManager.updateShortcuts(listOf(shortcut))
-                            Toast.makeText(requireContext(), R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), commonR.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                         }
                     }
 
@@ -368,7 +369,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
                 if (bitmap != null)
                     Icon.createWithBitmap(bitmap)
                 else
-                    Icon.createWithResource(requireContext(), R.drawable.ic_stat_ic_notification_blue)
+                    Icon.createWithResource(requireContext(), commonR.drawable.ic_stat_ic_notification_blue)
             )
             .setIntent(intent)
             .build()
@@ -376,11 +377,11 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
 
     private fun setPinnedShortcutType(value: String) {
         when (value) {
-            getString(R.string.entity_id) -> {
+            getString(commonR.string.entity_id) -> {
                 findPreference<EditTextPreference>("pinned_shortcut_path")?.isVisible = false
                 findPreference<ListPreference>("pinned_shortcut_entity_list")?.isVisible = true
             }
-            getString(R.string.lovelace) -> {
+            getString(commonR.string.lovelace) -> {
                 findPreference<EditTextPreference>("pinned_shortcut_path")?.isVisible = true
                 findPreference<ListPreference>("pinned_shortcut_entity_list")?.isVisible = false
             }
@@ -389,11 +390,11 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
 
     private fun setDynamicShortcutType(value: String, position: Int) {
         when (value) {
-            getString(R.string.entity_id) -> {
+            getString(commonR.string.entity_id) -> {
                 findPreference<EditTextPreference>(SHORTCUT_PREFIX + position + PATH_SUFFIX)?.isVisible = false
                 findPreference<ListPreference>(SHORTCUT_PREFIX + position + ENTITY_SUFFIX)?.isVisible = true
             }
-            getString(R.string.lovelace) -> {
+            getString(commonR.string.lovelace) -> {
                 findPreference<EditTextPreference>(SHORTCUT_PREFIX + position + PATH_SUFFIX)?.isVisible = true
                 findPreference<ListPreference>(SHORTCUT_PREFIX + position + ENTITY_SUFFIX)?.isVisible = false
             }

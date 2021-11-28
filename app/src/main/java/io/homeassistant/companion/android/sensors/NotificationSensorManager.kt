@@ -10,8 +10,8 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
     companion object {
@@ -22,22 +22,22 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         val lastNotification = SensorManager.BasicSensor(
             "last_notification",
             "sensor",
-            R.string.basic_sensor_name_last_notification,
-            R.string.sensor_description_last_notification,
+            commonR.string.basic_sensor_name_last_notification,
+            commonR.string.sensor_description_last_notification,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification"
         )
         val lastRemovedNotification = SensorManager.BasicSensor(
             "last_removed_notification",
             "sensor",
-            R.string.basic_sensor_name_last_removed_notification,
-            R.string.sensor_description_last_removed_notification,
+            commonR.string.basic_sensor_name_last_removed_notification,
+            commonR.string.sensor_description_last_removed_notification,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification"
         )
         val activeNotificationCount = SensorManager.BasicSensor(
             "active_notification_count",
             "sensor",
-            R.string.basic_sensor_name_active_notification_count,
-            R.string.sensor_description_active_notification_count,
+            commonR.string.basic_sensor_name_active_notification_count,
+            commonR.string.sensor_description_active_notification_count,
             unitOfMeasurement = "notifications",
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT
@@ -45,8 +45,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         private val mediaSession = SensorManager.BasicSensor(
             "media_session",
             "sensor",
-            R.string.basic_sensor_name_media_session,
-            R.string.sensor_description_media_session,
+            commonR.string.basic_sensor_name_media_session,
+            commonR.string.sensor_description_media_session,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#media-session-sensor"
         )
     }
@@ -55,7 +55,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
     }
     override val name: Int
-        get() = R.string.sensor_name_last_notification
+        get() = commonR.string.sensor_name_last_notification
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(lastNotification, lastRemovedNotification, activeNotificationCount, mediaSession)
     }

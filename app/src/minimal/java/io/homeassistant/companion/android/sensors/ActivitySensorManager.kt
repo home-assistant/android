@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.sensors
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class ActivitySensorManager : BroadcastReceiver(), SensorManager {
 
@@ -15,7 +15,7 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_activity
+        get() = commonR.string.sensor_name_activity
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf()

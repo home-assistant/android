@@ -29,11 +29,11 @@ import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.previewFavoritesList
+import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalWearMaterialApi
 @Composable
@@ -73,7 +73,7 @@ fun SettingsView(
             state = scalingLazyListState
         ) {
             item {
-                ListHeader(id = R.string.favorite_settings)
+                ListHeader(id = commonR.string.favorite_settings)
             }
             item {
                 Chip(
@@ -84,7 +84,7 @@ fun SettingsView(
                     },
                     label = {
                         Text(
-                            text = stringResource(id = R.string.favorite)
+                            text = stringResource(id = commonR.string.favorite)
                         )
                     },
                     onClick = onClickSetFavorites,
@@ -103,7 +103,7 @@ fun SettingsView(
                     },
                     label = {
                         Text(
-                            text = stringResource(id = R.string.clear_favorites),
+                            text = stringResource(id = commonR.string.clear_favorites),
                         )
                     },
                     onClick = onClearFavorites,
@@ -112,7 +112,7 @@ fun SettingsView(
                     ),
                     secondaryLabel = {
                         Text(
-                            text = stringResource(id = R.string.irreverisble)
+                            text = stringResource(id = commonR.string.irreverisble)
                         )
                     },
                     enabled = favorites.isNotEmpty()
@@ -120,7 +120,7 @@ fun SettingsView(
             }
             item {
                 ListHeader(
-                    id = R.string.feedback_settings,
+                    id = commonR.string.feedback_settings,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -136,7 +136,7 @@ fun SettingsView(
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     },
                     label = {
-                        Text(stringResource(R.string.setting_haptic_label))
+                        Text(stringResource(commonR.string.setting_haptic_label))
                     },
                     appIcon = {
                         Image(
@@ -167,7 +167,7 @@ fun SettingsView(
                         onToastEnabled(it)
                     },
                     label = {
-                        Text(stringResource(R.string.setting_toast_label))
+                        Text(stringResource(commonR.string.setting_toast_label))
                     },
                     appIcon = {
                         Image(
@@ -191,7 +191,7 @@ fun SettingsView(
 
             item {
                 ListHeader(
-                    id = R.string.tile_settings,
+                    id = commonR.string.tile_settings,
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
@@ -204,7 +204,7 @@ fun SettingsView(
                     },
                     label = {
                         Text(
-                            text = stringResource(id = R.string.shortcuts)
+                            text = stringResource(id = commonR.string.shortcuts)
                         )
                     },
                     onClick = onClickSetShortcuts,
