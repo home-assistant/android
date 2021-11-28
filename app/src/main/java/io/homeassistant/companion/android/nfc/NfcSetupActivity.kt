@@ -13,6 +13,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.UrlHandler
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class NfcSetupActivity : BaseActivity() {
@@ -91,7 +92,7 @@ class NfcSetupActivity : BaseActivity() {
                 val nfcTagId = UrlHandler.splitNfcTagId(url)
                 if (nfcTagId == null) {
                     Log.w(TAG, "Unable to read tag!")
-                    Toast.makeText(this, R.string.nfc_invalid_tag, Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, commonR.string.nfc_invalid_tag, Toast.LENGTH_LONG).show()
                 } else {
                     viewModel.nfcReadEvent.postValue(nfcTagId)
                 }
@@ -100,7 +101,7 @@ class NfcSetupActivity : BaseActivity() {
                     val nfcTagUrl = "https://www.home-assistant.io/tag/$nfcTagToWriteUUID"
                     NFCUtil.createNFCMessage(nfcTagUrl, intent)
                     Log.d(TAG, "Wrote nfc tag with url: $nfcTagUrl")
-                    val message = R.string.nfc_write_tag_success
+                    val message = commonR.string.nfc_write_tag_success
                     Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
 
                     viewModel.nfcReadEvent.value = nfcTagToWriteUUID
@@ -113,7 +114,7 @@ class NfcSetupActivity : BaseActivity() {
                         finish()
                     }
                 } catch (e: Exception) {
-                    val message = R.string.nfc_write_tag_error
+                    val message = commonR.string.nfc_write_tag_error
                     Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
                     Log.e(TAG, "Unable to write tag.", e)
                 }

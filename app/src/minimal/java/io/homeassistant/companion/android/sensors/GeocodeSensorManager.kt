@@ -1,8 +1,8 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class GeocodeSensorManager : SensorManager {
 
@@ -11,15 +11,15 @@ class GeocodeSensorManager : SensorManager {
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
-            R.string.basic_sensor_name_geolocation,
-            R.string.sensor_description_geocoded_location
+            commonR.string.basic_sensor_name_geolocation,
+            commonR.string.sensor_description_geocoded_location
         )
     }
 
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_geolocation
+        get() = commonR.string.sensor_name_geolocation
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf()

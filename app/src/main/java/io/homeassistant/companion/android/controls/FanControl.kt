@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class FanControl {
@@ -39,14 +40,14 @@ class FanControl {
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_FAN)
-            control.setZone(context.getString(R.string.domain_fan))
+            control.setZone(context.getString(commonR.string.domain_fan))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "off" -> context.getString(R.string.state_off)
-                    "on" -> context.getString(R.string.state_on)
-                    "unavailable" -> context.getString(R.string.state_unavailable)
-                    else -> context.getString(R.string.state_unknown)
+                    "off" -> context.getString(commonR.string.state_off)
+                    "on" -> context.getString(commonR.string.state_on)
+                    "unavailable" -> context.getString(commonR.string.state_unavailable)
+                    else -> context.getString(commonR.string.state_unknown)
                 }
             )
             if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_SPEED == SUPPORT_SET_SPEED) {

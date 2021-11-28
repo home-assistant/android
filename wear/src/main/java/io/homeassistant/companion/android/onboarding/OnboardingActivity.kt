@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.onboarding.authentication.Authenticati
 import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupActivity
 import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class OnboardingActivity : AppCompatActivity(), OnboardingView {
@@ -94,7 +95,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
         // Show failure message
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)
-            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_connection))
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(commonR.string.failed_connection))
         }
         startActivity(intent)
         loadingView.visibility = View.GONE

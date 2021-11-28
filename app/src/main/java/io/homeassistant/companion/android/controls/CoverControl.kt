@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class CoverControl {
@@ -53,15 +54,15 @@ class CoverControl {
                     else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
                 }
             )
-            control.setZone(context.getString(R.string.domain_cover))
+            control.setZone(context.getString(commonR.string.domain_cover))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "closed" -> context.getString(R.string.state_closed)
-                    "closing" -> context.getString(R.string.state_closing)
-                    "open" -> context.getString(R.string.state_open)
-                    "opening" -> context.getString(R.string.state_opening)
-                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    "closed" -> context.getString(commonR.string.state_closed)
+                    "closing" -> context.getString(commonR.string.state_closing)
+                    "open" -> context.getString(commonR.string.state_open)
+                    "opening" -> context.getString(commonR.string.state_opening)
+                    "unavailable" -> context.getString(commonR.string.state_unavailable)
                     else -> entity.state
                 }
             )

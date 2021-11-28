@@ -43,6 +43,7 @@ import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.previewEntityList
 import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.util.setChipDefaults
+import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalWearMaterialApi
 @Composable
@@ -103,7 +104,7 @@ fun MainView(
             if (favoriteEntityIds.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.favorites,
+                        stringId = commonR.string.favorites,
                         expanded = expandedFavorites,
                         onExpandChanged = { expandedFavorites = it }
                     )
@@ -152,7 +153,7 @@ fun MainView(
             if (entities.isNullOrEmpty()) {
                 item {
                     Column {
-                        ListHeader(id = R.string.loading)
+                        ListHeader(id = commonR.string.loading)
                         Chip(
                             modifier = Modifier
                                 .padding(
@@ -162,7 +163,7 @@ fun MainView(
                                 ),
                             label = {
                                 Text(
-                                    text = stringResource(R.string.loading_entities),
+                                    text = stringResource(commonR.string.loading_entities),
                                     textAlign = TextAlign.Center
                                 )
                             },
@@ -175,7 +176,7 @@ fun MainView(
             if (inputBooleans.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.input_booleans,
+                        stringId = commonR.string.input_booleans,
                         expanded = expandedInputBooleans,
                         onExpandChanged = { expandedInputBooleans = it }
                     )
@@ -189,7 +190,7 @@ fun MainView(
             if (lights.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.lights,
+                        stringId = commonR.string.lights,
                         expanded = expandedLights,
                         onExpandChanged = { expandedLights = it }
                     )
@@ -203,7 +204,7 @@ fun MainView(
             if (locks.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.locks,
+                        stringId = commonR.string.locks,
                         expanded = expandedLocks,
                         onExpandChanged = { expandedLocks = it }
                     )
@@ -217,7 +218,7 @@ fun MainView(
             if (scenes.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.scenes,
+                        stringId = commonR.string.scenes,
                         expanded = expandedScenes,
                         onExpandChanged = { expandedScenes = it }
                     )
@@ -231,7 +232,7 @@ fun MainView(
             if (scripts.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.scripts,
+                        stringId = commonR.string.scripts,
                         expanded = expandedScripts,
                         onExpandChanged = { expandedScripts = it }
                     )
@@ -245,7 +246,7 @@ fun MainView(
             if (switches.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.switches,
+                        stringId = commonR.string.switches,
                         expanded = expandedSwitches,
                         onExpandChanged = { expandedSwitches = it }
                     )

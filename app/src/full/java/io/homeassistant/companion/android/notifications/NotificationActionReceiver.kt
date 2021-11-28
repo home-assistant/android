@@ -9,7 +9,6 @@ import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.util.NotificationActionContentHandler
 import io.homeassistant.companion.android.util.cancel
@@ -18,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class NotificationActionReceiver : BroadcastReceiver() {
@@ -58,7 +58,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
         val onFailure: () -> Unit = {
             Handler(context.mainLooper).post {
-                Toast.makeText(context, R.string.event_error, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, commonR.string.event_error, Toast.LENGTH_LONG).show()
             }
         }
         if (notificationAction.key == "REPLY") {

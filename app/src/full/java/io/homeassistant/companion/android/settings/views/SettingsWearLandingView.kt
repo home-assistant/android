@@ -20,8 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.wearDeviceName
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SettingWearLandingView(
@@ -32,7 +32,7 @@ fun SettingWearLandingView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.wear_settings)) },
+                title = { Text(stringResource(commonR.string.wear_settings)) },
                 actions = {
                     IconButton(onClick = {
                         val intent = Intent(
@@ -43,7 +43,7 @@ fun SettingWearLandingView(
                     }) {
                         Icon(
                             Icons.Filled.HelpOutline,
-                            contentDescription = stringResource(id = R.string.help)
+                            contentDescription = stringResource(id = commonR.string.help)
                         )
                     }
                 }
@@ -56,7 +56,7 @@ fun SettingWearLandingView(
                 .padding(start = 20.dp, top = 10.dp, end = 20.dp)
         ) {
             Text(
-                text = stringResource(id = R.string.manage_favorites_device, deviceName),
+                text = stringResource(id = commonR.string.manage_favorites_device, deviceName),
                 textAlign = TextAlign.Center
             )
             Button(
@@ -65,7 +65,7 @@ fun SettingWearLandingView(
                     .fillMaxWidth()
                     .padding(top = 10.dp, end = 10.dp)
             ) {
-                Text(text = stringResource(R.string.set_favorites_on_device))
+                Text(text = stringResource(commonR.string.set_favorites_on_device))
             }
         }
     }

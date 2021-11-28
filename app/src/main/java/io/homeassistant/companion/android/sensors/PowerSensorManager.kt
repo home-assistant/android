@@ -5,8 +5,8 @@ import android.content.Context.POWER_SERVICE
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class PowerSensorManager : SensorManager {
     companion object {
@@ -16,24 +16,24 @@ class PowerSensorManager : SensorManager {
         val interactiveDevice = SensorManager.BasicSensor(
             "is_interactive",
             "binary_sensor",
-            R.string.basic_sensor_name_interactive,
-            R.string.sensor_description_interactive,
+            commonR.string.basic_sensor_name_interactive,
+            commonR.string.sensor_description_interactive,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#interactive-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val doze = SensorManager.BasicSensor(
             "is_idle",
             "binary_sensor",
-            R.string.basic_sensor_name_doze,
-            R.string.sensor_description_doze,
+            commonR.string.basic_sensor_name_doze,
+            commonR.string.sensor_description_doze,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#doze-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val powerSave = SensorManager.BasicSensor(
             "power_save",
             "binary_sensor",
-            R.string.basic_sensor_name_power_save,
-            R.string.sensor_description_power_save,
+            commonR.string.basic_sensor_name_power_save,
+            commonR.string.sensor_description_power_save,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#power-save-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -42,7 +42,7 @@ class PowerSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_power
+        get() = commonR.string.sensor_name_power
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

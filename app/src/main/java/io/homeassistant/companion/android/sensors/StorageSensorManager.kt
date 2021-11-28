@@ -4,10 +4,10 @@ import android.content.Context
 import android.os.Environment
 import android.os.StatFs
 import android.util.Log
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.io.File
 import kotlin.math.roundToInt
+import io.homeassistant.companion.android.common.R as commonR
 
 class StorageSensorManager : SensorManager {
     companion object {
@@ -16,8 +16,8 @@ class StorageSensorManager : SensorManager {
         private val storageSensor = SensorManager.BasicSensor(
             "storage_sensor",
             "sensor",
-            R.string.basic_sensor_name_internal_storage,
-            R.string.sensor_description_internal_storage,
+            commonR.string.basic_sensor_name_internal_storage,
+            commonR.string.sensor_description_internal_storage,
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -25,8 +25,8 @@ class StorageSensorManager : SensorManager {
         private val externalStorage = SensorManager.BasicSensor(
             "external_storage",
             "sensor",
-            R.string.basic_sensor_name_external_storage,
-            R.string.sensor_description_external_storage,
+            commonR.string.basic_sensor_name_external_storage,
+            commonR.string.sensor_description_external_storage,
             unitOfMeasurement = "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -71,7 +71,7 @@ class StorageSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_storage
+        get() = commonR.string.sensor_name_storage
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(storageSensor, externalStorage)
     }

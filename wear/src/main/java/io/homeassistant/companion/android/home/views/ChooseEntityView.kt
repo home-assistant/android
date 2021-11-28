@@ -28,7 +28,6 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
@@ -37,6 +36,7 @@ import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.previewEntityList
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ChooseEntityView(
@@ -74,7 +74,7 @@ fun ChooseEntityView(
         state = scalingLazyListState
     ) {
         item {
-            ListHeader(id = R.string.shortcuts)
+            ListHeader(id = commonR.string.shortcuts)
         }
         item {
             Chip(
@@ -82,7 +82,7 @@ fun ChooseEntityView(
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
                 icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
-                label = { Text(stringResource(id = R.string.none)) },
+                label = { Text(stringResource(id = commonR.string.none)) },
                 onClick = onNoneClicked,
                 colors = ChipDefaults.primaryChipColors(
                     contentColor = Color.Black
@@ -92,7 +92,7 @@ fun ChooseEntityView(
         if (inputBooleans.isNotEmpty()) {
             item {
                 ListHeader(
-                    stringId = R.string.input_booleans,
+                    stringId = commonR.string.input_booleans,
                     expanded = expandedInputBooleans,
                     onExpandChanged = { expandedInputBooleans = it }
                 )
@@ -110,7 +110,7 @@ fun ChooseEntityView(
         if (lights.isNotEmpty()) {
             item {
                 ListHeader(
-                    stringId = R.string.lights,
+                    stringId = commonR.string.lights,
                     expanded = expandedLights,
                     onExpandChanged = { expandedLights = it }
                 )
@@ -128,7 +128,7 @@ fun ChooseEntityView(
         if (locks.isNotEmpty()) {
             item {
                 ListHeader(
-                    stringId = R.string.locks,
+                    stringId = commonR.string.locks,
                     expanded = expandedLocks,
                     onExpandChanged = { expandedLocks = it }
                 )
@@ -146,7 +146,7 @@ fun ChooseEntityView(
         if (scenes.isNotEmpty()) {
             item {
                 ListHeader(
-                    stringId = R.string.scenes,
+                    stringId = commonR.string.scenes,
                     expanded = expandedScenes,
                     onExpandChanged = { expandedScenes = it }
                 )
@@ -164,7 +164,7 @@ fun ChooseEntityView(
         if (scripts.isNotEmpty()) {
             item {
                 ListHeader(
-                    stringId = R.string.scripts,
+                    stringId = commonR.string.scripts,
                     expanded = expandedScripts,
                     onExpandChanged = { expandedScripts = it }
                 )
@@ -182,7 +182,7 @@ fun ChooseEntityView(
         if (switches.isNotEmpty()) {
             item {
                 ListHeader(
-                    stringId = R.string.switches,
+                    stringId = commonR.string.switches,
                     expanded = expandedSwitches,
                     onExpandChanged = { expandedSwitches = it }
                 )

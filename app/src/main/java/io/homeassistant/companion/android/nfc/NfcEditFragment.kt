@@ -23,6 +23,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
@@ -73,10 +74,10 @@ class NfcEditFragment : Fragment() {
                     integrationUseCase.scanTag(
                         hashMapOf("tag_id" to uuid)
                     )
-                    Toast.makeText(activity, R.string.nfc_event_fired_success, Toast.LENGTH_SHORT)
+                    Toast.makeText(activity, commonR.string.nfc_event_fired_success, Toast.LENGTH_SHORT)
                         .show()
                 } catch (e: Exception) {
-                    Toast.makeText(activity, R.string.nfc_event_fired_fail, Toast.LENGTH_LONG)
+                    Toast.makeText(activity, commonR.string.nfc_event_fired_fail, Toast.LENGTH_LONG)
                         .show()
                     Log.e(TAG, "Unable to send tag to Home Assistant.", e)
                 }

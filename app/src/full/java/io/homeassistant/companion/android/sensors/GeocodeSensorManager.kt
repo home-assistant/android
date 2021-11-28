@@ -7,11 +7,11 @@ import android.location.Geocoder
 import android.os.Build
 import android.util.Log
 import com.google.android.gms.location.LocationServices
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
+import io.homeassistant.companion.android.common.R as commonR
 
 class GeocodeSensorManager : SensorManager {
 
@@ -22,8 +22,8 @@ class GeocodeSensorManager : SensorManager {
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
-            R.string.basic_sensor_name_geolocation,
-            R.string.sensor_description_geocoded_location
+            commonR.string.basic_sensor_name_geolocation,
+            commonR.string.sensor_description_geocoded_location
         )
     }
 
@@ -33,7 +33,7 @@ class GeocodeSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_geolocation
+        get() = commonR.string.sensor_name_geolocation
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(geocodedLocation)
     }
@@ -99,7 +99,7 @@ class GeocodeSensorManager : SensorManager {
 
             var prettyAddress = address?.getAddressLine(0)
 
-            HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(R.string.unknown_address))
+            HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address))
 
             onSensorUpdated(
                 context,

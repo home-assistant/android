@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Context
 import android.os.Build
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
@@ -12,6 +11,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
 import java.util.UUID
 import kotlin.collections.ArrayList
+import io.homeassistant.companion.android.common.R as commonR
 
 class BluetoothSensorManager : SensorManager {
     companion object {
@@ -37,23 +37,23 @@ class BluetoothSensorManager : SensorManager {
         val bluetoothConnection = SensorManager.BasicSensor(
             "bluetooth_connection",
             "sensor",
-            R.string.basic_sensor_name_bluetooth,
-            R.string.sensor_description_bluetooth_connection,
+            commonR.string.basic_sensor_name_bluetooth,
+            commonR.string.sensor_description_bluetooth_connection,
             unitOfMeasurement = "connection(s)",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
         val bluetoothState = SensorManager.BasicSensor(
             "bluetooth_state",
             "binary_sensor",
-            R.string.basic_sensor_name_bluetooth_state,
-            R.string.sensor_description_bluetooth_state,
+            commonR.string.basic_sensor_name_bluetooth_state,
+            commonR.string.sensor_description_bluetooth_state,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         val bleTransmitter = SensorManager.BasicSensor(
             "ble_emitter",
             "sensor",
-            R.string.basic_sensor_name_bluetooth_ble_emitter,
-            R.string.sensor_description_bluetooth_ble_emitter,
+            commonR.string.basic_sensor_name_bluetooth_ble_emitter,
+            commonR.string.sensor_description_bluetooth_ble_emitter,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
@@ -78,7 +78,7 @@ class BluetoothSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_bluetooth
+        get() = commonR.string.sensor_name_bluetooth
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(bluetoothConnection, bluetoothState, bleTransmitter)
     }

@@ -4,8 +4,8 @@ import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class AudioSensorManager : SensorManager {
     companion object {
@@ -14,66 +14,66 @@ class AudioSensorManager : SensorManager {
         val audioSensor = SensorManager.BasicSensor(
             "audio_sensor",
             "sensor",
-            R.string.sensor_name_ringer_mode,
-            R.string.sensor_description_audio_sensor,
+            commonR.string.sensor_name_ringer_mode,
+            commonR.string.sensor_description_audio_sensor,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         private val audioState = SensorManager.BasicSensor(
             "audio_mode",
             "sensor",
-            R.string.sensor_name_audio_mode,
-            R.string.sensor_description_audio_mode
+            commonR.string.sensor_name_audio_mode,
+            commonR.string.sensor_description_audio_mode
         )
         private val headphoneState = SensorManager.BasicSensor(
             "headphone_state",
             "binary_sensor",
-            R.string.sensor_name_headphone,
-            R.string.sensor_description_headphone
+            commonR.string.sensor_name_headphone,
+            commonR.string.sensor_description_headphone
         )
         val micMuted = SensorManager.BasicSensor(
             "mic_muted",
             "binary_sensor",
-            R.string.sensor_name_mic_muted,
-            R.string.sensor_description_mic_muted
+            commonR.string.sensor_name_mic_muted,
+            commonR.string.sensor_description_mic_muted
         )
         private val musicActive = SensorManager.BasicSensor(
             "music_active",
             "binary_sensor",
-            R.string.sensor_name_music_active,
-            R.string.sensor_description_music_active
+            commonR.string.sensor_name_music_active,
+            commonR.string.sensor_description_music_active
         )
         val speakerphoneState = SensorManager.BasicSensor(
             "speakerphone_state",
             "binary_sensor",
-            R.string.sensor_name_speakerphone,
-            R.string.sensor_description_speakerphone
+            commonR.string.sensor_name_speakerphone,
+            commonR.string.sensor_description_speakerphone
         )
         private val volAlarm = SensorManager.BasicSensor(
             "volume_alarm",
             "sensor",
-            R.string.sensor_name_volume_alarm,
-            R.string.sensor_description_volume_alarm,
+            commonR.string.sensor_name_volume_alarm,
+            commonR.string.sensor_description_volume_alarm,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         private val volCall = SensorManager.BasicSensor(
             "volume_call",
             "sensor",
-            R.string.sensor_name_volume_call,
-            R.string.sensor_description_volume_call,
+            commonR.string.sensor_name_volume_call,
+            commonR.string.sensor_description_volume_call,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         private val volMusic = SensorManager.BasicSensor(
             "volume_music",
             "sensor",
-            R.string.sensor_name_volume_music,
-            R.string.sensor_description_volume_music,
+            commonR.string.sensor_name_volume_music,
+            commonR.string.sensor_description_volume_music,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         private val volRing = SensorManager.BasicSensor(
             "volume_ring",
             "sensor",
-            R.string.sensor_name_volume_ring,
-            R.string.sensor_description_volume_ring,
+            commonR.string.sensor_name_volume_ring,
+            commonR.string.sensor_description_volume_ring,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
     }
@@ -86,7 +86,7 @@ class AudioSensorManager : SensorManager {
         get() = false
 
     override val name: Int
-        get() = R.string.sensor_name_audio
+        get() = commonR.string.sensor_name_audio
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(audioSensor, audioState, headphoneState, micMuted, speakerphoneState, musicActive, volAlarm, volCall, volMusic, volRing)

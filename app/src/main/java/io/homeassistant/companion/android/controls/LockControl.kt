@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class LockControl {
@@ -37,17 +38,17 @@ class LockControl {
             control.setDeviceType(
                 DeviceTypes.TYPE_LOCK
             )
-            control.setZone(context.getString(R.string.domain_lock))
+            control.setZone(context.getString(commonR.string.domain_lock))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "jammed" -> context.getString(R.string.state_jammed)
-                    "locked" -> context.getString(R.string.state_locked)
-                    "locking" -> context.getString(R.string.state_locking)
-                    "unlocked" -> context.getString(R.string.state_unlocked)
-                    "unlocking" -> context.getString(R.string.state_unlocking)
-                    "unavailable" -> context.getString(R.string.state_unavailable)
-                    else -> context.getString(R.string.state_unknown)
+                    "jammed" -> context.getString(commonR.string.state_jammed)
+                    "locked" -> context.getString(commonR.string.state_locked)
+                    "locking" -> context.getString(commonR.string.state_locking)
+                    "unlocked" -> context.getString(commonR.string.state_unlocked)
+                    "unlocking" -> context.getString(commonR.string.state_unlocking)
+                    "unavailable" -> context.getString(commonR.string.state_unavailable)
+                    else -> context.getString(commonR.string.state_unknown)
                 }
             )
             control.setControlTemplate(

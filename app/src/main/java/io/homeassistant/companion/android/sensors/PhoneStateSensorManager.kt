@@ -6,8 +6,8 @@ import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class PhoneStateSensorManager : SensorManager {
 
@@ -16,24 +16,24 @@ class PhoneStateSensorManager : SensorManager {
         val phoneState = SensorManager.BasicSensor(
             "phone_state",
             "sensor",
-            R.string.basic_sensor_name_phone,
-            R.string.sensor_description_phone_state,
+            commonR.string.basic_sensor_name_phone,
+            commonR.string.sensor_description_phone_state,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#phone-state-sensor"
         )
 
         val sim_1 = SensorManager.BasicSensor(
             "sim_1",
             "sensor",
-            R.string.basic_sensor_name_sim1,
-            R.string.sensor_description_sim_1,
+            commonR.string.basic_sensor_name_sim1,
+            commonR.string.sensor_description_sim_1,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
         val sim_2 = SensorManager.BasicSensor(
             "sim_2",
             "sensor",
-            R.string.basic_sensor_name_sim2,
-            R.string.sensor_description_sim_2,
+            commonR.string.basic_sensor_name_sim2,
+            commonR.string.sensor_description_sim_2,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
@@ -44,7 +44,7 @@ class PhoneStateSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_phone
+        get() = commonR.string.sensor_name_phone
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)

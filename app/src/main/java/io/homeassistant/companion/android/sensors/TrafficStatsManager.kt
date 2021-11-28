@@ -5,10 +5,10 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.TrafficStats
 import android.util.Log
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.math.RoundingMode
 import kotlin.math.absoluteValue
+import io.homeassistant.companion.android.common.R as commonR
 
 class TrafficStatsManager : SensorManager {
     companion object {
@@ -18,8 +18,8 @@ class TrafficStatsManager : SensorManager {
         val rxBytesMobile = SensorManager.BasicSensor(
             "mobile_rx_gb",
             "sensor",
-            R.string.basic_sensor_name_mobile_rx_gb,
-            R.string.sensor_description_mobile_rx_gb,
+            commonR.string.basic_sensor_name_mobile_rx_gb,
+            commonR.string.sensor_description_mobile_rx_gb,
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -27,8 +27,8 @@ class TrafficStatsManager : SensorManager {
         val txBytesMobile = SensorManager.BasicSensor(
             "mobile_tx_gb",
             "sensor",
-            R.string.basic_sensor_name_mobile_tx_gb,
-            R.string.sensor_description_mobile_tx_gb,
+            commonR.string.basic_sensor_name_mobile_tx_gb,
+            commonR.string.sensor_description_mobile_tx_gb,
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -36,8 +36,8 @@ class TrafficStatsManager : SensorManager {
         val rxBytesTotal = SensorManager.BasicSensor(
             "total_rx_gb",
             "sensor",
-            R.string.basic_sensor_name_total_rx_gb,
-            R.string.sensor_description_total_rx_gb,
+            commonR.string.basic_sensor_name_total_rx_gb,
+            commonR.string.sensor_description_total_rx_gb,
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -45,8 +45,8 @@ class TrafficStatsManager : SensorManager {
         val txBytesTotal = SensorManager.BasicSensor(
             "total_tx_gb",
             "sensor",
-            R.string.basic_sensor_name_total_tx_gb,
-            R.string.sensor_description_total_tx_gb,
+            commonR.string.basic_sensor_name_total_tx_gb,
+            commonR.string.sensor_description_total_tx_gb,
             unitOfMeasurement = "GB",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
@@ -60,7 +60,7 @@ class TrafficStatsManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_traffic_stats
+        get() = commonR.string.sensor_name_traffic_stats
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (hasCellular) {

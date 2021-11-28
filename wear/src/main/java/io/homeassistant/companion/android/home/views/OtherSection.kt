@@ -14,7 +14,7 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.Text
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun OtherSection(
@@ -22,7 +22,7 @@ fun OtherSection(
     onLogoutClicked: () -> Unit
 ) {
     Column {
-        ListHeader(id = R.string.other)
+        ListHeader(id = commonR.string.other)
         Chip(
             modifier = Modifier
                 .fillMaxWidth()
@@ -32,7 +32,7 @@ fun OtherSection(
             },
             label = {
                 Text(
-                    text = stringResource(id = R.string.settings)
+                    text = stringResource(id = commonR.string.settings)
                 )
             },
             onClick = onSettingsClicked,
@@ -49,7 +49,7 @@ fun OtherSection(
             },
             label = {
                 Text(
-                    text = stringResource(id = R.string.logout)
+                    text = stringResource(id = commonR.string.logout)
                 )
             },
             onClick = onLogoutClicked,

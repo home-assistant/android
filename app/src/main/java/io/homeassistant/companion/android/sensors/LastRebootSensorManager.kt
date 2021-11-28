@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
@@ -14,6 +13,7 @@ import java.util.Date
 import java.util.GregorianCalendar
 import java.util.TimeZone
 import kotlin.math.absoluteValue
+import io.homeassistant.companion.android.common.R as commonR
 
 class LastRebootSensorManager : SensorManager {
     companion object {
@@ -25,8 +25,8 @@ class LastRebootSensorManager : SensorManager {
         private val lastRebootSensor = SensorManager.BasicSensor(
             "last_reboot",
             "sensor",
-            R.string.basic_sensor_name_last_reboot,
-            R.string.sensor_description_last_reboot,
+            commonR.string.basic_sensor_name_last_reboot,
+            commonR.string.sensor_description_last_reboot,
             "timestamp",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
@@ -38,7 +38,7 @@ class LastRebootSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_last_reboot
+        get() = commonR.string.sensor_name_last_reboot
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(lastRebootSensor)

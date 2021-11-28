@@ -2,9 +2,9 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
 
@@ -23,20 +23,20 @@ class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
             "",
-            R.string.basic_sensor_name_location_background,
-            R.string.sensor_description_location_background
+            commonR.string.basic_sensor_name_location_background,
+            commonR.string.sensor_description_location_background
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
-            R.string.basic_sensor_name_location_zone,
-            R.string.sensor_description_location_zone
+            commonR.string.basic_sensor_name_location_zone,
+            commonR.string.sensor_description_location_zone
         )
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
             "",
-            R.string.basic_sensor_name_location_accurate,
-            R.string.sensor_description_location_accurate
+            commonR.string.basic_sensor_name_location_accurate,
+            commonR.string.sensor_description_location_accurate
         )
         internal const val TAG = "LocBroadcastReceiver"
     }
@@ -48,7 +48,7 @@ class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_location
+        get() = commonR.string.sensor_name_location
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf()

@@ -20,7 +20,6 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
@@ -36,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class LocationSensorManager : LocationSensorManagerBase() {
@@ -68,27 +68,27 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
             "",
-            R.string.basic_sensor_name_location_background,
-            R.string.sensor_description_location_background
+            commonR.string.basic_sensor_name_location_background,
+            commonR.string.sensor_description_location_background
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
-            R.string.basic_sensor_name_location_zone,
-            R.string.sensor_description_location_zone
+            commonR.string.basic_sensor_name_location_zone,
+            commonR.string.sensor_description_location_zone
         )
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
             "",
-            R.string.basic_sensor_name_location_accurate,
-            R.string.sensor_description_location_accurate
+            commonR.string.basic_sensor_name_location_accurate,
+            commonR.string.sensor_description_location_accurate
         )
 
         val highAccuracyMode = SensorManager.BasicSensor(
             "high_accuracy_mode",
             "binary_sensor",
-            R.string.basic_sensor_name_high_accuracy_mode,
-            R.string.sensor_description_high_accuracy_mode,
+            commonR.string.basic_sensor_name_high_accuracy_mode,
+            commonR.string.sensor_description_high_accuracy_mode,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         internal const val TAG = "LocBroadcastReceiver"
@@ -450,7 +450,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
                 // Update GeoLocation Sensor (if enabled) with new Location
-                val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == R.string.basic_sensor_name_geolocation } }
+                val geoSensorManager = SensorReceiver.MANAGERS.firstOrNull { it.getAvailableSensors(latestContext).any { s -> s.name == commonR.string.basic_sensor_name_geolocation } }
                 if (geoSensorManager != null) {
                     if (geoSensorManager.isEnabled(latestContext, "geocoded_location")) {
                         geoSensorManager.requestSensorUpdate(latestContext)
@@ -532,7 +532,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         Log.d(TAG, "Event sent to Home Assistant")
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to send event to Home Assistant", e)
-                        Toast.makeText(latestContext, R.string.zone_event_failure, Toast.LENGTH_LONG)
+                        Toast.makeText(latestContext, commonR.string.zone_event_failure, Toast.LENGTH_LONG)
                             .show()
                     }
                 }
@@ -839,7 +839,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         get() = false
 
     override val name: Int
-        get() = R.string.sensor_name_location
+        get() = commonR.string.sensor_name_location
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {

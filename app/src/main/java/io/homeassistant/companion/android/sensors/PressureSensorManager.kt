@@ -8,9 +8,9 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.math.RoundingMode
+import io.homeassistant.companion.android.common.R as commonR
 
 class PressureSensorManager : SensorManager, SensorEventListener {
     companion object {
@@ -20,8 +20,8 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         private val pressureSensor = SensorManager.BasicSensor(
             "pressure_sensor",
             "sensor",
-            R.string.sensor_name_pressure,
-            R.string.sensor_description_pressure_sensor,
+            commonR.string.sensor_name_pressure,
+            commonR.string.sensor_description_pressure_sensor,
             "pressure",
             "hPa",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT
@@ -38,7 +38,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         get() = false
 
     override val name: Int
-        get() = R.string.sensor_name_pressure
+        get() = commonR.string.sensor_name_pressure
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(pressureSensor)

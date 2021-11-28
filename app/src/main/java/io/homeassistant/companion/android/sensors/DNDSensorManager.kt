@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.sensors
 import android.content.Context
 import android.provider.Settings.Global
 import android.util.Log
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class DNDSensorManager : SensorManager {
     companion object {
@@ -13,8 +13,8 @@ class DNDSensorManager : SensorManager {
         val dndSensor = SensorManager.BasicSensor(
             "dnd_sensor",
             "sensor",
-            R.string.sensor_name_dnd,
-            R.string.sensor_description_dnd_sensor,
+            commonR.string.sensor_name_dnd,
+            commonR.string.sensor_description_dnd_sensor,
             entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
     }
@@ -25,7 +25,7 @@ class DNDSensorManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_dnd
+        get() = commonR.string.sensor_name_dnd
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(dndSensor)

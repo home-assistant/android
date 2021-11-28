@@ -10,9 +10,9 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.os.Build
 import android.util.Log
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
+import io.homeassistant.companion.android.common.R as commonR
 
 class StepsSensorManager : SensorManager, SensorEventListener {
     companion object {
@@ -22,8 +22,8 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         private val stepsSensor = SensorManager.BasicSensor(
             "steps_sensor",
             "sensor",
-            R.string.sensor_name_steps,
-            R.string.sensor_description_steps_sensor,
+            commonR.string.sensor_name_steps,
+            commonR.string.sensor_description_steps_sensor,
             unitOfMeasurement = "steps",
             stateClass = SensorManager.STATE_CLASS_TOTAL_INCREASING
         )
@@ -37,7 +37,7 @@ class StepsSensorManager : SensorManager, SensorEventListener {
         get() = false
 
     override val name: Int
-        get() = R.string.sensor_name_steps
+        get() = commonR.string.sensor_name_steps
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(stepsSensor)

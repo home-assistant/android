@@ -8,10 +8,10 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.ActivityIntegrationBinding
 import io.homeassistant.companion.android.home.HomeActivity
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationView {
@@ -64,7 +64,7 @@ class MobileAppIntegrationActivity : AppCompatActivity(), MobileAppIntegrationVi
                 ConfirmationActivity.EXTRA_ANIMATION_TYPE,
                 ConfirmationActivity.FAILURE_ANIMATION
             )
-            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_registration))
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(commonR.string.failed_registration))
         }
         startActivity(intent)
         binding.loadingView.visibility = View.GONE

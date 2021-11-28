@@ -11,7 +11,6 @@ import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
@@ -22,6 +21,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class CameraWidgetConfigureActivity : BaseActivity() {
@@ -136,7 +136,7 @@ class CameraWidgetConfigureActivity : BaseActivity() {
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
-            Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
+            Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
         }
     }

@@ -28,6 +28,7 @@ import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import io.homeassistant.companion.android.common.R as commonR
 
 class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityChangedListener {
 
@@ -156,17 +157,17 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
         when {
             wearNodesWithApp == null || allConnectedNodes == null -> {
                 Log.d(TAG, "Waiting on Results for both connected nodes and nodes with app")
-                binding.informationTextView.text = getString(R.string.message_checking)
+                binding.informationTextView.text = getString(commonR.string.message_checking)
                 binding.remoteOpenButton.isInvisible = true
             }
             allConnectedNodes.isEmpty() -> {
                 Log.d(TAG, "No devices")
-                binding.informationTextView.text = getString(R.string.message_checking)
+                binding.informationTextView.text = getString(commonR.string.message_checking)
                 binding.remoteOpenButton.isInvisible = true
             }
             wearNodesWithApp.isEmpty() -> {
                 Log.d(TAG, "Missing on all devices")
-                binding.informationTextView.text = getString(R.string.message_missing_all)
+                binding.informationTextView.text = getString(commonR.string.message_missing_all)
                 binding.remoteOpenButton.isVisible = true
             }
             wearNodesWithApp.size < allConnectedNodes.size -> {
@@ -208,7 +209,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
 
                     Toast.makeText(
                         this@SettingsWearActivity,
-                        getString(R.string.store_request_successful),
+                        getString(commonR.string.store_request_successful),
                         Toast.LENGTH_SHORT
                     ).show()
                 } catch (cancellationException: CancellationException) {
@@ -216,7 +217,7 @@ class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityC
                 } catch (throwable: Throwable) {
                     Toast.makeText(
                         this@SettingsWearActivity,
-                        getString(R.string.store_request_unsuccessful),
+                        getString(commonR.string.store_request_unsuccessful),
                         Toast.LENGTH_LONG
                     ).show()
                 }

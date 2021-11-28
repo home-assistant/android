@@ -18,7 +18,6 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
@@ -42,6 +41,7 @@ import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetDao
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @Database(
     entities = [
@@ -460,8 +460,8 @@ abstract class AppDatabase : RoomDatabase() {
         private fun notifyMigrationFailed() {
             createNotificationChannel()
             val notification = NotificationCompat.Builder(appContext, channelId)
-                .setSmallIcon(R.drawable.ic_stat_ic_notification)
-                .setContentTitle(appContext.getString(R.string.database_migration_failed))
+                .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
+                .setContentTitle(appContext.getString(commonR.string.database_migration_failed))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .build()
             with(NotificationManagerCompat.from(appContext)) {
@@ -476,7 +476,7 @@ abstract class AppDatabase : RoomDatabase() {
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(
                             appContext,
-                            R.string.database_event_failure,
+                            commonR.string.database_event_failure,
                             Toast.LENGTH_LONG
                         ).show()
                     }
