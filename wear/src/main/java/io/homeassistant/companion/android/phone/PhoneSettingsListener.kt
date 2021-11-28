@@ -109,8 +109,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                             "Favorites: $data"
                         )
                         favoritesDao.deleteAll()
-                        data.forEachIndexed { index, s ->
-                            favoritesDao.add(Favorites(s, index))
+                        if (data.isNotEmpty() && data[0] != "") {
+                            data.forEachIndexed { index, s ->
+                                favoritesDao.add(Favorites(s, index))
+                            }
                         }
                     }
                     it.release()
