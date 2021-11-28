@@ -19,10 +19,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mikepenz.iconics.IconicsDrawable
 import io.homeassistant.companion.android.settings.SettingsWearViewModel
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.draggedItem
@@ -66,7 +68,7 @@ fun LoadWearFavoritesSettings(
             state = reorderState.listState,
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .padding(top = 10.dp, start = 20.dp, end = 20.dp)
+                .padding(top = 10.dp, start = 5.dp, end = 10.dp)
                 .then(
                     Modifier.reorderable(
                         reorderState,
@@ -87,16 +89,21 @@ fun LoadWearFavoritesSettings(
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 Row(
                     modifier = Modifier
-                        .padding(15.dp)
+                        .padding(12.dp)
                         .clickable {
                             settingsWearViewModel.onEntitySelected(
                                 false,
                                 favoriteEntities[index]
                             )
                         }
-                        .draggedItem(reorderState.offsetByKey(favoriteEntities[index]), Orientation.Vertical)
+                        .draggedItem(
+                            reorderState.offsetByKey(favoriteEntities[index]),
+                            Orientation.Vertical
+                        )
                         .detectReorderAfterLongPress(reorderState)
                 ) {
+                    val iconBitmap = IconicsDrawable(LocalContext.current, "cmd-drag_vertical").toBitmap().asImageBitmap()
+                    Icon(iconBitmap, "", modifier = Modifier.padding(top = 13.dp))
                     Checkbox(
                         checked = favoriteEntities.contains(favoriteEntities[index]),
                         onCheckedChange = {

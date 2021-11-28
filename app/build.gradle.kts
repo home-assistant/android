@@ -193,6 +193,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.2")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
+    implementation("com.mikepenz:iconics-compose:5.3.3")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
     implementation("org.burnoutcrew.composereorderable:reorderable:0.7.4")
 }
