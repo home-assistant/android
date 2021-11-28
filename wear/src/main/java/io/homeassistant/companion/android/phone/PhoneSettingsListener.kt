@@ -13,6 +13,8 @@ import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.wear.Favorites
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -67,8 +69,9 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private fun sendHomeFavorites(nodeId: String) = mainScope.launch {
         Log.d(TAG, "sendHomeFavorites to: $nodeId")
-        val currentFavorites = integrationUseCase.getWearHomeFavorites().toList()
+        val currentFavorites = AppDatabase.getInstance(applicationContext).favoritesDao().getAll()
 
+        Log.d(TAG, "new list: $currentFavorites")
         val putDataRequest = PutDataMapRequest.create("/home_favorites").run {
             dataMap.putString("favorites", currentFavorites.toString())
             setUrgent()
@@ -85,20 +88,22 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private fun saveFavorites() {
         Log.d(TAG, "Finding existing favorites")
+        val favoritesDao = AppDatabase.getInstance(applicationContext).favoritesDao()
         mainScope.launch {
             Wearable.getDataClient(applicationContext).getDataItems(Uri.parse("wear://*/save_home_favorites"))
                 .addOnSuccessListener {
                     Log.d(TAG, "Found existing favorites: ${it.count}")
                     it.forEach { dataItem ->
-                        val data = getHomeFavorites(DataMapItem.fromDataItem(dataItem).dataMap)
+                        val data = getHomeFavorites(DataMapItem.fromDataItem(dataItem).dataMap).removeSurrounding("[", "]").split(", ").toList()
                         Log.d(
                             TAG,
-                            "Favorites: ${data.removeSurrounding("[", "]").split(", ").map { it }}"
+                            "Favorites: $data"
                         )
-                        mainScope.launch {
-                            integrationUseCase.setWearHomeFavorites(
-                                data.removeSurrounding("[", "]").split(", ").map { it }.toSet()
-                            )
+                        favoritesDao.deleteAll()
+                        var i = 1
+                        for (item in data) {
+                            favoritesDao.add(Favorites(item, i))
+                            i++
                         }
                     }
                     it.release()

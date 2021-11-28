@@ -24,11 +24,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.settings.SettingsWearViewModel
-import io.homeassistant.companion.android.common.R as commonR
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.draggedItem
 import org.burnoutcrew.reorderable.rememberReorderState
 import org.burnoutcrew.reorderable.reorderable
+import io.homeassistant.companion.android.common.R as commonR
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/wear-os"
 val supportedDomains = listOf(

@@ -61,7 +61,7 @@ class SettingsWearViewModel @Inject constructor(
         getFavorites(DataMapItem.fromDataItem(item).dataMap)
         favoriteEntityIds.clear()
         favoriteEntityIds.addAll(
-            data.removeSurrounding("[", "]").split(", ").map { it }
+            data.removeSurrounding("[", "]").removePrefix("Favorites(id=").split(", ").map { it }
         )
     }
 
@@ -105,11 +105,13 @@ class SettingsWearViewModel @Inject constructor(
                     Log.d(TAG, "Found existing favorites: ${dataItemBuffer.count}")
                     dataItemBuffer.forEach {
                         val data = getFavorites(DataMapItem.fromDataItem(it).dataMap)
+                            .removeSurrounding("[", "]").split("), ").toList()
                         Log.d(TAG, "Favorites: $data")
                         favoriteEntityIds.clear()
-                        favoriteEntityIds.addAll(
-                            data.removeSurrounding("[", "]").split(", ").map { it }
-                        )
+                        for (item in data) {
+                            val favorites = item.removeSurrounding("Favorites(", ")").split(", ")
+                            favoriteEntityIds.add(favorites[0].removePrefix("Favorites(").removePrefix("id="))
+                        }
                     }
                     dataItemBuffer.release()
                 }
@@ -165,8 +167,9 @@ class SettingsWearViewModel @Inject constructor(
                 event.dataItem.also { item ->
                     if (item.uri.path?.compareTo("/home_favorites") == 0) {
                         val data = getFavorites(DataMapItem.fromDataItem(item).dataMap)
-                        saveHomeFavorites(data, item)
+                            .removeSurrounding("[", "]").split("), ").toList()
                         Log.d(TAG, "onDataChanged: Found home favorites: $data")
+                        saveHomeFavorites(data.toString(), item)
                     }
                 }
             }
