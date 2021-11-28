@@ -34,7 +34,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/wear-os"
 val supportedDomains = listOf(
-    "input_boolean", "light", "switch", "script", "scene"
+    "input_boolean", "light", "lock", "switch", "script", "scene"
 )
 
 @Composable

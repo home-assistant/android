@@ -449,7 +449,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_19_20 = object : Migration(19, 20) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("CREATE TABLE IF NOT EXISTS `favorites` (`id` TEXT NOT NULL, `position` INTEGER NOT NULL)")
+                database.execSQL("CREATE TABLE IF NOT EXISTS `favorites` (`id` TEXT PRIMARY KEY NOT NULL, `position` INTEGER)")
             }
         }
 

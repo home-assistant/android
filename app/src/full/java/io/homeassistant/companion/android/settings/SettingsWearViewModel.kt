@@ -12,7 +12,6 @@ import com.google.android.gms.wearable.CapabilityClient
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
-import com.google.android.gms.wearable.DataItem
 import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.PutDataMapRequest
@@ -24,6 +23,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import kotlinx.coroutines.launch
 import org.burnoutcrew.reorderable.ItemPosition
 import org.burnoutcrew.reorderable.move
+import org.json.JSONArray
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -57,8 +57,7 @@ class SettingsWearViewModel @Inject constructor(
         }
     }
 
-    private fun saveHomeFavorites(data: String, item: DataItem) {
-        getFavorites(DataMapItem.fromDataItem(item).dataMap)
+    private fun saveHomeFavorites(data: String) {
         favoriteEntityIds.clear()
         favoriteEntityIds.addAll(
             data.removeSurrounding("[", "]").removePrefix("Favorites(id=").split(", ").map { it }
@@ -105,12 +104,13 @@ class SettingsWearViewModel @Inject constructor(
                     Log.d(TAG, "Found existing favorites: ${dataItemBuffer.count}")
                     dataItemBuffer.forEach {
                         val data = getFavorites(DataMapItem.fromDataItem(it).dataMap)
-                            .removeSurrounding("[", "]").split("), ").toList()
-                        Log.d(TAG, "Favorites: $data")
+                        val jsonString = JSONArray(data)
+                        Log.d(TAG, "Favorites: $jsonString")
                         favoriteEntityIds.clear()
-                        for (item in data) {
-                            val favorites = item.removeSurrounding("Favorites(", ")").split(", ")
-                            favoriteEntityIds.add(favorites[0].removePrefix("Favorites(").removePrefix("id="))
+                        for (item in 0 until jsonString.length()) {
+                            favoriteEntityIds.add(
+                                jsonString.getString(item)
+                            )
                         }
                     }
                     dataItemBuffer.release()
@@ -167,9 +167,9 @@ class SettingsWearViewModel @Inject constructor(
                 event.dataItem.also { item ->
                     if (item.uri.path?.compareTo("/home_favorites") == 0) {
                         val data = getFavorites(DataMapItem.fromDataItem(item).dataMap)
-                            .removeSurrounding("[", "]").split("), ").toList()
-                        Log.d(TAG, "onDataChanged: Found home favorites: $data")
-                        saveHomeFavorites(data.toString(), item)
+                        val jsonString = JSONArray(data).toString()
+                        Log.d(TAG, "onDataChanged: Found home favorites: $jsonString")
+                        saveHomeFavorites(jsonString)
                     }
                 }
             }

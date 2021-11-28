@@ -19,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -70,10 +71,18 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
     private fun sendHomeFavorites(nodeId: String) = mainScope.launch {
         Log.d(TAG, "sendHomeFavorites to: $nodeId")
         val currentFavorites = AppDatabase.getInstance(applicationContext).favoritesDao().getAll()
+        val list = emptyList<String>().toMutableList()
+        for (favorite in currentFavorites!!) {
+            list += listOf(favorite.id)
+        }
+        val jsonArray = JSONArray(list.toString())
+        val jsonString = List(jsonArray.length()) {
+            jsonArray.getString(it)
+        }.map { it }
 
-        Log.d(TAG, "new list: $currentFavorites")
+        Log.d(TAG, "new list: $jsonString")
         val putDataRequest = PutDataMapRequest.create("/home_favorites").run {
-            dataMap.putString("favorites", currentFavorites.toString())
+            dataMap.putString("favorites", jsonString.toString())
             setUrgent()
             asPutDataRequest()
         }
@@ -100,10 +109,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                             "Favorites: $data"
                         )
                         favoritesDao.deleteAll()
-                        var i = 1
-                        for (item in data) {
-                            favoritesDao.add(Favorites(item, i))
-                            i++
+                        data.forEachIndexed { index, s ->
+                            favoritesDao.add(Favorites(s, index))
                         }
                     }
                     it.release()

@@ -171,9 +171,9 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     private fun updateFavoritePositions() {
         var i = 1
         viewModelScope.launch {
-            favoritesDao.getAll()?.forEach {
-                if (it.position != i)
-                    updateFavorites(Favorites(it.id, i))
+            favoritesDao.getAll()?.forEachIndexed { index, favorites ->
+                if (index != i)
+                    updateFavorites(Favorites(favorites.id, index))
                 i++
             }
         }
