@@ -28,7 +28,6 @@ import androidx.wear.compose.material.ToggleChipDefaults
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.home.MainViewModel
@@ -85,7 +84,7 @@ fun SetFavoritesView(
                 state = scalingLazyListState
             ) {
                 item {
-                    ListHeader(id = R.string.set_favorite)
+                    ListHeader(id = commonR.string.set_favorite)
                 }
                 if (favoriteEntityIds.isNotEmpty()) {
                     val favoriteEntities = mutableListOf<Entity<*>>()
@@ -105,7 +104,7 @@ fun SetFavoritesView(
                 if (mainViewModel.inputBooleans.isNotEmpty()) {
                     item {
                         ListHeader(
-                            stringId = R.string.input_booleans,
+                            stringId = commonR.string.input_booleans,
                             expanded = expandedInputBooleans,
                             onExpandChanged = { expandedInputBooleans = it }
                         )
@@ -125,7 +124,7 @@ fun SetFavoritesView(
                 if (mainViewModel.lights.isNotEmpty()) {
                     item {
                         ListHeader(
-                            stringId = R.string.lights,
+                            stringId = commonR.string.lights,
                             expanded = expandedLights,
                             onExpandChanged = { expandedLights = it }
                         )
@@ -162,11 +161,10 @@ fun SetFavoritesView(
                     }
                 }
 
-
                 if (mainViewModel.scenes.isNotEmpty()) {
                     item {
                         ListHeader(
-                            stringId = R.string.scenes,
+                            stringId = commonR.string.scenes,
                             expanded = expandedScenes,
                             onExpandChanged = { expandedScenes = it }
                         )
@@ -186,7 +184,7 @@ fun SetFavoritesView(
                 if (mainViewModel.scripts.isNotEmpty()) {
                     item {
                         ListHeader(
-                            stringId = R.string.scripts,
+                            stringId = commonR.string.scripts,
                             expanded = expandedScripts,
                             onExpandChanged = { expandedScripts = it }
                         )
@@ -206,7 +204,7 @@ fun SetFavoritesView(
                 if (mainViewModel.switches.isNotEmpty()) {
                     item {
                         ListHeader(
-                            stringId = R.string.switches,
+                            stringId = commonR.string.switches,
                             expanded = expandedSwitches,
                             onExpandChanged = { expandedSwitches = it }
                         )

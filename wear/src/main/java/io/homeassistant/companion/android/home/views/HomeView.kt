@@ -23,13 +23,13 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
+import io.homeassistant.companion.android.common.R as commonR
 
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_ENTITY_LIST = "entity_list"
@@ -52,13 +52,13 @@ fun LoadHomePage(
     WearAppTheme {
         if (mainViewModel.entities.isNullOrEmpty() && mainViewModel.favoriteEntityIds.isNullOrEmpty()) {
             Column {
-                ListHeader(id = R.string.loading)
+                ListHeader(id = commonR.string.loading)
                 Chip(
                     modifier = Modifier
                         .padding(top = 30.dp, start = 10.dp, end = 10.dp),
                     label = {
                         Text(
-                            text = stringResource(R.string.loading_entities),
+                            text = stringResource(commonR.string.loading_entities),
                             textAlign = TextAlign.Center
                         )
                     },
@@ -94,7 +94,10 @@ fun LoadHomePage(
                     composable(SCREEN_ENTITY_LIST) {
                         EntityViewList(
                             entityLists = mainViewModel.entityLists,
-                            onEntityClicked = { mainViewModel.toggleEntity(it) },
+                            onEntityClicked =
+                            { entityId, state ->
+                                mainViewModel.toggleEntity(entityId, state)
+                            },
                             isHapticEnabled = mainViewModel.isHapticEnabled.value,
                             isToastEnabled = mainViewModel.isToastEnabled.value
                         )

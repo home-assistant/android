@@ -23,7 +23,6 @@ import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberScalingLazyListState
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
@@ -31,11 +30,12 @@ import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun EntityViewList(
     entityLists: Map<Int, List<Entity<*>>>,
-    onEntityClicked: (String) -> Unit,
+    onEntityClicked: (String, String) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
 ) {
@@ -88,7 +88,7 @@ fun EntityViewList(
                                 Chip(
                                     label = {
                                         Text(
-                                            text = stringResource(R.string.loading_entities),
+                                            text = stringResource(commonR.string.loading_entities),
                                             textAlign = TextAlign.Center
                                         )
                                     },
@@ -114,8 +114,8 @@ private fun PreviewEntityListView() {
         LocalRotaryEventDispatcher provides rotaryEventDispatcher
     ) {
         EntityViewList(
-            entityLists = mapOf(R.string.lights to listOf(previewEntity1, previewEntity2)),
-            onEntityClicked = {},
+            entityLists = mapOf(commonR.string.lights to listOf(previewEntity1, previewEntity2)),
+            onEntityClicked = { _, _ -> },
             isHapticEnabled = false,
             isToastEnabled = false
         )

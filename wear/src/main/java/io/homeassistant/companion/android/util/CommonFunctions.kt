@@ -7,7 +7,6 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 
 fun getIcon(icon: String?, domain: String, context: Context): IIcon? {

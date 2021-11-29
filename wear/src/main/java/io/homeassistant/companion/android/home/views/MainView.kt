@@ -35,7 +35,6 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -46,6 +45,7 @@ import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.previewFavoritesList
+import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
@@ -92,7 +92,7 @@ fun MainView(
                 if (favoriteEntityIds.isNotEmpty()) {
                     item {
                         ListHeader(
-                            stringId = R.string.favorites,
+                            stringId = commonR.string.favorites,
                             expanded = expandedFavorites,
                             onExpandChanged = { expandedFavorites = it }
                         )
@@ -119,7 +119,7 @@ fun MainView(
                                         )
                                     },
                                     onClick = {
-                                        onEntityClicked(favoriteEntityID)
+                                        onEntityClicked(favoriteEntityID, "unknown")
                                         onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
                                     },
                                     colors = ChipDefaults.secondaryChipColors()
@@ -138,11 +138,11 @@ fun MainView(
                 if (mainViewModel.entities.isNullOrEmpty()) {
                     item {
                         Column {
-                            ListHeader(id = R.string.loading)
+                            ListHeader(id = commonR.string.loading)
                             Chip(
                                 label = {
                                     Text(
-                                        text = stringResource(R.string.loading_entities),
+                                        text = stringResource(commonR.string.loading_entities),
                                         textAlign = TextAlign.Center
                                     )
                                 },
@@ -153,7 +153,7 @@ fun MainView(
                     }
                 } else {
                     item {
-                        ListHeader(id = R.string.more_entities)
+                        ListHeader(id = commonR.string.more_entities)
                     }
                     item {
                         Chip(
@@ -165,17 +165,17 @@ fun MainView(
                                 )
                             },
                             label = {
-                                Text(text = stringResource(R.string.all_entities))
+                                Text(text = stringResource(commonR.string.all_entities))
                             },
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        R.string.scenes to mainViewModel.scenes,
-                                        R.string.input_booleans to mainViewModel.inputBooleans,
-                                        R.string.lights to mainViewModel.lights,
-                                        R.string.locks to mainViewModel.locks,
-                                        R.string.scripts to mainViewModel.scripts,
-                                        R.string.switches to mainViewModel.switches
+                                        commonR.string.scenes to mainViewModel.scenes,
+                                        commonR.string.input_booleans to mainViewModel.inputBooleans,
+                                        commonR.string.lights to mainViewModel.lights,
+                                        commonR.string.locks to mainViewModel.locks,
+                                        commonR.string.scripts to mainViewModel.scripts,
+                                        commonR.string.switches to mainViewModel.switches
                                     )
                                 )
                             },
@@ -193,12 +193,12 @@ fun MainView(
                                 getIcon("", "input_boolean", context)?.let { Image(asset = it) }
                             },
                             label = {
-                                Text(text = stringResource(R.string.input_booleans))
+                                Text(text = stringResource(commonR.string.input_booleans))
                             },
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        R.string.input_booleans to mainViewModel.inputBooleans
+                                        commonR.string.input_booleans to mainViewModel.inputBooleans
                                     )
                                 )
                             },
@@ -214,12 +214,12 @@ fun MainView(
                                 getIcon("", "light", context)?.let { Image(asset = it) }
                             },
                             label = {
-                                Text(text = stringResource(R.string.lights))
+                                Text(text = stringResource(commonR.string.lights))
                             },
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        R.string.lights to mainViewModel.lights
+                                        commonR.string.lights to mainViewModel.lights
                                     )
                                 )
                             },
@@ -235,12 +235,12 @@ fun MainView(
                                 getIcon("", "lock", context)?.let { Image(asset = it) }
                             },
                             label = {
-                                Text(text = stringResource(R.string.locks))
+                                Text(text = stringResource(commonR.string.locks))
                             },
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        R.string.locks to mainViewModel.locks
+                                        commonR.string.locks to mainViewModel.locks
                                     )
                                 )
                             },
@@ -256,12 +256,12 @@ fun MainView(
                                 getIcon("", "scene", context)?.let { Image(asset = it) }
                             },
                             label = {
-                                Text(text = stringResource(R.string.scenes))
+                                Text(text = stringResource(commonR.string.scenes))
                             },
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        R.string.scenes to mainViewModel.scenes
+                                        commonR.string.scenes to mainViewModel.scenes
                                     )
                                 )
                             },
@@ -277,12 +277,12 @@ fun MainView(
                                 getIcon("", "script", context)?.let { Image(asset = it) }
                             },
                             label = {
-                                Text(text = stringResource(R.string.scripts))
+                                Text(text = stringResource(commonR.string.scripts))
                             },
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        R.string.scripts to mainViewModel.scripts
+                                        commonR.string.scripts to mainViewModel.scripts
                                     )
                                 )
                             },
@@ -298,12 +298,12 @@ fun MainView(
                                 getIcon("", "switch", context)?.let { Image(asset = it) }
                             },
                             label = {
-                                Text(text = stringResource(R.string.switches))
+                                Text(text = stringResource(commonR.string.switches))
                             },
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        R.string.switches to mainViewModel.switches
+                                        commonR.string.switches to mainViewModel.switches
                                     )
                                 )
                             },
@@ -326,7 +326,7 @@ fun MainView(
                         },
                         label = {
                             Text(
-                                text = stringResource(id = R.string.settings)
+                                text = stringResource(id = commonR.string.settings)
                             )
                         },
                         onClick = onSettingsClicked,

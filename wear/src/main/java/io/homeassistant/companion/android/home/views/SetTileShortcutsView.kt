@@ -60,7 +60,7 @@ fun SetTileShortcutsView(
             state = scalingLazyListState
         ) {
             item {
-                ListHeader(id = R.string.shortcuts)
+                ListHeader(id = commonR.string.shortcuts)
             }
             items(shortcutEntities.size) { index ->
 
@@ -81,7 +81,7 @@ fun SetTileShortcutsView(
                     },
                     label = {
                         Text(
-                            text = stringResource(R.string.shortcut_n, index + 1)
+                            text = stringResource(commonR.string.shortcut_n, index + 1)
                         )
                     },
                     secondaryLabel = {

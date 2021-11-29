@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="account">Account</string>
     <string name="action_reply">Reply</string>
     <string name="activity_intent_error">Unable to send activity intent, please check command format</string>
     <string name="add_service_data_field">Add Field</string>
     <string name="add_shortcut">Add Shortcut</string>
     <string name="add_widget">Add widget</string>
+    <string name="all_entities">All entities</string>
     <string name="app_name">Home Assistant</string>
     <string name="app_version_info">App Version Info</string>
     <string name="application_version">Application Version</string>
@@ -271,6 +273,7 @@
     <string name="message_missing_all">The Wear app is missing on your watch, click the button below to install the app.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
     <string name="message_some_installed">The Wear app is installed on some of your wear devices: (%1$s)\n\nClick the button below to install the app on the other devices.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
     <string name="missing_command_permission">Please open the Home Assistant app and send the command again in order to grant the proper permissions.</string>
+    <string name="more_entities">More entities</string>
     <string name="need_help">Need Help?</string>
     <string name="nfc_btn_create_duplicate">Create duplicate</string>
     <string name="nfc_btn_fire_event">Fire event</string>
