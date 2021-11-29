@@ -66,35 +66,42 @@ fun EntityViewList(
             state = scalingLazyListState
         ) {
             for ((headerId, entities) in entityLists) {
-                item {
-                    if (entityLists.size > 1) {
-                        ListHeader(
-                            stringId = headerId,
-                            expanded = expandedStates[headerId]!!,
-                            onExpandChanged = { expandedStates[headerId] = it }
-                        )
-                    } else {
-                        ListHeader(headerId)
+                if (entities.isNotEmpty()) {
+                    item {
+                        if (entityLists.size > 1) {
+                            ListHeader(
+                                stringId = headerId,
+                                expanded = expandedStates[headerId]!!,
+                                onExpandChanged = { expandedStates[headerId] = it }
+                            )
+                        } else {
+                            ListHeader(headerId)
+                        }
                     }
-                }
-                if (expandedStates[headerId]!!) {
-                    items(entities.size) { index ->
-                        EntityUi(entities[index], onEntityClicked, isHapticEnabled, isToastEnabled)
-                    }
+                    if (expandedStates[headerId]!!) {
+                        items(entities.size) { index ->
+                            EntityUi(
+                                entities[index],
+                                onEntityClicked,
+                                isHapticEnabled,
+                                isToastEnabled
+                            )
+                        }
 
-                    if (entities.isNullOrEmpty()) {
-                        item {
-                            Column {
-                                Chip(
-                                    label = {
-                                        Text(
-                                            text = stringResource(commonR.string.loading_entities),
-                                            textAlign = TextAlign.Center
-                                        )
-                                    },
-                                    onClick = { /* No op */ },
-                                    colors = ChipDefaults.primaryChipColors()
-                                )
+                        if (entities.isNullOrEmpty()) {
+                            item {
+                                Column {
+                                    Chip(
+                                        label = {
+                                            Text(
+                                                text = stringResource(commonR.string.loading_entities),
+                                                textAlign = TextAlign.Center
+                                            )
+                                        },
+                                        onClick = { /* No op */ },
+                                        colors = ChipDefaults.primaryChipColors()
+                                    )
+                                }
                             }
                         }
                     }

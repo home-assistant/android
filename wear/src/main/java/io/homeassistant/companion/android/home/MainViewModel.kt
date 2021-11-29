@@ -63,8 +63,8 @@ class MainViewModel @Inject constructor() : ViewModel() {
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             homePresenter.getEntities().forEach {
                 entities[it.entityId] = it
-                updateEntityDomains()
             }
+            updateEntityDomains()
             homePresenter.getEntityUpdates().collect {
                 entities[it.entityId] = it
                 updateEntityDomains()
