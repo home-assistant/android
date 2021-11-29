@@ -39,7 +39,7 @@ fun EntityUi(
 
     if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
         ToggleChip(
-            checked = entity.state == "on",
+            checked = entity.state == "on" || entity.state == "locked",
             onCheckedChange = {
                 onEntityClicked(entity.entityId, entity.state)
                 onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, friendlyName, haptic)
