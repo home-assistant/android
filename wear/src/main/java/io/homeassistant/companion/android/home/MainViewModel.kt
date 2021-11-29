@@ -28,7 +28,6 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun init(homePresenter: HomePresenter) {
         this.homePresenter = homePresenter
         loadEntities()
-        getFavorites()
     }
 
     // entities
@@ -104,8 +103,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     }
 
     fun getFavorites() {
-        favoriteEntityIds.clear()
         viewModelScope.launch {
+            favoriteEntityIds.clear()
             favorites()?.collect {
                 for (favorite in it) {
                     favoriteEntityIds.add(favorite.id)
@@ -171,9 +170,9 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     private fun updateFavoritePositions() {
         var i = 1
         viewModelScope.launch {
-            favoritesDao.getAll()?.forEachIndexed { index, favorites ->
-                if (index != i)
-                    updateFavorites(Favorites(favorites.id, index))
+            favoritesDao.getAll()?.forEach { favorites ->
+                if (i != i)
+                    updateFavorites(Favorites(favorites.id, i))
                 i++
             }
         }
