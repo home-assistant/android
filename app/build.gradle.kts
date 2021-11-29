@@ -169,7 +169,6 @@ dependencies {
     "fullImplementation"("io.sentry:sentry-android:5.4.2")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
-    implementation("androidx.work:work-runtime-ktx:2.7.1")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 
