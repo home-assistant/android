@@ -23,11 +23,11 @@ class HomePresenterImpl @Inject constructor(
 
     companion object {
         val toggleDomains = listOf(
-            "cover", "fan", "humidifier", "input_boolean", "light",
+            "cover", "fan", "humidifier", "input_boolean", "light", "lock",
             "media_player", "remote", "siren", "switch"
         )
         val supportedDomains = listOf(
-            "input_boolean", "light", "switch", "script", "scene"
+            "input_boolean", "light", "lock", "switch", "script", "scene"
         )
         const val TAG = "HomePresenter"
     }
@@ -66,21 +66,24 @@ class HomePresenterImpl @Inject constructor(
         return integrationUseCase.getEntityUpdates()
     }
 
-    override suspend fun onEntityClicked(entityId: String) {
-
-        if (entityId.split(".")[0] in toggleDomains) {
-            integrationUseCase.callService(
-                entityId.split(".")[0],
-                "toggle",
-                hashMapOf("entity_id" to entityId)
-            )
-        } else {
-            integrationUseCase.callService(
-                entityId.split(".")[0],
-                "turn_on",
-                hashMapOf("entity_id" to entityId)
-            )
+    override suspend fun onEntityClicked(entityId: String, state: String) {
+        val domain = entityId.split(".")[0]
+        val serviceName = when (domain) {
+            "lock" -> {
+                // Defaults to locking, to be save
+                if (state == "locked")
+                    "unlock"
+                else
+                    "lock"
+            }
+            in toggleDomains -> "toggle"
+            else -> "turn_on"
         }
+        integrationUseCase.callService(
+            domain,
+            serviceName,
+            hashMapOf("entity_id" to entityId)
+        )
     }
 
     override fun onLogoutClicked() {

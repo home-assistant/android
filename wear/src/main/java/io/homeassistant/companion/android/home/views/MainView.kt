@@ -43,13 +43,14 @@ import io.homeassistant.companion.android.util.onEntityClickedFeedback
 import io.homeassistant.companion.android.util.previewEntityList
 import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.util.setChipDefaults
+import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalWearMaterialApi
 @Composable
 fun MainView(
     entities: Map<String, Entity<*>>,
     favoriteEntityIds: List<String>,
-    onEntityClicked: (String) -> Unit,
+    onEntityClicked: (String, String) -> Unit,
     onSettingsClicked: () -> Unit,
     onLogoutClicked: () -> Unit,
     isHapticEnabled: Boolean,
@@ -60,6 +61,7 @@ fun MainView(
     var expandedFavorites: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedLocks: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
@@ -68,6 +70,7 @@ fun MainView(
     val scenes = entitiesList.filter { it.entityId.split(".")[0] == "scene" }
     val scripts = entitiesList.filter { it.entityId.split(".")[0] == "script" }
     val lights = entitiesList.filter { it.entityId.split(".")[0] == "light" }
+    val locks = entitiesList.filter { it.entityId.split(".")[0] == "lock" }
     val inputBooleans = entitiesList.filter { it.entityId.split(".")[0] == "input_boolean" }
     val switches = entitiesList.filter { it.entityId.split(".")[0] == "switch" }
 
@@ -101,7 +104,7 @@ fun MainView(
             if (favoriteEntityIds.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.favorites,
+                        stringId = commonR.string.favorites,
                         expanded = expandedFavorites,
                         onExpandChanged = { expandedFavorites = it }
                     )
@@ -128,7 +131,7 @@ fun MainView(
                                     )
                                 },
                                 onClick = {
-                                    onEntityClicked(favoriteEntityID)
+                                    onEntityClicked(favoriteEntityID, "unknown")
                                     onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, favoriteEntityID, haptic)
                                 },
                                 colors = ChipDefaults.primaryChipColors(
@@ -150,7 +153,7 @@ fun MainView(
             if (entities.isNullOrEmpty()) {
                 item {
                     Column {
-                        ListHeader(id = R.string.loading)
+                        ListHeader(id = commonR.string.loading)
                         Chip(
                             modifier = Modifier
                                 .padding(
@@ -160,7 +163,7 @@ fun MainView(
                                 ),
                             label = {
                                 Text(
-                                    text = stringResource(R.string.loading_entities),
+                                    text = stringResource(commonR.string.loading_entities),
                                     textAlign = TextAlign.Center
                                 )
                             },
@@ -173,7 +176,7 @@ fun MainView(
             if (inputBooleans.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.input_booleans,
+                        stringId = commonR.string.input_booleans,
                         expanded = expandedInputBooleans,
                         onExpandChanged = { expandedInputBooleans = it }
                     )
@@ -187,7 +190,7 @@ fun MainView(
             if (lights.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.lights,
+                        stringId = commonR.string.lights,
                         expanded = expandedLights,
                         onExpandChanged = { expandedLights = it }
                     )
@@ -198,10 +201,24 @@ fun MainView(
                     }
                 }
             }
+            if (locks.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = commonR.string.locks,
+                        expanded = expandedLocks,
+                        onExpandChanged = { expandedLocks = it }
+                    )
+                }
+                if (expandedLocks) {
+                    items(locks.size) { index ->
+                        EntityUi(locks[index], onEntityClicked, isHapticEnabled, isToastEnabled)
+                    }
+                }
+            }
             if (scenes.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.scenes,
+                        stringId = commonR.string.scenes,
                         expanded = expandedScenes,
                         onExpandChanged = { expandedScenes = it }
                     )
@@ -215,7 +232,7 @@ fun MainView(
             if (scripts.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.scripts,
+                        stringId = commonR.string.scripts,
                         expanded = expandedScripts,
                         onExpandChanged = { expandedScripts = it }
                     )
@@ -229,7 +246,7 @@ fun MainView(
             if (switches.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.switches,
+                        stringId = commonR.string.switches,
                         expanded = expandedSwitches,
                         onExpandChanged = { expandedSwitches = it }
                     )
@@ -262,7 +279,7 @@ private fun PreviewMainView() {
         MainView(
             entities = previewEntityList,
             favoriteEntityIds = previewFavoritesList,
-            onEntityClicked = {},
+            onEntityClicked = { _, _ -> },
             onSettingsClicked = {},
             onLogoutClicked = {},
             isHapticEnabled = true,

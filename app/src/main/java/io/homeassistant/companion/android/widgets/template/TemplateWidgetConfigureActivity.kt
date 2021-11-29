@@ -11,7 +11,6 @@ import android.view.View.VISIBLE
 import androidx.core.widget.doAfterTextChanged
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetTemplateConfigureBinding
@@ -22,6 +21,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class TemplateWidgetConfigureActivity : BaseActivity() {
@@ -68,11 +68,11 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
         val templateWidget = templateWidgetDao.get(appWidgetId)
         if (templateWidget != null) {
             binding.templateText.setText(templateWidget.template)
-            binding.addButton.setText(R.string.update_widget)
+            binding.addButton.setText(commonR.string.update_widget)
             if (templateWidget.template.isNotEmpty())
                 renderTemplateText(templateWidget.template)
             else {
-                binding.renderedTemplate.text = getString(R.string.empty_template)
+                binding.renderedTemplate.text = getString(commonR.string.empty_template)
                 binding.addButton.isEnabled = false
             }
             binding.deleteButton.visibility = VISIBLE
@@ -86,7 +86,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
                 binding.addButton.isEnabled = true
                 renderTemplateText(editableText.toString())
             } else {
-                binding.renderedTemplate.text = getString(R.string.empty_template)
+                binding.renderedTemplate.text = getString(commonR.string.empty_template)
                 binding.addButton.isEnabled = false
             }
         }
@@ -141,11 +141,11 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
 
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
-        builder.setTitle(R.string.confirm_delete_this_widget_title)
-        builder.setMessage(R.string.confirm_delete_this_widget_message)
+        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
+        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
 
         builder.setPositiveButton(
-            R.string.confirm_positive
+            commonR.string.confirm_positive
         ) { dialog, _ ->
             templateWidgetDao.delete(appWidgetId)
             dialog.dismiss()
@@ -153,7 +153,7 @@ class TemplateWidgetConfigureActivity : BaseActivity() {
         }
 
         builder.setNegativeButton(
-            R.string.confirm_negative
+            commonR.string.confirm_negative
         ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }

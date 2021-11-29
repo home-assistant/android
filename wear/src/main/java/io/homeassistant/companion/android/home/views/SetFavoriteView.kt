@@ -39,6 +39,7 @@ import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.previewEntityList
 import io.homeassistant.companion.android.util.previewFavoritesList
+import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalWearMaterialApi
 @Composable
@@ -49,6 +50,7 @@ fun SetFavoritesView(
 ) {
     var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
+    var expandedLocks: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
@@ -57,6 +59,7 @@ fun SetFavoritesView(
     val scenes = validEntityList.filter { it.entityId.split(".")[0] == "scene" }
     val scripts = validEntityList.filter { it.entityId.split(".")[0] == "script" }
     val lights = validEntityList.filter { it.entityId.split(".")[0] == "light" }
+    val locks = validEntityList.filter { it.entityId.split(".")[0] == "lock" }
     val inputBooleans = validEntityList.filter { it.entityId.split(".")[0] == "input_boolean" }
     val switches = validEntityList.filter { it.entityId.split(".")[0] == "switch" }
 
@@ -85,7 +88,7 @@ fun SetFavoritesView(
             state = scalingLazyListState
         ) {
             item {
-                ListHeader(id = R.string.set_favorite)
+                ListHeader(id = commonR.string.set_favorite)
             }
             if (favoriteEntityIds.isNotEmpty()) {
                 val favoriteEntities = mutableListOf<Entity<*>>()
@@ -105,7 +108,7 @@ fun SetFavoritesView(
             if (inputBooleans.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.input_booleans,
+                        stringId = commonR.string.input_booleans,
                         expanded = expandedInputBooleans,
                         onExpandChanged = { expandedInputBooleans = it }
                     )
@@ -124,7 +127,7 @@ fun SetFavoritesView(
             if (lights.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.lights,
+                        stringId = commonR.string.lights,
                         expanded = expandedLights,
                         onExpandChanged = { expandedLights = it }
                     )
@@ -140,10 +143,29 @@ fun SetFavoritesView(
                     }
                 }
             }
+            if (locks.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = commonR.string.locks,
+                        expanded = expandedLocks,
+                        onExpandChanged = { expandedLocks = it }
+                    )
+                }
+                if (expandedLocks) {
+                    items(locks.size) { index ->
+                        FavoriteToggleChip(
+                            entityList = locks,
+                            index = index,
+                            favoriteEntityIds = favoriteEntityIds,
+                            onFavoriteSelected = onFavoriteSelected
+                        )
+                    }
+                }
+            }
             if (scenes.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.scenes,
+                        stringId = commonR.string.scenes,
                         expanded = expandedScenes,
                         onExpandChanged = { expandedScenes = it }
                     )
@@ -162,7 +184,7 @@ fun SetFavoritesView(
             if (scripts.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.scripts,
+                        stringId = commonR.string.scripts,
                         expanded = expandedScripts,
                         onExpandChanged = { expandedScripts = it }
                     )
@@ -181,7 +203,7 @@ fun SetFavoritesView(
             if (switches.isNotEmpty()) {
                 item {
                     ListHeader(
-                        stringId = R.string.switches,
+                        stringId = commonR.string.switches,
                         expanded = expandedSwitches,
                         onExpandChanged = { expandedSwitches = it }
                     )

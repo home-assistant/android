@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun WelcomeView(
@@ -40,7 +41,7 @@ fun WelcomeView(
         Image(
             painter = painterResource(id = R.drawable.app_icon_round),
             contentDescription = stringResource(
-                id = R.string.app_name
+                id = commonR.string.app_name
             ),
             modifier = Modifier
                 .size(width = 274.dp, height = 202.dp)
@@ -51,13 +52,13 @@ fun WelcomeView(
             fontSize = 19.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            text = stringResource(R.string.welcome_hass),
+            text = stringResource(commonR.string.welcome_hass),
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
         )
         Text(
             fontSize = 17.sp,
-            text = stringResource(R.string.welcome_hass_desc),
+            text = stringResource(commonR.string.welcome_hass_desc),
             modifier = Modifier
                 .padding(bottom = 15.dp, start = 30.dp, end = 20.dp, top = 10.dp)
         )
@@ -69,7 +70,7 @@ fun WelcomeView(
                     textDecoration = TextDecoration.Underline
                 )
             ) {
-                append(stringResource(id = R.string.learn_more))
+                append(stringResource(id = commonR.string.learn_more))
             }
             pop()
         }
@@ -91,7 +92,7 @@ fun WelcomeView(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
         ) {
-            Text(text = stringResource(id = R.string.continue_connect))
+            Text(text = stringResource(id = commonR.string.continue_connect))
         }
     }
 }

@@ -15,6 +15,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class ClimateControl {
@@ -35,18 +36,18 @@ class ClimateControl {
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_AC_HEATER)
-            control.setZone(context.getString(R.string.domain_climate))
+            control.setZone(context.getString(commonR.string.domain_climate))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "auto" -> context.getString(R.string.state_auto)
-                    "cool" -> context.getString(R.string.state_cool)
-                    "dry" -> context.getString(R.string.state_dry)
-                    "fan_only" -> context.getString(R.string.state_fan_only)
-                    "heat" -> context.getString(R.string.state_heat)
-                    "heat_cool" -> context.getString(R.string.state_heat_cool)
-                    "off" -> context.getString(R.string.state_off)
-                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    "auto" -> context.getString(commonR.string.state_auto)
+                    "cool" -> context.getString(commonR.string.state_cool)
+                    "dry" -> context.getString(commonR.string.state_dry)
+                    "fan_only" -> context.getString(commonR.string.state_fan_only)
+                    "heat" -> context.getString(commonR.string.state_heat)
+                    "heat_cool" -> context.getString(commonR.string.state_heat_cool)
+                    "off" -> context.getString(commonR.string.state_off)
+                    "unavailable" -> context.getString(commonR.string.state_unavailable)
                     else -> entity.state
                 }
             )

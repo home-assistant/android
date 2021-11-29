@@ -12,8 +12,8 @@ import android.os.PowerManager
 import android.telephony.TelephonyManager
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.sensors.LastUpdateManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget

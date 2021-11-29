@@ -17,7 +17,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 
 object DisabledLocationHandler {
     private const val DISABLED_LOCATION_WARN_ID = "DisabledLocationWarning"
@@ -54,10 +54,10 @@ object DisabledLocationHandler {
     }
 
     fun showLocationDisabledWarnDialog(activity: Activity, settings: Array<String>, showAsNotification: Boolean = false, withDisableOption: Boolean = false, callback: (() -> Unit)? = null) {
-        var positionTextId = R.string.confirm_positive
-        var negativeTextId = R.string.confirm_negative
+        var positionTextId = commonR.string.confirm_positive
+        var negativeTextId = commonR.string.confirm_negative
         if (withDisableOption && callback != null) {
-            negativeTextId = R.string.location_disabled_option_disable
+            negativeTextId = commonR.string.location_disabled_option_disable
         }
 
         val intent = Intent(
@@ -81,7 +81,7 @@ object DisabledLocationHandler {
                 var channelID = "Location disabled"
 
                 if (VERSION.SDK_INT >= VERSION_CODES.O) {
-                    val channel = NotificationChannel(channelID, activity.applicationContext.getString(R.string.location_warn_channel), NotificationManager.IMPORTANCE_DEFAULT)
+                    val channel = NotificationChannel(channelID, activity.applicationContext.getString(commonR.string.location_warn_channel), NotificationManager.IMPORTANCE_DEFAULT)
                     notificationManager.createNotificationChannel(channel)
                 }
 
@@ -91,14 +91,14 @@ object DisabledLocationHandler {
                 )
 
                 val notificationBuilder = NotificationCompat.Builder(activity, channelID)
-                    .setSmallIcon(R.drawable.ic_stat_ic_notification)
+                    .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                     .setColor(Color.RED)
                     .setOngoing(true)
-                    .setContentTitle(activity.applicationContext.getString(R.string.location_disabled_title))
-                    .setContentText(activity.applicationContext.getString(R.string.location_disabled_notification_short_message))
+                    .setContentTitle(activity.applicationContext.getString(commonR.string.location_disabled_title))
+                    .setContentText(activity.applicationContext.getString(commonR.string.location_disabled_notification_short_message))
                     .setStyle(
                         NotificationCompat.BigTextStyle()
-                            .bigText(activity.applicationContext.getString(R.string.location_disabled_notification_message, parameters))
+                            .bigText(activity.applicationContext.getString(commonR.string.location_disabled_notification_message, parameters))
                     )
                     .setContentIntent(pendingIntent)
 
@@ -106,8 +106,8 @@ object DisabledLocationHandler {
             }
         } else {
             AlertDialog.Builder(activity)
-                .setTitle(R.string.location_disabled_title)
-                .setMessage(activity.applicationContext.getString(R.string.location_disabled_message, parameters))
+                .setTitle(commonR.string.location_disabled_title)
+                .setMessage(activity.applicationContext.getString(commonR.string.location_disabled_message, parameters))
                 .setPositiveButton(positionTextId) { _, _ ->
                     activity.applicationContext.startActivity(intent)
                 }

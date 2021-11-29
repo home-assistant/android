@@ -21,8 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.SettingsWearViewModel
+import io.homeassistant.companion.android.common.R as commonR
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/wear-os"
 val supportedDomains = listOf(
@@ -40,7 +40,7 @@ fun LoadWearFavoritesSettings(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.wear_favorite_entities)) },
+                title = { Text(stringResource(commonR.string.wear_favorite_entities)) },
                 actions = {
                     IconButton(onClick = {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(WEAR_DOCS_LINK))
@@ -48,7 +48,7 @@ fun LoadWearFavoritesSettings(
                     }) {
                         Icon(
                             Icons.Filled.HelpOutline,
-                            contentDescription = stringResource(id = R.string.help)
+                            contentDescription = stringResource(id = commonR.string.help)
                         )
                     }
                 }
@@ -61,7 +61,7 @@ fun LoadWearFavoritesSettings(
         ) {
             item {
                 Text(
-                    text = stringResource(R.string.wear_set_favorites),
+                    text = stringResource(commonR.string.wear_set_favorites),
                     fontWeight = FontWeight.Bold
                 )
             }

@@ -43,6 +43,7 @@ import java.nio.ByteBuffer
 import javax.inject.Inject
 import kotlin.math.min
 import kotlin.math.roundToInt
+import io.homeassistant.companion.android.common.R as commonR
 
 // Dimensions (dp)
 private const val CIRCLE_SIZE = 56f
@@ -101,6 +102,7 @@ class ShortcutsTile : TileService() {
                             when (entity.entityId.split(".")[0]) {
                                 "input_boolean", "switch" -> "light_switch"
                                 "light" -> "lightbulb"
+                                "lock" -> "lock"
                                 "script" -> "script_text_outline"
                                 "scene" -> "palette_outline"
                                 else -> "cellphone"
@@ -151,7 +153,7 @@ class ShortcutsTile : TileService() {
         if (entities.isEmpty()) {
             addContent(
                 LayoutElementBuilders.Text.Builder()
-                    .setText(getString(R.string.shortcuts_tile_empty))
+                    .setText(getString(commonR.string.shortcuts_tile_empty))
                     .build()
             )
         } else {

@@ -19,11 +19,11 @@ import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class SettingsWearViewModel @Inject constructor(
@@ -84,7 +84,7 @@ class SettingsWearViewModel @Inject constructor(
             addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to wear") }
             addOnFailureListener { e ->
                 Log.e(TAG, "Failed to send favorites to wear", e)
-                Toast.makeText(application, application.getString(R.string.failure_send_favorites_wear), Toast.LENGTH_SHORT).show()
+                Toast.makeText(application, application.getString(commonR.string.failure_send_favorites_wear), Toast.LENGTH_SHORT).show()
             }
         }
     }

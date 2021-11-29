@@ -10,6 +10,7 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.FragmentNfcWriteBinding
+import io.homeassistant.companion.android.common.R as commonR
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
@@ -32,7 +33,7 @@ class NfcWriteFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val nfcWriteTagObserver = Observer<String> {
-            binding.tvInstructionsWriteNfc.text = getString(R.string.nfc_write_tag_instructions, it)
+            binding.tvInstructionsWriteNfc.text = getString(commonR.string.nfc_write_tag_instructions, it)
         }
         viewModel.nfcWriteTagEvent.observe(viewLifecycleOwner, nfcWriteTagObserver)
 

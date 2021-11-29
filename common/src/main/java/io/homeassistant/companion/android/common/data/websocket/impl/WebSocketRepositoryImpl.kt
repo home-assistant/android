@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data.websocket.impl
 
 import android.util.Log
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -55,6 +56,7 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
     private val mapper = jacksonObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
         .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
     private val responseCallbackJobs = mutableMapOf<Long, CancellableContinuation<SocketResponse>>()
     private val id = AtomicLong(1)

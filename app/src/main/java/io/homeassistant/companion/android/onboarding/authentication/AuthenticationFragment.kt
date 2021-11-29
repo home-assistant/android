@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
+import io.homeassistant.companion.android.common.R as commonR
 
 class AuthenticationFragment(
     val presenter: AuthenticationPresenter,
@@ -62,7 +63,7 @@ class AuthenticationFragment(
                         error: WebResourceError?
                     ) {
                         super.onReceivedError(view, request, error)
-                        showError(R.string.webview_error, null, error)
+                        showError(commonR.string.webview_error, null, error)
                     }
 
                     override fun onReceivedSslError(
@@ -71,7 +72,7 @@ class AuthenticationFragment(
                         error: SslError?
                     ) {
                         super.onReceivedSslError(view, handler, error)
-                        showError(R.string.error_ssl, error, null)
+                        showError(commonR.string.error_ssl, error, null)
                     }
                 }
             }
@@ -103,24 +104,24 @@ class AuthenticationFragment(
             return
         }
         AlertDialog.Builder(requireContext())
-            .setTitle(R.string.error_connection_failed)
+            .setTitle(commonR.string.error_connection_failed)
             .setMessage(
                 when (sslError?.primaryError) {
-                    SslError.SSL_DATE_INVALID -> R.string.webview_error_SSL_DATE_INVALID
-                    SslError.SSL_EXPIRED -> R.string.webview_error_SSL_EXPIRED
-                    SslError.SSL_IDMISMATCH -> R.string.webview_error_SSL_IDMISMATCH
-                    SslError.SSL_INVALID -> R.string.webview_error_SSL_INVALID
-                    SslError.SSL_NOTYETVALID -> R.string.webview_error_SSL_NOTYETVALID
-                    SslError.SSL_UNTRUSTED -> R.string.webview_error_SSL_UNTRUSTED
+                    SslError.SSL_DATE_INVALID -> commonR.string.webview_error_SSL_DATE_INVALID
+                    SslError.SSL_EXPIRED -> commonR.string.webview_error_SSL_EXPIRED
+                    SslError.SSL_IDMISMATCH -> commonR.string.webview_error_SSL_IDMISMATCH
+                    SslError.SSL_INVALID -> commonR.string.webview_error_SSL_INVALID
+                    SslError.SSL_NOTYETVALID -> commonR.string.webview_error_SSL_NOTYETVALID
+                    SslError.SSL_UNTRUSTED -> commonR.string.webview_error_SSL_UNTRUSTED
                     else -> {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                             when (error?.errorCode) {
                                 WebViewClient.ERROR_FAILED_SSL_HANDSHAKE ->
-                                    R.string.webview_error_FAILED_SSL_HANDSHAKE
-                                WebViewClient.ERROR_AUTHENTICATION -> R.string.webview_error_AUTHENTICATION
-                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> R.string.webview_error_PROXY_AUTHENTICATION
-                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> R.string.webview_error_AUTH_SCHEME
-                                WebViewClient.ERROR_HOST_LOOKUP -> R.string.webview_error_HOST_LOOKUP
+                                    commonR.string.webview_error_FAILED_SSL_HANDSHAKE
+                                WebViewClient.ERROR_AUTHENTICATION -> commonR.string.webview_error_AUTHENTICATION
+                                WebViewClient.ERROR_PROXY_AUTHENTICATION -> commonR.string.webview_error_PROXY_AUTHENTICATION
+                                WebViewClient.ERROR_UNSUPPORTED_AUTH_SCHEME -> commonR.string.webview_error_AUTH_SCHEME
+                                WebViewClient.ERROR_HOST_LOOKUP -> commonR.string.webview_error_HOST_LOOKUP
                             }
                         }
                         message

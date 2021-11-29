@@ -19,6 +19,7 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class LightControl {
@@ -46,14 +47,14 @@ class LightControl {
             val supportsBrightness = if (supportedColorModes == null) false else (supportedColorModes - NO_BRIGHTNESS_SUPPORT).isNotEmpty()
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
-            control.setZone(context.getString(R.string.domain_light))
+            control.setZone(context.getString(commonR.string.domain_light))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "off" -> context.getString(R.string.state_off)
-                    "on" -> context.getString(R.string.state_on)
-                    "unavailable" -> context.getString(R.string.state_unavailable)
-                    else -> context.getString(R.string.state_unknown)
+                    "off" -> context.getString(commonR.string.state_off)
+                    "on" -> context.getString(commonR.string.state_on)
+                    "unavailable" -> context.getString(commonR.string.state_unavailable)
+                    else -> context.getString(commonR.string.state_unknown)
                 }
             )
             val minValue = 0f

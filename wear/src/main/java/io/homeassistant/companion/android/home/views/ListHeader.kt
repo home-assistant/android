@@ -9,7 +9,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.ListHeader
 import androidx.wear.compose.material.Text
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ListHeader(
@@ -47,7 +47,7 @@ fun ListHeader(id: Int, modifier: Modifier = Modifier) {
 @Composable
 private fun PreviewListHeader() {
     ListHeader(
-        stringId = R.string.other,
+        stringId = commonR.string.other,
         expanded = true,
         onExpandChanged = {}
     )

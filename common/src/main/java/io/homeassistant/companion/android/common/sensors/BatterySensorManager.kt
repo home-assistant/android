@@ -1,10 +1,10 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 
 class BatterySensorManager : SensorManager {
 
@@ -13,8 +13,8 @@ class BatterySensorManager : SensorManager {
         private val batteryLevel = SensorManager.BasicSensor(
             "battery_level",
             "sensor",
-            R.string.basic_sensor_name_battery_level,
-            R.string.sensor_description_battery_level,
+            commonR.string.basic_sensor_name_battery_level,
+            commonR.string.sensor_description_battery_level,
             "battery",
             "%",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -23,38 +23,38 @@ class BatterySensorManager : SensorManager {
         private val batteryState = SensorManager.BasicSensor(
             "battery_state",
             "sensor",
-            R.string.basic_sensor_name_battery_state,
-            R.string.sensor_description_battery_state,
+            commonR.string.basic_sensor_name_battery_state,
+            commonR.string.sensor_description_battery_state,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
-            R.string.basic_sensor_name_charging,
-            R.string.sensor_description_charging,
+            commonR.string.basic_sensor_name_charging,
+            commonR.string.sensor_description_charging,
             "plug",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val chargerTypeState = SensorManager.BasicSensor(
             "charger_type",
             "sensor",
-            R.string.basic_sensor_name_charger_type,
-            R.string.sensor_description_charger_type,
+            commonR.string.basic_sensor_name_charger_type,
+            commonR.string.sensor_description_charger_type,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val batteryHealthState = SensorManager.BasicSensor(
             "battery_health",
             "sensor",
-            R.string.basic_sensor_name_battery_health,
-            R.string.sensor_description_battery_health,
+            commonR.string.basic_sensor_name_battery_health,
+            commonR.string.sensor_description_battery_health,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
 
         private val batteryTemperature = SensorManager.BasicSensor(
             "battery_temperature",
             "sensor",
-            R.string.basic_sensor_name_battery_temperature,
-            R.string.sensor_description_battery_temperature,
+            commonR.string.basic_sensor_name_battery_temperature,
+            commonR.string.sensor_description_battery_temperature,
             "temperature",
             "°C",
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
@@ -65,13 +65,22 @@ class BatterySensorManager : SensorManager {
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#battery-sensors"
     }
+
     override val enabledByDefault: Boolean
         get() = true
 
     override val name: Int
-        get() = R.string.sensor_name_battery
+        get() = commonR.string.sensor_name_battery
+
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(batteryLevel, batteryState, isChargingState, chargerTypeState, batteryHealthState, batteryTemperature)
+        return listOf(
+            batteryLevel,
+            batteryState,
+            isChargingState,
+            chargerTypeState,
+            batteryHealthState,
+            batteryTemperature
+        )
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {

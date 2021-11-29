@@ -29,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Calendar
+import io.homeassistant.companion.android.common.R as commonR
 
 class LogFragment : Fragment() {
 
@@ -46,13 +47,13 @@ class LogFragment : Fragment() {
                 if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
                     Log.d(TAG, "Click on share logs without WRITE_EXTERNAL_STORAGE permission")
                     AlertDialog.Builder(requireActivity())
-                        .setTitle(getString(R.string.share_logs))
-                        .setMessage(getString(R.string.share_logs_perm_message))
-                        .setPositiveButton(R.string.confirm_positive) { _, _ ->
+                        .setTitle(getString(commonR.string.share_logs))
+                        .setMessage(getString(commonR.string.share_logs_perm_message))
+                        .setPositiveButton(commonR.string.confirm_positive) { _, _ ->
                             Log.i(TAG, "Request WRITE_EXTERNAL_STORAGE permission, to create log file")
                             requestPermissions(arrayOf(permission), SHARE_LOGS_REQUEST_CODE)
                         }
-                        .setNegativeButton(R.string.confirm_negative) { _, _ ->
+                        .setNegativeButton(commonR.string.confirm_negative) { _, _ ->
                             Log.w(TAG, "User cancel request for WRITE_EXTERNAL_STORAGE permission")
                             // Do nothing
                         }.show()
@@ -109,9 +110,9 @@ class LogFragment : Fragment() {
 
     private fun shareLog() {
         AlertDialog.Builder(requireActivity())
-            .setTitle(getString(R.string.share_logs))
-            .setMessage(getString(R.string.share_logs_sens_message))
-            .setPositiveButton(R.string.confirm_positive) { _, _ ->
+            .setTitle(getString(commonR.string.share_logs))
+            .setMessage(getString(commonR.string.share_logs_sens_message))
+            .setPositiveButton(commonR.string.confirm_positive) { _, _ ->
                 Log.d(TAG, "User want to share log")
                 val c = Calendar.getInstance()
                 val year = c.get(Calendar.YEAR)
@@ -167,10 +168,10 @@ class LogFragment : Fragment() {
                     }
                 } else {
                     Log.e(TAG, "Could not open share dialog, because log file does not exist.")
-                    Toast.makeText(requireContext(), getString(R.string.log_file_not_created), Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), getString(commonR.string.log_file_not_created), Toast.LENGTH_LONG).show()
                 }
             }
-            .setNegativeButton(R.string.confirm_negative) { _, _ ->
+            .setNegativeButton(commonR.string.confirm_negative) { _, _ ->
                 Log.w(TAG, "User don't want to share the log")
                 // Do nothing
             }.show()
@@ -178,7 +179,7 @@ class LogFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(R.string.log)
+        activity?.title = getString(commonR.string.log)
     }
 
     private fun getExcludedComponentsForPackageName(sendIntent: Intent, packageNames: Array<String>): ArrayList<ComponentName> {

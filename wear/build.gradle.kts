@@ -69,6 +69,10 @@ android {
     lint {
         disable("MissingTranslation")
     }
+
+    kapt {
+        correctErrorTypes = true
+    }
 }
 
 play {
@@ -92,8 +96,8 @@ dependencies {
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
     compileOnly("com.google.android.wearable:wearable:2.8.1")
 
-    implementation("com.google.dagger:hilt-android:2.40.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.40.1")
+    implementation("com.google.dagger:hilt-android:2.40.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.40.2")
 
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
 
@@ -102,6 +106,7 @@ dependencies {
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.3.3")
 
+    implementation("androidx.activity:activity:1.4.0")
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.compose.compiler:compiler:1.0.5")
     implementation("androidx.compose.foundation:foundation:1.0.5")

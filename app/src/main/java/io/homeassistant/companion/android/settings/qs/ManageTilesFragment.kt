@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.qs.TileEntity
 import kotlinx.coroutines.runBlocking
 import java.lang.Exception
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class ManageTilesFragment constructor(
@@ -70,7 +71,7 @@ class ManageTilesFragment constructor(
         }
         val iconDialog = IconDialog.newInstance(settings)
 
-        activity?.title = getString(R.string.tiles)
+        activity?.title = getString(commonR.string.tiles)
         val tileDao = AppDatabase.getInstance(requireContext()).tileDao()
         var tileList = tileDao.getAll()
         var tileLabel = findPreference<EditTextPreference>("tile_label")?.text
@@ -128,9 +129,10 @@ class ManageTilesFragment constructor(
                         findPreference<ListPreference>("tile_entity")?.value = item.entityId
                         tileEntity = item.entityId
                         findPreference<Preference>("tile_icon")?.let {
-                            it.summary = item.iconId.toString()
-                            if (item.iconId != null) {
-                                val iconDrawable = iconPack.getIcon(item.iconId)?.drawable
+                            val iconId = item.iconId
+                            it.summary = iconId.toString()
+                            if (iconId != null) {
+                                val iconDrawable = iconPack.getIcon(iconId)?.drawable
                                 if (iconDrawable != null) {
                                     val icon = DrawableCompat.wrap(iconDrawable)
                                     icon.setColorFilter(
@@ -199,7 +201,7 @@ class ManageTilesFragment constructor(
             )
             tileDao.add(tileData)
             tileList = tileDao.getAll()
-            Toast.makeText(requireContext(), R.string.tile_updated, Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), commonR.string.tile_updated, Toast.LENGTH_SHORT).show()
             return@setOnPreferenceClickListener true
         }
     }

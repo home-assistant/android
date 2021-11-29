@@ -18,11 +18,11 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import io.homeassistant.companion.android.common.R as commonR
 
 class HighAccuracyLocationService : Service() {
 
@@ -113,7 +113,7 @@ class HighAccuracyLocationService : Service() {
             var channelID = "High accuracy location"
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(channelID, context.getString(R.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+                val channel = NotificationChannel(channelID, context.getString(commonR.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
                 notificationManagerCompat.createNotificationChannel(channel)
             }
 
@@ -125,14 +125,14 @@ class HighAccuracyLocationService : Service() {
             val disablePendingIntent = PendingIntent.getBroadcast(context, 0, disableIntent, PendingIntent.FLAG_MUTABLE)
 
             notificationBuilder = NotificationCompat.Builder(context, channelID)
-                .setSmallIcon(R.drawable.ic_stat_ic_notification)
+                .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                 .setColor(Color.GRAY)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
-                .setContentTitle(context.getString(R.string.high_accuracy_mode_notification_title))
+                .setContentTitle(context.getString(commonR.string.high_accuracy_mode_notification_title))
                 .setVisibility(NotificationCompat.VISIBILITY_SECRET) // This hides the notification from lock screen
                 .setCategory(Notification.CATEGORY_SERVICE)
-                .addAction(0, context.getString(R.string.disable), disablePendingIntent)
+                .addAction(0, context.getString(commonR.string.disable), disablePendingIntent)
         }
     }
 

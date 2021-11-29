@@ -27,12 +27,6 @@ android {
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments(mapOf("room.incremental" to "true"))
-            }
-        }
     }
 
     buildFeatures {
@@ -119,6 +113,10 @@ android {
         isAbortOnError = false
         disable("MissingTranslation")
     }
+
+    kapt {
+        correctErrorTypes = true
+    }
 }
 
 play {
@@ -145,8 +143,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
 
-    implementation("com.google.dagger:hilt-android:2.40.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.40.1")
+    implementation("com.google.dagger:hilt-android:2.40.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.40.2")
 
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
@@ -160,10 +158,6 @@ dependencies {
     implementation("androidx.wear:wear-remote-interactions:1.0.0")
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
 
-    implementation("androidx.room:room-runtime:2.3.0")
-    implementation("androidx.room:room-ktx:2.3.0")
-    kapt("androidx.room:room-compiler:2.3.0")
-
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.squareup.picasso:picasso:2.8")
@@ -172,10 +166,9 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-core:20.0.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.4.1")
+    "fullImplementation"("io.sentry:sentry-android:5.4.2")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
-    implementation("androidx.work:work-runtime-ktx:2.7.0")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 

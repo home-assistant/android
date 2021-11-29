@@ -9,8 +9,8 @@ import android.view.inputmethod.EditorInfo
 import android.webkit.URLUtil
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.FragmentManualSetupBinding
+import io.homeassistant.companion.android.common.R as commonR
 
 class ManualSetupFragment(
     val presenter: ManualSetupPresenter
@@ -54,7 +54,7 @@ class ManualSetupFragment(
 
     override fun displayUrlError() {
         binding?.urlTextLayout?.error =
-            getString(R.string.url_parse_error)
+            getString(commonR.string.url_parse_error)
     }
 
     override fun onDestroyView() {

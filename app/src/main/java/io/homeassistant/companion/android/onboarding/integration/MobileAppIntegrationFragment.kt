@@ -23,6 +23,7 @@ import io.homeassistant.companion.android.databinding.FragmentMobileAppIntegrati
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.R as commonR
 
 class MobileAppIntegrationFragment(
     val presenter: MobileAppIntegrationPresenter
@@ -67,8 +68,8 @@ class MobileAppIntegrationFragment(
                         checked = false
                     } else if (!permissionOk) {
                         dialog = AlertDialog.Builder(requireContext())
-                            .setTitle(R.string.enable_location_tracking)
-                            .setMessage(R.string.enable_location_tracking_prompt)
+                            .setTitle(commonR.string.enable_location_tracking)
+                            .setMessage(commonR.string.enable_location_tracking_prompt)
                             .setPositiveButton(android.R.string.ok) { _, _ ->
                                 requestPermissions(
                                     sensorId
@@ -102,12 +103,12 @@ class MobileAppIntegrationFragment(
 
     override fun showWarning() {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle(R.string.firebase_error_title)
-            .setMessage(R.string.firebase_error_message)
-            .setPositiveButton(R.string.skip) { _, _ ->
+            .setTitle(commonR.string.firebase_error_title)
+            .setMessage(commonR.string.firebase_error_message)
+            .setPositiveButton(commonR.string.skip) { _, _ ->
                 presenter.onRegistrationAttempt(true, binding.deviceName.text.toString())
             }
-            .setNegativeButton(R.string.retry) { _, _ ->
+            .setNegativeButton(commonR.string.retry) { _, _ ->
                 presenter.onRegistrationAttempt(false, binding.deviceName.text.toString())
             }
             .show()

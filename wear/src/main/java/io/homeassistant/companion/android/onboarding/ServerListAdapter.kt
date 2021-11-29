@@ -10,6 +10,7 @@ import io.homeassistant.companion.android.viewHolders.InstanceViewHolder
 import io.homeassistant.companion.android.viewHolders.LoadingViewHolder
 import io.homeassistant.companion.android.viewHolders.ManualSetupViewHolder
 import kotlin.math.min
+import io.homeassistant.companion.android.common.R as commonR
 
 class ServerListAdapter(
     val servers: ArrayList<HomeAssistantInstance>
@@ -57,12 +58,12 @@ class ServerListAdapter(
         if (holder is InstanceViewHolder && position <= servers.size) {
             holder.server = servers[position - 1]
         } else if (holder is ManualSetupViewHolder) {
-            holder.text.setText(R.string.manual_setup)
+            holder.text.setText(commonR.string.manual_setup)
         } else if (holder is HeaderViewHolder) {
             if (position == 0) {
-                holder.headerTextView.setText(R.string.list_header_instances)
+                holder.headerTextView.setText(commonR.string.list_header_instances)
             } else {
-                holder.headerTextView.setText(R.string.other)
+                holder.headerTextView.setText(commonR.string.other)
             }
         }
     }

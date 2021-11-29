@@ -28,6 +28,7 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
@@ -52,34 +53,34 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
                                 if (basicSensor.unitOfMeasurement.isNullOrBlank()) it.summary = sensorEntity.state
                                 else it.summary = sensorEntity.state + " " + basicSensor.unitOfMeasurement
                             } else {
-                                it.summary = getString(R.string.enabled)
+                                it.summary = getString(commonR.string.enabled)
                             }
                             // TODO: Add the icon from mdi:icon?
                         } else {
                             totalDisabledSensors += 1
-                            it.summary = getString(R.string.disabled)
+                            it.summary = getString(commonR.string.disabled)
                         }
                     }
                 }
             }
 
             findPreference<PreferenceCategory>("enable_disable_category")?.let {
-                it.summary = getString(R.string.manage_all_sensors_summary, (totalDisabledSensors + totalEnabledSensors))
+                it.summary = getString(commonR.string.manage_all_sensors_summary, (totalDisabledSensors + totalEnabledSensors))
             }
 
             findPreference<SwitchPreference>("enable_disable_sensors")?.let {
                 if (totalDisabledSensors == 0) {
-                    it.title = getString(R.string.disable_all_sensors, totalEnabledSensors)
+                    it.title = getString(commonR.string.disable_all_sensors, totalEnabledSensors)
                     it.summary = ""
                     it.isChecked = permissionsAllGranted
                     enableAllSensors = permissionsAllGranted
                     activity?.invalidateOptionsMenu()
                 } else {
                     if (totalEnabledSensors == 0)
-                        it.title = getString(R.string.enable_all_sensors)
+                        it.title = getString(commonR.string.enable_all_sensors)
                     else
-                        it.title = getString(R.string.enable_remaining_sensors, totalDisabledSensors)
-                    it.summary = getString(R.string.enable_all_sensors_summary)
+                        it.title = getString(commonR.string.enable_remaining_sensors, totalDisabledSensors)
+                    it.summary = getString(commonR.string.enable_all_sensors_summary)
                     it.isChecked = false
                 }
             }
@@ -293,7 +294,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(R.string.sensors)
+        activity?.title = getString(commonR.string.sensors)
         filterSensors()
         handler.postDelayed(refresh, 0)
     }

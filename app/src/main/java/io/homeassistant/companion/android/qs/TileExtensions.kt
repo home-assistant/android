@@ -15,11 +15,11 @@ import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.N)
 @AndroidEntryPoint
@@ -75,8 +75,9 @@ abstract class TileExtensions : TileService() {
                         tile.state = if (state.state == "on" || state.state == "open") Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
                     } else
                         tile.state = Tile.STATE_INACTIVE
-                    if (tileData.iconId != null) {
-                        val icon = getTileIcon(tileData.iconId, context)
+                    val iconId = tileData.iconId
+                    if (iconId != null) {
+                        val icon = getTileIcon(iconId, context)
                         tile.icon = Icon.createWithBitmap(icon)
                     }
                     tile.updateTile()
@@ -115,7 +116,7 @@ abstract class TileExtensions : TileService() {
                         )
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to call service", e)
-                        Toast.makeText(context, R.string.service_call_failure, Toast.LENGTH_SHORT)
+                        Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_SHORT)
                             .show()
                     }
                 }
@@ -124,7 +125,7 @@ abstract class TileExtensions : TileService() {
             } else {
                 tile.state = Tile.STATE_UNAVAILABLE
                 tile.updateTile()
-                Toast.makeText(context, R.string.tile_data_missing, Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, commonR.string.tile_data_missing, Toast.LENGTH_SHORT).show()
             }
         }
 
