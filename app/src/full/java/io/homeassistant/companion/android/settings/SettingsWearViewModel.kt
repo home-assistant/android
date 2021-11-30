@@ -37,8 +37,8 @@ class SettingsWearViewModel @Inject constructor(
 
     private val application = getApplication<HomeAssistantApplication>()
     companion object {
-        private val TAG = "SettingsWearViewModel"
-        private val CAPABILITY_WEAR_FAVORITES = "send_home_favorites"
+        private const val TAG = "SettingsWearViewModel"
+        private const val CAPABILITY_WEAR_FAVORITES = "send_home_favorites"
     }
 
     var entities = mutableStateMapOf<String, Entity<*>>()
@@ -58,10 +58,14 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     private fun saveHomeFavorites(data: String) {
+        val jsonString = JSONArray(data)
+        Log.d(TAG, "saveHomeFavorites: $jsonString")
         favoriteEntityIds.clear()
-        favoriteEntityIds.addAll(
-            data.removeSurrounding("[", "]").removePrefix("Favorites(id=").split(", ").map { it }
-        )
+        for (favorite in 0 until jsonString.length()) {
+            favoriteEntityIds.add(
+                jsonString.getString(favorite)
+            )
+        }
     }
 
     fun onEntitySelected(checked: Boolean, entityId: String) {
@@ -104,14 +108,7 @@ class SettingsWearViewModel @Inject constructor(
                     Log.d(TAG, "Found existing favorites: ${dataItemBuffer.count}")
                     dataItemBuffer.forEach {
                         val data = getFavorites(DataMapItem.fromDataItem(it).dataMap)
-                        val jsonString = JSONArray(data)
-                        Log.d(TAG, "Favorites: $jsonString")
-                        favoriteEntityIds.clear()
-                        for (item in 0 until jsonString.length()) {
-                            favoriteEntityIds.add(
-                                jsonString.getString(item)
-                            )
-                        }
+                        saveHomeFavorites(data)
                     }
                     dataItemBuffer.release()
                 }
@@ -167,9 +164,7 @@ class SettingsWearViewModel @Inject constructor(
                 event.dataItem.also { item ->
                     if (item.uri.path?.compareTo("/home_favorites") == 0) {
                         val data = getFavorites(DataMapItem.fromDataItem(item).dataMap)
-                        val jsonString = JSONArray(data).toString()
-                        Log.d(TAG, "onDataChanged: Found home favorites: $jsonString")
-                        saveHomeFavorites(jsonString)
+                        saveHomeFavorites(data)
                     }
                 }
             }
