@@ -144,7 +144,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
 
     implementation("com.google.dagger:hilt-android:2.40.2")
-    kapt("com.google.dagger:hilt-android-compiler:2.40.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.40.3")
 
     implementation("androidx.appcompat:appcompat:1.3.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
