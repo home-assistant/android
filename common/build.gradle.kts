@@ -52,7 +52,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 
-    implementation("com.google.dagger:hilt-android:2.40.2")
+    implementation("com.google.dagger:hilt-android:2.40.3")
     kapt("com.google.dagger:hilt-android-compiler:2.40.2")
 
     api("androidx.room:room-runtime:2.3.0")
