@@ -214,11 +214,10 @@ private fun FavoriteToggleChip(
     )
 
     val entityId = entityList[index].entityId
-    var checked by rememberSaveable { mutableStateOf(favoriteEntityIds.contains(entityId)) }
+    val checked = favoriteEntityIds.contains(entityId)
     ToggleChip(
         checked = checked,
         onCheckedChange = {
-            checked = it
             onFavoriteSelected(entityId, favoriteEntityIds.size + 1, it)
         },
         modifier = Modifier
