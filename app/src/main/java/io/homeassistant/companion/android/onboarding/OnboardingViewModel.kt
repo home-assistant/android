@@ -2,8 +2,11 @@ package io.homeassistant.companion.android.onboarding
 
 import android.app.Application
 import android.net.nsd.NsdManager
+import android.util.Patterns
+import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,10 +31,17 @@ class OnboardingViewModel @Inject constructor(
         }
     )
     val foundInstances = mutableStateListOf<HomeAssistantInstance>()
+    val manualUrl = mutableStateOf("")
+    val manualContinueEnabled = mutableStateOf(false)
 
     init {
         // start scanning for instances
         homeAssistantSearcher.beginSearch()
+    }
+
+    fun onManualUrlUpdated(url: String){
+        manualUrl.value = url
+        manualContinueEnabled.value = URLUtil.isValidUrl(url)
     }
 
     override fun onCleared() {

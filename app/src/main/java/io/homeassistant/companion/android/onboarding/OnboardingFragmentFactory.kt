@@ -8,26 +8,22 @@ import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenter
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
-import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenter
 import io.homeassistant.companion.android.themes.ThemesManager
 import javax.inject.Inject
 
 class OnboardingFragmentFactory @Inject constructor(
     private val authenticationPresenter: AuthenticationPresenter,
     private val themesManager: ThemesManager,
-    private val mobileAppIntegrationPresenter: MobileAppIntegrationPresenter,
-    private val manualSetupPresenter: ManualSetupPresenter
+    private val mobileAppIntegrationPresenter: MobileAppIntegrationPresenter
 ) : FragmentFactory() {
     override fun instantiate(classLoader: ClassLoader, className: String): Fragment {
         return when (className) {
             AuthenticationFragment::class.java.name ->
                 AuthenticationFragment(authenticationPresenter, themesManager)
-            DiscoveryFragment::class.java.name ->
-                DiscoveryFragment()
+            DiscoveryFragment::class.java.name -> DiscoveryFragment()
             MobileAppIntegrationFragment::class.java.name ->
                 MobileAppIntegrationFragment(mobileAppIntegrationPresenter)
-            ManualSetupFragment::class.java.name ->
-                ManualSetupFragment(manualSetupPresenter)
+            ManualSetupFragment::class.java.name -> ManualSetupFragment()
             else -> super.instantiate(classLoader, className)
         }
     }

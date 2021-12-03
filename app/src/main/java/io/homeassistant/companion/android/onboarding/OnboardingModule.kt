@@ -12,19 +12,12 @@ import io.homeassistant.companion.android.onboarding.authentication.Authenticati
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationListener
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenter
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenterImpl
-import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
-import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenter
-import io.homeassistant.companion.android.onboarding.manual.ManualSetupPresenterImpl
 
 @Module
 @InstallIn(ActivityComponent::class)
 abstract class OnboardingModule {
 
     companion object {
-
-        @Provides
-        fun manualSetupListener(activity: Activity): ManualSetupListener =
-            activity as ManualSetupListener
 
         @Provides
         fun authenticationListener(activity: Activity): AuthenticationListener =
@@ -40,7 +33,4 @@ abstract class OnboardingModule {
 
     @Binds
     abstract fun mobileAppIntegrationPresenter(mobileAppIntegrationPresenterImpl: MobileAppIntegrationPresenterImpl): MobileAppIntegrationPresenter
-
-    @Binds
-    abstract fun manualSetupPresenter(manualSetupPresenterImpl: ManualSetupPresenterImpl): ManualSetupPresenter
 }
