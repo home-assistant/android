@@ -14,6 +14,7 @@ import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -27,7 +28,7 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
         private const val HOME_ASSISTANT = "https://www.home-assistant.io"
     }
 
-    private val viewModel by viewModels<DiscoveryViewModel>()
+    private val viewModel by viewModels<OnboardingViewModel>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,7 +39,7 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
             setContent {
                 MdcTheme {
                     DiscoveryView(
-                        discoveryViewModel = viewModel,
+                        onboardingViewModel = viewModel,
                         whatIsThisClicked = { openHomeAssistantHomePage() },
                         manualSetupClicked = { navigateToManualSetup() },
                         instanceClicked = { onInstanceClicked(it) }

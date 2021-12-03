@@ -24,12 +24,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import java.net.URL
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun DiscoveryView(
-    discoveryViewModel: DiscoveryViewModel,
+    onboardingViewModel: OnboardingViewModel,
     whatIsThisClicked: () -> Unit,
     manualSetupClicked: () -> Unit,
     instanceClicked: (instance: HomeAssistantInstance) -> Unit
@@ -60,7 +61,7 @@ fun DiscoveryView(
                 .fillMaxHeight()
                 .padding(20.dp)
         ) {
-            discoveryViewModel.foundInstances.forEach { instance ->
+            onboardingViewModel.foundInstances.forEach { instance ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -104,7 +105,7 @@ fun DiscoveryView(
 @Preview
 @Composable
 fun PreviewDiscoveryView() {
-    val viewModel = DiscoveryViewModel(HomeAssistantApplication())
+    val viewModel = OnboardingViewModel(HomeAssistantApplication())
     for (i in 0..5) {
         viewModel.foundInstances.add(
             HomeAssistantInstance(

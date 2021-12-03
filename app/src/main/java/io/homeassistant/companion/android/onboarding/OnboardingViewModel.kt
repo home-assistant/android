@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding.discovery
+package io.homeassistant.companion.android.onboarding
 
 import android.app.Application
 import android.net.nsd.NsdManager
@@ -8,10 +8,12 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantInstance
+import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantSearcher
 import javax.inject.Inject
 
 @HiltViewModel
-class DiscoveryViewModel @Inject constructor(
+class OnboardingViewModel @Inject constructor(
     app: Application
 ) : AndroidViewModel(app) {
 
