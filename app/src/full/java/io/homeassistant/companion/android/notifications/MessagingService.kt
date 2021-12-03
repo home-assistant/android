@@ -67,6 +67,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
+import java.net.URLDecoder
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.collections.HashMap
@@ -515,16 +516,22 @@ class MessagingService : FirebaseMessagingService() {
                     if (!extras.isNullOrEmpty()) {
                         val items = extras.split(',')
                         for (item in items) {
-                            val pair = item.split(":")
+                            val chunks = item.split(":")
+                            var value = chunks[1]
+                            if (chunks.size > 2) {
+                                value = chunks.subList(1, chunks.lastIndex).joinToString(":")
+                                if (chunks.last() == "urlencoded")
+                                    value = URLDecoder.decode(value, "UTF-8")
+                            }
                             intent.putExtra(
-                                pair[0],
-                                if (pair[1].isDigitsOnly())
-                                    pair[1].toInt()
-                                else if ((pair[1].toLowerCase() == "true") ||
-                                    (pair[1].toLowerCase() == "false")
+                                chunks[0],
+                                if (value.isDigitsOnly())
+                                    value.toInt()
+                                else if ((value.lowercase() == "true") ||
+                                    (value.lowercase() == "false")
                                 )
-                                    pair[1].toBoolean()
-                                else pair[1]
+                                    value.toBoolean()
+                                else value
                             )
                         }
                     }
