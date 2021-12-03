@@ -13,17 +13,15 @@ import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
-import io.homeassistant.companion.android.onboarding.discovery.DiscoveryListener
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationListener
-import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupListener
+import io.homeassistant.companion.android.onboarding.welcome.WelcomeFragment
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 @AndroidEntryPoint
 class OnboardingActivity :
     AppCompatActivity(),
-    DiscoveryListener,
     ManualSetupListener,
     AuthenticationListener,
     MobileAppIntegrationListener {
@@ -65,22 +63,6 @@ class OnboardingActivity :
         } else {
             super.onBackPressed()
         }
-    }
-
-    override fun onSelectManualSetup() {
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.content, ManualSetupFragment::class.java, null)
-            .addToBackStack(null)
-            .commit()
-    }
-
-    override fun onHomeAssistantDiscover() {
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.content, AuthenticationFragment::class.java, null)
-            .addToBackStack(null)
-            .commit()
     }
 
     override fun onSelectUrl() {

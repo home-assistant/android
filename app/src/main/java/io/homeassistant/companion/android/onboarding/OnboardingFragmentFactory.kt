@@ -5,7 +5,6 @@ import androidx.fragment.app.FragmentFactory
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationPresenter
 import io.homeassistant.companion.android.onboarding.discovery.DiscoveryFragment
-import io.homeassistant.companion.android.onboarding.discovery.DiscoveryPresenter
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationPresenter
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
@@ -16,7 +15,6 @@ import javax.inject.Inject
 class OnboardingFragmentFactory @Inject constructor(
     private val authenticationPresenter: AuthenticationPresenter,
     private val themesManager: ThemesManager,
-    private val discoveryPresenter: DiscoveryPresenter,
     private val mobileAppIntegrationPresenter: MobileAppIntegrationPresenter,
     private val manualSetupPresenter: ManualSetupPresenter
 ) : FragmentFactory() {
@@ -25,7 +23,7 @@ class OnboardingFragmentFactory @Inject constructor(
             AuthenticationFragment::class.java.name ->
                 AuthenticationFragment(authenticationPresenter, themesManager)
             DiscoveryFragment::class.java.name ->
-                DiscoveryFragment(discoveryPresenter)
+                DiscoveryFragment()
             MobileAppIntegrationFragment::class.java.name ->
                 MobileAppIntegrationFragment(mobileAppIntegrationPresenter)
             ManualSetupFragment::class.java.name ->
