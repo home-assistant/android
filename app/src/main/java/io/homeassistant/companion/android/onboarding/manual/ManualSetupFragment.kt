@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,7 +18,7 @@ import io.homeassistant.companion.android.onboarding.authentication.Authenticati
 @AndroidEntryPoint
 class ManualSetupFragment: Fragment() {
 
-    private val viewModel by viewModels<OnboardingViewModel>()
+    private val viewModel by activityViewModels<OnboardingViewModel>()
 
     @ExperimentalComposeUiApi
     override fun onCreateView(

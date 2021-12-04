@@ -11,7 +11,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.onboarding.authentication.AuthenticationListener
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationListener
 import io.homeassistant.companion.android.onboarding.welcome.WelcomeFragment
@@ -20,7 +19,6 @@ import io.homeassistant.companion.android.webview.WebViewActivity
 @AndroidEntryPoint
 class OnboardingActivity :
     AppCompatActivity(),
-    AuthenticationListener,
     MobileAppIntegrationListener {
 
     companion object {
@@ -61,14 +59,6 @@ class OnboardingActivity :
         } else {
             super.onBackPressed()
         }
-    }
-
-    override fun onAuthenticationSuccess() {
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.content, MobileAppIntegrationFragment::class.java, null)
-            .addToBackStack(null)
-            .commit()
     }
 
     override fun onIntegrationRegistrationComplete() {

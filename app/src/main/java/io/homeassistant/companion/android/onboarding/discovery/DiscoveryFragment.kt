@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,7 +29,7 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
         private const val HOME_ASSISTANT = "https://www.home-assistant.io"
     }
 
-    private val viewModel by viewModels<OnboardingViewModel>()
+    private val viewModel by activityViewModels<OnboardingViewModel>()
 
     override fun onCreateView(
         inflater: LayoutInflater,

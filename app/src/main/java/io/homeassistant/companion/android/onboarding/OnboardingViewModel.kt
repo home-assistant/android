@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.onboarding
 
 import android.app.Application
+import android.net.Uri
 import android.net.nsd.NsdManager
+import android.util.Log
 import android.util.Patterns
 import android.webkit.URLUtil
 import android.widget.Toast
@@ -9,15 +11,19 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantSearcher
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    app: Application
+    app: Application,
+    val authenticationRepository: AuthenticationRepository
 ) : AndroidViewModel(app) {
 
     private val homeAssistantSearcher = HomeAssistantSearcher(
@@ -33,6 +39,7 @@ class OnboardingViewModel @Inject constructor(
     val foundInstances = mutableStateListOf<HomeAssistantInstance>()
     val manualUrl = mutableStateOf("")
     val manualContinueEnabled = mutableStateOf(false)
+    val authCode = mutableStateOf("")
 
     init {
         // start scanning for instances
@@ -42,6 +49,10 @@ class OnboardingViewModel @Inject constructor(
     fun onManualUrlUpdated(url: String){
         manualUrl.value = url
         manualContinueEnabled.value = URLUtil.isValidUrl(url)
+    }
+
+    fun registerAuthCode(code: String) {
+        authCode.value = code
     }
 
     override fun onCleared() {

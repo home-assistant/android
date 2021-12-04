@@ -51,7 +51,7 @@ fun ManualSetupView(
         //TODO: Error case handling
         TextField(
             value = onboardingViewModel.manualUrl.value,
-            onValueChange = { it: String -> onboardingViewModel.onManualUrlUpdated(it) },
+            onValueChange = { onboardingViewModel.onManualUrlUpdated(it) },
             modifier = Modifier.align(Alignment.CenterHorizontally),
             label = { Text(stringResource(id = commonR.string.input_url)) },
 //            hint = { Text(stringResource(id = commonR.string.input_url_hint)) },

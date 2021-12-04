@@ -24,6 +24,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.authentication.impl.AuthenticationRepositoryImpl
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import java.net.URL
 import io.homeassistant.companion.android.common.R as commonR
@@ -105,7 +110,55 @@ fun DiscoveryView(
 @Preview
 @Composable
 fun PreviewDiscoveryView() {
-    val viewModel = OnboardingViewModel(HomeAssistantApplication())
+    val viewModel = OnboardingViewModel(HomeAssistantApplication(), object :AuthenticationRepository{
+        override suspend fun initiateLoginFlow(): LoginFlowInit {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun loginAuthentication(
+            flowId: String,
+            username: String,
+            password: String
+        ): LoginFlowCreateEntry {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun registerAuthorizationCode(authorizationCode: String) {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun retrieveExternalAuthentication(forceRefresh: Boolean): String {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun retrieveAccessToken(): String {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun revokeSession() {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun getSessionState(): SessionState {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun buildAuthenticationUrl(callbackUrl: String): URL {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun buildBearerToken(): String {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun setLockEnabled(enabled: Boolean) {
+            TODO("Not yet implemented")
+        }
+
+        override suspend fun isLockEnabled(): Boolean {
+            TODO("Not yet implemented")
+        }
+    })
     for (i in 0..5) {
         viewModel.foundInstances.add(
             HomeAssistantInstance(
