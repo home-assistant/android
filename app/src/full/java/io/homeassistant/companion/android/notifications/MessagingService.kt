@@ -514,26 +514,7 @@ class MessagingService : FirebaseMessagingService() {
                     val extras = data["group"]
                     val className = data[INTENT_CLASS_NAME]
                     if (!extras.isNullOrEmpty()) {
-                        val items = extras.split(',')
-                        for (item in items) {
-                            val chunks = item.split(":")
-                            var value = chunks[1]
-                            if (chunks.size > 2) {
-                                value = chunks.subList(1, chunks.lastIndex).joinToString(":")
-                                if (chunks.last() == "urlencoded")
-                                    value = URLDecoder.decode(value, "UTF-8")
-                            }
-                            intent.putExtra(
-                                chunks[0],
-                                if (value.isDigitsOnly())
-                                    value.toInt()
-                                else if ((value.lowercase() == "true") ||
-                                    (value.lowercase() == "false")
-                                )
-                                    value.toBoolean()
-                                else value
-                            )
-                        }
+                        addExtrasToIntent(intent, extras)
                     }
                     intent.`package` = packageName
                     if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty())
@@ -649,6 +630,32 @@ class MessagingService : FirebaseMessagingService() {
                 }
             }
             else -> Log.d(TAG, "No command received")
+        }
+    }
+
+    /**
+     * Add Extra values to Intent.
+     */
+    private fun addExtrasToIntent(intent: Intent, extras: String) {
+        val items = extras.split(',')
+        for (item in items) {
+            val chunks = item.split(":")
+            var value = chunks[1]
+            if (chunks.size > 2) {
+                value = chunks.subList(1, chunks.lastIndex).joinToString(":")
+                if (chunks.last() == "urlencoded")
+                    value = URLDecoder.decode(value, "UTF-8")
+            }
+            intent.putExtra(
+                chunks[0],
+                if (value.isDigitsOnly())
+                    value.toInt()
+                else if ((value.lowercase() == "true") ||
+                    (value.lowercase() == "false")
+                )
+                    value.toBoolean()
+                else value
+            )
         }
     }
 
@@ -1425,26 +1432,7 @@ class MessagingService : FirebaseMessagingService() {
                 intent.setClassName(packageName, className)
             val extras = data["group"]
             if (!extras.isNullOrEmpty()) {
-                val items = extras.split(',')
-                for (item in items) {
-                    val chunks = item.split(":")
-                    var value = chunks[1]
-                    if (chunks.size > 2) {
-                        value = chunks.subList(1, chunks.lastIndex).joinToString(":")
-                        if (chunks.last() == "urlencoded")
-                            value = URLDecoder.decode(value, "UTF-8")
-                    }
-                    intent.putExtra(
-                        chunks[0],
-                        if (value.isDigitsOnly())
-                            value.toInt()
-                        else if ((value.lowercase() == "true") ||
-                            (value.lowercase() == "false")
-                        )
-                            value.toBoolean()
-                        else value
-                    )
-                }
+                addExtrasToIntent(intent, extras)
             }
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             if (!packageName.isNullOrEmpty()) {
