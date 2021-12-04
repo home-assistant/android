@@ -36,12 +36,11 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URL
+import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class AuthenticationFragment(
-    val themesManager: ThemesManager
-) : Fragment() {
+class AuthenticationFragment: Fragment() {
 
     companion object {
         private const val TAG = "AuthenticationFragment"
@@ -50,6 +49,9 @@ class AuthenticationFragment(
     }
 
     private val viewModel by activityViewModels<OnboardingViewModel>()
+
+    @Inject
+    lateinit var themesManager: ThemesManager
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreateView(

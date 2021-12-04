@@ -5,21 +5,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
-import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationListener
 import io.homeassistant.companion.android.onboarding.welcome.WelcomeFragment
-import io.homeassistant.companion.android.webview.WebViewActivity
 
 @AndroidEntryPoint
-class OnboardingActivity :
-    AppCompatActivity(),
-    MobileAppIntegrationListener {
+class OnboardingActivity : AppCompatActivity() {
 
     companion object {
         const val SESSION_CONNECTED = "is_registered"
@@ -32,9 +24,6 @@ class OnboardingActivity :
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val entryPoint =
-            EntryPointAccessors.fromActivity(this, OnboardingFragmentFactoryEntryPoint::class.java)
-        supportFragmentManager.fragmentFactory = entryPoint.getFragmentFactory()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
 
@@ -61,14 +50,6 @@ class OnboardingActivity :
         }
     }
 
-    override fun onIntegrationRegistrationComplete() {
-        startWebView()
-    }
-
-    private fun startWebView() {
-        startActivity(WebViewActivity.newInstance(this))
-        finish()
-    }
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
         // Temporary workaround to sideload on Android TV and use a remote for basic navigation in WebView
@@ -83,9 +64,4 @@ class OnboardingActivity :
         return super.dispatchKeyEvent(event)
     }
 
-    @EntryPoint
-    @InstallIn(ActivityComponent::class)
-    interface OnboardingFragmentFactoryEntryPoint {
-        fun getFragmentFactory(): OnboardingFragmentFactory
-    }
 }
