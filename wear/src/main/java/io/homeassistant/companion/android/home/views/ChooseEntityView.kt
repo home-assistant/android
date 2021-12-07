@@ -30,17 +30,18 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.home.MainViewModel
+import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.previewEntityList
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun ChooseEntityView(
-    validEntities: Map<String, Entity<*>>,
+    mainViewModel: MainViewModel,
     onNoneClicked: () -> Unit,
     onEntitySelected: (entity: SimplifiedEntity) -> Unit
 ) {
@@ -51,149 +52,145 @@ fun ChooseEntityView(
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
 
-    val validEntityList = validEntities.values.toList().sortedBy { it.entityId }
-    val scenes = validEntityList.filter { it.entityId.split(".")[0] == "scene" }
-    val scripts = validEntityList.filter { it.entityId.split(".")[0] == "script" }
-    val lights = validEntityList.filter { it.entityId.split(".")[0] == "light" }
-    val locks = validEntityList.filter { it.entityId.split(".")[0] == "lock" }
-    val inputBooleans = validEntityList.filter { it.entityId.split(".")[0] == "input_boolean" }
-    val switches = validEntityList.filter { it.entityId.split(".")[0] == "switch" }
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
-    ScalingLazyColumn(
-        modifier = Modifier
-            .fillMaxSize(),
-        contentPadding = PaddingValues(
-            top = 40.dp,
-            start = 8.dp,
-            end = 8.dp,
-            bottom = 40.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        state = scalingLazyListState
-    ) {
-        item {
-            ListHeader(id = commonR.string.shortcuts)
-        }
-        item {
-            Chip(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
-                label = { Text(stringResource(id = commonR.string.none)) },
-                onClick = onNoneClicked,
-                colors = ChipDefaults.primaryChipColors(
-                    contentColor = Color.Black
-                )
-            )
-        }
-        if (inputBooleans.isNotEmpty()) {
+
+    WearAppTheme {
+        ScalingLazyColumn(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentPadding = PaddingValues(
+                top = 24.dp,
+                start = 8.dp,
+                end = 8.dp,
+                bottom = 48.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            state = scalingLazyListState
+        ) {
             item {
-                ListHeader(
-                    stringId = commonR.string.input_booleans,
-                    expanded = expandedInputBooleans,
-                    onExpandChanged = { expandedInputBooleans = it }
+                ListHeader(id = commonR.string.shortcuts)
+            }
+            item {
+                Chip(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    icon = { Image(asset = CommunityMaterial.Icon.cmd_delete) },
+                    label = { Text(stringResource(id = commonR.string.none)) },
+                    onClick = onNoneClicked,
+                    colors = ChipDefaults.primaryChipColors(
+                        contentColor = Color.Black
+                    )
                 )
             }
-            if (expandedInputBooleans) {
-                items(inputBooleans.size) { index ->
-                    ChooseEntityChip(
-                        entityList = inputBooleans,
-                        index = index,
-                        onEntitySelected = onEntitySelected
+            if (mainViewModel.inputBooleans.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = commonR.string.input_booleans,
+                        expanded = expandedInputBooleans,
+                        onExpandChanged = { expandedInputBooleans = it }
                     )
                 }
-            }
-        }
-        if (lights.isNotEmpty()) {
-            item {
-                ListHeader(
-                    stringId = commonR.string.lights,
-                    expanded = expandedLights,
-                    onExpandChanged = { expandedLights = it }
-                )
-            }
-            if (expandedLights) {
-                items(lights.size) { index ->
-                    ChooseEntityChip(
-                        entityList = lights,
-                        index = index,
-                        onEntitySelected = onEntitySelected
-                    )
+                if (expandedInputBooleans) {
+                    items(mainViewModel.inputBooleans.size) { index ->
+                        ChooseEntityChip(
+                            entityList = mainViewModel.inputBooleans,
+                            index = index,
+                            onEntitySelected = onEntitySelected
+                        )
+                    }
                 }
             }
-        }
-        if (locks.isNotEmpty()) {
-            item {
-                ListHeader(
-                    stringId = commonR.string.locks,
-                    expanded = expandedLocks,
-                    onExpandChanged = { expandedLocks = it }
-                )
-            }
-            if (expandedLocks) {
-                items(locks.size) { index ->
-                    ChooseEntityChip(
-                        entityList = locks,
-                        index = index,
-                        onEntitySelected = onEntitySelected
+            if (mainViewModel.locks.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = commonR.string.locks,
+                        expanded = expandedLocks,
+                        onExpandChanged = { expandedLocks = it }
                     )
                 }
-            }
-        }
-        if (scenes.isNotEmpty()) {
-            item {
-                ListHeader(
-                    stringId = commonR.string.scenes,
-                    expanded = expandedScenes,
-                    onExpandChanged = { expandedScenes = it }
-                )
-            }
-            if (expandedScenes) {
-                items(scenes.size) { index ->
-                    ChooseEntityChip(
-                        entityList = scenes,
-                        index = index,
-                        onEntitySelected = onEntitySelected
-                    )
+                if (expandedLocks) {
+                    items(mainViewModel.locks.size) { index ->
+                        ChooseEntityChip(
+                            entityList = mainViewModel.locks,
+                            index = index,
+                            onEntitySelected = onEntitySelected
+                        )
+                    }
                 }
             }
-        }
-        if (scripts.isNotEmpty()) {
-            item {
-                ListHeader(
-                    stringId = commonR.string.scripts,
-                    expanded = expandedScripts,
-                    onExpandChanged = { expandedScripts = it }
-                )
-            }
-            if (expandedScripts) {
-                items(scripts.size) { index ->
-                    ChooseEntityChip(
-                        entityList = scripts,
-                        index = index,
-                        onEntitySelected = onEntitySelected
+            if (mainViewModel.lights.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = commonR.string.lights,
+                        expanded = expandedLights,
+                        onExpandChanged = { expandedLights = it }
                     )
                 }
+                if (expandedLights) {
+                    items(mainViewModel.lights.size) { index ->
+                        ChooseEntityChip(
+                            entityList = mainViewModel.lights,
+                            index = index,
+                            onEntitySelected = onEntitySelected
+                        )
+                    }
+                }
             }
-        }
-        if (switches.isNotEmpty()) {
-            item {
-                ListHeader(
-                    stringId = commonR.string.switches,
-                    expanded = expandedSwitches,
-                    onExpandChanged = { expandedSwitches = it }
-                )
-            }
-            if (expandedSwitches) {
-                items(switches.size) { index ->
-                    ChooseEntityChip(
-                        entityList = switches,
-                        index = index,
-                        onEntitySelected = onEntitySelected
+            if (mainViewModel.scenes.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = commonR.string.scenes,
+                        expanded = expandedScenes,
+                        onExpandChanged = { expandedScenes = it }
                     )
+                }
+                if (expandedScenes) {
+                    items(mainViewModel.scenes.size) { index ->
+                        ChooseEntityChip(
+                            entityList = mainViewModel.scenes,
+                            index = index,
+                            onEntitySelected = onEntitySelected
+                        )
+                    }
+                }
+            }
+            if (mainViewModel.scripts.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = commonR.string.scripts,
+                        expanded = expandedScripts,
+                        onExpandChanged = { expandedScripts = it }
+                    )
+                }
+                if (expandedScripts) {
+                    items(mainViewModel.scripts.size) { index ->
+                        ChooseEntityChip(
+                            entityList = mainViewModel.scripts,
+                            index = index,
+                            onEntitySelected = onEntitySelected
+                        )
+                    }
+                }
+            }
+            if (mainViewModel.switches.isNotEmpty()) {
+                item {
+                    ListHeader(
+                        stringId = commonR.string.switches,
+                        expanded = expandedSwitches,
+                        onExpandChanged = { expandedSwitches = it }
+                    )
+                }
+                if (expandedSwitches) {
+                    items(mainViewModel.switches.size) { index ->
+                        ChooseEntityChip(
+                            entityList = mainViewModel.switches,
+                            index = index,
+                            onEntitySelected = onEntitySelected
+                        )
+                    }
                 }
             }
         }
@@ -251,7 +248,7 @@ private fun PreviewChooseEntityView() {
     ) {
         RotaryEventHandlerSetup(rotaryEventDispatcher)
         ChooseEntityView(
-            validEntities = previewEntityList,
+            mainViewModel = MainViewModel(),
             onNoneClicked = { /*TODO*/ },
             onEntitySelected = {}
         )

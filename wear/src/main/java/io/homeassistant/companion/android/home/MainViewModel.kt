@@ -23,12 +23,30 @@ class MainViewModel @Inject constructor() : ViewModel() {
         loadEntities()
     }
 
+    // entities
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
     var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
         private set
+    var scenes = mutableStateListOf<Entity<*>>()
+        private set
+    var scripts = mutableStateListOf<Entity<*>>()
+        private set
+    var lights = mutableStateListOf<Entity<*>>()
+        private set
+    var locks = mutableStateListOf<Entity<*>>()
+        private set
+    var inputBooleans = mutableStateListOf<Entity<*>>()
+        private set
+    var switches = mutableStateListOf<Entity<*>>()
+        private set
+
+    // Content of EntityListView
+    var entityLists = mutableStateMapOf<Int, List<Entity<*>>>()
+
+    // settings
     var isHapticEnabled = mutableStateOf(false)
         private set
     var isToastEnabled = mutableStateOf(false)
@@ -46,10 +64,28 @@ class MainViewModel @Inject constructor() : ViewModel() {
             homePresenter.getEntities().forEach {
                 entities[it.entityId] = it
             }
+            updateEntityDomains()
             homePresenter.getEntityUpdates().collect {
                 entities[it.entityId] = it
+                updateEntityDomains()
             }
         }
+    }
+
+    fun updateEntityDomains() {
+        val entitiesList = entities.values.toList().sortedBy { it.entityId }
+        scenes.clear()
+        scenes.addAll(entitiesList.filter { it.entityId.split(".")[0] == "scene" })
+        scripts.clear()
+        scripts.addAll(entitiesList.filter { it.entityId.split(".")[0] == "script" })
+        lights.clear()
+        lights.addAll(entitiesList.filter { it.entityId.split(".")[0] == "light" })
+        locks.clear()
+        locks.addAll(entitiesList.filter { it.entityId.split(".")[0] == "lock" })
+        inputBooleans.clear()
+        inputBooleans.addAll(entitiesList.filter { it.entityId.split(".")[0] == "input_boolean" })
+        switches.clear()
+        switches.addAll(entitiesList.filter { it.entityId.split(".")[0] == "switch" })
     }
 
     fun toggleEntity(entityId: String, state: String) {
