@@ -139,6 +139,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private lateinit var exoPlayerView: PlayerView
     private lateinit var playerBinding: ExoPlayerViewBinding
     private lateinit var currentLang: String
+    private lateinit var windowInsetsController: WindowInsetsControllerCompat
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
     private var isConnected = false
@@ -166,6 +167,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         binding = ActivityWebviewBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
 
         // Initially set status and navigation bar color to colorLaunchScreenBackground to match the launch screen until the web frontend is loaded
         val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, R.color.colorLaunchScreenBackground, theme)
@@ -992,21 +995,27 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int) {
-        val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+        // window.statusBarColor and window.navigationBarColor must both be set before
+        // windowInsetsController sets the foreground colors.
 
+        // Set background colors
         if (statusBarColor != 0) {
             window.statusBarColor = statusBarColor
-            windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         } else {
             Log.e(TAG, "Cannot set status bar color $statusBarColor. Skipping coloring...")
         }
-
         if (navigationBarColor != 0) {
             window.navigationBarColor = navigationBarColor
-
-            windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
         } else {
             Log.e(TAG, "Cannot set navigation bar color $navigationBarColor. Skipping coloring...")
+        }
+
+        // Set foreground colors
+        if (statusBarColor != 0) {
+            windowInsetsController.isAppearanceLightStatusBars = !isColorDark(navigationBarColor)
+        }
+        if (navigationBarColor != 0) {
+            windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
         }
     }
 
