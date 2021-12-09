@@ -48,7 +48,7 @@ fun ManualSetupView(
                 .padding(20.dp)
         )
 
-        //TODO: Error case handling
+        // TODO: Error case handling
         TextField(
             value = onboardingViewModel.manualUrl.value,
             onValueChange = { onboardingViewModel.onManualUrlUpdated(it) },

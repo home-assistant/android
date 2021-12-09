@@ -5,7 +5,6 @@ import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,7 +18,6 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
@@ -29,18 +27,12 @@ import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.isStarted
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.net.URL
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class AuthenticationFragment: Fragment() {
+class AuthenticationFragment : Fragment() {
 
     companion object {
         private const val TAG = "AuthenticationFragment"
@@ -62,37 +54,39 @@ class AuthenticationFragment: Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 MdcTheme {
-                    AndroidView({ WebView(requireContext()).apply {
-                        themesManager.setThemeForWebView(requireContext(), settings)
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        settings.userAgentString =
-                            USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
-                        webViewClient = object : WebViewClient() {
-                            override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
-                                return onRedirect(url)
-                            }
+                    AndroidView({
+                        WebView(requireContext()).apply {
+                            themesManager.setThemeForWebView(requireContext(), settings)
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            settings.userAgentString =
+                                USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
+                            webViewClient = object : WebViewClient() {
+                                override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
+                                    return onRedirect(url)
+                                }
 
-                            override fun onReceivedError(
-                                view: WebView?,
-                                request: WebResourceRequest?,
-                                error: WebResourceError?
-                            ) {
-                                super.onReceivedError(view, request, error)
-                                showError(commonR.string.webview_error, null, error)
-                            }
+                                override fun onReceivedError(
+                                    view: WebView?,
+                                    request: WebResourceRequest?,
+                                    error: WebResourceError?
+                                ) {
+                                    super.onReceivedError(view, request, error)
+                                    showError(commonR.string.webview_error, null, error)
+                                }
 
-                            override fun onReceivedSslError(
-                                view: WebView?,
-                                handler: SslErrorHandler?,
-                                error: SslError?
-                            ) {
-                                super.onReceivedSslError(view, handler, error)
-                                showError(commonR.string.error_ssl, error, null)
+                                override fun onReceivedSslError(
+                                    view: WebView?,
+                                    handler: SslErrorHandler?,
+                                    error: SslError?
+                                ) {
+                                    super.onReceivedSslError(view, handler, error)
+                                    showError(commonR.string.error_ssl, error, null)
+                                }
                             }
-                        }
-                        loadUrl(buildAuthUrl(viewModel.manualUrl.value))
-                    }})
+                            loadUrl(buildAuthUrl(viewModel.manualUrl.value))
+                        } 
+                    })
                 }
             }
         }

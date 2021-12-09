@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.onboarding.integration
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -18,22 +19,16 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.composethemeadapter.MdcTheme
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.switchmaterial.SwitchMaterial
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.databinding.FragmentMobileAppIntegrationBinding
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
-import io.homeassistant.companion.android.onboarding.discovery.DiscoveryView
 import io.homeassistant.companion.android.sensors.LocationSensorManager
-import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class MobileAppIntegrationFragment: Fragment() {
+class MobileAppIntegrationFragment : Fragment() {
 
     companion object {
         private const val BACKGROUND_REQUEST = 99
@@ -56,9 +51,9 @@ class MobileAppIntegrationFragment: Fragment() {
                 MdcTheme {
                     MobileAppIntegrationView(
                         onboardingViewModel = viewModel,
-                        openPrivacyPolicy = {},
-                        onLocationTrackingChanged = {onLocationTrackingChanged(it)},
-                        onFinishClicked = {}
+                        openPrivacyPolicy = this@MobileAppIntegrationFragment::openPrivacyPolicy,
+                        onLocationTrackingChanged = this@MobileAppIntegrationFragment::onLocationTrackingChanged,
+                        onFinishClicked = this@MobileAppIntegrationFragment::onComplete
                     )
                 }
             }
@@ -70,10 +65,16 @@ class MobileAppIntegrationFragment: Fragment() {
         if (isChecked) {
 
             val locationEnabled = DisabledLocationHandler.isLocationEnabled(requireContext())
-            val permissionOk = LocationSensorManager().checkPermission(requireContext(), LocationSensorManager.backgroundLocation.id)
+            val permissionOk = LocationSensorManager().checkPermission(
+                requireContext(),
+                LocationSensorManager.backgroundLocation.id
+            )
 
             if (!locationEnabled) {
-                DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(LocationSensorManager.backgroundLocation.name)))
+                DisabledLocationHandler.showLocationDisabledWarnDialog(
+                    requireActivity(),
+                    arrayOf(getString(LocationSensorManager.backgroundLocation.name))
+                )
                 checked = false
             } else if (!permissionOk) {
                 dialog = AlertDialog.Builder(requireContext())
@@ -90,6 +91,7 @@ class MobileAppIntegrationFragment: Fragment() {
         }
 
         setLocationTracking(checked)
+        viewModel.locationTrackingEnabled.value = checked
     }
 
     private fun requestPermissions(sensorId: String) {
@@ -120,7 +122,10 @@ class MobileAppIntegrationFragment: Fragment() {
         if (permissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) &&
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
         ) {
-            requestPermissions(arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION), LOCATION_REQUEST_CODE)
+            requestPermissions(
+                arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                LOCATION_REQUEST_CODE
+            )
         }
 
         if (requestCode == LOCATION_REQUEST_CODE) {
@@ -166,5 +171,21 @@ class MobileAppIntegrationFragment: Fragment() {
             context?.getSystemService(PowerManager::class.java)
                 ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
                 ?: false
+    }
+
+    private fun onComplete() {
+        val retData = Intent().apply {
+            putExtra("URL", viewModel.manualUrl.value)
+            putExtra("AuthCode", viewModel.authCode.value)
+            putExtra("DeviceName", viewModel.deviceName.value)
+            putExtra("LocationTracking", viewModel.locationTrackingEnabled.value)
+        }
+        activity?.setResult(Activity.RESULT_OK, retData)
+        activity?.finish()
+    }
+
+    private fun openPrivacyPolicy() {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(getString(commonR.string.privacy_url)))
+        startActivity(intent)
     }
 }

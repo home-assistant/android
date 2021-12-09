@@ -7,14 +7,12 @@ import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.welcome.WelcomeFragment
 
 @AndroidEntryPoint
 class OnboardingActivity : AppCompatActivity() {
 
     companion object {
-        const val SESSION_CONNECTED = "is_registered"
         private const val AUTHENTICATION_FRAGMENT = "authentication_fragment"
         private const val TAG = "OnboardingActivity"
 
@@ -27,19 +25,10 @@ class OnboardingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
 
-        val sessionConnected = intent.extras?.getBoolean(SESSION_CONNECTED) ?: false
-
-        if (sessionConnected) {
-            supportFragmentManager
-                .beginTransaction()
-                .add(R.id.content, MobileAppIntegrationFragment::class.java, null)
-                .commit()
-        } else {
-            supportFragmentManager
-                .beginTransaction()
-                .add(R.id.content, WelcomeFragment::class.java, null)
-                .commit()
-        }
+        supportFragmentManager
+            .beginTransaction()
+            .add(R.id.content, WelcomeFragment::class.java, null)
+            .commit()
     }
 
     override fun onBackPressed() {
@@ -49,7 +38,6 @@ class OnboardingActivity : AppCompatActivity() {
             super.onBackPressed()
         }
     }
-
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
         // Temporary workaround to sideload on Android TV and use a remote for basic navigation in WebView
@@ -63,5 +51,4 @@ class OnboardingActivity : AppCompatActivity() {
 
         return super.dispatchKeyEvent(event)
     }
-
 }

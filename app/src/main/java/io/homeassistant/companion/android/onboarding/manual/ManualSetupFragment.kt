@@ -8,7 +8,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -16,7 +15,7 @@ import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 
 @AndroidEntryPoint
-class ManualSetupFragment: Fragment() {
+class ManualSetupFragment : Fragment() {
 
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
@@ -45,5 +44,4 @@ class ManualSetupFragment: Fragment() {
             .addToBackStack(null)
             .commit()
     }
-
 }
