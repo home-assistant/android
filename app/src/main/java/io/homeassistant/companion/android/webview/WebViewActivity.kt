@@ -1012,7 +1012,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         // Set foreground colors
         if (statusBarColor != 0) {
-            windowInsetsController.isAppearanceLightStatusBars = !isColorDark(navigationBarColor)
+            windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         }
         if (navigationBarColor != 0) {
             windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
