@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.media_player_controls
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -145,14 +146,73 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             val widget = mediaPlayCtrlWidgetDao.get(appWidgetId)
             if (widget != null) {
                 val entityId: String = widget.entityId
-                val label: String? = widget.label
+                var label: String? = widget.label
                 val showSkip: Boolean = widget.showSkip
                 val showSeek: Boolean = widget.showSeek
 
-                setTextViewText(
-                    R.id.widgetLabel,
-                    label ?: entityId
-                )
+                if (isMediaPlayerPlaying(context, entityId) == true) {
+                    setImageViewResource(
+                        R.id.widgetPlayPauseButton,
+                        R.drawable.ic_pause
+                    )
+                    scheduleNextMediaUpdate(context, widget.id, entityId)
+                } else {
+                    setImageViewResource(
+                        R.id.widgetPlayPauseButton,
+                        R.drawable.ic_play
+                    )
+                }
+
+                var artist = retrieveMediaPlayerArtist(context, entityId)
+                val title = retrieveMediaPlayerTitle(context, entityId)
+                val album = retrieveMediaPlayerAlbum(context, entityId)
+
+                if (artist != null && title != null) {
+                    if (album != null) {
+                        artist = "$artist - $album"
+                    }
+                    setTextViewText(
+                        R.id.widgetMediaInfoArtist,
+                        artist
+                    )
+                    setTextViewText(
+                        R.id.widgetMediaInfoTitle,
+                        retrieveMediaPlayerTitle(context, entityId)
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaInfoTitle,
+                        View.VISIBLE
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaInfoArtist,
+                        View.VISIBLE
+                    )
+                    setViewVisibility(
+                        R.id.widgetLabel,
+                        View.GONE
+                    )
+                } else {
+                    if (artist != null) {
+                        label = artist
+                    }
+                    setTextViewText(
+                        R.id.widgetLabel,
+                        label ?: entityId
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaInfoTitle,
+                        View.GONE
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaInfoArtist,
+                        View.GONE
+                    )
+                    setViewVisibility(
+                        R.id.widgetLabel,
+                        View.VISIBLE
+                    )
+                }
+
                 val entityPictureUrl = retrieveMediaPlayerImageUrl(context, entityId)
                 val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
                 val url = "$baseUrl$entityPictureUrl"
@@ -183,7 +243,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         if (BuildConfig.DEBUG)
                             Picasso.get().isLoggingEnabled = true
                         try {
-                            Picasso.get().load(url).resize(1024, 600).into(
+                            Picasso.get().load(url).resize(1024, 1024).into(
                                 this,
                                 R.id.widgetMediaImage,
                                 intArrayOf(appWidgetId)
@@ -278,10 +338,38 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
+    private suspend fun scheduleNextMediaUpdate(context: Context, appWidgetId: Int, entityId: String) {
+        Log.d(TAG, "Media Source currently playing, scheduling next update")
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val updateMediaIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
+            action = UPDATE_MEDIA_IMAGE
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+        val pendingUpdateMediaIntent: PendingIntent = PendingIntent.getBroadcast(
+            context, 0, updateMediaIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val nextUpdate: Number
+        val mediaPlayerEntity = integrationUseCase.getEntity(entityId)
+        var mediaFinishedIn = 30
+        if (mediaPlayerEntity.attributes["media_duration"] != null && mediaPlayerEntity.attributes["media_position"] != null) {
+            mediaFinishedIn =
+                (mediaPlayerEntity.attributes["media_duration"] as Double).minus(mediaPlayerEntity.attributes["media_position"] as Double)
+                    .toInt()
+        }
+        if (mediaFinishedIn < 30) {
+            nextUpdate = mediaFinishedIn * 1000
+        } else {
+            nextUpdate = 30000
+        }
+        am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis().plus(nextUpdate), pendingUpdateMediaIntent)
+    }
+
     private suspend fun retrieveMediaPlayerImageUrl(context: Context, entityId: String): String? {
         val entity: Entity<Map<String, Any>>
         try {
             entity = integrationUseCase.getEntity(entityId)
+            Log.e("ENTITY_LOG", entity.toString())
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE)
@@ -290,6 +378,66 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
 
         return entity.attributes["entity_picture"]?.toString()
+    }
+
+    private suspend fun isMediaPlayerPlaying(context: Context, entityId: String): Boolean? {
+        val entity: Entity<Map<String, Any>>
+        try {
+            entity = integrationUseCase.getEntity(entityId)
+            Log.e("ENTITY_LOG", entity.toString())
+        } catch (e: Exception) {
+            Log.d(TAG, "Failed to fetch entity or entity does not exist")
+            if (lastIntent == UPDATE_MEDIA_IMAGE)
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            return null
+        }
+
+        return entity.state.equals("playing")
+    }
+
+    private suspend fun retrieveMediaPlayerArtist(context: Context, entityId: String): String? {
+        val entity: Entity<Map<String, Any>>
+        try {
+            entity = integrationUseCase.getEntity(entityId)
+            Log.e("ENTITY_LOG", entity.toString())
+        } catch (e: Exception) {
+            Log.d(TAG, "Failed to fetch entity or entity does not exist")
+            if (lastIntent == UPDATE_MEDIA_IMAGE)
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            return null
+        }
+
+        return entity.attributes["media_artist"]?.toString()
+    }
+
+    private suspend fun retrieveMediaPlayerTitle(context: Context, entityId: String): String? {
+        val entity: Entity<Map<String, Any>>
+        try {
+            entity = integrationUseCase.getEntity(entityId)
+            Log.e("ENTITY_LOG", entity.toString())
+        } catch (e: Exception) {
+            Log.d(TAG, "Failed to fetch entity or entity does not exist")
+            if (lastIntent == UPDATE_MEDIA_IMAGE)
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            return null
+        }
+
+        return entity.attributes["media_title"]?.toString()
+    }
+
+    private suspend fun retrieveMediaPlayerAlbum(context: Context, entityId: String): String? {
+        val entity: Entity<Map<String, Any>>
+        try {
+            entity = integrationUseCase.getEntity(entityId)
+            Log.e("ENTITY_LOG", entity.toString())
+        } catch (e: Exception) {
+            Log.d(TAG, "Failed to fetch entity or entity does not exist")
+            if (lastIntent == UPDATE_MEDIA_IMAGE)
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            return null
+        }
+
+        return entity.attributes["media_album_name"]?.toString()
     }
 
     override fun onReceive(context: Context, intent: Intent) {
