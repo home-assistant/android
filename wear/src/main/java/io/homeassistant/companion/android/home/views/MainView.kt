@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -22,7 +21,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -39,12 +37,10 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
-import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventDispatcher
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
-import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalAnimationApi
@@ -57,7 +53,8 @@ fun MainView(
     onSettingsClicked: () -> Unit,
     onTestClicked: (entityLists: Map<Int, List<Entity<*>>>) -> Unit,
     isHapticEnabled: Boolean,
-    isToastEnabled: Boolean
+    isToastEnabled: Boolean,
+    deleteFavorite: (String) -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
 
@@ -125,12 +122,21 @@ fun MainView(
                                     colors = ChipDefaults.secondaryChipColors()
                                 )
                             } else {
-                                EntityUi(
-                                    mainViewModel.entities[favoriteEntityID]!!,
-                                    onEntityClicked,
-                                    isHapticEnabled,
-                                    isToastEnabled
-                                )
+                                var isValidEntity = false
+                                for (entity in mainViewModel.entities) {
+                                    if (entity.value.entityId == favoriteEntityID) {
+                                        isValidEntity = true
+                                        EntityUi(
+                                            mainViewModel.entities[favoriteEntityID]!!,
+                                            onEntityClicked,
+                                            isHapticEnabled,
+                                            isToastEnabled
+                                        )
+                                    }
+                                }
+                                if (!isValidEntity) {
+                                    deleteFavorite(favoriteEntityID)
+                                }
                             }
                         }
                     }
@@ -335,27 +341,5 @@ fun MainView(
                 }
             }
         }
-    }
-}
-
-@ExperimentalAnimationApi
-@ExperimentalWearMaterialApi
-@Preview
-@Composable
-private fun PreviewMainView() {
-    val rotaryEventDispatcher = RotaryEventDispatcher()
-
-    CompositionLocalProvider(
-        LocalRotaryEventDispatcher provides rotaryEventDispatcher
-    ) {
-        MainView(
-            mainViewModel = MainViewModel(),
-            favoriteEntityIds = previewFavoritesList,
-            onEntityClicked = { _, _ -> },
-            onSettingsClicked = {},
-            onTestClicked = {},
-            isHapticEnabled = true,
-            isToastEnabled = false
-        )
     }
 }

@@ -1,26 +1,34 @@
 package io.homeassistant.companion.android.home
 
+import android.app.Application
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.wear.Favorites
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor() : ViewModel() {
+class MainViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
 
     private lateinit var homePresenter: HomePresenter
+    val app = getApplication<HomeAssistantApplication>()
+    private val favoritesDao = AppDatabase.getInstance(app.applicationContext).favoritesDao()
 
     // TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments
     fun init(homePresenter: HomePresenter) {
         this.homePresenter = homePresenter
         loadEntities()
+        getFavorites()
     }
 
     // entities
@@ -52,12 +60,13 @@ class MainViewModel @Inject constructor() : ViewModel() {
     var isToastEnabled = mutableStateOf(false)
         private set
 
+    private fun favorites(): Flow<List<Favorites>>? = favoritesDao.getAllFlow()
+
     private fun loadEntities() {
         viewModelScope.launch {
             if (!homePresenter.isConnected()) {
                 return@launch
             }
-            favoriteEntityIds.addAll(homePresenter.getWearHomeFavorites())
             shortcutEntities.addAll(homePresenter.getTileShortcuts())
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
@@ -94,35 +103,20 @@ class MainViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun addFavorite(entityId: String) {
-
+    private fun getFavorites() {
         viewModelScope.launch {
-            favoriteEntityIds.add(entityId)
-            homePresenter.setWearHomeFavorites(favoriteEntityIds)
-        }
-    }
-
-    fun removeFavorite(entity: String) {
-
-        viewModelScope.launch {
-            favoriteEntityIds.remove(entity)
-            homePresenter.setWearHomeFavorites(favoriteEntityIds)
+            favorites()?.collect {
+                favoriteEntityIds.clear()
+                for (favorite in it) {
+                    favoriteEntityIds.add(favorite.id)
+                }
+            }
         }
     }
 
     fun clearFavorites() {
-        viewModelScope.launch {
-            favoriteEntityIds.clear()
-            homePresenter.setWearHomeFavorites(favoriteEntityIds)
-        }
-    }
-
-    // TODO: Remove the below as we should save favorites to the DB so we can use a proper flow like above
-    fun updateFavorites() {
-        viewModelScope.launch {
-            favoriteEntityIds.clear()
-            favoriteEntityIds.addAll(homePresenter.getWearHomeFavorites())
-        }
+        favoriteEntityIds.clear()
+        favoritesDao.deleteAll()
     }
 
     fun setTileShortcut(index: Int, entity: SimplifiedEntity) {
@@ -156,6 +150,32 @@ class MainViewModel @Inject constructor() : ViewModel() {
         viewModelScope.launch {
             homePresenter.setWearToastConfirmation(enabled)
             isToastEnabled.value = enabled
+        }
+    }
+
+    fun addFavorites(favorites: Favorites) {
+        favoritesDao.add(favorites)
+        updateFavoritePositions()
+    }
+
+    private fun updateFavorites(favorites: Favorites) {
+        favoritesDao.update(favorites)
+        updateFavoritePositions()
+    }
+
+    fun removeFavorites(id: String) {
+        favoritesDao.delete(id)
+        updateFavoritePositions()
+    }
+
+    private fun updateFavoritePositions() {
+        var i = 1
+        viewModelScope.launch {
+            favoritesDao.getAll()?.forEach { favorites ->
+                if (i != i)
+                    updateFavorites(Favorites(favorites.id, i))
+                i++
+            }
         }
     }
 

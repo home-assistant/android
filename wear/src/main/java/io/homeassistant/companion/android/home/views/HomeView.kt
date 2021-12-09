@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -23,6 +22,7 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
+import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
@@ -88,7 +88,8 @@ fun LoadHomePage(
                                 swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                             },
                             mainViewModel.isHapticEnabled.value,
-                            mainViewModel.isToastEnabled.value
+                            mainViewModel.isToastEnabled.value,
+                            { id -> mainViewModel.removeFavorites(id) }
                         )
                     }
                     composable(SCREEN_ENTITY_LIST) {
@@ -119,11 +120,12 @@ fun LoadHomePage(
                         SetFavoritesView(
                             mainViewModel,
                             mainViewModel.favoriteEntityIds
-                        ) { entityId, isSelected ->
+                        ) { entityId, position, isSelected ->
+                            val favorites = Favorites(entityId, position)
                             if (isSelected) {
-                                mainViewModel.addFavorite(entityId)
+                                mainViewModel.addFavorites(favorites)
                             } else {
-                                mainViewModel.removeFavorite(entityId)
+                                mainViewModel.removeFavorites(entityId)
                             }
                         }
                     }
@@ -154,12 +156,4 @@ fun LoadHomePage(
             }
         }
     }
-}
-
-@ExperimentalAnimationApi
-@ExperimentalWearMaterialApi
-@Preview
-@Composable
-private fun PreviewHomeView() {
-    LoadHomePage(mainViewModel = MainViewModel())
 }

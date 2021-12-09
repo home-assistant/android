@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -18,7 +17,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -32,9 +30,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.common.R as commonR
@@ -237,20 +232,4 @@ private fun ChooseEntityChip(
         },
         colors = ChipDefaults.secondaryChipColors()
     )
-}
-
-@Preview
-@Composable
-private fun PreviewChooseEntityView() {
-    val rotaryEventDispatcher = RotaryEventDispatcher()
-    CompositionLocalProvider(
-        LocalRotaryEventDispatcher provides rotaryEventDispatcher
-    ) {
-        RotaryEventHandlerSetup(rotaryEventDispatcher)
-        ChooseEntityView(
-            mainViewModel = MainViewModel(),
-            onNoneClicked = { /*TODO*/ },
-            onEntitySelected = {}
-        )
-    }
 }
