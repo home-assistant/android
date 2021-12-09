@@ -85,7 +85,7 @@ class AuthenticationFragment : Fragment() {
                                 }
                             }
                             loadUrl(buildAuthUrl(viewModel.manualUrl.value))
-                        } 
+                        }
                     })
                 }
             }

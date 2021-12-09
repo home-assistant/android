@@ -15,6 +15,7 @@ import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
+import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -70,5 +71,11 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
     }
 
     private fun onInstanceClicked(instance: HomeAssistantInstance) {
+        viewModel.manualUrl.value = instance.url.toString()
+        parentFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, MobileAppIntegrationFragment::class.java, null)
+            .addToBackStack(null)
+            .commit()
     }
 }
