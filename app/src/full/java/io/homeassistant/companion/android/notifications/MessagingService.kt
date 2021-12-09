@@ -67,6 +67,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
+import java.net.URLDecoder
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.collections.HashMap
@@ -513,20 +514,7 @@ class MessagingService : FirebaseMessagingService() {
                     val extras = data["group"]
                     val className = data[INTENT_CLASS_NAME]
                     if (!extras.isNullOrEmpty()) {
-                        val items = extras.split(',')
-                        for (item in items) {
-                            val pair = item.split(":")
-                            intent.putExtra(
-                                pair[0],
-                                if (pair[1].isDigitsOnly())
-                                    pair[1].toInt()
-                                else if ((pair[1].toLowerCase() == "true") ||
-                                    (pair[1].toLowerCase() == "false")
-                                )
-                                    pair[1].toBoolean()
-                                else pair[1]
-                            )
-                        }
+                        addExtrasToIntent(intent, extras)
                     }
                     intent.`package` = packageName
                     if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty())
@@ -642,6 +630,32 @@ class MessagingService : FirebaseMessagingService() {
                 }
             }
             else -> Log.d(TAG, "No command received")
+        }
+    }
+
+    /**
+     * Add Extra values to Intent.
+     */
+    private fun addExtrasToIntent(intent: Intent, extras: String) {
+        val items = extras.split(',')
+        for (item in items) {
+            val chunks = item.split(":")
+            var value = chunks[1]
+            if (chunks.size > 2) {
+                value = chunks.subList(1, chunks.lastIndex).joinToString(":")
+                if (chunks.last() == "urlencoded")
+                    value = URLDecoder.decode(value, "UTF-8")
+            }
+            intent.putExtra(
+                chunks[0],
+                if (value.isDigitsOnly())
+                    value.toInt()
+                else if ((value.lowercase() == "true") ||
+                    (value.lowercase() == "false")
+                )
+                    value.toBoolean()
+                else value
+            )
         }
     }
 
@@ -1418,20 +1432,7 @@ class MessagingService : FirebaseMessagingService() {
                 intent.setClassName(packageName, className)
             val extras = data["group"]
             if (!extras.isNullOrEmpty()) {
-                val items = extras.split(',')
-                for (item in items) {
-                    val pair = item.split(":")
-                    intent.putExtra(
-                        pair[0],
-                        if (pair[1].isDigitsOnly())
-                            pair[1].toInt()
-                        else if ((pair[1].toLowerCase() == "true") ||
-                            (pair[1].toLowerCase() == "false")
-                        )
-                            pair[1].toBoolean()
-                        else pair[1]
-                    )
-                }
+                addExtrasToIntent(intent, extras)
             }
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             if (!packageName.isNullOrEmpty()) {
