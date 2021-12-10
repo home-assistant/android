@@ -1,5 +1,5 @@
 package io.homeassistant.companion.android.onboarding
 
-suspend fun getRegistrationCode(): String {
+suspend fun getMessagingToken(): String {
     return ""
 }
