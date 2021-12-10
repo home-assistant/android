@@ -129,6 +129,7 @@ class MobileAppIntegrationFragment : Fragment() {
 
         if (requestCode == LOCATION_REQUEST_CODE) {
             val hasPermission = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            viewModel.locationTrackingEnabled.value = hasPermission
             setLocationTracking(hasPermission)
             requestBackgroundAccess()
         }
