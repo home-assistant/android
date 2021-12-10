@@ -47,6 +47,8 @@ class SettingsWearViewModel @Inject constructor(
 
     private val objectMapper = jacksonObjectMapper()
 
+    var hasData = mutableStateOf(false)
+        private set
     var isAuthenticated = mutableStateOf(false)
         private set
     var entities = mutableStateMapOf<String, Entity<*>>()
@@ -83,7 +85,7 @@ class SettingsWearViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        Wearable.getDataClient(getApplication()).removeListener(this)
+        Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
     }
 
     fun onEntitySelected(checked: Boolean, entityId: String) {
@@ -170,5 +172,6 @@ class SettingsWearViewModel @Inject constructor(
         favoriteEntityIdList.forEach { entityId ->
             favoriteEntityIds.add(entityId)
         }
+        hasData.value = true
     }
 }

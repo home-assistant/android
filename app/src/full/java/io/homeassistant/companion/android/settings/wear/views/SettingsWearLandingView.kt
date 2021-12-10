@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
@@ -14,6 +15,7 @@ import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -26,6 +28,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun SettingWearLandingView(
     deviceName: String,
+    hasData: Boolean,
     isAuthed: Boolean,
     navigateFavorites: () -> Unit,
     loginWearOs: () -> Unit
@@ -58,26 +61,32 @@ fun SettingWearLandingView(
                 .padding(start = 20.dp, top = 10.dp, end = 20.dp)
         ) {
             Text(
-                text = stringResource(id = commonR.string.manage_favorites_device, deviceName),
+                text = stringResource(id = commonR.string.manage_wear_device, deviceName),
                 textAlign = TextAlign.Center
             )
-            if (isAuthed) {
-                Button(
-                    onClick = navigateFavorites,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp, end = 10.dp)
-                ) {
-                    Text(text = stringResource(commonR.string.set_favorites_on_device))
+            when {
+                !hasData -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 }
-            } else {
-                Button(
-                    onClick = loginWearOs,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 10.dp, end = 10.dp)
-                ) {
-                    Text(text = "Login Wear OS Device")
+                isAuthed -> {
+                    Button(
+                        onClick = navigateFavorites,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp, end = 10.dp)
+                    ) {
+                        Text(stringResource(commonR.string.set_favorites_on_device))
+                    }
+                }
+                else -> {
+                    Button(
+                        onClick = loginWearOs,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp, end = 10.dp)
+                    ) {
+                        Text(stringResource(commonR.string.login_wear_os_device))
+                    }
                 }
             }
         }
@@ -89,6 +98,7 @@ fun SettingWearLandingView(
 private fun PreviewSettingWearLandingView() {
     SettingWearLandingView(
         deviceName = wearDeviceName,
+        hasData = true,
         isAuthed = true,
         navigateFavorites = {},
         loginWearOs = {}

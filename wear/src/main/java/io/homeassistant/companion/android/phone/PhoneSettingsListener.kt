@@ -65,7 +65,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         val putDataRequest = PutDataMapRequest.create("/config").run {
             dataMap.putLong(KEY_UPDATE_TIME, System.nanoTime())
             dataMap.putBoolean(KEY_IS_AUTHENTICATED, integrationUseCase.isRegistered())
-            dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites))
+            dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites.map { it.id }))
             setUrgent()
             asPutDataRequest()
         }

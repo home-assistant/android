@@ -24,6 +24,7 @@ fun LoadSettingsHomeView(
             composable(SettingsWearMainView.LANDING) {
                 SettingWearLandingView(
                     deviceName = deviceName,
+                    hasData = settingsWearViewModel.hasData.value,
                     isAuthed = settingsWearViewModel.isAuthenticated.value,
                     navigateFavorites = { navController.navigate(SettingsWearMainView.FAVORITES) },
                     loginWearOs = loginWearOs
