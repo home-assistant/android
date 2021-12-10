@@ -1,26 +1,27 @@
 package io.homeassistant.companion.android.onboarding.discovery
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
-import android.net.nsd.NsdManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import com.google.android.material.composethemeadapter.MdcTheme
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.databinding.FragmentDiscoveryBinding
-import io.homeassistant.companion.android.databinding.InstanceItemBinding
+import io.homeassistant.companion.android.onboarding.OnboardingViewModel
+import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
+import io.homeassistant.companion.android.onboarding.manual.ManualSetupFragment
+import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
-class DiscoveryFragment(
-    val presenter: DiscoveryPresenter
-) : Fragment(), DiscoveryView {
+@AndroidEntryPoint
+class DiscoveryFragment @Inject constructor() : Fragment() {
 
     companion object {
 
@@ -28,103 +29,63 @@ class DiscoveryFragment(
         private const val HOME_ASSISTANT = "https://www.home-assistant.io"
     }
 
-    private val instances = arrayListOf<HomeAssistantInstance>()
-
-    private lateinit var homeAssistantSearcher: HomeAssistantSearcher
-
-    private lateinit var listViewAdapter: ArrayAdapter<HomeAssistantInstance>
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        presenter.init(this)
-        super.onCreate(savedInstanceState)
-
-        homeAssistantSearcher = HomeAssistantSearcher(
-            getSystemService(requireContext(), NsdManager::class.java)!!,
-            this
-        )
-    }
+    private val viewModel by activityViewModels<OnboardingViewModel>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-
-        listViewAdapter = object : ArrayAdapter<HomeAssistantInstance>(requireContext(), R.layout.instance_item, instances) {
-            @SuppressLint("InflateParams")
-            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val binding = if (convertView != null) {
-                    InstanceItemBinding.bind(convertView)
-                } else {
-                    InstanceItemBinding.inflate(LayoutInflater.from(context))
-                }
-                getItem(position)?.let {
-                    binding.name.text = it.name
-                    binding.url.text = it.url.toString()
-                }
-
-                return binding.root
-            }
-        }
-
-        val binding = FragmentDiscoveryBinding.inflate(inflater, container, false)
-
-        binding.instanceListView.apply {
-            adapter = listViewAdapter
-            setOnItemClickListener { _, _, position, _ -> presenter.onUrlSelected(instances[position].url) }
-        }
-        binding.whatIsThis.apply {
-            setOnClickListener {
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(HOME_ASSISTANT)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                try {
-                    startActivity(intent)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Unable to load Home Assistant home page", e)
-                    Toast.makeText(context, commonR.string.what_is_this_crash, Toast.LENGTH_LONG).show()
+        return ComposeView(requireContext()).apply {
+            setContent {
+                MdcTheme {
+                    DiscoveryView(
+                        onboardingViewModel = viewModel,
+                        whatIsThisClicked = { openHomeAssistantHomePage() },
+                        manualSetupClicked = { navigateToManualSetup() },
+                        instanceClicked = { onInstanceClicked(it) }
+                    )
                 }
             }
         }
-        binding.manualSetup
-            .setOnClickListener { (activity as DiscoveryListener).onSelectManualSetup() }
-
-        return binding.root
     }
 
     override fun onResume() {
         super.onResume()
-        homeAssistantSearcher.beginSearch()
+        viewModel.startSearch()
     }
 
     override fun onPause() {
         super.onPause()
-        homeAssistantSearcher.stopSearch()
+        viewModel.stopSearch()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        homeAssistantSearcher.stopSearch()
-        presenter.onFinish()
-    }
-
-    override fun onUrlSaved() {
-        (activity as DiscoveryListener).onHomeAssistantDiscover()
-    }
-
-    override fun onInstanceFound(instance: HomeAssistantInstance) {
-        if (!instances.contains(instance)) {
-            instances.add(instance)
-            activity?.runOnUiThread {
-                listViewAdapter.notifyDataSetChanged()
-            }
+    private fun openHomeAssistantHomePage() {
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.data = Uri.parse(HOME_ASSISTANT)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to load Home Assistant home page", e)
+            Toast.makeText(context, commonR.string.what_is_this_crash, Toast.LENGTH_LONG).show()
         }
     }
 
-    override fun onScanError() {
-        Toast.makeText(context, commonR.string.failed_scan, Toast.LENGTH_LONG).show()
-        if (instances.isEmpty()) {
-            (activity as DiscoveryListener).onSelectManualSetup()
-        }
+    private fun navigateToManualSetup() {
+        parentFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, ManualSetupFragment::class.java, null)
+            .addToBackStack(null)
+            .commit()
+    }
+
+    private fun onInstanceClicked(instance: HomeAssistantInstance) {
+        viewModel.manualUrl.value = instance.url.toString()
+        parentFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, AuthenticationFragment::class.java, null)
+            .addToBackStack(null)
+            .commit()
     }
 }

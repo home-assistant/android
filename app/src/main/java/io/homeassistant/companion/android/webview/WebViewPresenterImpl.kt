@@ -111,7 +111,7 @@ class WebViewPresenterImpl @Inject constructor(
             try {
                 authenticationUseCase.revokeSession()
                 view.setExternalAuth("$callback(true)")
-                view.openOnBoarding()
+                view.relaunchApp()
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to revoke session", e)
                 view.setExternalAuth("$callback(false)")

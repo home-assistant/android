@@ -68,8 +68,8 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
-import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -461,7 +461,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     @JavascriptInterface
                     fun revokeExternalAuth(callback: String) {
                         presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
-                        openOnBoarding()
+                        relaunchApp()
                         finish()
                     }
 
@@ -979,9 +979,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun openOnBoarding() {
+    override fun relaunchApp() {
+        startActivity(Intent(this, LaunchActivity::class.java))
         finish()
-        startActivity(Intent(this, OnboardingActivity::class.java))
     }
 
     override fun onBackPressed() {
@@ -1059,7 +1059,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setMessage(commonR.string.error_auth_revoked)
             alert.setPositiveButton(android.R.string.ok) { _, _ ->
                 presenter.clearKnownUrls()
-                openOnBoarding()
+                relaunchApp()
             }
         } else if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.SSL) {
             if (description != null)

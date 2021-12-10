@@ -366,7 +366,7 @@
     <string name="security_vulnerably_view">View Bulletin</string>
     <string name="security">Security</string>
     <string name="select_entity_to_display">Select Entity to display</string>
-    <string name="select_instance">Select the instance you would\nlike to connect to:</string>
+    <string name="select_instance">Select the instance you would like to connect to:</string>
     <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the Sensor Worker notifications.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be.</string>
     <string name="sensor_description_app_inactive">Whether or not the app is currently considered inactive by the system</string>
