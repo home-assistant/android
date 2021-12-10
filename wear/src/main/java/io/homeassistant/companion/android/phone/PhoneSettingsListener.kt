@@ -12,6 +12,7 @@ import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.Favorites
@@ -24,6 +25,9 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChangedListener {
+
+    @Inject
+    lateinit var authenticationRepository: AuthenticationRepository
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
@@ -52,14 +56,24 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         dataEvents.forEach { event ->
             if (event.type == DataEvent.TYPE_CHANGED) {
                 event.dataItem.also { item ->
-                    if (item.uri.path?.compareTo("/save_home_favorites") == 0) {
-                        val data = getHomeFavorites(DataMapItem.fromDataItem(item).dataMap)
-                        Log.d(TAG, "onDataChanged: Received home favorites: $data")
-                        saveFavorites()
+                    when (item.uri.path) {
+                        "/authenticate" -> {
+                            login(DataMapItem.fromDataItem(item).dataMap)
+                        }
+                        "/save_home_favorites" -> {
+                            val data = getHomeFavorites(DataMapItem.fromDataItem(item).dataMap)
+                            Log.d(TAG, "onDataChanged: Received home favorites: $data")
+                            saveFavorites()
+                        }
+
                     }
                 }
             }
         }
+    }
+
+    private fun login(dataMap: DataMap) {
+        TODO()
     }
 
     private fun getHomeFavorites(map: DataMap): String {
@@ -82,6 +96,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
         Log.d(TAG, "new list: $jsonString")
         val putDataRequest = PutDataMapRequest.create("/home_favorites").run {
+            dataMap.putBoolean("isAuthenticated", integrationUseCase.isRegistered())
             dataMap.putString("favorites", jsonString.toString())
             setUrgent()
             asPutDataRequest()

@@ -10,7 +10,8 @@ import io.homeassistant.companion.android.settings.SettingsWearViewModel
 @Composable
 fun LoadSettingsHomeView(
     settingsWearViewModel: SettingsWearViewModel,
-    deviceName: String
+    deviceName: String,
+    loginWearOs: ()->Unit
 ) {
     MdcTheme {
         val navController = rememberNavController()
@@ -21,9 +22,12 @@ fun LoadSettingsHomeView(
                 )
             }
             composable(SettingsWearMainView.LANDING) {
-                SettingWearLandingView(deviceName) {
-                    navController.navigate(SettingsWearMainView.FAVORITES)
-                }
+                SettingWearLandingView(
+                    deviceName = deviceName,
+                    isAuthed = settingsWearViewModel.isAuthenticated.value,
+                    navigateFavorites = { navController.navigate(SettingsWearMainView.FAVORITES) },
+                    loginWearOs = loginWearOs
+                )
             }
         }
     }

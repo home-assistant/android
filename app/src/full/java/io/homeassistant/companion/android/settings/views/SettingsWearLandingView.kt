@@ -26,7 +26,9 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun SettingWearLandingView(
     deviceName: String,
-    navigateFavorites: () -> Unit
+    isAuthed: Boolean,
+    navigateFavorites: () -> Unit,
+    loginWearOs: () -> Unit
 ) {
     val context = LocalContext.current
     Scaffold(
@@ -59,13 +61,24 @@ fun SettingWearLandingView(
                 text = stringResource(id = commonR.string.manage_favorites_device, deviceName),
                 textAlign = TextAlign.Center
             )
-            Button(
-                onClick = navigateFavorites,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 10.dp, end = 10.dp)
-            ) {
-                Text(text = stringResource(commonR.string.set_favorites_on_device))
+            if(isAuthed) {
+                Button(
+                    onClick = navigateFavorites,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp, end = 10.dp)
+                ) {
+                    Text(text = stringResource(commonR.string.set_favorites_on_device))
+                }
+            } else {
+                Button(
+                    onClick = loginWearOs,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp, end = 10.dp)
+                ) {
+                    Text(text = "Login Wear OS Device")
+                }
             }
         }
     }
@@ -74,5 +87,10 @@ fun SettingWearLandingView(
 @Preview
 @Composable
 private fun PreviewSettingWearLandingView() {
-    SettingWearLandingView(wearDeviceName) {}
+    SettingWearLandingView(
+        deviceName = wearDeviceName,
+        isAuthed = true,
+        navigateFavorites = {},
+        loginWearOs = {}
+    )
 }

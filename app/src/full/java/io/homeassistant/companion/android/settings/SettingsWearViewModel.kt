@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.wearable.CapabilityClient
@@ -41,9 +42,12 @@ class SettingsWearViewModel @Inject constructor(
         private const val CAPABILITY_WEAR_FAVORITES = "send_home_favorites"
     }
 
+    var isAuthenticated = mutableStateOf(false)
+        private set
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
+        private set
 
     fun init() {
         loadEntities()
@@ -107,8 +111,10 @@ class SettingsWearViewModel @Inject constructor(
                 .addOnSuccessListener { dataItemBuffer ->
                     Log.d(TAG, "Found existing favorites: ${dataItemBuffer.count}")
                     dataItemBuffer.forEach {
-                        val data = getFavorites(DataMapItem.fromDataItem(it).dataMap)
-                        saveHomeFavorites(data)
+                        val dm = DataMapItem.fromDataItem(it).dataMap
+                        isAuthenticated.value = dm.getBoolean("isAuthenticated", false)
+                        val favorites = getFavorites(dm)
+                        saveHomeFavorites(favorites)
                     }
                     dataItemBuffer.release()
                 }
@@ -146,6 +152,27 @@ class SettingsWearViewModel @Inject constructor(
                         }
                     }
                 }
+        }
+    }
+
+    fun sendAuthToWear(
+        url: String,
+        authCode: String,
+        deviceName: String,
+        deviceTrackingEnabled: Boolean
+    ){
+        val putDataRequest = PutDataMapRequest.create("/authenticate").run {
+            dataMap.putString("URL", url)
+            dataMap.putString("AuthCode", authCode)
+            dataMap.putString("DeviceName", deviceName)
+            dataMap.putBoolean("LocationTracking", deviceTrackingEnabled)
+            setUrgent()
+            asPutDataRequest()
+        }
+
+        Wearable.getDataClient(application).putDataItem(putDataRequest).apply {
+            addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to wear") }
+            addOnFailureListener { e -> Log.e(TAG, "Failed to send favorites to wear", e) }
         }
     }
 
