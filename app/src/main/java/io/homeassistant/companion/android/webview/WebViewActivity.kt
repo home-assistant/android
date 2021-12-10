@@ -438,6 +438,16 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             addJavascriptInterface(
                 object : Any() {
+                    // TODO This feature is deprecated and should be removed after 2022.6
+                    @JavascriptInterface
+                    fun onHomeAssistantSetTheme() {
+                        // We need to launch the getAndSetStatusBarNavigationBarColors in another thread, because otherwise the evaluateJavascript inside the method
+                        // will not trigger it's callback method :/
+                        GlobalScope.launch(Dispatchers.Main) {
+                            getAndSetStatusBarNavigationBarColors()
+                        }
+                    }
+
                     @JavascriptInterface
                     fun getExternalAuth(payload: String) {
                         JSONObject(payload).let {
@@ -492,6 +502,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                     webView.evaluateJavascript(script) {
                                         Log.d(TAG, "Callback $it")
                                     }
+
+                                    // TODO This feature is deprecated and should be removed after 2022.6
+                                    getAndSetStatusBarNavigationBarColors()
+
+                                    // TODO This feature is deprecated and should be removed after 2022.6
+                                    // Set event lister for HA theme change
+                                    webView.evaluateJavascript(
+                                        "document.addEventListener('settheme', function ()" +
+                                                "{" +
+                                                "window.externalApp.onHomeAssistantSetTheme();" +
+                                                "});",
+                                        null
+                                    )
                                 }
                                 "config_screen/show" ->
                                     startActivity(
