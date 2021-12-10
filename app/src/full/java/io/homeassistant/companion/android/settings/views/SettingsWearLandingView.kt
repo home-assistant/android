@@ -61,7 +61,7 @@ fun SettingWearLandingView(
                 text = stringResource(id = commonR.string.manage_favorites_device, deviceName),
                 textAlign = TextAlign.Center
             )
-            if(isAuthed) {
+            if (isAuthed) {
                 Button(
                     onClick = navigateFavorites,
                     modifier = Modifier

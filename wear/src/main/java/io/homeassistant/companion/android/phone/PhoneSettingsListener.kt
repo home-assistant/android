@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.phone
 
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import com.google.android.gms.wearable.DataClient
@@ -12,10 +13,14 @@ import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.Favorites
+import io.homeassistant.companion.android.home.HomeActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,6 +33,9 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     @Inject
     lateinit var authenticationRepository: AuthenticationRepository
+
+    @Inject
+    lateinit var urlRepository: UrlRepository
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
@@ -65,15 +73,30 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                             Log.d(TAG, "onDataChanged: Received home favorites: $data")
                             saveFavorites()
                         }
-
                     }
                 }
             }
         }
     }
 
-    private fun login(dataMap: DataMap) {
-        TODO()
+    private fun login(dataMap: DataMap) = mainScope.launch {
+        val url = dataMap.getString("URL")
+        val authCode = dataMap.getString("AuthCode")
+        val deviceName = dataMap.getString("DeviceName")
+        val deviceTrackingEnabled = dataMap.getString("LocationTracking")
+
+        urlRepository.saveUrl(url)
+        authenticationRepository.registerAuthorizationCode(authCode)
+        integrationUseCase.registerDevice(
+            DeviceRegistration(
+                "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                deviceName
+            )
+        )
+
+        val intent = HomeActivity.newInstance(applicationContext)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
     }
 
     private fun getHomeFavorites(map: DataMap): String {

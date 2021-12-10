@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.settings.SettingsWearViewModel
 fun LoadSettingsHomeView(
     settingsWearViewModel: SettingsWearViewModel,
     deviceName: String,
-    loginWearOs: ()->Unit
+    loginWearOs: () -> Unit
 ) {
     MdcTheme {
         val navController = rememberNavController()

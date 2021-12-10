@@ -29,7 +29,6 @@ class SettingsWearMainView : AppCompatActivity() {
             this::onOnboardingComplete
         )
 
-
     companion object {
         private const val TAG = "SettingsWearDevice"
         private var currentNodes = setOf<Node>()
@@ -67,7 +66,7 @@ class SettingsWearMainView : AppCompatActivity() {
         settingsWearViewModel.stopWearListening()
     }
 
-    private fun loginWearOs(){
+    private fun loginWearOs() {
         registerActivityResult.launch(OnboardingActivity.newInstance(this))
     }
 

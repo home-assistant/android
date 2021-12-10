@@ -160,7 +160,7 @@ class SettingsWearViewModel @Inject constructor(
         authCode: String,
         deviceName: String,
         deviceTrackingEnabled: Boolean
-    ){
+    ) {
         val putDataRequest = PutDataMapRequest.create("/authenticate").run {
             dataMap.putString("URL", url)
             dataMap.putString("AuthCode", authCode)
