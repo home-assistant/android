@@ -50,6 +50,16 @@ class DiscoveryFragment @Inject constructor() : Fragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        viewModel.startSearch()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.stopSearch()
+    }
+
     private fun openHomeAssistantHomePage() {
         val intent = Intent(Intent.ACTION_VIEW)
         intent.data = Uri.parse(HOME_ASSISTANT)

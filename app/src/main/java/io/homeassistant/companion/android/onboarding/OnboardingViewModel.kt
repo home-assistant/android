@@ -25,7 +25,9 @@ class OnboardingViewModel @Inject constructor(
     private val homeAssistantSearcher = HomeAssistantSearcher(
         ContextCompat.getSystemService(app, NsdManager::class.java)!!,
         { instance ->
-            foundInstances.add(instance)
+            if(foundInstances.none { it.url == instance.url }) {
+                foundInstances.add(instance)
+            }
         },
         {
             Toast.makeText(app, R.string.failed_scan, Toast.LENGTH_LONG).show()
@@ -39,11 +41,6 @@ class OnboardingViewModel @Inject constructor(
     val deviceName = mutableStateOf(Build.MODEL)
     val locationTrackingEnabled = mutableStateOf(false)
 
-    init {
-        // start scanning for instances
-        homeAssistantSearcher.beginSearch()
-    }
-
     fun onManualUrlUpdated(url: String) {
         manualUrl.value = url
         manualContinueEnabled.value = URLUtil.isValidUrl(url)
@@ -53,8 +50,15 @@ class OnboardingViewModel @Inject constructor(
         authCode.value = code
     }
 
-    override fun onCleared() {
-        // stop scanning
+    fun startSearch(){
+        homeAssistantSearcher.beginSearch()
+    }
+
+    fun stopSearch(){
         homeAssistantSearcher.stopSearch()
+    }
+
+    override fun onCleared() {
+        stopSearch()
     }
 }
