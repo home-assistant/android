@@ -25,7 +25,7 @@ class OnboardingViewModel @Inject constructor(
     private val homeAssistantSearcher = HomeAssistantSearcher(
         ContextCompat.getSystemService(app, NsdManager::class.java)!!,
         { instance ->
-            if(foundInstances.none { it.url == instance.url }) {
+            if (foundInstances.none { it.url == instance.url }) {
                 foundInstances.add(instance)
             }
         },
@@ -50,11 +50,11 @@ class OnboardingViewModel @Inject constructor(
         authCode.value = code
     }
 
-    fun startSearch(){
+    fun startSearch() {
         homeAssistantSearcher.beginSearch()
     }
 
-    fun stopSearch(){
+    fun stopSearch() {
         homeAssistantSearcher.stopSearch()
     }
 
