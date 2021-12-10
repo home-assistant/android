@@ -438,6 +438,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             addJavascriptInterface(
                 object : Any() {
+                    // TODO This feature is deprecated and should be removed after 2022.6
                     @JavascriptInterface
                     fun onHomeAssistantSetTheme() {
                         // We need to launch the getAndSetStatusBarNavigationBarColors in another thread, because otherwise the evaluateJavascript inside the method
@@ -502,8 +503,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         Log.d(TAG, "Callback $it")
                                     }
 
+                                    // TODO This feature is deprecated and should be removed after 2022.6
                                     getAndSetStatusBarNavigationBarColors()
 
+                                    // TODO This feature is deprecated and should be removed after 2022.6
                                     // Set event lister for HA theme change
                                     webView.evaluateJavascript(
                                         "document.addEventListener('settheme', function ()" +
@@ -530,6 +533,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
                                 "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
+                                "theme-update" -> getAndSetStatusBarNavigationBarColors()
                             }
                         }
                     }
