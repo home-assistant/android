@@ -50,7 +50,7 @@ fun MobileAppIntegrationView(
 
         TextField(
             value = onboardingViewModel.deviceName.value,
-            onValueChange = { onboardingViewModel.onManualUrlUpdated(it) },
+            onValueChange = { onboardingViewModel.onDeviceNameUpdated(it) },
             modifier = Modifier.align(Alignment.CenterHorizontally),
             label = { Text(stringResource(id = commonR.string.device_name)) },
             singleLine = true,

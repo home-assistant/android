@@ -50,6 +50,10 @@ class OnboardingViewModel @Inject constructor(
         authCode.value = code
     }
 
+    fun onDeviceNameUpdated(name: String) {
+        deviceName.value = name
+    }
+
     fun startSearch() {
         homeAssistantSearcher.beginSearch()
     }
