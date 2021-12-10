@@ -34,10 +34,9 @@ class MobileAppIntegrationFragment : Fragment() {
         private const val BACKGROUND_REQUEST = 99
 
         private const val LOCATION_REQUEST_CODE = 0
-
-        private var dialog: AlertDialog? = null
     }
 
+    private var dialog: AlertDialog? = null
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
     @ExperimentalComposeUiApi
