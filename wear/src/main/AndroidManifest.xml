@@ -85,9 +85,9 @@
                 <data android:scheme="wear" android:host="*"
                     android:path="/authenticate" />
                 <data android:scheme="wear" android:host="*"
-                    android:path="/send_home_favorites" />
+                    android:path="/requestConfig" />
                 <data android:scheme="wear" android:host="*"
-                    android:path="/save_home_favorites" />
+                    android:path="/updateFavorites" />
             </intent-filter>
         </service>
     </application>
