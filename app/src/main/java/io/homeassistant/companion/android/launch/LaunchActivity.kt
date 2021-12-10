@@ -5,6 +5,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.CircularProgressIndicator
@@ -32,7 +33,7 @@ import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class LaunchActivity : BaseActivity(), LaunchView {
+class LaunchActivity : AppCompatActivity(), LaunchView {
 
     companion object {
         const val TAG = "LaunchActivity"
