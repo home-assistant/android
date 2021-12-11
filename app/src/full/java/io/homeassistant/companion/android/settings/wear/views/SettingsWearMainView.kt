@@ -54,7 +54,7 @@ class SettingsWearMainView : AppCompatActivity() {
     }
 
     private fun loginWearOs() {
-        registerActivityResult.launch(OnboardingActivity.newInstance(this))
+        registerActivityResult.launch(OnboardingActivity.newInstance(this, currentNodes.first().displayName, false))
     }
 
     private fun onOnboardingComplete(result: ActivityResult) {

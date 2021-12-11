@@ -2,8 +2,10 @@ package io.homeassistant.companion.android.onboarding
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
@@ -15,15 +17,24 @@ class OnboardingActivity : AppCompatActivity() {
     companion object {
         private const val AUTHENTICATION_FRAGMENT = "authentication_fragment"
         private const val TAG = "OnboardingActivity"
+        private const val EXTRA_DEFAULT_DEVICE_NAME = "extra_default_device_name"
+        private const val EXTRA_LOCATION_TRACKING_POSSIBLE = "location_tracking_possible"
 
-        fun newInstance(context: Context): Intent {
-            return Intent(context, OnboardingActivity::class.java)
+        fun newInstance(context: Context, defaultDeviceName: String = Build.MODEL, locationTrackingPossible: Boolean = true): Intent {
+            return Intent(context, OnboardingActivity::class.java).apply {
+                putExtra(EXTRA_DEFAULT_DEVICE_NAME, defaultDeviceName)
+                putExtra(EXTRA_LOCATION_TRACKING_POSSIBLE, locationTrackingPossible)
+            }
         }
     }
+
+    private val viewModel by viewModels<OnboardingViewModel>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
+        viewModel.deviceName.value = intent.getStringExtra(EXTRA_DEFAULT_DEVICE_NAME) ?: Build.MODEL
+        viewModel.locationTrackingPossible.value = intent.getBooleanExtra(EXTRA_LOCATION_TRACKING_POSSIBLE, false)
 
         supportFragmentManager
             .beginTransaction()
