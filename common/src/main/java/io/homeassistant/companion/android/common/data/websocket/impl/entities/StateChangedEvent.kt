@@ -6,6 +6,6 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class StateChangedEvent(
     val entityId: String,
-    val oldState: Entity<*>,
-    val newState: Entity<*>
+    val oldState: Entity<*>?,
+    val newState: Entity<*>?
 )
