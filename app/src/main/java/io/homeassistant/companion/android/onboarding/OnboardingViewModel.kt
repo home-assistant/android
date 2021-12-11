@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding
 
 import android.app.Application
 import android.net.nsd.NsdManager
-import android.os.Build
 import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
@@ -38,7 +37,8 @@ class OnboardingViewModel @Inject constructor(
     val manualUrl = mutableStateOf("")
     val manualContinueEnabled = mutableStateOf(false)
     val authCode = mutableStateOf("")
-    val deviceName = mutableStateOf(Build.MODEL)
+    val deviceName = mutableStateOf("")
+    val locationTrackingPossible = mutableStateOf(false)
     val locationTrackingEnabled = mutableStateOf(false)
 
     fun onManualUrlUpdated(url: String) {

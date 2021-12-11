@@ -244,6 +244,7 @@
     <string name="log">Log</string>
     <string name="logbook">Logbook</string>
     <string name="login">Login</string>
+    <string name="login_wear_os_device">Login Wear OS Device</string>
     <string name="logout">Logout</string>
     <string name="lovelace_view_dashboard">Lovelace View or Dashboard</string>
     <string name="lovelace">Lovelace</string>
@@ -251,7 +252,6 @@
     <string name="manage_all_notifications">Manage All Notifications</string>
     <string name="manage_all_sensors_summary">This device has %1$d available sensors to utilize.</string>
     <string name="manage_all_sensors">Manage All Sensors</string>
-    <string name="manage_favorites_device">Manage Favorites on device %1$s</string>
     <string name="manage_shortcuts_summary">Manage launcher shortcuts</string>
     <string name="manage_shortcuts">Manage Shortcuts</string>
     <string name="manage_ssids_input_exists">This SSID already exists.</string>
@@ -260,6 +260,7 @@
     <string name="manage_this_notification">Manage This Notification</string>
     <string name="manage_tiles_summary">Setup and manage Quick Setting tiles here. They will not function until you set them up here.</string>
     <string name="manage_tiles">Manage Tiles</string>
+    <string name="manage_wear_device">Manage device %1$s</string>
     <string name="manage_widgets_summary">Edit your widgets, adding/deleting can only be done from the home screen</string>
     <string name="manage_widgets">Manage Widgets</string>
     <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure the URL includes the protocol and port. For example:\n\nhttp://homeassistant.local:8123 or \nhttps://example.duckdns.org.</string>

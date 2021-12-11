@@ -61,23 +61,25 @@ fun MobileAppIntegrationView(
                 }
             )
         )
-        Row {
+        if (onboardingViewModel.locationTrackingPossible.value) {
+            Row {
+                Text(
+                    text = stringResource(commonR.string.enable_location_tracking),
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .weight(1f)
+                )
+                Switch(
+                    checked = onboardingViewModel.locationTrackingEnabled.value,
+                    onCheckedChange = onLocationTrackingChanged,
+                    colors = SwitchDefaults.colors(uncheckedThumbColor = MaterialTheme.colors.secondary)
+                )
+            }
             Text(
-                text = stringResource(commonR.string.enable_location_tracking),
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .weight(1f)
-            )
-            Switch(
-                checked = onboardingViewModel.locationTrackingEnabled.value,
-                onCheckedChange = onLocationTrackingChanged,
-                colors = SwitchDefaults.colors(uncheckedThumbColor = MaterialTheme.colors.secondary)
+                text = stringResource(id = commonR.string.enable_location_tracking_description),
+                fontWeight = FontWeight.Light
             )
         }
-        Text(
-            text = stringResource(id = commonR.string.enable_location_tracking_description),
-            fontWeight = FontWeight.Light
-        )
         TextButton(onClick = openPrivacyPolicy) {
             Text(stringResource(id = commonR.string.privacy_url))
         }
