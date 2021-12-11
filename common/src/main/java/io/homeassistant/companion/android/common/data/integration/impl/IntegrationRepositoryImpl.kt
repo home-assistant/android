@@ -26,13 +26,13 @@ import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONArray
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.Exception
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -464,16 +464,18 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getEntityUpdates(): Flow<Entity<*>> {
-        return webSocketRepository.getStateChanges().map {
-            Entity(
-                it.newState.entityId,
-                it.newState.state,
-                it.newState.attributes,
-                it.newState.lastChanged,
-                it.newState.lastUpdated,
-                it.newState.context
-            )
-        }
+        return webSocketRepository.getStateChanges()
+            .filter { it.newState != null }
+            .map {
+                Entity(
+                    it.newState!!.entityId,
+                    it.newState.state,
+                    it.newState.attributes,
+                    it.newState.lastChanged,
+                    it.newState.lastUpdated,
+                    it.newState.context
+                )
+            }
     }
 
     private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
