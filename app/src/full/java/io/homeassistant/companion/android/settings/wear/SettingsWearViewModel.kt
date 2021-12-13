@@ -77,6 +77,14 @@ class SettingsWearViewModel @Inject constructor(
                     }
                 }
             }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Failed to send config request to wear", e)
+                Toast.makeText(
+                    application,
+                    application.getString(commonR.string.failed_wear_config_request),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         viewModelScope.launch {
             integrationUseCase.getEntities().forEach {
                 entities[it.entityId] = it

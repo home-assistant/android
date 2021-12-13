@@ -47,7 +47,7 @@ class SettingsWearMainView : AppCompatActivity() {
         setContent {
             LoadSettingsHomeView(
                 settingsWearViewModel,
-                currentNodes.first().displayName,
+                if (!currentNodes.isNullOrEmpty()) currentNodes.first().displayName else "unknown",
                 this::loginWearOs
             )
         }
@@ -58,11 +58,13 @@ class SettingsWearMainView : AppCompatActivity() {
     }
 
     private fun onOnboardingComplete(result: ActivityResult) {
-        val intent = result.data!!
-        val url = intent.getStringExtra("URL").toString()
-        val authCode = intent.getStringExtra("AuthCode").toString()
-        val deviceName = intent.getStringExtra("DeviceName").toString()
-        val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
-        settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled)
+        if (result.data != null) {
+            val intent = result.data!!
+            val url = intent.getStringExtra("URL").toString()
+            val authCode = intent.getStringExtra("AuthCode").toString()
+            val deviceName = intent.getStringExtra("DeviceName").toString()
+            val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
+            settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled)
+        }
     }
 }
