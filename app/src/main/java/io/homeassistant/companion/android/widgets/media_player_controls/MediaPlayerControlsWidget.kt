@@ -220,8 +220,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
                 if (icon != null && icon.startsWith("mdi")) {
                     val iconName = icon.split(":")[1]
-                    val iconColor = ContextCompat.getColor(context, R.color.colorIcon);
-                    val iconDrawable: Bitmap = IconicsDrawable(context, "cmd-$iconName").apply { colorInt =  iconColor}.toBitmap()
+                    val iconDrawable: Bitmap = IconicsDrawable(context, "cmd-$iconName").toBitmap()
                     setImageViewBitmap(
                         R.id.widgetSourceIcon,
                         iconDrawable

@@ -56,7 +56,7 @@
                 android:layout_alignParentEnd="true"
                 android:padding="8dp"
                 android:visibility="invisible"
-                app:tint="@color/colorWidgetButtonLabel"
+                android:tint="@color/colorWidgetButtonLabel"
                 android:src="@drawable/app_icon_round" />
 
             <LinearLayout
@@ -116,7 +116,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="32dp"
                 android:layout_alignParentBottom="true"
-                android:background="@android:color/white"
                 android:orientation="horizontal">
 
                 <ImageButton
@@ -129,7 +128,7 @@
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_prev_track"
-                    app:tint="@color/colorIcon" />
+                    android:tint="@color/colorIcon" />
 
                 <ImageButton
                     android:id="@+id/widgetRewindButton"
@@ -141,7 +140,7 @@
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_rewind"
-                    app:tint="@color/colorIcon" />
+                    android:tint="@color/colorIcon" />
 
                 <ImageButton
                     android:id="@+id/widgetPlayPauseButton"
@@ -153,7 +152,7 @@
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_playpause"
-                    app:tint="@color/colorIcon" />
+                    android:tint="@color/colorIcon" />
 
                 <ImageButton
                     android:id="@+id/widgetFastForwardButton"
@@ -165,7 +164,7 @@
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_fastforward"
-                    app:tint="@color/colorIcon" />
+                    android:tint="@color/colorIcon" />
 
                 <ImageButton
                     android:id="@+id/widgetNextTrackButton"
@@ -177,7 +176,7 @@
                     android:padding="4dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_next_track"
-                    app:tint="@color/colorIcon" />
+                    android:tint="@color/colorIcon" />
             </LinearLayout>
         </RelativeLayout>
     </LinearLayout>
