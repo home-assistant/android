@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.widgets.media_player_controls
 
-import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -15,28 +13,29 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import com.mikepenz.iconics.IconicsDrawable
-import com.mikepenz.iconics.utils.colorInt
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class MediaPlayerControlsWidget : AppWidgetProvider() {
+class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
     companion object {
         private const val TAG = "MediaPlayCtrlsWidget"
@@ -63,14 +62,11 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     }
 
     @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
-    @Inject
     lateinit var urlUseCase: UrlRepository
 
     lateinit var mediaPlayCtrlWidgetDao: MediaPlayerControlsWidgetDao
 
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private var entityUpdates: Flow<Entity<*>>? = null
 
     override fun onUpdate(
         context: Context,
@@ -104,18 +100,14 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
     }
 
     private fun updateAllWidgets(
-        context: Context,
-        mediaPlayerWidgetList: Array<MediaPlayerControlsWidgetEntity>?
+        context: Context
     ) {
-        if (mediaPlayerWidgetList != null) {
-            Log.d(TAG, "Updating all widgets")
-            for (item in mediaPlayerWidgetList) {
-                updateAppWidget(context, item.id)
-            }
+        getAllWidgetIds(context).forEach {
+            updateAppWidget(context, it)
         }
     }
 
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
         val updateMediaIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
             action = UPDATE_MEDIA_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -159,7 +151,6 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         R.id.widgetPlayPauseButton,
                         R.drawable.ic_pause
                     )
-                    scheduleNextMediaUpdate(context, widget.id, entityId)
                 } else {
                     setImageViewResource(
                         R.id.widgetPlayPauseButton,
@@ -170,7 +161,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 var artist = retrieveMediaPlayerArtist(context, entityId)
                 val title = retrieveMediaPlayerTitle(context, entityId)
                 val album = retrieveMediaPlayerAlbum(context, entityId)
-                val icon = retrieveIcon(context, entityId);
+                val icon = retrieveIcon(context, entityId)
 
                 if (artist != null && title != null) {
                     if (album != null) {
@@ -361,31 +352,8 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun scheduleNextMediaUpdate(context: Context, appWidgetId: Int, entityId: String) {
-        Log.d(TAG, "Media Source currently playing, scheduling next update")
-        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val updateMediaIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
-            action = UPDATE_MEDIA_IMAGE
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-        }
-        val pendingUpdateMediaIntent: PendingIntent = PendingIntent.getBroadcast(
-            context, 0, updateMediaIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        val nextUpdate: Number
-        val mediaPlayerEntity = integrationUseCase.getEntity(entityId)
-        var mediaFinishedIn = 30
-        if (mediaPlayerEntity.attributes["media_duration"] != null && mediaPlayerEntity.attributes["media_position"] != null) {
-            mediaFinishedIn =
-                (mediaPlayerEntity.attributes["media_duration"] as Double).minus(mediaPlayerEntity.attributes["media_position"] as Double)
-                    .toInt()
-        }
-        if (mediaFinishedIn < 30) {
-            nextUpdate = mediaFinishedIn * 1000
-        } else {
-            nextUpdate = 30000
-        }
-        am.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis().plus(nextUpdate), pendingUpdateMediaIntent)
+    override fun getAllWidgetIds(context: Context): List<Int> {
+        return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll()?.map { it.id }.orEmpty()
     }
 
     private suspend fun retrieveMediaPlayerImageUrl(context: Context, entityId: String): String? {
@@ -488,18 +456,22 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
         super.onReceive(context, intent)
         when (lastIntent) {
-            RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
+            RECEIVE_DATA -> {
+                saveEntityConfiguration(context, intent.extras, appWidgetId)
+                onScreenOn(context)
+            }
             UPDATE_MEDIA_IMAGE -> updateAppWidget(context, appWidgetId)
             CALL_PREV_TRACK -> callPreviousTrackService(appWidgetId)
             CALL_REWIND -> callRewindService(context, appWidgetId)
             CALL_PLAYPAUSE -> callPlayPauseService(appWidgetId)
             CALL_FASTFORWARD -> callFastForwardService(context, appWidgetId)
             CALL_NEXT_TRACK -> callNextTrackService(appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, mediaPlayerWidgetList)
+            Intent.ACTION_SCREEN_ON -> onScreenOn(context)
+            Intent.ACTION_SCREEN_OFF -> onScreenOff()
         }
     }
 
-    private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
+    override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
@@ -530,6 +502,27 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
+    }
+
+    private fun onScreenOn(context: Context) {
+        mainScope = CoroutineScope(Dispatchers.Main + Job())
+        if (entityUpdates == null) {
+            mainScope.launch {
+                if (!integrationUseCase.isRegistered()) {
+                    return@launch
+                }
+                updateAllWidgets(context)
+                entityUpdates = integrationUseCase.getEntityUpdates()
+                entityUpdates!!.collect {
+                    updateAllWidgets(context)
+                }
+            }
+        }
+    }
+
+    private fun onScreenOff() {
+        mainScope.cancel()
+        entityUpdates = null
     }
 
     private fun callPreviousTrackService(appWidgetId: Int) {
