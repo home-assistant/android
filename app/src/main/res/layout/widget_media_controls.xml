@@ -48,6 +48,17 @@
             android:minHeight="32sp"
             android:orientation="vertical">
 
+            <ImageView
+                android:id="@+id/widgetSourceIcon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:padding="8dp"
+                android:visibility="invisible"
+                app:tint="@color/colorWidgetButtonLabel"
+                android:src="@drawable/app_icon_round" />
+
             <LinearLayout
                 android:id="@+id/widgetMediaInfolayout"
                 android:layout_width="match_parent"

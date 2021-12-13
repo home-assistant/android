@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
@@ -14,6 +15,9 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.core.content.ContextCompat
+import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.utils.colorInt
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
@@ -166,6 +170,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                 var artist = retrieveMediaPlayerArtist(context, entityId)
                 val title = retrieveMediaPlayerTitle(context, entityId)
                 val album = retrieveMediaPlayerAlbum(context, entityId)
+                val icon = retrieveIcon(context, entityId);
 
                 if (artist != null && title != null) {
                     if (album != null) {
@@ -210,6 +215,25 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                     setViewVisibility(
                         R.id.widgetLabel,
                         View.VISIBLE
+                    )
+                }
+
+                if (icon != null && icon.startsWith("mdi")) {
+                    val iconName = icon.split(":")[1]
+                    val iconColor = ContextCompat.getColor(context, R.color.colorIcon);
+                    val iconDrawable: Bitmap = IconicsDrawable(context, "cmd-$iconName").apply { colorInt =  iconColor}.toBitmap()
+                    setImageViewBitmap(
+                        R.id.widgetSourceIcon,
+                        iconDrawable
+                    )
+                    setViewVisibility(
+                        R.id.widgetSourceIcon,
+                        View.VISIBLE
+                    )
+                } else {
+                    setViewVisibility(
+                        R.id.widgetSourceIcon,
+                        View.INVISIBLE
                     )
                 }
 
@@ -369,7 +393,6 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val entity: Entity<Map<String, Any>>
         try {
             entity = integrationUseCase.getEntity(entityId)
-            Log.e("ENTITY_LOG", entity.toString())
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE)
@@ -384,7 +407,6 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val entity: Entity<Map<String, Any>>
         try {
             entity = integrationUseCase.getEntity(entityId)
-            Log.e("ENTITY_LOG", entity.toString())
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE)
@@ -399,7 +421,6 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val entity: Entity<Map<String, Any>>
         try {
             entity = integrationUseCase.getEntity(entityId)
-            Log.e("ENTITY_LOG", entity.toString())
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE)
@@ -414,7 +435,6 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val entity: Entity<Map<String, Any>>
         try {
             entity = integrationUseCase.getEntity(entityId)
-            Log.e("ENTITY_LOG", entity.toString())
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE)
@@ -429,7 +449,6 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         val entity: Entity<Map<String, Any>>
         try {
             entity = integrationUseCase.getEntity(entityId)
-            Log.e("ENTITY_LOG", entity.toString())
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE)
@@ -438,6 +457,20 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
 
         return entity.attributes["media_album_name"]?.toString()
+    }
+
+    private suspend fun retrieveIcon(context: Context, entityId: String): String? {
+        val entity: Entity<Map<String, Any>>
+        try {
+            entity = integrationUseCase.getEntity(entityId)
+        } catch (e: Exception) {
+            Log.d(TAG, "Failed to fetch entity or entity does not exist")
+            if (lastIntent == UPDATE_MEDIA_IMAGE)
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+            return null
+        }
+
+        return entity.attributes["icon"]?.toString()
     }
 
     override fun onReceive(context: Context, intent: Intent) {
