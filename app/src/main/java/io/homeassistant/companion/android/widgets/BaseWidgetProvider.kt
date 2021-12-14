@@ -67,7 +67,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun onScreenOn(context: Context) {
+    fun onScreenOn(context: Context) {
         mainScope = CoroutineScope(Dispatchers.Main + Job())
         if (entityUpdates == null) {
             mainScope.launch {

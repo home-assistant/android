@@ -24,12 +24,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
@@ -58,15 +52,12 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_SHOW_SKIP = "EXTRA_INCLUDE_SKIP"
         internal const val EXTRA_SHOW_SEEK = "EXTRA_INCLUDE_SEEK"
-        private var lastIntent = ""
     }
 
     @Inject
     lateinit var urlUseCase: UrlRepository
 
     lateinit var mediaPlayCtrlWidgetDao: MediaPlayerControlsWidgetDao
-
-    private var entityUpdates: Flow<Entity<*>>? = null
 
     override fun onUpdate(
         context: Context,
@@ -76,7 +67,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
-            updateAppWidget(
+            updateView(
                 context,
                 appWidgetId,
                 appWidgetManager
@@ -84,7 +75,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    private fun updateAppWidget(
+    private fun updateView(
         context: Context,
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
@@ -96,14 +87,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         mainScope.launch {
             val views = getWidgetRemoteViews(context, appWidgetId)
             appWidgetManager.updateAppWidget(appWidgetId, views)
-        }
-    }
-
-    private fun updateAllWidgets(
-        context: Context
-    ) {
-        getAllWidgetIds(context).forEach {
-            updateAppWidget(context, it)
         }
     }
 
@@ -145,8 +128,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 var label: String? = widget.label
                 val showSkip: Boolean = widget.showSkip
                 val showSeek: Boolean = widget.showSeek
+                val entity = getEntity(context, widget.entityId)
 
-                if (isMediaPlayerPlaying(context, entityId) == true) {
+                if (entity?.state.equals("playing")) {
                     setImageViewResource(
                         R.id.widgetPlayPauseButton,
                         R.drawable.ic_pause
@@ -158,10 +142,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 }
 
-                var artist = retrieveMediaPlayerArtist(context, entityId)
-                val title = retrieveMediaPlayerTitle(context, entityId)
-                val album = retrieveMediaPlayerAlbum(context, entityId)
-                val icon = retrieveIcon(context, entityId)
+                var artist = entity?.attributes?.get("media_artist")?.toString()
+                val title = entity?.attributes?.get("media_title")?.toString()
+                val album = entity?.attributes?.get("media_album_name")?.toString()
+                val icon = entity?.attributes?.get("icon")?.toString()
 
                 if (artist != null && title != null) {
                     if (album != null) {
@@ -173,7 +157,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                     setTextViewText(
                         R.id.widgetMediaInfoTitle,
-                        retrieveMediaPlayerTitle(context, entityId)
+                        title
                     )
                     setViewVisibility(
                         R.id.widgetMediaInfoTitle,
@@ -227,7 +211,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 }
 
-                val entityPictureUrl = retrieveMediaPlayerImageUrl(context, entityId)
+                val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
                 val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
                 val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
@@ -356,7 +340,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll()?.map { it.id }.orEmpty()
     }
 
-    private suspend fun retrieveMediaPlayerImageUrl(context: Context, entityId: String): String? {
+    private suspend fun getEntity(context: Context, entityId: String): Entity<Map<String, Any>>? {
         val entity: Entity<Map<String, Any>>
         try {
             entity = integrationUseCase.getEntity(entityId)
@@ -367,77 +351,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             return null
         }
 
-        return entity.attributes["entity_picture"]?.toString()
-    }
-
-    private suspend fun isMediaPlayerPlaying(context: Context, entityId: String): Boolean? {
-        val entity: Entity<Map<String, Any>>
-        try {
-            entity = integrationUseCase.getEntity(entityId)
-        } catch (e: Exception) {
-            Log.d(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent == UPDATE_MEDIA_IMAGE)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
-            return null
-        }
-
-        return entity.state.equals("playing")
-    }
-
-    private suspend fun retrieveMediaPlayerArtist(context: Context, entityId: String): String? {
-        val entity: Entity<Map<String, Any>>
-        try {
-            entity = integrationUseCase.getEntity(entityId)
-        } catch (e: Exception) {
-            Log.d(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent == UPDATE_MEDIA_IMAGE)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
-            return null
-        }
-
-        return entity.attributes["media_artist"]?.toString()
-    }
-
-    private suspend fun retrieveMediaPlayerTitle(context: Context, entityId: String): String? {
-        val entity: Entity<Map<String, Any>>
-        try {
-            entity = integrationUseCase.getEntity(entityId)
-        } catch (e: Exception) {
-            Log.d(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent == UPDATE_MEDIA_IMAGE)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
-            return null
-        }
-
-        return entity.attributes["media_title"]?.toString()
-    }
-
-    private suspend fun retrieveMediaPlayerAlbum(context: Context, entityId: String): String? {
-        val entity: Entity<Map<String, Any>>
-        try {
-            entity = integrationUseCase.getEntity(entityId)
-        } catch (e: Exception) {
-            Log.d(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent == UPDATE_MEDIA_IMAGE)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
-            return null
-        }
-
-        return entity.attributes["media_album_name"]?.toString()
-    }
-
-    private suspend fun retrieveIcon(context: Context, entityId: String): String? {
-        val entity: Entity<Map<String, Any>>
-        try {
-            entity = integrationUseCase.getEntity(entityId)
-        } catch (e: Exception) {
-            Log.d(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent == UPDATE_MEDIA_IMAGE)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
-            return null
-        }
-
-        return entity.attributes["icon"]?.toString()
+        return entity
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -452,22 +366,23 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         )
 
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
-        val mediaPlayerWidgetList = mediaPlayCtrlWidgetDao.getAll()
 
         super.onReceive(context, intent)
         when (lastIntent) {
+            UPDATE_VIEW -> updateView(
+                context,
+                appWidgetId
+            )
             RECEIVE_DATA -> {
                 saveEntityConfiguration(context, intent.extras, appWidgetId)
-                onScreenOn(context)
+                super.onScreenOn(context)
             }
-            UPDATE_MEDIA_IMAGE -> updateAppWidget(context, appWidgetId)
+            UPDATE_MEDIA_IMAGE -> updateView(context, appWidgetId)
             CALL_PREV_TRACK -> callPreviousTrackService(appWidgetId)
             CALL_REWIND -> callRewindService(context, appWidgetId)
             CALL_PLAYPAUSE -> callPlayPauseService(appWidgetId)
             CALL_FASTFORWARD -> callFastForwardService(context, appWidgetId)
             CALL_NEXT_TRACK -> callNextTrackService(appWidgetId)
-            Intent.ACTION_SCREEN_ON -> onScreenOn(context)
-            Intent.ACTION_SCREEN_OFF -> onScreenOff()
         }
     }
 
@@ -502,27 +417,6 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
         }
-    }
-
-    private fun onScreenOn(context: Context) {
-        mainScope = CoroutineScope(Dispatchers.Main + Job())
-        if (entityUpdates == null) {
-            mainScope.launch {
-                if (!integrationUseCase.isRegistered()) {
-                    return@launch
-                }
-                updateAllWidgets(context)
-                entityUpdates = integrationUseCase.getEntityUpdates()
-                entityUpdates!!.collect {
-                    updateAllWidgets(context)
-                }
-            }
-        }
-    }
-
-    private fun onScreenOff() {
-        mainScope.cancel()
-        entityUpdates = null
     }
 
     private fun callPreviousTrackService(appWidgetId: Int) {
