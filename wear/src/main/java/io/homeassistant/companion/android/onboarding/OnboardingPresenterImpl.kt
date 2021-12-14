@@ -51,6 +51,7 @@ class OnboardingPresenterImpl @Inject constructor(
                 }
             }
         }
+        dataEvents.release()
     }
 
     override fun getInstance(map: DataMap): HomeAssistantInstance {

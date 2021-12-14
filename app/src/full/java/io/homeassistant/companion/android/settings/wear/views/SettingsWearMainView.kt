@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.settings.wear.views
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,22 +48,25 @@ class SettingsWearMainView : AppCompatActivity() {
         setContent {
             LoadSettingsHomeView(
                 settingsWearViewModel,
-                currentNodes.first().displayName,
+                currentNodes.firstOrNull()?.displayName ?: "unknown",
                 this::loginWearOs
             )
         }
     }
 
     private fun loginWearOs() {
-        registerActivityResult.launch(OnboardingActivity.newInstance(this, currentNodes.first().displayName, false))
+        registerActivityResult.launch(OnboardingActivity.newInstance(this, currentNodes.firstOrNull()?.displayName ?: "unknown", false))
     }
 
     private fun onOnboardingComplete(result: ActivityResult) {
-        val intent = result.data!!
-        val url = intent.getStringExtra("URL").toString()
-        val authCode = intent.getStringExtra("AuthCode").toString()
-        val deviceName = intent.getStringExtra("DeviceName").toString()
-        val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
-        settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled)
+        if (result.data != null) {
+            val intent = result.data!!
+            val url = intent.getStringExtra("URL").toString()
+            val authCode = intent.getStringExtra("AuthCode").toString()
+            val deviceName = intent.getStringExtra("DeviceName").toString()
+            val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
+            settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled)
+        } else
+            Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
     }
 }
