@@ -14,9 +14,9 @@ import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.RegistryArea
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -29,7 +29,8 @@ class LightControl {
 
         override fun createControl(
             context: Context,
-            entity: Entity<Map<String, Any>>
+            entity: Entity<Map<String, Any>>,
+            registryArea: RegistryArea?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -57,6 +58,9 @@ class LightControl {
                     else -> context.getString(commonR.string.state_unknown)
                 }
             )
+            if (registryArea != null) {
+                control.setSubtitle(registryArea.name)
+            }
             val minValue = 0f
             val maxValue = 100f
             var currentValue = (entity.attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100) ?: 0f

@@ -48,6 +48,10 @@ interface IntegrationRepository {
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>
     suspend fun getEntityUpdates(): Flow<Entity<*>>
 
+    suspend fun getRegistryEntities(): List<RegistryEntity>
+    suspend fun getRegistryDevices(): List<RegistryDevice>
+    suspend fun getRegistryAreas(): List<RegistryArea>
+
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 
     suspend fun scanTag(data: HashMap<String, Any>)

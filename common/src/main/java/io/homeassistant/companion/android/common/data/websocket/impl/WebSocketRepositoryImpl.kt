@@ -9,6 +9,9 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RegistryAreaResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RegistryDeviceResponse
+import io.homeassistant.companion.android.common.data.integration.impl.entities.RegistryEntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
@@ -99,6 +102,45 @@ class WebSocketRepositoryImpl @Inject constructor(
         return mapper.convertValue(
             socketResponse.result!!,
             object : TypeReference<List<EntityResponse<Any>>>() {}
+        )
+    }
+
+    override suspend fun getRegistryEntities(): List<RegistryEntityResponse> {
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "config/entity_registry/list"
+            )
+        )
+
+        return mapper.convertValue(
+            socketResponse.result!!,
+            object : TypeReference<List<RegistryEntityResponse>>() {}
+        )
+    }
+
+    override suspend fun getRegistryDevices(): List<RegistryDeviceResponse> {
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "config/device_registry/list"
+            )
+        )
+
+        return mapper.convertValue(
+            socketResponse.result!!,
+            object : TypeReference<List<RegistryDeviceResponse>>() {}
+        )
+    }
+
+    override suspend fun getRegistryAreas(): List<RegistryAreaResponse> {
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "config/area_registry/list"
+            )
+        )
+
+        return mapper.convertValue(
+            socketResponse.result!!,
+            object : TypeReference<List<RegistryAreaResponse>>() {}
         )
     }
 

@@ -8,6 +8,9 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.RegistryArea
+import io.homeassistant.companion.android.common.data.integration.RegistryDevice
+import io.homeassistant.companion.android.common.data.integration.RegistryEntity
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
@@ -476,6 +479,50 @@ class IntegrationRepositoryImpl @Inject constructor(
                     it.newState.context
                 )
             }
+    }
+
+    override suspend fun getRegistryEntities(): List<RegistryEntity> {
+        val response = webSocketRepository.getRegistryEntities()
+
+        return response
+            .map {
+                RegistryEntity(
+                    it.entityId,
+                    it.deviceId,
+                    it.areaId
+                )
+            }
+            .sortedBy { it.entityId }
+            .toList()
+    }
+
+    override suspend fun getRegistryDevices(): List<RegistryDevice> {
+        val response = webSocketRepository.getRegistryDevices()
+
+        return response
+            .map {
+                RegistryDevice(
+                    it.id,
+                    it.name,
+                    it.areaId
+                )
+            }
+            .sortedBy { it.id }
+            .toList()
+    }
+
+    override suspend fun getRegistryAreas(): List<RegistryArea> {
+        val response = webSocketRepository.getRegistryAreas()
+
+        return response
+            .map {
+                RegistryArea(
+                    it.areaId,
+                    it.name
+                )
+            }
+            .sortedBy { it.name }
+            .toList()
     }
 
     private suspend fun canRegisterEntityCategoryStateClass(): Boolean {

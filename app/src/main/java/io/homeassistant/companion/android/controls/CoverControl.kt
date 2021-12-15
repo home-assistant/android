@@ -14,9 +14,9 @@ import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.RegistryArea
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -27,7 +27,8 @@ class CoverControl {
         const val SUPPORT_SET_POSITION = 4
         override fun createControl(
             context: Context,
-            entity: Entity<Map<String, Any>>
+            entity: Entity<Map<String, Any>>,
+            registryArea: RegistryArea?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -41,6 +42,9 @@ class CoverControl {
             control.setTitle(
                 (entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence
             )
+            if (registryArea != null) {
+                control.setSubtitle(registryArea.name)
+            }
             control.setDeviceType(
                 when (entity.attributes["device_class"]) {
                     "awning" -> DeviceTypes.TYPE_AWNING

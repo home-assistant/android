@@ -10,9 +10,9 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
 import android.service.controls.templates.RangeTemplate
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.RegistryArea
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -23,7 +23,8 @@ class ClimateControl {
 
         override fun createControl(
             context: Context,
-            entity: Entity<Map<String, Any>>
+            entity: Entity<Map<String, Any>>,
+            registryArea: RegistryArea?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -35,6 +36,9 @@ class ClimateControl {
                 )
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
+            if (registryArea != null) {
+                control.setSubtitle(registryArea.name)
+            }
             control.setDeviceType(DeviceTypes.TYPE_AC_HEATER)
             control.setZone(context.getString(commonR.string.domain_climate))
             control.setStatus(Control.STATUS_OK)

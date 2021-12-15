@@ -9,6 +9,9 @@ import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.RegistryArea
+import io.homeassistant.companion.android.common.data.integration.RegistryDevice
+import io.homeassistant.companion.android.common.data.integration.RegistryEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -53,13 +56,18 @@ class HaControlsProviderService : ControlsProviderService() {
         return Flow.Publisher { subscriber ->
             ioScope.launch {
                 try {
+                    val registryEntities = integrationRepository.getRegistryEntities()
+                    val registryDevices = integrationRepository.getRegistryDevices()
+                    val registryAreas = integrationRepository.getRegistryAreas()
+
                     integrationRepository
                         .getEntities()
                         .mapNotNull {
                             val domain = it.entityId.split(".")[0]
                             domainToHaControl[domain]?.createControl(
                                 applicationContext,
-                                it as Entity<Map<String, Any>>
+                                it as Entity<Map<String, Any>>,
+                                getAreaForEntity(it.entityId, registryEntities, registryDevices, registryAreas)
                             )
                         }
                         .forEach {
@@ -85,12 +93,16 @@ class HaControlsProviderService : ControlsProviderService() {
                         // Load up initial values
                         // This should use the cached values that we should store in the DB.
                         // For now we'll use the rest API
+                        val registryEntities = integrationRepository.getRegistryEntities()
+                        val registryDevices = integrationRepository.getRegistryDevices()
+                        val registryAreas = integrationRepository.getRegistryAreas()
                         controlIds.forEach {
                             val entity = integrationRepository.getEntity(it)
                             val domain = it.split(".")[0]
                             val control = domainToHaControl[domain]?.createControl(
                                 applicationContext,
-                                entity
+                                entity,
+                                getAreaForEntity(it, registryEntities, registryDevices, registryAreas)
                             )
                             subscriber.onNext(control)
                         }
@@ -101,7 +113,8 @@ class HaControlsProviderService : ControlsProviderService() {
                                 val domain = it.entityId.split(".")[0]
                                 val control = domainToHaControl[domain]?.createControl(
                                     applicationContext,
-                                    it as Entity<Map<String, Any>>
+                                    it as Entity<Map<String, Any>>,
+                                    getAreaForEntity(it.entityId, registryEntities, registryDevices, registryAreas)
                                 )
                                 subscriber.onNext(control)
                             }
@@ -139,5 +152,25 @@ class HaControlsProviderService : ControlsProviderService() {
         } else {
             consumer.accept(ControlAction.RESPONSE_UNKNOWN)
         }
+    }
+
+    private fun getAreaForEntity(
+        entityId: String,
+        entityRegistry: List<RegistryEntity>,
+        deviceRegistry: List<RegistryDevice>,
+        areaRegistry: List<RegistryArea>
+    ): RegistryArea? {
+        val rEntity = entityRegistry.firstOrNull { it.entityId == entityId }
+        if (rEntity != null) {
+            if (rEntity.areaId != null) {
+                return areaRegistry.firstOrNull { it.areaId == rEntity.entityId }
+            } else if (rEntity.deviceId != null) {
+                val rDevice = deviceRegistry.firstOrNull { it.id == rEntity.deviceId }
+                if (rDevice != null) {
+                    return areaRegistry.firstOrNull { it.areaId == rDevice.areaId }
+                }
+            }
+        }
+        return null
     }
 }
