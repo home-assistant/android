@@ -42,9 +42,7 @@ class CoverControl {
             control.setTitle(
                 (entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence
             )
-            if (area != null) {
-                control.setSubtitle(area.name)
-            }
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(
                 when (entity.attributes["device_class"]) {
                     "awning" -> DeviceTypes.TYPE_AWNING

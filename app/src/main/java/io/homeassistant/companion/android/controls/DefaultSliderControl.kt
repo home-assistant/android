@@ -35,9 +35,7 @@ class DefaultSliderControl {
                 )
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
-            if (area != null) {
-                control.setSubtitle(area.name)
-            }
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_UNKNOWN)
             control.setZone(context.getString(commonR.string.domain_input_number))
             control.setStatus(Control.STATUS_OK)

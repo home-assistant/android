@@ -36,9 +36,7 @@ class DefaultSwitchControl {
                 )
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
-            if (area != null) {
-                control.setSubtitle(area.name)
-            }
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(
                 when (entity.entityId.split(".")[0]) {
                     "switch" -> DeviceTypes.TYPE_SWITCH

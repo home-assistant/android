@@ -47,6 +47,7 @@ class LightControl {
             val supportedColorModes = entity.attributes["supported_color_modes"] as? List<String>
             val supportsBrightness = if (supportedColorModes == null) false else (supportedColorModes - NO_BRIGHTNESS_SUPPORT).isNotEmpty()
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
             control.setZone(context.getString(commonR.string.domain_light))
             control.setStatus(Control.STATUS_OK)
@@ -58,9 +59,6 @@ class LightControl {
                     else -> context.getString(commonR.string.state_unknown)
                 }
             )
-            if (area != null) {
-                control.setSubtitle(area.name)
-            }
             val minValue = 0f
             val maxValue = 100f
             var currentValue = (entity.attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100) ?: 0f

@@ -40,9 +40,7 @@ class VacuumControl {
                 )
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
-            if (area != null) {
-                control.setSubtitle(area.name)
-            }
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_VACUUM)
             control.setZone(context.getString(commonR.string.domain_vacuum))
             control.setStatus(Control.STATUS_OK)
