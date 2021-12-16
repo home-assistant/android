@@ -9,13 +9,13 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
-import io.homeassistant.companion.android.common.data.integration.impl.entities.RegistryAreaResponse
-import io.homeassistant.companion.android.common.data.integration.impl.entities.RegistryDeviceResponse
-import io.homeassistant.companion.android.common.data.integration.impl.entities.RegistryEntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
@@ -105,33 +105,7 @@ class WebSocketRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getRegistryEntities(): List<RegistryEntityResponse> {
-        val socketResponse = sendMessage(
-            mapOf(
-                "type" to "config/entity_registry/list"
-            )
-        )
-
-        return mapper.convertValue(
-            socketResponse.result!!,
-            object : TypeReference<List<RegistryEntityResponse>>() {}
-        )
-    }
-
-    override suspend fun getRegistryDevices(): List<RegistryDeviceResponse> {
-        val socketResponse = sendMessage(
-            mapOf(
-                "type" to "config/device_registry/list"
-            )
-        )
-
-        return mapper.convertValue(
-            socketResponse.result!!,
-            object : TypeReference<List<RegistryDeviceResponse>>() {}
-        )
-    }
-
-    override suspend fun getRegistryAreas(): List<RegistryAreaResponse> {
+    override suspend fun getAreaRegistry(): List<AreaRegistryResponse> {
         val socketResponse = sendMessage(
             mapOf(
                 "type" to "config/area_registry/list"
@@ -140,7 +114,33 @@ class WebSocketRepositoryImpl @Inject constructor(
 
         return mapper.convertValue(
             socketResponse.result!!,
-            object : TypeReference<List<RegistryAreaResponse>>() {}
+            object : TypeReference<List<AreaRegistryResponse>>() {}
+        )
+    }
+
+    override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse> {
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "config/device_registry/list"
+            )
+        )
+
+        return mapper.convertValue(
+            socketResponse.result!!,
+            object : TypeReference<List<DeviceRegistryResponse>>() {}
+        )
+    }
+
+    override suspend fun getEntityRegistry(): List<EntityRegistryResponse> {
+        val socketResponse = sendMessage(
+            mapOf(
+                "type" to "config/entity_registry/list"
+            )
+        )
+
+        return mapper.convertValue(
+            socketResponse.result!!,
+            object : TypeReference<List<EntityRegistryResponse>>() {}
         )
     }
 

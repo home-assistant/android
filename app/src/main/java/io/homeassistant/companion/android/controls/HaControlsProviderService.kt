@@ -9,9 +9,9 @@ import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.RegistryArea
-import io.homeassistant.companion.android.common.data.integration.RegistryDevice
-import io.homeassistant.companion.android.common.data.integration.RegistryEntity
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -56,9 +56,9 @@ class HaControlsProviderService : ControlsProviderService() {
         return Flow.Publisher { subscriber ->
             ioScope.launch {
                 try {
-                    val registryEntities = integrationRepository.getRegistryEntities()
-                    val registryDevices = integrationRepository.getRegistryDevices()
-                    val registryAreas = integrationRepository.getRegistryAreas()
+                    val areaRegistry = integrationRepository.getAreaRegistry()
+                    val deviceRegistry = integrationRepository.getDeviceRegistry()
+                    val entityRegistry = integrationRepository.getEntityRegistry()
 
                     integrationRepository
                         .getEntities()
@@ -67,7 +67,7 @@ class HaControlsProviderService : ControlsProviderService() {
                             domainToHaControl[domain]?.createControl(
                                 applicationContext,
                                 it as Entity<Map<String, Any>>,
-                                getAreaForEntity(it.entityId, registryEntities, registryDevices, registryAreas)
+                                getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
                             )
                         }
                         .forEach {
@@ -93,16 +93,16 @@ class HaControlsProviderService : ControlsProviderService() {
                         // Load up initial values
                         // This should use the cached values that we should store in the DB.
                         // For now we'll use the rest API
-                        val registryEntities = integrationRepository.getRegistryEntities()
-                        val registryDevices = integrationRepository.getRegistryDevices()
-                        val registryAreas = integrationRepository.getRegistryAreas()
+                        val areaRegistry = integrationRepository.getAreaRegistry()
+                        val deviceRegistry = integrationRepository.getDeviceRegistry()
+                        val entityRegistry = integrationRepository.getEntityRegistry()
                         controlIds.forEach {
                             val entity = integrationRepository.getEntity(it)
                             val domain = it.split(".")[0]
                             val control = domainToHaControl[domain]?.createControl(
                                 applicationContext,
                                 entity,
-                                getAreaForEntity(it, registryEntities, registryDevices, registryAreas)
+                                getAreaForEntity(it, areaRegistry, deviceRegistry, entityRegistry)
                             )
                             subscriber.onNext(control)
                         }
@@ -114,7 +114,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                 val control = domainToHaControl[domain]?.createControl(
                                     applicationContext,
                                     it as Entity<Map<String, Any>>,
-                                    getAreaForEntity(it.entityId, registryEntities, registryDevices, registryAreas)
+                                    getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
                                 )
                                 subscriber.onNext(control)
                             }
@@ -156,10 +156,10 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private fun getAreaForEntity(
         entityId: String,
-        entityRegistry: List<RegistryEntity>,
-        deviceRegistry: List<RegistryDevice>,
-        areaRegistry: List<RegistryArea>
-    ): RegistryArea? {
+        areaRegistry: List<AreaRegistryResponse>,
+        deviceRegistry: List<DeviceRegistryResponse>,
+        entityRegistry: List<EntityRegistryResponse>
+    ): AreaRegistryResponse? {
         val rEntity = entityRegistry.firstOrNull { it.entityId == entityId }
         if (rEntity != null) {
             if (rEntity.areaId != null) {

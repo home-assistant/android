@@ -11,7 +11,7 @@ import android.service.controls.templates.StatelessTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.RegistryArea
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -23,7 +23,7 @@ class SceneControl {
         override fun createControl(
             context: Context,
             entity: Entity<Map<String, Any>>,
-            registryArea: RegistryArea?
+            area: AreaRegistryResponse?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -35,8 +35,8 @@ class SceneControl {
                 )
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
-            if (registryArea != null) {
-                control.setSubtitle(registryArea.name)
+            if (area != null) {
+                control.setSubtitle(area.name)
             }
             control.setDeviceType(DeviceTypes.TYPE_ROUTINE)
             control.setZone(

@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.common.data.integration
 
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import kotlinx.coroutines.flow.Flow
 
 interface IntegrationRepository {
@@ -48,9 +51,9 @@ interface IntegrationRepository {
     suspend fun getEntity(entityId: String): Entity<Map<String, Any>>
     suspend fun getEntityUpdates(): Flow<Entity<*>>
 
-    suspend fun getRegistryEntities(): List<RegistryEntity>
-    suspend fun getRegistryDevices(): List<RegistryDevice>
-    suspend fun getRegistryAreas(): List<RegistryArea>
+    suspend fun getAreaRegistry(): List<AreaRegistryResponse>
+    suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>
+    suspend fun getEntityRegistry(): List<EntityRegistryResponse>
 
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 

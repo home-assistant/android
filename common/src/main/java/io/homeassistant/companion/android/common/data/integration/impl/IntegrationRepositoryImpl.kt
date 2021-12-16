@@ -8,9 +8,6 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationException
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.RegistryArea
-import io.homeassistant.companion.android.common.data.integration.RegistryDevice
-import io.homeassistant.companion.android.common.data.integration.RegistryEntity
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
@@ -27,6 +24,9 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
@@ -481,49 +481,11 @@ class IntegrationRepositoryImpl @Inject constructor(
             }
     }
 
-    override suspend fun getRegistryEntities(): List<RegistryEntity> {
-        val response = webSocketRepository.getRegistryEntities()
+    override suspend fun getAreaRegistry(): List<AreaRegistryResponse> = webSocketRepository.getAreaRegistry()
 
-        return response
-            .map {
-                RegistryEntity(
-                    it.entityId,
-                    it.deviceId,
-                    it.areaId
-                )
-            }
-            .sortedBy { it.entityId }
-            .toList()
-    }
+    override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse> = webSocketRepository.getDeviceRegistry()
 
-    override suspend fun getRegistryDevices(): List<RegistryDevice> {
-        val response = webSocketRepository.getRegistryDevices()
-
-        return response
-            .map {
-                RegistryDevice(
-                    it.id,
-                    it.name,
-                    it.areaId
-                )
-            }
-            .sortedBy { it.id }
-            .toList()
-    }
-
-    override suspend fun getRegistryAreas(): List<RegistryArea> {
-        val response = webSocketRepository.getRegistryAreas()
-
-        return response
-            .map {
-                RegistryArea(
-                    it.areaId,
-                    it.name
-                )
-            }
-            .sortedBy { it.name }
-            .toList()
-    }
+    override suspend fun getEntityRegistry(): List<EntityRegistryResponse> = webSocketRepository.getEntityRegistry()
 
     private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
         val version = getHomeAssistantVersion()
