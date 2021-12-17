@@ -9,6 +9,7 @@ import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
@@ -31,6 +32,9 @@ class HaControlsProviderService : ControlsProviderService() {
 
     @Inject
     lateinit var integrationRepository: IntegrationRepository
+
+    @Inject
+    lateinit var webSocketRepository: WebSocketRepository
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -56,9 +60,9 @@ class HaControlsProviderService : ControlsProviderService() {
         return Flow.Publisher { subscriber ->
             ioScope.launch {
                 try {
-                    val areaRegistry = integrationRepository.getAreaRegistry()
-                    val deviceRegistry = integrationRepository.getDeviceRegistry()
-                    val entityRegistry = integrationRepository.getEntityRegistry()
+                    val areaRegistry = webSocketRepository.getAreaRegistry()
+                    val deviceRegistry = webSocketRepository.getDeviceRegistry()
+                    val entityRegistry = webSocketRepository.getEntityRegistry()
 
                     integrationRepository
                         .getEntities()
@@ -93,9 +97,9 @@ class HaControlsProviderService : ControlsProviderService() {
                         // Load up initial values
                         // This should use the cached values that we should store in the DB.
                         // For now we'll use the rest API
-                        val areaRegistry = integrationRepository.getAreaRegistry()
-                        val deviceRegistry = integrationRepository.getDeviceRegistry()
-                        val entityRegistry = integrationRepository.getEntityRegistry()
+                        val areaRegistry = webSocketRepository.getAreaRegistry()
+                        val deviceRegistry = webSocketRepository.getDeviceRegistry()
+                        val entityRegistry = webSocketRepository.getEntityRegistry()
                         controlIds.forEach {
                             val entity = integrationRepository.getEntity(it)
                             val domain = it.split(".")[0]

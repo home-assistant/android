@@ -24,9 +24,6 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
-import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
@@ -480,12 +477,6 @@ class IntegrationRepositoryImpl @Inject constructor(
                 )
             }
     }
-
-    override suspend fun getAreaRegistry(): List<AreaRegistryResponse> = webSocketRepository.getAreaRegistry()
-
-    override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse> = webSocketRepository.getDeviceRegistry()
-
-    override suspend fun getEntityRegistry(): List<EntityRegistryResponse> = webSocketRepository.getEntityRegistry()
 
     private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
         val version = getHomeAssistantVersion()
