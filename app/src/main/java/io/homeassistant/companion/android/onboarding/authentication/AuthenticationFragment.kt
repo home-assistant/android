@@ -26,6 +26,7 @@ import io.homeassistant.companion.android.common.data.authentication.impl.Authen
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationFragment
 import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.util.MTLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import javax.inject.Inject
@@ -61,7 +62,7 @@ class AuthenticationFragment : Fragment() {
                             settings.domStorageEnabled = true
                             settings.userAgentString =
                                 USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
-                            webViewClient = object : WebViewClient() {
+                            webViewClient = object : MTLSWebViewClient() {
                                 override fun shouldOverrideUrlLoading(view: WebView?, url: String): Boolean {
                                     return onRedirect(url)
                                 }

@@ -25,7 +25,6 @@ class HomeAssistantApis @Inject constructor(private val urlRepository: UrlReposi
         private val CALL_TIMEOUT = 30L
         private val READ_TIMEOUT = 30L
     }
-
     private fun configureOkHttpClient(builder: OkHttpClient.Builder): OkHttpClient.Builder {
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(
@@ -67,6 +66,8 @@ class HomeAssistantApis @Inject constructor(private val urlRepository: UrlReposi
         }
         builder.callTimeout(CALL_TIMEOUT, TimeUnit.SECONDS)
         builder.readTimeout(READ_TIMEOUT, TimeUnit.SECONDS)
+
+        MTLSHelper().setupOkHttpClientSSLSocketFactory(builder)
 
         return builder
     }

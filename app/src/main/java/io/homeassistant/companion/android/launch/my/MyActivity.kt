@@ -7,10 +7,10 @@ import android.net.Uri
 import android.os.Bundle
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.databinding.ActivityMyBinding
+import io.homeassistant.companion.android.util.MTLSWebViewClient
 import io.homeassistant.companion.android.webview.WebViewActivity
 
 class MyActivity : BaseActivity() {
@@ -44,7 +44,7 @@ class MyActivity : BaseActivity() {
 
             binding.webview.apply {
                 settings.javaScriptEnabled = true
-                webViewClient = object : WebViewClient() {
+                webViewClient = object : MTLSWebViewClient() {
                     override fun shouldOverrideUrlLoading(
                         view: WebView?,
                         request: WebResourceRequest?

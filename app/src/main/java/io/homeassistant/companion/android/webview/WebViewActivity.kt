@@ -36,7 +36,6 @@ import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
@@ -76,6 +75,7 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.DisabledLocationHandler
+import io.homeassistant.companion.android.util.MTLSWebViewClient
 import io.homeassistant.companion.android.util.isStarted
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -215,7 +215,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
             settings.userAgentString = USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
-            webViewClient = object : WebViewClient() {
+            webViewClient = object : MTLSWebViewClient() {
                 override fun onReceivedError(
                     view: WebView?,
                     errorCode: Int,
