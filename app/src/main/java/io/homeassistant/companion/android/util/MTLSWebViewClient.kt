@@ -6,8 +6,10 @@ import android.webkit.ClientCertRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.MTLSHelper
 import java.security.cert.X509Certificate
+import io.homeassistant.companion.android.common.R as commonR
 
 open class MTLSWebViewClient : WebViewClient() {
     override fun onReceivedClientCertRequest(view: WebView, request: ClientCertRequest) {
@@ -33,10 +35,8 @@ open class MTLSWebViewClient : WebViewClient() {
 
     private fun showMissingClientCertError(context: Context) {
         AlertDialog.Builder(context)
-            .setTitle("TLS Client certificate not available")
-            .setMessage(
-                "Remote site asked for client Certificate\nPlace tls_client.key and tls_client.crt in android/data/io.homeassistant.companion.android/files and restart application"
-            )
+            .setTitle(commonR.string.mtls_cert_not_found_title)
+            .setMessage(commonR.string.mtls_cert_not_found_message)
             .setPositiveButton(android.R.string.ok) { _, _ -> }
             .show()
     }
