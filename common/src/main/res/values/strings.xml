@@ -696,5 +696,6 @@
     <string name="widgets">Widgets</string>
     <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
     <string name="failed_wear_config_request">Failed to send config request to wear device</string>
-
+    <string name="mtls_cert_not_found_title">TLS Client certificate not available</string>
+    <string name="mtls_cert_not_found_message">Remote site asked for client Certificate\nPlace tls_client.key and tls_client.crt in android/data/io.homeassistant.companion.android/files and restart application</string>
 </resources>
