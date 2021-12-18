@@ -138,17 +138,17 @@ dependencies {
         exclude(group = "org.json", module = "json")
     }
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.0")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.10")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2")
 
-    implementation("com.google.dagger:hilt-android:2.40.2")
-    kapt("com.google.dagger:hilt-android-compiler:2.40.2")
+    implementation("com.google.dagger:hilt-android:2.40.5")
+    kapt("com.google.dagger:hilt-android-compiler:2.40.5")
 
-    implementation("androidx.appcompat:appcompat:1.3.1")
+    implementation("androidx.appcompat:appcompat:1.4.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.2")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.1.1")
     implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
@@ -166,7 +166,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-core:20.0.0")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.4.2")
+    "fullImplementation"("io.sentry:sentry-android:5.4.3")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2")
 
     implementation("androidx.biometric:biometric:1.1.0")
@@ -189,10 +189,12 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.navigation:navigation-compose:2.4.0-beta02")
     implementation("com.google.android.material:compose-theme-adapter:1.1.0")
-    implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.2")
+    implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.3")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
+    implementation("com.mikepenz:iconics-compose:5.3.3")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.7.4")
 }
 
 // Disable to fix memory leak and be compatible with the configuration cache.

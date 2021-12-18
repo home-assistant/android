@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -15,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
@@ -29,16 +27,11 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
-import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventHandlerSetup
 import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.previewFavoritesList
 import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalAnimationApi
@@ -47,7 +40,7 @@ import io.homeassistant.companion.android.common.R as commonR
 fun SetFavoritesView(
     mainViewModel: MainViewModel,
     favoriteEntityIds: List<String>,
-    onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
+    onFavoriteSelected: (entityId: String, entityPosition: Int, isSelected: Boolean) -> Unit
 ) {
     var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
@@ -55,10 +48,6 @@ fun SetFavoritesView(
     var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
-
-    val validEntities = mainViewModel.entities
-        .filter { it.key.split(".")[0] in HomePresenterImpl.supportedDomains }
-    val validEntityList = validEntities.values.toList().sortedBy { it.entityId }
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     RotaryEventState(scrollState = scalingLazyListState)
@@ -85,21 +74,6 @@ fun SetFavoritesView(
             ) {
                 item {
                     ListHeader(id = commonR.string.set_favorite)
-                }
-                if (favoriteEntityIds.isNotEmpty()) {
-                    val favoriteEntities = mutableListOf<Entity<*>>()
-                    for (entity in validEntityList) {
-                        if (favoriteEntityIds.contains(entity.entityId))
-                            favoriteEntities += listOf(entity)
-                    }
-                    items(favoriteEntities.size) { index ->
-                        FavoriteToggleChip(
-                            entityList = favoriteEntities,
-                            index = index,
-                            favoriteEntityIds = favoriteEntityIds,
-                            onFavoriteSelected = onFavoriteSelected
-                        )
-                    }
                 }
                 if (mainViewModel.inputBooleans.isNotEmpty()) {
                     item {
@@ -230,7 +204,7 @@ private fun FavoriteToggleChip(
     entityList: List<Entity<*>>,
     index: Int,
     favoriteEntityIds: List<String>,
-    onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
+    onFavoriteSelected: (entityId: String, entityPosition: Int, isSelected: Boolean) -> Unit
 ) {
     val attributes = entityList[index].attributes as Map<*, *>
     val iconBitmap = getIcon(
@@ -244,7 +218,7 @@ private fun FavoriteToggleChip(
     ToggleChip(
         checked = checked,
         onCheckedChange = {
-            onFavoriteSelected(entityId, it)
+            onFavoriteSelected(entityId, favoriteEntityIds.size + 1, it)
         },
         modifier = Modifier
             .fillMaxWidth(),
@@ -263,22 +237,4 @@ private fun FavoriteToggleChip(
         },
         toggleIcon = { ToggleChipDefaults.SwitchIcon(checked) }
     )
-}
-
-@ExperimentalAnimationApi
-@ExperimentalWearMaterialApi
-@Preview
-@Composable
-private fun PreviewSetFavoriteView() {
-    val rotaryEventDispatcher = RotaryEventDispatcher()
-    CompositionLocalProvider(
-        LocalRotaryEventDispatcher provides rotaryEventDispatcher
-    ) {
-        RotaryEventHandlerSetup(rotaryEventDispatcher)
-        SetFavoritesView(
-            mainViewModel = MainViewModel(),
-            favoriteEntityIds = previewFavoritesList,
-            onFavoriteSelected = { _, _ -> }
-        )
-    }
 }

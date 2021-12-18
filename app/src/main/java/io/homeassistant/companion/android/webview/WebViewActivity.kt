@@ -68,8 +68,8 @@ import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
-import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -139,6 +139,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private lateinit var exoPlayerView: PlayerView
     private lateinit var playerBinding: ExoPlayerViewBinding
     private lateinit var currentLang: String
+    private lateinit var windowInsetsController: WindowInsetsControllerCompat
 
     private var mFilePathCallback: ValueCallback<Array<Uri>>? = null
     private var isConnected = false
@@ -166,6 +167,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
         binding = ActivityWebviewBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
 
         // Initially set status and navigation bar color to colorLaunchScreenBackground to match the launch screen until the web frontend is loaded
         val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, R.color.colorLaunchScreenBackground, theme)
@@ -435,6 +438,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             addJavascriptInterface(
                 object : Any() {
+                    // TODO This feature is deprecated and should be removed after 2022.6
                     @JavascriptInterface
                     fun onHomeAssistantSetTheme() {
                         // We need to launch the getAndSetStatusBarNavigationBarColors in another thread, because otherwise the evaluateJavascript inside the method
@@ -457,7 +461,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     @JavascriptInterface
                     fun revokeExternalAuth(callback: String) {
                         presenter.onRevokeExternalAuth(JSONObject(callback).get("callback") as String)
-                        openOnBoarding()
+                        relaunchApp()
                         finish()
                     }
 
@@ -499,8 +503,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         Log.d(TAG, "Callback $it")
                                     }
 
+                                    // TODO This feature is deprecated and should be removed after 2022.6
                                     getAndSetStatusBarNavigationBarColors()
 
+                                    // TODO This feature is deprecated and should be removed after 2022.6
                                     // Set event lister for HA theme change
                                     webView.evaluateJavascript(
                                         "document.addEventListener('settheme', function ()" +
@@ -527,6 +533,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
                                 "haptic" -> processHaptic(json.getJSONObject("payload").getString("hapticType"))
+                                "theme-update" -> getAndSetStatusBarNavigationBarColors()
                             }
                         }
                     }
@@ -972,9 +979,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun openOnBoarding() {
+    override fun relaunchApp() {
+        startActivity(Intent(this, LaunchActivity::class.java))
         finish()
-        startActivity(Intent(this, OnboardingActivity::class.java))
     }
 
     override fun onBackPressed() {
@@ -992,21 +999,27 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     override fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int) {
-        val windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+        // window.statusBarColor and window.navigationBarColor must both be set before
+        // windowInsetsController sets the foreground colors.
 
+        // Set background colors
         if (statusBarColor != 0) {
             window.statusBarColor = statusBarColor
-            windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
         } else {
             Log.e(TAG, "Cannot set status bar color $statusBarColor. Skipping coloring...")
         }
-
         if (navigationBarColor != 0) {
             window.navigationBarColor = navigationBarColor
-
-            windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
         } else {
             Log.e(TAG, "Cannot set navigation bar color $navigationBarColor. Skipping coloring...")
+        }
+
+        // Set foreground colors
+        if (statusBarColor != 0) {
+            windowInsetsController.isAppearanceLightStatusBars = !isColorDark(statusBarColor)
+        }
+        if (navigationBarColor != 0) {
+            windowInsetsController.isAppearanceLightNavigationBars = !isColorDark(navigationBarColor)
         }
     }
 
@@ -1046,7 +1059,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             alert.setMessage(commonR.string.error_auth_revoked)
             alert.setPositiveButton(android.R.string.ok) { _, _ ->
                 presenter.clearKnownUrls()
-                openOnBoarding()
+                relaunchApp()
             }
         } else if (errorType == io.homeassistant.companion.android.webview.WebView.ErrorType.SSL) {
             if (description != null)

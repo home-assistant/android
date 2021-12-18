@@ -48,7 +48,6 @@ class HomeActivity : ComponentActivity(), HomeView {
     }
 
     override fun onResume() {
-        mainViewModel.updateFavorites()
         super.onResume()
         SensorWorker.start(this)
 

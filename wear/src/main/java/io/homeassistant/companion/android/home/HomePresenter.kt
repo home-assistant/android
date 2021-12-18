@@ -17,8 +17,6 @@ interface HomePresenter {
 
     suspend fun getEntities(): List<Entity<*>>
     suspend fun getEntityUpdates(): Flow<Entity<*>>
-    suspend fun getWearHomeFavorites(): List<String>
-    suspend fun setWearHomeFavorites(favorites: List<String>)
     suspend fun getTileShortcuts(): List<SimplifiedEntity>
     suspend fun setTileShortcuts(entities: List<SimplifiedEntity>)
 

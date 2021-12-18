@@ -26,13 +26,13 @@ import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.json.JSONArray
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.Exception
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -59,7 +59,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_SECRET = "secret"
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
-        private const val PREF_WEAR_HOME_FAVORITES = "wear_home_favorites"
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
@@ -350,14 +349,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
-    override suspend fun setWearHomeFavorites(favorites: Set<String>) {
-        localStorage.putStringSet(PREF_WEAR_HOME_FAVORITES, favorites)
-    }
-
-    override suspend fun getWearHomeFavorites(): Set<String> {
-        return localStorage.getStringSet(PREF_WEAR_HOME_FAVORITES) ?: setOf()
-    }
-
     override suspend fun getTileShortcuts(): List<String> {
         val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
         return List(jsonArray.length()) {
@@ -473,16 +464,18 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getEntityUpdates(): Flow<Entity<*>> {
-        return webSocketRepository.getStateChanges().map {
-            Entity(
-                it.newState.entityId,
-                it.newState.state,
-                it.newState.attributes,
-                it.newState.lastChanged,
-                it.newState.lastUpdated,
-                it.newState.context
-            )
-        }
+        return webSocketRepository.getStateChanges()
+            .filter { it.newState != null }
+            .map {
+                Entity(
+                    it.newState!!.entityId,
+                    it.newState.state,
+                    it.newState.attributes,
+                    it.newState.lastChanged,
+                    it.newState.lastUpdated,
+                    it.newState.context
+                )
+            }
     }
 
     private suspend fun canRegisterEntityCategoryStateClass(): Boolean {

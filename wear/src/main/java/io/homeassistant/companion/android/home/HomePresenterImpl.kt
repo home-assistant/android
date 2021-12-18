@@ -117,14 +117,6 @@ class HomePresenterImpl @Inject constructor(
         return integrationUseCase.isRegistered()
     }
 
-    override suspend fun getWearHomeFavorites(): List<String> {
-        return integrationUseCase.getWearHomeFavorites().toList()
-    }
-
-    override suspend fun setWearHomeFavorites(favorites: List<String>) {
-        integrationUseCase.setWearHomeFavorites(favorites.toSet())
-    }
-
     override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
         return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
     }

@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding
+package io.homeassistant.companion.android.onboarding.welcome
 
 import android.os.Build
 import android.os.Bundle

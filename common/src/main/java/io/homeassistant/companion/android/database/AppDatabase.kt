@@ -30,6 +30,8 @@ import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.wear.Favorites
+import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
@@ -55,9 +57,10 @@ import io.homeassistant.companion.android.common.R as commonR
         StaticWidgetEntity::class,
         TemplateWidgetEntity::class,
         NotificationItem::class,
-        TileEntity::class
+        TileEntity::class,
+        Favorites::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = false
 )
 @TypeConverters(EntriesTypeConverter::class)
@@ -71,6 +74,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun templateWidgetDao(): TemplateWidgetDao
     abstract fun notificationDao(): NotificationDao
     abstract fun tileDao(): TileDao
+    abstract fun favoritesDao(): FavoritesDao
 
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
@@ -113,7 +117,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_15_16,
                     MIGRATION_16_17,
                     MIGRATION_17_18,
-                    MIGRATION_18_19
+                    MIGRATION_18_19,
+                    MIGRATION_19_20
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -439,6 +444,12 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("ALTER TABLE `sensors` ADD `entity_category` TEXT")
                 database.execSQL("ALTER TABLE `sensors` ADD `core_registration` TEXT")
                 database.execSQL("ALTER TABLE `sensors` ADD `app_registration` TEXT")
+            }
+        }
+
+        private val MIGRATION_19_20 = object : Migration(19, 20) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `favorites` (`id` TEXT PRIMARY KEY NOT NULL, `position` INTEGER)")
             }
         }
 
