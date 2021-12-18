@@ -2,9 +2,9 @@ package io.homeassistant.companion.android.widgets.media_player_controls
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.os.Handler
@@ -13,25 +13,23 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
+import com.mikepenz.iconics.IconicsDrawable
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class MediaPlayerControlsWidget : AppWidgetProvider() {
+class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
     companion object {
         private const val TAG = "MediaPlayCtrlsWidget"
@@ -54,18 +52,12 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
         internal const val EXTRA_SHOW_SKIP = "EXTRA_INCLUDE_SKIP"
         internal const val EXTRA_SHOW_SEEK = "EXTRA_INCLUDE_SEEK"
-        private var lastIntent = ""
     }
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
 
     @Inject
     lateinit var urlUseCase: UrlRepository
 
     lateinit var mediaPlayCtrlWidgetDao: MediaPlayerControlsWidgetDao
-
-    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onUpdate(
         context: Context,
@@ -75,7 +67,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
         // There may be multiple widgets active, so update all of them
         appWidgetIds.forEach { appWidgetId ->
-            updateAppWidget(
+            updateView(
                 context,
                 appWidgetId,
                 appWidgetManager
@@ -83,7 +75,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private fun updateAppWidget(
+    private fun updateView(
         context: Context,
         appWidgetId: Int,
         appWidgetManager: AppWidgetManager = AppWidgetManager.getInstance(context)
@@ -98,19 +90,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private fun updateAllWidgets(
-        context: Context,
-        mediaPlayerWidgetList: Array<MediaPlayerControlsWidgetEntity>?
-    ) {
-        if (mediaPlayerWidgetList != null) {
-            Log.d(TAG, "Updating all widgets")
-            for (item in mediaPlayerWidgetList) {
-                updateAppWidget(context, item.id)
-            }
-        }
-    }
-
-    private suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
         val updateMediaIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
             action = UPDATE_MEDIA_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -145,15 +125,93 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             val widget = mediaPlayCtrlWidgetDao.get(appWidgetId)
             if (widget != null) {
                 val entityId: String = widget.entityId
-                val label: String? = widget.label
+                var label: String? = widget.label
                 val showSkip: Boolean = widget.showSkip
                 val showSeek: Boolean = widget.showSeek
+                val entity = getEntity(context, widget.entityId)
 
-                setTextViewText(
-                    R.id.widgetLabel,
-                    label ?: entityId
-                )
-                val entityPictureUrl = retrieveMediaPlayerImageUrl(context, entityId)
+                if (entity?.state.equals("playing")) {
+                    setImageViewResource(
+                        R.id.widgetPlayPauseButton,
+                        R.drawable.ic_pause
+                    )
+                } else {
+                    setImageViewResource(
+                        R.id.widgetPlayPauseButton,
+                        R.drawable.ic_play
+                    )
+                }
+
+                var artist = entity?.attributes?.get("media_artist")?.toString()
+                val title = entity?.attributes?.get("media_title")?.toString()
+                val album = entity?.attributes?.get("media_album_name")?.toString()
+                val icon = entity?.attributes?.get("icon")?.toString()
+
+                if (artist != null && title != null) {
+                    if (album != null) {
+                        artist = "$artist - $album"
+                    }
+                    setTextViewText(
+                        R.id.widgetMediaInfoArtist,
+                        artist
+                    )
+                    setTextViewText(
+                        R.id.widgetMediaInfoTitle,
+                        title
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaInfoTitle,
+                        View.VISIBLE
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaInfoArtist,
+                        View.VISIBLE
+                    )
+                    setViewVisibility(
+                        R.id.widgetLabel,
+                        View.GONE
+                    )
+                } else {
+                    if (artist != null) {
+                        label = artist
+                    }
+                    setTextViewText(
+                        R.id.widgetLabel,
+                        label ?: entityId
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaInfoTitle,
+                        View.GONE
+                    )
+                    setViewVisibility(
+                        R.id.widgetMediaInfoArtist,
+                        View.GONE
+                    )
+                    setViewVisibility(
+                        R.id.widgetLabel,
+                        View.VISIBLE
+                    )
+                }
+
+                if (icon != null && icon.startsWith("mdi")) {
+                    val iconName = icon.split(":")[1]
+                    val iconDrawable: Bitmap = IconicsDrawable(context, "cmd-$iconName").toBitmap()
+                    setImageViewBitmap(
+                        R.id.widgetSourceIcon,
+                        iconDrawable
+                    )
+                    setViewVisibility(
+                        R.id.widgetSourceIcon,
+                        View.VISIBLE
+                    )
+                } else {
+                    setViewVisibility(
+                        R.id.widgetSourceIcon,
+                        View.INVISIBLE
+                    )
+                }
+
+                val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
                 val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
                 val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
@@ -183,7 +241,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
                         if (BuildConfig.DEBUG)
                             Picasso.get().isLoggingEnabled = true
                         try {
-                            Picasso.get().load(url).resize(1024, 600).into(
+                            Picasso.get().load(url).resize(1024, 1024).into(
                                 this,
                                 R.id.widgetMediaImage,
                                 intArrayOf(appWidgetId)
@@ -278,7 +336,11 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun retrieveMediaPlayerImageUrl(context: Context, entityId: String): String? {
+    override fun getAllWidgetIds(context: Context): List<Int> {
+        return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll()?.map { it.id }.orEmpty()
+    }
+
+    private suspend fun getEntity(context: Context, entityId: String): Entity<Map<String, Any>>? {
         val entity: Entity<Map<String, Any>>
         try {
             entity = integrationUseCase.getEntity(entityId)
@@ -289,7 +351,7 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
             return null
         }
 
-        return entity.attributes["entity_picture"]?.toString()
+        return entity
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -304,22 +366,27 @@ class MediaPlayerControlsWidget : AppWidgetProvider() {
         )
 
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
-        val mediaPlayerWidgetList = mediaPlayCtrlWidgetDao.getAll()
 
         super.onReceive(context, intent)
         when (lastIntent) {
-            RECEIVE_DATA -> saveEntityConfiguration(context, intent.extras, appWidgetId)
-            UPDATE_MEDIA_IMAGE -> updateAppWidget(context, appWidgetId)
+            UPDATE_VIEW -> updateView(
+                context,
+                appWidgetId
+            )
+            RECEIVE_DATA -> {
+                saveEntityConfiguration(context, intent.extras, appWidgetId)
+                super.onScreenOn(context)
+            }
+            UPDATE_MEDIA_IMAGE -> updateView(context, appWidgetId)
             CALL_PREV_TRACK -> callPreviousTrackService(appWidgetId)
             CALL_REWIND -> callRewindService(context, appWidgetId)
             CALL_PLAYPAUSE -> callPlayPauseService(appWidgetId)
             CALL_FASTFORWARD -> callFastForwardService(context, appWidgetId)
             CALL_NEXT_TRACK -> callNextTrackService(appWidgetId)
-            Intent.ACTION_SCREEN_ON -> updateAllWidgets(context, mediaPlayerWidgetList)
         }
     }
 
-    private fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
+    override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
         if (extras == null) return
 
         val entitySelection: String? = extras.getString(EXTRA_ENTITY_ID)
