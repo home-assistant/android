@@ -42,7 +42,6 @@ class MTLSHelper {
         if (!keyFile.exists())return
         if (!certFile.exists())return
 
-        // https://stackoverflow.com/questions/59000913/mutual-authentication-using-retrofit-android
         val certificateFactory = CertificateFactory.getInstance("X.509")
 
         val privateKeyContent = keyFile.readText()
@@ -58,14 +57,11 @@ class MTLSHelper {
         val certificate = certificateFactory.generateCertificate(certificateInputStream)
 
         // Set up KeyStore
-        // val keyStore: KeyStore = KeyStore.getInstance(KeyStore.getDefaultType())
         val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
-        // keyStore.load(null, keychainpass.toCharArray())
         keyStore.load(null)
         keyStore.setKeyEntry(
             keyentryname,
             keyFactory.generatePrivate(keySpec),
-            // keychainpass.toCharArray(),
             null,
             arrayOf(certificate)
         )
@@ -127,8 +123,6 @@ class MTLSHelper {
         val sslContext = SSLContext.getInstance("TLS")
 
         sslContext.init(arrayOf(MTLSHelper().getMTLSKeyManagerForOKHTTP()), trustManagers, null)
-
-        // val sslSocketFactory: SSLSocketFactory =
 
         builder.sslSocketFactory(sslContext.socketFactory, trustManagers[0] as X509TrustManager)
     }
