@@ -12,7 +12,7 @@ open class HomeAssistantApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        MTLSHelper().init(this);
+        MTLSHelper().init(this)
 
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
