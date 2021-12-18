@@ -77,6 +77,9 @@ import io.homeassistant.companion.android.common.R as commonR
 class MessagingService : FirebaseMessagingService() {
     companion object {
         const val TAG = "MessagingService"
+
+        const val APP_PREFIX = "app://"
+
         const val TITLE = "title"
         const val MESSAGE = "message"
         const val SUBJECT = "subject"
@@ -94,6 +97,8 @@ class MessagingService : FirebaseMessagingService() {
         const val ALERT_ONCE = "alert_once"
         const val INTENT_CLASS_NAME = "intent_class_name"
         const val NOTIFICATION_ICON = "notification_icon"
+        const val URI = "URI"
+        const val REPLY = "REPLY"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -788,19 +793,8 @@ class MessagingService : FirebaseMessagingService() {
         groupId: Int,
         data: Map<String, String>
     ) {
-        val actionUri = if (!data["clickAction"].isNullOrEmpty()) data["clickAction"] else "/"
-        val contentIntent = Intent(this, NotificationContentReceiver::class.java).apply {
-            putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP, group)
-            putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
-            putExtra(NotificationContentReceiver.EXTRA_NOTIFICATION_ACTION_URI, actionUri)
-        }
-        val contentPendingIntent = PendingIntent.getBroadcast(
-            this,
-            messageId,
-            contentIntent,
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        builder.setContentIntent(contentPendingIntent)
+        val actionUri = data["clickAction"] ?: "/"
+        builder.setContentIntent(createOpenUriPendingIntent(actionUri))
     }
 
     private fun handleDeleteIntent(
@@ -1107,12 +1101,8 @@ class MessagingService : FirebaseMessagingService() {
                     data["action_${i}_uri"],
                     data
                 )
-                val actionIntent = Intent(this, NotificationActionReceiver::class.java).apply {
-                    action =
-                        if (notificationAction.key == "URI")
-                            NotificationActionReceiver.OPEN_URI
-                        else
-                            NotificationActionReceiver.FIRE_EVENT
+                val eventIntent = Intent(this, NotificationActionReceiver::class.java).apply {
+                    action = NotificationActionReceiver.FIRE_EVENT
                     if (data["sticky"]?.toBoolean() != true) {
                         putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_TAG, tag)
                         putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_ID, messageId)
@@ -1122,42 +1112,80 @@ class MessagingService : FirebaseMessagingService() {
                         notificationAction
                     )
                 }
-                if (notificationAction.key != "REPLY") {
-                    val actionPendingIntent = PendingIntent.getBroadcast(
-                        this,
-                        (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
-                        actionIntent,
-                        PendingIntent.FLAG_IMMUTABLE
-                    )
 
-                    val icon =
-                        if (notificationAction.key == "URI")
-                            R.drawable.ic_globe
-                        else
-                            commonR.drawable.ic_stat_ic_notification
-                    builder.addAction(icon, notificationAction.title, actionPendingIntent)
-                } else {
-                    val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
-                        setLabel(getString(commonR.string.action_reply))
-                        build()
+                when (notificationAction.key) {
+                    URI -> {
+                        if (!notificationAction.uri.isNullOrBlank()) {
+                            builder.addAction(
+                                R.drawable.ic_globe,
+                                notificationAction.title,
+                                createOpenUriPendingIntent(notificationAction.uri)
+                            )
+                        }
                     }
-                    val replyPendingIntent = PendingIntent.getBroadcast(
-                        this,
-                        0,
-                        actionIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-                    )
-                    val action: NotificationCompat.Action = NotificationCompat.Action.Builder(
-                        R.drawable.ic_baseline_reply_24,
-                        notificationAction.title,
-                        replyPendingIntent
-                    )
-                        .addRemoteInput(remoteInput)
-                        .build()
-                    builder.addAction(action)
+                    REPLY -> {
+                        val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
+                            setLabel(getString(commonR.string.action_reply))
+                            build()
+                        }
+                        val replyPendingIntent = PendingIntent.getBroadcast(
+                            this,
+                            0,
+                            eventIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                        )
+                        val action: NotificationCompat.Action = NotificationCompat.Action.Builder(
+                            R.drawable.ic_baseline_reply_24,
+                            notificationAction.title,
+                            replyPendingIntent
+                        )
+                            .addRemoteInput(remoteInput)
+                            .build()
+                        builder.addAction(action)
+                    }
+                    else -> {
+                        val actionPendingIntent = PendingIntent.getBroadcast(
+                            this,
+                            (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
+                            eventIntent,
+                            PendingIntent.FLAG_IMMUTABLE
+                        )
+                        builder.addAction(commonR.drawable.ic_stat_ic_notification, notificationAction.title, actionPendingIntent)
+                    }
                 }
             }
         }
+    }
+
+    private fun createOpenUriPendingIntent(
+        uri: String
+    ): PendingIntent {
+        val intent = when {
+            uri.isBlank() -> {
+                WebViewActivity.newInstance(this)
+            }
+            uri.startsWith(APP_PREFIX) -> {
+                packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
+            }
+            UrlHandler.isAbsoluteUrl(uri) -> {
+                Intent(Intent.ACTION_VIEW).apply {
+                    this.data = Uri.parse(uri)
+                }
+            }
+            else -> {
+                WebViewActivity.newInstance(this, uri)
+            }
+        } ?: WebViewActivity.newInstance(this)
+
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+
+        return PendingIntent.getActivity(
+            this,
+            (uri.hashCode() + System.currentTimeMillis()).toInt(),
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     private fun handleChannel(
