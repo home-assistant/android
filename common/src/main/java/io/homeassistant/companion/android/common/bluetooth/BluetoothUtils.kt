@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.bluetooth
+package io.homeassistant.companion.android.common.bluetooth
 
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
@@ -22,12 +22,26 @@ object BluetoothUtils {
                 val bondedDevices = adapter.bondedDevices
                 for (btDev in bondedDevices) {
                     val name = btDev.name ?: btDev.address
-                    devices.add(BluetoothDevice(btDev.address, name, true, isConnected(btDev)))
+                    devices.add(
+                        BluetoothDevice(
+                            btDev.address,
+                            name,
+                            true,
+                            isConnected(btDev)
+                        )
+                    )
                 }
                 val btConnectedDevices = bluetoothManager.getConnectedDevices(BluetoothProfile.GATT)
                 for (btDev in btConnectedDevices) {
                     val name = btDev.name ?: btDev.address
-                    devices.add(BluetoothDevice(btDev.address, name, false, isConnected(btDev)))
+                    devices.add(
+                        BluetoothDevice(
+                            btDev.address,
+                            name,
+                            false,
+                            isConnected(btDev)
+                        )
+                    )
                 }
             }
         }

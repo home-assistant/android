@@ -26,7 +26,7 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.sensors.LocationSensorManager
-import io.homeassistant.companion.android.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint

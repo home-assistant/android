@@ -55,9 +55,9 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.UrlHandler
-import io.homeassistant.companion.android.util.cancel
-import io.homeassistant.companion.android.util.cancelGroupIfNeeded
-import io.homeassistant.companion.android.util.getActiveNotification
+import io.homeassistant.companion.android.common.util.cancel
+import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

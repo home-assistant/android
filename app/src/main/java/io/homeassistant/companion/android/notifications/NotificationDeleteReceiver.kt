@@ -8,7 +8,7 @@ import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR

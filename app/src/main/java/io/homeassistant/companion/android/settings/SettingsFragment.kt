@@ -39,8 +39,8 @@ import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
-import io.homeassistant.companion.android.util.DisabledLocationHandler
-import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull

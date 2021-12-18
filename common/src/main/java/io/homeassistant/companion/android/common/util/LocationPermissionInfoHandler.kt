@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.util
+package io.homeassistant.companion.android.common.util
 
 import android.Manifest
 import android.content.Context

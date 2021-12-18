@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.Manifest
 import android.content.Context
@@ -8,7 +8,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import okhttp3.Call
