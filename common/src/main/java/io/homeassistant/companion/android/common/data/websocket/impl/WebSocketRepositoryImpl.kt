@@ -298,11 +298,24 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     @ExperimentalCoroutinesApi
     private suspend fun handleEvent(response: SocketResponse) {
-        val eventResponse = mapper.convertValue(
-            response.event,
-            object : TypeReference<EventResponse>() {}
-        )
-        eventSubscriptionProducerScope[eventResponse.eventType]?.send(eventResponse.data)
+        val eventResponseType = response.event?.get("event_type")
+        if (eventResponseType != null && eventResponseType.isTextual) {
+            val eventResponseClass = when (eventResponseType.textValue()) {
+                "state_changed" -> object : TypeReference<EventResponse<StateChangedEvent>>() {}
+                "area_registry_updated" -> object : TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
+                "device_registry_updated" -> object : TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
+                "entity_registry_updated" -> object : TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
+                else -> {
+                    Log.d(TAG, "Unknown event type received")
+                    object : TypeReference<EventResponse<Any>>() {}
+                }
+            }
+            val eventResponse = mapper.convertValue(
+                response.event,
+                eventResponseClass
+            )
+            eventSubscriptionProducerScope[eventResponse.eventType]?.send(eventResponse.data)
+        }
     }
 
     @ExperimentalCoroutinesApi
