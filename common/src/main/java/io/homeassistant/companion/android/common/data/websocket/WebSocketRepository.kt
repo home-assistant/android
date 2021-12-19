@@ -3,9 +3,12 @@ package io.homeassistant.companion.android.common.data.websocket
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,4 +26,10 @@ interface WebSocketRepository {
     suspend fun callService(request: ServiceCallRequest)
     @ExperimentalCoroutinesApi
     suspend fun getStateChanges(): Flow<StateChangedEvent>
+    @ExperimentalCoroutinesApi
+    suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>
+    @ExperimentalCoroutinesApi
+    suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>
+    @ExperimentalCoroutinesApi
+    suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>
 }

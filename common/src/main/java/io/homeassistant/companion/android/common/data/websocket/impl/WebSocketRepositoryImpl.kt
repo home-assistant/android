@@ -13,9 +13,12 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
@@ -66,11 +69,11 @@ class WebSocketRepositoryImpl @Inject constructor(
     private var connection: WebSocket? = null
     private val connectedMutex = Mutex()
     private var connected = Job()
-    private val stateChangedMutex = Mutex()
-    private var stateChangedFlow: SharedFlow<StateChangedEvent>? = null
+    private val eventSubscriptionMutex = mutableMapOf<String, Mutex>()
+    private val eventSubscriptionFlow = mutableMapOf<String, SharedFlow<*>>()
 
     @ExperimentalCoroutinesApi
-    private var producerScope: ProducerScope<StateChangedEvent>? = null
+    private var eventSubscriptionProducerScope = mutableMapOf<String, ProducerScope<Any>>()
 
     override suspend fun sendPing(): Boolean {
         val socketResponse = sendMessage(
@@ -170,21 +173,36 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     @ExperimentalCoroutinesApi
-    override suspend fun getStateChanges(): Flow<StateChangedEvent> {
-        stateChangedMutex.withLock {
-            if (stateChangedFlow == null) {
+    override suspend fun getStateChanges(): Flow<StateChangedEvent> = subscribeToEventsForType("state_changed")
+
+    @ExperimentalCoroutinesApi
+    override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent> = subscribeToEventsForType("area_registry_updated")
+
+    @ExperimentalCoroutinesApi
+    override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent> = subscribeToEventsForType("device_registry_updated")
+
+    @ExperimentalCoroutinesApi
+    override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent> = subscribeToEventsForType("entity_registry_updated")
+
+    @ExperimentalCoroutinesApi
+    private suspend fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T> {
+        if (eventSubscriptionMutex[eventType] == null) {
+            eventSubscriptionMutex[eventType] = Mutex()
+        }
+        eventSubscriptionMutex[eventType]!!.withLock {
+            if (eventSubscriptionFlow[eventType] == null) {
 
                 val response = sendMessage(
                     mapOf(
                         "type" to "subscribe_events",
-                        "event_type" to "state_changed"
+                        "event_type" to eventType
                     )
                 )
 
-                stateChangedFlow = callbackFlow {
-                    producerScope = this
+                eventSubscriptionFlow[eventType] = callbackFlow<T> {
+                    eventSubscriptionProducerScope[eventType] = this as ProducerScope<Any>
                     awaitClose {
-                        Log.d(TAG, "Unsubscribing from state_changes")
+                        Log.d(TAG, "Unsubscribing from $eventType")
                         ioScope.launch {
                             sendMessage(
                                 mapOf(
@@ -193,13 +211,13 @@ class WebSocketRepositoryImpl @Inject constructor(
                                 )
                             )
                         }
-                        producerScope = null
-                        stateChangedFlow = null
+                        eventSubscriptionProducerScope.remove(eventType)
+                        eventSubscriptionFlow.remove(eventType)
                     }
                 }.shareIn(ioScope, SharingStarted.WhileSubscribed())
             }
 
-            return stateChangedFlow!!
+            return eventSubscriptionFlow[eventType]!! as SharedFlow<T>
         }
     }
 
@@ -284,7 +302,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             response.event,
             object : TypeReference<EventResponse>() {}
         )
-        producerScope?.send(eventResponse.data)
+        eventSubscriptionProducerScope[eventResponse.eventType]?.send(eventResponse.data)
     }
 
     @ExperimentalCoroutinesApi
@@ -292,17 +310,19 @@ class WebSocketRepositoryImpl @Inject constructor(
         connected = Job()
         connection = null
         // If we still have flows flowing
-        if (stateChangedFlow != null && ioScope.isActive) {
+        if (eventSubscriptionFlow.any() && ioScope.isActive) {
             ioScope.launch {
                 try {
                     connect()
                     // Register for websocket events!
-                    sendMessage(
-                        mapOf(
-                            "type" to "subscribe_events",
-                            "event_type" to "state_changed"
+                    eventSubscriptionFlow.forEach { (eventType, _) ->
+                        sendMessage(
+                            mapOf(
+                                "type" to "subscribe_events",
+                                "event_type" to eventType
+                            )
                         )
-                    )
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Issue reconnecting websocket", e)
                 }

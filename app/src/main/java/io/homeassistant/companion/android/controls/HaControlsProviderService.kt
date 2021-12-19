@@ -15,8 +15,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import java.util.concurrent.Flow
 import java.util.function.Consumer
@@ -89,11 +89,14 @@ class HaControlsProviderService : ControlsProviderService() {
         Log.d(TAG, "publisherFor $controlIds")
         return Flow.Publisher { subscriber ->
             subscriber.onSubscribe(object : Flow.Subscription {
-                var running = true
+                val webSocketScope = CoroutineScope(Dispatchers.IO)
                 override fun request(n: Long) {
                     Log.d(TAG, "request $n")
                     ioScope.launch {
                         val entityFlow = integrationRepository.getEntityUpdates()
+                        val areaRegistryFlow = webSocketRepository.getAreaRegistryUpdates()
+                        val deviceRegistryFlow = webSocketRepository.getDeviceRegistryUpdates()
+                        val entityRegistryFlow = webSocketRepository.getEntityRegistryUpdates()
                         // Load up initial values
                         // This should use the cached values that we should store in the DB.
                         // For now we'll use the rest API
@@ -112,15 +115,32 @@ class HaControlsProviderService : ControlsProviderService() {
                         }
 
                         // Listen for the state changed events.
-                        entityFlow.takeWhile { running }.collect {
-                            if (controlIds.contains(it.entityId)) {
-                                val domain = it.entityId.split(".")[0]
-                                val control = domainToHaControl[domain]?.createControl(
-                                    applicationContext,
-                                    it as Entity<Map<String, Any>>,
-                                    getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
-                                )
-                                subscriber.onNext(control)
+                        webSocketScope.launch {
+                            entityFlow.collect {
+                                if (controlIds.contains(it.entityId)) {
+                                    val domain = it.entityId.split(".")[0]
+                                    val control = domainToHaControl[domain]?.createControl(
+                                        applicationContext,
+                                        it as Entity<Map<String, Any>>,
+                                        getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                                    )
+                                    subscriber.onNext(control)
+                                }
+                            }
+                        }
+                        webSocketScope.launch {
+                            areaRegistryFlow.collect {
+                                Log.i(TAG, "Received area registry update $it")
+                            }
+                        }
+                        webSocketScope.launch {
+                            deviceRegistryFlow.collect {
+                                Log.i(TAG, "Received device registry update $it")
+                            }
+                        }
+                        webSocketScope.launch {
+                            entityRegistryFlow.collect {
+                                Log.i(TAG, "Received entity registry update $it")
                             }
                         }
                     }
@@ -128,7 +148,7 @@ class HaControlsProviderService : ControlsProviderService() {
 
                 override fun cancel() {
                     Log.d(TAG, "cancel")
-                    running = false
+                    webSocketScope.cancel()
                 }
             })
         }
