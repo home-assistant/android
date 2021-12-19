@@ -220,7 +220,7 @@ class HaControlsProviderService : ControlsProviderService() {
             // By default, an entity should be considered to be in the same area as the associated device (if any)
             // This can be overridden for an individual entity, so check the entity registry first
             if (rEntity.areaId != null) {
-                return areaRegistry.firstOrNull { it.areaId == rEntity.entityId }
+                return areaRegistry.firstOrNull { it.areaId == rEntity.areaId }
             } else if (rEntity.deviceId != null) {
                 val rDevice = deviceRegistry.firstOrNull { it.id == rEntity.deviceId }
                 if (rDevice != null) {
