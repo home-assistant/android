@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
@@ -64,6 +65,15 @@ interface SensorManager {
         }
 
         return sensor.enabled
+    }
+
+    // Request to update a sensor, including any broadcast intent which may have triggered the request
+    // The intent will be null if the update is being done on a timer, rather than as a result
+    // of a broadcast being received.
+    fun requestSensorUpdate(context: Context, intent: Intent?) {
+        // Few sensors care about the intent, so allow them to just implement the interface that
+        // does not get passed that parameter.
+        requestSensorUpdate(context)
     }
 
     fun requestSensorUpdate(context: Context)
