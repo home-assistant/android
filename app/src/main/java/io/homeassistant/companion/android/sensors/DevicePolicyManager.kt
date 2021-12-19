@@ -2,8 +2,8 @@ package io.homeassistant.companion.android.sensors
 
 import android.content.Context
 import android.content.Intent
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 
 class DevicePolicyManager : SensorManager {
     companion object {
@@ -44,8 +44,7 @@ class DevicePolicyManager : SensorManager {
         // The intent has the only record we get of this state, so save it off in our instance
         if (intent?.action == Intent.ACTION_MANAGED_PROFILE_AVAILABLE) {
             isManagedProfileAvailable = true
-        }
-        else if (intent?.action == Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE) {
+        } else if (intent?.action == Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE) {
             isManagedProfileAvailable = false
         }
 
