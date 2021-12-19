@@ -57,6 +57,10 @@ class WebSocketRepositoryImpl @Inject constructor(
 ) : WebSocketRepository, WebSocketListener() {
 
     companion object {
+        private const val EVENT_STATE_CHANGED = "state_changed"
+        private const val EVENT_AREA_REGISTRY_UPDATED = "area_registry_updated"
+        private const val EVENT_DEVICE_REGISTRY_UPDATED = "device_registry_updated"
+        private const val EVENT_ENTITY_REGISTRY_UPDATED = "entity_registry_updated"
         private const val TAG = "WebSocketRepository"
     }
 
@@ -173,16 +177,16 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     @ExperimentalCoroutinesApi
-    override suspend fun getStateChanges(): Flow<StateChangedEvent> = subscribeToEventsForType("state_changed")
+    override suspend fun getStateChanges(): Flow<StateChangedEvent> = subscribeToEventsForType(EVENT_STATE_CHANGED)
 
     @ExperimentalCoroutinesApi
-    override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent> = subscribeToEventsForType("area_registry_updated")
+    override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent> = subscribeToEventsForType(EVENT_AREA_REGISTRY_UPDATED)
 
     @ExperimentalCoroutinesApi
-    override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent> = subscribeToEventsForType("device_registry_updated")
+    override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent> = subscribeToEventsForType(EVENT_DEVICE_REGISTRY_UPDATED)
 
     @ExperimentalCoroutinesApi
-    override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent> = subscribeToEventsForType("entity_registry_updated")
+    override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent> = subscribeToEventsForType(EVENT_ENTITY_REGISTRY_UPDATED)
 
     @ExperimentalCoroutinesApi
     private suspend fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T> {
@@ -301,10 +305,10 @@ class WebSocketRepositoryImpl @Inject constructor(
         val eventResponseType = response.event?.get("event_type")
         if (eventResponseType != null && eventResponseType.isTextual) {
             val eventResponseClass = when (eventResponseType.textValue()) {
-                "state_changed" -> object : TypeReference<EventResponse<StateChangedEvent>>() {}
-                "area_registry_updated" -> object : TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
-                "device_registry_updated" -> object : TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
-                "entity_registry_updated" -> object : TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
+                EVENT_STATE_CHANGED -> object : TypeReference<EventResponse<StateChangedEvent>>() {}
+                EVENT_AREA_REGISTRY_UPDATED -> object : TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
+                EVENT_DEVICE_REGISTRY_UPDATED -> object : TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
+                EVENT_ENTITY_REGISTRY_UPDATED -> object : TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
                 else -> {
                     Log.d(TAG, "Unknown event type received")
                     object : TypeReference<EventResponse<Any>>() {}
