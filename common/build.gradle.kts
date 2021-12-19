@@ -55,9 +55,9 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.40.5")
     kapt("com.google.dagger:hilt-android-compiler:2.40.5")
 
-    api("androidx.room:room-runtime:2.3.0")
-    api("androidx.room:room-ktx:2.3.0")
-    kapt("androidx.room:room-compiler:2.3.0")
+    api("androidx.room:room-runtime:2.4.0")
+    api("androidx.room:room-ktx:2.4.0")
+    kapt("androidx.room:room-compiler:2.4.0")
 
     api("androidx.work:work-runtime-ktx:2.7.1")
 

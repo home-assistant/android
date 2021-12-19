@@ -6,13 +6,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,12 +31,11 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
-import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.previewFavoritesList
+import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.common.R as commonR
 
+@ExperimentalComposeUiApi
 @ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
 @Composable
@@ -51,7 +51,7 @@ fun SettingsView(
     onToastEnabled: (Boolean) -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
-    RotaryEventState(scrollState = scalingLazyListState)
+    LocalView.current.requestFocus()
 
     WearAppTheme {
         Scaffold(
@@ -63,7 +63,8 @@ fun SettingsView(
         ) {
             ScalingLazyColumn(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .scrollHandler(scalingLazyListState),
                 contentPadding = PaddingValues(
                     top = 24.dp,
                     start = 8.dp,
@@ -229,26 +230,21 @@ fun SettingsView(
     }
 }
 
+@ExperimentalComposeUiApi
 @ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
 @Preview
 @Composable
 private fun PreviewSettingsView() {
-    val rotaryEventDispatcher = RotaryEventDispatcher()
-
-    CompositionLocalProvider(
-        LocalRotaryEventDispatcher provides rotaryEventDispatcher
-    ) {
-        SettingsView(
-            favorites = previewFavoritesList,
-            onClickSetFavorites = { /*TODO*/ },
-            onClearFavorites = {},
-            onClickSetShortcuts = {},
-            onClickLogout = {},
-            isHapticEnabled = true,
-            isToastEnabled = false,
-            {},
-            {}
-        )
-    }
+    SettingsView(
+        favorites = previewFavoritesList,
+        onClickSetFavorites = { /*TODO*/ },
+        onClearFavorites = {},
+        onClickSetShortcuts = {},
+        onClickLogout = {},
+        isHapticEnabled = true,
+        isToastEnabled = false,
+        {},
+        {}
+    )
 }

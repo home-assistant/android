@@ -11,10 +11,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -30,10 +32,11 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
+import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.common.R as commonR
 
+@ExperimentalComposeUiApi
 @Composable
 fun ChooseEntityView(
     mainViewModel: MainViewModel,
@@ -48,12 +51,13 @@ fun ChooseEntityView(
     var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
-    RotaryEventState(scrollState = scalingLazyListState)
+    LocalView.current.requestFocus()
 
     WearAppTheme {
         ScalingLazyColumn(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .scrollHandler(scalingLazyListState),
             contentPadding = PaddingValues(
                 top = 24.dp,
                 start = 8.dp,
