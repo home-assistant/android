@@ -106,15 +106,9 @@ class HaControlsProviderService : ControlsProviderService() {
                         val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
                         controlIds.forEach {
                             val entity = integrationRepository.getEntity(it)
-                            val domain = it.split(".")[0]
-                            val control = domainToHaControl[domain]?.createControl(
-                                applicationContext,
-                                entity,
-                                getAreaForEntity(it, areaRegistry, deviceRegistry, entityRegistry)
-                            )
                             entities[it] = entity
-                            subscriber.onNext(control)
                         }
+                        sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
 
                         // Listen for the state changed events.
                         webSocketScope.launch {
@@ -133,44 +127,20 @@ class HaControlsProviderService : ControlsProviderService() {
                         webSocketScope.launch {
                             areaRegistryFlow.collect {
                                 areaRegistry = webSocketRepository.getAreaRegistry()
-                                entities.forEach {
-                                    val domain = it.key.split(".")[0]
-                                    val control = domainToHaControl[domain]?.createControl(
-                                        applicationContext,
-                                        it.value,
-                                        getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
-                                    )
-                                    subscriber.onNext(control)
-                                }
+                                sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
                             }
                         }
                         webSocketScope.launch {
                             deviceRegistryFlow.collect {
                                 deviceRegistry = webSocketRepository.getDeviceRegistry()
-                                entities.forEach {
-                                    val domain = it.key.split(".")[0]
-                                    val control = domainToHaControl[domain]?.createControl(
-                                        applicationContext,
-                                        it.value,
-                                        getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
-                                    )
-                                    subscriber.onNext(control)
-                                }
+                                sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
                             }
                         }
                         webSocketScope.launch {
                             entityRegistryFlow.collect { event ->
                                 if (event.action == "update" && controlIds.contains(event.entityId)) {
                                     entityRegistry = webSocketRepository.getEntityRegistry()
-                                    entities.forEach {
-                                        val domain = it.key.split(".")[0]
-                                        val control = domainToHaControl[domain]?.createControl(
-                                            applicationContext,
-                                            it.value,
-                                            getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
-                                        )
-                                        subscriber.onNext(control)
-                                    }
+                                    sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
                                 }
                             }
                         }
@@ -206,6 +176,24 @@ class HaControlsProviderService : ControlsProviderService() {
             consumer.accept(ControlAction.RESPONSE_OK)
         } else {
             consumer.accept(ControlAction.RESPONSE_UNKNOWN)
+        }
+    }
+
+    private fun sendEntitiesToSubscriber(
+        subscriber: Flow.Subscriber<in Control>,
+        entities: Map<String, Entity<Map<String, Any>>>,
+        areaRegistry: List<AreaRegistryResponse>,
+        deviceRegistry: List<DeviceRegistryResponse>,
+        entityRegistry: List<EntityRegistryResponse>
+    ) {
+        entities.forEach {
+            val domain = it.key.split(".")[0]
+            val control = domainToHaControl[domain]?.createControl(
+                applicationContext,
+                it.value,
+                getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
+            )
+            subscriber.onNext(control)
         }
     }
 
