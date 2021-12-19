@@ -213,7 +213,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
                 val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
                 val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
-                val url = if(entityPictureUrl?.startsWith("http") == true) entityPictureUrl else "$baseUrl$entityPictureUrl"
+                val url = if (entityPictureUrl?.startsWith("http") == true) entityPictureUrl else "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
                     setImageViewResource(
                         R.id.widgetMediaImage,
