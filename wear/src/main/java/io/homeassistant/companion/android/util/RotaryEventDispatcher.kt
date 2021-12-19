@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.util
 
+import android.os.Build
 import android.view.MotionEvent
 import android.view.ViewConfiguration
 import androidx.compose.foundation.gestures.ScrollableState
@@ -21,7 +22,13 @@ fun Modifier.scrollHandler(scrollState: ScrollableState): Modifier = composed {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val scaledVerticalScrollFactor =
-        remember { ViewConfiguration.get(context).scaledVerticalScrollFactor }
+        remember {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ViewConfiguration.get(context).scaledVerticalScrollFactor
+            } else {
+                ViewConfiguration::class.java.getDeclaredMethod("getScaledScrollFactor").toString().toFloat()
+            }
+        }
 
     this.pointerInteropFilter(RequestDisallowInterceptTouchEvent()) { event ->
         if (event.action != MotionEvent.ACTION_SCROLL ||
