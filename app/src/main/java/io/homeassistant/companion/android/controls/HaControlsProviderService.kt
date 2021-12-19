@@ -100,9 +100,10 @@ class HaControlsProviderService : ControlsProviderService() {
                         // Load up initial values
                         // This should use the cached values that we should store in the DB.
                         // For now we'll use the rest API
-                        val areaRegistry = webSocketRepository.getAreaRegistry()
-                        val deviceRegistry = webSocketRepository.getDeviceRegistry()
-                        val entityRegistry = webSocketRepository.getEntityRegistry()
+                        var areaRegistry = webSocketRepository.getAreaRegistry()
+                        var deviceRegistry = webSocketRepository.getDeviceRegistry()
+                        var entityRegistry = webSocketRepository.getEntityRegistry()
+                        val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
                         controlIds.forEach {
                             val entity = integrationRepository.getEntity(it)
                             val domain = it.split(".")[0]
@@ -111,6 +112,7 @@ class HaControlsProviderService : ControlsProviderService() {
                                 entity,
                                 getAreaForEntity(it, areaRegistry, deviceRegistry, entityRegistry)
                             )
+                            entities[it] = entity
                             subscriber.onNext(control)
                         }
 
@@ -130,17 +132,46 @@ class HaControlsProviderService : ControlsProviderService() {
                         }
                         webSocketScope.launch {
                             areaRegistryFlow.collect {
-                                Log.i(TAG, "Received area registry update $it")
+                                areaRegistry = webSocketRepository.getAreaRegistry()
+                                entities.forEach {
+                                    val domain = it.key.split(".")[0]
+                                    val control = domainToHaControl[domain]?.createControl(
+                                        applicationContext,
+                                        it.value,
+                                        getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
+                                    )
+                                    subscriber.onNext(control)
+                                }
                             }
                         }
                         webSocketScope.launch {
                             deviceRegistryFlow.collect {
-                                Log.i(TAG, "Received device registry update $it")
+                                deviceRegistry = webSocketRepository.getDeviceRegistry()
+                                entities.forEach {
+                                    val domain = it.key.split(".")[0]
+                                    val control = domainToHaControl[domain]?.createControl(
+                                        applicationContext,
+                                        it.value,
+                                        getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
+                                    )
+                                    subscriber.onNext(control)
+                                }
                             }
                         }
                         webSocketScope.launch {
-                            entityRegistryFlow.collect {
-                                Log.i(TAG, "Received entity registry update $it")
+                            entityRegistryFlow.collect { event ->
+                                if (event.action == "update" && controlIds.contains(event.entityId)) {
+                                    entityRegistry = webSocketRepository.getEntityRegistry()
+                                    entities.forEach {
+                                        val domain = it.key.split(".")[0]
+                                        val control = domainToHaControl[domain]?.createControl(
+                                            applicationContext,
+                                            it.value,
+                                            getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
+                                        )
+                                        subscriber.onNext(control)
+                                    }
+                                }
                             }
                         }
                     }
