@@ -213,7 +213,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
                 val entityPictureUrl = entity?.attributes?.get("entity_picture")?.toString()
                 val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
-                val url = "$baseUrl$entityPictureUrl"
+                val url = if (entityPictureUrl?.startsWith("http") == true) entityPictureUrl else "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
                     setImageViewResource(
                         R.id.widgetMediaImage,
@@ -238,8 +238,10 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                     Log.d(TAG, "Fetching media preview image")
                     Handler(Looper.getMainLooper()).post {
-                        if (BuildConfig.DEBUG)
+                        if (BuildConfig.DEBUG) {
                             Picasso.get().isLoggingEnabled = true
+                            Picasso.get().setIndicatorsEnabled(true)
+                        }
                         try {
                             Picasso.get().load(url).resize(1024, 1024).into(
                                 this,

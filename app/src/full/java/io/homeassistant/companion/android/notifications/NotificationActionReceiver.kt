@@ -10,7 +10,6 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.util.NotificationActionContentHandler
 import io.homeassistant.companion.android.util.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +24,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
     companion object {
         const val TAG = "NotifActionReceiver"
         const val FIRE_EVENT = "FIRE_EVENT"
-        const val OPEN_URI = "OPEN_URI"
         const val EXTRA_NOTIFICATION_TAG = "EXTRA_NOTIFICATION_TAG"
         const val EXTRA_NOTIFICATION_ID = "EXTRA_NOTIFICATION_ID"
         const val EXTRA_NOTIFICATION_ACTION = "EXTRA_ACTION_KEY"
@@ -71,11 +69,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
-            OPEN_URI -> NotificationActionContentHandler.openUri(
-                context,
-                notificationAction.uri,
-                onComplete
-            )
         }
     }
 
