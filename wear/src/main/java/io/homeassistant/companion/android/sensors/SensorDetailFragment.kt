@@ -3,14 +3,12 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.text.InputType
 import android.util.Log
-import android.view.Menu
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
@@ -25,12 +23,12 @@ import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.Setting
-import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
@@ -73,18 +71,18 @@ class SensorDetailFragment(
         setHasOptionsMenu(true)
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        super.onPrepareOptionsMenu(menu)
-        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
-        menu.removeItem(R.id.action_filter)
-        menu.removeItem(R.id.action_search)
-
-        menu.findItem(R.id.get_help)?.let {
-            it.isVisible = true
-            val docsLink = basicSensor.docsLink ?: sensorManager.docsLink()
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))
-        }
-    }
+//    override fun onPrepareOptionsMenu(menu: Menu) {
+//        super.onPrepareOptionsMenu(menu)
+//        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
+//        menu.removeItem(R.id.action_filter)
+//        menu.removeItem(R.id.action_search)
+//
+//        menu.findItem(R.id.get_help)?.let {
+//            it.isVisible = true
+//            val docsLink = basicSensor.docsLink ?: sensorManager.docsLink()
+//            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))
+//        }
+//    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 
