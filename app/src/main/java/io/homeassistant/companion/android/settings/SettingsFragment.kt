@@ -324,7 +324,7 @@ class SettingsFragment constructor(
             it.isEnabled = false
             try {
                 val unwrappedDrawable =
-                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_priority)
+                    AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_priority)
                 unwrappedDrawable?.setTint(Color.DKGRAY)
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
@@ -350,7 +350,7 @@ class SettingsFragment constructor(
             it.isEnabled = true
             try {
                 val unwrappedDrawable =
-                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_priority)
+                    AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_priority)
                 unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {

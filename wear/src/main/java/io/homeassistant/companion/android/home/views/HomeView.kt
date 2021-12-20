@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import android.content.Intent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -14,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
@@ -24,6 +26,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.home.MainViewModel
+import io.homeassistant.companion.android.sensors.SensorSettingsActivity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
@@ -109,6 +112,7 @@ fun LoadHomePage(
                         onClickSetFavorites = { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
                         onClearFavorites = { mainViewModel.clearFavorites() },
                         onClickSetShortcuts = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) },
+                        onClickSensors = { context.startActivity(Intent(context, SensorSettingsActivity::class.java)) },
                         onClickLogout = { mainViewModel.logout() },
                         isHapticEnabled = mainViewModel.isHapticEnabled.value,
                         isToastEnabled = mainViewModel.isToastEnabled.value,

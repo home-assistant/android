@@ -7,13 +7,18 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.core.content.res.ResourcesCompat
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
@@ -63,6 +68,7 @@ fun SettingsView(
     onClickSetFavorites: () -> Unit,
     onClearFavorites: () -> Unit,
     onClickSetShortcuts: () -> Unit,
+    onClickSensors: () -> Unit,
     onClickLogout: () -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
@@ -171,7 +177,21 @@ fun SettingsView(
                         onClick = onClickTemplateTile
                     )
                 }
-
+                item {
+                    ListHeader(
+                        id = commonR.string.sensors
+                    )
+                }
+                item {
+                    SecondarySettingsChip(
+                        icon = Icon(
+                            painter = painterResource(id = commonR.drawable.leak),
+                            contentDescription = stringResource(id = commonR.string.sensor_title)
+                        ),
+                        label = stringResource(id = commonR.string.sensors),
+                        onClick = onClickSensors
+                    )
+                }
                 item {
                     ListHeader(
                         id = commonR.string.account
@@ -211,6 +231,7 @@ private fun PreviewSettingsView() {
         onClickSetFavorites = { /*TODO*/ },
         onClearFavorites = {},
         onClickSetShortcuts = {},
+        onClickSensors = {},
         onClickLogout = {},
         isHapticEnabled = true,
         isToastEnabled = false,
