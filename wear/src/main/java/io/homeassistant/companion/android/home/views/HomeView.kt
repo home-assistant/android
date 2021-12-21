@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -68,6 +69,9 @@ fun LoadHomePage(
             }
         } else {
             val swipeDismissableNavController = rememberSwipeDismissableNavController()
+            BackHandler {
+                swipeDismissableNavController.popBackStack()
+            }
             CompositionLocalProvider(
                 LocalRotaryEventDispatcher provides rotaryEventDispatcher
             ) {
