@@ -163,7 +163,7 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew bundleFullRelease
+        run: ./gradlew bundleRelease
 
       - name: Deploy to Playstore Beta
         env:
@@ -172,7 +172,7 @@ jobs:
           KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
-        run: ./gradlew publishFullReleaseBundle
+        run: ./gradlew publishReleaseBundle
 
       - name: Promote to Beta to Production
         env:
