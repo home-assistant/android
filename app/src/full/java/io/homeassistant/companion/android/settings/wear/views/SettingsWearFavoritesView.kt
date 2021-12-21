@@ -32,7 +32,7 @@ import org.burnoutcrew.reorderable.rememberReorderState
 import org.burnoutcrew.reorderable.reorderable
 import io.homeassistant.companion.android.common.R as commonR
 
-const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/wear-os"
+const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/"
 val supportedDomains = listOf(
     "input_boolean", "light", "lock", "switch", "script", "scene"
 )
