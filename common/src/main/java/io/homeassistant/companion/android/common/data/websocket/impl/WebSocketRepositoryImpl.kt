@@ -213,14 +213,17 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     private suspend fun authenticate() {
-        connection!!.send(
-            mapper.writeValueAsString(
-                mapOf(
-                    "type" to "auth",
-                    "access_token" to authenticationRepository.retrieveAccessToken()
+        if (connection != null) {
+            connection!!.send(
+                mapper.writeValueAsString(
+                    mapOf(
+                        "type" to "auth",
+                        "access_token" to authenticationRepository.retrieveAccessToken()
+                    )
                 )
             )
-        )
+        } else
+            Log.e(TAG, "Attempted to authenticate when connection is null")
     }
 
     private fun handleAuthComplete(successful: Boolean) {
