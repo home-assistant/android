@@ -70,7 +70,10 @@ fun LoadHomePage(
         } else {
             val swipeDismissableNavController = rememberSwipeDismissableNavController()
             BackHandler {
-                swipeDismissableNavController.popBackStack()
+                // Check if current page is landing so we don't back into a null page
+                if (swipeDismissableNavController.currentDestination?.route != SCREEN_LANDING) {
+                    swipeDismissableNavController.popBackStack()
+                }
             }
             CompositionLocalProvider(
                 LocalRotaryEventDispatcher provides rotaryEventDispatcher
