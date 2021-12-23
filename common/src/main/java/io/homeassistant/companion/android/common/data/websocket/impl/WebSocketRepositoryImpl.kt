@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -176,7 +177,7 @@ class WebSocketRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get flow of entities", e)
         }
-        return stateChangedFlow!!
+        return emptyFlow()
     }
 
     /**
