@@ -88,12 +88,10 @@ class HaControlsProviderService : ControlsProviderService() {
                         controlIds.forEach {
                             val entity = integrationRepository.getEntity(it)
                             val domain = it.split(".")[0]
-                            val control = entity?.let { it1 ->
-                                domainToHaControl[domain]?.createControl(
-                                    applicationContext,
-                                    it1
-                                )
-                            }
+                            val control = domainToHaControl[domain]?.createControl(
+                                applicationContext,
+                                entity
+                            )
                             subscriber.onNext(control)
                         }
 

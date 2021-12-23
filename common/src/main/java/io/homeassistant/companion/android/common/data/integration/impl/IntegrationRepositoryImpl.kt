@@ -27,7 +27,6 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketReposit
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -414,14 +413,14 @@ class IntegrationRepositoryImpl @Inject constructor(
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
 
         return try {
-            val response: GetConfigResponse = webSocketRepository.getConfig()
+            val response: GetConfigResponse? = webSocketRepository.getConfig()
 
-            localStorage.putString(PREF_HA_VERSION, response.version)
+            localStorage.putString(PREF_HA_VERSION, response?.version)
             localStorage.putLong(
                 PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                 current + (14400000)
             ) // 4 hours
-            response.version
+            response?.version.toString()
         } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
             localStorage.getString(PREF_HA_VERSION) ?: ""
@@ -429,82 +428,62 @@ class IntegrationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getServices(): List<Service> {
-        return try {
-            val response = webSocketRepository.getServices()
+        val response = webSocketRepository.getServices()
 
-            response.flatMap {
-                it.services.map { service ->
-                    Service(it.domain, service.key, service.value)
-                }
-            }.toList()
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get list of services", e)
-            emptyList()
-        }
+        return response.flatMap {
+            it.services.map { service ->
+                Service(it.domain, service.key, service.value)
+            }
+        }.toList()
     }
 
     override suspend fun getEntities(): List<Entity<Any>> {
-        return try {
-            val response = webSocketRepository.getStates()
+        val response = webSocketRepository.getStates()
 
-            response
-                .map {
-                    Entity(
-                        it.entityId,
-                        it.state,
-                        it.attributes,
-                        it.lastChanged,
-                        it.lastUpdated,
-                        it.context
-                    )
-                }
-                .sortedBy { it.entityId }
-                .toList()
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get list of entities", e)
-            emptyList()
-        }
+        return response
+            .map {
+                Entity(
+                    it.entityId,
+                    it.state,
+                    it.attributes,
+                    it.lastChanged,
+                    it.lastUpdated,
+                    it.context
+                )
+            }
+            .sortedBy { it.entityId }
+            .toList()
     }
 
-    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
-        return try {
-            val response = integrationService.getState(
-                authenticationRepository.buildBearerToken(),
-                entityId
-            )
-            Entity(
-                response.entityId,
-                response.state,
-                response.attributes,
-                response.lastChanged,
-                response.lastUpdated,
-                response.context
-            )
-        } catch (e: java.lang.Exception) {
-            Log.e(TAG, "Unable to get entity info for: $entityId", e)
-            null
-        }
+    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>> {
+        val response = integrationService.getState(
+            authenticationRepository.buildBearerToken(),
+            entityId
+        )
+        return Entity(
+            response.entityId,
+            response.state,
+            response.attributes,
+            response.lastChanged,
+            response.lastUpdated,
+            response.context
+        )
     }
 
     @ExperimentalCoroutinesApi
     override suspend fun getEntityUpdates(): Flow<Entity<*>> {
-        return try {
-            webSocketRepository.getStateChanges()
-                .filter { it.newState != null }
-                .map {
-                    Entity(
-                        it.newState!!.entityId,
-                        it.newState.state,
-                        it.newState.attributes,
-                        it.newState.lastChanged,
-                        it.newState.lastUpdated,
-                        it.newState.context
-                    )
-                }
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get entity updates", e)
-            emptyFlow()
-        }
+        return webSocketRepository.getStateChanges()
+            .filter { it.newState != null }
+            .map {
+                Entity(
+                    it.newState!!.entityId,
+                    it.newState.state,
+                    it.newState.attributes,
+                    it.newState.lastChanged,
+                    it.newState.lastUpdated,
+                    it.newState.context
+                )
+            }
     }
 
     private suspend fun canRegisterEntityCategoryStateClass(): Boolean {

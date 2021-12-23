@@ -175,16 +175,13 @@ class CameraWidget : AppWidgetProvider() {
     private suspend fun retrieveCameraImageUrl(context: Context, entityId: String): String? {
         val entity: Entity<Map<String, Any>>
         try {
-            entity = integrationUseCase.getEntity(entityId)!!
+            entity = integrationUseCase.getEntity(entityId)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
             if (lastIntent == UPDATE_IMAGE)
                 Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             return null
         }
-
-        if (entity == null)
-            return null
 
         return entity.attributes["entity_picture"]?.toString()
     }
