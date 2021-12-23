@@ -345,13 +345,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     private suspend fun getEntity(context: Context, entityId: String): Entity<Map<String, Any>>? {
         val entity: Entity<Map<String, Any>>
         try {
-            entity = integrationUseCase.getEntity(entityId)
+            entity = integrationUseCase.getEntity(entityId)!!
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE)
                 Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             return null
         }
+
+        if (entity == null)
+            return null
 
         return entity
     }
@@ -464,13 +467,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val currentEntityInfo: Entity<Map<String, Any>>
             try {
-                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)!!
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 return@launch
             }
+
+            if (currentEntityInfo == null)
+                return@launch
 
             val fetchedAttributes = currentEntityInfo.attributes
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()
@@ -535,13 +541,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
 
             val currentEntityInfo: Entity<Map<String, Any>>
             try {
-                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)!!
             } catch (e: Exception) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
                 return@launch
             }
+
+            if (currentEntityInfo == null)
+                return@launch
 
             val fetchedAttributes = currentEntityInfo.attributes
             val currentTime = fetchedAttributes["media_position"]?.toString()?.toDoubleOrNull()

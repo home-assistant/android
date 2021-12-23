@@ -25,7 +25,9 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -33,6 +35,8 @@ import org.json.JSONArray
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -83,18 +87,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         request.supportsEncryption = false
         request.deviceId = deviceId
 
-        val response =
-            integrationService.registerDevice(
-                authenticationRepository.buildBearerToken(),
-                request
+        try {
+            val response =
+                integrationService.registerDevice(
+                    authenticationRepository.buildBearerToken(),
+                    request
+                )
+            persistDeviceRegistration(deviceRegistration)
+            urlRepository.saveRegistrationUrls(
+                response.cloudhookUrl,
+                response.remoteUiUrl,
+                response.webhookId
             )
-        persistDeviceRegistration(deviceRegistration)
-        urlRepository.saveRegistrationUrls(
-            response.cloudhookUrl,
-            response.remoteUiUrl,
-            response.webhookId
-        )
-        localStorage.putString(PREF_SECRET, response.secret)
+            localStorage.putString(PREF_SECRET, response.secret)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to register device", e)
+        }
     }
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
@@ -405,7 +413,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             return localStorage.getString(PREF_HA_VERSION)
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
 
-        try {
+        return try {
             val response: GetConfigResponse = webSocketRepository.getConfig()
 
             localStorage.putString(PREF_HA_VERSION, response.version)
@@ -413,69 +421,90 @@ class IntegrationRepositoryImpl @Inject constructor(
                 PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                 current + (14400000)
             ) // 4 hours
-            return response.version
+            response.version
         } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
-            return return localStorage.getString(PREF_HA_VERSION) ?: ""
+            localStorage.getString(PREF_HA_VERSION) ?: ""
         }
     }
 
     override suspend fun getServices(): List<Service> {
-        val response = webSocketRepository.getServices()
+        return try {
+            val response = webSocketRepository.getServices()
 
-        return response.flatMap {
-            it.services.map { service ->
-                Service(it.domain, service.key, service.value)
-            }
-        }.toList()
+            response.flatMap {
+                it.services.map { service ->
+                    Service(it.domain, service.key, service.value)
+                }
+            }.toList()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get list of services", e)
+            emptyList()
+        }
     }
 
     override suspend fun getEntities(): List<Entity<Any>> {
-        val response = webSocketRepository.getStates()
+        return try {
+            val response = webSocketRepository.getStates()
 
-        return response
-            .map {
-                Entity(
-                    it.entityId,
-                    it.state,
-                    it.attributes,
-                    it.lastChanged,
-                    it.lastUpdated,
-                    it.context
-                )
-            }
-            .sortedBy { it.entityId }
-            .toList()
+            response
+                .map {
+                    Entity(
+                        it.entityId,
+                        it.state,
+                        it.attributes,
+                        it.lastChanged,
+                        it.lastUpdated,
+                        it.context
+                    )
+                }
+                .sortedBy { it.entityId }
+                .toList()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get list of entities", e)
+            emptyList()
+        }
     }
 
-    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>> {
-        val response = integrationService.getState(
-            authenticationRepository.buildBearerToken(),
-            entityId
-        )
-        return Entity(
-            response.entityId,
-            response.state,
-            response.attributes,
-            response.lastChanged,
-            response.lastUpdated,
-            response.context
-        )
+    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
+        return try {
+            val response = integrationService.getState(
+                authenticationRepository.buildBearerToken(),
+                entityId
+            )
+            Entity(
+                response.entityId,
+                response.state,
+                response.attributes,
+                response.lastChanged,
+                response.lastUpdated,
+                response.context
+            )
+        } catch (e: java.lang.Exception) {
+            Log.e(TAG, "Unable to get entity info for: $entityId", e)
+            null
+        }
     }
 
+    @ExperimentalCoroutinesApi
     override suspend fun getEntityUpdates(): Flow<Entity<*>> {
-        return webSocketRepository.getStateChanges()
-            .filter { it.newState != null }
-            .map {
-                Entity(
-                    it.newState!!.entityId,
-                    it.newState.state,
-                    it.newState.attributes,
-                    it.newState.lastChanged,
-                    it.newState.lastUpdated,
-                    it.newState.context
-                )
-            }
+        return try {
+            webSocketRepository.getStateChanges()
+                .filter { it.newState != null }
+                .map {
+                    Entity(
+                        it.newState!!.entityId,
+                        it.newState.state,
+                        it.newState.attributes,
+                        it.newState.lastChanged,
+                        it.newState.lastUpdated,
+                        it.newState.context
+                    )
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get entity updates", e)
+            emptyFlow()
+        }
     }
 
     private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
