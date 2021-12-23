@@ -90,12 +90,10 @@ fun LoadWearFavoritesSettings(
             }
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
                 val favoriteEntityID = favoriteEntities[index].replace("[", "").replace("]", "")
-                var favoriteAttributes: Map<*, *>
-                var favoriteFriendlyName: String
                 for (entity in validEntities)
                     if (entity.entityId == favoriteEntityID) {
-                        favoriteAttributes = entity.attributes as Map<*, *>
-                        favoriteFriendlyName = favoriteAttributes["friendly_name"].toString()
+                        val favoriteAttributes = entity.attributes as Map<*, *>
+                        val favoriteFriendlyName = favoriteAttributes["friendly_name"].toString()
                         Row(
                             modifier = Modifier
                                 .padding(12.dp)
