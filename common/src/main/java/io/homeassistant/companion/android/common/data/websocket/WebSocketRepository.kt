@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface WebSocketRepository {
     suspend fun sendPing(): Boolean
-    suspend fun getConfig(): GetConfigResponse
+    suspend fun getConfig(): GetConfigResponse?
     suspend fun getStates(): List<EntityResponse<Any>>
     suspend fun getServices(): List<DomainResponse>
     suspend fun getPanels(): List<String>
