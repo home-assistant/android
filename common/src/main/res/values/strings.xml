@@ -697,5 +697,6 @@
     <string name="widgets">Widgets</string>
     <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
     <string name="failed_wear_config_request">Failed to send config request to wear device</string>
+    <string name="companion_app">Companion App</string>
 
 </resources>
