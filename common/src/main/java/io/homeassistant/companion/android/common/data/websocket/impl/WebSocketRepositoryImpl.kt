@@ -174,10 +174,12 @@ class WebSocketRepositoryImpl @Inject constructor(
                     }.shareIn(ioScope, SharingStarted.WhileSubscribed())
                 }
             }
+
+            return stateChangedFlow!!
         } catch (e: Exception) {
             Log.e(TAG, "Unable to get flow of entities", e)
+            return emptyFlow()
         }
-        return emptyFlow()
     }
 
     /**
