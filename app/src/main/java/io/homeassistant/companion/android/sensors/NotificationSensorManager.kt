@@ -17,6 +17,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
     companion object {
         private const val TAG = "NotificationManager"
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
+        private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
 
         private var listenerConnected = false
         val lastNotification = SensorManager.BasicSensor(
@@ -102,8 +103,16 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             ""
         ).split(", ").filter { it.isNotBlank() }
 
+        val disableAllowListRequirement = getSetting(
+            applicationContext,
+            lastNotification,
+            SETTING_DISABLE_ALLOW_LIST,
+            "toggle",
+            "false"
+        ).toBoolean()
+
         if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)
+            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) || !disableAllowListRequirement
         ) {
             return
         }
@@ -147,8 +156,16 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             ""
         ).split(", ").filter { it.isNotBlank() }
 
+        val disableAllowListRequirement = getSetting(
+            applicationContext,
+            lastRemovedNotification,
+            SETTING_DISABLE_ALLOW_LIST,
+            "toggle",
+            "false"
+        ).toBoolean()
+
         if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)
+            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) || !disableAllowListRequirement
         ) {
             return
         }
