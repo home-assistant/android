@@ -13,11 +13,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,12 +39,12 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
-import io.homeassistant.companion.android.util.RotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
+import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.common.R as commonR
 
+@ExperimentalComposeUiApi
 @ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
 @Composable
@@ -62,8 +64,7 @@ fun MainView(
 
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
-    RotaryEventDispatcher(scalingLazyListState)
-    RotaryEventState(scrollState = scalingLazyListState)
+    LocalView.current.requestFocus()
 
     WearAppTheme {
         Scaffold(
@@ -75,7 +76,8 @@ fun MainView(
         ) {
             ScalingLazyColumn(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .scrollHandler(scalingLazyListState),
                 contentPadding = PaddingValues(
                     top = 24.dp,
                     start = 8.dp,

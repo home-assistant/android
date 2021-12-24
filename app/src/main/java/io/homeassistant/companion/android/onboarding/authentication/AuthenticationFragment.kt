@@ -5,6 +5,7 @@ import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.viewinterop.AndroidView
@@ -93,14 +95,21 @@ class AuthenticationFragment : Fragment() {
     }
 
     private fun buildAuthUrl(base: String): String {
-        return base.toHttpUrl()
-            .newBuilder()
-            .addPathSegments("auth/authorize")
-            .addEncodedQueryParameter("response_type", "code")
-            .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
-            .addEncodedQueryParameter("redirect_uri", AUTH_CALLBACK)
-            .build()
-            .toString()
+        return try {
+            base.toHttpUrl()
+                .newBuilder()
+                .addPathSegments("auth/authorize")
+                .addEncodedQueryParameter("response_type", "code")
+                .addEncodedQueryParameter("client_id", AuthenticationService.CLIENT_ID)
+                .addEncodedQueryParameter("redirect_uri", AUTH_CALLBACK)
+                .build()
+                .toString()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to build authentication URL", e)
+            Toast.makeText(context, commonR.string.error_connection_failed, Toast.LENGTH_LONG).show()
+            parentFragmentManager.popBackStack()
+            ""
+        }
     }
 
     private fun onRedirect(url: String): Boolean {

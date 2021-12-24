@@ -22,7 +22,6 @@ class BluetoothSensorManager : SensorManager {
         private const val SETTING_BLE_TRANSMIT_POWER = "ble_transmit_power"
         private const val SETTING_BLE_ADVERTISE_MODE = "ble_advertise_mode"
         private const val SETTING_BLE_TRANSMIT_ENABLED = "ble_transmit_enabled"
-        private const val SETTING_BLE_ENABLE_TOGGLE_ALL = "ble_enable_toggle_all"
         private const val SETTING_BLE_MEASURED_POWER = "ble_measured_power_at_1m"
 
         private const val DEFAULT_BLE_TRANSMIT_POWER = "ultraLow"
@@ -162,15 +161,7 @@ class BluetoothSensorManager : SensorManager {
         )
     }
 
-    override fun enableToggleAll(context: Context, sensorId: String): Boolean {
-        if (sensorId == bleTransmitter.id) {
-            return getSetting(context, bleTransmitter, SETTING_BLE_ENABLE_TOGGLE_ALL, "toggle", "false").toBoolean()
-        }
-        return super.enableToggleAll(context, sensorId)
-    }
-
     private fun updateBLEDevice(context: Context) {
-        addSettingIfNotPresent(context, bleTransmitter, SETTING_BLE_ENABLE_TOGGLE_ALL, "toggle", "false")
         val transmitActive = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_ENABLED, "toggle", "true").toBoolean()
         val uuid = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
         val major = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_MAJOR)

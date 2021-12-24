@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -89,27 +90,37 @@ class WebSocketRepositoryImpl @Inject constructor(
         return socketResponse.type == "pong"
     }
 
-    override suspend fun getConfig(): GetConfigResponse {
-        val socketResponse = sendMessage(
-            mapOf(
-                "type" to "get_config"
+    override suspend fun getConfig(): GetConfigResponse? {
+        return try {
+            val socketResponse = sendMessage(
+                mapOf(
+                    "type" to "get_config"
+                )
             )
-        )
 
-        return mapper.convertValue(socketResponse.result!!, GetConfigResponse::class.java)
+            mapper.convertValue(socketResponse.result!!, GetConfigResponse::class.java)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get config response", e)
+            null
+        }
     }
 
     override suspend fun getStates(): List<EntityResponse<Any>> {
-        val socketResponse = sendMessage(
-            mapOf(
-                "type" to "get_states"
+        return try {
+            val socketResponse = sendMessage(
+                mapOf(
+                    "type" to "get_states"
+                )
             )
-        )
 
-        return mapper.convertValue(
-            socketResponse.result!!,
-            object : TypeReference<List<EntityResponse<Any>>>() {}
-        )
+            mapper.convertValue(
+                socketResponse.result!!,
+                object : TypeReference<List<EntityResponse<Any>>>() {}
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get list of entities", e)
+            emptyList()
+        }
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse> {
@@ -152,19 +163,24 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getServices(): List<DomainResponse> {
-        val socketResponse = sendMessage(
-            mapOf(
-                "type" to "get_services"
+        return try {
+            val socketResponse = sendMessage(
+                mapOf(
+                    "type" to "get_services"
+                )
             )
-        )
 
-        val response = mapper.convertValue(
-            socketResponse.result!!,
-            object : TypeReference<Map<String, Map<String, ServiceData>>>() {}
-        )
+            val response = mapper.convertValue(
+                socketResponse.result!!,
+                object : TypeReference<Map<String, Map<String, ServiceData>>>() {}
+            )
 
-        return response.map {
-            DomainResponse(it.key, it.value)
+            response.map {
+                DomainResponse(it.key, it.value)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get service data")
+            emptyList()
         }
     }
 
@@ -190,38 +206,43 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     @ExperimentalCoroutinesApi
     private suspend fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T> {
-        if (eventSubscriptionMutex[eventType] == null) {
-            eventSubscriptionMutex[eventType] = Mutex()
-        }
-        eventSubscriptionMutex[eventType]!!.withLock {
-            if (eventSubscriptionFlow[eventType] == null) {
+        return try {
+            if (eventSubscriptionMutex[eventType] == null) {
+                eventSubscriptionMutex[eventType] = Mutex()
+            }
+            eventSubscriptionMutex[eventType]!!.withLock {
+                if (eventSubscriptionFlow[eventType] == null) {
 
-                val response = sendMessage(
-                    mapOf(
-                        "type" to "subscribe_events",
-                        "event_type" to eventType
+                    val response = sendMessage(
+                        mapOf(
+                            "type" to "subscribe_events",
+                            "event_type" to eventType
+                        )
                     )
-                )
 
-                eventSubscriptionFlow[eventType] = callbackFlow<T> {
-                    eventSubscriptionProducerScope[eventType] = this as ProducerScope<Any>
-                    awaitClose {
-                        Log.d(TAG, "Unsubscribing from $eventType")
-                        ioScope.launch {
-                            sendMessage(
-                                mapOf(
-                                    "type" to "unsubscribe_events",
-                                    "subscription" to response.id
+                    eventSubscriptionFlow[eventType] = callbackFlow<T> {
+                        eventSubscriptionProducerScope[eventType] = this as ProducerScope<Any>
+                        awaitClose {
+                            Log.d(TAG, "Unsubscribing from $eventType")
+                            ioScope.launch {
+                                sendMessage(
+                                    mapOf(
+                                        "type" to "unsubscribe_events",
+                                        "subscription" to response.id
+                                    )
                                 )
-                            )
+                            }
+                            eventSubscriptionProducerScope.remove(eventType)
+                            eventSubscriptionFlow.remove(eventType)
                         }
-                        eventSubscriptionProducerScope.remove(eventType)
-                        eventSubscriptionFlow.remove(eventType)
-                    }
-                }.shareIn(ioScope, SharingStarted.WhileSubscribed())
+                    }.shareIn(ioScope, SharingStarted.WhileSubscribed())
+                }
             }
 
-            return eventSubscriptionFlow[eventType]!! as SharedFlow<T>
+            eventSubscriptionFlow[eventType]!! as SharedFlow<T>
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to subscribe to $eventType", e)
+            emptyFlow()
         }
     }
 
@@ -277,14 +298,17 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     private suspend fun authenticate() {
-        connection!!.send(
-            mapper.writeValueAsString(
-                mapOf(
-                    "type" to "auth",
-                    "access_token" to authenticationRepository.retrieveAccessToken()
+        if (connection != null) {
+            connection!!.send(
+                mapper.writeValueAsString(
+                    mapOf(
+                        "type" to "auth",
+                        "access_token" to authenticationRepository.retrieveAccessToken()
+                    )
                 )
             )
-        )
+        } else
+            Log.e(TAG, "Attempted to authenticate when connection is null")
     }
 
     private fun handleAuthComplete(successful: Boolean) {
