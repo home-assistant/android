@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
