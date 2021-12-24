@@ -124,42 +124,57 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse> {
-        val socketResponse = sendMessage(
-            mapOf(
-                "type" to "config/area_registry/list"
+        return try {
+            val socketResponse = sendMessage(
+                mapOf(
+                    "type" to "config/area_registry/list"
+                )
             )
-        )
 
-        return mapper.convertValue(
-            socketResponse.result!!,
-            object : TypeReference<List<AreaRegistryResponse>>() {}
-        )
+            mapper.convertValue(
+                socketResponse.result!!,
+                object : TypeReference<List<AreaRegistryResponse>>() {}
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get area registry list", e)
+            emptyList()
+        }
     }
 
     override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse> {
-        val socketResponse = sendMessage(
-            mapOf(
-                "type" to "config/device_registry/list"
+        return try {
+            val socketResponse = sendMessage(
+                mapOf(
+                    "type" to "config/device_registry/list"
+                )
             )
-        )
 
-        return mapper.convertValue(
-            socketResponse.result!!,
-            object : TypeReference<List<DeviceRegistryResponse>>() {}
-        )
+            mapper.convertValue(
+                socketResponse.result!!,
+                object : TypeReference<List<DeviceRegistryResponse>>() {}
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get device registry list", e)
+            emptyList()
+        }
     }
 
     override suspend fun getEntityRegistry(): List<EntityRegistryResponse> {
-        val socketResponse = sendMessage(
-            mapOf(
-                "type" to "config/entity_registry/list"
+        return try {
+            val socketResponse = sendMessage(
+                mapOf(
+                    "type" to "config/entity_registry/list"
+                )
             )
-        )
 
-        return mapper.convertValue(
-            socketResponse.result!!,
-            object : TypeReference<List<EntityRegistryResponse>>() {}
-        )
+            mapper.convertValue(
+                socketResponse.result!!,
+                object : TypeReference<List<EntityRegistryResponse>>() {}
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get entity registry list", e)
+            emptyList()
+        }
     }
 
     override suspend fun getServices(): List<DomainResponse> {
