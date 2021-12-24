@@ -91,18 +91,20 @@ class ActivitySensorManager : BroadcastReceiver(), SensorManager {
         Log.d(TAG, "Received activity update.")
         if (ActivityRecognitionResult.hasResult(intent)) {
             val result = ActivityRecognitionResult.extractResult(intent)
-            var probActivity = typeToString(result.mostProbableActivity)
+            var probActivity = result?.let { typeToString(it.mostProbableActivity) }
 
             if (probActivity == "on_foot")
-                probActivity = getSubActivity(result)
+                probActivity = result?.let { getSubActivity(it) }
 
-            onSensorUpdated(
-                context,
-                activity,
-                probActivity,
-                getSensorIcon(probActivity),
-                result.probableActivities.map { typeToString(it) to it.confidence }.toMap()
-            )
+            if (probActivity != null && result != null) {
+                onSensorUpdated(
+                    context,
+                    activity,
+                    probActivity,
+                    getSensorIcon(probActivity),
+                    result.probableActivities.map { typeToString(it) to it.confidence }.toMap()
+                )
+            }
         }
     }
 

@@ -5,13 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,13 +24,12 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberScalingLazyListState
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
-import io.homeassistant.companion.android.util.LocalRotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventDispatcher
-import io.homeassistant.companion.android.util.RotaryEventState
 import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
+import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.common.R as commonR
 
+@ExperimentalComposeUiApi
 @Composable
 fun EntityViewList(
     entityLists: Map<Int, List<Entity<*>>>,
@@ -49,12 +47,13 @@ fun EntityViewList(
     }
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
-    RotaryEventState(scrollState = scalingLazyListState)
+    LocalView.current.requestFocus()
 
     WearAppTheme {
         ScalingLazyColumn(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .scrollHandler(scalingLazyListState),
             contentPadding = PaddingValues(
                 top = 24.dp,
                 start = 8.dp,
@@ -111,20 +110,15 @@ fun EntityViewList(
     }
 }
 
+@ExperimentalComposeUiApi
 @ExperimentalWearMaterialApi
 @Preview
 @Composable
 private fun PreviewEntityListView() {
-    val rotaryEventDispatcher = RotaryEventDispatcher()
-
-    CompositionLocalProvider(
-        LocalRotaryEventDispatcher provides rotaryEventDispatcher
-    ) {
-        EntityViewList(
-            entityLists = mapOf(commonR.string.lights to listOf(previewEntity1, previewEntity2)),
-            onEntityClicked = { _, _ -> },
-            isHapticEnabled = false,
-            isToastEnabled = false
-        )
-    }
+    EntityViewList(
+        entityLists = mapOf(commonR.string.lights to listOf(previewEntity1, previewEntity2)),
+        onEntityClicked = { _, _ -> },
+        isHapticEnabled = false,
+        isToastEnabled = false
+    )
 }

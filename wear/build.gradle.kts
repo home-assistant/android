@@ -107,14 +107,14 @@ dependencies {
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.3.3")
 
-    implementation("androidx.activity:activity:1.4.0")
+    implementation("androidx.activity:activity-ktx:1.4.0")
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.compose.compiler:compiler:1.0.5")
     implementation("androidx.compose.foundation:foundation:1.0.5")
     implementation("androidx.compose.ui:ui-tooling:1.0.5")
-    implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha11")
-    implementation("androidx.wear.compose:compose-material:1.0.0-alpha11")
-    implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha11")
+    implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha13")
+    implementation("androidx.wear.compose:compose-material:1.0.0-alpha13")
+    implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha13")
 
     implementation("com.google.guava:guava:31.0.1-android")
     implementation("androidx.wear.tiles:tiles:1.0.0")

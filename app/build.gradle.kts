@@ -162,8 +162,8 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.squareup.picasso:picasso:2.8")
 
-    "fullImplementation"("com.google.android.gms:play-services-location:18.0.0")
-    "fullImplementation"("com.google.firebase:firebase-core:20.0.0")
+    "fullImplementation"("com.google.android.gms:play-services-location:19.0.0")
+    "fullImplementation"("com.google.firebase:firebase-core:20.0.2")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
     "fullImplementation"("io.sentry:sentry-android:5.5.2")
@@ -187,8 +187,8 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.0.5")
     implementation("androidx.compose.ui:ui-tooling:1.0.5")
     implementation("androidx.activity:activity-compose:1.4.0")
-    implementation("androidx.navigation:navigation-compose:2.4.0-beta02")
-    implementation("com.google.android.material:compose-theme-adapter:1.1.0")
+    implementation("androidx.navigation:navigation-compose:2.4.0-rc01")
+    implementation("com.google.android.material:compose-theme-adapter:1.1.1")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.3")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
