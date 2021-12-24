@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.launch
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -92,37 +93,40 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
 
     private fun onOnboardingComplete(result: ActivityResult) {
         mainScope.launch {
-            val intent = result.data!!
-            val url = intent.getStringExtra("URL").toString()
-            val authCode = intent.getStringExtra("AuthCode").toString()
-            val deviceName = intent.getStringExtra("DeviceName").toString()
-            val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
-            val messagingToken = getMessagingToken()
-            if (messagingToken.isNullOrBlank()) {
-                AlertDialog.Builder(this@LaunchActivity)
-                    .setTitle(commonR.string.firebase_error_title)
-                    .setMessage(commonR.string.firebase_error_message)
-                    .setPositiveButton(commonR.string.skip) { _, _ ->
-                        mainScope.launch {
-                            registerAndOpenWebview(
-                                url,
-                                authCode,
-                                deviceName,
-                                messagingToken,
-                                deviceTrackingEnabled
-                            )
+            if (result.data != null) {
+                val intent = result.data!!
+                val url = intent.getStringExtra("URL").toString()
+                val authCode = intent.getStringExtra("AuthCode").toString()
+                val deviceName = intent.getStringExtra("DeviceName").toString()
+                val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
+                val messagingToken = getMessagingToken()
+                if (messagingToken.isNullOrBlank()) {
+                    AlertDialog.Builder(this@LaunchActivity)
+                        .setTitle(commonR.string.firebase_error_title)
+                        .setMessage(commonR.string.firebase_error_message)
+                        .setPositiveButton(commonR.string.skip) { _, _ ->
+                            mainScope.launch {
+                                registerAndOpenWebview(
+                                    url,
+                                    authCode,
+                                    deviceName,
+                                    messagingToken,
+                                    deviceTrackingEnabled
+                                )
+                            }
                         }
-                    }
-                    .show()
-            } else {
-                registerAndOpenWebview(
-                    url,
-                    authCode,
-                    deviceName,
-                    messagingToken,
-                    deviceTrackingEnabled
-                )
-            }
+                        .show()
+                } else {
+                    registerAndOpenWebview(
+                        url,
+                        authCode,
+                        deviceName,
+                        messagingToken,
+                        deviceTrackingEnabled
+                    )
+                }
+            } else
+                Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
         }
     }
 

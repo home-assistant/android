@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -33,6 +34,8 @@ import org.json.JSONArray
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -83,18 +86,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         request.supportsEncryption = false
         request.deviceId = deviceId
 
-        val response =
-            integrationService.registerDevice(
-                authenticationRepository.buildBearerToken(),
-                request
+        try {
+            val response =
+                integrationService.registerDevice(
+                    authenticationRepository.buildBearerToken(),
+                    request
+                )
+            persistDeviceRegistration(deviceRegistration)
+            urlRepository.saveRegistrationUrls(
+                response.cloudhookUrl,
+                response.remoteUiUrl,
+                response.webhookId
             )
-        persistDeviceRegistration(deviceRegistration)
-        urlRepository.saveRegistrationUrls(
-            response.cloudhookUrl,
-            response.remoteUiUrl,
-            response.webhookId
-        )
-        localStorage.putString(PREF_SECRET, response.secret)
+            localStorage.putString(PREF_SECRET, response.secret)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to register device", e)
+        }
     }
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
@@ -405,18 +412,18 @@ class IntegrationRepositoryImpl @Inject constructor(
             return localStorage.getString(PREF_HA_VERSION)
                 ?: "" // Skip checking HA version as it has not been 4 hours yet
 
-        try {
-            val response: GetConfigResponse = webSocketRepository.getConfig()
+        return try {
+            val response: GetConfigResponse? = webSocketRepository.getConfig()
 
-            localStorage.putString(PREF_HA_VERSION, response.version)
+            localStorage.putString(PREF_HA_VERSION, response?.version)
             localStorage.putLong(
                 PREF_CHECK_SENSOR_REGISTRATION_NEXT,
                 current + (14400000)
             ) // 4 hours
-            return response.version
+            response?.version.toString()
         } catch (e: Exception) {
             Log.e(TAG, "Issue getting new version from core.", e)
-            return return localStorage.getString(PREF_HA_VERSION) ?: ""
+            localStorage.getString(PREF_HA_VERSION) ?: ""
         }
     }
 
@@ -463,6 +470,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
     }
 
+    @ExperimentalCoroutinesApi
     override suspend fun getEntityUpdates(): Flow<Entity<*>> {
         return webSocketRepository.getStateChanges()
             .filter { it.newState != null }
