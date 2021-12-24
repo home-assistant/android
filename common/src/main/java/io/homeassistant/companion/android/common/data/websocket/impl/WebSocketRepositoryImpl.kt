@@ -74,7 +74,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private var connection: WebSocket? = null
     private val connectedMutex = Mutex()
     private var connected = Job()
-    private val eventSubscriptionMutex = mutableMapOf<String, Mutex>()
+    private val eventSubscriptionMutex = Mutex()
     private val eventSubscriptionFlow = mutableMapOf<String, SharedFlow<*>>()
 
     @ExperimentalCoroutinesApi
@@ -222,10 +222,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     @ExperimentalCoroutinesApi
     private suspend fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T> {
         return try {
-            if (eventSubscriptionMutex[eventType] == null) {
-                eventSubscriptionMutex[eventType] = Mutex()
-            }
-            eventSubscriptionMutex[eventType]!!.withLock {
+            eventSubscriptionMutex.withLock {
                 if (eventSubscriptionFlow[eventType] == null) {
 
                     val response = sendMessage(
