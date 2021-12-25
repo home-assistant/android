@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.Build
+import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
 import android.widget.Toast
@@ -793,13 +794,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
                                 "HomeAssistant::AccurateLocation"
                             )?.apply { acquire(10 * 60 * 1000L /*10 minutes*/) }
                     var numberCalls = 0
-                    override fun onLocationResult(locationResult: LocationResult?) {
+                    override fun onLocationResult(locationResult: LocationResult) {
                         numberCalls++
                         Log.d(
                             TAG,
-                            "Got single accurate location update: ${locationResult?.lastLocation}"
+                            "Got single accurate location update: ${locationResult.lastLocation}"
                         )
-                        if (locationResult == null) {
+                        if (locationResult.equals(null)) {
                             Log.w(TAG, "No location provided.")
                             return
                         }
@@ -828,7 +829,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                         }
                     }
                 },
-                null
+                Looper.getMainLooper()
             )
     }
 

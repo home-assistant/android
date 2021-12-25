@@ -499,6 +499,6 @@ class SettingsFragment constructor(
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(commonR.string.app_name)
+        activity?.title = getString(commonR.string.companion_app)
     }
 }

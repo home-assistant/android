@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.IconicsDrawable
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
@@ -87,35 +89,49 @@ fun LoadWearFavoritesSettings(
                 )
             }
             items(favoriteEntities.size, { favoriteEntities[it] }) { index ->
-                Row(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .clickable {
-                            settingsWearViewModel.onEntitySelected(
-                                false,
-                                favoriteEntities[index]
+                val favoriteEntityID = favoriteEntities[index].replace("[", "").replace("]", "")
+                for (entity in validEntities)
+                    if (entity.entityId == favoriteEntityID) {
+                        val favoriteAttributes = entity.attributes as Map<*, *>
+                        val favoriteFriendlyName = favoriteAttributes["friendly_name"].toString()
+                        Row(
+                            modifier = Modifier
+                                .padding(12.dp)
+                                .clickable {
+                                    settingsWearViewModel.onEntitySelected(
+                                        false,
+                                        favoriteEntities[index]
+                                    )
+                                }
+                                .draggedItem(
+                                    reorderState.offsetByKey(favoriteEntities[index]),
+                                    Orientation.Vertical
+                                )
+                                .detectReorderAfterLongPress(reorderState)
+                        ) {
+                            val iconBitmap =
+                                IconicsDrawable(LocalContext.current, "cmd-drag_vertical").toBitmap()
+                                    .asImageBitmap()
+                            Icon(iconBitmap, "", modifier = Modifier.padding(top = 13.dp))
+                            Checkbox(
+                                checked = favoriteEntities.contains(favoriteEntities[index]),
+                                onCheckedChange = {
+                                    settingsWearViewModel.onEntitySelected(it, favoriteEntities[index])
+                                },
+                                modifier = Modifier.padding(end = 5.dp)
                             )
+                            Column {
+                                Text(
+                                    text = favoriteFriendlyName,
+                                    modifier = Modifier.padding(top = 10.dp)
+                                )
+                                Text(
+                                    text = getDomainString(favoriteEntityID.split('.')[0]),
+                                    fontSize = 11.sp
+                                )
+                            }
                         }
-                        .draggedItem(
-                            reorderState.offsetByKey(favoriteEntities[index]),
-                            Orientation.Vertical
-                        )
-                        .detectReorderAfterLongPress(reorderState)
-                ) {
-                    val iconBitmap = IconicsDrawable(LocalContext.current, "cmd-drag_vertical").toBitmap().asImageBitmap()
-                    Icon(iconBitmap, "", modifier = Modifier.padding(top = 13.dp))
-                    Checkbox(
-                        checked = favoriteEntities.contains(favoriteEntities[index]),
-                        onCheckedChange = {
-                            settingsWearViewModel.onEntitySelected(it, favoriteEntities[index])
-                        },
-                        modifier = Modifier.padding(end = 5.dp)
-                    )
-                    Text(
-                        text = favoriteEntities[index].replace("[", "").replace("]", ""),
-                        modifier = Modifier.padding(top = 10.dp)
-                    )
-                }
+                    }
             }
             item {
                 Divider()
@@ -123,6 +139,7 @@ fun LoadWearFavoritesSettings(
             if (!validEntities.isNullOrEmpty()) {
                 items(validEntities.size) { index ->
                     val item = validEntities[index]
+                    val itemAttributes = item.attributes as Map<*, *>
                     if (!favoriteEntities.contains(item.entityId)) {
                         Row(
                             modifier = Modifier
@@ -138,14 +155,33 @@ fun LoadWearFavoritesSettings(
                                 },
                                 modifier = Modifier.padding(end = 5.dp)
                             )
-                            Text(
-                                text = item.entityId,
-                                modifier = Modifier.padding(top = 10.dp)
-                            )
+                            Column {
+                                Text(
+                                    text = itemAttributes["friendly_name"].toString(),
+                                    modifier = Modifier.padding(top = 10.dp)
+                                )
+                                Text(
+                                    text = getDomainString(item.entityId.split('.')[0]),
+                                    fontSize = 11.sp
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun getDomainString(domain: String): String {
+    return when (domain) {
+        "input_boolean" -> stringResource(commonR.string.domain_input_boolean)
+        "light" -> stringResource(commonR.string.domain_light)
+        "lock" -> stringResource(commonR.string.domain_lock)
+        "scene" -> stringResource(commonR.string.domain_scene)
+        "script" -> stringResource(commonR.string.domain_script)
+        "switch" -> stringResource(commonR.string.domain_switch)
+        else -> ""
     }
 }
