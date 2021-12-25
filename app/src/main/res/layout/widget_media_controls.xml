@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/widgetLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -14,25 +15,29 @@
         android:orientation="horizontal">
 
         <FrameLayout
-            android:layout_width="60dp"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent">
+
             <ImageView
                 android:id="@+id/widgetMediaImage"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:visibility="invisible"
                 android:contentDescription="@string/widget_media_image_description"
-                android:scaleType="centerCrop" />
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop"
+                android:visibility="invisible" />
+
             <ImageView
                 android:id="@+id/widgetMediaPlaceholder"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginStart="4dp"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"
-                android:src="@drawable/app_icon_round"
                 android:contentDescription="@string/widget_media_image_description"
-                android:scaleType="fitCenter" />
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/app_icon_round" />
         </FrameLayout>
 
         <RelativeLayout
@@ -41,28 +46,76 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:minHeight="32sp"
-            android:layout_margin="4dp"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/widgetLabel"
+            <ImageView
+                android:id="@+id/widgetSourceIcon"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:padding="8dp"
+                android:visibility="invisible"
+                android:tint="@color/colorWidgetButtonLabel"
+                android:src="@drawable/app_icon_round" />
+
+            <LinearLayout
+                android:id="@+id/widgetMediaInfolayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/widget_label_placeholder_text"
-                android:textSize="24sp"
-                android:textAlignment="center"
+                android:layout_height="0dp"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentEnd="true"
+                android:layout_above="@id/widgetMediaButtonlayout"
+                android:layout_margin="4dp"
                 android:gravity="center"
-                android:textColor="@color/colorWidgetButtonLabel"
-                android:minLines="1"
-                android:maxLines="2"
-                />
+                android:orientation="vertical"
+                android:padding="4dp">
+
+                <TextView
+                    android:id="@+id/widgetLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:maxLines="2"
+                    android:minLines="1"
+                    android:text="@string/widget_label_placeholder_text"
+                    android:textAlignment="center"
+                    android:textColor="@color/colorWidgetButtonLabel"
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:id="@+id/widgetMediaInfoTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:maxLines="1"
+                    android:minLines="1"
+                    android:visibility="gone"
+                    android:text="@string/widget_label_placeholder_text"
+                    android:textAlignment="textStart"
+                    android:textColor="@color/colorWidgetButtonLabel"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/widgetMediaInfoArtist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:maxLines="1"
+                    android:minLines="1"
+                    android:visibility="gone"
+                    android:text="@string/widget_label_placeholder_text"
+                    android:textAlignment="textStart"
+                    android:textColor="@color/colorWidgetButtonLabel"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/widgetMediaButtonlayout"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_below="@id/widgetLabel"
+                android:layout_height="32dp"
                 android:layout_alignParentBottom="true"
-                android:padding="4dp"
                 android:orientation="horizontal">
 
                 <ImageButton
@@ -70,60 +123,60 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:padding="4dp"
+                    android:background="?android:selectableItemBackground"
                     android:contentDescription="@string/widget_media_prev_track_button"
-                    android:src="@drawable/ic_prev_track"
-                    android:tint="@color/colorIcon"
+                    android:padding="4dp"
                     android:scaleType="fitCenter"
-                    android:background="?android:selectableItemBackground"/>
+                    android:src="@drawable/ic_prev_track"
+                    android:tint="@color/colorIcon" />
 
                 <ImageButton
                     android:id="@+id/widgetRewindButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:padding="4dp"
+                    android:background="?android:selectableItemBackground"
                     android:contentDescription="@string/widget_media_rewind_button"
-                    android:src="@drawable/ic_rewind"
-                    android:tint="@color/colorIcon"
+                    android:padding="4dp"
                     android:scaleType="fitCenter"
-                    android:background="?android:selectableItemBackground"/>
+                    android:src="@drawable/ic_rewind"
+                    android:tint="@color/colorIcon" />
 
                 <ImageButton
                     android:id="@+id/widgetPlayPauseButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1.5"
-                    android:padding="4dp"
+                    android:background="?android:selectableItemBackground"
                     android:contentDescription="@string/widget_media_playpause_button"
-                    android:src="@drawable/ic_playpause"
-                    android:tint="@color/colorIcon"
+                    android:padding="4dp"
                     android:scaleType="fitCenter"
-                    android:background="?android:selectableItemBackground"/>
+                    android:src="@drawable/ic_playpause"
+                    android:tint="@color/colorIcon" />
 
                 <ImageButton
                     android:id="@+id/widgetFastForwardButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:padding="4dp"
+                    android:background="?android:selectableItemBackground"
                     android:contentDescription="@string/widget_media_fastforward_button"
-                    android:src="@drawable/ic_fastforward"
-                    android:tint="@color/colorIcon"
+                    android:padding="4dp"
                     android:scaleType="fitCenter"
-                    android:background="?android:selectableItemBackground"/>
+                    android:src="@drawable/ic_fastforward"
+                    android:tint="@color/colorIcon" />
 
                 <ImageButton
                     android:id="@+id/widgetNextTrackButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:padding="4dp"
+                    android:background="?android:selectableItemBackground"
                     android:contentDescription="@string/widget_media_next_track_button"
-                    android:src="@drawable/ic_next_track"
-                    android:tint="@color/colorIcon"
+                    android:padding="4dp"
                     android:scaleType="fitCenter"
-                    android:background="?android:selectableItemBackground"/>
+                    android:src="@drawable/ic_next_track"
+                    android:tint="@color/colorIcon" />
             </LinearLayout>
         </RelativeLayout>
     </LinearLayout>

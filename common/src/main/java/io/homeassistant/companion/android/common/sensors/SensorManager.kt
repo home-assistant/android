@@ -74,10 +74,6 @@ interface SensorManager {
         return true
     }
 
-    fun enableToggleAll(context: Context, sensorId: String): Boolean {
-        return true
-    }
-
     fun addSettingIfNotPresent(
         context: Context,
         sensor: BasicSensor,

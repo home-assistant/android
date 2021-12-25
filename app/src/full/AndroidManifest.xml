@@ -18,11 +18,6 @@
             android:enabled="true"
             android:exported="true" />
 
-        <receiver
-            android:name=".notifications.NotificationContentReceiver"
-            android:enabled="true"
-            android:exported="true" />
-
         <receiver android:name=".location.HighAccuracyLocationReceiver"
             android:enabled="true"
             android:exported="true" />

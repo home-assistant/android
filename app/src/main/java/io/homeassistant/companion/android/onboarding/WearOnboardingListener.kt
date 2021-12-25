@@ -35,16 +35,18 @@ class WearOnboardingListener : WearableListenerService() {
         // Retrieve current instance
         val url = urlUseCase.getUrl()
 
-        // Put as DataMap in data layer
-        val putDataReq: PutDataRequest = PutDataMapRequest.create("/home_assistant_instance").run {
-            dataMap.putString("name", url?.host.toString())
-            dataMap.putString("url", url.toString())
-            setUrgent()
-            asPutDataRequest()
-        }
-        Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq).apply {
-            addOnSuccessListener { Log.d("WearOnboardingListener", "sendHomeAssistantInstance: success") }
-            addOnFailureListener { Log.d("WearOnboardingListener", "sendHomeAssistantInstance: failed") }
+        if (url != null) {
+            // Put as DataMap in data layer
+            val putDataReq: PutDataRequest = PutDataMapRequest.create("/home_assistant_instance").run {
+                dataMap.putString("name", url?.host.toString())
+                dataMap.putString("url", url.toString())
+                setUrgent()
+                asPutDataRequest()
+            }
+            Wearable.getDataClient(this@WearOnboardingListener).putDataItem(putDataReq).apply {
+                addOnSuccessListener { Log.d("WearOnboardingListener", "sendHomeAssistantInstance: success") }
+                addOnFailureListener { Log.d("WearOnboardingListener", "sendHomeAssistantInstance: failed") }
+            }
         }
     }
 }
