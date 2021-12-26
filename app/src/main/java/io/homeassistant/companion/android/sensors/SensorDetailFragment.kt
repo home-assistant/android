@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
+import android.app.AppOpsManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -127,6 +129,13 @@ class SensorDetailFragment(
                                         requestPermissions(permissions)
                                     }
                                 )
+                            } else if (sensorManager is LastAppSensorManager) {
+                                val pm = context.packageManager
+                                val appInfo = pm.getApplicationInfo(context.packageName, 0)
+                                val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+                                val mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
+                                if (mode != AppOpsManager.MODE_ALLOWED)
+                                    requestPermissions(permissions)
                             } else requestPermissions(permissions)
 
                             return@setOnPreferenceChangeListener false
@@ -483,6 +492,8 @@ class SensorDetailFragment(
         when {
             permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
                 requestPermissions(
                     permissions.toSet()
