@@ -4,7 +4,9 @@ import android.Manifest
 import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.util.TreeMap
@@ -64,12 +66,21 @@ class LastAppSensorManager : SensorManager {
             }
         }
 
+        var lastApp = sortedMap[sortedMap.lastKey()]?.packageName ?: "none"
+        try {
+            val pm = context.packageManager
+            val appInfo = pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)
+            lastApp = pm.getApplicationLabel(appInfo).toString()
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get package name for: $lastApp", e)
+        }
+
         val icon = "mdi:android"
 
         onSensorUpdated(
             context,
             last_used,
-            sortedMap[sortedMap.lastKey()]?.packageName ?: "none",
+            lastApp,
             icon,
             mapOf()
         )
