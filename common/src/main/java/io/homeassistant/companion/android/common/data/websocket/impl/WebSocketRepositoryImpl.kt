@@ -12,7 +12,13 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.ServiceCallRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DomainResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EventResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
@@ -52,6 +58,10 @@ class WebSocketRepositoryImpl @Inject constructor(
 ) : WebSocketRepository, WebSocketListener() {
 
     companion object {
+        private const val EVENT_STATE_CHANGED = "state_changed"
+        private const val EVENT_AREA_REGISTRY_UPDATED = "area_registry_updated"
+        private const val EVENT_DEVICE_REGISTRY_UPDATED = "device_registry_updated"
+        private const val EVENT_ENTITY_REGISTRY_UPDATED = "entity_registry_updated"
         private const val TAG = "WebSocketRepository"
     }
 
@@ -64,11 +74,11 @@ class WebSocketRepositoryImpl @Inject constructor(
     private var connection: WebSocket? = null
     private val connectedMutex = Mutex()
     private var connected = Job()
-    private val stateChangedMutex = Mutex()
-    private var stateChangedFlow: SharedFlow<StateChangedEvent>? = null
+    private val eventSubscriptionMutex = Mutex()
+    private val eventSubscriptionFlow = mutableMapOf<String, SharedFlow<*>>()
 
     @ExperimentalCoroutinesApi
-    private var producerScope: ProducerScope<StateChangedEvent>? = null
+    private var eventSubscriptionProducerScope = mutableMapOf<String, ProducerScope<Any>>()
 
     override suspend fun sendPing(): Boolean {
         val socketResponse = sendMessage(
@@ -113,6 +123,60 @@ class WebSocketRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getAreaRegistry(): List<AreaRegistryResponse> {
+        return try {
+            val socketResponse = sendMessage(
+                mapOf(
+                    "type" to "config/area_registry/list"
+                )
+            )
+
+            mapper.convertValue(
+                socketResponse.result!!,
+                object : TypeReference<List<AreaRegistryResponse>>() {}
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get area registry list", e)
+            emptyList()
+        }
+    }
+
+    override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse> {
+        return try {
+            val socketResponse = sendMessage(
+                mapOf(
+                    "type" to "config/device_registry/list"
+                )
+            )
+
+            mapper.convertValue(
+                socketResponse.result!!,
+                object : TypeReference<List<DeviceRegistryResponse>>() {}
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get device registry list", e)
+            emptyList()
+        }
+    }
+
+    override suspend fun getEntityRegistry(): List<EntityRegistryResponse> {
+        return try {
+            val socketResponse = sendMessage(
+                mapOf(
+                    "type" to "config/entity_registry/list"
+                )
+            )
+
+            mapper.convertValue(
+                socketResponse.result!!,
+                object : TypeReference<List<EntityRegistryResponse>>() {}
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to get entity registry list", e)
+            emptyList()
+        }
+    }
+
     override suspend fun getServices(): List<DomainResponse> {
         return try {
             val socketResponse = sendMessage(
@@ -144,22 +208,34 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     @ExperimentalCoroutinesApi
-    override suspend fun getStateChanges(): Flow<StateChangedEvent> {
-        try {
-            stateChangedMutex.withLock {
-                if (stateChangedFlow == null) {
+    override suspend fun getStateChanges(): Flow<StateChangedEvent> = subscribeToEventsForType(EVENT_STATE_CHANGED)
+
+    @ExperimentalCoroutinesApi
+    override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent> = subscribeToEventsForType(EVENT_AREA_REGISTRY_UPDATED)
+
+    @ExperimentalCoroutinesApi
+    override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent> = subscribeToEventsForType(EVENT_DEVICE_REGISTRY_UPDATED)
+
+    @ExperimentalCoroutinesApi
+    override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent> = subscribeToEventsForType(EVENT_ENTITY_REGISTRY_UPDATED)
+
+    @ExperimentalCoroutinesApi
+    private suspend fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T> {
+        return try {
+            eventSubscriptionMutex.withLock {
+                if (eventSubscriptionFlow[eventType] == null) {
 
                     val response = sendMessage(
                         mapOf(
                             "type" to "subscribe_events",
-                            "event_type" to "state_changed"
+                            "event_type" to eventType
                         )
                     )
 
-                    stateChangedFlow = callbackFlow {
-                        producerScope = this
+                    eventSubscriptionFlow[eventType] = callbackFlow<T> {
+                        eventSubscriptionProducerScope[eventType] = this as ProducerScope<Any>
                         awaitClose {
-                            Log.d(TAG, "Unsubscribing from state_changes")
+                            Log.d(TAG, "Unsubscribing from $eventType")
                             ioScope.launch {
                                 sendMessage(
                                     mapOf(
@@ -168,17 +244,17 @@ class WebSocketRepositoryImpl @Inject constructor(
                                     )
                                 )
                             }
-                            producerScope = null
-                            stateChangedFlow = null
+                            eventSubscriptionProducerScope.remove(eventType)
+                            eventSubscriptionFlow.remove(eventType)
                         }
                     }.shareIn(ioScope, SharingStarted.WhileSubscribed())
                 }
             }
 
-            return stateChangedFlow!!
+            eventSubscriptionFlow[eventType]!! as SharedFlow<T>
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to get flow of entities", e)
-            return emptyFlow()
+            Log.e(TAG, "Unable to subscribe to $eventType", e)
+            emptyFlow()
         }
     }
 
@@ -262,11 +338,24 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     @ExperimentalCoroutinesApi
     private suspend fun handleEvent(response: SocketResponse) {
-        val eventResponse = mapper.convertValue(
-            response.event,
-            object : TypeReference<EventResponse>() {}
-        )
-        producerScope?.send(eventResponse.data)
+        val eventResponseType = response.event?.get("event_type")
+        if (eventResponseType != null && eventResponseType.isTextual) {
+            val eventResponseClass = when (eventResponseType.textValue()) {
+                EVENT_STATE_CHANGED -> object : TypeReference<EventResponse<StateChangedEvent>>() {}
+                EVENT_AREA_REGISTRY_UPDATED -> object : TypeReference<EventResponse<AreaRegistryUpdatedEvent>>() {}
+                EVENT_DEVICE_REGISTRY_UPDATED -> object : TypeReference<EventResponse<DeviceRegistryUpdatedEvent>>() {}
+                EVENT_ENTITY_REGISTRY_UPDATED -> object : TypeReference<EventResponse<EntityRegistryUpdatedEvent>>() {}
+                else -> {
+                    Log.d(TAG, "Unknown event type received")
+                    object : TypeReference<EventResponse<Any>>() {}
+                }
+            }
+            val eventResponse = mapper.convertValue(
+                response.event,
+                eventResponseClass
+            )
+            eventSubscriptionProducerScope[eventResponse.eventType]?.send(eventResponse.data)
+        }
     }
 
     @ExperimentalCoroutinesApi
@@ -274,17 +363,19 @@ class WebSocketRepositoryImpl @Inject constructor(
         connected = Job()
         connection = null
         // If we still have flows flowing
-        if (stateChangedFlow != null && ioScope.isActive) {
+        if (eventSubscriptionFlow.any() && ioScope.isActive) {
             ioScope.launch {
                 try {
                     connect()
                     // Register for websocket events!
-                    sendMessage(
-                        mapOf(
-                            "type" to "subscribe_events",
-                            "event_type" to "state_changed"
+                    eventSubscriptionFlow.forEach { (eventType, _) ->
+                        sendMessage(
+                            mapOf(
+                                "type" to "subscribe_events",
+                                "event_type" to eventType
+                            )
                         )
-                    )
+                    }
                 } catch (e: Exception) {
                     Log.e(TAG, "Issue reconnecting websocket", e)
                 }

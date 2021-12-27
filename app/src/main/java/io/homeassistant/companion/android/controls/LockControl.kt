@@ -11,9 +11,9 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -23,7 +23,8 @@ class LockControl {
     companion object : HaControl {
         override fun createControl(
             context: Context,
-            entity: Entity<Map<String, Any>>
+            entity: Entity<Map<String, Any>>,
+            area: AreaRegistryResponse?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -35,6 +36,7 @@ class LockControl {
                 )
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(
                 DeviceTypes.TYPE_LOCK
             )
