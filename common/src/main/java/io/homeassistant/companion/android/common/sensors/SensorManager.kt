@@ -46,13 +46,17 @@ interface SensorManager {
             if (sensorId != "last_used_app")
                 context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
             else {
-                val pm = context.packageManager
-                val appInfo = pm.getApplicationInfo(context.packageName, 0)
-                val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-                val mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
-                mode == AppOpsManager.MODE_ALLOWED
+                checkUsageStatsPermission(context)
             }
         }
+    }
+
+    fun checkUsageStatsPermission(context: Context): Boolean {
+        val pm = context.packageManager
+        val appInfo = pm.getApplicationInfo(context.packageName, 0)
+        val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
+        return mode == AppOpsManager.MODE_ALLOWED
     }
 
     fun isEnabled(context: Context, sensorId: String): Boolean {
