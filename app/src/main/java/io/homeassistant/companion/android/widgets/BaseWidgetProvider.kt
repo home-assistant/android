@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -75,9 +74,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     return@launch
                 }
                 updateAllWidgets(context)
-                entityUpdates = integrationUseCase.getEntityUpdates()
-                entityUpdates!!.collect {
-                    updateAllWidgets(context)
+                if (getAllWidgetIds(context).isNotEmpty()) {
+                    entityUpdates = integrationUseCase.getEntityUpdates()
+                    entityUpdates!!.collect {
+                        updateAllWidgets(context)
+                    }
                 }
             }
         }
