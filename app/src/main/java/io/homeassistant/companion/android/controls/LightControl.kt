@@ -14,9 +14,9 @@ import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -29,7 +29,8 @@ class LightControl {
 
         override fun createControl(
             context: Context,
-            entity: Entity<Map<String, Any>>
+            entity: Entity<Map<String, Any>>,
+            area: AreaRegistryResponse?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -46,6 +47,7 @@ class LightControl {
             val supportedColorModes = entity.attributes["supported_color_modes"] as? List<String>
             val supportsBrightness = if (supportedColorModes == null) false else (supportedColorModes - NO_BRIGHTNESS_SUPPORT).isNotEmpty()
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
             control.setZone(context.getString(commonR.string.domain_light))
             control.setStatus(Control.STATUS_OK)
