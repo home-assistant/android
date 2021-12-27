@@ -66,7 +66,7 @@ class LastAppSensorManager : SensorManager {
             }
         }
 
-        var lastApp = sortedMap[sortedMap.lastKey()]?.packageName ?: "none"
+        var lastApp = sortedMap.maxByOrNull { it.key }?.value?.packageName ?: "none"
         try {
             val pm = context.packageManager
             val appInfo = pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)
