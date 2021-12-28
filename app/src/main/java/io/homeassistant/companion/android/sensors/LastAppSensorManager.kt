@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
-import android.app.usage.UsageStats
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.pm.PackageManager
@@ -9,7 +8,6 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import java.util.TreeMap
 import io.homeassistant.companion.android.common.R as commonR
 
 class LastAppSensorManager : SensorManager {
