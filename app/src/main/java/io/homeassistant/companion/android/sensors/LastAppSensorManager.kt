@@ -58,15 +58,7 @@ class LastAppSensorManager : SensorManager {
 
         val usageStats = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val current = System.currentTimeMillis()
-        val appList = usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current)
-        val sortedMap = TreeMap<Long, UsageStats>()
-        if (!appList.isNullOrEmpty() && appList.size > 0) {
-            for (item in appList) {
-                sortedMap[item.lastTimeUsed] = item
-            }
-        }
-
-        var lastApp = sortedMap.maxByOrNull { it.key }?.value?.packageName ?: "none"
+        val lastApp = usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull { it.lastTimeUsed }?.packageName ?: "none"
         try {
             val pm = context.packageManager
             val appInfo = pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)
