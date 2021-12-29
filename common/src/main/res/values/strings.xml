@@ -698,5 +698,8 @@
     <string name="zone_event_failure">Unable to send zone event to Home Assistant</string>
     <string name="failed_wear_config_request">Failed to send config request to wear device</string>
     <string name="companion_app">Companion App</string>
+    <string name="basic_sensor_name_last_used_app">Last Used App</string>
+    <string name="sensor_description_last_used_app">Application name or package name of the last used application on the device</string>
+    <string name="sensor_name_last_app">Last Used App</string>
 
 </resources>
