@@ -421,6 +421,16 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
+    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        getAllWidgetIds(context).forEach { appWidgetId ->
+            val intent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
+                action = UPDATE_VIEW
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            }
+            context.sendBroadcast(intent)
+        }
+    }
+
     private fun callPreviousTrackService(appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")

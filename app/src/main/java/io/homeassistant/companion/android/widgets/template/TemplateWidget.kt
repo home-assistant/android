@@ -11,6 +11,7 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
@@ -101,6 +102,16 @@ class TemplateWidget : BaseWidgetProvider() {
                 )
             )
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
+        }
+    }
+
+    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        getAllWidgetIds(context).forEach { appWidgetId ->
+            val intent = Intent(context, TemplateWidget::class.java).apply {
+                action = UPDATE_VIEW
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            }
+            context.sendBroadcast(intent)
         }
     }
 }

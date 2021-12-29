@@ -172,6 +172,16 @@ class EntityWidget : BaseWidgetProvider() {
         }
     }
 
+    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        getAllWidgetIds(context).forEach { appWidgetId ->
+            val intent = Intent(context, EntityWidget::class.java).apply {
+                action = UPDATE_VIEW
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            }
+            context.sendBroadcast(intent)
+        }
+    }
+
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
         appWidgetIds.forEach { appWidgetId ->
