@@ -38,7 +38,7 @@ class TemplateWidget : BaseWidgetProvider() {
         return templateWidgetDao.getAll()?.map { it.id }.orEmpty()
     }
 
-    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
         // and label need to be re-assigned, or the next time the layout updates
         // (e.g home screen rotation) the widget will fall back on its default layout
