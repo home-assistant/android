@@ -44,12 +44,13 @@ class DefaultSwitchControl {
                 }
             )
             control.setZone(
-                when (entity.entityId.split(".")[0]) {
-                    "automation" -> context.getString(commonR.string.domain_automation)
-                    "input_boolean" -> context.getString(commonR.string.domain_input_boolean)
-                    "switch" -> context.getString(commonR.string.domain_switch)
-                    else -> entity.entityId.split(".")[0].capitalize()
-                }
+                area?.name
+                    ?: when (entity.entityId.split(".")[0]) {
+                        "automation" -> context.getString(commonR.string.domain_automation)
+                        "input_boolean" -> context.getString(commonR.string.domain_input_boolean)
+                        "switch" -> context.getString(commonR.string.domain_switch)
+                        else -> entity.entityId.split(".")[0].capitalize()
+                    }
             )
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(

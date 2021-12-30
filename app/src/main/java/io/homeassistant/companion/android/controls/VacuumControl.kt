@@ -42,7 +42,7 @@ class VacuumControl {
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_VACUUM)
-            control.setZone(context.getString(commonR.string.domain_vacuum))
+            control.setZone(area?.name ?: context.getString(commonR.string.domain_vacuum))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
