@@ -70,11 +70,11 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             shortcutEntities.addAll(homePresenter.getTileShortcuts())
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
-            homePresenter.getEntities().forEach {
+            homePresenter.getEntities()?.forEach {
                 entities[it.entityId] = it
             }
             updateEntityDomains()
-            homePresenter.getEntityUpdates().collect {
+            homePresenter.getEntityUpdates()?.collect {
                 entities[it.entityId] = it
                 updateEntityDomains()
             }
