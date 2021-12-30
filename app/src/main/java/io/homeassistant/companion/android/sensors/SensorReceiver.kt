@@ -36,6 +36,7 @@ class SensorReceiver : SensorReceiverBase() {
             DNDSensorManager(),
             GeocodeSensorManager(),
             KeyguardSensorManager(),
+            LastAppSensorManager(),
             LastRebootSensorManager(),
             LastUpdateManager(),
             LightSensorManager(),
