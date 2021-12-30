@@ -17,7 +17,6 @@ import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
@@ -173,11 +172,9 @@ class CameraWidget : AppWidgetProvider() {
     }
 
     private suspend fun retrieveCameraImageUrl(context: Context, entityId: String): String? {
-        val entity: Entity<Map<String, Any>>
-        try {
-            entity = integrationUseCase.getEntity(entityId)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
+        val entity = integrationUseCase.getEntity(entityId)
+        if (entity == null) {
+            Log.e(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_IMAGE)
                 Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             return null

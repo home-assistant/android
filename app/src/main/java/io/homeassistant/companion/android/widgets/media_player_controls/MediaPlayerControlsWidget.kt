@@ -343,7 +343,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     }
 
     private suspend fun getEntity(context: Context, entityId: String, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
-        val entity: Entity<Map<String, Any>>
+        val entity: Entity<Map<String, Any>>?
         try {
             entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
                 suggestedEntity
@@ -477,10 +477,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
-            val currentEntityInfo: Entity<Map<String, Any>>
-            try {
-                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
-            } catch (e: Exception) {
+            val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+            if (currentEntityInfo == null) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
@@ -548,10 +546,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
-            val currentEntityInfo: Entity<Map<String, Any>>
-            try {
-                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
-            } catch (e: Exception) {
+            val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+            if (currentEntityInfo == null) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()

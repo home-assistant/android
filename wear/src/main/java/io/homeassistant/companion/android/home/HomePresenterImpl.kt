@@ -53,16 +53,11 @@ class HomePresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getEntities(): List<Entity<*>> {
-        return try {
-            integrationUseCase.getEntities()
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get entities", e)
-            emptyList()
-        }
+    override suspend fun getEntities(): List<Entity<*>>? {
+        return integrationUseCase.getEntities()
     }
 
-    override suspend fun getEntityUpdates(): Flow<Entity<*>> {
+    override suspend fun getEntityUpdates(): Flow<Entity<*>>? {
         return integrationUseCase.getEntityUpdates()
     }
 
