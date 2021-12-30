@@ -86,7 +86,7 @@ class SettingsWearViewModel @Inject constructor(
                 ).show()
             }
         viewModelScope.launch {
-            integrationUseCase.getEntities().forEach {
+            integrationUseCase.getEntities()?.forEach {
                 entities[it.entityId] = it
             }
         }

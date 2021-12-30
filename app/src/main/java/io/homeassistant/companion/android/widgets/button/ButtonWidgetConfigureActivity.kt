@@ -270,7 +270,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         mainScope.launch {
             try {
                 // Fetch services
-                integrationUseCase.getServices().forEach {
+                integrationUseCase.getServices()?.forEach {
                     services[getServiceString(it)] = it
                 }
                 Log.d(TAG, "Services found: $services")
@@ -305,7 +305,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                                 dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
                         }
                     }
-                    integrationUseCase.getEntities().forEach {
+                    integrationUseCase.getEntities()?.forEach {
                         entities[it.entityId] = it
                     }
                     dynamicFieldAdapter.notifyDataSetChanged()
@@ -326,7 +326,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
             try {
                 // Fetch entities
-                integrationUseCase.getEntities().forEach {
+                integrationUseCase.getEntities()?.forEach {
                     entities[it.entityId] = it
                 }
             } catch (e: Exception) {
