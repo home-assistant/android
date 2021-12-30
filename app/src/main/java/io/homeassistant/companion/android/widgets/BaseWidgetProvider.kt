@@ -77,7 +77,7 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 if (getAllWidgetIds(context).isNotEmpty()) {
                     entityUpdates = integrationUseCase.getEntityUpdates()
                     entityUpdates!!.collect {
-                        updateAllWidgets(context)
+                        onEntityStateChanged(context, it)
                     }
                 }
             }
@@ -108,7 +108,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews
+    abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
     abstract fun getAllWidgetIds(context: Context): List<Int>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
+    abstract fun onEntityStateChanged(context: Context, entity: Entity<*>)
 }

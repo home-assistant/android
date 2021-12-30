@@ -32,7 +32,7 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
     }
 
-    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         val intent = Intent(context, EntityWidget::class.java).apply {
             action = UPDATE_VIEW
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -57,6 +57,7 @@ class EntityWidget : BaseWidgetProvider() {
                     resolveTextToShow(
                         context,
                         entityId,
+                        suggestedEntity,
                         attributeIds,
                         stateSeparator,
                         attributeSeparator,
@@ -89,6 +90,7 @@ class EntityWidget : BaseWidgetProvider() {
     private suspend fun resolveTextToShow(
         context: Context,
         entityId: String?,
+        suggestedEntity: Entity<Map<String, Any>>?,
         attributeIds: String?,
         stateSeparator: String,
         attributeSeparator: String,
@@ -97,7 +99,11 @@ class EntityWidget : BaseWidgetProvider() {
         val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
         var entity: Entity<Map<String, Any>>? = null
         try {
-            entity = entityId?.let { integrationUseCase.getEntity(it) }
+            entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
+                suggestedEntity
+            } else {
+                entityId?.let { integrationUseCase.getEntity(it) }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
             if (lastIntent == UPDATE_VIEW)
@@ -169,6 +175,17 @@ class EntityWidget : BaseWidgetProvider() {
             )
 
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
+        }
+    }
+
+    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        AppDatabase.getInstance(context).staticWidgetDao().getAll().orEmpty().forEach {
+            if (it.entityId == entity.entityId) {
+                mainScope.launch {
+                    val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)
+                    AppWidgetManager.getInstance(context).updateAppWidget(it.id, views)
+                }
+            }
         }
     }
 

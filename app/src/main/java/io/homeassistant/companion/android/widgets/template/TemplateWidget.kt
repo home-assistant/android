@@ -11,6 +11,7 @@ import android.widget.RemoteViews
 import android.widget.Toast
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
@@ -37,7 +38,7 @@ class TemplateWidget : BaseWidgetProvider() {
         return templateWidgetDao.getAll()?.map { it.id }.orEmpty()
     }
 
-    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         // Every time AppWidgetManager.updateAppWidget(...) is called, the button listener
         // and label need to be re-assigned, or the next time the layout updates
         // (e.g home screen rotation) the widget will fall back on its default layout
@@ -101,6 +102,16 @@ class TemplateWidget : BaseWidgetProvider() {
                 )
             )
             onUpdate(context, AppWidgetManager.getInstance(context), intArrayOf(appWidgetId))
+        }
+    }
+
+    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        getAllWidgetIds(context).forEach { appWidgetId ->
+            val intent = Intent(context, TemplateWidget::class.java).apply {
+                action = UPDATE_VIEW
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            }
+            context.sendBroadcast(intent)
         }
     }
 }
