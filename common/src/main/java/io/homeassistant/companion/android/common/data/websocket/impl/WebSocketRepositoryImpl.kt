@@ -4,6 +4,7 @@ import android.util.Log
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.module.kotlin.contains
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -76,8 +77,10 @@ class WebSocketRepositoryImpl @Inject constructor(
     private var connected = Job()
     private val eventSubscriptionMutex = Mutex()
     private val eventSubscriptionFlow = mutableMapOf<String, SharedFlow<*>>()
-
     private var eventSubscriptionProducerScope = mutableMapOf<String, ProducerScope<Any>>()
+
+    private var notificationFlow: Flow<Map<String, String>>? = null
+    private var notificationProducerScope: ProducerScope<Map<String, String>>? = null
 
     override suspend fun sendPing(): Boolean {
         val socketResponse = sendMessage(
@@ -203,6 +206,32 @@ class WebSocketRepositoryImpl @Inject constructor(
         return eventSubscriptionFlow[eventType]!! as Flow<T>
     }
 
+    override suspend fun getNotifications(): Flow<Map<String, String>>? {
+        val response = sendMessage(
+            mapOf(
+                "type" to "mobile_app/push_notification_channel",
+                "webhook_id" to urlRepository.getWebhookId(),
+                "support_confirm" to true
+            )
+        )
+
+        if (response == null) {
+            Log.e(TAG, "Unable to register for notifications")
+            return null
+        }
+
+        notificationFlow = callbackFlow {
+            notificationProducerScope = this
+            awaitClose {
+                // TODO: Is there a way to unsubscribe?
+                notificationFlow = null
+                notificationProducerScope = null
+            }
+        }.shareIn(ioScope, SharingStarted.WhileSubscribed())
+
+        return notificationFlow
+    }
+
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {
@@ -306,6 +335,17 @@ class WebSocketRepositoryImpl @Inject constructor(
                 eventResponseClass
             )
             eventSubscriptionProducerScope[eventResponse.eventType]?.send(eventResponse.data)
+        } else if (response.event?.contains("hass_confirm_id") == true) {
+            notificationProducerScope?.send(
+                mapper.convertValue(response.event, object : TypeReference<Map<String, String>>() {})
+            )
+            sendMessage(
+                mapOf(
+                    "type" to "mobile_app/push_notification_confirm",
+                    "webhook_id" to urlRepository.getWebhookId(),
+                    "confirm_id" to response.event.get("hass_confirm_id").asText()
+                )
+            )
         }
     }
 
