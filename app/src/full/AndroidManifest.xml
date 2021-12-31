@@ -23,7 +23,7 @@
             android:exported="true" />
 
         <service
-            android:name=".notifications.MessagingService"
+            android:name=".notifications.FirebaseCloudMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

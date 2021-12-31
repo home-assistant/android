@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MessagingService : FirebaseMessagingService() {
+class FirebaseCloudMessagingService : FirebaseMessagingService() {
     companion object {
         const val TAG = "MessagingService"
     }

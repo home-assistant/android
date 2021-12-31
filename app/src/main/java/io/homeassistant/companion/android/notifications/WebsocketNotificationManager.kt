@@ -48,11 +48,16 @@ class WebsocketNotificationManager(
                     .build()
 
             WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(TAG, ExistingPeriodicWorkPolicy.REPLACE, websocketNotifications)
+                .enqueueUniquePeriodicWork(
+                    TAG,
+                    ExistingPeriodicWorkPolicy.REPLACE,
+                    websocketNotifications
+                )
         }
     }
 
-    private val notificationManager = applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    private val notificationManager =
+        applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
@@ -78,7 +83,28 @@ class WebsocketNotificationManager(
         val websocketRepository = entryPoint.websocketRepository()
         val messagingManager = entryPoint.messagingManager()
         websocketRepository.getNotifications()?.collect {
-            messagingManager.handleMessage(it)
+            val flattened = mutableMapOf<String, String>()
+            if (it.containsKey("data")) {
+                for ((key, value) in it["data"] as Map<*, *>) {
+                    if (key == "actions" && value is List<*>) {
+                        value.forEachIndexed { i, action ->
+                            if (action is Map<*, *>) {
+                                flattened["action_${i + 1}_key"] = action["action"].toString()
+                                flattened["action_${i + 1}_title"] = action["title"].toString()
+                                flattened["action_${i + 1}_uri"] = action["uri"].toString()
+                            }
+                        }
+                    } else {
+                        flattened[key.toString()] = value.toString()
+                    }
+                }
+            }
+            // Message and title are in the root unlike all the others.
+            listOf("message", "title").forEach { key ->
+                if (it.containsKey(key))
+                    flattened[key] = it[key].toString()
+            }
+            messagingManager.handleMessage(flattened)
         }
 
         Result.success()

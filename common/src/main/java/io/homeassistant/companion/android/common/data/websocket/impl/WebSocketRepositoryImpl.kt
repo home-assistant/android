@@ -79,8 +79,8 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val eventSubscriptionFlow = mutableMapOf<String, SharedFlow<*>>()
     private var eventSubscriptionProducerScope = mutableMapOf<String, ProducerScope<Any>>()
 
-    private var notificationFlow: Flow<Map<String, String>>? = null
-    private var notificationProducerScope: ProducerScope<Map<String, String>>? = null
+    private var notificationFlow: Flow<Map<String, Any>>? = null
+    private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
 
     override suspend fun sendPing(): Boolean {
         val socketResponse = sendMessage(
@@ -206,7 +206,7 @@ class WebSocketRepositoryImpl @Inject constructor(
         return eventSubscriptionFlow[eventType]!! as Flow<T>
     }
 
-    override suspend fun getNotifications(): Flow<Map<String, String>>? {
+    override suspend fun getNotifications(): Flow<Map<String, Any>>? {
         val response = sendMessage(
             mapOf(
                 "type" to "mobile_app/push_notification_channel",
@@ -337,7 +337,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             eventSubscriptionProducerScope[eventResponse.eventType]?.send(eventResponse.data)
         } else if (response.event?.contains("hass_confirm_id") == true) {
             notificationProducerScope?.send(
-                mapper.convertValue(response.event, object : TypeReference<Map<String, String>>() {})
+                mapper.convertValue(response.event, object : TypeReference<Map<String, Any>>() {})
             )
             sendMessage(
                 mapOf(
