@@ -42,7 +42,7 @@ class FanControl {
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_FAN)
-            control.setZone(context.getString(commonR.string.domain_fan))
+            control.setZone(area?.name ?: context.getString(commonR.string.domain_fan))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {

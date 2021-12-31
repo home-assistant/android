@@ -64,14 +64,20 @@ class HaControlsProviderService : ControlsProviderService() {
                     val deviceRegistry = webSocketRepository.getDeviceRegistry()
                     val entityRegistry = webSocketRepository.getEntityRegistry()
 
-                    integrationRepository
-                        .getEntities()
+                    val entities = integrationRepository.getEntities()
+                    val areaForEntity = mutableMapOf<String, AreaRegistryResponse?>()
+                    entities?.forEach {
+                        areaForEntity[it.entityId] = getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                    }
+
+                    entities
+                        ?.sortedWith(compareBy(nullsLast()) { areaForEntity[it.entityId]?.name })
                         ?.mapNotNull {
                             val domain = it.entityId.split(".")[0]
                             domainToHaControl[domain]?.createControl(
                                 applicationContext,
                                 it as Entity<Map<String, Any>>,
-                                getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                                areaForEntity[it.entityId]
                             )
                         }
                         ?.forEach {

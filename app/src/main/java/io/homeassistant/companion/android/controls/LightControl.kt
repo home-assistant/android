@@ -49,7 +49,7 @@ class LightControl {
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
             control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
-            control.setZone(context.getString(commonR.string.domain_light))
+            control.setZone(area?.name ?: context.getString(commonR.string.domain_light))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
