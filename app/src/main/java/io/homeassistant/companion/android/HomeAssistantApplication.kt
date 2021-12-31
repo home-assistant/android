@@ -138,6 +138,17 @@ open class HomeAssistantApplication : Application() {
             }
         }
 
+        // Register for changes to the managed profile availability
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter().apply {
+                    addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE)
+                    addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)
+                }
+            )
+        }
+
         // Update widgets when the screen turns on, updates are skipped if widgets were not added
         val buttonWidget = ButtonWidget()
         val entityWidget = EntityWidget()

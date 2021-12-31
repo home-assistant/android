@@ -81,12 +81,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         ioScope.launch {
-            updateSensors(context, integrationUseCase)
+            updateSensors(context, integrationUseCase, intent)
             if (chargingActions.contains(intent.action)) {
                 // Add a 5 second delay to perform another update so charging state updates completely.
                 // This is necessary as the system needs a few seconds to verify the charger.
                 delay(5000L)
-                updateSensors(context, integrationUseCase)
+                updateSensors(context, integrationUseCase, intent)
             }
         }
     }
@@ -97,7 +97,8 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
     suspend fun updateSensors(
         context: Context,
-        integrationUseCase: IntegrationRepository
+        integrationUseCase: IntegrationRepository,
+        intent: Intent?
     ) {
         val sensorDao = AppDatabase.getInstance(context).sensorDao()
         val enabledRegistrations = mutableListOf<SensorRegistration<Any>>()
@@ -112,13 +113,13 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
 
         managers.forEach { manager ->
 
-            // Since we don't have this manager injected it doesn't fulfil it's injects, manually
+            // Since we don't have this manager injected it doesn't fulfil its injects, manually
             // inject for now I guess?
             if (manager is LocationSensorManagerBase)
                 manager.integrationUseCase = integrationUseCase
 
             try {
-                manager.requestSensorUpdate(context)
+                manager.requestSensorUpdate(context, intent)
             } catch (e: Exception) {
                 Log.e(tag, "Issue requesting updates for ${context.getString(manager.name)}", e)
             }
