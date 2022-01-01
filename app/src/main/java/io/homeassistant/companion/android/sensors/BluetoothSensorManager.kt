@@ -8,7 +8,7 @@ import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
 import java.util.UUID
 import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
@@ -67,7 +67,7 @@ class BluetoothSensorManager : SensorManager {
             if (transmitEnabled) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
             }
-            sensorDao.add(Setting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), "toggle"))
+            sensorDao.add(SensorSetting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), "toggle"))
         }
     }
 

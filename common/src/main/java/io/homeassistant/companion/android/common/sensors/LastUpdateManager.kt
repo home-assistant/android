@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.common.R as commonR
 
 class LastUpdateManager : SensorManager {
@@ -69,11 +69,11 @@ class LastUpdateManager : SensorManager {
         val intentSetting = allSettings.firstOrNull { it.name == intentSettingName }?.value ?: ""
         if (addNewIntent == "true") {
             if (intentSetting == "") {
-                sensorDao.add(Setting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", "toggle"))
-                sensorDao.add(Setting(lastUpdate.id, intentSettingName, intentAction, "string"))
+                sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", "toggle"))
+                sensorDao.add(SensorSetting(lastUpdate.id, intentSettingName, intentAction, "string"))
             }
         } else {
-            sensorDao.add(Setting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", "toggle"))
+            sensorDao.add(SensorSetting(lastUpdate.id, SETTING_ADD_NEW_INTENT, "false", "toggle"))
         }
         for (setting in allSettings) {
             if (setting.value == "")

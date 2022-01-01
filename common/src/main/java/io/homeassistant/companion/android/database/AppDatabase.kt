@@ -30,8 +30,9 @@ import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
+import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
@@ -53,7 +54,7 @@ import io.homeassistant.companion.android.common.R as commonR
         Attribute::class,
         Authentication::class,
         Sensor::class,
-        Setting::class,
+        SensorSetting::class,
         ButtonWidgetEntity::class,
         CameraWidgetEntity::class,
         MediaPlayerControlsWidgetEntity::class,
@@ -62,7 +63,7 @@ import io.homeassistant.companion.android.common.R as commonR
         NotificationItem::class,
         TileEntity::class,
         Favorites::class,
-        io.homeassistant.companion.android.database.settings.Setting::class
+        Setting::class
     ],
     version = 21,
     exportSchema = false

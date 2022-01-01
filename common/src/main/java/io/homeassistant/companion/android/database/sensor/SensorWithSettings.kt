@@ -10,5 +10,5 @@ data class SensorWithSettings(
         parentColumn = "id",
         entityColumn = "sensor_id"
     )
-    val settings: List<Setting>
+    val sensorSettings: List<SensorSetting>
 )
