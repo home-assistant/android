@@ -34,6 +34,7 @@ import io.homeassistant.companion.android.common.R as commonR
 
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_ENTITY_LIST = "entity_list"
+private const val SCREEN_MANAGE_SENSORS = "manage_sensors"
 private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
 private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
@@ -112,7 +113,7 @@ fun LoadHomePage(
                         onClickSetFavorites = { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
                         onClearFavorites = { mainViewModel.clearFavorites() },
                         onClickSetShortcuts = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) },
-                        onClickSensors = { context.startActivity(Intent(context, SensorSettingsActivity::class.java)) },
+                        onClickSensors = { swipeDismissableNavController.navigate(SCREEN_MANAGE_SENSORS) },
                         onClickLogout = { mainViewModel.logout() },
                         isHapticEnabled = mainViewModel.isHapticEnabled.value,
                         isToastEnabled = mainViewModel.isToastEnabled.value,
@@ -147,6 +148,9 @@ fun LoadHomePage(
                             TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
                         }
                     )
+                }
+                composable(SCREEN_MANAGE_SENSORS) {
+                    SensorsView()
                 }
                 composable(SCREEN_SELECT_TILE_SHORTCUT) {
                     ChooseEntityView(
