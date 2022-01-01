@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.settings.notification.views
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +47,7 @@ fun RadioButtonRow(
     onClick: () -> Unit
 ) {
     Row(
+        modifier = Modifier.fillMaxWidth().selectable(selected = selected, onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(selected = selected, onClick = onClick)
