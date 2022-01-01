@@ -4,8 +4,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Context.NOTIFICATION_SERVICE
+import android.hardware.display.DisplayManager
 import android.os.Build
 import android.util.Log
+import android.view.Display
 import androidx.core.app.NotificationCompat
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -21,9 +23,9 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
-import kotlinx.coroutines.Dispatchers
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.settings.LocalNotificationSetting
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 @ExperimentalCoroutinesApi
@@ -59,6 +61,14 @@ class WebsocketNotificationManager(
     private val notificationManager =
         applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
+    private val entryPoint = EntryPointAccessors
+        .fromApplication(applicationContext, WebsocketNotificationManagerEntryPoint::class.java)
+
+    private val websocketRepository: WebSocketRepository = entryPoint.websocketRepository()
+    private val messagingManager: MessagingManager = entryPoint.messagingManager()
+
+    private val settingsDao = AppDatabase.getInstance(appContext).settingsDao()
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface WebsocketNotificationManagerEntryPoint {
@@ -66,7 +76,17 @@ class WebsocketNotificationManager(
         fun messagingManager(): MessagingManager
     }
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    override suspend fun doWork(): Result {
+        // should we be running....
+        val dm = applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        val displayOff = dm.displays.all { it.state == Display.STATE_OFF }
+        val setting = settingsDao.get(0)?.localNotificationSetting ?: LocalNotificationSetting.SCREEN_ON
+        if (setting == LocalNotificationSetting.NEVER) {
+            return Result.success()
+        } else if (displayOff && settingsDao.get(0)?.localNotificationSetting == LocalNotificationSetting.SCREEN_ON) {
+            return Result.success()
+        }
+
         Log.d(TAG, "Starting to listen for Websocket Notifications")
         createNotificationChannel()
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
@@ -74,14 +94,8 @@ class WebsocketNotificationManager(
             .setContentTitle(applicationContext.getString(R.string.websocket_listening))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
+        setForeground(ForegroundInfo(NOTIFICATION_ID, notification))
 
-        val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
-        setForeground(foregroundInfo)
-
-        val entryPoint = EntryPointAccessors
-            .fromApplication(applicationContext, WebsocketNotificationManagerEntryPoint::class.java)
-        val websocketRepository = entryPoint.websocketRepository()
-        val messagingManager = entryPoint.messagingManager()
         websocketRepository.getNotifications()?.collect {
             val flattened = mutableMapOf<String, String>()
             if (it.containsKey("data")) {
@@ -107,7 +121,7 @@ class WebsocketNotificationManager(
             messagingManager.handleMessage(flattened)
         }
 
-        Result.success()
+        return Result.success()
     }
 
     private fun createNotificationChannel() {

@@ -59,11 +59,14 @@ class WebSocketRepositoryImpl @Inject constructor(
 ) : WebSocketRepository, WebSocketListener() {
 
     companion object {
+        private const val TAG = "WebSocketRepository"
+
         private const val EVENT_STATE_CHANGED = "state_changed"
         private const val EVENT_AREA_REGISTRY_UPDATED = "area_registry_updated"
         private const val EVENT_DEVICE_REGISTRY_UPDATED = "device_registry_updated"
         private const val EVENT_ENTITY_REGISTRY_UPDATED = "entity_registry_updated"
-        private const val TAG = "WebSocketRepository"
+
+        private const val DISCONNECT_DELAY = 10000L
     }
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
@@ -78,7 +81,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val eventSubscriptionMutex = Mutex()
     private val eventSubscriptionFlow = mutableMapOf<String, SharedFlow<*>>()
     private var eventSubscriptionProducerScope = mutableMapOf<String, ProducerScope<Any>>()
-
+    private val notificationMutex = Mutex()
     private var notificationFlow: Flow<Map<String, Any>>? = null
     private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
 
@@ -207,29 +210,34 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getNotifications(): Flow<Map<String, Any>>? {
-        val response = sendMessage(
-            mapOf(
-                "type" to "mobile_app/push_notification_channel",
-                "webhook_id" to urlRepository.getWebhookId(),
-                "support_confirm" to true
-            )
-        )
+        notificationMutex.withLock {
+            if (notificationFlow == null) {
+                val response = sendMessage(
+                    mapOf(
+                        "type" to "mobile_app/push_notification_channel",
+                        "webhook_id" to urlRepository.getWebhookId(),
+                        "support_confirm" to true
+                    )
+                )
 
-        if (response == null) {
-            Log.e(TAG, "Unable to register for notifications")
-            return null
-        }
+                if (response == null) {
+                    Log.e(TAG, "Unable to register for notifications")
+                    return null
+                }
 
-        notificationFlow = callbackFlow {
-            notificationProducerScope = this
-            awaitClose {
-                // TODO: Is there a way to unsubscribe?
-                notificationFlow = null
-                notificationProducerScope = null
+                notificationFlow = callbackFlow {
+                    notificationProducerScope = this
+                    awaitClose {
+                        // TODO: Is there a way to unsubscribe?
+                        notificationFlow = null
+                        notificationProducerScope = null
+                        connection?.close(1001, "Done listening to notifications.")
+                    }
+                }.shareIn(ioScope, SharingStarted.WhileSubscribed(DISCONNECT_DELAY))
             }
-        }.shareIn(ioScope, SharingStarted.WhileSubscribed())
 
-        return notificationFlow
+            return notificationFlow
+        }
     }
 
     private suspend fun connect(): Boolean {

@@ -9,10 +9,9 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
-import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.settings.notification.views.LocalNotificationSettingsView
 
-@AndroidEntryPoint
+// @AndroidEntryPoint
 class LocalNotificationSettingsFragment : Fragment() {
 
     val viewModel: LocalNotificationViewModel by viewModels()

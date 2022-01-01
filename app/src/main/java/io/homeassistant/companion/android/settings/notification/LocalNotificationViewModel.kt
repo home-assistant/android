@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.LocalNotificationSetting
 import io.homeassistant.companion.android.database.settings.Setting
+import io.homeassistant.companion.android.notifications.WebsocketNotificationManager
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -32,5 +33,6 @@ class LocalNotificationViewModel @Inject constructor(
             it.localNotificationSetting = setting
             settingsDao.update(it)
         }
+        WebsocketNotificationManager.start(getApplication())
     }
 }
