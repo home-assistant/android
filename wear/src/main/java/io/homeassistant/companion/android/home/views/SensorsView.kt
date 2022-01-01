@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -13,6 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
@@ -63,32 +66,17 @@ fun SensorsView() {
                 items(sensorManagers.size, { sensorManagers[it].name } ) { index ->
                     sensorManagers.forEach { manager ->
                         Row {
-                            Text(text = stringResource(manager.name))
-
-//                        preferenceScreen.addPreference(prefCategory)
-//
-//                        manager.getAvailableSensors(requireContext()).sortedBy { getString(it.name) }.forEach { basicSensor ->
-//                            pref.key = basicSensor.id
-//                            pref.title = getString(basicSensor.name)
-//                            pref.isVisible = !SensorsSettingsFragment.showOnlyEnabledSensors || (SensorsSettingsFragment.showOnlyEnabledSensors && manager.isEnabled(requireContext(), basicSensor.id))
-//                            pref.setOnPreferenceClickListener {
-//                                parentFragmentManager
-//                                    .beginTransaction()
-//                                    .replace(
-//                                        R.id.content,
-//                                        SensorDetailFragment.newInstance(
-//                                            manager,
-//                                            basicSensor,
-//                                            integrationUseCase
-//                                        )
-//                                    )
-//                                    .addToBackStack("Sensor Detail")
-//                                    .commit()
-//                                return@setOnPreferenceClickListener true
-//                            }
-//
-////                        prefCategory.addPreference(pref)
-//                        }
+                            Chip(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                colors = ChipDefaults.secondaryChipColors(),
+                                label = {
+                                    Text(
+                                        text = stringResource(manager.name)
+                                    )
+                                },
+                                onClick = {}
+                            )
                         }
                     }
                 }
