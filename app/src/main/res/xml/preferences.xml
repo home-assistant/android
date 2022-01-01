@@ -113,6 +113,10 @@
         android:key="notifications"
         app:isPreferenceVisible="false">
         <Preference
+            android:key="local_notifications"
+            android:title="Local Notifications"
+            android:summary="Manage local notifications that bypass Firebase Cloud Messaging." />
+        <Preference
             android:key="notification_history"
             app:isPreferenceVisible="false"
             android:title="@string/notification_history"

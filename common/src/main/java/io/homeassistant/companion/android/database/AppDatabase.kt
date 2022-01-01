@@ -31,6 +31,8 @@ import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -59,12 +61,16 @@ import io.homeassistant.companion.android.common.R as commonR
         TemplateWidgetEntity::class,
         NotificationItem::class,
         TileEntity::class,
-        Favorites::class
+        Favorites::class,
+        io.homeassistant.companion.android.database.settings.Setting::class
     ],
-    version = 20,
+    version = 21,
     exportSchema = false
 )
-@TypeConverters(EntriesTypeConverter::class)
+@TypeConverters(
+    LocalNotificationSettingConverter::class,
+    EntriesTypeConverter::class
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
     abstract fun sensorDao(): SensorDao
@@ -76,6 +82,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun tileDao(): TileDao
     abstract fun favoritesDao(): FavoritesDao
+    abstract fun settingsDao(): SettingsDao
 
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
@@ -119,7 +126,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_16_17,
                     MIGRATION_17_18,
                     MIGRATION_18_19,
-                    MIGRATION_19_20
+                    MIGRATION_19_20,
+                    MIGRATION_20_21
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -451,6 +459,12 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_19_20 = object : Migration(19, 20) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("CREATE TABLE IF NOT EXISTS `favorites` (`id` TEXT PRIMARY KEY NOT NULL, `position` INTEGER)")
+            }
+        }
+
+        private val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `settings` (`id` INTEGER NOT NULL, `localNotificationSetting` TEXT NOT NULL, PRIMARY KEY(`id`))")
             }
         }
 
