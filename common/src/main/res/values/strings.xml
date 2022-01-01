@@ -737,6 +737,8 @@
     <string name="basic_sensor_name_last_used_app">Last Used App</string>
     <string name="sensor_description_last_used_app">Application name or package name of the last used application on the device</string>
     <string name="sensor_name_last_app">Last Used App</string>
+    <string name="local_notif_name">Local Notifications</string>
+    <string name="local_notif_summary">Manage local notifications that bypass Firebase Cloud Messaging.</string>
     <string name="local_notif_description">Please select when you would like the application to attempt to directly communicate with your Home Assistant instance to attempt to bypass Firebase Cloud Messaging for push notifications.</string>
     <string name="local_notif_never">Never</string>
     <string name="local_notif_while_screen_on">While Screen On</string>
