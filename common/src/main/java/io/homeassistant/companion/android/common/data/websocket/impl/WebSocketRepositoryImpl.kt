@@ -240,6 +240,17 @@ class WebSocketRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun ackNotification(confirmId: String): Boolean {
+        val response = sendMessage(
+            mapOf(
+                "type" to "mobile_app/push_notification_confirm",
+                "webhook_id" to urlRepository.getWebhookId(),
+                "confirm_id" to confirmId
+            )
+        )
+        return response?.success == true
+    }
+
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {
@@ -344,16 +355,14 @@ class WebSocketRepositoryImpl @Inject constructor(
             )
             eventSubscriptionProducerScope[eventResponse.eventType]?.send(eventResponse.data)
         } else if (response.event?.contains("hass_confirm_id") == true) {
-            notificationProducerScope?.send(
-                mapper.convertValue(response.event, object : TypeReference<Map<String, Any>>() {})
-            )
-            sendMessage(
-                mapOf(
-                    "type" to "mobile_app/push_notification_confirm",
-                    "webhook_id" to urlRepository.getWebhookId(),
-                    "confirm_id" to response.event.get("hass_confirm_id").asText()
+            if (notificationProducerScope?.isActive == true) {
+                notificationProducerScope?.send(
+                    mapper.convertValue(
+                        response.event,
+                        object : TypeReference<Map<String, Any>>() {}
+                    )
                 )
-            )
+            }
         }
     }
 

@@ -27,4 +27,5 @@ interface WebSocketRepository {
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?
     suspend fun getNotifications(): Flow<Map<String, Any>>?
+    suspend fun ackNotification(confirmId: String): Boolean
 }

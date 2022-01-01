@@ -97,6 +97,8 @@ class WebsocketNotificationManager(
         setForeground(ForegroundInfo(NOTIFICATION_ID, notification))
 
         websocketRepository.getNotifications()?.collect {
+            if (it.containsKey("hass_confirm_id"))
+                websocketRepository.ackNotification(it["hass_confirm_id"].toString())
             val flattened = mutableMapOf<String, String>()
             if (it.containsKey("data")) {
                 for ((key, value) in it["data"] as Map<*, *>) {
