@@ -45,7 +45,7 @@ class MTLSHelper {
         if (!keyFile.exists())return
         if (!certFile.exists())return
 
-        var certificateInputStream: FileInputStream?=null
+        var certificateInputStream: FileInputStream? = null
         try {
             val certificateFactory = CertificateFactory.getInstance("X.509")
 
@@ -73,20 +73,16 @@ class MTLSHelper {
             )
 
             // Remove files after importing them if tls_client.keep doesn't exists (useful for debugging purposes)
-            if(!File(baseDir, "$filename.keep").exists()) {
+            if (!File(baseDir, "$filename.keep").exists()) {
                 keyFile.delete()
                 certFile.delete()
             }
-            importMsg=context.getString(R.string.mtls_cert_importmsg_message_ok)
-        }
-        catch (ex: Exception)
-        {
-            importErrorMsg=ex.localizedMessage
-        }
-        finally {
+            importMsg = context.getString(R.string.mtls_cert_importmsg_message_ok)
+        } catch (ex: Exception) {
+            importErrorMsg = ex.localizedMessage
+        } finally {
             certificateInputStream?.close()
         }
-
     }
 
     fun init(context: Context) {
