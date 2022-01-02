@@ -42,23 +42,21 @@ open class MTLSWebViewClient : WebViewClient() {
     }
 
     private fun showImportMessageIfNeeded(context: Context) {
-        if(MTLSHelper.importErrorMsg!=null)
-        {
+        if (MTLSHelper.importErrorMsg != null) {
             AlertDialog.Builder(context)
                 .setTitle(commonR.string.mtls_cert_importmsg_title)
-                .setMessage(context.getString(commonR.string.mtls_cert_importmsg_message_err)+"\n"+MTLSHelper.importErrorMsg)
+                .setMessage(context.getString(commonR.string.mtls_cert_importmsg_message_err) + "\n" + MTLSHelper.importErrorMsg)
                 .setPositiveButton(android.R.string.ok) { _, _ -> }
                 .show()
-            MTLSHelper.importErrorMsg=null
+            MTLSHelper.importErrorMsg = null
         }
-        if(MTLSHelper.importMsg!=null)
-        {
+        if (MTLSHelper.importMsg != null) {
             AlertDialog.Builder(context)
                 .setTitle(commonR.string.mtls_cert_importmsg_title)
                 .setMessage(MTLSHelper.importMsg)
                 .setPositiveButton(android.R.string.ok) { _, _ -> }
                 .show()
-            MTLSHelper.importMsg=null
+            MTLSHelper.importMsg = null
         }
     }
 }
