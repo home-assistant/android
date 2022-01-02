@@ -3,8 +3,6 @@ package io.homeassistant.companion.android
 import android.app.Application
 import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
@@ -16,7 +14,7 @@ import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.notifications.WebsocketNotificationManager
+import io.homeassistant.companion.android.notifications.NotificationBroadcastReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -48,11 +46,7 @@ open class HomeAssistantApplication : Application() {
 
         // This will make sure we start/stop when we actually need too.
         registerReceiver(
-            object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    WebsocketNotificationManager.start(context)
-                }
-            },
+            NotificationBroadcastReceiver(),
             IntentFilter().apply {
                 addAction(Intent.ACTION_SCREEN_OFF)
                 addAction(Intent.ACTION_SCREEN_ON)

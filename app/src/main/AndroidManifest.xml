@@ -62,6 +62,20 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <!-- Start things like SensorWorker on device boot -->
+<!--        <receiver android:name=".notifications.NotificationBroadcastReceiver"-->
+<!--            android:exported="true">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.BOOT_COMPLETED" />-->
+<!--                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />-->
+<!--                <action android:name="android.intent.action.MY_PACKAGE_SUSPENDED" />-->
+<!--                <action android:name="android.intent.action.MY_PACKAGE_UNSUSPENDED" />-->
+<!--                <action android:name="android.intent.action.QUICKBOOT_POWERON" />-->
+<!--                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />-->
+<!--                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />-->
+<!--                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />-->
+<!--                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />-->
+<!--            </intent-filter>-->
+<!--        </receiver>-->
         <receiver android:name=".sensors.SensorReceiver"
             android:exported="true">
             <intent-filter>
