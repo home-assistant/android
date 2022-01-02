@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.data
 
 import android.content.Context
 import android.util.Base64
+import io.homeassistant.companion.android.common.R
 import okhttp3.OkHttpClient
 import java.io.File
 import java.io.FileInputStream
@@ -23,9 +24,10 @@ class MTLSHelper {
     private val filename = "tls_client"
     private val keyentryname = "client_mtls_cert"
     companion object {
-        private lateinit var baseDir: File
         var clientPrivateKey: PrivateKey? = null
         var clientPublicKey: Certificate? = null
+        var importMsg: String? = null
+        var importErrorMsg: String? = null
     }
 
     private fun loadKeyData() {
@@ -35,42 +37,60 @@ class MTLSHelper {
         clientPublicKey = keyStore.getCertificate(keyentryname) ?: return
     }
 
-    private fun tryImportKeys() {
+    private fun tryImportKeys(context: Context) {
+        val baseDir = context.getExternalFilesDir(null)!!
         val keyFile = File(baseDir, "$filename.key")
         val certFile = File(baseDir, "$filename.crt")
 
         if (!keyFile.exists())return
         if (!certFile.exists())return
 
-        val certificateFactory = CertificateFactory.getInstance("X.509")
+        var certificateInputStream: FileInputStream?=null
+        try {
+            val certificateFactory = CertificateFactory.getInstance("X.509")
 
-        val privateKeyContent = keyFile.readText()
-            .replace("-----BEGIN.*PRIVATE KEY-----".toRegex(), "")
-            .replace(System.lineSeparator().toRegex(), "")
-            .replace("-----END.*PRIVATE KEY-----".toRegex(), "")
-        val privateKeyAsBytes: ByteArray = Base64.decode(privateKeyContent, Base64.DEFAULT)
-        val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
-        val keySpec = PKCS8EncodedKeySpec(privateKeyAsBytes)
+            val privateKeyContent = keyFile.readText()
+                .replace("-----BEGIN.*PRIVATE KEY-----".toRegex(), "")
+                .replace(System.lineSeparator().toRegex(), "")
+                .replace("-----END.*PRIVATE KEY-----".toRegex(), "")
+            val privateKeyAsBytes: ByteArray = Base64.decode(privateKeyContent, Base64.DEFAULT)
+            val keySpec = PKCS8EncodedKeySpec(privateKeyAsBytes)
+            val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
+            val privateKey = keyFactory.generatePrivate(keySpec)
 
-        // Get certificate
-        val certificateInputStream = FileInputStream(certFile)
-        val certificate = certificateFactory.generateCertificate(certificateInputStream)
+            // Get certificate
+            certificateInputStream = FileInputStream(certFile)
+            val certificate = certificateFactory.generateCertificate(certificateInputStream)
 
-        // Set up KeyStore
-        val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
-        keyStore.load(null)
-        keyStore.setKeyEntry(
-            keyentryname,
-            keyFactory.generatePrivate(keySpec),
-            null,
-            arrayOf(certificate)
-        )
-        certificateInputStream.close()
+            // Set up KeyStore
+            val keyStore: KeyStore = KeyStore.getInstance("AndroidKeyStore")
+            keyStore.load(null)
+            keyStore.setKeyEntry(
+                keyentryname,
+                privateKey,
+                null,
+                arrayOf(certificate)
+            )
+
+            // Remove files after importing them if tls_client.keep doesn't exists (useful for debugging purposes)
+            if(!File(baseDir, "$filename.keep").exists()) {
+                keyFile.delete()
+                certFile.delete()
+            }
+            importMsg=context.getString(R.string.mtls_cert_importmsg_message_ok)
+        }
+        catch (ex: Exception)
+        {
+            importErrorMsg=ex.localizedMessage
+        }
+        finally {
+            certificateInputStream?.close()
+        }
+
     }
 
     fun init(context: Context) {
-        baseDir = context.getExternalFilesDir(null)!!
-        tryImportKeys()
+        tryImportKeys(context)
         loadKeyData()
     }
     private fun getMTLSKeyManagerForOKHTTP(): X509KeyManager {
