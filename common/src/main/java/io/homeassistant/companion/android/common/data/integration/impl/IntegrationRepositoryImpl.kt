@@ -622,14 +622,7 @@ class IntegrationRepositoryImpl @Inject constructor(
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
-        val appData = if (pushToken == null) {
-            null
-        } else {
-            hashMapOf(
-                "push_url" to PUSH_URL,
-                "push_token" to pushToken
-            )
-        }
+
         return RegisterDeviceRequest(
             null,
             null,
@@ -640,7 +633,11 @@ class IntegrationRepositoryImpl @Inject constructor(
             null,
             osVersion,
             null,
-            appData,
+            hashMapOf(
+                // TODO: This is a hack and should be fixed in core
+                "push_url" to if (!pushToken.isNullOrBlank()) PUSH_URL else "http://0.0.0.0/",
+                "push_token" to (pushToken ?: "")
+            ),
             null
         )
     }
