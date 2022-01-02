@@ -25,7 +25,6 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -86,9 +85,15 @@ class IntegrationRepositoryImpl @Inject constructor(
         request.supportsEncryption = false
         request.deviceId = deviceId
 
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        if (url == null) {
+            Log.e(TAG, "Unable to register device due to missing URL")
+            return
+        }
         try {
             val response =
                 integrationService.registerDevice(
+                    url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
                     authenticationRepository.buildBearerToken(),
                     request
                 )
@@ -427,38 +432,43 @@ class IntegrationRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getServices(): List<Service> {
+    override suspend fun getServices(): List<Service>? {
         val response = webSocketRepository.getServices()
 
-        return response.flatMap {
+        return response?.flatMap {
             it.services.map { service ->
                 Service(it.domain, service.key, service.value)
             }
-        }.toList()
+        }?.toList()
     }
 
-    override suspend fun getEntities(): List<Entity<Any>> {
+    override suspend fun getEntities(): List<Entity<Any>>? {
         val response = webSocketRepository.getStates()
 
-        return response
-            .map {
-                Entity(
-                    it.entityId,
-                    it.state,
-                    it.attributes,
-                    it.lastChanged,
-                    it.lastUpdated,
-                    it.context
-                )
-            }
-            .sortedBy { it.entityId }
-            .toList()
+        return response?.map {
+            Entity(
+                it.entityId,
+                it.state,
+                it.attributes,
+                it.lastChanged,
+                it.lastUpdated,
+                it.context
+            )
+        }
+            ?.sortedBy { it.entityId }
+            ?.toList()
     }
 
-    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>> {
+    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        if (url == null) {
+            Log.e(TAG, "Unable to register device due to missing URL")
+            return null
+        }
+
         val response = integrationService.getState(
-            authenticationRepository.buildBearerToken(),
-            entityId
+            url.newBuilder().addPathSegments("api/states/$entityId").build(),
+            authenticationRepository.buildBearerToken()
         )
         return Entity(
             response.entityId,
@@ -470,11 +480,10 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
     }
 
-    @ExperimentalCoroutinesApi
-    override suspend fun getEntityUpdates(): Flow<Entity<*>> {
+    override suspend fun getEntityUpdates(): Flow<Entity<*>>? {
         return webSocketRepository.getStateChanges()
-            .filter { it.newState != null }
-            .map {
+            ?.filter { it.newState != null }
+            ?.map {
                 Entity(
                     it.newState!!.entityId,
                     it.newState.state,

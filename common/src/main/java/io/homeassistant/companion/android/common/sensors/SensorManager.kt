@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.common.sensors
 
+import android.app.AppOpsManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
@@ -42,8 +44,20 @@ interface SensorManager {
 
     fun checkPermission(context: Context, sensorId: String): Boolean {
         return requiredPermissions(sensorId).all {
-            context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
+            if (sensorId != "last_used_app")
+                context.checkPermission(it, myPid(), myUid()) == PackageManager.PERMISSION_GRANTED
+            else {
+                checkUsageStatsPermission(context)
+            }
         }
+    }
+
+    fun checkUsageStatsPermission(context: Context): Boolean {
+        val pm = context.packageManager
+        val appInfo = pm.getApplicationInfo(context.packageName, 0)
+        val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
+        return mode == AppOpsManager.MODE_ALLOWED
     }
 
     fun isEnabled(context: Context, sensorId: String): Boolean {
@@ -64,6 +78,15 @@ interface SensorManager {
         }
 
         return sensor.enabled
+    }
+
+    // Request to update a sensor, including any broadcast intent which may have triggered the request
+    // The intent will be null if the update is being done on a timer, rather than as a result
+    // of a broadcast being received.
+    fun requestSensorUpdate(context: Context, intent: Intent?) {
+        // Few sensors care about the intent, so allow them to just implement the interface that
+        // does not get passed that parameter.
+        requestSensorUpdate(context)
     }
 
     fun requestSensorUpdate(context: Context)

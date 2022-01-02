@@ -116,7 +116,7 @@ fun SettingsView(
                         onClick = onClearFavorites,
                         secondaryLabel = {
                             Text(
-                                text = stringResource(id = commonR.string.irreverisble)
+                                text = stringResource(id = commonR.string.irreversible)
                             )
                         },
                         enabled = favorites.isNotEmpty()

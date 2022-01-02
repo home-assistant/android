@@ -42,11 +42,11 @@ interface IntegrationRepository {
 
     suspend fun getHomeAssistantVersion(): String
 
-    suspend fun getServices(): List<Service>
+    suspend fun getServices(): List<Service>?
 
-    suspend fun getEntities(): List<Entity<Any>>
-    suspend fun getEntity(entityId: String): Entity<Map<String, Any>>
-    suspend fun getEntityUpdates(): Flow<Entity<*>>
+    suspend fun getEntities(): List<Entity<Any>>?
+    suspend fun getEntity(entityId: String): Entity<Map<String, Any>>?
+    suspend fun getEntityUpdates(): Flow<Entity<*>>?
 
     suspend fun callService(domain: String, service: String, serviceData: HashMap<String, Any>)
 

@@ -127,6 +127,8 @@ class SensorDetailFragment(
                                         requestPermissions(permissions)
                                     }
                                 )
+                            } else if (sensorManager is LastAppSensorManager && !sensorManager.checkUsageStatsPermission(context)) {
+                                requestPermissions(permissions)
                             } else requestPermissions(permissions)
 
                             return@setOnPreferenceChangeListener false
@@ -483,6 +485,8 @@ class SensorDetailFragment(
         when {
             permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
                 requestPermissions(
                     permissions.toSet()

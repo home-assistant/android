@@ -13,7 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -75,9 +74,11 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                     return@launch
                 }
                 updateAllWidgets(context)
-                entityUpdates = integrationUseCase.getEntityUpdates()
-                entityUpdates!!.collect {
-                    updateAllWidgets(context)
+                if (getAllWidgetIds(context).isNotEmpty()) {
+                    entityUpdates = integrationUseCase.getEntityUpdates()
+                    entityUpdates!!.collect {
+                        onEntityStateChanged(context, it)
+                    }
                 }
             }
         }
@@ -107,7 +108,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews
+    abstract suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>? = null): RemoteViews
     abstract fun getAllWidgetIds(context: Context): List<Int>
     abstract fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int)
+    abstract fun onEntityStateChanged(context: Context, entity: Entity<*>)
 }

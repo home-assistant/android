@@ -9,9 +9,9 @@ import android.service.controls.DeviceTypes
 import android.service.controls.actions.ControlAction
 import android.service.controls.templates.StatelessTemplate
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -22,7 +22,8 @@ class SceneControl {
 
         override fun createControl(
             context: Context,
-            entity: Entity<Map<String, Any>>
+            entity: Entity<Map<String, Any>>,
+            area: AreaRegistryResponse?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -34,13 +35,15 @@ class SceneControl {
                 )
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_ROUTINE)
             control.setZone(
-                when (entity.entityId.split(".")[0]) {
-                    "scene" -> context.getString(commonR.string.domain_scene)
-                    "script" -> context.getString(commonR.string.domain_script)
-                    else -> entity.entityId.split(".")[0].capitalize()
-                }
+                area?.name
+                    ?: when (entity.entityId.split(".")[0]) {
+                        "scene" -> context.getString(commonR.string.domain_scene)
+                        "script" -> context.getString(commonR.string.domain_script)
+                        else -> entity.entityId.split(".")[0].capitalize()
+                    }
             )
             control.setStatus(Control.STATUS_OK)
             control.setControlTemplate(

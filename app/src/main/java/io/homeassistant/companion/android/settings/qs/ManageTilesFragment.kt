@@ -97,7 +97,7 @@ class ManageTilesFragment constructor(
 
         runBlocking {
             try {
-                integrationRepository.getEntities().forEach {
+                integrationRepository.getEntities()?.forEach {
                     val split = it.entityId.split(".")
                     if (split[0] in validDomains)
                         entityList = entityList + it.entityId

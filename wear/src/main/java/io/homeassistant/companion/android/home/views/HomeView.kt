@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
@@ -68,8 +69,10 @@ fun LoadHomePage(
         } else {
             val swipeDismissableNavController = rememberSwipeDismissableNavController()
             BackHandler {
-                // Check if current page is landing so we don't back into a null page
-                if (swipeDismissableNavController.currentDestination?.route != SCREEN_LANDING) {
+                val activity = (context as? Activity)
+                if (swipeDismissableNavController.currentDestination?.route == SCREEN_LANDING) {
+                    activity?.finish()
+                } else {
                     swipeDismissableNavController.popBackStack()
                 }
             }
