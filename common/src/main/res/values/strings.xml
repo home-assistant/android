@@ -881,4 +881,7 @@
     <string name="zone">Zone</string>
     <string name="mtls_cert_not_found_title">TLS Client certificate not available</string>
     <string name="mtls_cert_not_found_message">Remote site asked for client Certificate\nPlace tls_client.key and tls_client.crt in android/data/io.homeassistant.companion.android/files and restart application</string>
+    <string name="mtls_cert_importmsg_title">TLS Client certificate</string>
+    <string name="mtls_cert_importmsg_message_err">Error while importing TLS Client certificate:</string>
+    <string name="mtls_cert_importmsg_message_ok">TLS Client key/cert pair imported successfully,\ntls_client.key and tls_client.crt removed.</string>
 </resources>

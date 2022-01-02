@@ -6,7 +6,6 @@ import android.webkit.ClientCertRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AlertDialog
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.MTLSHelper
 import java.security.cert.X509Certificate
 import io.homeassistant.companion.android.common.R as commonR
@@ -31,6 +30,7 @@ open class MTLSWebViewClient : WebViewClient() {
             )
             super.onReceivedClientCertRequest(view, request)
         }
+        showImportMessageIfNeeded(view.context)
     }
 
     private fun showMissingClientCertError(context: Context) {
@@ -39,5 +39,26 @@ open class MTLSWebViewClient : WebViewClient() {
             .setMessage(commonR.string.mtls_cert_not_found_message)
             .setPositiveButton(android.R.string.ok) { _, _ -> }
             .show()
+    }
+
+    private fun showImportMessageIfNeeded(context: Context) {
+        if(MTLSHelper.importErrorMsg!=null)
+        {
+            AlertDialog.Builder(context)
+                .setTitle(commonR.string.mtls_cert_importmsg_title)
+                .setMessage(context.getString(commonR.string.mtls_cert_importmsg_message_err)+"\n"+MTLSHelper.importErrorMsg)
+                .setPositiveButton(android.R.string.ok) { _, _ -> }
+                .show()
+            MTLSHelper.importErrorMsg=null
+        }
+        if(MTLSHelper.importMsg!=null)
+        {
+            AlertDialog.Builder(context)
+                .setTitle(commonR.string.mtls_cert_importmsg_title)
+                .setMessage(MTLSHelper.importMsg)
+                .setPositiveButton(android.R.string.ok) { _, _ -> }
+                .show()
+            MTLSHelper.importMsg=null
+        }
     }
 }
