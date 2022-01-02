@@ -8,6 +8,7 @@ import android.view.KeyEvent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.onboarding.welcome.WelcomeFragment
 
@@ -20,7 +21,7 @@ class OnboardingActivity : AppCompatActivity() {
         private const val EXTRA_DEFAULT_DEVICE_NAME = "extra_default_device_name"
         private const val EXTRA_LOCATION_TRACKING_POSSIBLE = "location_tracking_possible"
 
-        fun newInstance(context: Context, defaultDeviceName: String = Build.MODEL, locationTrackingPossible: Boolean = true): Intent {
+        fun newInstance(context: Context, defaultDeviceName: String = Build.MODEL, locationTrackingPossible: Boolean = BuildConfig.FLAVOR == "full"): Intent {
             return Intent(context, OnboardingActivity::class.java).apply {
                 putExtra(EXTRA_DEFAULT_DEVICE_NAME, defaultDeviceName)
                 putExtra(EXTRA_LOCATION_TRACKING_POSSIBLE, locationTrackingPossible)
