@@ -29,8 +29,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -370,8 +372,9 @@ class WebSocketRepositoryImpl @Inject constructor(
         connected = Job()
         connection = null
         // If we still have flows flowing
-        if (eventSubscriptionFlow.any() && ioScope.isActive) {
+        if ((eventSubscriptionFlow.any() || notificationFlow != null) && ioScope.isActive) {
             ioScope.launch {
+                delay(10000)
                 if (connect()) {
                     eventSubscriptionFlow.forEach { (eventType, _) ->
                         val resp = sendMessage(
@@ -382,6 +385,19 @@ class WebSocketRepositoryImpl @Inject constructor(
                         )
                         if (resp == null) {
                             Log.e(TAG, "Issue re-registering event subscriptions")
+                        }
+                    }
+                    if(notificationFlow != null){
+                        val response = sendMessage(
+                            mapOf(
+                                "type" to "mobile_app/push_notification_channel",
+                                "webhook_id" to urlRepository.getWebhookId(),
+                                "support_confirm" to true
+                            )
+                        )
+
+                        if (response == null) {
+                            Log.e(TAG, "Unable to re-register for notifications")
                         }
                     }
                 }
