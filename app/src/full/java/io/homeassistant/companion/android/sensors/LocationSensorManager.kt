@@ -253,6 +253,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun startHighAccuracyService(intervalInSeconds: Int) {
+        lastHighAccuracyMode = true
         onSensorUpdated(
             latestContext,
             highAccuracyMode,
@@ -265,6 +266,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun stopHighAccuracyService() {
+        lastHighAccuracyMode = false
         onSensorUpdated(
             latestContext,
             highAccuracyMode,
