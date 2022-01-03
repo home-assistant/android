@@ -64,17 +64,23 @@ class HaControlsProviderService : ControlsProviderService() {
                     val deviceRegistry = webSocketRepository.getDeviceRegistry()
                     val entityRegistry = webSocketRepository.getEntityRegistry()
 
-                    integrationRepository
-                        .getEntities()
-                        .mapNotNull {
+                    val entities = integrationRepository.getEntities()
+                    val areaForEntity = mutableMapOf<String, AreaRegistryResponse?>()
+                    entities?.forEach {
+                        areaForEntity[it.entityId] = getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                    }
+
+                    entities
+                        ?.sortedWith(compareBy(nullsLast()) { areaForEntity[it.entityId]?.name })
+                        ?.mapNotNull {
                             val domain = it.entityId.split(".")[0]
                             domainToHaControl[domain]?.createControl(
                                 applicationContext,
                                 it as Entity<Map<String, Any>>,
-                                getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                                areaForEntity[it.entityId]
                             )
                         }
-                        .forEach {
+                        ?.forEach {
                             subscriber.onNext(it)
                         }
                 } catch (e: Exception) {
@@ -106,13 +112,17 @@ class HaControlsProviderService : ControlsProviderService() {
                         val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
                         controlIds.forEach {
                             val entity = integrationRepository.getEntity(it)
-                            entities[it] = entity
+                            if (entity != null) {
+                                entities[it] = entity
+                            } else {
+                                Log.e(TAG, "Unable to get $it from Home Assistant.")
+                            }
                         }
                         sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
 
                         // Listen for the state changed events.
                         webSocketScope.launch {
-                            entityFlow.collect {
+                            entityFlow?.collect {
                                 if (controlIds.contains(it.entityId)) {
                                     val domain = it.entityId.split(".")[0]
                                     val control = domainToHaControl[domain]?.createControl(
@@ -125,19 +135,19 @@ class HaControlsProviderService : ControlsProviderService() {
                             }
                         }
                         webSocketScope.launch {
-                            areaRegistryFlow.collect {
+                            areaRegistryFlow?.collect {
                                 areaRegistry = webSocketRepository.getAreaRegistry()
                                 sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
                             }
                         }
                         webSocketScope.launch {
-                            deviceRegistryFlow.collect {
+                            deviceRegistryFlow?.collect {
                                 deviceRegistry = webSocketRepository.getDeviceRegistry()
                                 sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
                             }
                         }
                         webSocketScope.launch {
-                            entityRegistryFlow.collect { event ->
+                            entityRegistryFlow?.collect { event ->
                                 if (event.action == "update" && controlIds.contains(event.entityId)) {
                                     entityRegistry = webSocketRepository.getEntityRegistry()
                                     sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
@@ -182,9 +192,9 @@ class HaControlsProviderService : ControlsProviderService() {
     private fun sendEntitiesToSubscriber(
         subscriber: Flow.Subscriber<in Control>,
         entities: Map<String, Entity<Map<String, Any>>>,
-        areaRegistry: List<AreaRegistryResponse>,
-        deviceRegistry: List<DeviceRegistryResponse>,
-        entityRegistry: List<EntityRegistryResponse>
+        areaRegistry: List<AreaRegistryResponse>?,
+        deviceRegistry: List<DeviceRegistryResponse>?,
+        entityRegistry: List<EntityRegistryResponse>?
     ) {
         entities.forEach {
             val domain = it.key.split(".")[0]
@@ -199,20 +209,20 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private fun getAreaForEntity(
         entityId: String,
-        areaRegistry: List<AreaRegistryResponse>,
-        deviceRegistry: List<DeviceRegistryResponse>,
-        entityRegistry: List<EntityRegistryResponse>
+        areaRegistry: List<AreaRegistryResponse>?,
+        deviceRegistry: List<DeviceRegistryResponse>?,
+        entityRegistry: List<EntityRegistryResponse>?
     ): AreaRegistryResponse? {
-        val rEntity = entityRegistry.firstOrNull { it.entityId == entityId }
+        val rEntity = entityRegistry?.firstOrNull { it.entityId == entityId }
         if (rEntity != null) {
             // By default, an entity should be considered to be in the same area as the associated device (if any)
             // This can be overridden for an individual entity, so check the entity registry first
             if (rEntity.areaId != null) {
-                return areaRegistry.firstOrNull { it.areaId == rEntity.areaId }
+                return areaRegistry?.firstOrNull { it.areaId == rEntity.areaId }
             } else if (rEntity.deviceId != null) {
-                val rDevice = deviceRegistry.firstOrNull { it.id == rEntity.deviceId }
+                val rDevice = deviceRegistry?.firstOrNull { it.id == rEntity.deviceId }
                 if (rDevice != null) {
-                    return areaRegistry.firstOrNull { it.areaId == rDevice.areaId }
+                    return areaRegistry?.firstOrNull { it.areaId == rDevice.areaId }
                 }
             }
         }

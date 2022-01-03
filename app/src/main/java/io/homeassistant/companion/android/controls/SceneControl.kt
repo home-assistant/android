@@ -38,11 +38,12 @@ class SceneControl {
             control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_ROUTINE)
             control.setZone(
-                when (entity.entityId.split(".")[0]) {
-                    "scene" -> context.getString(commonR.string.domain_scene)
-                    "script" -> context.getString(commonR.string.domain_script)
-                    else -> entity.entityId.split(".")[0].capitalize()
-                }
+                area?.name
+                    ?: when (entity.entityId.split(".")[0]) {
+                        "scene" -> context.getString(commonR.string.domain_scene)
+                        "script" -> context.getString(commonR.string.domain_script)
+                        else -> entity.entityId.split(".")[0].capitalize()
+                    }
             )
             control.setStatus(Control.STATUS_OK)
             control.setControlTemplate(

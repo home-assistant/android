@@ -98,7 +98,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
 
         runBlocking {
             try {
-                integrationUseCase.getEntities().forEach {
+                integrationUseCase.getEntities()?.forEach {
                     entityList = entityList + it.entityId
                 }
             } catch (e: Exception) {

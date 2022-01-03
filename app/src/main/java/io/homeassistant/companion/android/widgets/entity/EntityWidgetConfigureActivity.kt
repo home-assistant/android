@@ -137,7 +137,7 @@ class EntityWidgetConfigureActivity : BaseActivity() {
             try {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
-                fetchedEntities.forEach {
+                fetchedEntities?.forEach {
                     entities[it.entityId] = it
                 }
                 entityAdapter.addAll(entities.values)

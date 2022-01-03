@@ -90,7 +90,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
-    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int): RemoteViews {
+    override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
         val updateMediaIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
             action = UPDATE_MEDIA_IMAGE
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
@@ -128,7 +128,7 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                 var label: String? = widget.label
                 val showSkip: Boolean = widget.showSkip
                 val showSeek: Boolean = widget.showSeek
-                val entity = getEntity(context, widget.entityId)
+                val entity = getEntity(context, widget.entityId, suggestedEntity)
 
                 if (entity?.state.equals("playing")) {
                     setImageViewResource(
@@ -342,10 +342,14 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         return AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll()?.map { it.id }.orEmpty()
     }
 
-    private suspend fun getEntity(context: Context, entityId: String): Entity<Map<String, Any>>? {
-        val entity: Entity<Map<String, Any>>
+    private suspend fun getEntity(context: Context, entityId: String, suggestedEntity: Entity<Map<String, Any>>?): Entity<Map<String, Any>>? {
+        val entity: Entity<Map<String, Any>>?
         try {
-            entity = integrationUseCase.getEntity(entityId)
+            entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
+                suggestedEntity
+            } else {
+                entityId.let { integrationUseCase.getEntity(it) }
+            }
         } catch (e: Exception) {
             Log.d(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_MEDIA_IMAGE)
@@ -421,6 +425,17 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
+    override fun onEntityStateChanged(context: Context, entity: Entity<*>) {
+        AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao().getAll().orEmpty().forEach {
+            if (it.entityId == entity.entityId) {
+                mainScope.launch {
+                    val views = getWidgetRemoteViews(context, it.id, entity as Entity<Map<String, Any>>)
+                    AppWidgetManager.getInstance(context).updateAppWidget(it.id, views)
+                }
+            }
+        }
+    }
+
     private fun callPreviousTrackService(appWidgetId: Int) {
         mainScope.launch {
             Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
@@ -462,10 +477,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
-            val currentEntityInfo: Entity<Map<String, Any>>
-            try {
-                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
-            } catch (e: Exception) {
+            val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+            if (currentEntityInfo == null) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
@@ -533,10 +546,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     "entity id: " + entity.entityId + System.lineSeparator()
             )
 
-            val currentEntityInfo: Entity<Map<String, Any>>
-            try {
-                currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
-            } catch (e: Exception) {
+            val currentEntityInfo = integrationUseCase.getEntity(entity.entityId)
+            if (currentEntityInfo == null) {
                 Log.d(TAG, "Failed to fetch entity or entity does not exist")
                 if (lastIntent != Intent.ACTION_SCREEN_ON)
                     Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()

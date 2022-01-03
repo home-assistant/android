@@ -51,7 +51,7 @@ abstract class SensorWorkerBase(
                 if (lastUpdateSensor.enabled)
                     LastUpdateManager().sendLastUpdate(appContext, TAG)
             }
-            sensorReceiver.updateSensors(appContext, integrationUseCase)
+            sensorReceiver.updateSensors(appContext, integrationUseCase, null)
         }
         Result.success()
     }

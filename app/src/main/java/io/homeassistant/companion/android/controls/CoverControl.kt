@@ -56,7 +56,7 @@ class CoverControl {
                     else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
                 }
             )
-            control.setZone(context.getString(commonR.string.domain_cover))
+            control.setZone(area?.name ?: context.getString(commonR.string.domain_cover))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {

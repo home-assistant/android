@@ -40,7 +40,7 @@ class LockControl {
             control.setDeviceType(
                 DeviceTypes.TYPE_LOCK
             )
-            control.setZone(context.getString(commonR.string.domain_lock))
+            control.setZone(area?.name ?: context.getString(commonR.string.domain_lock))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {

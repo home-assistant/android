@@ -112,7 +112,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         ).toBoolean()
 
         if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) || !disableAllowListRequirement
+            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
+            (!disableAllowListRequirement && allowPackages.isEmpty())
         ) {
             return
         }
@@ -165,7 +166,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         ).toBoolean()
 
         if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) || !disableAllowListRequirement
+            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
+            (!disableAllowListRequirement && allowPackages.isEmpty())
         ) {
             return
         }

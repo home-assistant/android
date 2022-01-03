@@ -14,21 +14,21 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.Url
 
 interface IntegrationService {
 
-    @POST("/api/mobile_app/registrations")
+    @POST
     suspend fun registerDevice(
+        @Url url: HttpUrl,
         @Header("Authorization") auth: String,
         @Body request: RegisterDeviceRequest
     ): RegisterDeviceResponse
 
-    @GET("/api/states/{entityId}")
+    @GET
     suspend fun getState(
-        @Header("Authorization") auth: String,
-        @Path("entityId") entityId: String
+        @Url url: HttpUrl,
+        @Header("Authorization") auth: String
     ): EntityResponse<Map<String, Any>>
 
     @POST

@@ -34,6 +34,7 @@ class SensorReceiver : SensorReceiverBase() {
             BatterySensorManager(),
             BluetoothSensorManager(),
             DNDSensorManager(),
+            DevicePolicyManager(),
             GeocodeSensorManager(),
             KeyguardSensorManager(),
             LastAppSensorManager(),
@@ -73,6 +74,8 @@ class SensorReceiver : SensorReceiverBase() {
         NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED to DNDSensorManager.dndSensor.id,
         AudioManager.ACTION_MICROPHONE_MUTE_CHANGED to AudioSensorManager.micMuted.id,
         AudioManager.ACTION_SPEAKERPHONE_STATE_CHANGED to AudioSensorManager.speakerphoneState.id,
-        AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id
+        AudioManager.RINGER_MODE_CHANGED_ACTION to AudioSensorManager.audioSensor.id,
+        Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE to DevicePolicyManager.isWorkProfile.id,
+        Intent.ACTION_MANAGED_PROFILE_AVAILABLE to DevicePolicyManager.isWorkProfile.id,
     )
 }

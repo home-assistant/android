@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.util
 
 import android.os.Build
+import android.util.Log
 import android.view.MotionEvent
 import android.view.ViewConfiguration
 import androidx.compose.foundation.gestures.ScrollableState
@@ -17,6 +18,8 @@ import androidx.core.view.InputDeviceCompat
 import androidx.core.view.MotionEventCompat
 import kotlinx.coroutines.launch
 
+private const val TAG = "RotaryEvent"
+
 @ExperimentalComposeUiApi
 fun Modifier.scrollHandler(scrollState: ScrollableState): Modifier = composed {
     val context = LocalContext.current
@@ -26,7 +29,13 @@ fun Modifier.scrollHandler(scrollState: ScrollableState): Modifier = composed {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 ViewConfiguration.get(context).scaledVerticalScrollFactor
             } else {
-                ViewConfiguration::class.java.getDeclaredMethod("getScaledScrollFactor").toString().toFloat()
+                try {
+                    ViewConfiguration::class.java.getDeclaredMethod("getScaledScrollFactor")
+                        .toString().toFloat()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to get scaled scroll factor", e)
+                    0f
+                }
             }
         }
 
