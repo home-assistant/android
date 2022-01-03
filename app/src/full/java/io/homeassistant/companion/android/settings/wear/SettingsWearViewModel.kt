@@ -43,6 +43,7 @@ class SettingsWearViewModel @Inject constructor(
         private const val KEY_UPDATE_TIME = "UpdateTime"
         private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
         private const val KEY_FAVORITES = "favorites"
+        private const val KEY_TEMPLATE_TILE = "templateTile"
     }
 
     private val objectMapper = jacksonObjectMapper()
@@ -54,6 +55,8 @@ class SettingsWearViewModel @Inject constructor(
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
+        private set
+    var templateTileContent = mutableStateOf("")
         private set
 
     init {
@@ -151,8 +154,21 @@ class SettingsWearViewModel @Inject constructor(
         }
 
         Wearable.getDataClient(getApplication<HomeAssistantApplication>()).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to wear") }
-            addOnFailureListener { e -> Log.e(TAG, "Failed to send favorites to wear", e) }
+            addOnSuccessListener { Log.d(TAG, "Successfully sent auth to wear") }
+            addOnFailureListener { e -> Log.e(TAG, "Failed to send auth to wear", e) }
+        }
+    }
+
+    fun sendTemplateTile(content: String) {
+        val putDataRequest = PutDataMapRequest.create("/updateTemplateTile").run {
+            dataMap.putString(KEY_TEMPLATE_TILE, content)
+            setUrgent()
+            asPutDataRequest()
+        }
+
+        Wearable.getDataClient(getApplication<HomeAssistantApplication>()).putDataItem(putDataRequest).apply {
+            addOnSuccessListener { Log.d(TAG, "Successfully sent tile template to wear") }
+            addOnFailureListener { e -> Log.e(TAG, "Failed to send tile template to wear", e) }
         }
     }
 
@@ -180,6 +196,7 @@ class SettingsWearViewModel @Inject constructor(
         favoriteEntityIdList.forEach { entityId ->
             favoriteEntityIds.add(entityId)
         }
+        templateTileContent.value = data.getString(KEY_TEMPLATE_TILE, "")
         hasData.value = true
     }
 }

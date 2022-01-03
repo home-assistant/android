@@ -59,6 +59,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         private set
     var isToastEnabled = mutableStateOf(false)
         private set
+    var templateTileContent = mutableStateOf("")
+        private set
 
     private fun favorites(): Flow<List<Favorites>>? = favoritesDao.getAllFlow()
 
@@ -70,6 +72,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             shortcutEntities.addAll(homePresenter.getTileShortcuts())
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
+            templateTileContent.value = homePresenter.getTemplateTileContent()
             homePresenter.getEntities()?.forEach {
                 entities[it.entityId] = it
             }
@@ -150,6 +153,13 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         viewModelScope.launch {
             homePresenter.setWearToastConfirmation(enabled)
             isToastEnabled.value = enabled
+        }
+    }
+
+    fun setTemplateTileContent(content: String) {
+        viewModelScope.launch {
+            homePresenter.setTemplateTileContent(content)
+            templateTileContent.value = content
         }
     }
 

@@ -35,6 +35,7 @@ class SettingsWearMainView : AppCompatActivity() {
         private var currentNodes = setOf<Node>()
         const val LANDING = "Landing"
         const val FAVORITES = "Favorites"
+        const val TEMPLATE = "Template"
 
         fun newInstance(context: Context, wearNodes: Set<Node>): Intent {
             currentNodes = wearNodes

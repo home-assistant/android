@@ -48,7 +48,9 @@ fun SettingsView(
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
-    onToastEnabled: (Boolean) -> Unit
+    onToastEnabled: (Boolean) -> Unit,
+    templateTileContent: String,
+    onTemplateTileContentChanged: (String) -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     LocalView.current.requestFocus()
@@ -200,6 +202,19 @@ fun SettingsView(
                         onClick = onClickSetShortcuts
                     )
                 }
+                item {
+                    EditTextChip(
+                        stringResource(commonR.string.template_tile_content),
+                        templateTileContent,
+                        {
+                            Image(
+                                asset = CommunityMaterial.Icon3.cmd_text_box,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            )
+                        },
+                        onTemplateTileContentChanged
+                    )
+                }
 
                 item {
                     ListHeader(
@@ -245,6 +260,8 @@ private fun PreviewSettingsView() {
         isHapticEnabled = true,
         isToastEnabled = false,
         {},
+        {},
+        templateTileContent = "",
         {}
     )
 }

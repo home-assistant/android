@@ -117,7 +117,9 @@ fun LoadHomePage(
                         mainViewModel.isHapticEnabled.value,
                         mainViewModel.isToastEnabled.value,
                         { mainViewModel.setHapticEnabled(it) },
-                        { mainViewModel.setToastEnabled(it) }
+                        { mainViewModel.setToastEnabled(it) },
+                        mainViewModel.templateTileContent.value,
+                        { mainViewModel.setTemplateTileContent(it) }
                     )
                 }
                 composable(SCREEN_SET_FAVORITES) {
