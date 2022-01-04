@@ -11,7 +11,7 @@ If you are looking for documentation around the companion applications check out
 
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
 
-- Create 6 Android apps, with following package names 
+- Create six Android apps, with following package names 
  - `io.homeassistant.companion.android`
  - `io.homeassistant.companion.android.debug`
  - `io.homeassistant.companion.android.minimal`
