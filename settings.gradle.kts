@@ -25,9 +25,11 @@ val isCI = serviceOf<ProviderFactory>()
 
 dependencyResolutionManagement {
     repositories {
-        maven { url = java.net.URI("https://maven.aliyun.com/repository/google") }
-        maven { url = java.net.URI("https://maven.aliyun.com/repository/jcenter") }
-        maven { url = java.net.URI("https://maven.aliyun.com/repository/public") }
+//        maven("https://maven.aliyun.com/repository/google")
+//        maven("https://maven.aliyun.com/repository/jcenter")
+//        maven("https://maven.aliyun.com/repository/public")
+        mavenCentral()
+        google()
         maven("https://jitpack.io")
     }
 }

@@ -1,37 +1,30 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.Build
-import android.os.Looper
 import android.os.PowerManager
 import android.text.TextUtils
 import android.util.Log
 import androidx.core.content.ContextCompat.getSystemService
-import com.amap.api.location.*
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.GCJ2WGS
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.bluetooth.BluetoothUtils
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
-import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Setting
 import io.homeassistant.companion.android.util.DisabledLocationHandler
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
+import com.amap.api.location.*
 
 @AndroidEntryPoint
 class LocationSensorManager : LocationSensorManagerBase() {
@@ -173,15 +166,15 @@ class LocationSensorManager : LocationSensorManagerBase() {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
-            ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
-            ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
+            ACTION_PROCESS_LOCATION -> handleLocationUpdate()
+            ACTION_PROCESS_GEO -> handleLocationUpdate()
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
                 val intentData = intent.extras?.get("command")?.toString()
                 if (intentData == "turn_on")
-                    startHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
-                else if (intentData == "turn_off")
-                    stopHighAccuracyService()
+                    handleLocationUpdate()
+//                else if (intentData == "turn_off")
+//                    handleLocationUpdate()
             }
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }
@@ -634,15 +627,32 @@ class LocationSensorManager : LocationSensorManagerBase() {
             mapOf(
                 "Administrative Area" to it!!.district,
                 "Country" to it.city,
-                "ISO Country Code" to it.cityCode,
+                "accuracy" to it.accuracy,
+                "altitude" to it.altitude,
+                "bearing" to it.bearing,
+                "provider" to it.provider,
+                "time" to it.time,
                 "Locality" to it.province,
                 "Latitude" to it.latitude,
                 "Longitude" to it.longitude,
                 "Postal Code" to it.cityCode,
-                "Thoroughfare" to it.street
+                "Thoroughfare" to it.street,
+                //"ISO Country Code" to it.cityCode,
+                "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) it.verticalAccuracyMeters.toInt() else 0,
             )
         }
         // }
+//        val zoneAttr = mapOf(
+//            "accuracy" to geofencingEvent.triggeringLocation.accuracy,
+//            "altitude" to geofencingEvent.triggeringLocation.altitude,
+//            "bearing" to geofencingEvent.triggeringLocation.bearing,
+//            "latitude" to geofencingEvent.triggeringLocation.latitude,
+//            "longitude" to geofencingEvent.triggeringLocation.longitude,
+//            "provider" to geofencingEvent.triggeringLocation.provider,
+//            "time" to geofencingEvent.triggeringLocation.time,
+//            "vertical_accuracy" to if (Build.VERSION.SDK_INT >= 26) geofencingEvent.triggeringLocation.verticalAccuracyMeters.toInt() else 0,
+//            "zone" to zone
+//        )
         if (TextUtils.isEmpty(addressStr)) {
             addressStr =
                 amapLocation!!.city + amapLocation!!.district + amapLocation!!.street + amapLocation!!.aoiName + amapLocation!!.floor

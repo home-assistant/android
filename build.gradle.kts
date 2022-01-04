@@ -7,10 +7,10 @@ plugins {
 
 buildscript {
     repositories {
-        maven { url = java.net.URI("https://maven.aliyun.com/repository/google") }
-        maven { url = java.net.URI("https://maven.aliyun.com/repository/jcenter") }
-        maven { url = java.net.URI("https://maven.aliyun.com/repository/public") }
-        maven { url = java.net.URI("https://maven.aliyun.com/repository/gradle-plugin") }
+        google()
+//        maven("https://maven.aliyun.com/repository/jcenter")
+//        maven("https://maven.aliyun.com/repository/public")
+//        maven("https://maven.aliyun.com/repository/gradle-plugin")
         gradlePluginPortal()
     }
     dependencies {
@@ -34,11 +34,11 @@ allprojects {
     }
 }
 
-gradle.projectsEvaluated {
-    project(":app").tasks.matching { it.name.startsWith("publish") }.configureEach {
-        mustRunAfter(project(":wear").tasks.matching { it.name.startsWith("publish") })
-    }
-}
+//gradle.projectsEvaluated {
+//    project(":app").tasks.matching { it.name.startsWith("publish") }.configureEach {
+//        mustRunAfter(project(":wear").tasks.matching { it.name.startsWith("publish") })
+//    }
+//}
 
 tasks.register("clean").configure {
     delete("build")

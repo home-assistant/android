@@ -131,6 +131,7 @@ play {
 }
 
 dependencies {
+    //implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
     implementation(project(":common"))
 
     implementation("com.github.Dimezis:BlurView:version-1.6.6")
@@ -171,6 +172,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
     "fullImplementation"("io.sentry:sentry-android:5.5.2")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0")
+    "fullImplementation"("com.amap.api:location:5.6.2")
 
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
