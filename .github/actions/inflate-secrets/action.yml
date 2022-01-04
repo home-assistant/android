@@ -21,6 +21,7 @@ runs:
       run: |
         cp .github/mock-google-services.json app/src/debug/google-services.json
         cp .github/mock-google-services.json app/src/minimal/google-services.json
+        cp .github/mock-google-services.json app/src/quest/google-services.json
 
     - name: Inflate release_keystore.keystore
       shell: bash

@@ -100,7 +100,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                 val deviceName = intent.getStringExtra("DeviceName").toString()
                 val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
                 val messagingToken = getMessagingToken()
-                if (messagingToken.isNullOrBlank()) {
+                if (messagingToken.isNullOrBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)
                         .setMessage(commonR.string.firebase_error_message)

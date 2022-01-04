@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:compileSdkVersion="29"
+    android:installLocation="auto"
+    package="io.homeassistant.companion.android">
+
+    <uses-feature android:name="android.hardware.vr.headtracking" android:required="true" android:version="1"
+        tools:targetApi="n" />
+    <application android:allowBackup="false"
+        tools:replace="android:allowBackup"
+        android:icon="@mipmap/ic_launcher">
+        <activity android:name=".launch.LaunchActivity" android:excludeFromRecents="true" />
+        <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2"/>
+    </application>
+
+</manifest>

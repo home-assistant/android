@@ -141,6 +141,7 @@ class SettingsFragment constructor(
             return@setOnPreferenceClickListener true
         }
 
+        findPreference<PreferenceCategory>("widgets")?.isVisible = BuildConfig.FLAVOR != "quest"
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
@@ -150,31 +151,33 @@ class SettingsFragment constructor(
             return@setOnPreferenceClickListener true
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
-            findPreference<PreferenceCategory>("shortcuts")?.let {
-                it.isVisible = true
+        if (BuildConfig.FLAVOR != "quest") {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+                findPreference<PreferenceCategory>("shortcuts")?.let {
+                    it.isVisible = true
+                }
+                findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
+                    parentFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
+                        .addToBackStack(getString(commonR.string.shortcuts))
+                        .commit()
+                    return@setOnPreferenceClickListener true
+                }
             }
-            findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
-                    .addToBackStack(getString(commonR.string.shortcuts))
-                    .commit()
-                return@setOnPreferenceClickListener true
-            }
-        }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            findPreference<PreferenceCategory>("quick_settings")?.let {
-                it.isVisible = true
-            }
-            findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
-                parentFragmentManager
-                    .beginTransaction()
-                    .replace(R.id.content, ManageTilesFragment::class.java, null)
-                    .addToBackStack(getString(commonR.string.tiles))
-                    .commit()
-                return@setOnPreferenceClickListener true
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                findPreference<PreferenceCategory>("quick_settings")?.let {
+                    it.isVisible = true
+                }
+                findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
+                    parentFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.content, ManageTilesFragment::class.java, null)
+                        .addToBackStack(getString(commonR.string.tiles))
+                        .commit()
+                    return@setOnPreferenceClickListener true
+                }
             }
         }
 
@@ -217,7 +220,7 @@ class SettingsFragment constructor(
                 }
             }
             findPreference<SwitchPreference>("crash_reporting")?.let {
-                it.isVisible = true
+                it.isVisible = BuildConfig.FLAVOR == "full"
                 it.setOnPreferenceChangeListener { _, newValue ->
                     val checked = newValue as Boolean
 
@@ -228,7 +231,7 @@ class SettingsFragment constructor(
             val pm = requireContext().packageManager
             val hasWearApp = pm.getLaunchIntentForPackage("com.google.android.wearable.app")
             val hasSamsungApp = pm.getLaunchIntentForPackage("com.samsung.android.app.watchmanager")
-            findPreference<PreferenceCategory>("wear_category")?.isVisible = hasWearApp != null || hasSamsungApp != null
+            findPreference<PreferenceCategory>("wear_category")?.isVisible = BuildConfig.FLAVOR == "full" && (hasWearApp != null || hasSamsungApp != null)
             findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
                 startActivity(SettingsWearActivity.newInstance(requireContext()))
                 return@setOnPreferenceClickListener true
@@ -238,7 +241,7 @@ class SettingsFragment constructor(
         findPreference<Preference>("changelog")?.let {
             val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL"))
                 "https://github.com/home-assistant/android/releases"
-            else "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
+            else "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "").replace("-quest", "")}"
             it.summary = link
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
         }
