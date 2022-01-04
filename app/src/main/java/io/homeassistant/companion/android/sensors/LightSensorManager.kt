@@ -8,8 +8,9 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
+import io.homeassistant.companion.android.common.R as commonR
 
 class LightSensorManager : SensorManager, SensorEventListener {
     companion object {
@@ -19,10 +20,11 @@ class LightSensorManager : SensorManager, SensorEventListener {
         private val lightSensor = SensorManager.BasicSensor(
             "light_sensor",
             "sensor",
-            R.string.sensor_name_light,
-            R.string.sensor_description_light_sensor,
+            commonR.string.sensor_name_light,
+            commonR.string.sensor_description_light_sensor,
             "illuminance",
-            "lx"
+            "lx",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
     }
 
@@ -33,7 +35,7 @@ class LightSensorManager : SensorManager, SensorEventListener {
         get() = false
 
     override val name: Int
-        get() = R.string.sensor_name_light
+        get() = commonR.string.sensor_name_light
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(lightSensor)
@@ -81,16 +83,14 @@ class LightSensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event != null) {
-            if (event.sensor.type == Sensor.TYPE_LIGHT) {
-                onSensorUpdated(
-                    latestContext,
-                    lightSensor,
-                    event.values[0].roundToInt().toString(),
-                    "mdi:brightness-5",
-                    mapOf()
-                )
-            }
+        if (event?.sensor?.type == Sensor.TYPE_LIGHT) {
+            onSensorUpdated(
+                latestContext,
+                lightSensor,
+                event.values[0].roundToInt().toString(),
+                "mdi:brightness-5",
+                mapOf()
+            )
         }
         mySensorManager.unregisterListener(this)
         Log.d(TAG, "Light sensor listener unregistered")

@@ -12,11 +12,11 @@ interface WebView {
 
     fun loadUrl(url: String)
 
-    fun setStatusBarAndNavigationBarColor(color: Int)
+    fun setStatusBarAndNavigationBarColor(statusBarColor: Int, navigationBarColor: Int)
 
     fun setExternalAuth(script: String)
 
-    fun openOnBoarding()
+    fun relaunchApp()
 
     fun showError(errorType: ErrorType = ErrorType.TIMEOUT, error: SslError? = null, description: String? = null)
 }

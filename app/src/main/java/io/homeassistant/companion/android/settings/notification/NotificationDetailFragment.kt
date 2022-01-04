@@ -3,31 +3,30 @@ package io.homeassistant.companion.android.settings.notification
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.text.Html.fromHtml
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
+import android.view.View
+import android.view.ViewGroup
+import androidx.compose.ui.platform.ComposeView
+import androidx.fragment.app.Fragment
+import com.google.android.material.composethemeadapter.MdcTheme
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
-import java.util.Calendar
-import java.util.GregorianCalendar
+import io.homeassistant.companion.android.settings.notification.views.LoadNotification
+import io.homeassistant.companion.android.common.R as commonR
 
-class NotificationDetailFragment(
-    private val notification: NotificationItem
-) :
-    PreferenceFragmentCompat() {
+class NotificationDetailFragment : Fragment() {
 
     companion object {
-        fun newInstance(
-            notification: NotificationItem
-        ): NotificationDetailFragment {
-            return NotificationDetailFragment(notification)
-        }
+        val ARG_NOTIF = "notification"
     }
 
+    private lateinit var notification: NotificationItem
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        notification = arguments?.get(ARG_NOTIF) as NotificationItem
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
     }
@@ -50,22 +49,17 @@ class NotificationDetailFragment(
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-
-        addPreferencesFromResource(R.xml.notification_detail)
-
-        findPreference<Preference>("received_at")?.let {
-            val cal: Calendar = GregorianCalendar()
-            cal.timeInMillis = notification.received
-            it.summary = cal.time.toString()
-        }
-
-        findPreference<Preference>("message")?.let {
-            it.summary = fromHtml(notification.message)
-        }
-
-        findPreference<Preference>("data")?.let {
-            it.summary = notification.data
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        return ComposeView(requireContext()).apply {
+            setContent {
+                MdcTheme {
+                    LoadNotification(notification)
+                }
+            }
         }
     }
 
@@ -74,11 +68,11 @@ class NotificationDetailFragment(
 
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(requireContext())
 
-        builder.setTitle(R.string.confirm_delete_this_notification_title)
-        builder.setMessage(R.string.confirm_delete_this_notification_message)
+        builder.setTitle(commonR.string.confirm_delete_this_notification_title)
+        builder.setMessage(commonR.string.confirm_delete_this_notification_message)
 
         builder.setPositiveButton(
-            R.string.confirm_positive
+            commonR.string.confirm_positive
         ) { dialog, _ ->
             notificationDao.delete(notification.id)
             dialog.dismiss()
@@ -86,7 +80,7 @@ class NotificationDetailFragment(
         }
 
         builder.setNegativeButton(
-            R.string.confirm_negative
+            commonR.string.confirm_negative
         ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }

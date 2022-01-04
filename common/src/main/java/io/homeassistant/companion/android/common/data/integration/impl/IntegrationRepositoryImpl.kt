@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.FireEventRequest
-import io.homeassistant.companion.android.common.data.integration.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.integration.impl.entities.IntegrationRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitRequest
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
@@ -24,15 +23,24 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.integration.impl.entities.Template
 import io.homeassistant.companion.android.common.data.integration.impl.entities.UpdateLocationRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.json.JSONArray
+import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.Exception
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
     private val authenticationRepository: AuthenticationRepository,
     private val urlRepository: UrlRepository,
+    private val webSocketRepository: WebSocketRepository,
     @Named("integration") private val localStorage: LocalStorage,
     @Named("manufacturer") private val manufacturer: String,
     @Named("model") private val model: String,
@@ -52,13 +60,21 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_SECRET = "secret"
 
+        private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
+        private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
+        private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
+        private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
+        private const val PREF_HA_VERSION = "ha_version"
+        private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
+        private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
-        private const val PREF_SENSORS_REGISTERED = "sensors_registered"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
         private const val TAG = "IntegrationRepository"
         private const val RATE_LIMIT_URL = BuildConfig.RATE_LIMIT_URL
+
+        private val VERSION_PATTERN = Pattern.compile("([0-9]{4})\\.([0-9]{1,2})\\.([0-9]{1,2}).*")
     }
 
     override suspend fun registerDevice(deviceRegistration: DeviceRegistration) {
@@ -67,31 +83,30 @@ class IntegrationRepositoryImpl @Inject constructor(
         request.appName = APP_NAME
         request.osName = OS_NAME
         request.supportsEncryption = false
+        request.deviceId = deviceId
 
-        try {
-            val version = integrationService
-                .discoveryInfo(authenticationRepository.buildBearerToken())
-                .version.split(".")
-            // If we are above version 0.104.0 add device_id
-            if (version.size > 2 && (Integer.parseInt(version[0]) > 0 || Integer.parseInt(version[1]) >= 104)) {
-                request.deviceId = deviceId
-            }
-        } catch (e: Exception) {
-            // Ignore errors we don't technically need it need it
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        if (url == null) {
+            Log.e(TAG, "Unable to register device due to missing URL")
+            return
         }
-
-        val response =
-            integrationService.registerDevice(
-                authenticationRepository.buildBearerToken(),
-                request
+        try {
+            val response =
+                integrationService.registerDevice(
+                    url.newBuilder().addPathSegments("api/mobile_app/registrations").build(),
+                    authenticationRepository.buildBearerToken(),
+                    request
+                )
+            persistDeviceRegistration(deviceRegistration)
+            urlRepository.saveRegistrationUrls(
+                response.cloudhookUrl,
+                response.remoteUiUrl,
+                response.webhookId
             )
-        persistDeviceRegistration(deviceRegistration)
-        urlRepository.saveRegistrationUrls(
-            response.cloudhookUrl,
-            response.remoteUiUrl,
-            response.webhookId
-        )
-        localStorage.putString(PREF_SECRET, response.secret)
+            localStorage.putString(PREF_SECRET, response.secret)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to register device", e)
+        }
     }
 
     override suspend fun updateRegistration(deviceRegistration: DeviceRegistration) {
@@ -314,6 +329,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getBoolean(PREF_FULLSCREEN_ENABLED)
     }
 
+    override suspend fun setKeepScreenOnEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_KEEP_SCREEN_ON_ENABLED, enabled)
+    }
+
+    override suspend fun isKeepScreenOnEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
+    }
+
+    override suspend fun isAutoPlayVideoEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_AUTOPLAY_VIDEO)
+    }
+
+    override suspend fun setAutoPlayVideo(enabled: Boolean) {
+        localStorage.putBoolean(PREF_AUTOPLAY_VIDEO, enabled)
+    }
+
     override suspend fun sessionTimeOut(value: Int) {
         localStorage.putInt(PREF_SESSION_TIMEOUT, value)
     }
@@ -330,6 +361,33 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getLong(PREF_SESSION_EXPIRE) ?: 0
     }
 
+    override suspend fun getTileShortcuts(): List<String> {
+        val jsonArray = JSONArray(localStorage.getString(PREF_TILE_SHORTCUTS) ?: "[]")
+        return List(jsonArray.length()) {
+            jsonArray.getString(it)
+        }
+    }
+
+    override suspend fun setTileShortcuts(entities: List<String>) {
+        localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
+    }
+
+    override suspend fun setWearHapticFeedback(enabled: Boolean) {
+        localStorage.putBoolean(PREF_WEAR_HAPTIC_FEEDBACK, enabled)
+    }
+
+    override suspend fun getWearHapticFeedback(): Boolean {
+        return localStorage.getBoolean(PREF_WEAR_HAPTIC_FEEDBACK)
+    }
+
+    override suspend fun setWearToastConfirmation(enabled: Boolean) {
+        localStorage.putBoolean(PREF_WEAR_TOAST_CONFIRMATION, enabled)
+    }
+
+    override suspend fun getWearToastConfirmation(): Boolean {
+        return localStorage.getBoolean(PREF_WEAR_TOAST_CONFIRMATION)
+    }
+
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
         val pushToken = localStorage.getString(PREF_PUSH_TOKEN) ?: ""
         val requestBody = RateLimitRequest(pushToken)
@@ -338,7 +396,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         var causeException: Exception? = null
 
         try {
-            checkRateLimits = integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
+            checkRateLimits =
+                integrationService.getRateLimit(RATE_LIMIT_URL, requestBody).rateLimits
         } catch (e: Exception) {
             causeException = e
             Log.e(TAG, "Unable to get notification rate limits", e)
@@ -350,71 +409,43 @@ class IntegrationRepositoryImpl @Inject constructor(
         else throw IntegrationException("Error calling checkRateLimits")
     }
 
-    override suspend fun getThemeColor(): String {
-        val getConfigRequest =
-            IntegrationRequest(
-                "get_config",
-                null
-            )
-
-        var response: GetConfigResponse? = null
-        var causeException: Exception? = null
-
-        for (it in urlRepository.getApiUrls()) {
-            try {
-                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
-
-            if (response != null)
-                return response.themeColor
-        }
-
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request get_config/themeColor")
-    }
-
     override suspend fun getHomeAssistantVersion(): String {
-        val getConfigRequest =
-            IntegrationRequest(
-                "get_config",
-                null
-            )
-        var response: GetConfigResponse? = null
-        var causeException: Exception? = null
 
-        for (it in urlRepository.getApiUrls()) {
-            try {
-                response = integrationService.getConfig(it.toHttpUrlOrNull()!!, getConfigRequest)
-            } catch (e: Exception) {
-                if (causeException == null) causeException = e
-                // Ignore failure until we are out of URLS to try, but use the first exception as cause exception
-            }
+        val current = System.currentTimeMillis()
+        val next = localStorage.getLong(PREF_CHECK_SENSOR_REGISTRATION_NEXT) ?: 0
+        if (current <= next)
+            return localStorage.getString(PREF_HA_VERSION)
+                ?: "" // Skip checking HA version as it has not been 4 hours yet
 
-            if (response != null)
-                return response.version
+        return try {
+            val response: GetConfigResponse? = webSocketRepository.getConfig()
+
+            localStorage.putString(PREF_HA_VERSION, response?.version)
+            localStorage.putLong(
+                PREF_CHECK_SENSOR_REGISTRATION_NEXT,
+                current + (14400000)
+            ) // 4 hours
+            response?.version.toString()
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue getting new version from core.", e)
+            localStorage.getString(PREF_HA_VERSION) ?: ""
         }
-
-        if (causeException != null) throw IntegrationException(causeException)
-        else throw IntegrationException("Error calling integration request get_config/version")
     }
 
-    override suspend fun getServices(): Array<Service> {
-        val response = integrationService.getServices(authenticationRepository.buildBearerToken())
+    override suspend fun getServices(): List<Service>? {
+        val response = webSocketRepository.getServices()
 
-        return response.flatMap {
+        return response?.flatMap {
             it.services.map { service ->
                 Service(it.domain, service.key, service.value)
             }
-        }.toTypedArray()
+        }?.toList()
     }
 
-    override suspend fun getEntities(): Array<Entity<Any>> {
-        val response = integrationService.getStates(authenticationRepository.buildBearerToken())
+    override suspend fun getEntities(): List<Entity<Any>>? {
+        val response = webSocketRepository.getStates()
 
-        return response.map {
+        return response?.map {
             Entity(
                 it.entityId,
                 it.state,
@@ -423,13 +454,21 @@ class IntegrationRepositoryImpl @Inject constructor(
                 it.lastUpdated,
                 it.context
             )
-        }.toTypedArray()
+        }
+            ?.sortedBy { it.entityId }
+            ?.toList()
     }
 
-    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>> {
+    override suspend fun getEntity(entityId: String): Entity<Map<String, Any>>? {
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        if (url == null) {
+            Log.e(TAG, "Unable to register device due to missing URL")
+            return null
+        }
+
         val response = integrationService.getState(
-            authenticationRepository.buildBearerToken(),
-            entityId
+            url.newBuilder().addPathSegments("api/states/$entityId").build(),
+            authenticationRepository.buildBearerToken()
         )
         return Entity(
             response.entityId,
@@ -441,13 +480,38 @@ class IntegrationRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
-        val registeredSensors = localStorage.getStringSet(PREF_SENSORS_REGISTERED)
-        if (registeredSensors?.contains(sensorRegistration.uniqueId) == true) {
-            // Already registered
-            return
-        }
+    override suspend fun getEntityUpdates(): Flow<Entity<*>>? {
+        return webSocketRepository.getStateChanges()
+            ?.filter { it.newState != null }
+            ?.map {
+                Entity(
+                    it.newState!!.entityId,
+                    it.newState.state,
+                    it.newState.attributes,
+                    it.newState.lastChanged,
+                    it.newState.lastUpdated,
+                    it.newState.context
+                )
+            }
+    }
 
+    private suspend fun canRegisterEntityCategoryStateClass(): Boolean {
+        val version = getHomeAssistantVersion()
+        val matches = VERSION_PATTERN.matcher(version)
+        var canRegisterCategoryStateClass = false
+        if (matches.find() && matches.matches()) {
+            val year = Integer.parseInt(matches.group(1) ?: "0")
+            val month = Integer.parseInt(matches.group(2) ?: "0")
+            val release = Integer.parseInt(matches.group(3) ?: "0")
+            canRegisterCategoryStateClass =
+                year > 2021 || (year == 2021 && month >= 11 && release >= 0)
+        }
+        return canRegisterCategoryStateClass
+    }
+
+    override suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>) {
+
+        val canRegisterCategoryStateClass = canRegisterEntityCategoryStateClass()
         val integrationRequest = IntegrationRequest(
             "register_sensor",
             SensorRequest(
@@ -458,7 +522,9 @@ class IntegrationRepositoryImpl @Inject constructor(
                 sensorRegistration.attributes,
                 sensorRegistration.name,
                 sensorRegistration.deviceClass,
-                sensorRegistration.unitOfMeasurement
+                sensorRegistration.unitOfMeasurement,
+                if (canRegisterCategoryStateClass) sensorRegistration.stateClass else null,
+                if (canRegisterCategoryStateClass) sensorRegistration.entityCategory else null
             )
         )
 
@@ -468,10 +534,6 @@ class IntegrationRepositoryImpl @Inject constructor(
                 integrationService.callWebhook(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     // If we created sensor or it already exists
                     if (it.isSuccessful || it.code() == 409) {
-                        localStorage.putStringSet(
-                            PREF_SENSORS_REGISTERED,
-                            registeredSensors.orEmpty().plus(sensorRegistration.uniqueId)
-                        )
                         return
                     }
                 }
@@ -504,7 +566,6 @@ class IntegrationRepositoryImpl @Inject constructor(
                 integrationService.updateSensors(it.toHttpUrlOrNull()!!, integrationRequest).let {
                     it.forEach { (_, response) ->
                         if (response["success"] == false) {
-                            localStorage.putStringSet(PREF_SENSORS_REGISTERED, setOf())
                             return false
                         }
                     }

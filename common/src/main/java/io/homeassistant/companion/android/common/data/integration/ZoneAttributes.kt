@@ -6,5 +6,5 @@ data class ZoneAttributes(
     val longitude: Double,
     val radius: Float,
     val friendlyName: String,
-    val icon: String
+    val icon: String?
 )

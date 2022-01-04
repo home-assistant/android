@@ -1,8 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.jlleitschuh.gradle.ktlint") version "10.0.0"
-    id("com.github.ben-manes.versions") version "0.38.0"
+    id("org.jlleitschuh.gradle.ktlint") version "10.2.1"
+    id("com.github.ben-manes.versions") version "0.40.0"
 }
 
 buildscript {
@@ -12,15 +12,15 @@ buildscript {
         maven { url = java.net.URI("https://maven.aliyun.com/repository/public") }
         maven { url = java.net.URI("https://maven.aliyun.com/repository/gradle-plugin") }
         gradlePluginPortal()
-        maven("https://oss.sonatype.org/content/repositories/snapshots")
     }
     dependencies {
-        classpath(Config.Plugin.android)
-        classpath(Config.Plugin.kotlin)
-        classpath(Config.Plugin.google)
-        classpath(Config.Plugin.appDistribution)
-        classpath(Config.Plugin.androidJunit5)
-        classpath(Config.Plugin.gpp)
+        classpath("com.android.tools.build:gradle:7.0.4")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31")
+        classpath("com.google.gms:google-services:4.3.10")
+        classpath("com.google.firebase:firebase-appdistribution-gradle:2.2.0")
+        classpath("de.mannodermaus.gradle.plugins:android-junit5:1.8.1.0")
+        classpath("com.github.triplet.gradle:play-publisher:3.7.0")
+        classpath("com.google.dagger:hilt-android-gradle-plugin:2.40.5")
     }
 }
 
@@ -29,8 +29,14 @@ allprojects {
 
     tasks.withType<KotlinCompile>().configureEach {
         kotlinOptions {
-            jvmTarget = "1.8"
+            jvmTarget = "11"
         }
+    }
+}
+
+gradle.projectsEvaluated {
+    project(":app").tasks.matching { it.name.startsWith("publish") }.configureEach {
+        mustRunAfter(project(":wear").tasks.matching { it.name.startsWith("publish") })
     }
 }
 

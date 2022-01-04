@@ -8,23 +8,22 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
-import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.util.NotificationActionContentHandler
 import io.homeassistant.companion.android.util.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class NotificationActionReceiver : BroadcastReceiver() {
 
     companion object {
         const val TAG = "NotifActionReceiver"
         const val FIRE_EVENT = "FIRE_EVENT"
-        const val OPEN_URI = "OPEN_URI"
         const val EXTRA_NOTIFICATION_TAG = "EXTRA_NOTIFICATION_TAG"
         const val EXTRA_NOTIFICATION_ID = "EXTRA_NOTIFICATION_ID"
         const val EXTRA_NOTIFICATION_ACTION = "EXTRA_ACTION_KEY"
@@ -36,10 +35,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
     lateinit var integrationUseCase: IntegrationRepository
 
     override fun onReceive(context: Context, intent: Intent) {
-        DaggerServiceComponent.builder()
-            .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         val notificationAction =
             intent.getParcelableExtra<NotificationAction>(EXTRA_NOTIFICATION_ACTION)
@@ -61,7 +56,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         }
         val onFailure: () -> Unit = {
             Handler(context.mainLooper).post {
-                Toast.makeText(context, R.string.event_error, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, commonR.string.event_error, Toast.LENGTH_LONG).show()
             }
         }
         if (notificationAction.key == "REPLY") {
@@ -74,11 +69,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             FIRE_EVENT -> fireEvent(notificationAction, onComplete, onFailure)
-            OPEN_URI -> NotificationActionContentHandler.openUri(context, notificationAction.uri, onComplete)
         }
-
-        // Make sure the notification shade closes
-        context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
     }
 
     private fun fireEvent(

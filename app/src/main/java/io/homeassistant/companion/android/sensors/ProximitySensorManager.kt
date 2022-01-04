@@ -8,8 +8,9 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
+import io.homeassistant.companion.android.common.R as commonR
 
 class ProximitySensorManager : SensorManager, SensorEventListener {
     companion object {
@@ -19,8 +20,9 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         private val proximitySensor = SensorManager.BasicSensor(
             "proximity_sensor",
             "sensor",
-            R.string.sensor_name_proximity,
-            R.string.sensor_description_proximity_sensor
+            commonR.string.sensor_name_proximity,
+            commonR.string.sensor_description_proximity_sensor,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 
@@ -35,7 +37,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         get() = false
 
     override val name: Int
-        get() = R.string.sensor_name_proximity
+        get() = commonR.string.sensor_name_proximity
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(proximitySensor)
@@ -79,24 +81,21 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (event != null) {
-            if (event.sensor.type == Sensor.TYPE_PROXIMITY) {
-                val sensorValue = event.values[0].roundToInt()
-                val state =
-                    if (maxRange == 5 && sensorValue == 5)
-                        "far"
-                    else if (maxRange == 5)
-                        "near"
-                    else
-                        sensorValue
-                onSensorUpdated(
-                    latestContext,
-                    proximitySensor,
-                    state,
-                    "mdi:leak",
-                    mapOf()
-                )
-            }
+        if (event?.sensor?.type == Sensor.TYPE_PROXIMITY) {
+            val sensorValue = event.values[0].roundToInt()
+            val state =
+                when {
+                    maxRange == 5 && sensorValue == 5 -> "far"
+                    maxRange == 5 -> "near"
+                    else -> sensorValue
+                }
+            onSensorUpdated(
+                latestContext,
+                proximitySensor,
+                state,
+                "mdi:leak",
+                mapOf()
+            )
         }
         mySensorManager.unregisterListener(this)
         Log.d(TAG, "Proximity sensor listener unregistered")

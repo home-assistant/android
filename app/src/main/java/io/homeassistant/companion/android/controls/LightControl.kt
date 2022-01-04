@@ -14,11 +14,12 @@ import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class LightControl {
@@ -28,7 +29,8 @@ class LightControl {
 
         override fun createControl(
             context: Context,
-            entity: Entity<Map<String, Any>>
+            entity: Entity<Map<String, Any>>,
+            area: AreaRegistryResponse?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -36,24 +38,25 @@ class LightControl {
                     context,
                     0,
                     WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    PendingIntent.FLAG_CANCEL_CURRENT
+                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             )
 
             // On HA Core 2021.5 and later brightness detection has changed
             // to simplify things in the app lets use both methods for now
             val supportedColorModes = entity.attributes["supported_color_modes"] as? List<String>
-            val supportsBrightness = if (supportedColorModes == null) false else !(supportedColorModes - NO_BRIGHTNESS_SUPPORT).isEmpty()
+            val supportsBrightness = if (supportedColorModes == null) false else (supportedColorModes - NO_BRIGHTNESS_SUPPORT).isNotEmpty()
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(DeviceTypes.TYPE_LIGHT)
-            control.setZone(context.getString(R.string.domain_light))
+            control.setZone(area?.name ?: context.getString(commonR.string.domain_light))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "off" -> context.getString(R.string.state_off)
-                    "on" -> context.getString(R.string.state_on)
-                    "unavailable" -> context.getString(R.string.state_unavailable)
-                    else -> context.getString(R.string.state_unknown)
+                    "off" -> context.getString(commonR.string.state_off)
+                    "on" -> context.getString(commonR.string.state_on)
+                    "unavailable" -> context.getString(commonR.string.state_unavailable)
+                    else -> context.getString(commonR.string.state_unknown)
                 }
             )
             val minValue = 0f

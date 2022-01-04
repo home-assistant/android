@@ -1,11 +1,11 @@
 import org.gradle.kotlin.dsl.support.serviceOf
 
-include(":common", ":app", ":wearos_app")
+include(":common", ":app", ":wear")
 
 rootProject.name = "home-assistant-android"
 
 plugins {
-    id("com.gradle.enterprise").version("3.6.1")
+    id("com.gradle.enterprise").version("3.7")
 }
 
 // It should be easier to read an environment variable here once github.com/gradle/configuration-cache/issues/211 is resolved.
@@ -28,5 +28,6 @@ dependencyResolutionManagement {
         maven { url = java.net.URI("https://maven.aliyun.com/repository/google") }
         maven { url = java.net.URI("https://maven.aliyun.com/repository/jcenter") }
         maven { url = java.net.URI("https://maven.aliyun.com/repository/public") }
+        maven("https://jitpack.io")
     }
 }

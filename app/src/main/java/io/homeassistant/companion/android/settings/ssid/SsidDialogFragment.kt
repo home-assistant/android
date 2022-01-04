@@ -9,6 +9,7 @@ import android.view.inputmethod.EditorInfo
 import androidx.preference.PreferenceDialogFragmentCompat
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.DialogSsidBinding
+import io.homeassistant.companion.android.common.R as commonR
 
 class SsidDialogFragment : PreferenceDialogFragmentCompat() {
 
@@ -53,7 +54,7 @@ class SsidDialogFragment : PreferenceDialogFragmentCompat() {
             binding.inputContainer.error = null
             binding.inputSsid.text = null
         } else {
-            binding.inputContainer.error = getString(R.string.manage_ssids_input_exists)
+            binding.inputContainer.error = getString(commonR.string.manage_ssids_input_exists)
         }
         return result
     }

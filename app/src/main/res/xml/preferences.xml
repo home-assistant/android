@@ -21,6 +21,11 @@
             android:key="connection_internal"
             android:title="@string/pref_connection_internal"
             app:useSimpleSummaryProvider="true"/>
+        <SwitchPreference
+            android:key="prioritize_internal"
+            android:title="@string/prioritize_internal"
+            android:icon="@drawable/ic_priority"
+            android:summary="@string/prioritize_internal_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/device_registration">
@@ -53,12 +58,32 @@
             app:useSimpleSummaryProvider="true"/>
     </PreferenceCategory>
     <PreferenceCategory
+        android:key="wear_category"
+        app:isPreferenceVisible="false"
+        android:title="@string/wear_os_category">
+        <Preference
+            android:key="wear_settings"
+            android:title="@string/wear_os_settings_title"
+            android:icon="@drawable/ic_baseline_watch_24"
+            android:summary="@string/wear_os_settings_summary" />
+    </PreferenceCategory>
+    <PreferenceCategory
         android:title="@string/other_settings">
         <SwitchPreference
             android:key="fullscreen"
             android:icon="@drawable/ic_fullscreen"
             android:title="@string/fullscreen"
             android:summary="@string/fullscreen_def"/>
+        <SwitchPreference
+            android:key="keep_screen_on"
+            android:icon="@drawable/ic_phone_check"
+            android:title="@string/keep_screen_on"
+            android:summary="@string/keep_screen_on_def"/>
+        <SwitchPreference
+            android:key="autoplay_video"
+            android:icon="@drawable/ic_baseline_video_settings_24"
+            android:title="@string/autoplay_video"
+            android:summary="@string/autoplay_video_summary" />
         <Preference
             android:key="nfc_tags"
             android:icon="@drawable/ic_nfc"
@@ -156,7 +181,7 @@
             app:enableCopying="true" />
         <Preference
             android:key="version"
-            android:icon="@drawable/app_icon"
+            android:icon="@drawable/app_icon_round"
             android:title="@string/application_version"
             android:summary="1.0.0 (1)"/>
         <Preference

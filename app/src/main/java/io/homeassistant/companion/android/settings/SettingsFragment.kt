@@ -24,11 +24,8 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
@@ -38,6 +35,7 @@ import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
+import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
@@ -48,33 +46,25 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
-class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
+class SettingsFragment constructor(
+    val presenter: SettingsPresenter,
+    val langProvider: LanguagesProvider
+) : PreferenceFragmentCompat(), SettingsView {
 
     companion object {
         private const val TAG = "SettingsFragment"
         private const val SSID_DIALOG_TAG = "${BuildConfig.APPLICATION_ID}.SSID_DIALOG_TAG"
         private const val LOCATION_REQUEST_CODE = 0
         private const val BACKGROUND_LOCATION_REQUEST_CODE = 1
-        fun newInstance() = SettingsFragment()
     }
 
-    @Inject
-    lateinit var presenter: SettingsPresenter
-
-    @Inject
-    lateinit var langProvider: LanguagesProvider
     private lateinit var authenticator: Authenticator
     private var setLock = false
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
+        presenter.init(this)
 
         authenticator = Authenticator(requireContext(), requireActivity(), ::authenticationResult)
 
@@ -86,8 +76,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             val isValid = newValue.toString().isBlank() || newValue.toString().toHttpUrlOrNull() != null
             if (!isValid) {
                 AlertDialog.Builder(requireActivity())
-                    .setTitle(R.string.url_invalid)
-                    .setMessage(R.string.url_parse_error)
+                    .setTitle(commonR.string.url_invalid)
+                    .setMessage(commonR.string.url_parse_error)
                     .setPositiveButton(android.R.string.ok) { _, _ -> }
                     .show()
             }
@@ -103,12 +93,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 isValid = true
                 if (BiometricManager.from(requireActivity()).canAuthenticate() == BiometricManager.BIOMETRIC_SUCCESS) {
                     setLock = true
-                    authenticator.authenticate(getString(R.string.biometric_set_title))
+                    authenticator.authenticate(getString(commonR.string.biometric_set_title))
                 } else {
                     isValid = false
                     AlertDialog.Builder(requireActivity())
-                        .setTitle(R.string.set_lock_title)
-                        .setMessage(R.string.set_lock_message)
+                        .setTitle(commonR.string.set_lock_title)
+                        .setMessage(commonR.string.set_lock_message)
                         .setPositiveButton(android.R.string.ok) { _, _ -> }
                         .show()
                 }
@@ -125,10 +115,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
         findPreference<Preference>("nfc_tags")?.let {
             val pm: PackageManager = requireContext().packageManager
-            if (pm.hasSystemFeature(PackageManager.FEATURE_NFC))
-                it.isVisible = presenter.nfcEnabled()
-            else
-                it.isVisible = false
+            it.isVisible = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
             it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
                 startActivity(NfcSetupActivity.newInstance(requireActivity()))
                 true
@@ -149,7 +136,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             parentFragmentManager
                 .beginTransaction()
                 .replace(R.id.content, SensorsSettingsFragment.newInstance())
-                .addToBackStack(getString(R.string.sensors))
+                .addToBackStack(getString(commonR.string.sensors))
                 .commit()
             return@setOnPreferenceClickListener true
         }
@@ -157,8 +144,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, ManageWidgetsSettingsFragment.newInstance())
-                .addToBackStack(getString(R.string.widgets))
+                .replace(R.id.content, ManageWidgetsSettingsFragment::class.java, null)
+                .addToBackStack(getString(commonR.string.widgets))
                 .commit()
             return@setOnPreferenceClickListener true
         }
@@ -170,8 +157,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             findPreference<Preference>("manage_shortcuts")?.setOnPreferenceClickListener {
                 parentFragmentManager
                     .beginTransaction()
-                    .replace(R.id.content, ManageShortcutsSettingsFragment.newInstance())
-                    .addToBackStack(getString(R.string.shortcuts))
+                    .replace(R.id.content, ManageShortcutsSettingsFragment::class.java, null)
+                    .addToBackStack(getString(commonR.string.shortcuts))
                     .commit()
                 return@setOnPreferenceClickListener true
             }
@@ -184,8 +171,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             findPreference<Preference>("manage_tiles")?.setOnPreferenceClickListener {
                 parentFragmentManager
                     .beginTransaction()
-                    .replace(R.id.content, ManageTilesFragment.newInstance())
-                    .addToBackStack(getString(R.string.tiles))
+                    .replace(R.id.content, ManageTilesFragment::class.java, null)
+                    .addToBackStack(getString(commonR.string.tiles))
                     .commit()
                 return@setOnPreferenceClickListener true
             }
@@ -200,8 +187,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 it.setOnPreferenceClickListener {
                     parentFragmentManager
                         .beginTransaction()
-                        .replace(R.id.content, NotificationHistoryFragment.newInstance())
-                        .addToBackStack(getString(R.string.notifications))
+                        .replace(R.id.content, NotificationHistoryFragment::class.java, null)
+                        .addToBackStack(getString(commonR.string.notifications))
                         .commit()
                     return@setOnPreferenceClickListener true
                 }
@@ -223,9 +210,9 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                             }
                         }
                         it.isVisible = true
-                        it.summary = "\n${getString(R.string.successful)}: ${rateLimits?.successful}       ${getString(R.string.errors)}: ${rateLimits?.errors}" +
-                            "\n\n${getString(R.string.remaining)}/${getString(R.string.maximum)}: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
-                            "\n\n${getString(R.string.resets_at)}: $formattedDate"
+                        it.summary = "\n${getString(commonR.string.successful)}: ${rateLimits?.successful}       ${getString(commonR.string.errors)}: ${rateLimits?.errors}" +
+                            "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
+                            "\n\n${getString(commonR.string.resets_at)}: $formattedDate"
                     }
                 }
             }
@@ -236,6 +223,15 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
                     true
                 }
+            }
+
+            val pm = requireContext().packageManager
+            val hasWearApp = pm.getLaunchIntentForPackage("com.google.android.wearable.app")
+            val hasSamsungApp = pm.getLaunchIntentForPackage("com.samsung.android.app.watchmanager")
+            findPreference<PreferenceCategory>("wear_category")?.isVisible = hasWearApp != null || hasSamsungApp != null
+            findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
+                startActivity(SettingsWearActivity.newInstance(requireContext()))
+                return@setOnPreferenceClickListener true
             }
         }
 
@@ -266,8 +262,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
         findPreference<Preference>("show_share_logs")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, LogFragment.newInstance())
-                .addToBackStack(getString(R.string.log))
+                .replace(R.id.content, LogFragment::class.java, null)
+                .addToBackStack(getString(commonR.string.log))
                 .commit()
             return@setOnPreferenceClickListener true
         }
@@ -287,6 +283,18 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 Log.d("SettingsFragment", "Unable to set the icon tint", e)
             }
         }
+
+        findPreference<SwitchPreference>("prioritize_internal")?.let {
+            it.isEnabled = false
+            try {
+                val unwrappedDrawable =
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_priority)
+                unwrappedDrawable?.setTint(Color.DKGRAY)
+                it.icon = unwrappedDrawable
+            } catch (e: Exception) {
+                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+            }
+        }
     }
 
     override fun enableInternalConnection() {
@@ -295,6 +303,18 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
             try {
                 val unwrappedDrawable =
                     AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
+                unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
+                it.icon = unwrappedDrawable
+            } catch (e: Exception) {
+                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+            }
+        }
+
+        findPreference<SwitchPreference>("prioritize_internal")?.let {
+            it.isEnabled = true
+            try {
+                val unwrappedDrawable =
+                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_priority)
                 unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
@@ -336,12 +356,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
                 } else openSsidDialog()
             } else {
                 if (presenter.isSsidUsed()) {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)), showAsNotification = false, withDisableOption = true) {
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(commonR.string.pref_connection_wifi)), showAsNotification = false, withDisableOption = true) {
                         presenter.clearSsids()
                         preference.setSsids(emptySet())
                     }
                 } else {
-                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(R.string.pref_connection_wifi)))
+                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(commonR.string.pref_connection_wifi)))
                 }
             }
         } else {
@@ -378,12 +398,12 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     private fun updateBackgroundAccessPref() {
         findPreference<Preference>("background")?.let {
             if (isIgnoringBatteryOptimizations()) {
-                it.setSummary(R.string.background_access_enabled)
+                it.setSummary(commonR.string.background_access_enabled)
                 it.setOnPreferenceClickListener {
                     true
                 }
             } else {
-                it.setSummary(R.string.background_access_disabled)
+                it.setSummary(commonR.string.background_access_disabled)
                 it.setOnPreferenceClickListener {
                     requestBackgroundAccess()
                     true
@@ -445,8 +465,8 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
             context?.getSystemService(PowerManager::class.java)
-            ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
-            ?: false
+                ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
+                ?: false
     }
 
     override fun onRequestPermissionsResult(
@@ -479,6 +499,6 @@ class SettingsFragment : PreferenceFragmentCompat(), SettingsView {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(R.string.app_name)
+        activity?.title = getString(commonR.string.companion_app)
     }
 }

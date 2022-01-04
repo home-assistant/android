@@ -19,10 +19,11 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import androidx.preference.contains
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.bluetooth.BluetoothUtils
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
@@ -31,6 +32,7 @@ import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import kotlinx.coroutines.runBlocking
 
+@AndroidEntryPoint
 class SensorDetailFragment(
     private val sensorManager: SensorManager,
     private val basicSensor: SensorManager.BasicSensor,
@@ -84,11 +86,7 @@ class SensorDetailFragment(
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        DaggerSensorComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
+
         sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
 
         addPreferencesFromResource(R.xml.sensor_detail)
@@ -129,6 +127,8 @@ class SensorDetailFragment(
                                         requestPermissions(permissions)
                                     }
                                 )
+                            } else if (sensorManager is LastAppSensorManager && !sensorManager.checkUsageStatsPermission(context)) {
+                                requestPermissions(permissions)
                             } else requestPermissions(permissions)
 
                             return@setOnPreferenceChangeListener false
@@ -485,6 +485,8 @@ class SensorDetailFragment(
         when {
             permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
                 requestPermissions(
                     permissions.toSet()

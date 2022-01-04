@@ -10,11 +10,10 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
-import io.homeassistant.companion.android.common.dagger.AppComponent
-import io.homeassistant.companion.android.common.dagger.Graph
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.android.HiltAndroidApp
+import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.sensors.LastUpdateManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -24,19 +23,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-open class HomeAssistantApplication : Application(), GraphComponentAccessor {
+@HiltAndroidApp
+open class HomeAssistantApplication : Application() {
 
-    lateinit var graph: Graph
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO + Job())
+
+    @Inject
+    lateinit var prefsRepository: PrefsRepository
 
     override fun onCreate() {
         super.onCreate()
 
-        graph = Graph(this, 0)
-
         ioScope.launch {
-            initCrashReporting(applicationContext, graph.appComponent.prefsUseCase().isCrashReporting())
+            initCrashReporting(
+                applicationContext,
+                prefsRepository.isCrashReporting()
+            )
         }
 
         val sensorReceiver = SensorReceiver()
@@ -134,33 +138,30 @@ open class HomeAssistantApplication : Application(), GraphComponentAccessor {
             }
         }
 
+        // Register for changes to the managed profile availability
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter().apply {
+                    addAction(Intent.ACTION_MANAGED_PROFILE_AVAILABLE)
+                    addAction(Intent.ACTION_MANAGED_PROFILE_UNAVAILABLE)
+                }
+            )
+        }
+
         // Update widgets when the screen turns on, updates are skipped if widgets were not added
         val buttonWidget = ButtonWidget()
         val entityWidget = EntityWidget()
         val mediaPlayerWidget = MediaPlayerControlsWidget()
         val templateWidget = TemplateWidget()
 
-        registerReceiver(
-            buttonWidget,
-            IntentFilter(Intent.ACTION_SCREEN_ON)
-        )
+        val screenIntentFilter = IntentFilter()
+        screenIntentFilter.addAction(Intent.ACTION_SCREEN_ON)
+        screenIntentFilter.addAction(Intent.ACTION_SCREEN_OFF)
 
-        registerReceiver(
-            entityWidget,
-            IntentFilter(Intent.ACTION_SCREEN_ON)
-        )
-
-        registerReceiver(
-            mediaPlayerWidget,
-            IntentFilter(Intent.ACTION_SCREEN_ON)
-        )
-
-        registerReceiver(
-            templateWidget,
-            IntentFilter(Intent.ACTION_SCREEN_ON)
-        )
+        registerReceiver(buttonWidget, screenIntentFilter)
+        registerReceiver(entityWidget, screenIntentFilter)
+        registerReceiver(mediaPlayerWidget, screenIntentFilter)
+        registerReceiver(templateWidget, screenIntentFilter)
     }
-
-    override val appComponent: AppComponent
-        get() = graph.appComponent
 }

@@ -1,10 +1,15 @@
 package io.homeassistant.companion.android.common.data.authentication.impl
 
+import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.authentication.SessionState
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowAuthentication
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowRequest
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URL
@@ -18,16 +23,43 @@ class AuthenticationRepositoryImpl @Inject constructor(
 ) : AuthenticationRepository {
 
     companion object {
+        private const val TAG = "AuthRepo"
         private const val PREF_ACCESS_TOKEN = "access_token"
         private const val PREF_EXPIRED_DATE = "expires_date"
         private const val PREF_REFRESH_TOKEN = "refresh_token"
         private const val PREF_TOKEN_TYPE = "token_type"
-
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
     }
 
+    override suspend fun initiateLoginFlow(): LoginFlowInit {
+        return authenticationService.initializeLogin(
+            LoginFlowRequest(
+                AuthenticationService.CLIENT_ID,
+                AuthenticationService.AUTH_CALLBACK,
+                AuthenticationService.HANDLER
+            )
+        )
+    }
+
+    override suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowCreateEntry {
+        return authenticationService.authenticate(
+            AuthenticationService.AUTHENTICATE_BASE_PATH + flowId,
+            LoginFlowAuthentication(
+                AuthenticationService.CLIENT_ID,
+                username,
+                password
+            )
+        )
+    }
+
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        if (url == null) {
+            Log.e(TAG, "Unable to register auth code.")
+            return
+        }
         authenticationService.getToken(
+            url.newBuilder().addPathSegments("auth/token").build(),
             AuthenticationService.GRANT_TYPE_CODE,
             authorizationCode,
             AuthenticationService.CLIENT_ID
@@ -47,9 +79,22 @@ class AuthenticationRepositoryImpl @Inject constructor(
         return convertSession(ensureValidSession(forceRefresh))
     }
 
+    override suspend fun retrieveAccessToken(): String {
+        return ensureValidSession(false).accessToken
+    }
+
     override suspend fun revokeSession() {
-        val session = retrieveSession() ?: throw AuthorizationException()
-        authenticationService.revokeToken(session.refreshToken, AuthenticationService.REVOKE_ACTION)
+        val session = retrieveSession()
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        if (session == null || url == null) {
+            Log.e(TAG, "Unable to revoke session.")
+            return
+        }
+        authenticationService.revokeToken(
+            url.newBuilder().addPathSegments("auth/token").build(),
+            session.refreshToken,
+            AuthenticationService.REVOKE_ACTION
+        )
         saveSession(null)
         urlRepository.saveUrl("", true)
         urlRepository.saveUrl("", false)
@@ -104,10 +149,16 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     private suspend fun ensureValidSession(forceRefresh: Boolean = false): Session {
-        val session = retrieveSession() ?: throw AuthorizationException()
+        val session = retrieveSession()
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        if (session == null || url == null) {
+            Log.e(TAG, "Unable to revoke session.")
+            throw AuthorizationException()
+        }
 
         if (session.isExpired() || forceRefresh) {
             return authenticationService.refreshToken(
+                url.newBuilder().addPathSegments("auth/token").build(),
                 AuthenticationService.GRANT_TYPE_REFRESH,
                 session.refreshToken,
                 AuthenticationService.CLIENT_ID

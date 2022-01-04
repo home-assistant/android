@@ -4,13 +4,13 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.util.Log
 import okio.internal.commonToUtf8String
-import java.lang.Exception
 import java.net.URL
 import java.util.concurrent.locks.ReentrantLock
 
 class HomeAssistantSearcher constructor(
     private val nsdManager: NsdManager,
-    private val discoveryView: DiscoveryView
+    private val onInstanceFound: (instance: HomeAssistantInstance) -> Unit,
+    private val onError: () -> Unit
 ) : NsdManager.DiscoveryListener {
 
     companion object {
@@ -32,7 +32,7 @@ class HomeAssistantSearcher constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Issue starting discover.", e)
             isSearching = false
-            discoveryView.onScanError()
+            onError()
         }
     }
 
@@ -66,7 +66,7 @@ class HomeAssistantSearcher constructor(
                         val baseUrl = it.attributes["base_url"]
                         val version = it.attributes["version"]
                         if (baseUrl != null && version != null) {
-                            discoveryView.onInstanceFound(
+                            onInstanceFound(
                                 HomeAssistantInstance(
                                     it.serviceName,
                                     URL(baseUrl.commonToUtf8String()),
@@ -93,7 +93,7 @@ class HomeAssistantSearcher constructor(
 
     override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
         Log.e(TAG, "Discovery failed: Error code:$errorCode")
-        discoveryView.onScanError()
+        onError()
         stopSearch()
     }
 

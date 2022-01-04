@@ -20,7 +20,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class SettingsPresenterImpl @Inject constructor(
-    private val settingsView: SettingsView,
     private val urlUseCase: UrlRepository,
     private val integrationUseCase: IntegrationRepository,
     private val authenticationUseCase: AuthenticationRepository,
@@ -34,13 +33,21 @@ class SettingsPresenterImpl @Inject constructor(
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private lateinit var settingsView: SettingsView
+
+    override fun init(settingsView: SettingsView) {
+        this.settingsView = settingsView
+    }
 
     override fun getBoolean(key: String, defValue: Boolean): Boolean {
         return runBlocking {
             return@runBlocking when (key) {
                 "fullscreen" -> integrationUseCase.isFullScreenEnabled()
+                "keep_screen_on" -> integrationUseCase.isKeepScreenOnEnabled()
                 "app_lock" -> authenticationUseCase.isLockEnabled()
                 "crash_reporting" -> prefsRepository.isCrashReporting()
+                "prioritize_internal" -> urlUseCase.isPrioritizeInternal()
+                "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -50,8 +57,11 @@ class SettingsPresenterImpl @Inject constructor(
         mainScope.launch {
             when (key) {
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
+                "keep_screen_on" -> integrationUseCase.setKeepScreenOnEnabled(value)
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
+                "prioritize_internal" -> urlUseCase.setPrioritizeInternal(value)
+                "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -183,22 +193,6 @@ class SettingsPresenterImpl @Inject constructor(
     override fun getSessionExpireMillis(): Long {
         return runBlocking {
             integrationUseCase.getSessionExpireMillis()
-        }
-    }
-
-    // Make sure Core is above 0.114.0 because that's the first time NFC is available.
-    override fun nfcEnabled(): Boolean {
-        return runBlocking {
-            var splitVersion = listOf<String>()
-
-            try {
-                splitVersion = integrationUseCase.getHomeAssistantVersion().split(".")
-            } catch (e: Exception) {
-                Log.e(TAG, "Unable to get core version.", e)
-            }
-
-            return@runBlocking splitVersion.size > 2 &&
-                (Integer.parseInt(splitVersion[0]) > 0 || Integer.parseInt(splitVersion[1]) >= 114)
         }
     }
 

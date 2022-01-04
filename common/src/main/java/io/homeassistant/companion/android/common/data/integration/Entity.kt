@@ -8,5 +8,5 @@ data class Entity<T>(
     val attributes: T,
     val lastChanged: Calendar,
     val lastUpdated: Calendar,
-    val context: Map<String, Any>
+    val context: Map<String, Any>?
 )

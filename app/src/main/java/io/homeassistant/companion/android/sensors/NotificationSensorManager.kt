@@ -10,41 +10,44 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.R as commonR
 
 class NotificationSensorManager : NotificationListenerService(), SensorManager {
     companion object {
         private const val TAG = "NotificationManager"
         private const val SETTING_ALLOW_LIST = "notification_allow_list"
+        private const val SETTING_DISABLE_ALLOW_LIST = "notification_disable_allow_list"
 
         private var listenerConnected = false
         val lastNotification = SensorManager.BasicSensor(
             "last_notification",
             "sensor",
-            R.string.basic_sensor_name_last_notification,
-            R.string.sensor_description_last_notification,
+            commonR.string.basic_sensor_name_last_notification,
+            commonR.string.sensor_description_last_notification,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-notification"
         )
         val lastRemovedNotification = SensorManager.BasicSensor(
             "last_removed_notification",
             "sensor",
-            R.string.basic_sensor_name_last_removed_notification,
-            R.string.sensor_description_last_removed_notification,
+            commonR.string.basic_sensor_name_last_removed_notification,
+            commonR.string.sensor_description_last_removed_notification,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#last-removed-notification"
         )
         val activeNotificationCount = SensorManager.BasicSensor(
             "active_notification_count",
             "sensor",
-            R.string.basic_sensor_name_active_notification_count,
-            R.string.sensor_description_active_notification_count,
+            commonR.string.basic_sensor_name_active_notification_count,
+            commonR.string.sensor_description_active_notification_count,
             unitOfMeasurement = "notifications",
-            docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count"
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#active-notification-count",
+            stateClass = SensorManager.STATE_CLASS_MEASUREMENT
         )
         private val mediaSession = SensorManager.BasicSensor(
             "media_session",
             "sensor",
-            R.string.basic_sensor_name_media_session,
-            R.string.sensor_description_media_session,
+            commonR.string.basic_sensor_name_media_session,
+            commonR.string.sensor_description_media_session,
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#media-session-sensor"
         )
     }
@@ -53,7 +56,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
     }
     override val name: Int
-        get() = R.string.sensor_name_last_notification
+        get() = commonR.string.sensor_name_last_notification
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(lastNotification, lastRemovedNotification, activeNotificationCount, mediaSession)
     }
@@ -105,8 +108,17 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             ""
         ).split(", ").filter { it.isNotBlank() }
 
+        val disableAllowListRequirement = getSetting(
+            applicationContext,
+            lastNotification,
+            SETTING_DISABLE_ALLOW_LIST,
+            "toggle",
+            "false"
+        ).toBoolean()
+
         if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)
+            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
+            (!disableAllowListRequirement && allowPackages.isEmpty())
         ) {
             return
         }
@@ -151,8 +163,17 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             ""
         ).split(", ").filter { it.isNotBlank() }
 
+        val disableAllowListRequirement = getSetting(
+            applicationContext,
+            lastRemovedNotification,
+            SETTING_DISABLE_ALLOW_LIST,
+            "toggle",
+            "false"
+        ).toBoolean()
+
         if (sbn.packageName == application.packageName ||
-            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages)
+            (allowPackages.isNotEmpty() && sbn.packageName !in allowPackages) ||
+            (!disableAllowListRequirement && allowPackages.isEmpty())
         ) {
             return
         }

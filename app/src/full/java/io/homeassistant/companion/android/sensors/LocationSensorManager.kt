@@ -1,11 +1,12 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
-import android.content.BroadcastReceiver
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.location.Location
 import android.os.Build
+import android.os.Looper
 import android.os.PowerManager
 import android.text.TextUtils
 import android.util.Log
@@ -16,7 +17,11 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
+import io.homeassistant.companion.android.common.data.integration.ZoneAttributes
+import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Setting
@@ -26,8 +31,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
-class LocationSensorManager : BroadcastReceiver(), SensorManager {
+@AndroidEntryPoint
+class LocationSensorManager : LocationSensorManagerBase() {
 
     companion object {
         private const val SETTING_ACCURACY = "Minimum Accuracy"
@@ -50,24 +57,34 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
             "io.homeassistant.companion.android.background.PROCESS_UPDATES"
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
+        const val ACTION_FORCE_HIGH_ACCURACY =
+            "io.homeassistant.companion.android.background.FORCE_HIGH_ACCURACY"
 
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
             "",
-            R.string.basic_sensor_name_location_background,
-            R.string.sensor_description_location_background
+            commonR.string.basic_sensor_name_location_background,
+            commonR.string.sensor_description_location_background
         )
         val zoneLocation = SensorManager.BasicSensor(
             "zone_background",
             "",
-            R.string.basic_sensor_name_location_zone,
-            R.string.sensor_description_location_zone
+            commonR.string.basic_sensor_name_location_zone,
+            commonR.string.sensor_description_location_zone
         )
         val singleAccurateLocation = SensorManager.BasicSensor(
             "accurate_location",
             "",
-            R.string.basic_sensor_name_location_accurate,
-            R.string.sensor_description_location_accurate
+            commonR.string.basic_sensor_name_location_accurate,
+            commonR.string.sensor_description_location_accurate
+        )
+
+        val highAccuracyMode = SensorManager.BasicSensor(
+            "high_accuracy_mode",
+            "binary_sensor",
+            commonR.string.basic_sensor_name_high_accuracy_mode,
+            commonR.string.sensor_description_high_accuracy_mode,
+            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
         )
         internal const val TAG = "LocBroadcastReceiver"
 
@@ -99,9 +116,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
                 ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
         }
     }
-
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
@@ -155,25 +169,21 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
 
     override fun onReceive(context: Context, intent: Intent) {
         latestContext = context
-        ensureInjected()
 
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
             ACTION_REQUEST_LOCATION_UPDATES -> setupLocationTracking()
-            ACTION_PROCESS_LOCATION -> handleLocationUpdate()
+            ACTION_PROCESS_LOCATION -> handleLocationUpdate(intent)
+            ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
+            ACTION_FORCE_HIGH_ACCURACY -> {
+                val intentData = intent.extras?.get("command")?.toString()
+                if (intentData == "turn_on")
+                    startHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
+                else if (intentData == "turn_off")
+                    stopHighAccuracyService()
+            }
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
-        }
-    }
-
-    private fun ensureInjected() {
-        if (latestContext.applicationContext is GraphComponentAccessor) {
-            DaggerSensorComponent.builder()
-                .appComponent((latestContext.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
-        } else {
-            throw Exception("Application Context passed is not of our application!")
         }
     }
 
@@ -502,23 +512,37 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         get() = true
 
     override val name: Int
-        get() = R.string.sensor_name_location
+        get() = commonR.string.sensor_name_location
 
     val availableSensors: List<SensorManager.BasicSensor>
         get() = listOf(singleAccurateLocation, backgroundLocation, zoneLocation)
 
     override fun requiredPermissions(sensorId: String): Array<String> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-                Manifest.permission.BLUETOOTH
-            )
-        } else {
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.BLUETOOTH
-            )
+        return when {
+            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.BLUETOOTH,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                )
+            }
+            (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) -> {
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.BLUETOOTH
+                )
+            }
+            else -> {
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.BLUETOOTH
+                )
+            }
         }
     }
 
@@ -526,7 +550,6 @@ class LocationSensorManager : BroadcastReceiver(), SensorManager {
         context: Context
     ) {
         latestContext = context
-        ensureInjected()
         if (isEnabled(context, zoneLocation.id) || isEnabled(context, backgroundLocation.id))
             setupLocationTracking()
         val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()

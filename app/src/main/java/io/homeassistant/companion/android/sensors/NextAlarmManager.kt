@@ -3,7 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
-import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
 import java.text.SimpleDateFormat
@@ -11,6 +11,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.GregorianCalendar
 import java.util.TimeZone
+import io.homeassistant.companion.android.common.R as commonR
 
 class NextAlarmManager : SensorManager {
     companion object {
@@ -20,8 +21,8 @@ class NextAlarmManager : SensorManager {
         val nextAlarm = SensorManager.BasicSensor(
             "next_alarm",
             "sensor",
-            R.string.basic_sensor_name_alarm,
-            R.string.sensor_description_next_alarm,
+            commonR.string.basic_sensor_name_alarm,
+            commonR.string.sensor_description_next_alarm,
             "timestamp"
         )
     }
@@ -32,7 +33,7 @@ class NextAlarmManager : SensorManager {
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_alarm
+        get() = commonR.string.sensor_name_alarm
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return listOf(nextAlarm)

@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import java.lang.Exception
+import io.homeassistant.companion.android.common.R as commonR
 
 class GeocodeSensorManager : SensorManager {
 
@@ -22,17 +23,18 @@ class GeocodeSensorManager : SensorManager {
         val geocodedLocation = SensorManager.BasicSensor(
             "geocoded_location",
             "sensor",
-            R.string.basic_sensor_name_geolocation,
-            R.string.sensor_description_geocoded_location
+            commonR.string.basic_sensor_name_geolocation,
+            commonR.string.sensor_description_geocoded_location
         )
     }
 
     override val enabledByDefault: Boolean
         get() = false
     override val name: Int
-        get() = R.string.sensor_name_geolocation
-    val availableSensors: List<SensorManager.BasicSensor>
-        get() = listOf(geocodedLocation)
+        get() = commonR.string.sensor_name_geolocation
+    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
+        return listOf(geocodedLocation)
+    }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -49,10 +51,6 @@ class GeocodeSensorManager : SensorManager {
         context: Context
     ) {
         updateGeocodedLocation(context)
-    }
-
-    override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(geocodedLocation)
     }
 
     private fun updateGeocodedLocation(context: Context) {
@@ -115,12 +113,12 @@ class GeocodeSensorManager : SensorManager {
 
         val prettyAddress = address?.getAddressLine(0) ?: "Unknown"
 
-        HighAccuracyLocationService.updateNotificationAddress(context, location, prettyAddress)
+        HighAccuracyLocationService.updateNotificationAddress(context, location, if (!prettyAddress.isNullOrEmpty()) prettyAddress else context.getString(commonR.string.unknown_address))
 
         onSensorUpdated(
             context,
             geocodedLocation,
-            prettyAddress,
+            if (!prettyAddress.isNullOrEmpty()) prettyAddress else "Unknown", ,
             "mdi:map",
             attributes
         )

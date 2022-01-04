@@ -14,22 +14,22 @@ import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
 import com.squareup.picasso.Picasso
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class CameraWidget : AppWidgetProvider() {
 
     companion object {
@@ -113,7 +113,7 @@ class CameraWidget : AppWidgetProvider() {
                 if (entityPictureUrl == null) {
                     setImageViewResource(
                         R.id.widgetCameraImage,
-                        R.drawable.app_icon
+                        R.drawable.app_icon_round
                     )
                     setViewVisibility(
                         R.id.widgetCameraPlaceholder,
@@ -155,7 +155,7 @@ class CameraWidget : AppWidgetProvider() {
                         context,
                         appWidgetId,
                         updateCameraIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 )
                 setOnClickPendingIntent(
@@ -164,7 +164,7 @@ class CameraWidget : AppWidgetProvider() {
                         context,
                         appWidgetId,
                         updateCameraIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
                 )
             }
@@ -172,13 +172,11 @@ class CameraWidget : AppWidgetProvider() {
     }
 
     private suspend fun retrieveCameraImageUrl(context: Context, entityId: String): String? {
-        val entity: Entity<Map<String, Any>>
-        try {
-            entity = integrationUseCase.getEntity(entityId)
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
+        val entity = integrationUseCase.getEntity(entityId)
+        if (entity == null) {
+            Log.e(TAG, "Failed to fetch entity or entity does not exist")
             if (lastIntent == UPDATE_IMAGE)
-                Toast.makeText(context, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
+                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
             return null
         }
 
@@ -195,8 +193,6 @@ class CameraWidget : AppWidgetProvider() {
                 "Broadcast action: " + lastIntent + System.lineSeparator() +
                 "AppWidgetId: " + appWidgetId
         )
-
-        ensureInjected(context)
 
         cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
         val cameraWidgetList = cameraWidgetDao.getAll()
@@ -250,17 +246,6 @@ class CameraWidget : AppWidgetProvider() {
 
     override fun onDisabled(context: Context) {
         // Enter relevant functionality for when the last widget is disabled
-    }
-
-    private fun ensureInjected(context: Context) {
-        if (context.applicationContext is GraphComponentAccessor) {
-            DaggerProviderComponent.builder()
-                .appComponent((context.applicationContext as GraphComponentAccessor).appComponent)
-                .build()
-                .inject(this)
-        } else {
-            throw Exception("Application Context passed is not of our application!")
-        }
     }
 
     private fun isConnectionActive(context: Context): Boolean {

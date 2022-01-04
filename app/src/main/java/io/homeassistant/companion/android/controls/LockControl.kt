@@ -11,18 +11,20 @@ import android.service.controls.actions.ControlAction
 import android.service.controls.templates.ControlButton
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class LockControl {
     companion object : HaControl {
         override fun createControl(
             context: Context,
-            entity: Entity<Map<String, Any>>
+            entity: Entity<Map<String, Any>>,
+            area: AreaRegistryResponse?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -30,21 +32,25 @@ class LockControl {
                     context,
                     0,
                     WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    PendingIntent.FLAG_CANCEL_CURRENT
+                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             )
             control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(
                 DeviceTypes.TYPE_LOCK
             )
-            control.setZone(context.getString(R.string.domain_lock))
+            control.setZone(area?.name ?: context.getString(commonR.string.domain_lock))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "locked" -> context.getString(R.string.state_locked)
-                    "unlocked" -> context.getString(R.string.state_unlocked)
-                    "unavailable" -> context.getString(R.string.state_unavailable)
-                    else -> context.getString(R.string.state_unknown)
+                    "jammed" -> context.getString(commonR.string.state_jammed)
+                    "locked" -> context.getString(commonR.string.state_locked)
+                    "locking" -> context.getString(commonR.string.state_locking)
+                    "unlocked" -> context.getString(commonR.string.state_unlocked)
+                    "unlocking" -> context.getString(commonR.string.state_unlocking)
+                    "unavailable" -> context.getString(commonR.string.state_unavailable)
+                    else -> context.getString(commonR.string.state_unknown)
                 }
             )
             control.setControlTemplate(

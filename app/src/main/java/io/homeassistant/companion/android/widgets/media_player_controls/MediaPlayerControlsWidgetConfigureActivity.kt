@@ -10,20 +10,13 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
+import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.android.synthetic.main.widget_media_controls_configure.add_button
-import kotlinx.android.synthetic.main.widget_media_controls_configure.delete_button
-import kotlinx.android.synthetic.main.widget_media_controls_configure.label
-import kotlinx.android.synthetic.main.widget_media_controls_configure.widget_show_seek_buttons_checkbox
-import kotlinx.android.synthetic.main.widget_media_controls_configure.widget_show_skip_buttons_checkbox
-import kotlinx.android.synthetic.main.widget_media_controls_configure.widget_text_config_entity_id
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,7 +24,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
     companion object {
@@ -42,6 +37,9 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
+
+    private lateinit var binding: WidgetMediaControlsConfigureBinding
+
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var entities = LinkedHashMap<String, Entity<Any>>()
@@ -54,9 +52,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        setContentView(R.layout.widget_media_controls_configure)
+        binding = WidgetMediaControlsConfigureBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        add_button.setOnClickListener(addWidgetButtonClickListener)
+        binding.addButton.setOnClickListener(addWidgetButtonClickListener)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -73,47 +72,40 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             return
         }
 
-        // Inject components
-        DaggerProviderComponent.builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
-
         val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(applicationContext).mediaPlayCtrlWidgetDao()
         val mediaPlayerWidget = mediaPlayerControlsWidgetDao.get(appWidgetId)
         if (mediaPlayerWidget != null) {
-            label.setText(mediaPlayerWidget.label)
-            widget_text_config_entity_id.setText(mediaPlayerWidget.entityId)
-            widget_show_seek_buttons_checkbox.isChecked = mediaPlayerWidget.showSeek
-            widget_show_skip_buttons_checkbox.isChecked = mediaPlayerWidget.showSkip
+            binding.label.setText(mediaPlayerWidget.label)
+            binding.widgetTextConfigEntityId.setText(mediaPlayerWidget.entityId)
+            binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
+            binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
             val entity = runBlocking {
                 try {
                     integrationUseCase.getEntity(mediaPlayerWidget.entityId)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to get entity information", e)
-                    Toast.makeText(applicationContext, R.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
                         .show()
                     null
                 }
             }
             if (entity != null)
                 selectedEntity = entity as Entity<Any>?
-            add_button.setText(R.string.update_widget)
-            delete_button.visibility = View.VISIBLE
-            delete_button.setOnClickListener(onDeleteWidget)
+            binding.addButton.setText(commonR.string.update_widget)
+            binding.deleteButton.visibility = View.VISIBLE
+            binding.deleteButton.setOnClickListener(onDeleteWidget)
         }
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
-        widget_text_config_entity_id.setAdapter(entityAdapter)
-        widget_text_config_entity_id.onFocusChangeListener = dropDownOnFocus
-        widget_text_config_entity_id.onItemClickListener = entityDropDownOnItemClick
+        binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
+        binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
+        binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
         mainScope.launch {
             try {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
-                fetchedEntities.sortBy { e -> e.entityId }
-                fetchedEntities.forEach {
+                fetchedEntities?.forEach {
                     val entityId = it.entityId
                     val domain = entityId.split(".")[0]
 
@@ -164,15 +156,15 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_LABEL,
-                label.text.toString()
+                binding.label.text.toString()
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_SKIP,
-                widget_show_skip_buttons_checkbox.isChecked
+                binding.widgetShowSkipButtonsCheckbox.isChecked
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_SEEK,
-                widget_show_seek_buttons_checkbox.isChecked
+                binding.widgetShowSeekButtonsCheckbox.isChecked
             )
 
             context.sendBroadcast(intent)
@@ -185,7 +177,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
-            Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
+            Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
         }
     }
@@ -205,11 +197,11 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
-        builder.setTitle(R.string.confirm_delete_this_widget_title)
-        builder.setMessage(R.string.confirm_delete_this_widget_message)
+        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
+        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
 
         builder.setPositiveButton(
-            R.string.confirm_positive
+            commonR.string.confirm_positive
         ) { dialog, _ ->
             mediaPlayerControlsWidgetDao.delete(appWidgetId)
             dialog.dismiss()
@@ -217,7 +209,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         }
 
         builder.setNegativeButton(
-            R.string.confirm_negative
+            commonR.string.confirm_negative
         ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }

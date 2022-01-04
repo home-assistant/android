@@ -14,7 +14,10 @@ interface WebViewPresenter {
 
     fun isFullScreen(): Boolean
 
+    fun isKeepScreenOnEnabled(): Boolean
+
     fun isLockEnabled(): Boolean
+    fun isAutoPlayVideoEnabled(): Boolean
 
     fun sessionTimeOut(): Int
 
@@ -25,5 +28,5 @@ interface WebViewPresenter {
 
     fun isSsidUsed(): Boolean
 
-    suspend fun getStatusBarAndNavigationBarColor(webViewColor: String): Int
+    suspend fun parseWebViewColor(webViewColor: String): Int
 }

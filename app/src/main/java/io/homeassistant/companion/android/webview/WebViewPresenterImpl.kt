@@ -1,9 +1,10 @@
 package io.homeassistant.companion.android.webview
 
+import android.content.Context
 import android.graphics.Color
 import android.net.Uri
 import android.util.Log
-import androidx.core.graphics.ColorUtils
+import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -22,7 +23,7 @@ import java.util.regex.Pattern
 import javax.inject.Inject
 
 class WebViewPresenterImpl @Inject constructor(
-    private val view: WebView,
+    @ActivityContext context: Context,
     private val urlUseCase: UrlRepository,
     private val authenticationUseCase: AuthenticationRepository,
     private val integrationUseCase: IntegrationRepository
@@ -32,6 +33,8 @@ class WebViewPresenterImpl @Inject constructor(
         private const val TAG = "WebViewPresenterImpl"
     }
 
+    private val view = context as WebView
+
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var url: URL? = null
@@ -39,7 +42,7 @@ class WebViewPresenterImpl @Inject constructor(
     override fun onViewReady(path: String?) {
         mainScope.launch {
             val oldUrl = url
-            url = urlUseCase.getUrl()
+            url = urlUseCase.getUrl(urlUseCase.isInternal() || urlUseCase.isPrioritizeInternal())
 
             if (path != null && !path.startsWith("entityId:")) {
                 url = UrlHandler.handle(url, path)
@@ -108,7 +111,7 @@ class WebViewPresenterImpl @Inject constructor(
             try {
                 authenticationUseCase.revokeSession()
                 view.setExternalAuth("$callback(true)")
-                view.openOnBoarding()
+                view.relaunchApp()
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to revoke session", e)
                 view.setExternalAuth("$callback(false)")
@@ -129,9 +132,21 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isKeepScreenOnEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isKeepScreenOnEnabled()
+        }
+    }
+
     override fun isLockEnabled(): Boolean {
         return runBlocking {
             authenticationUseCase.isLockEnabled()
+        }
+    }
+
+    override fun isAutoPlayVideoEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isAutoPlayVideoEnabled()
         }
     }
 
@@ -163,45 +178,26 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
-    override suspend fun getStatusBarAndNavigationBarColor(webViewColor: String): Int = withContext(Dispatchers.IO) {
-        var statusbarNavBarColor = 0
+    override suspend fun parseWebViewColor(webViewColor: String): Int = withContext(Dispatchers.IO) {
+        var color = 0
 
-        Log.d(TAG, "Try getting status bar/navigation bar color from webviews color \"$webViewColor\"")
-        if (!webViewColor.isNullOrEmpty() && webViewColor != "null" && webViewColor.length >= 2) {
-            val trimmedColorString = webViewColor.substring(1, webViewColor.length - 1).trim()
-            Log.d(TAG, "Color from webview is \"$trimmedColorString\"")
+        Log.d(TAG, "Try getting color from webview color \"$webViewColor\".")
+        if (webViewColor.isNotEmpty() && webViewColor != "null") {
             try {
-                statusbarNavBarColor = parseColorWithRgb(trimmedColorString)
-                Log.i(TAG, "Found color $statusbarNavBarColor for status bar/navigation bar")
+                color = parseColorWithRgb(webViewColor)
+                Log.i(TAG, "Found color $color.")
             } catch (e: Exception) {
-                Log.w(TAG, "Could not get status bar/navigation bar color from webview. Try getting status bar/navigation bar color from HA", e)
+                Log.w(TAG, "Could not get color from webview.", e)
             }
         } else {
-            Log.w(TAG, "Could not get status bar/navigation bar color from webview. Color \"$webViewColor\" is not a valid color. Try getting status bar/navigation bar color from HA")
+            Log.w(TAG, "Could not get color from webview. Color \"$webViewColor\" is not a valid color.")
         }
 
-        if (statusbarNavBarColor == 0) {
-            Log.d(TAG, "Try getting status bar/navigation bar color from HA")
-            runBlocking {
-                try {
-                    val colorString = integrationUseCase.getThemeColor()
-                    Log.d(TAG, "Color from HA is \"$colorString\"")
-                    if (!colorString.isNullOrEmpty()) {
-                        statusbarNavBarColor = parseColorWithRgb(colorString)
-                        Log.i(TAG, "Found color $statusbarNavBarColor for status bar/navigation bar")
-                    } else {
-                        Log.e(TAG, "Could not get status bar/navigation bar color from HA. No theme color defined in theme variable \"app-header-background-color\"")
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Could not get status bar/navigation bar color from HA.", e)
-                }
-            }
+        if (color == 0) {
+            Log.w(TAG, "Couldn't get color.")
         }
 
-        // Darken the found color a bit
-        statusbarNavBarColor = ColorUtils.blendARGB(statusbarNavBarColor, Color.BLACK, 0.1f)
-
-        return@withContext statusbarNavBarColor
+        return@withContext color
     }
 
     private fun parseColorWithRgb(colorString: String): Int {

@@ -9,22 +9,21 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
+import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
-import kotlinx.android.synthetic.main.widget_camera_configure.add_button
-import kotlinx.android.synthetic.main.widget_camera_configure.widget_text_config_entity_id
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class CameraWidgetConfigureActivity : BaseActivity() {
 
     companion object {
@@ -47,9 +46,10 @@ class CameraWidgetConfigureActivity : BaseActivity() {
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        setContentView(R.layout.widget_camera_configure)
+        val binding = WidgetCameraConfigureBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        add_button.setOnClickListener(addWidgetButtonClickListener)
+        binding.addButton.setOnClickListener(addWidgetButtonClickListener)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -66,24 +66,17 @@ class CameraWidgetConfigureActivity : BaseActivity() {
             return
         }
 
-        // Inject components
-        DaggerProviderComponent.builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
-
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
 
-        widget_text_config_entity_id.setAdapter(entityAdapter)
-        widget_text_config_entity_id.onFocusChangeListener = dropDownOnFocus
-        widget_text_config_entity_id.onItemClickListener = entityDropDownOnItemClick
+        binding.widgetTextConfigEntityId.setAdapter(entityAdapter)
+        binding.widgetTextConfigEntityId.onFocusChangeListener = dropDownOnFocus
+        binding.widgetTextConfigEntityId.onItemClickListener = entityDropDownOnItemClick
 
         mainScope.launch {
             try {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
-                fetchedEntities.sortBy { e -> e.entityId }
-                fetchedEntities.forEach {
+                fetchedEntities?.forEach {
                     val entityId = it.entityId
                     val domain = entityId.split(".")[0]
 
@@ -143,7 +136,7 @@ class CameraWidgetConfigureActivity : BaseActivity() {
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
-            Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
+            Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
         }
     }

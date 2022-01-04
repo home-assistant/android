@@ -5,14 +5,15 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
-import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class ShareActivity : BaseActivity() {
 
     companion object {
@@ -24,11 +25,6 @@ class ShareActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        DaggerShareComponent.builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
 
         val data = mutableMapOf(
             "caller" to ActivityCompat.getReferrer(this).toString()
@@ -51,14 +47,14 @@ class ShareActivity : BaseActivity() {
                 Log.d(TAG, "Share successful!")
                 Toast.makeText(
                     applicationContext,
-                    R.string.share_success,
+                    commonR.string.share_success,
                     Toast.LENGTH_SHORT
                 ).show()
             } catch (e: Exception) {
                 Log.e(TAG, "Issue sharing with Home Assistant", e)
                 Toast.makeText(
                     applicationContext,
-                    R.string.share_failed,
+                    commonR.string.share_failed,
                     Toast.LENGTH_LONG
                 ).show()
             }

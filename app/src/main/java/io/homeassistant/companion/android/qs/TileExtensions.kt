@@ -14,14 +14,15 @@ import androidx.core.graphics.drawable.toBitmap
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
-import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.N)
+@AndroidEntryPoint
 abstract class TileExtensions : TileService() {
 
     abstract fun getTile(): Tile?
@@ -33,34 +34,37 @@ abstract class TileExtensions : TileService() {
 
     override fun onClick() {
         super.onClick()
-        DaggerTileComponent.builder()
-            .appComponent((applicationContext as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
         if (getTile() != null) {
-            setTileData(applicationContext, getTileId(), getTile()!!)
+            setTileData(applicationContext, getTileId(), getTile()!!, integrationUseCase)
             tileClicked(applicationContext, getTileId(), getTile()!!, integrationUseCase)
         }
     }
 
     override fun onTileAdded() {
         super.onTileAdded()
+        Log.d(TAG, "Tile: ${getTileId()} added")
         if (getTile() != null)
-            setTileData(applicationContext, getTileId(), getTile()!!)
+            setTileData(applicationContext, getTileId(), getTile()!!, integrationUseCase)
     }
 
     override fun onStartListening() {
         super.onStartListening()
+        Log.d(TAG, "Tile: ${getTileId()} is in view")
         if (getTile() != null)
-            setTileData(applicationContext, getTileId(), getTile()!!)
+            setTileData(applicationContext, getTileId(), getTile()!!, integrationUseCase)
     }
 
     companion object {
         private const val TAG = "TileExtensions"
         private var iconPack: IconPack? = null
+        private val toggleDomains = listOf(
+            "cover", "fan", "humidifier", "input_boolean", "light",
+            "media_player", "remote", "siren", "switch"
+        )
 
         @RequiresApi(Build.VERSION_CODES.N)
-        fun setTileData(context: Context, tileId: String, tile: Tile): Boolean {
+        fun setTileData(context: Context, tileId: String, tile: Tile, integrationUseCase: IntegrationRepository): Boolean {
+            Log.d(TAG, "Attempting to set tile data for tile ID: $tileId")
             val tileDao = AppDatabase.getInstance(context).tileDao()
             val tileData = tileDao.get(tileId)
             try {
@@ -69,20 +73,27 @@ abstract class TileExtensions : TileService() {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                         tile.subtitle = tileData.subtitle
                     }
-                    tile.state = Tile.STATE_INACTIVE
-                    if (tileData.iconId != null) {
-                        val icon = getTileIcon(tileData.iconId, context)
+                    if (tileData.entityId.split('.')[0] in toggleDomains) {
+                        val state = runBlocking { integrationUseCase.getEntity(tileData.entityId) }
+                        tile.state = if (state?.state == "on" || state?.state == "open") Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                    } else
+                        tile.state = Tile.STATE_INACTIVE
+                    val iconId = tileData.iconId
+                    if (iconId != null) {
+                        val icon = getTileIcon(iconId, context)
                         tile.icon = Icon.createWithBitmap(icon)
                     }
+                    Log.d(TAG, "Tile data set for tile ID: $tileId")
                     tile.updateTile()
                     true
                 } else {
+                    Log.d(TAG, "No tile data found for tile ID: $tileId")
                     tile.state = Tile.STATE_UNAVAILABLE
                     tile.updateTile()
                     false
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Unable to set tile data", e)
+                Log.e(TAG, "Unable to set tile data for tile ID: $tileId", e)
                 return false
             }
         }
@@ -94,24 +105,24 @@ abstract class TileExtensions : TileService() {
             tile: Tile,
             integrationUseCase: IntegrationRepository
         ) {
-
+            Log.d(TAG, "Click detected for tile ID: $tileId")
             val tileDao = AppDatabase.getInstance(context).tileDao()
             val tileData = tileDao.get(tileId)
-            val hasTile = setTileData(context, tileId, tile)
+            val hasTile = setTileData(context, tileId, tile, integrationUseCase)
             if (hasTile) {
                 tile.state = Tile.STATE_ACTIVE
                 tile.updateTile()
-                val tileService = tileData?.entityId?.split(".")
                 runBlocking {
                     try {
                         integrationUseCase.callService(
-                            tileService!![0],
-                            tileService[1],
-                            hashMapOf()
+                            tileData?.entityId?.split(".")!![0],
+                            if (tileData.entityId.split(".")[0] in toggleDomains) "toggle" else "turn_on",
+                            hashMapOf("entity_id" to tileData.entityId)
                         )
+                        Log.d(TAG, "Service call sent for tile ID: $tileId")
                     } catch (e: Exception) {
-                        Log.e(TAG, "Unable to call service", e)
-                        Toast.makeText(context, R.string.service_call_failure, Toast.LENGTH_SHORT)
+                        Log.e(TAG, "Unable to call service for tile ID: $tileId", e)
+                        Toast.makeText(context, commonR.string.service_call_failure, Toast.LENGTH_SHORT)
                             .show()
                     }
                 }
@@ -120,7 +131,8 @@ abstract class TileExtensions : TileService() {
             } else {
                 tile.state = Tile.STATE_UNAVAILABLE
                 tile.updateTile()
-                Toast.makeText(context, R.string.tile_data_missing, Toast.LENGTH_SHORT).show()
+                Log.d(TAG, "No tile data found for tile ID: $tileId")
+                Toast.makeText(context, commonR.string.tile_data_missing, Toast.LENGTH_SHORT).show()
             }
         }
 

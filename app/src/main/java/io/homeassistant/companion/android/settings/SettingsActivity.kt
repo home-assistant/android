@@ -6,9 +6,16 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.SearchView
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class SettingsActivity : BaseActivity() {
 
     companion object {
@@ -17,11 +24,11 @@ class SettingsActivity : BaseActivity() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_activity_settings, menu)
 
-        (menu?.findItem(R.id.action_search)?.actionView as SearchView).apply {
-            queryHint = getString(R.string.search_sensors)
+        (menu.findItem(R.id.action_search)?.actionView as SearchView).apply {
+            queryHint = getString(commonR.string.search_sensors)
             maxWidth = Integer.MAX_VALUE
         }
 
@@ -29,6 +36,9 @@ class SettingsActivity : BaseActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val entryPoint = EntryPointAccessors.fromActivity(this, SettingsFragmentFactoryEntryPoint::class.java)
+        supportFragmentManager.fragmentFactory = entryPoint.getSettingsFragmentFactory()
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
 
@@ -36,7 +46,7 @@ class SettingsActivity : BaseActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, SettingsFragment.newInstance())
+            .replace(R.id.content, SettingsFragment::class.java, null)
             .commit()
     }
 
@@ -52,5 +62,11 @@ class SettingsActivity : BaseActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    @EntryPoint
+    @InstallIn(ActivityComponent::class)
+    interface SettingsFragmentFactoryEntryPoint {
+        fun getSettingsFragmentFactory(): SettingsFragmentFactory
     }
 }

@@ -1,0 +1,129 @@
+package io.homeassistant.companion.android.phone
+
+import android.content.Intent
+import android.util.Log
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMap
+import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.MessageEvent
+import com.google.android.gms.wearable.PutDataMapRequest
+import com.google.android.gms.wearable.Wearable
+import com.google.android.gms.wearable.WearableListenerService
+import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.BuildConfig
+import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.wear.Favorites
+import io.homeassistant.companion.android.home.HomeActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@AndroidEntryPoint
+class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChangedListener {
+
+    @Inject
+    lateinit var authenticationRepository: AuthenticationRepository
+
+    @Inject
+    lateinit var urlRepository: UrlRepository
+
+    @Inject
+    lateinit var integrationUseCase: IntegrationRepository
+
+    private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+
+    private val objectMapper = jacksonObjectMapper()
+
+    companion object {
+        private const val TAG = "PhoneSettingsListener"
+
+        private const val KEY_UPDATE_TIME = "UpdateTime"
+        private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
+        private const val KEY_FAVORITES = "favorites"
+    }
+
+    override fun onMessageReceived(event: MessageEvent) {
+        Log.d(TAG, "Message received: $event")
+        if (event.path == "/requestConfig") {
+            sendPhoneData()
+        }
+    }
+
+    private fun sendPhoneData() = mainScope.launch {
+        val currentFavorites =
+            AppDatabase.getInstance(applicationContext).favoritesDao().getAll() ?: listOf()
+        val putDataRequest = PutDataMapRequest.create("/config").run {
+            dataMap.putLong(KEY_UPDATE_TIME, System.nanoTime())
+            dataMap.putBoolean(KEY_IS_AUTHENTICATED, integrationUseCase.isRegistered())
+            dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites.map { it.id }))
+            setUrgent()
+            asPutDataRequest()
+        }
+
+        Wearable.getDataClient(this@PhoneSettingsListener).putDataItem(putDataRequest).apply {
+            addOnSuccessListener { Log.d(TAG, "Successfully sent /config to device") }
+            addOnFailureListener { e -> Log.e(TAG, "Failed to send /config to device", e) }
+        }
+    }
+
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        Log.d(TAG, "onDataChanged ${dataEvents.count}")
+        dataEvents.forEach { event ->
+            if (event.type == DataEvent.TYPE_CHANGED) {
+                event.dataItem.also { item ->
+                    when (item.uri.path) {
+                        "/authenticate" -> {
+                            login(DataMapItem.fromDataItem(item).dataMap)
+                        }
+                        "/updateFavorites" -> {
+                            saveFavorites(DataMapItem.fromDataItem(item).dataMap)
+                        }
+                    }
+                }
+            }
+        }
+        dataEvents.release()
+    }
+
+    private fun login(dataMap: DataMap) = mainScope.launch {
+        val url = dataMap.getString("URL")
+        val authCode = dataMap.getString("AuthCode")
+        val deviceName = dataMap.getString("DeviceName")
+        val deviceTrackingEnabled = dataMap.getString("LocationTracking")
+
+        urlRepository.saveUrl(url)
+        authenticationRepository.registerAuthorizationCode(authCode)
+        integrationUseCase.registerDevice(
+            DeviceRegistration(
+                "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                deviceName
+            )
+        )
+
+        sendPhoneData()
+
+        val intent = HomeActivity.newInstance(applicationContext)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(intent)
+    }
+
+    private fun saveFavorites(dataMap: DataMap) {
+        val favoritesIds: List<String> =
+            objectMapper.readValue(dataMap.getString(KEY_FAVORITES, "[]"))
+        val favoritesDao = AppDatabase.getInstance(applicationContext).favoritesDao()
+        favoritesDao.deleteAll()
+        favoritesIds.forEachIndexed { index, entityId ->
+            favoritesDao.add(Favorites(entityId, index))
+        }
+    }
+}

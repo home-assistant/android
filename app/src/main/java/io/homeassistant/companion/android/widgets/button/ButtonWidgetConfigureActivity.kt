@@ -27,25 +27,26 @@ import com.maltaisn.icondialog.data.Icon
 import com.maltaisn.icondialog.pack.IconPack
 import com.maltaisn.icondialog.pack.IconPackLoader
 import com.maltaisn.iconpack.mdi.createMaterialDesignIconPack
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.widgets.DaggerProviderComponent
+import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
-import kotlinx.android.synthetic.main.widget_button_configure.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
+@AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
@@ -61,6 +62,8 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     private var entities = HashMap<String, Entity<Any>>()
     private var dynamicFields = ArrayList<ServiceFieldBinder>()
     private lateinit var dynamicFieldAdapter: WidgetDynamicFieldAdapter
+
+    private lateinit var binding: WidgetButtonConfigureBinding
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -83,7 +86,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
 
             // Analyze and send service and domain
-            val serviceText = context.widget_text_config_service.text.toString()
+            val serviceText = binding.widgetTextConfigService.text.toString()
             val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
             val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
             intent.putExtra(
@@ -98,11 +101,11 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             // Fetch and send label and icon
             intent.putExtra(
                 ButtonWidget.EXTRA_LABEL,
-                context.label.text.toString()
+                binding.label.text.toString()
             )
             intent.putExtra(
                 ButtonWidget.EXTRA_ICON,
-                context.widget_config_icon_selector.tag as Int
+                binding.widgetConfigIconSelector.tag as Int
             )
 
             // Analyze and send service data
@@ -128,7 +131,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
-            Toast.makeText(applicationContext, R.string.widget_creation_error, Toast.LENGTH_LONG)
+            Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG)
                 .show()
         }
     }
@@ -148,7 +151,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 dynamicFields.add(
                     ServiceFieldBinder(
-                        context.widget_text_config_service.text.toString(),
+                        binding.widgetTextConfigService.text.toString(),
                         fieldKeyInput.text.toString()
                     )
                 )
@@ -226,7 +229,8 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        setContentView(R.layout.widget_button_configure)
+        binding = WidgetButtonConfigureBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         // Find the widget id from the intent.
         val intent = intent
@@ -243,22 +247,16 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             return
         }
 
-        // Inject components
-        DaggerProviderComponent.builder()
-            .appComponent((application as GraphComponentAccessor).appComponent)
-            .build()
-            .inject(this)
-
         val buttonWidgetDao = AppDatabase.getInstance(applicationContext).buttonWidgetDao()
         val buttonWidget = buttonWidgetDao.get(appWidgetId)
         var serviceText = ""
         if (buttonWidget != null) {
             serviceText = "${buttonWidget.domain}.${buttonWidget.service}"
-            widget_text_config_service.setText(serviceText)
-            label.setText(buttonWidget.label)
-            add_button.setText(R.string.update_widget)
-            delete_button.visibility = VISIBLE
-            delete_button.setOnClickListener(onDeleteWidget)
+            binding.widgetTextConfigService.setText(serviceText)
+            binding.label.setText(buttonWidget.label)
+            binding.addButton.setText(commonR.string.update_widget)
+            binding.deleteButton.visibility = VISIBLE
+            binding.deleteButton.setOnClickListener(onDeleteWidget)
         }
         // Create an icon pack loader with application context.
         val loader = IconPackLoader(this)
@@ -266,13 +264,13 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         val serviceAdapter = SingleItemArrayAdapter<Service>(this) {
             if (it != null) getServiceString(it) else ""
         }
-        widget_text_config_service.setAdapter(serviceAdapter)
-        widget_text_config_service.onFocusChangeListener = dropDownOnFocus
+        binding.widgetTextConfigService.setAdapter(serviceAdapter)
+        binding.widgetTextConfigService.onFocusChangeListener = dropDownOnFocus
 
         mainScope.launch {
             try {
                 // Fetch services
-                integrationUseCase.getServices().forEach {
+                integrationUseCase.getServices()?.forEach {
                     services[getServiceString(it)] = it
                 }
                 Log.d(TAG, "Services found: $services")
@@ -307,7 +305,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                                 dynamicFields.add(ServiceFieldBinder(serviceText, fieldKey))
                         }
                     }
-                    integrationUseCase.getEntities().forEach {
+                    integrationUseCase.getEntities()?.forEach {
                         entities[it.entityId] = it
                     }
                     dynamicFieldAdapter.notifyDataSetChanged()
@@ -323,12 +321,12 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 // Custom components can cause services to not load
                 // Display error text
                 Log.e(TAG, "Unable to load services from Home Assistant", e)
-                widget_config_service_error.visibility = VISIBLE
+                binding.widgetConfigServiceError.visibility = VISIBLE
             }
 
             try {
                 // Fetch entities
-                integrationUseCase.getEntities().forEach {
+                integrationUseCase.getEntities()?.forEach {
                     entities[it.entityId] = it
                 }
             } catch (e: Exception) {
@@ -337,14 +335,14 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             }
         }
 
-        widget_text_config_service.addTextChangedListener(serviceTextWatcher)
+        binding.widgetTextConfigService.addTextChangedListener(serviceTextWatcher)
 
-        add_field_button.setOnClickListener(onAddFieldListener)
-        add_button.setOnClickListener(onAddWidget)
+        binding.addFieldButton.setOnClickListener(onAddFieldListener)
+        binding.addButton.setOnClickListener(onAddWidget)
 
         dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
-        widget_config_fields_layout.adapter = dynamicFieldAdapter
-        widget_config_fields_layout.layoutManager = LinearLayoutManager(this)
+        binding.widgetConfigFieldsLayout.adapter = dynamicFieldAdapter
+        binding.widgetConfigFieldsLayout.layoutManager = LinearLayoutManager(this)
 
         // Do this off the main thread, takes a second or two...
         runOnUiThread {
@@ -357,7 +355,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             val iconDialog = IconDialog.newInstance(settings)
             val iconId = buttonWidget?.iconId ?: 62017
             onIconDialogIconsSelected(iconDialog, listOf(iconPack.icons[iconId]!!))
-            widget_config_icon_selector.setOnClickListener {
+            binding.widgetConfigIconSelector.setOnClickListener {
                 iconDialog.show(supportFragmentManager, ICON_DIALOG_TAG)
             }
         }
@@ -375,14 +373,14 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         Log.d(TAG, "Selected icon: ${icons.firstOrNull()}")
         val selectedIcon = icons.firstOrNull()
         if (selectedIcon != null) {
-            widget_config_icon_selector.tag = selectedIcon.id
+            binding.widgetConfigIconSelector.tag = selectedIcon.id
             val iconDrawable = selectedIcon.drawable
             if (iconDrawable != null) {
                 val icon = DrawableCompat.wrap(iconDrawable)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     DrawableCompat.setTint(icon, resources.getColor(R.color.colorIcon, theme))
                 }
-                widget_config_icon_selector.setImageBitmap(icon.toBitmap())
+                binding.widgetConfigIconSelector.setImageBitmap(icon.toBitmap())
             }
         }
     }
@@ -392,11 +390,11 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
 
         val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
 
-        builder.setTitle(R.string.confirm_delete_this_widget_title)
-        builder.setMessage(R.string.confirm_delete_this_widget_message)
+        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
+        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
 
         builder.setPositiveButton(
-            R.string.confirm_positive
+            commonR.string.confirm_positive
         ) { dialog, _ ->
             buttonWidgetDao.delete(appWidgetId)
             dialog.dismiss()
@@ -404,7 +402,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         }
 
         builder.setNegativeButton(
-            R.string.confirm_negative
+            commonR.string.confirm_negative
         ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }

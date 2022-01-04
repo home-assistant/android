@@ -18,14 +18,12 @@ import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import java.util.Calendar
 import java.util.GregorianCalendar
+import io.homeassistant.companion.android.common.R as commonR
 
 class NotificationHistoryFragment : PreferenceFragmentCompat() {
 
     companion object {
         private var filterValue = 25
-        fun newInstance(): NotificationHistoryFragment {
-            return NotificationHistoryFragment()
-        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,9 +39,9 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
             it.isVisible = true
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/notifications/notifications-basic"))
         }
-        menu.findItem(R.id.last25)?.title = getString(R.string.last_num_notifications, 25)
-        menu.findItem(R.id.last50)?.title = getString(R.string.last_num_notifications, 50)
-        menu.findItem(R.id.last100)?.title = getString(R.string.last_num_notifications, 100)
+        menu.findItem(R.id.last25)?.title = getString(commonR.string.last_num_notifications, 25)
+        menu.findItem(R.id.last50)?.title = getString(commonR.string.last_num_notifications, 50)
+        menu.findItem(R.id.last100)?.title = getString(commonR.string.last_num_notifications, 100)
 
         val prefCategory = findPreference<PreferenceCategory>("list_notifications")
         val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
@@ -70,10 +68,10 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                             if (item.message.contains(query, true))
                                 searchList += item
                         }
-                        prefCategory?.title = getString(R.string.search_results)
+                        prefCategory?.title = getString(commonR.string.search_results)
                         reloadNotifications(searchList, prefCategory)
                     } else if (query.isNullOrEmpty()) {
-                        prefCategory?.title = getString(R.string.notifications)
+                        prefCategory?.title = getString(commonR.string.notifications)
                         filterNotifications(filterValue, notificationDao, prefCategory)
                     }
                     return false
@@ -106,7 +104,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
 
-        activity?.title = getString(R.string.notifications)
+        activity?.title = getString(commonR.string.notifications)
         val notificationDao = AppDatabase.getInstance(requireContext()).notificationDao()
         val notificationList = notificationDao.getLastItems(25)
 
@@ -127,11 +125,11 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
     private fun deleteAllConfirmation(notificationDao: NotificationDao) {
         val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
 
-        builder.setTitle(R.string.confirm_delete_all_notification_title)
-        builder.setMessage(R.string.confirm_delete_all_notification_message)
+        builder.setTitle(commonR.string.confirm_delete_all_notification_title)
+        builder.setMessage(commonR.string.confirm_delete_all_notification_message)
 
         builder.setPositiveButton(
-            R.string.confirm_positive
+            commonR.string.confirm_positive
         ) { dialog, _ ->
             notificationDao.deleteAll()
             dialog.dismiss()
@@ -139,7 +137,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
         }
 
         builder.setNegativeButton(
-            R.string.confirm_negative
+            commonR.string.confirm_negative
         ) { dialog, _ -> // Do nothing
             dialog.dismiss()
         }
@@ -161,13 +159,14 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 pref.isIconSpaceReserved = false
 
                 pref.setOnPreferenceClickListener {
+                    val args = Bundle()
+                    args.putSerializable(NotificationDetailFragment.ARG_NOTIF, item)
                     parentFragmentManager
                         .beginTransaction()
                         .replace(
                             R.id.content,
-                            NotificationDetailFragment.newInstance(
-                                item
-                            )
+                            NotificationDetailFragment::class.java,
+                            args
                         )
                         .addToBackStack("Notification Detail")
                         .commit()

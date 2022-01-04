@@ -14,11 +14,12 @@ import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.ToggleRangeTemplate
 import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
+import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
 class CoverControl {
@@ -26,7 +27,8 @@ class CoverControl {
         const val SUPPORT_SET_POSITION = 4
         override fun createControl(
             context: Context,
-            entity: Entity<Map<String, Any>>
+            entity: Entity<Map<String, Any>>,
+            area: AreaRegistryResponse?
         ): Control {
             val control = Control.StatefulBuilder(
                 entity.entityId,
@@ -34,12 +36,13 @@ class CoverControl {
                     context,
                     0,
                     WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    PendingIntent.FLAG_CANCEL_CURRENT
+                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
             )
             control.setTitle(
                 (entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence
             )
+            control.setSubtitle(area?.name ?: "")
             control.setDeviceType(
                 when (entity.attributes["device_class"]) {
                     "awning" -> DeviceTypes.TYPE_AWNING
@@ -53,15 +56,15 @@ class CoverControl {
                     else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
                 }
             )
-            control.setZone(context.getString(R.string.domain_cover))
+            control.setZone(area?.name ?: context.getString(commonR.string.domain_cover))
             control.setStatus(Control.STATUS_OK)
             control.setStatusText(
                 when (entity.state) {
-                    "closed" -> context.getString(R.string.state_closed)
-                    "closing" -> context.getString(R.string.state_closing)
-                    "open" -> context.getString(R.string.state_open)
-                    "opening" -> context.getString(R.string.state_opening)
-                    "unavailable" -> context.getString(R.string.state_unavailable)
+                    "closed" -> context.getString(commonR.string.state_closed)
+                    "closing" -> context.getString(commonR.string.state_closing)
+                    "open" -> context.getString(commonR.string.state_open)
+                    "opening" -> context.getString(commonR.string.state_opening)
+                    "unavailable" -> context.getString(commonR.string.state_unavailable)
                     else -> entity.state
                 }
             )

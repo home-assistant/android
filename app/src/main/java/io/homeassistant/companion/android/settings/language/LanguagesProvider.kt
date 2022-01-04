@@ -6,9 +6,9 @@ import android.os.Build
 import android.os.LocaleList
 import android.util.DisplayMetrics
 import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.R
 import java.util.Locale
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 class LanguagesProvider @Inject constructor(
     private var langManager: LanguagesManager
@@ -42,13 +42,13 @@ class LanguagesProvider @Inject constructor(
             }
         }
 
-        val languages = mutableMapOf(resources.getString(R.string.lang_option_label_default) to resources.getString(R.string.lang_option_value_default))
+        val languages = mutableMapOf(resources.getString(commonR.string.lang_option_label_default) to resources.getString(commonR.string.lang_option_value_default))
         languages.putAll(listAppLocales)
         return languages
     }
 
     private fun getStringResource(context: Context, lang: String): String {
-        val resource = R.string.application_version
+        val resource = commonR.string.application_version
         val resources = context.resources
         val configuration = resources.configuration
 

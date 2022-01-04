@@ -18,14 +18,9 @@ import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureAc
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.template.TemplateWidgetConfigureActivity
+import io.homeassistant.companion.android.common.R as commonR
 
 class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
-
-    companion object {
-        fun newInstance(): ManageWidgetsSettingsFragment {
-            return ManageWidgetsSettingsFragment()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,7 +43,7 @@ class ManageWidgetsSettingsFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
 
-        activity?.title = getString(R.string.widgets)
+        activity?.title = getString(commonR.string.widgets)
         val staticWidgetDao = AppDatabase.getInstance(requireContext()).staticWidgetDao()
         val staticWidgetList = staticWidgetDao.getAll()
         val templateWidgetDao = AppDatabase.getInstance(requireContext()).templateWidgetDao()

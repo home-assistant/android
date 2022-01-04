@@ -4,74 +4,44 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
-import android.widget.Button
-import android.widget.EditText
-import androidx.appcompat.widget.AppCompatEditText
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
-import com.google.android.material.textfield.TextInputLayout
-import io.homeassistant.companion.android.DaggerPresenterComponent
-import io.homeassistant.companion.android.PresenterModule
+import androidx.fragment.app.activityViewModels
+import com.google.android.material.composethemeadapter.MdcTheme
+import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.dagger.GraphComponentAccessor
-import javax.inject.Inject
+import io.homeassistant.companion.android.onboarding.OnboardingViewModel
+import io.homeassistant.companion.android.onboarding.authentication.AuthenticationFragment
 
-class ManualSetupFragment : Fragment(), ManualSetupView {
+@AndroidEntryPoint
+class ManualSetupFragment : Fragment() {
 
-    companion object {
-        fun newInstance(): ManualSetupFragment {
-            return ManualSetupFragment()
-        }
-    }
+    private val viewModel by activityViewModels<OnboardingViewModel>()
 
-    @Inject
-    lateinit var presenter: ManualSetupPresenter
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        DaggerPresenterComponent
-            .builder()
-            .appComponent((activity?.application as GraphComponentAccessor).appComponent)
-            .presenterModule(PresenterModule(this))
-            .build()
-            .inject(this)
-    }
-
+    @ExperimentalComposeUiApi
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_manual_setup, container, false).apply {
-            findViewById<AppCompatEditText>(R.id.home_assistant_url).setOnEditorActionListener { _, actionId, _ ->
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    submitForm()
-                    return@setOnEditorActionListener true
+    ): View {
+        return ComposeView(requireContext()).apply {
+            setContent {
+                MdcTheme {
+                    ManualSetupView(
+                        onboardingViewModel = viewModel,
+                        connectedClicked = { connectClicked() }
+                    )
                 }
-                return@setOnEditorActionListener false
-            }
-            findViewById<Button>(R.id.ok).setOnClickListener {
-                submitForm()
             }
         }
     }
 
-    private fun View.submitForm() {
-        presenter.onClickOk(findViewById<EditText>(R.id.home_assistant_url).text.toString())
-    }
-
-    override fun urlSaved() {
-        (activity as ManualSetupListener).onSelectUrl()
-    }
-
-    override fun displayUrlError() {
-        view?.findViewById<TextInputLayout>(R.id.url_text_layout)?.error =
-            getString(R.string.url_parse_error)
-    }
-
-    override fun onDestroy() {
-        presenter.onFinish()
-        super.onDestroy()
+    private fun connectClicked() {
+        parentFragmentManager
+            .beginTransaction()
+            .replace(R.id.content, AuthenticationFragment::class.java, null)
+            .addToBackStack(null)
+            .commit()
     }
 }

@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.bluetooth
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import androidx.core.content.getSystemService
 import java.lang.reflect.Method
 
 object BluetoothUtils {
@@ -10,7 +11,7 @@ object BluetoothUtils {
         val devices: MutableList<BluetoothDevice> = ArrayList()
 
         val bluetoothManager =
-            (context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
+            context.applicationContext.getSystemService<BluetoothManager>()!!
 
         if (bluetoothManager.adapter != null) {
 
@@ -34,7 +35,7 @@ object BluetoothUtils {
     }
     fun isOn(context: Context): Boolean {
         val bluetoothManager =
-            (context.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager)
+            context.applicationContext.getSystemService<BluetoothManager>()!!
 
         if (bluetoothManager.adapter != null) {
             val adapter = bluetoothManager.adapter
