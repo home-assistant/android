@@ -96,7 +96,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./wear/build/outputs/apk/release/wear-release.apk
           asset_name: home-assistant-wear-${{steps.rel_number.outputs.version}}.apk
           asset_content_type: application/zip
