@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.sensors
 
 import android.app.AlarmManager
 import android.content.Context
+import android.os.Build
 import android.util.Log
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Setting
@@ -29,6 +31,9 @@ class NextAlarmManager : SensorManager {
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#next-alarm-sensor"
+    }
+    override fun hasSensor(context: Context): Boolean {
+        return BuildConfig.FLAVOR != "quest"
     }
     override val enabledByDefault: Boolean
         get() = false

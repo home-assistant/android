@@ -142,6 +142,7 @@ class SettingsFragment constructor(
         }
 
         findPreference<PreferenceCategory>("widgets")?.isVisible = BuildConfig.FLAVOR != "quest"
+        findPreference<PreferenceCategory>("security_category")?.isVisible = BuildConfig.FLAVOR != "quest"
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
