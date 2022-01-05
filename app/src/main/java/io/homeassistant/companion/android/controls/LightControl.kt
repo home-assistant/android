@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.controls
 
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
@@ -17,7 +15,6 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -27,38 +24,16 @@ class LightControl {
         private const val SUPPORT_BRIGHTNESS = 1
         private val NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
 
-        override fun createControl(
+        override fun provideControlFeatures(
             context: Context,
+            control: Control.StatefulBuilder,
             entity: Entity<Map<String, Any>>,
             area: AreaRegistryResponse?
-        ): Control {
-            val control = Control.StatefulBuilder(
-                entity.entityId,
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-            )
-
+        ): Control.StatefulBuilder {
             // On HA Core 2021.5 and later brightness detection has changed
             // to simplify things in the app lets use both methods for now
             val supportedColorModes = entity.attributes["supported_color_modes"] as? List<String>
             val supportsBrightness = if (supportedColorModes == null) false else (supportedColorModes - NO_BRIGHTNESS_SUPPORT).isNotEmpty()
-            control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
-            control.setSubtitle(area?.name ?: "")
-            control.setDeviceType(DeviceTypes.TYPE_LIGHT)
-            control.setZone(area?.name ?: context.getString(commonR.string.domain_light))
-            control.setStatus(Control.STATUS_OK)
-            control.setStatusText(
-                when (entity.state) {
-                    "off" -> context.getString(commonR.string.state_off)
-                    "on" -> context.getString(commonR.string.state_on)
-                    "unavailable" -> context.getString(commonR.string.state_unavailable)
-                    else -> context.getString(commonR.string.state_unknown)
-                }
-            )
             val minValue = 0f
             val maxValue = 100f
             var currentValue = (entity.attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100) ?: 0f
@@ -90,8 +65,14 @@ class LightControl {
                         )
                     )
             )
-            return control.build()
+            return control
         }
+
+        override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+            DeviceTypes.TYPE_LIGHT
+
+        override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+            context.getString(commonR.string.domain_light)
 
         override fun performAction(
             integrationRepository: IntegrationRepository,
