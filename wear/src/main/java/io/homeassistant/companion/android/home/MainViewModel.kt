@@ -110,10 +110,10 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         entitiesNotInAreas.clear()
         entitiesList.forEach { entity ->
             areaForEntity[entity.entityId]?.let {
-                if(!areasList.contains(it)) {
+                if (!areasList.contains(it)) {
                     areasList.add(it)
                 }
-                if(areaEntitiesList[it.name] == null) {
+                if (areaEntitiesList[it.name] == null) {
                     areaEntitiesList[it.name] = mutableListOf(entity)
                 } else {
                     areaEntitiesList[it.name]!!.add(entity)

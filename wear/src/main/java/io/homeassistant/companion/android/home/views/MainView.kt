@@ -161,11 +161,11 @@ fun MainView(
                     }
                 }
 
-                if(mainViewModel.areas.isNotEmpty()) {
+                if (mainViewModel.areas.isNotEmpty()) {
                     item {
                         ListHeader(id = commonR.string.areas)
                     }
-                    for(area in mainViewModel.areas) {
+                    for (area in mainViewModel.areas) {
                         item {
                             Chip(
                                 modifier = Modifier.fillMaxWidth(),
@@ -185,7 +185,7 @@ fun MainView(
                     }
                 }
 
-                if(mainViewModel.entitiesNotInAreas.isNotEmpty()) {
+                if (mainViewModel.entitiesNotInAreas.isNotEmpty()) {
                     item {
                         ListHeader(id = commonR.string.more_entities)
                     }
@@ -319,7 +319,7 @@ fun MainView(
                 }
 
                 // All entities regardless of area
-                if(mainViewModel.entities.isNotEmpty()) {
+                if (mainViewModel.entities.isNotEmpty()) {
                     item {
                         Chip(
                             modifier = Modifier
