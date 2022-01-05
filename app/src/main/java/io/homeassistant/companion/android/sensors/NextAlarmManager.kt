@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.sensors
 
 import android.app.AlarmManager
 import android.content.Context
-import android.os.Build
 import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.SensorManager
