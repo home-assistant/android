@@ -214,7 +214,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
-            val deviceUa = settings.userAgentString;
+            val deviceUa = settings.userAgentString
             settings.userAgentString = deviceUa + USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
 
             webViewClient = object : WebViewClient() {
