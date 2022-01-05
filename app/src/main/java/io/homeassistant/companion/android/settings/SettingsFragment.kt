@@ -126,12 +126,18 @@ class SettingsFragment constructor(
 
         updateBackgroundAccessPref()
 
-        findPreference<EditTextPreference>("connection_internal")?.onPreferenceChangeListener =
-            onChangeUrlValidator
+        findPreference<SsidPreference>("connection_internal_ssids")?.isVisible = BuildConfig.FLAVOR != "quest"
+
+        findPreference<EditTextPreference>("connection_internal")?.let {
+            it.isVisible = BuildConfig.FLAVOR != "quest"
+            it.onPreferenceChangeListener =
+                onChangeUrlValidator
+        }
 
         findPreference<EditTextPreference>("connection_external")?.onPreferenceChangeListener =
             onChangeUrlValidator
 
+        findPreference<SwitchPreference>("prioritize_internal")?.isVisible = BuildConfig.FLAVOR != "quest"
         findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
