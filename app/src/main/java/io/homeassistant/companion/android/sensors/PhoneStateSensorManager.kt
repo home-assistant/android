@@ -6,6 +6,7 @@ import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -45,7 +46,9 @@ class PhoneStateSensorManager : SensorManager {
         get() = false
     override val name: Int
         get() = commonR.string.sensor_name_phone
-
+    override fun hasSensor(context: Context): Boolean {
+        return BuildConfig.FLAVOR != "quest"
+    }
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
             listOf(phoneState, sim_1, sim_2)
