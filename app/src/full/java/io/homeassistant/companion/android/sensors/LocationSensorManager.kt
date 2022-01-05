@@ -153,7 +153,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         } else {
             //定位失败时，可通过ErrCode（错误码）信息来确定失败的原因，errInfo是错误信息，详见错误码表。
             Log.e(
-                "AmapError", "Location Error, ErrCode:"
+                TAG, "Location Error, ErrCode:"
                         + location.errorCode + ", errInfo:"
                         + location.errorInfo
             )
@@ -304,6 +304,9 @@ class LocationSensorManager : LocationSensorManagerBase() {
             return
         }
 
+        AMapLocationClient.updatePrivacyShow(latestContext, true, true);
+        AMapLocationClient.updatePrivacyAgree(latestContext, true);
+
         mLocationClient = AMapLocationClient(latestContext)
 
 //        val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
@@ -360,7 +363,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             accuracy = location.accuracy.toInt()
         }
         val updateLocation = UpdateLocation(
-           // name,
+            // name,
             arrayOf(location.latitude, location.longitude),
             accuracy,
             location.speed.toInt(),
