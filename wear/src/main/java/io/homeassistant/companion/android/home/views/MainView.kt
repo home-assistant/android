@@ -53,7 +53,7 @@ fun MainView(
     favoriteEntityIds: List<String>,
     onEntityClicked: (String, String) -> Unit,
     onSettingsClicked: () -> Unit,
-    onTestClicked: (entityLists: Map<Int, List<Entity<*>>>) -> Unit,
+    onTestClicked: (entityLists: Map<String, List<Entity<*>>>) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
     deleteFavorite: (String) -> Unit
@@ -159,39 +159,37 @@ fun MainView(
                             )
                         }
                     }
-                } else {
+                }
+
+                if(mainViewModel.areas.isNotEmpty()) {
                     item {
-                        ListHeader(id = commonR.string.more_entities)
+                        ListHeader(id = commonR.string.areas)
                     }
-                    item {
-                        Chip(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            icon = {
-                                Image(
-                                    asset = CommunityMaterial.Icon.cmd_animation
-                                )
-                            },
-                            label = {
-                                Text(text = stringResource(commonR.string.all_entities))
-                            },
-                            onClick = {
-                                onTestClicked(
-                                    mapOf(
-                                        commonR.string.scenes to mainViewModel.scenes,
-                                        commonR.string.input_booleans to mainViewModel.inputBooleans,
-                                        commonR.string.lights to mainViewModel.lights,
-                                        commonR.string.locks to mainViewModel.locks,
-                                        commonR.string.scripts to mainViewModel.scripts,
-                                        commonR.string.switches to mainViewModel.switches
+                    for(area in mainViewModel.areas) {
+                        item {
+                            Chip(
+                                modifier = Modifier.fillMaxWidth(),
+                                label = {
+                                    Text(text = area.name)
+                                },
+                                onClick = {
+                                    onTestClicked(
+                                        mapOf(
+                                            area.name to mainViewModel.areaEntities[area.name]!!
+                                        )
                                     )
-                                )
-                            },
-                            colors = ChipDefaults.primaryChipColors()
-                        )
+                                },
+                                colors = ChipDefaults.primaryChipColors()
+                            )
+                        }
                     }
                 }
 
+                if(mainViewModel.entitiesNotInAreas.isNotEmpty()) {
+                    item {
+                        ListHeader(id = commonR.string.more_entities)
+                    }
+                }
                 // Buttons for each existing category
                 if (mainViewModel.inputBooleans.isNotEmpty()) {
                     item {
@@ -206,7 +204,7 @@ fun MainView(
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        commonR.string.input_booleans to mainViewModel.inputBooleans
+                                        context.getString(commonR.string.input_booleans) to mainViewModel.inputBooleans
                                     )
                                 )
                             },
@@ -227,7 +225,7 @@ fun MainView(
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        commonR.string.lights to mainViewModel.lights
+                                        context.getString(commonR.string.lights) to mainViewModel.lights
                                     )
                                 )
                             },
@@ -248,7 +246,7 @@ fun MainView(
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        commonR.string.locks to mainViewModel.locks
+                                        context.getString(commonR.string.locks) to mainViewModel.locks
                                     )
                                 )
                             },
@@ -269,7 +267,7 @@ fun MainView(
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        commonR.string.scenes to mainViewModel.scenes
+                                        context.getString(commonR.string.scenes) to mainViewModel.scenes
                                     )
                                 )
                             },
@@ -290,7 +288,7 @@ fun MainView(
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        commonR.string.scripts to mainViewModel.scripts
+                                        context.getString(commonR.string.scripts) to mainViewModel.scripts
                                     )
                                 )
                             },
@@ -311,7 +309,7 @@ fun MainView(
                             onClick = {
                                 onTestClicked(
                                     mapOf(
-                                        commonR.string.switches to mainViewModel.switches
+                                        context.getString(commonR.string.switches) to mainViewModel.switches
                                     )
                                 )
                             },
@@ -320,12 +318,43 @@ fun MainView(
                     }
                 }
 
+                // All entities regardless of area
+                if(mainViewModel.entities.isNotEmpty()) {
+                    item {
+                        Chip(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 32.dp),
+                            icon = {
+                                Image(
+                                    asset = CommunityMaterial.Icon.cmd_animation
+                                )
+                            },
+                            label = {
+                                Text(text = stringResource(commonR.string.all_entities))
+                            },
+                            onClick = {
+                                onTestClicked(
+                                    mapOf(
+                                        context.getString(commonR.string.scenes) to mainViewModel.scenes,
+                                        context.getString(commonR.string.input_booleans) to mainViewModel.inputBooleans,
+                                        context.getString(commonR.string.lights) to mainViewModel.lights,
+                                        context.getString(commonR.string.locks) to mainViewModel.locks,
+                                        context.getString(commonR.string.scripts) to mainViewModel.scripts,
+                                        context.getString(commonR.string.switches) to mainViewModel.switches
+                                    )
+                                )
+                            },
+                            colors = ChipDefaults.secondaryChipColors()
+                        )
+                    }
+                }
+
                 // Settings
                 item {
                     Chip(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 32.dp),
+                            .fillMaxWidth(),
                         icon = {
                             Image(
                                 asset = CommunityMaterial.Icon.cmd_cog,

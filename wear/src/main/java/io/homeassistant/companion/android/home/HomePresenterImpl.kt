@@ -7,18 +7,20 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@ExperimentalCoroutinesApi
 class HomePresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationRepository,
-    private val integrationUseCase: IntegrationRepository
+    private val integrationUseCase: IntegrationRepository,
+    private val webSocketUseCase: WebSocketRepository
 ) : HomePresenter {
 
     companion object {
@@ -110,6 +112,18 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun isConnected(): Boolean {
         return integrationUseCase.isRegistered()
+    }
+
+    override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
+        return webSocketUseCase.getAreaRegistry()
+    }
+
+    override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
+        return webSocketUseCase.getDeviceRegistry()
+    }
+
+    override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
+        return webSocketUseCase.getEntityRegistry()
     }
 
     override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
