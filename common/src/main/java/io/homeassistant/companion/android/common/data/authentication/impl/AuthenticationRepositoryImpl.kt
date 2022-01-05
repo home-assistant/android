@@ -32,7 +32,9 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun initiateLoginFlow(): LoginFlowInit {
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull().toString()
         return authenticationService.initializeLogin(
+            url + "auth/login_flow",
             LoginFlowRequest(
                 AuthenticationService.CLIENT_ID,
                 AuthenticationService.AUTH_CALLBACK,
@@ -42,8 +44,9 @@ class AuthenticationRepositoryImpl @Inject constructor(
     }
 
     override suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowCreateEntry {
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull().toString()
         return authenticationService.authenticate(
-            AuthenticationService.AUTHENTICATE_BASE_PATH + flowId,
+            url + AuthenticationService.AUTHENTICATE_BASE_PATH + flowId,
             LoginFlowAuthentication(
                 AuthenticationService.CLIENT_ID,
                 username,
