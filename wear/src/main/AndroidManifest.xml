@@ -80,6 +80,9 @@
             <intent-filter>
                 <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
             </intent-filter>
+
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/template_tile_example" />
         </service>
         <receiver android:name=".tiles.TileActionReceiver"
             android:exported="false">
