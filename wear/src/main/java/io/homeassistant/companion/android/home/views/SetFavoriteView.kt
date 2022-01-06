@@ -79,7 +79,7 @@ fun SetFavoritesView(
                 item {
                     ListHeader(id = commonR.string.set_favorite)
                 }
-                if (mainViewModel.inputBooleans.isNotEmpty()) {
+                if (mainViewModel.entitiesByDomain["input_boolean"].orEmpty().isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = commonR.string.input_booleans,
@@ -88,9 +88,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedInputBooleans) {
-                        items(mainViewModel.inputBooleans.size) { index ->
+                        items(mainViewModel.entitiesByDomain["input_boolean"].orEmpty().size) { index ->
                             FavoriteToggleChip(
-                                entityList = mainViewModel.inputBooleans,
+                                entityList = mainViewModel.entitiesByDomain["input_boolean"].orEmpty(),
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -99,7 +99,7 @@ fun SetFavoritesView(
                     }
                 }
 
-                if (mainViewModel.lights.isNotEmpty()) {
+                if (mainViewModel.entitiesByDomain["light"].orEmpty().isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = commonR.string.lights,
@@ -108,9 +108,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedLights) {
-                        items(mainViewModel.lights.size) { index ->
+                        items(mainViewModel.entitiesByDomain["light"].orEmpty().size) { index ->
                             FavoriteToggleChip(
-                                entityList = mainViewModel.lights,
+                                entityList = mainViewModel.entitiesByDomain["light"].orEmpty(),
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -119,7 +119,7 @@ fun SetFavoritesView(
                     }
                 }
 
-                if (mainViewModel.locks.isNotEmpty()) {
+                if (mainViewModel.entitiesByDomain["lock"].orEmpty().isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = commonR.string.locks,
@@ -128,9 +128,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedLocks) {
-                        items(mainViewModel.locks.size) { index ->
+                        items(mainViewModel.entitiesByDomain["lock"].orEmpty().size) { index ->
                             FavoriteToggleChip(
-                                entityList = mainViewModel.locks,
+                                entityList = mainViewModel.entitiesByDomain["lock"].orEmpty(),
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -139,7 +139,7 @@ fun SetFavoritesView(
                     }
                 }
 
-                if (mainViewModel.scenes.isNotEmpty()) {
+                if (mainViewModel.entitiesByDomain["scene"].orEmpty().isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = commonR.string.scenes,
@@ -148,9 +148,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedScenes) {
-                        items(mainViewModel.scenes.size) { index ->
+                        items(mainViewModel.entitiesByDomain["scene"].orEmpty().size) { index ->
                             FavoriteToggleChip(
-                                entityList = mainViewModel.scenes,
+                                entityList = mainViewModel.entitiesByDomain["scene"].orEmpty(),
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -159,7 +159,7 @@ fun SetFavoritesView(
                     }
                 }
 
-                if (mainViewModel.scripts.isNotEmpty()) {
+                if (mainViewModel.entitiesByDomain["script"].orEmpty().isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = commonR.string.scripts,
@@ -168,9 +168,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedScripts) {
-                        items(mainViewModel.scripts.size) { index ->
+                        items(mainViewModel.entitiesByDomain["script"].orEmpty().size) { index ->
                             FavoriteToggleChip(
-                                entityList = mainViewModel.scripts,
+                                entityList = mainViewModel.entitiesByDomain["script"].orEmpty(),
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected
@@ -179,7 +179,7 @@ fun SetFavoritesView(
                     }
                 }
 
-                if (mainViewModel.switches.isNotEmpty()) {
+                if (mainViewModel.entitiesByDomain["switch"].orEmpty().isNotEmpty()) {
                     item {
                         ListHeader(
                             stringId = commonR.string.switches,
@@ -188,9 +188,9 @@ fun SetFavoritesView(
                         )
                     }
                     if (expandedSwitches) {
-                        items(mainViewModel.switches.size) { index ->
+                        items(mainViewModel.entitiesByDomain["switch"].orEmpty().size) { index ->
                             FavoriteToggleChip(
-                                entityList = mainViewModel.switches,
+                                entityList = mainViewModel.entitiesByDomain["switch"].orEmpty(),
                                 index = index,
                                 favoriteEntityIds = favoriteEntityIds,
                                 onFavoriteSelected = onFavoriteSelected

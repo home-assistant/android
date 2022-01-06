@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@ExperimentalCoroutinesApi
 class HomePresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationRepository,
     private val integrationUseCase: IntegrationRepository,
@@ -119,14 +118,17 @@ class HomePresenterImpl @Inject constructor(
         return integrationUseCase.isRegistered()
     }
 
+    @ExperimentalCoroutinesApi
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
         return webSocketUseCase.getAreaRegistry()
     }
 
+    @ExperimentalCoroutinesApi
     override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
         return webSocketUseCase.getDeviceRegistry()
     }
 
+    @ExperimentalCoroutinesApi
     override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
         return webSocketUseCase.getEntityRegistry()
     }

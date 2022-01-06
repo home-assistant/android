@@ -4,9 +4,10 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -161,21 +162,55 @@ fun MainView(
                     }
                 }
 
-                if (mainViewModel.areas.isNotEmpty()) {
+                if (mainViewModel.entitiesByArea.values.any { it.isNotEmpty() }) {
                     item {
                         ListHeader(id = commonR.string.areas)
                     }
-                    for (area in mainViewModel.areas) {
+                    for ((id, entities) in mainViewModel.entitiesByArea) {
+                        if (entities.isNotEmpty()) {
+                            val area = mainViewModel.areas.first { it.areaId == id }
+                            item {
+                                Chip(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    label = {
+                                        Text(text = area.name)
+                                    },
+                                    onClick = {
+                                        onTestClicked(
+                                            mapOf(
+                                                area.name to mainViewModel.entitiesByArea[id]!!
+                                            )
+                                        )
+                                    },
+                                    colors = ChipDefaults.primaryChipColors()
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (mainViewModel.entities.values.any { mainViewModel.getAreaForEntity(it.entityId) == null }) {
+                    item {
+                        ListHeader(id = commonR.string.more_entities)
+                    }
+                }
+                // Buttons for each existing category
+                for ((domain, entities) in mainViewModel.entitiesByDomain) {
+                    val domainEntitiesNotInArea = entities.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
+                    if (domainEntitiesNotInArea.isNotEmpty()) {
                         item {
                             Chip(
                                 modifier = Modifier.fillMaxWidth(),
+                                icon = {
+                                    getIcon("", domain, context)?.let { Image(asset = it) }
+                                },
                                 label = {
-                                    Text(text = area.name)
+                                    Text(text = mainViewModel.nameForDomain[domain]!!)
                                 },
                                 onClick = {
                                     onTestClicked(
                                         mapOf(
-                                            area.name to mainViewModel.areaEntities[area.name]!!
+                                            mainViewModel.nameForDomain[domain]!! to mainViewModel.entitiesByDomain[domain]!!.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
                                         )
                                     )
                                 },
@@ -185,146 +220,15 @@ fun MainView(
                     }
                 }
 
-                if (mainViewModel.entitiesNotInAreas.isNotEmpty()) {
-                    item {
-                        ListHeader(id = commonR.string.more_entities)
-                    }
+                item {
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
-                // Buttons for each existing category
-                if (mainViewModel.inputBooleans.isNotEmpty()) {
-                    item {
-                        Chip(
-                            modifier = Modifier.fillMaxWidth(),
-                            icon = {
-                                getIcon("", "input_boolean", context)?.let { Image(asset = it) }
-                            },
-                            label = {
-                                Text(text = stringResource(commonR.string.input_booleans))
-                            },
-                            onClick = {
-                                onTestClicked(
-                                    mapOf(
-                                        context.getString(commonR.string.input_booleans) to mainViewModel.inputBooleans
-                                    )
-                                )
-                            },
-                            colors = ChipDefaults.primaryChipColors()
-                        )
-                    }
-                }
-                if (mainViewModel.lights.isNotEmpty()) {
-                    item {
-                        Chip(
-                            modifier = Modifier.fillMaxWidth(),
-                            icon = {
-                                getIcon("", "light", context)?.let { Image(asset = it) }
-                            },
-                            label = {
-                                Text(text = stringResource(commonR.string.lights))
-                            },
-                            onClick = {
-                                onTestClicked(
-                                    mapOf(
-                                        context.getString(commonR.string.lights) to mainViewModel.lights
-                                    )
-                                )
-                            },
-                            colors = ChipDefaults.primaryChipColors()
-                        )
-                    }
-                }
-                if (mainViewModel.locks.isNotEmpty()) {
-                    item {
-                        Chip(
-                            modifier = Modifier.fillMaxWidth(),
-                            icon = {
-                                getIcon("", "lock", context)?.let { Image(asset = it) }
-                            },
-                            label = {
-                                Text(text = stringResource(commonR.string.locks))
-                            },
-                            onClick = {
-                                onTestClicked(
-                                    mapOf(
-                                        context.getString(commonR.string.locks) to mainViewModel.locks
-                                    )
-                                )
-                            },
-                            colors = ChipDefaults.primaryChipColors()
-                        )
-                    }
-                }
-                if (mainViewModel.scenes.isNotEmpty()) {
-                    item {
-                        Chip(
-                            modifier = Modifier.fillMaxWidth(),
-                            icon = {
-                                getIcon("", "scene", context)?.let { Image(asset = it) }
-                            },
-                            label = {
-                                Text(text = stringResource(commonR.string.scenes))
-                            },
-                            onClick = {
-                                onTestClicked(
-                                    mapOf(
-                                        context.getString(commonR.string.scenes) to mainViewModel.scenes
-                                    )
-                                )
-                            },
-                            colors = ChipDefaults.primaryChipColors()
-                        )
-                    }
-                }
-                if (mainViewModel.scripts.isNotEmpty()) {
-                    item {
-                        Chip(
-                            modifier = Modifier.fillMaxWidth(),
-                            icon = {
-                                getIcon("", "script", context)?.let { Image(asset = it) }
-                            },
-                            label = {
-                                Text(text = stringResource(commonR.string.scripts))
-                            },
-                            onClick = {
-                                onTestClicked(
-                                    mapOf(
-                                        context.getString(commonR.string.scripts) to mainViewModel.scripts
-                                    )
-                                )
-                            },
-                            colors = ChipDefaults.primaryChipColors()
-                        )
-                    }
-                }
-                if (mainViewModel.switches.isNotEmpty()) {
-                    item {
-                        Chip(
-                            modifier = Modifier.fillMaxWidth(),
-                            icon = {
-                                getIcon("", "switch", context)?.let { Image(asset = it) }
-                            },
-                            label = {
-                                Text(text = stringResource(commonR.string.switches))
-                            },
-                            onClick = {
-                                onTestClicked(
-                                    mapOf(
-                                        context.getString(commonR.string.switches) to mainViewModel.switches
-                                    )
-                                )
-                            },
-                            colors = ChipDefaults.primaryChipColors()
-                        )
-                    }
-                }
-
                 // All entities regardless of area
                 if (mainViewModel.entities.isNotEmpty()) {
                     item {
                         Chip(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 32.dp),
+                                .fillMaxWidth(),
                             icon = {
                                 Image(
                                     asset = CommunityMaterial.Icon.cmd_animation
@@ -335,14 +239,7 @@ fun MainView(
                             },
                             onClick = {
                                 onTestClicked(
-                                    mapOf(
-                                        context.getString(commonR.string.scenes) to mainViewModel.scenes,
-                                        context.getString(commonR.string.input_booleans) to mainViewModel.inputBooleans,
-                                        context.getString(commonR.string.lights) to mainViewModel.lights,
-                                        context.getString(commonR.string.locks) to mainViewModel.locks,
-                                        context.getString(commonR.string.scripts) to mainViewModel.scripts,
-                                        context.getString(commonR.string.switches) to mainViewModel.switches
-                                    )
+                                    mainViewModel.entitiesByDomain.mapKeys { mainViewModel.nameForDomain[it.key]!! }
                                 )
                             },
                             colors = ChipDefaults.secondaryChipColors()

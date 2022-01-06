@@ -84,7 +84,7 @@ fun ChooseEntityView(
                     )
                 )
             }
-            if (mainViewModel.inputBooleans.isNotEmpty()) {
+            if (mainViewModel.entitiesByDomain["input_boolean"].orEmpty().isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = commonR.string.input_booleans,
@@ -93,16 +93,16 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedInputBooleans) {
-                    items(mainViewModel.inputBooleans.size) { index ->
+                    items(mainViewModel.entitiesByDomain["input_boolean"].orEmpty().size) { index ->
                         ChooseEntityChip(
-                            entityList = mainViewModel.inputBooleans,
+                            entityList = mainViewModel.entitiesByDomain["input_boolean"].orEmpty(),
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-            if (mainViewModel.locks.isNotEmpty()) {
+            if (mainViewModel.entitiesByDomain["lock"].orEmpty().isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = commonR.string.locks,
@@ -111,16 +111,16 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedLocks) {
-                    items(mainViewModel.locks.size) { index ->
+                    items(mainViewModel.entitiesByDomain["lock"].orEmpty().size) { index ->
                         ChooseEntityChip(
-                            entityList = mainViewModel.locks,
+                            entityList = mainViewModel.entitiesByDomain["lock"].orEmpty(),
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-            if (mainViewModel.lights.isNotEmpty()) {
+            if (mainViewModel.entitiesByDomain["light"].orEmpty().isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = commonR.string.lights,
@@ -129,16 +129,16 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedLights) {
-                    items(mainViewModel.lights.size) { index ->
+                    items(mainViewModel.entitiesByDomain["light"].orEmpty().size) { index ->
                         ChooseEntityChip(
-                            entityList = mainViewModel.lights,
+                            entityList = mainViewModel.entitiesByDomain["light"].orEmpty(),
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-            if (mainViewModel.scenes.isNotEmpty()) {
+            if (mainViewModel.entitiesByDomain["scene"].orEmpty().isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = commonR.string.scenes,
@@ -147,16 +147,16 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedScenes) {
-                    items(mainViewModel.scenes.size) { index ->
+                    items(mainViewModel.entitiesByDomain["scene"].orEmpty().size) { index ->
                         ChooseEntityChip(
-                            entityList = mainViewModel.scenes,
+                            entityList = mainViewModel.entitiesByDomain["scene"].orEmpty(),
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-            if (mainViewModel.scripts.isNotEmpty()) {
+            if (mainViewModel.entitiesByDomain["script"].orEmpty().isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = commonR.string.scripts,
@@ -165,16 +165,16 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedScripts) {
-                    items(mainViewModel.scripts.size) { index ->
+                    items(mainViewModel.entitiesByDomain["script"].orEmpty().size) { index ->
                         ChooseEntityChip(
-                            entityList = mainViewModel.scripts,
+                            entityList = mainViewModel.entitiesByDomain["script"].orEmpty(),
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
                     }
                 }
             }
-            if (mainViewModel.switches.isNotEmpty()) {
+            if (mainViewModel.entitiesByDomain["switch"].orEmpty().isNotEmpty()) {
                 item {
                     ListHeader(
                         stringId = commonR.string.switches,
@@ -183,9 +183,9 @@ fun ChooseEntityView(
                     )
                 }
                 if (expandedSwitches) {
-                    items(mainViewModel.switches.size) { index ->
+                    items(mainViewModel.entitiesByDomain["switch"].orEmpty().size) { index ->
                         ChooseEntityChip(
-                            entityList = mainViewModel.switches,
+                            entityList = mainViewModel.entitiesByDomain["switch"].orEmpty(),
                             index = index,
                             onEntitySelected = onEntitySelected
                         )
