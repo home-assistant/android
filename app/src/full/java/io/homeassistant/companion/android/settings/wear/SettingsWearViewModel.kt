@@ -44,6 +44,7 @@ class SettingsWearViewModel @Inject constructor(
         private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
         private const val KEY_FAVORITES = "favorites"
         private const val KEY_TEMPLATE_TILE = "templateTile"
+        private const val KEY_TEMPLATE_TILE_REFRESH_INTERVAL = "templateTileRefreshInterval"
     }
 
     private val objectMapper = jacksonObjectMapper()
@@ -57,6 +58,8 @@ class SettingsWearViewModel @Inject constructor(
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
     var templateTileContent = mutableStateOf("")
+        private set
+    var templateTileRefreshInterval = mutableStateOf(0)
         private set
 
     init {
@@ -159,9 +162,10 @@ class SettingsWearViewModel @Inject constructor(
         }
     }
 
-    fun sendTemplateTile(content: String) {
+    fun sendTemplateTileInfo() {
         val putDataRequest = PutDataMapRequest.create("/updateTemplateTile").run {
-            dataMap.putString(KEY_TEMPLATE_TILE, content)
+            dataMap.putString(KEY_TEMPLATE_TILE, templateTileContent.value)
+            dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, templateTileRefreshInterval.value)
             setUrgent()
             asPutDataRequest()
         }
@@ -197,6 +201,7 @@ class SettingsWearViewModel @Inject constructor(
             favoriteEntityIds.add(entityId)
         }
         templateTileContent.value = data.getString(KEY_TEMPLATE_TILE, "")
+        templateTileRefreshInterval.value = data.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
         hasData.value = true
     }
 }

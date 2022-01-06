@@ -51,6 +51,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
         private const val KEY_FAVORITES = "favorites"
         private const val KEY_TEMPLATE_TILE = "templateTile"
+        private const val KEY_TEMPLATE_TILE_REFRESH_INTERVAL = "templateTileRefreshInterval"
     }
 
     override fun onMessageReceived(event: MessageEvent) {
@@ -68,6 +69,7 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
             dataMap.putBoolean(KEY_IS_AUTHENTICATED, integrationUseCase.isRegistered())
             dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites.map { it.id }))
             dataMap.putString(KEY_TEMPLATE_TILE, integrationUseCase.getTemplateTileContent())
+            dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, integrationUseCase.getTemplateTileRefreshInterval())
             setUrgent()
             asPutDataRequest()
         }
@@ -134,6 +136,8 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
     private fun saveTileTemplate(dataMap: DataMap) = mainScope.launch {
         val content = dataMap.getString(KEY_TEMPLATE_TILE, "")
+        val interval = dataMap.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
         integrationUseCase.setTemplateTileContent(content)
+        integrationUseCase.setTemplateTileRefreshInterval(interval)
     }
 }
