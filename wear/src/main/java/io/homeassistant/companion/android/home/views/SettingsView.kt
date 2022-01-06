@@ -49,8 +49,7 @@ fun SettingsView(
     isToastEnabled: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
     onToastEnabled: (Boolean) -> Unit,
-    templateTileContent: String,
-    onTemplateTileContentChanged: (String) -> Unit
+    onClickTemplateTile: () -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     LocalView.current.requestFocus()
@@ -203,16 +202,21 @@ fun SettingsView(
                     )
                 }
                 item {
-                    EditTextChip(
-                        stringResource(commonR.string.template_tile_content),
-                        templateTileContent,
-                        {
+                    Chip(
+                        modifier = Modifier.fillMaxWidth(),
+                        icon = {
                             Image(
                                 asset = CommunityMaterial.Icon3.cmd_text_box,
                                 colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
                             )
                         },
-                        onTemplateTileContentChanged
+                        colors = ChipDefaults.secondaryChipColors(),
+                        label = {
+                            Text(
+                                text = stringResource(id = commonR.string.template_tile_content)
+                            )
+                        },
+                        onClick = onClickTemplateTile
                     )
                 }
 
@@ -261,7 +265,6 @@ private fun PreviewSettingsView() {
         isToastEnabled = false,
         {},
         {},
-        templateTileContent = "",
         {}
     )
 }

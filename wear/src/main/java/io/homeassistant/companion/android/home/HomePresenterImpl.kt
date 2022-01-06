@@ -143,4 +143,12 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun setTemplateTileContent(content: String) {
         integrationUseCase.setTemplateTileContent(content)
     }
+
+    override suspend fun getTemplateTileRefreshInterval(): Int {
+        return integrationUseCase.getTemplateTileRefreshInterval()
+    }
+
+    override suspend fun setTemplateTileRefreshInterval(interval: Int) {
+        integrationUseCase.setTemplateTileRefreshInterval(interval)
+    }
 }

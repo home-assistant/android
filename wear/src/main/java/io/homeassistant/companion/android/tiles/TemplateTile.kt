@@ -46,7 +46,9 @@ class TemplateTile : TileService() {
 
             Tile.Builder()
                 .setResourcesVersion("1")
-                // .setFreshnessIntervalMillis(60 * 60 * 1000) // 60 minutes
+                .setFreshnessIntervalMillis(
+                    integrationUseCase.getTemplateTileRefreshInterval().toLong() * 60 * 1000
+                )
                 .setTimeline(
                     Timeline.Builder().addTimelineEntry(
                         TimelineEntry.Builder().setLayout(

@@ -37,6 +37,8 @@ interface IntegrationRepository {
     suspend fun setTileShortcuts(entities: List<String>)
     suspend fun getTemplateTileContent(): String
     suspend fun setTemplateTileContent(content: String)
+    suspend fun getTemplateTileRefreshInterval(): Int
+    suspend fun setTemplateTileRefreshInterval(interval: Int)
     suspend fun setWearHapticFeedback(enabled: Boolean)
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearToastConfirmation(enabled: Boolean)

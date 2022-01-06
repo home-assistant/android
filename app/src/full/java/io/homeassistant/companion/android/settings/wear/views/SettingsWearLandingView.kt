@@ -84,7 +84,7 @@ fun SettingWearLandingView(
                             .fillMaxWidth()
                             .padding(top = 10.dp, end = 10.dp)
                     ) {
-                        Text(stringResource(commonR.string.template_tile_content))
+                        Text(stringResource(commonR.string.template_tile))
                     }
                 }
                 else -> {

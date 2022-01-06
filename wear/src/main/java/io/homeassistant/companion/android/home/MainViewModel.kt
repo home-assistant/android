@@ -61,6 +61,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         private set
     var templateTileContent = mutableStateOf("")
         private set
+    var templateTileRefreshInterval = mutableStateOf(0)
+        private set
 
     private fun favorites(): Flow<List<Favorites>>? = favoritesDao.getAllFlow()
 
@@ -73,6 +75,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
             templateTileContent.value = homePresenter.getTemplateTileContent()
+            templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
             homePresenter.getEntities()?.forEach {
                 entities[it.entityId] = it
             }
@@ -160,6 +163,13 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         viewModelScope.launch {
             homePresenter.setTemplateTileContent(content)
             templateTileContent.value = content
+        }
+    }
+
+    fun setTemplateTileRefreshInterval(interval: Int) {
+        viewModelScope.launch {
+            homePresenter.setTemplateTileRefreshInterval(interval)
+            templateTileRefreshInterval.value = interval
         }
     }
 

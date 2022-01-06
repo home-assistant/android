@@ -346,6 +346,7 @@
     <string name="refresh_internal">Refresh Internal URL</string>
     <string name="refresh_log">Refresh logs</string>
     <string name="refresh">Refresh</string>
+    <string name="refresh_interval">Refresh interval</string>
     <string name="registerDevice">Register watch</string>
     <string name="remaining">Remaining</string>
     <string name="remember">Remember</string>

@@ -29,6 +29,7 @@ import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
+import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.common.R as commonR
 
 private const val SCREEN_LANDING = "landing"
@@ -37,6 +38,8 @@ private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
 private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
 private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
+private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
+private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template_refresh_interval"
 
 @ExperimentalComposeUiApi
 @ExperimentalAnimationApi
@@ -118,8 +121,7 @@ fun LoadHomePage(
                         mainViewModel.isToastEnabled.value,
                         { mainViewModel.setHapticEnabled(it) },
                         { mainViewModel.setToastEnabled(it) },
-                        mainViewModel.templateTileContent.value,
-                        { mainViewModel.setTemplateTileContent(it) }
+                        { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
                     )
                 }
                 composable(SCREEN_SET_FAVORITES) {
@@ -157,6 +159,25 @@ fun LoadHomePage(
                             swipeDismissableNavController.navigateUp()
                         }
                     )
+                }
+                composable(SCREEN_SET_TILE_TEMPLATE) {
+                    TemplateTileSettingsView(
+                        templateContent = mainViewModel.templateTileContent.value,
+                        refreshInterval = mainViewModel.templateTileRefreshInterval.value
+                    ) {
+                        swipeDismissableNavController.navigate(
+                            SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL
+                        )
+                    }
+                }
+                composable(SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL) {
+                    RefreshIntervalPickerView(
+                        currentInterval = mainViewModel.templateTileRefreshInterval.value
+                    ) {
+                        mainViewModel.setTemplateTileRefreshInterval(it)
+                        TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)
+                        swipeDismissableNavController.navigateUp()
+                    }
                 }
             }
         }
