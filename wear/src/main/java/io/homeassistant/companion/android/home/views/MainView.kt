@@ -54,7 +54,7 @@ fun MainView(
     favoriteEntityIds: List<String>,
     onEntityClicked: (String, String) -> Unit,
     onSettingsClicked: () -> Unit,
-    onTestClicked: (entityLists: Map<String, List<Entity<*>>>) -> Unit,
+    onTestClicked: (entityLists: Map<String, List<Entity<*>>>, filter: (Entity<*>) -> (Boolean)) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
     deleteFavorite: (String) -> Unit
@@ -180,7 +180,7 @@ fun MainView(
                                             mapOf(
                                                 area.name to mainViewModel.entitiesByArea[id]!!
                                             )
-                                        )
+                                        ) { true }
                                     },
                                     colors = ChipDefaults.primaryChipColors()
                                 )
@@ -210,9 +210,9 @@ fun MainView(
                                 onClick = {
                                     onTestClicked(
                                         mapOf(
-                                            mainViewModel.nameForDomain[domain]!! to mainViewModel.entitiesByDomain[domain]!!.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
+                                            mainViewModel.nameForDomain[domain]!! to mainViewModel.entitiesByDomain[domain]!!
                                         )
-                                    )
+                                    ) { mainViewModel.getAreaForEntity(it.entityId) == null }
                                 },
                                 colors = ChipDefaults.primaryChipColors()
                             )
@@ -240,7 +240,7 @@ fun MainView(
                             onClick = {
                                 onTestClicked(
                                     mainViewModel.entitiesByDomain.mapKeys { mainViewModel.nameForDomain[it.key]!! }
-                                )
+                                ) { true }
                             },
                             colors = ChipDefaults.secondaryChipColors()
                         )

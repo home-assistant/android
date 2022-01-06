@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun EntityViewList(
     entityLists: Map<String, List<Entity<*>>>,
+    entityListFilter: (Entity<*>) -> Boolean,
     onEntityClicked: (String, String) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
@@ -78,16 +79,17 @@ fun EntityViewList(
                         }
                     }
                     if (expandedStates[header.hashCode()]!!) {
-                        items(entities.size) { index ->
+                        val filtered = entities.filter { entityListFilter(it) }
+                        items(filtered.size) { index ->
                             EntityUi(
-                                entities[index],
+                                filtered[index],
                                 onEntityClicked,
                                 isHapticEnabled,
                                 isToastEnabled
                             )
                         }
 
-                        if (entities.isNullOrEmpty()) {
+                        if (filtered.isNullOrEmpty()) {
                             item {
                                 Column {
                                     Chip(
@@ -117,6 +119,7 @@ fun EntityViewList(
 private fun PreviewEntityListView() {
     EntityViewList(
         entityLists = mapOf(stringResource(commonR.string.lights) to listOf(previewEntity1, previewEntity2)),
+        entityListFilter = { true },
         onEntityClicked = { _, _ -> },
         isHapticEnabled = false,
         isToastEnabled = false

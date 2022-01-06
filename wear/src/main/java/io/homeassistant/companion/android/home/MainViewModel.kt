@@ -13,13 +13,13 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
-import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.Favorites
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class MainViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
@@ -55,6 +55,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     // Content of EntityListView
     var entityLists = mutableStateMapOf<String, List<Entity<*>>>()
+    var entityListFilter: (Entity<*>) -> Boolean = { true }
 
     // settings
     var isHapticEnabled = mutableStateOf(false)
