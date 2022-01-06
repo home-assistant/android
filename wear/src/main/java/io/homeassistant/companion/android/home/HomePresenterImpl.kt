@@ -9,12 +9,14 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -118,19 +120,28 @@ class HomePresenterImpl @Inject constructor(
         return integrationUseCase.isRegistered()
     }
 
-    @ExperimentalCoroutinesApi
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
         return webSocketUseCase.getAreaRegistry()
     }
 
-    @ExperimentalCoroutinesApi
     override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
         return webSocketUseCase.getDeviceRegistry()
     }
 
-    @ExperimentalCoroutinesApi
     override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
         return webSocketUseCase.getEntityRegistry()
+    }
+
+    override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? {
+        return webSocketUseCase.getAreaRegistryUpdates()
+    }
+
+    override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>? {
+        return webSocketUseCase.getDeviceRegistryUpdates()
+    }
+
+    override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>? {
+        return webSocketUseCase.getEntityRegistryUpdates()
     }
 
     override suspend fun getTileShortcuts(): List<SimplifiedEntity> {

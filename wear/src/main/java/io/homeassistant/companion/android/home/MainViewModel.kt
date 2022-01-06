@@ -100,9 +100,33 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             }
             updateEntityDomains()
 
-            homePresenter.getEntityUpdates()?.collect {
-                if (supportedDomains().contains(it.entityId.split(".")[0])) {
-                    entities[it.entityId] = it
+            viewModelScope.launch {
+                homePresenter.getEntityUpdates()?.collect {
+                    if (supportedDomains().contains(it.entityId.split(".")[0])) {
+                        entities[it.entityId] = it
+                        updateEntityDomains()
+                    }
+                }
+            }
+            viewModelScope.launch {
+                homePresenter.getAreaRegistryUpdates()?.collect {
+                    areaRegistry = homePresenter.getAreaRegistry()
+                    areas.clear()
+                    areaRegistry?.let {
+                        areas.addAll(it)
+                    }
+                    updateEntityDomains()
+                }
+            }
+            viewModelScope.launch {
+                homePresenter.getDeviceRegistryUpdates()?.collect {
+                    deviceRegistry = homePresenter.getDeviceRegistry()
+                    updateEntityDomains()
+                }
+            }
+            viewModelScope.launch {
+                homePresenter.getEntityRegistryUpdates()?.collect {
+                    entityRegistry = homePresenter.getEntityRegistry()
                     updateEntityDomains()
                 }
             }
