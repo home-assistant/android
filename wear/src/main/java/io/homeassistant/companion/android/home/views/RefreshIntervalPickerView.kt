@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Button
@@ -25,12 +23,12 @@ fun RefreshIntervalPickerView(
     currentInterval: Int,
     onSelectInterval: (Int) -> Unit
 ) {
-    val options = listOf(0, 60, 2*60, 5*60, 10*60, 15*60, 30*60, 60*60, 5*60*60, 10*60*60, 24*60*60)
+    val options = listOf(0, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
     val state = rememberPickerState()
 
     // TODO use currentInterval. PickerState currently doesn't support changing the selectedOption
 
-    Column (
+    Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         ListHeader(R.string.refresh_interval)

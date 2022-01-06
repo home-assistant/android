@@ -13,7 +13,12 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.wear.compose.material.*
+import androidx.wear.compose.material.Chip
+import androidx.wear.compose.material.ChipDefaults
+import androidx.wear.compose.material.ScalingLazyColumn
+import androidx.wear.compose.material.ScalingLazyListState
+import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
@@ -64,7 +69,7 @@ fun TemplateTileSettingsView(
                         text = stringResource(id = R.string.refresh_interval)
                     )
                 },
-                secondaryLabel = {Text(IntervalToString(refreshInterval))},
+                secondaryLabel = { Text(IntervalToString(refreshInterval)) },
                 onClick = onClickRefreshInterval
             )
         }

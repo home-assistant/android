@@ -71,20 +71,22 @@ fun SettingsWearTemplateTile(
                         .height(24.dp)
                         .width(24.dp)
                 )
-                Text(stringResource(R.string.refresh_interval),
-                    modifier = Modifier.padding(start = 4.dp, end = 4.dp))
+                Text(
+                    stringResource(R.string.refresh_interval),
+                    modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+                )
                 Box {
                     var dropdownExpanded by remember { mutableStateOf(false) }
                     OutlinedButton(
-                        onClick = {dropdownExpanded = true}
+                        onClick = { dropdownExpanded = true }
                     ) {
                         Text(IntervalToString(refreshInterval))
                     }
                     DropdownMenu(
                         expanded = dropdownExpanded,
-                        onDismissRequest = {dropdownExpanded = false}
+                        onDismissRequest = { dropdownExpanded = false }
                     ) {
-                        val options = listOf(0, 60, 2*60, 5*60, 10*60, 15*60, 30*60, 60*60, 5*60*60, 10*60*60, 24*60*60)
+                        val options = listOf(0, 60, 2 * 60, 5 * 60, 10 * 60, 15 * 60, 30 * 60, 60 * 60, 5 * 60 * 60, 10 * 60 * 60, 24 * 60 * 60)
                         for (option in options) {
                             DropdownMenuItem(onClick = {
                                 onRefreshIntervalChanged(option)
