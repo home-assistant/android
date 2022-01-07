@@ -51,8 +51,8 @@ interface AuthenticationService {
         @Field("action") action: String
     )
 
-    @POST("auth/login_flow")
-    suspend fun initializeLogin(@Body body: LoginFlowRequest): LoginFlowInit
+    @POST
+    suspend fun initializeLogin(@Url url: String, @Body body: LoginFlowRequest): LoginFlowInit
 
     @POST
     suspend fun authenticate(@Url url: String, @Body body: LoginFlowAuthentication): LoginFlowCreateEntry

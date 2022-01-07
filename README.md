@@ -11,11 +11,13 @@ If you are looking for documentation around the companion applications check out
 
 - Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
 
-- Create four Android apps, with following package names 
+- Create six Android apps, with following package names 
  - `io.homeassistant.companion.android`
  - `io.homeassistant.companion.android.debug`
  - `io.homeassistant.companion.android.minimal`
  - `io.homeassistant.companion.android.minimal.debug`
+ - `io.homeassistant.companion.android.quest`
+ - `io.homeassistant.companion.android.quest.debug`
 
 - Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder. This file contains the configuration of the whole project (all the four applications).
 
@@ -55,7 +57,7 @@ homeAssistantAndroidRateLimitUrl=https://mydomain.cloudfunctions.net/checkRateLi
 
 ## App Flavors
 
-The Android app has both a full flavor that uses Google Play Services to offer features like location tracking and notifications. There is also a minimal flavor that does not require Google Play Services and can be found in the releases section. The minimal flavor does not have location tracking or notifications.
+The Android app has both a full flavor that uses Google Play Services to offer features like location tracking and notifications. There is also a minimal flavor that does not require Google Play Services and can be found in the releases section. The minimal flavor does not have location tracking or notifications. The quest flavor is identical to the minimal flavor with the exception of changes required for the device.
 
 ## Testing Dev Releases
 

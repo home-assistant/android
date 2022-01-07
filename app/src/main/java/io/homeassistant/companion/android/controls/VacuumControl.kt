@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.controls
 
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
@@ -14,7 +12,6 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -24,35 +21,15 @@ class VacuumControl {
         private const val SUPPORT_TURN_ON = 1
         private var entitySupportedFeatures = 0
 
-        override fun createControl(
+        override fun provideControlFeatures(
             context: Context,
+            control: Control.StatefulBuilder,
             entity: Entity<Map<String, Any>>,
             area: AreaRegistryResponse?
-        ): Control {
+        ): Control.StatefulBuilder {
             entitySupportedFeatures = entity.attributes["supported_features"] as Int
-            val control = Control.StatefulBuilder(
-                entity.entityId,
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-            )
-            control.setTitle((entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence)
-            control.setSubtitle(area?.name ?: "")
-            control.setDeviceType(DeviceTypes.TYPE_VACUUM)
-            control.setZone(area?.name ?: context.getString(commonR.string.domain_vacuum))
-            control.setStatus(Control.STATUS_OK)
-            control.setStatusText(
-                if (entitySupportedFeatures and SUPPORT_TURN_ON == SUPPORT_TURN_ON) {
-                    when (entity.state) {
-                        "off" -> context.getString(commonR.string.state_off)
-                        "on" -> context.getString(commonR.string.state_on)
-                        "unavailable" -> context.getString(commonR.string.state_unavailable)
-                        else -> context.getString(commonR.string.state_unknown)
-                    }
-                } else {
+            if (entitySupportedFeatures and SUPPORT_TURN_ON != SUPPORT_TURN_ON) {
+                control.setStatusText(
                     when (entity.state) {
                         "cleaning" -> context.getString(commonR.string.state_cleaning)
                         "docked" -> context.getString(commonR.string.state_docked)
@@ -63,8 +40,8 @@ class VacuumControl {
                         "unavailable" -> context.getString(commonR.string.state_unavailable)
                         else -> context.getString(commonR.string.state_unknown)
                     }
-                }
-            )
+                )
+            }
             control.setControlTemplate(
                 ToggleTemplate(
                     entity.entityId,
@@ -77,8 +54,14 @@ class VacuumControl {
                     )
                 )
             )
-            return control.build()
+            return control
         }
+
+        override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+            DeviceTypes.TYPE_VACUUM
+
+        override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+            context.getString(commonR.string.domain_vacuum)
 
         override fun performAction(
             integrationRepository: IntegrationRepository,

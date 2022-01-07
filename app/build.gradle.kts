@@ -87,6 +87,11 @@ android {
             applicationIdSuffix = ""
             versionNameSuffix = "-full"
         }
+        create("quest") {
+            applicationIdSuffix = ".quest"
+            versionNameSuffix = "-quest"
+            minSdk = 23
+        }
 
         // Generate a list of application ids into BuildConfig
         val values = productFlavors.joinToString {
@@ -98,6 +103,9 @@ android {
 
     playConfigs {
         register("minimal") {
+            enabled.set(false)
+        }
+        register("quest") {
             enabled.set(false)
         }
     }

@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.controls
 
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import android.service.controls.Control
 import android.service.controls.DeviceTypes
@@ -17,7 +15,6 @@ import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
-import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -25,39 +22,12 @@ import io.homeassistant.companion.android.common.R as commonR
 class CoverControl {
     companion object : HaControl {
         const val SUPPORT_SET_POSITION = 4
-        override fun createControl(
+        override fun provideControlFeatures(
             context: Context,
+            control: Control.StatefulBuilder,
             entity: Entity<Map<String, Any>>,
             area: AreaRegistryResponse?
-        ): Control {
-            val control = Control.StatefulBuilder(
-                entity.entityId,
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    WebViewActivity.newInstance(context.applicationContext, "entityId:${entity.entityId}").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-            )
-            control.setTitle(
-                (entity.attributes["friendly_name"] ?: entity.entityId) as CharSequence
-            )
-            control.setSubtitle(area?.name ?: "")
-            control.setDeviceType(
-                when (entity.attributes["device_class"]) {
-                    "awning" -> DeviceTypes.TYPE_AWNING
-                    "blind" -> DeviceTypes.TYPE_BLINDS
-                    "curtain" -> DeviceTypes.TYPE_CURTAIN
-                    "door" -> DeviceTypes.TYPE_DOOR
-                    "garage" -> DeviceTypes.TYPE_GARAGE
-                    "gate" -> DeviceTypes.TYPE_GATE
-                    "shutter" -> DeviceTypes.TYPE_SHUTTER
-                    "window" -> DeviceTypes.TYPE_WINDOW
-                    else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
-                }
-            )
-            control.setZone(area?.name ?: context.getString(commonR.string.domain_cover))
-            control.setStatus(Control.STATUS_OK)
+        ): Control.StatefulBuilder {
             control.setStatusText(
                 when (entity.state) {
                     "closed" -> context.getString(commonR.string.state_closed)
@@ -100,8 +70,25 @@ class CoverControl {
                         )
                     )
             )
-            return control.build()
+            return control
         }
+
+        override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
+            when (entity.attributes["device_class"]) {
+                "awning" -> DeviceTypes.TYPE_AWNING
+                "blind" -> DeviceTypes.TYPE_BLINDS
+                "curtain" -> DeviceTypes.TYPE_CURTAIN
+                "door" -> DeviceTypes.TYPE_DOOR
+                "garage" -> DeviceTypes.TYPE_GARAGE
+                "gate" -> DeviceTypes.TYPE_GATE
+                "shutter" -> DeviceTypes.TYPE_SHUTTER
+                "window" -> DeviceTypes.TYPE_WINDOW
+                else -> DeviceTypes.TYPE_GENERIC_OPEN_CLOSE
+            }
+
+        override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
+            context.getString(commonR.string.domain_cover)
+
         override fun performAction(
             integrationRepository: IntegrationRepository,
             action: ControlAction
