@@ -49,6 +49,8 @@ fun SettingsView(
     isToastEnabled: Boolean,
     onHapticEnabled: (Boolean) -> Unit,
     onToastEnabled: (Boolean) -> Unit,
+    isShowShortcutTextEnabled: Boolean,
+    onShowShortcutTextEnabled: (Boolean) -> Unit,
     onClickTemplateTile: () -> Unit
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
@@ -202,6 +204,26 @@ fun SettingsView(
                     )
                 }
                 item {
+                    ToggleChip(
+                        modifier = Modifier.fillMaxWidth(),
+                        checked = isShowShortcutTextEnabled,
+                        onCheckedChange = { onShowShortcutTextEnabled(it) },
+                        label = {
+                            Text(stringResource(commonR.string.shortcuts_tile_text_setting))
+                        },
+                        appIcon = {
+                            Image(
+                                asset =
+                                if (isShowShortcutTextEnabled)
+                                    CommunityMaterial.Icon.cmd_alphabetical
+                                else
+                                    CommunityMaterial.Icon.cmd_alphabetical_off,
+                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                            )
+                        }
+                    )
+                }
+                item {
                     Chip(
                         modifier = Modifier.fillMaxWidth(),
                         icon = {
@@ -265,6 +287,8 @@ private fun PreviewSettingsView() {
         isToastEnabled = false,
         {},
         {},
+        isShowShortcutTextEnabled = true,
+        onShowShortcutTextEnabled = {},
         {}
     )
 }

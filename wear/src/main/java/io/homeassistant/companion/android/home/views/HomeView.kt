@@ -117,16 +117,21 @@ fun LoadHomePage(
                 }
                 composable(SCREEN_SETTINGS) {
                     SettingsView(
-                        mainViewModel.favoriteEntityIds,
-                        { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
-                        { mainViewModel.clearFavorites() },
-                        { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) },
-                        { mainViewModel.logout() },
-                        mainViewModel.isHapticEnabled.value,
-                        mainViewModel.isToastEnabled.value,
-                        { mainViewModel.setHapticEnabled(it) },
-                        { mainViewModel.setToastEnabled(it) },
-                        { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
+                        favorites = mainViewModel.favoriteEntityIds,
+                        onClickSetFavorites = { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
+                        onClearFavorites = { mainViewModel.clearFavorites() },
+                        onClickSetShortcuts = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) },
+                        onClickLogout = { mainViewModel.logout() },
+                        isHapticEnabled = mainViewModel.isHapticEnabled.value,
+                        isToastEnabled = mainViewModel.isToastEnabled.value,
+                        onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
+                        onToastEnabled = { mainViewModel.setToastEnabled(it) },
+                        isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
+                        onShowShortcutTextEnabled = {
+                            mainViewModel.setShowShortcutTextEnabled(it)
+                            TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        },
+                        onClickTemplateTile = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
                     )
                 }
                 composable(SCREEN_SET_FAVORITES) {

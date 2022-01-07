@@ -67,6 +67,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         private set
     var isToastEnabled = mutableStateOf(false)
         private set
+    var isShowShortcutTextEnabled = mutableStateOf(false)
+        private set
     var templateTileContent = mutableStateOf("")
         private set
     var templateTileRefreshInterval = mutableStateOf(0)
@@ -87,6 +89,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             shortcutEntities.addAll(homePresenter.getTileShortcuts())
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
+            isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTileContent.value = homePresenter.getTemplateTileContent()
             templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
 
@@ -237,6 +240,13 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         viewModelScope.launch {
             homePresenter.setWearToastConfirmation(enabled)
             isToastEnabled.value = enabled
+        }
+    }
+
+    fun setShowShortcutTextEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            homePresenter.setShowShortcutTextEnabled(enabled)
+            isShowShortcutTextEnabled.value = enabled
         }
     }
 

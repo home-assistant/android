@@ -62,6 +62,7 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
+        private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
         private const val PREF_TILE_TEMPLATE = "tile_template"
         private const val PREF_TILE_TEMPLATE_REFRESH_INTERVAL = "tile_template_refresh_interval"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
@@ -404,6 +405,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getWearToastConfirmation(): Boolean {
         return localStorage.getBoolean(PREF_WEAR_TOAST_CONFIRMATION)
+    }
+
+    override suspend fun setShowShortcutTextEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT, enabled)
+    }
+
+    override suspend fun getShowShortcutText(): Boolean {
+        return localStorage.getBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT)
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
