@@ -231,7 +231,8 @@ fun MainView(
                                 .fillMaxWidth(),
                             icon = {
                                 Image(
-                                    asset = CommunityMaterial.Icon.cmd_animation
+                                    asset = CommunityMaterial.Icon.cmd_animation,
+                                    colorFilter = ColorFilter.tint(Color.White)
                                 )
                             },
                             label = {
