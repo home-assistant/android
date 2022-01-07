@@ -36,12 +36,12 @@ class HomePresenterImpl @Inject constructor(
             "media_player", "remote", "siren", "switch"
         )
         val domainsWithNames = mapOf(
-            "input_boolean" to commonR.string.domain_input_boolean,
-            "light" to commonR.string.domain_light,
-            "lock" to commonR.string.domain_lock,
-            "switch" to commonR.string.domain_switch,
-            "script" to commonR.string.domain_script,
-            "scene" to commonR.string.domain_scene
+            "input_boolean" to commonR.string.input_booleans,
+            "light" to commonR.string.lights,
+            "lock" to commonR.string.locks,
+            "switch" to commonR.string.switches,
+            "script" to commonR.string.scripts,
+            "scene" to commonR.string.scenes
         )
         val supportedDomains = domainsWithNames.keys.toList()
         const val TAG = "HomePresenter"
