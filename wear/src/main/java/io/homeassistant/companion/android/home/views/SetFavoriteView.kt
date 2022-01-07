@@ -5,10 +5,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -45,12 +43,14 @@ fun SetFavoritesView(
     favoriteEntityIds: List<String>,
     onFavoriteSelected: (entityId: String, entityPosition: Int, isSelected: Boolean) -> Unit
 ) {
-    var expandedInputBooleans: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedLights: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedLocks: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedScenes: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedScripts: Boolean by rememberSaveable { mutableStateOf(true) }
-    var expandedSwitches: Boolean by rememberSaveable { mutableStateOf(true) }
+    // Remember expanded state of each header
+    val expandedStates = remember {
+        mutableStateMapOf<String, Boolean>().apply {
+            mainViewModel.supportedDomains().forEach {
+                put(it, true)
+            }
+        }
+    }
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     LocalView.current.requestFocus()
@@ -79,122 +79,24 @@ fun SetFavoritesView(
                 item {
                     ListHeader(id = commonR.string.set_favorite)
                 }
-                if (mainViewModel.entitiesByDomain["input_boolean"].orEmpty().isNotEmpty()) {
-                    item {
-                        ListHeader(
-                            stringId = commonR.string.input_booleans,
-                            expanded = expandedInputBooleans,
-                            onExpandChanged = { expandedInputBooleans = it }
-                        )
-                    }
-                    if (expandedInputBooleans) {
-                        items(mainViewModel.entitiesByDomain["input_boolean"].orEmpty().size) { index ->
-                            FavoriteToggleChip(
-                                entityList = mainViewModel.entitiesByDomain["input_boolean"].orEmpty(),
-                                index = index,
-                                favoriteEntityIds = favoriteEntityIds,
-                                onFavoriteSelected = onFavoriteSelected
+                for ((domain, entities) in mainViewModel.entitiesByDomain) {
+                    if (entities.isNotEmpty()) {
+                        item {
+                            ListHeader(
+                                string = mainViewModel.nameForDomain[domain]!!,
+                                expanded = expandedStates[domain]!!,
+                                onExpandChanged = { expandedStates[domain] = it }
                             )
                         }
-                    }
-                }
-
-                if (mainViewModel.entitiesByDomain["light"].orEmpty().isNotEmpty()) {
-                    item {
-                        ListHeader(
-                            stringId = commonR.string.lights,
-                            expanded = expandedLights,
-                            onExpandChanged = { expandedLights = it }
-                        )
-                    }
-                    if (expandedLights) {
-                        items(mainViewModel.entitiesByDomain["light"].orEmpty().size) { index ->
-                            FavoriteToggleChip(
-                                entityList = mainViewModel.entitiesByDomain["light"].orEmpty(),
-                                index = index,
-                                favoriteEntityIds = favoriteEntityIds,
-                                onFavoriteSelected = onFavoriteSelected
-                            )
-                        }
-                    }
-                }
-
-                if (mainViewModel.entitiesByDomain["lock"].orEmpty().isNotEmpty()) {
-                    item {
-                        ListHeader(
-                            stringId = commonR.string.locks,
-                            expanded = expandedLocks,
-                            onExpandChanged = { expandedLocks = it }
-                        )
-                    }
-                    if (expandedLocks) {
-                        items(mainViewModel.entitiesByDomain["lock"].orEmpty().size) { index ->
-                            FavoriteToggleChip(
-                                entityList = mainViewModel.entitiesByDomain["lock"].orEmpty(),
-                                index = index,
-                                favoriteEntityIds = favoriteEntityIds,
-                                onFavoriteSelected = onFavoriteSelected
-                            )
-                        }
-                    }
-                }
-
-                if (mainViewModel.entitiesByDomain["scene"].orEmpty().isNotEmpty()) {
-                    item {
-                        ListHeader(
-                            stringId = commonR.string.scenes,
-                            expanded = expandedScenes,
-                            onExpandChanged = { expandedScenes = it }
-                        )
-                    }
-                    if (expandedScenes) {
-                        items(mainViewModel.entitiesByDomain["scene"].orEmpty().size) { index ->
-                            FavoriteToggleChip(
-                                entityList = mainViewModel.entitiesByDomain["scene"].orEmpty(),
-                                index = index,
-                                favoriteEntityIds = favoriteEntityIds,
-                                onFavoriteSelected = onFavoriteSelected
-                            )
-                        }
-                    }
-                }
-
-                if (mainViewModel.entitiesByDomain["script"].orEmpty().isNotEmpty()) {
-                    item {
-                        ListHeader(
-                            stringId = commonR.string.scripts,
-                            expanded = expandedScripts,
-                            onExpandChanged = { expandedScripts = it }
-                        )
-                    }
-                    if (expandedScripts) {
-                        items(mainViewModel.entitiesByDomain["script"].orEmpty().size) { index ->
-                            FavoriteToggleChip(
-                                entityList = mainViewModel.entitiesByDomain["script"].orEmpty(),
-                                index = index,
-                                favoriteEntityIds = favoriteEntityIds,
-                                onFavoriteSelected = onFavoriteSelected
-                            )
-                        }
-                    }
-                }
-
-                if (mainViewModel.entitiesByDomain["switch"].orEmpty().isNotEmpty()) {
-                    item {
-                        ListHeader(
-                            stringId = commonR.string.switches,
-                            expanded = expandedSwitches,
-                            onExpandChanged = { expandedSwitches = it }
-                        )
-                    }
-                    if (expandedSwitches) {
-                        items(mainViewModel.entitiesByDomain["switch"].orEmpty().size) { index ->
-                            FavoriteToggleChip(
-                                entityList = mainViewModel.entitiesByDomain["switch"].orEmpty(),
-                                index = index,
-                                favoriteEntityIds = favoriteEntityIds,
-                                onFavoriteSelected = onFavoriteSelected
-                            )
+                        if (expandedStates[domain] == true) {
+                            items(mainViewModel.entitiesByDomain[domain].orEmpty().size) { index ->
+                                FavoriteToggleChip(
+                                    entityList = mainViewModel.entitiesByDomain[domain]!!,
+                                    index = index,
+                                    favoriteEntityIds = favoriteEntityIds,
+                                    onFavoriteSelected = onFavoriteSelected
+                                )
+                            }
                         }
                     }
                 }
