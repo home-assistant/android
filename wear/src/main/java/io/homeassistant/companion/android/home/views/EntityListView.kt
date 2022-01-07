@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun EntityViewList(
     entityLists: Map<String, List<Entity<*>>>,
+    entityListsOrder: List<String>,
     entityListFilter: (Entity<*>) -> Boolean,
     onEntityClicked: (String, String) -> Unit,
     isHapticEnabled: Boolean,
@@ -65,7 +66,8 @@ fun EntityViewList(
             horizontalAlignment = Alignment.CenterHorizontally,
             state = scalingLazyListState
         ) {
-            for ((header, entities) in entityLists) {
+            for (header in entityListsOrder) {
+                val entities = entityLists[header].orEmpty()
                 if (entities.isNotEmpty()) {
                     item {
                         if (entityLists.size > 1) {
@@ -119,6 +121,7 @@ fun EntityViewList(
 private fun PreviewEntityListView() {
     EntityViewList(
         entityLists = mapOf(stringResource(commonR.string.lights) to listOf(previewEntity1, previewEntity2)),
+        entityListsOrder = listOf(stringResource(commonR.string.lights)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
         isHapticEnabled = false,

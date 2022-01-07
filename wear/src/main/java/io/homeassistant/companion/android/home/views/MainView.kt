@@ -54,7 +54,7 @@ fun MainView(
     favoriteEntityIds: List<String>,
     onEntityClicked: (String, String) -> Unit,
     onSettingsClicked: () -> Unit,
-    onTestClicked: (entityLists: Map<String, List<Entity<*>>>, filter: (Entity<*>) -> (Boolean)) -> Unit,
+    onTestClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> (Boolean)) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
     deleteFavorite: (String) -> Unit
@@ -166,7 +166,8 @@ fun MainView(
                     item {
                         ListHeader(id = commonR.string.areas)
                     }
-                    for ((id, entities) in mainViewModel.entitiesByArea) {
+                    for (id in mainViewModel.entitiesByAreaOrder) {
+                        val entities = mainViewModel.entitiesByArea[id]!!
                         if (entities.isNotEmpty()) {
                             val area = mainViewModel.areas.first { it.areaId == id }
                             item {
@@ -177,9 +178,8 @@ fun MainView(
                                     },
                                     onClick = {
                                         onTestClicked(
-                                            mapOf(
-                                                area.name to mainViewModel.entitiesByArea[id]!!
-                                            )
+                                            mapOf(area.name to mainViewModel.entitiesByArea[id]!!),
+                                            listOf(area.name)
                                         ) { true }
                                     },
                                     colors = ChipDefaults.primaryChipColors()
@@ -195,8 +195,8 @@ fun MainView(
                     }
                 }
                 // Buttons for each existing category
-                for ((domain, entities) in mainViewModel.entitiesByDomain) {
-                    val domainEntitiesNotInArea = entities.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
+                for (domain in mainViewModel.entitiesByDomainOrder) {
+                    val domainEntitiesNotInArea = mainViewModel.entitiesByDomain[domain]!!.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
                     if (domainEntitiesNotInArea.isNotEmpty()) {
                         item {
                             Chip(
@@ -211,7 +211,8 @@ fun MainView(
                                     onTestClicked(
                                         mapOf(
                                             mainViewModel.stringForDomain(domain)!! to mainViewModel.entitiesByDomain[domain]!!
-                                        )
+                                        ),
+                                        listOf(mainViewModel.stringForDomain(domain)!!)
                                     ) { mainViewModel.getAreaForEntity(it.entityId) == null }
                                 },
                                 colors = ChipDefaults.primaryChipColors()
@@ -240,7 +241,8 @@ fun MainView(
                             },
                             onClick = {
                                 onTestClicked(
-                                    mainViewModel.entitiesByDomain.mapKeys { mainViewModel.stringForDomain(it.key)!! }
+                                    mainViewModel.entitiesByDomain.mapKeys { mainViewModel.stringForDomain(it.key)!! },
+                                    mainViewModel.entitiesByDomain.keys.map { mainViewModel.stringForDomain(it)!! }.sorted()
                                 ) { true }
                             },
                             colors = ChipDefaults.secondaryChipColors()

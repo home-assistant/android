@@ -51,9 +51,14 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         private set
     var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
         private set
+    var entitiesByAreaOrder = mutableStateListOf<String>()
+        private set
+    var entitiesByDomainOrder = mutableStateListOf<String>()
+        private set
 
     // Content of EntityListView
     var entityLists = mutableStateMapOf<String, List<Entity<*>>>()
+    var entityListsOrder = mutableStateListOf<String>()
     var entityListFilter: (Entity<*>) -> Boolean = { true }
 
     // settings
@@ -140,6 +145,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
                 entitiesByArea[area.areaId] = entitiesInArea
             }
         }
+        entitiesByAreaOrder.clear()
+        entitiesByAreaOrder.addAll(areasList.map { it.areaId })
         // Quick check: are there any areas in the list that no longer exist?
         entitiesByArea.forEach {
             if (!areasList.any { item -> item.areaId == it.key }) {
@@ -158,6 +165,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
                 entitiesByDomain[domain] = entitiesInDomain
             }
         }
+        entitiesByDomainOrder.clear()
+        entitiesByDomainOrder.addAll(domainsList)
     }
 
     fun toggleEntity(entityId: String, state: String) {

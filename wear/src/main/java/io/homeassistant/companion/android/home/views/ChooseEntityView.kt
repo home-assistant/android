@@ -84,7 +84,8 @@ fun ChooseEntityView(
                     )
                 )
             }
-            for ((domain, entities) in mainViewModel.entitiesByDomain) {
+            for (domain in mainViewModel.entitiesByDomainOrder) {
+                val entities = mainViewModel.entitiesByDomain[domain].orEmpty()
                 if (entities.isNotEmpty()) {
                     item {
                         ListHeader(
