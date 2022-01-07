@@ -19,7 +19,6 @@ import io.homeassistant.companion.android.database.wear.Favorites
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @HiltViewModel
 class MainViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
@@ -65,18 +64,10 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     private fun favorites(): Flow<List<Favorites>>? = favoritesDao.getAllFlow()
 
-    // TODO we shouldn't directly access an implementation
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
-    // TODO this should probably be provided from the same place as the supported domains list
-    val nameForDomain = mapOf(
-        "input_boolean" to app.applicationContext.getString(commonR.string.domain_input_boolean),
-        "light" to app.applicationContext.getString(commonR.string.domain_light),
-        "lock" to app.applicationContext.getString(commonR.string.domain_lock),
-        "switch" to app.applicationContext.getString(commonR.string.domain_switch),
-        "script" to app.applicationContext.getString(commonR.string.domain_script),
-        "scene" to app.applicationContext.getString(commonR.string.domain_scene)
-    )
+    fun stringForDomain(domain: String): String? =
+        HomePresenterImpl.domainsWithNames[domain]?.let { app.applicationContext.getString(it) }
 
     private fun loadEntities() {
         viewModelScope.launch {

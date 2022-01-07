@@ -83,7 +83,7 @@ fun SetFavoritesView(
                     if (entities.isNotEmpty()) {
                         item {
                             ListHeader(
-                                string = mainViewModel.nameForDomain[domain]!!,
+                                string = mainViewModel.stringForDomain(domain)!!,
                                 expanded = expandedStates[domain]!!,
                                 onExpandChanged = { expandedStates[domain] = it }
                             )

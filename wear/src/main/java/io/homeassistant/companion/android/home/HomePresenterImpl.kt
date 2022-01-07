@@ -22,6 +22,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 class HomePresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationRepository,
@@ -34,9 +35,15 @@ class HomePresenterImpl @Inject constructor(
             "cover", "fan", "humidifier", "input_boolean", "light", "lock",
             "media_player", "remote", "siren", "switch"
         )
-        val supportedDomains = listOf(
-            "input_boolean", "light", "lock", "switch", "script", "scene"
+        val domainsWithNames = mapOf(
+            "input_boolean" to commonR.string.domain_input_boolean,
+            "light" to commonR.string.domain_light,
+            "lock" to commonR.string.domain_lock,
+            "switch" to commonR.string.domain_switch,
+            "script" to commonR.string.domain_script,
+            "scene" to commonR.string.domain_scene
         )
+        val supportedDomains = domainsWithNames.keys.toList()
         const val TAG = "HomePresenter"
     }
 

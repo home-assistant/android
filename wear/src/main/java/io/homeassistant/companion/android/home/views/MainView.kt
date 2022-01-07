@@ -205,12 +205,12 @@ fun MainView(
                                     getIcon("", domain, context)?.let { Image(asset = it) }
                                 },
                                 label = {
-                                    Text(text = mainViewModel.nameForDomain[domain]!!)
+                                    Text(text = mainViewModel.stringForDomain(domain)!!)
                                 },
                                 onClick = {
                                     onTestClicked(
                                         mapOf(
-                                            mainViewModel.nameForDomain[domain]!! to mainViewModel.entitiesByDomain[domain]!!
+                                            mainViewModel.stringForDomain(domain)!! to mainViewModel.entitiesByDomain[domain]!!
                                         )
                                     ) { mainViewModel.getAreaForEntity(it.entityId) == null }
                                 },
@@ -240,7 +240,7 @@ fun MainView(
                             },
                             onClick = {
                                 onTestClicked(
-                                    mainViewModel.entitiesByDomain.mapKeys { mainViewModel.nameForDomain[it.key]!! }
+                                    mainViewModel.entitiesByDomain.mapKeys { mainViewModel.stringForDomain(it.key)!! }
                                 ) { true }
                             },
                             colors = ChipDefaults.secondaryChipColors()
