@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.Favorites
+import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -137,7 +138,12 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         // Create a list with all areas + their entities
         areasList.forEach { area ->
             val entitiesInArea = mutableStateListOf<Entity<*>>()
-            entitiesInArea.addAll(entitiesList.filter { getAreaForEntity(it.entityId)?.areaId == area.areaId })
+            entitiesInArea.addAll(
+                entitiesList
+                    .filter { getAreaForEntity(it.entityId)?.areaId == area.areaId }
+                    .map { it as Entity<Map<String, Any>> }
+                    .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String }
+            )
             entitiesByArea[area.areaId]?.let {
                 it.clear()
                 it.addAll(entitiesInArea)
@@ -175,22 +181,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         }
     }
 
-    fun getAreaForEntity(entityId: String): AreaRegistryResponse? {
-        val rEntity = entityRegistry?.firstOrNull { it.entityId == entityId }
-        if (rEntity != null) {
-            // By default, an entity should be considered to be in the same area as the associated device (if any)
-            // This can be overridden for an individual entity, so check the entity registry first
-            if (rEntity.areaId != null) {
-                return areaRegistry?.firstOrNull { it.areaId == rEntity.areaId }
-            } else if (rEntity.deviceId != null) {
-                val rDevice = deviceRegistry?.firstOrNull { it.id == rEntity.deviceId }
-                if (rDevice != null) {
-                    return areaRegistry?.firstOrNull { it.areaId == rDevice.areaId }
-                }
-            }
-        }
-        return null
-    }
+    fun getAreaForEntity(entityId: String): AreaRegistryResponse? =
+        RegistriesDataHandler.getAreaForEntity(entityId, areaRegistry, deviceRegistry, entityRegistry)
 
     private fun getFavorites() {
         viewModelScope.launch {
