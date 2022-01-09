@@ -11,7 +11,7 @@ class QuestSensorManager : SensorManager {
     companion object {
         private const val TAG = "QuestSensor"
         val headsetMounted = SensorManager.BasicSensor(
-            "headset_mounted",
+            "in_use",
             "binary_sensor",
             commonR.string.basic_sensor_name_headset_mounted,
             commonR.string.sensor_description_headset_mounted,
