@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.common.data.authentication.impl.entities
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class LoginFlowForm(
     @JsonProperty("type")
     override val type: String,
