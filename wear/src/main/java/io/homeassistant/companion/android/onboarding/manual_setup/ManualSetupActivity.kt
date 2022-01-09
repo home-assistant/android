@@ -10,7 +10,7 @@ import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.databinding.ActivityManualSetupBinding
-import io.homeassistant.companion.android.onboarding.authentication.PasswordAuthenticationActivity
+import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -40,7 +40,7 @@ class ManualSetupActivity : AppCompatActivity(), ManualSetupView {
     }
 
     override fun startAuthentication(flowId: String) {
-        startActivity(PasswordAuthenticationActivity.newInstance(this, flowId))
+        startActivity(AuthenticationActivity.newInstance(this, flowId))
     }
 
     override fun showLoading() {

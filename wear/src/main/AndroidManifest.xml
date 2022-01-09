@@ -51,8 +51,7 @@
         </activity>
         <activity android:name=".onboarding.OnboardingActivity" />
         <activity android:name=".onboarding.integration.MobileAppIntegrationActivity" />
-        <activity android:name=".onboarding.authentication.MfaAuthenticationActivity" />
-        <activity android:name=".onboarding.authentication.PasswordAuthenticationActivity" />
+        <activity android:name=".onboarding.authentication.AuthenticationActivity" />
         <activity android:name=".onboarding.manual_setup.ManualSetupActivity" />
 
         <!-- To show confirmations and failures -->

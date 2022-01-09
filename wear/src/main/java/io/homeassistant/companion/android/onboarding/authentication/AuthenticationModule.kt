@@ -7,8 +7,8 @@ import dagger.hilt.android.components.ActivityComponent
 
 @Module
 @InstallIn(ActivityComponent::class)
-interface MfaAuthenticationModule {
+interface AuthenticationModule {
 
     @Binds
-    fun authenticationPresenter(mfaAuthenticationPresenterImpl: MfaAuthenticationPresenterImpl): MfaAuthenticationPresenter
+    fun authenticationPresenter(authenticationPresenterImpl: AuthenticationPresenterImpl): AuthenticationPresenter
 }

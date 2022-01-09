@@ -17,7 +17,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.onboarding.authentication.PasswordAuthenticationActivity
+import io.homeassistant.companion.android.onboarding.authentication.AuthenticationActivity
 import io.homeassistant.companion.android.onboarding.manual_setup.ManualSetupActivity
 import io.homeassistant.companion.android.util.LoadingView
 import javax.inject.Inject
@@ -80,7 +80,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
     }
 
     override fun startAuthentication(flowId: String) {
-        startActivity(PasswordAuthenticationActivity.newInstance(this, flowId))
+        startActivity(AuthenticationActivity.newInstance(this, flowId))
     }
 
     override fun startManualSetup() {

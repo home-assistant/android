@@ -13,12 +13,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class PasswordAuthenticationPresenterImpl @Inject constructor(
+class AuthenticationPresenterImpl @Inject constructor(
     @ActivityContext context: Context,
     private val authenticationUseCase: AuthenticationRepository
-) : PasswordAuthenticationPresenter {
+) : AuthenticationPresenter {
     companion object {
-        private const val TAG = "PasswordAuthenticationPresenter"
+        private const val TAG = "AuthenticationPresenter"
     }
 
     enum class AuthenticationPhase {
@@ -26,7 +26,7 @@ class PasswordAuthenticationPresenterImpl @Inject constructor(
     }
     private var authenticationPhase = AuthenticationPhase.PASSWORD
 
-    private val view = context as PasswordAuthenticationView
+    private val view = context as AuthenticationView
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onNextClicked(flowId: String, username: String?, password: String?, code: String?) {
@@ -34,7 +34,7 @@ class PasswordAuthenticationPresenterImpl @Inject constructor(
         Log.d(TAG, "onNextClicked")
         mainScope.launch {
             try {
-                val flowResult = when(authenticationPhase) {
+                val flowResult = when (authenticationPhase) {
                     AuthenticationPhase.PASSWORD -> authenticationUseCase.loginAuthentication(flowId, username.orEmpty(), password.orEmpty())
                     AuthenticationPhase.MFA -> authenticationUseCase.loginCode(flowId, code.orEmpty())
                 }
