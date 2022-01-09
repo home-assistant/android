@@ -8,26 +8,26 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.databinding.ActivityAuthenticationPasswordBinding
+import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.databinding.ActivityAuthenticationMfaBinding
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class PasswordAuthenticationActivity : AppCompatActivity(), PasswordAuthenticationView {
+class MfaAuthenticationActivity : AppCompatActivity(), MfaAuthenticationView {
     companion object {
-        private const val TAG = "PasswordAuthenticationActivity"
+        private const val TAG = "MfaAuthenticationActivity"
 
         fun newInstance(context: Context, flowId: String): Intent {
-            var intent = Intent(context, PasswordAuthenticationActivity::class.java)
+            var intent = Intent(context, MfaAuthenticationActivity::class.java)
             intent.putExtra("flowId", flowId)
             return intent
         }
     }
 
     @Inject
-    lateinit var presenter: PasswordAuthenticationPresenter
-    private lateinit var binding: ActivityAuthenticationPasswordBinding
+    lateinit var presenter: MfaAuthenticationPresenter
+    private lateinit var binding: ActivityAuthenticationMfaBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,14 +37,13 @@ class PasswordAuthenticationActivity : AppCompatActivity(), PasswordAuthenticati
             finish()
         }
 
-        binding = ActivityAuthenticationPasswordBinding.inflate(layoutInflater)
+        binding = ActivityAuthenticationMfaBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.buttonNext.setOnClickListener {
             presenter.onNextClicked(
                 intent.getStringExtra("flowId")!!,
-                binding.username.text.toString(),
-                binding.password.text.toString()
+                binding.code.text.toString()
             )
         }
     }
@@ -59,10 +58,6 @@ class PasswordAuthenticationActivity : AppCompatActivity(), PasswordAuthenticati
         startActivity(MobileAppIntegrationActivity.newInstance(this))
     }
 
-    override fun startMfa(flowId: String) {
-        startActivity(MfaAuthenticationActivity.newInstance(this, flowId))
-    }
-
     override fun showLoading() {
         binding.loadingView.visibility = View.VISIBLE
     }
@@ -71,7 +66,7 @@ class PasswordAuthenticationActivity : AppCompatActivity(), PasswordAuthenticati
         // Show failure message
         val intent = Intent(this, ConfirmationActivity::class.java).apply {
             putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.FAILURE_ANIMATION)
-            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(commonR.string.failed_authentication))
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(R.string.failed_authentication))
         }
         startActivity(intent)
         binding.loadingView.visibility = View.GONE
