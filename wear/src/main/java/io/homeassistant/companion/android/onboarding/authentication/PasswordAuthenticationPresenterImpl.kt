@@ -21,21 +21,30 @@ class PasswordAuthenticationPresenterImpl @Inject constructor(
         private const val TAG = "PasswordAuthenticationPresenter"
     }
 
+    enum class AuthenticationPhase {
+        PASSWORD, MFA
+    }
+    private var authenticationPhase = AuthenticationPhase.PASSWORD
+
     private val view = context as PasswordAuthenticationView
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onNextClicked(flowId: String, username: String, password: String) {
+    override fun onNextClicked(flowId: String, username: String?, password: String?, code: String?) {
         view.showLoading()
         Log.d(TAG, "onNextClicked")
         mainScope.launch {
             try {
-                val flowResult = authenticationUseCase.loginAuthentication(flowId, username, password)
+                val flowResult = when(authenticationPhase) {
+                    AuthenticationPhase.PASSWORD -> authenticationUseCase.loginAuthentication(flowId, username.orEmpty(), password.orEmpty())
+                    AuthenticationPhase.MFA -> authenticationUseCase.loginCode(flowId, code.orEmpty())
+                }
                 Log.d(TAG, "Authenticated result type: ${flowResult?.type}")
                 when (flowResult?.type) {
                     "form" -> {
-                        if ((flowResult as LoginFlowForm).stepId == "mfa") {
+                        if (authenticationPhase == AuthenticationPhase.PASSWORD && (flowResult as LoginFlowForm).stepId == "mfa") {
                             Log.d(TAG, "MFA required to authenticate")
-                            view.startMfa(flowId)
+                            authenticationPhase = AuthenticationPhase.MFA
+                            view.showMfa()
                         } else {
                             Log.e(TAG, "Unable to authenticate")
                             view.showError()

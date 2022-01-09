@@ -44,7 +44,8 @@ class PasswordAuthenticationActivity : AppCompatActivity(), PasswordAuthenticati
             presenter.onNextClicked(
                 intent.getStringExtra("flowId")!!,
                 binding.username.text.toString(),
-                binding.password.text.toString()
+                binding.password.text.toString(),
+                binding.code.text.toString()
             )
         }
     }
@@ -59,8 +60,14 @@ class PasswordAuthenticationActivity : AppCompatActivity(), PasswordAuthenticati
         startActivity(MobileAppIntegrationActivity.newInstance(this))
     }
 
-    override fun startMfa(flowId: String) {
-        startActivity(MfaAuthenticationActivity.newInstance(this, flowId))
+    override fun showMfa() {
+        binding.titleLogin.visibility = View.GONE
+        binding.titleMfa.visibility = View.VISIBLE
+        binding.username.visibility = View.GONE
+        binding.password.visibility = View.GONE
+        binding.code.visibility = View.VISIBLE
+
+        binding.loadingView.visibility = View.GONE
     }
 
     override fun showLoading() {
