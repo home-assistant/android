@@ -19,7 +19,7 @@ If you are looking for documentation around the companion applications check out
  - `io.homeassistant.companion.android.quest`
  - `io.homeassistant.companion.android.quest.debug`
 
-- Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder. This file contains the configuration of the whole project (all the four applications).
+- Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder. This file contains the configuration of the whole project (all the six applications).
 
   [You can also use the mock services file instead of generating your own](/.github/mock-google-services.json)
   The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file push notification will never work**
