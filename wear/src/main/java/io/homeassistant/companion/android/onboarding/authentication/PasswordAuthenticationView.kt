@@ -1,7 +1,9 @@
 package io.homeassistant.companion.android.onboarding.authentication
 
-interface AuthenticationView {
+interface PasswordAuthenticationView {
     fun startIntegration()
+
+    fun startMfa(flowId: String)
 
     fun showLoading()
 

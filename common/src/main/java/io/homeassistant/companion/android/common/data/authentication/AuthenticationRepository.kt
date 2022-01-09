@@ -1,14 +1,16 @@
 package io.homeassistant.companion.android.common.data.authentication
 
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowForm
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowResponse
 import java.net.URL
 
 interface AuthenticationRepository {
 
-    suspend fun initiateLoginFlow(): LoginFlowInit
+    suspend fun initiateLoginFlow(): LoginFlowForm
 
-    suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowCreateEntry
+    suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowResponse?
+
+    suspend fun loginCode(flowId: String, code: String): LoginFlowResponse?
 
     suspend fun registerAuthorizationCode(authorizationCode: String)
 

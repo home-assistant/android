@@ -8,26 +8,26 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.wear.activity.ConfirmationActivity
 import dagger.hilt.android.AndroidEntryPoint
-import io.homeassistant.companion.android.databinding.ActivityAuthenticationBinding
+import io.homeassistant.companion.android.databinding.ActivityAuthenticationPasswordBinding
 import io.homeassistant.companion.android.onboarding.integration.MobileAppIntegrationActivity
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
-class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
+class PasswordAuthenticationActivity : AppCompatActivity(), PasswordAuthenticationView {
     companion object {
-        private const val TAG = "AuthenticationActivity"
+        private const val TAG = "PasswordAuthenticationActivity"
 
         fun newInstance(context: Context, flowId: String): Intent {
-            var intent = Intent(context, AuthenticationActivity::class.java)
+            var intent = Intent(context, PasswordAuthenticationActivity::class.java)
             intent.putExtra("flowId", flowId)
             return intent
         }
     }
 
     @Inject
-    lateinit var presenter: AuthenticationPresenter
-    private lateinit var binding: ActivityAuthenticationBinding
+    lateinit var presenter: PasswordAuthenticationPresenter
+    private lateinit var binding: ActivityAuthenticationPasswordBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +37,7 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
             finish()
         }
 
-        binding = ActivityAuthenticationBinding.inflate(layoutInflater)
+        binding = ActivityAuthenticationPasswordBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.buttonNext.setOnClickListener {
@@ -57,6 +57,10 @@ class AuthenticationActivity : AppCompatActivity(), AuthenticationView {
 
     override fun startIntegration() {
         startActivity(MobileAppIntegrationActivity.newInstance(this))
+    }
+
+    override fun startMfa(flowId: String) {
+        // TODO
     }
 
     override fun showLoading() {
