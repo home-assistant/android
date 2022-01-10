@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
@@ -38,7 +39,8 @@ import io.homeassistant.companion.android.util.IntervalToString
 
 @Composable
 fun SettingsWearTemplateTile(
-    content: String,
+    template: String,
+    renderedTemplate: String,
     refreshInterval: Int,
     onContentChanged: (String) -> Unit,
     onRefreshIntervalChanged: (Int) -> Unit
@@ -100,13 +102,18 @@ fun SettingsWearTemplateTile(
             }
             Text(stringResource(R.string.template_tile_help))
             TextField(
-                value = content,
+                value = template,
                 onValueChange = onContentChanged,
                 label = {
                     Text(stringResource(R.string.template_tile_content))
                 },
                 modifier = Modifier.padding(top = 8.dp),
-                maxLines = 12
+                maxLines = 10
+            )
+            Text(
+                renderedTemplate,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
     }

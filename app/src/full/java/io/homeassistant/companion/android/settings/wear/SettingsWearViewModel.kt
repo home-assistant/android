@@ -59,6 +59,8 @@ class SettingsWearViewModel @Inject constructor(
         private set
     var templateTileContent = mutableStateOf("")
         private set
+    var templateTileContentRendered = mutableStateOf("")
+        private set
     var templateTileRefreshInterval = mutableStateOf(0)
         private set
 
@@ -100,6 +102,24 @@ class SettingsWearViewModel @Inject constructor(
 
     override fun onCleared() {
         Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
+    }
+
+    fun setTemplateContent(template: String) {
+        templateTileContent.value = template
+        if (template.isNotEmpty()) {
+            viewModelScope.launch {
+                try {
+                    templateTileContentRendered.value =
+                        integrationUseCase.renderTemplate(template, mapOf())
+                } catch (e: Exception) {
+                    templateTileContentRendered.value = getApplication<Application>().getString(
+                        commonR.string.template_tile_error
+                    )
+                }
+            }
+        } else {
+            templateTileContentRendered.value = ""
+        }
     }
 
     fun onEntitySelected(checked: Boolean, entityId: String) {
@@ -200,7 +220,7 @@ class SettingsWearViewModel @Inject constructor(
         favoriteEntityIdList.forEach { entityId ->
             favoriteEntityIds.add(entityId)
         }
-        templateTileContent.value = data.getString(KEY_TEMPLATE_TILE, "")
+        setTemplateContent(data.getString(KEY_TEMPLATE_TILE, ""))
         templateTileRefreshInterval.value = data.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
         hasData.value = true
     }

@@ -33,10 +33,11 @@ fun LoadSettingsHomeView(
             }
             composable(SettingsWearMainView.TEMPLATE) {
                 SettingsWearTemplateTile(
-                    content = settingsWearViewModel.templateTileContent.value,
+                    template = settingsWearViewModel.templateTileContent.value,
+                    renderedTemplate = settingsWearViewModel.templateTileContentRendered.value,
                     refreshInterval = settingsWearViewModel.templateTileRefreshInterval.value,
                     onContentChanged = {
-                        settingsWearViewModel.templateTileContent.value = it
+                        settingsWearViewModel.setTemplateContent(it)
                         settingsWearViewModel.sendTemplateTileInfo()
                     },
                     onRefreshIntervalChanged = {
