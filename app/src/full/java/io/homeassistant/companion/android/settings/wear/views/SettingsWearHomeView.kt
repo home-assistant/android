@@ -43,6 +43,9 @@ fun LoadSettingsHomeView(
                     onRefreshIntervalChanged = {
                         settingsWearViewModel.templateTileRefreshInterval.value = it
                         settingsWearViewModel.sendTemplateTileInfo()
+                    },
+                    onBackClicked = {
+                        navController.navigateUp()
                     }
                 )
             }

@@ -26,16 +26,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.IntervalToString
+import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SettingsWearTemplateTile(
@@ -43,13 +44,24 @@ fun SettingsWearTemplateTile(
     renderedTemplate: String,
     refreshInterval: Int,
     onContentChanged: (String) -> Unit,
-    onRefreshIntervalChanged: (Int) -> Unit
+    onRefreshIntervalChanged: (Int) -> Unit,
+    onBackClicked: () -> Unit
 ) {
     val context = LocalContext.current
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.template_tile_content)) },
+                title = { Text(stringResource(commonR.string.template_tile)) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onBackClicked
+                    ) {
+                        Image(
+                            asset = CommunityMaterial.Icon.cmd_arrow_left,
+                            colorFilter = ColorFilter.tint(colorResource(R.color.colorIcon))
+                        )
+                    }
+                },
                 actions = {
                     IconButton(onClick = {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(WEAR_DOCS_LINK))
@@ -57,24 +69,24 @@ fun SettingsWearTemplateTile(
                     }) {
                         Icon(
                             Icons.Filled.HelpOutline,
-                            contentDescription = stringResource(id = R.string.help)
+                            contentDescription = stringResource(id = commonR.string.help)
                         )
                     }
                 }
             )
         }
     ) {
-        Column(Modifier.padding(top = 8.dp, start = 8.dp, end = 8.dp)) {
+        Column(Modifier.padding(all = 16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
                     asset = CommunityMaterial.Icon3.cmd_timer_cog,
-                    colorFilter = ColorFilter.tint(Color.White),
+                    colorFilter = ColorFilter.tint(colorResource(R.color.colorPrimary)),
                     modifier = Modifier
                         .height(24.dp)
                         .width(24.dp)
                 )
                 Text(
-                    stringResource(R.string.refresh_interval),
+                    stringResource(commonR.string.refresh_interval),
                     modifier = Modifier.padding(start = 4.dp, end = 4.dp)
                 )
                 Box {
@@ -100,12 +112,12 @@ fun SettingsWearTemplateTile(
                     }
                 }
             }
-            Text(stringResource(R.string.template_tile_help))
+            Text(stringResource(commonR.string.template_tile_help))
             TextField(
                 value = template,
                 onValueChange = onContentChanged,
                 label = {
-                    Text(stringResource(R.string.template_tile_content))
+                    Text(stringResource(commonR.string.template_tile_content))
                 },
                 modifier = Modifier.padding(top = 8.dp),
                 maxLines = 10

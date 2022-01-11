@@ -213,7 +213,7 @@ fun SettingsView(
                         colors = ChipDefaults.secondaryChipColors(),
                         label = {
                             Text(
-                                text = stringResource(id = commonR.string.template_tile_content)
+                                text = stringResource(id = commonR.string.template_tile)
                             )
                         },
                         onClick = onClickTemplateTile
