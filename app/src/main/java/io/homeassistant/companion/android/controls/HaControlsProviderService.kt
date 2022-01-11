@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.concurrent.Flow
 import java.util.function.Consumer
@@ -41,17 +40,19 @@ class HaControlsProviderService : ControlsProviderService() {
     private val domainToHaControl = mapOf(
         "automation" to DefaultSwitchControl,
         "camera" to null,
+        "button" to DefaultButtonControl,
         "climate" to ClimateControl,
         "cover" to CoverControl,
         "fan" to FanControl,
         "input_boolean" to DefaultSwitchControl,
+        "input_button" to DefaultButtonControl,
         "input_number" to DefaultSliderControl,
         "light" to LightControl,
         "lock" to LockControl,
         "media_player" to null,
         "remote" to null,
-        "scene" to SceneControl,
-        "script" to SceneControl,
+        "scene" to DefaultButtonControl,
+        "script" to DefaultButtonControl,
         "switch" to DefaultSwitchControl,
         "vacuum" to VacuumControl
     )

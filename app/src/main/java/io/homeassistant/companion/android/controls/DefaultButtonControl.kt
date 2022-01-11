@@ -14,7 +14,7 @@ import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 
 @RequiresApi(Build.VERSION_CODES.R)
-class SceneControl {
+class DefaultButtonControl {
     companion object : HaControl {
         override fun provideControlFeatures(
             context: Context,
@@ -32,10 +32,15 @@ class SceneControl {
         }
 
         override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-            DeviceTypes.TYPE_ROUTINE
+            when (entity.entityId.split(".")[0]) {
+                "scene", "script" -> DeviceTypes.TYPE_ROUTINE
+                else -> DeviceTypes.TYPE_UNKNOWN
+            }
 
         override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
             when (entity.entityId.split(".")[0]) {
+                "button" -> context.getString(commonR.string.domain_button)
+                "input_button" -> context.getString(commonR.string.domain_input_button)
                 "scene" -> context.getString(commonR.string.domain_scene)
                 "script" -> context.getString(commonR.string.domain_script)
                 else -> entity.entityId.split(".")[0].capitalize()
@@ -48,7 +53,10 @@ class SceneControl {
             return runBlocking {
                 integrationRepository.callService(
                     action.templateId.split(".")[0],
-                    "turn_on",
+                    when (action.templateId.split(".")[0]) {
+                        "button", "input_button" -> "press"
+                        else -> "turn_on"
+                    },
                     hashMapOf("entity_id" to action.templateId)
                 )
                 return@runBlocking true
