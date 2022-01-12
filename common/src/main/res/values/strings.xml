@@ -136,10 +136,12 @@
     <string name="disabled">Disabled</string>
     <string name="documentation">Documentation</string>
     <string name="domain_automation">Automation</string>
+    <string name="domain_button">Button</string>
     <string name="domain_climate">Climate</string>
     <string name="domain_cover">Cover</string>
     <string name="domain_fan">Fan</string>
     <string name="domain_input_boolean">Input Boolean</string>
+    <string name="domain_input_button">Input Button</string>
     <string name="domain_input_number">Input Number</string>
     <string name="domain_light">Light</string>
     <string name="domain_lock">Lock</string>
