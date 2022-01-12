@@ -54,7 +54,7 @@ fun ManualSetupView(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             label = { Text(stringResource(id = commonR.string.input_url)) },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
                 onDone = {
                     keyboardController?.hide()
