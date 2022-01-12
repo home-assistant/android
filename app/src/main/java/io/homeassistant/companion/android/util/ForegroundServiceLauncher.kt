@@ -10,7 +10,7 @@ import android.util.Log
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
-import java.util.*
+import java.util.Calendar
 
 class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
 

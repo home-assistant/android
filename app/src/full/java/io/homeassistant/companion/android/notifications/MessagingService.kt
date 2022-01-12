@@ -5,10 +5,8 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -72,7 +70,6 @@ import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
 import javax.inject.Inject
-import kotlin.collections.HashMap
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
