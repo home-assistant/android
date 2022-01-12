@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
@@ -55,7 +56,7 @@ interface SensorManager {
     fun checkUsageStatsPermission(context: Context): Boolean {
         val pm = context.packageManager
         val appInfo = pm.getApplicationInfo(context.packageName, 0)
-        val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val appOpsManager = context.getSystemService<AppOpsManager>()!!
         val mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
         return mode == AppOpsManager.MODE_ALLOWED
     }

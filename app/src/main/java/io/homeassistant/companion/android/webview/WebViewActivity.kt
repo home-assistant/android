@@ -43,6 +43,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.WindowInsetsControllerCompat
@@ -819,7 +820,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     fun processHaptic(hapticType: String) {
-        val vm = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        val vm = getSystemService<Vibrator>()
 
         Log.d(TAG, "Processing haptic tag for $hapticType")
         when (hapticType) {
@@ -827,19 +828,19 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
                     webView.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
                 else
-                    vm.vibrate(500)
+                    vm?.vibrate(500)
             }
             "warning" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-                    vm.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.EFFECT_HEAVY_CLICK))
+                    vm?.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.EFFECT_HEAVY_CLICK))
                 else
-                    vm.vibrate(1500)
+                    vm?.vibrate(1500)
             }
             "failure" -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
                     webView.performHapticFeedback(HapticFeedbackConstants.REJECT)
                 else
-                    vm.vibrate(1000)
+                    vm?.vibrate(1000)
             }
             "light" -> {
                 webView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
@@ -854,7 +855,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
                     webView.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
                 else
-                    vm.vibrate(50)
+                    vm?.vibrate(50)
             }
         }
     }

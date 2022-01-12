@@ -16,6 +16,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
@@ -474,7 +475,7 @@ class SettingsFragment constructor(
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-            context?.getSystemService(PowerManager::class.java)
+            context?.getSystemService<PowerManager>()
                 ?.isIgnoringBatteryOptimizations(requireActivity().packageName)
                 ?: false
     }

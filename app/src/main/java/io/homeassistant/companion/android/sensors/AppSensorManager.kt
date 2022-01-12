@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Process
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.math.RoundingMode
@@ -123,7 +124,7 @@ class AppSensorManager : SensorManager {
         updateAppTxGb(context, myUid)
         updateImportanceCheck(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val usageStatsManager = context.getSystemService<UsageStatsManager>()!!
             updateAppInactive(context, usageStatsManager)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
                 updateAppStandbyBucket(context, usageStatsManager)
@@ -262,7 +263,7 @@ class AppSensorManager : SensorManager {
         if (!isEnabled(context, app_importance.id))
             return
 
-        val appManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val appManager = context.getSystemService<ActivityManager>()!!
         val currentProcess = appManager.runningAppProcesses
         var importance = "not_running"
         if (currentProcess != null) {

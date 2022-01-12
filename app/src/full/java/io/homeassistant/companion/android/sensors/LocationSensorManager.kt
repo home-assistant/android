@@ -10,7 +10,7 @@ import android.os.Looper
 import android.os.PowerManager
 import android.util.Log
 import android.widget.Toast
-import androidx.core.content.ContextCompat.getSystemService
+import androidx.core.content.getSystemService
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
@@ -790,7 +790,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 request,
                 object : LocationCallback() {
                     val wakeLock: PowerManager.WakeLock? =
-                        getSystemService(latestContext, PowerManager::class.java)
+                        latestContext.getSystemService<PowerManager>()
                             ?.newWakeLock(
                                 PowerManager.PARTIAL_WAKE_LOCK,
                                 "HomeAssistant::AccurateLocation"

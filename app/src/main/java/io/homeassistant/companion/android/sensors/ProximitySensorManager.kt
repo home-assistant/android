@@ -1,13 +1,13 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import android.content.Context.SENSOR_SERVICE
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlin.math.roundToInt
 import io.homeassistant.companion.android.common.R as commonR
@@ -61,7 +61,7 @@ class ProximitySensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, proximitySensor.id))
             return
 
-        mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+        mySensorManager = latestContext.getSystemService()!!
 
         val proximitySensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY)
         if (proximitySensors != null && !isListenerRegistered) {

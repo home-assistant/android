@@ -14,6 +14,8 @@ import io.homeassistant.companion.android.common.data.authentication.Authenticat
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantInstance
 import io.homeassistant.companion.android.onboarding.discovery.HomeAssistantSearcher
 import javax.inject.Inject
+import androidx.core.content.getSystemService
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial.url
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
@@ -22,7 +24,7 @@ class OnboardingViewModel @Inject constructor(
 ) : AndroidViewModel(app) {
 
     private val homeAssistantSearcher = HomeAssistantSearcher(
-        ContextCompat.getSystemService(app, NsdManager::class.java)!!,
+        app.getSystemService()!!,
         { instance ->
             if (foundInstances.none { it.url == instance.url }) {
                 foundInstances.add(instance)

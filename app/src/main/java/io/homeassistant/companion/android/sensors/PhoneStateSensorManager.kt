@@ -6,6 +6,7 @@ import android.os.Build
 import android.telephony.SubscriptionInfo
 import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
@@ -73,7 +74,7 @@ class PhoneStateSensorManager : SensorManager {
 
             if (checkPermission(context, phoneState.id)) {
                 val telephonyManager =
-                    (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
+                    context.applicationContext.getSystemService<TelephonyManager>()!!
 
                 currentPhoneState = when (telephonyManager.callState) {
                     TelephonyManager.CALL_STATE_IDLE -> "idle"
@@ -115,8 +116,9 @@ class PhoneStateSensorManager : SensorManager {
 
             if (checkPermission(context, basicSimSensor.id)) {
                 val subscriptionManager =
-                    (context.applicationContext.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE)) as SubscriptionManager
-                val info: SubscriptionInfo? = subscriptionManager.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
+                    context.applicationContext.getSystemService<SubscriptionManager>()
+                val info: SubscriptionInfo? =
+                    subscriptionManager?.getActiveSubscriptionInfoForSimSlotIndex(slotIndex)
 
                 if (info != null) {
                     displayName = info.displayName.toString()
