@@ -50,6 +50,7 @@
     <string name="basic_sensor_name_doze">Doze Mode</string>
     <string name="basic_sensor_name_external_storage">External Storage</string>
     <string name="basic_sensor_name_geolocation">Geocoded Location</string>
+    <string name="basic_sensor_name_headset_mounted">In Use</string>
     <string name="basic_sensor_name_high_accuracy_mode">High Accuracy Mode</string>
     <string name="basic_sensor_name_interactive">Interactive</string>
     <string name="basic_sensor_name_internal_storage">Internal Storage</string>
@@ -398,6 +399,7 @@
     <string name="sensor_description_external_storage">Information about the total and available storage space externally</string>
     <string name="sensor_description_geocoded_location">Calculated address based on GPS data using Googles Location API</string>
     <string name="sensor_description_headphone">Whether headphones are plugged into the device</string>
+    <string name="sensor_description_headset_mounted">Whether the headset is currently in use</string>
     <string name="sensor_description_high_accuracy_mode">Whether high accuracy mode is active on the device</string>
     <string name="sensor_description_interactive">Whether the device is in an interactive state</string>
     <string name="sensor_description_internal_storage">Information about the total and available storage space internally</string>
@@ -475,6 +477,7 @@
     <string name="sensor_name_power">Power Sensors</string>
     <string name="sensor_name_pressure">Pressure Sensor</string>
     <string name="sensor_name_proximity">Proximity Sensor</string>
+    <string name="sensor_name_quest">Quest Sensors</string>
     <string name="sensor_name_ringer_mode">Ringer Mode</string>
     <string name="sensor_name_sleep_as_android">Sleep as Android Sensors</string>
     <string name="sensor_name_speakerphone">Speakerphone</string>
