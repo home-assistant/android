@@ -16,13 +16,22 @@ fun ListHeader(
     expanded: Boolean,
     onExpandChanged: (Boolean) -> Unit
 ) {
+    ListHeader(stringResource(stringId), expanded, onExpandChanged)
+}
+
+@Composable
+fun ListHeader(
+    string: String,
+    expanded: Boolean,
+    onExpandChanged: (Boolean) -> Unit
+) {
     ListHeader(
         modifier = Modifier
             .clickable { onExpandChanged(!expanded) }
     ) {
         Row {
             Text(
-                text = stringResource(id = stringId) + if (expanded) "\u2001-" else "\u2001+"
+                text = string + if (expanded) "\u2001-" else "\u2001+"
             )
         }
     }
@@ -30,10 +39,15 @@ fun ListHeader(
 
 @Composable
 fun ListHeader(id: Int, modifier: Modifier = Modifier) {
+    ListHeader(stringResource(id), modifier)
+}
+
+@Composable
+fun ListHeader(string: String, modifier: Modifier = Modifier) {
     ListHeader {
         Row {
             Text(
-                text = stringResource(id = id),
+                text = string,
                 modifier = modifier
             )
         }
