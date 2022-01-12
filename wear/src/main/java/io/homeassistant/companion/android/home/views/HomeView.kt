@@ -86,9 +86,12 @@ fun LoadHomePage(
                         mainViewModel.favoriteEntityIds,
                         { id, state -> mainViewModel.toggleEntity(id, state) },
                         { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                        {
+                        { lists, order, filter ->
                             mainViewModel.entityLists.clear()
-                            mainViewModel.entityLists.putAll(it)
+                            mainViewModel.entityLists.putAll(lists)
+                            mainViewModel.entityListsOrder.clear()
+                            mainViewModel.entityListsOrder.addAll(order)
+                            mainViewModel.entityListFilter = filter
                             swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                         },
                         mainViewModel.isHapticEnabled.value,
@@ -99,6 +102,8 @@ fun LoadHomePage(
                 composable(SCREEN_ENTITY_LIST) {
                     EntityViewList(
                         entityLists = mainViewModel.entityLists,
+                        entityListsOrder = mainViewModel.entityListsOrder,
+                        entityListFilter = mainViewModel.entityListFilter,
                         onEntityClicked =
                         { entityId, state ->
                             mainViewModel.toggleEntity(entityId, state)

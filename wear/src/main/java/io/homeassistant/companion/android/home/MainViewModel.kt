@@ -4,16 +4,20 @@ import android.app.Application
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.Favorites
+import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,6 +27,9 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     private lateinit var homePresenter: HomePresenter
     val app = getApplication<HomeAssistantApplication>()
     private val favoritesDao = AppDatabase.getInstance(app.applicationContext).favoritesDao()
+    private var areaRegistry: List<AreaRegistryResponse>? = null
+    private var deviceRegistry: List<DeviceRegistryResponse>? = null
+    private var entityRegistry: List<EntityRegistryResponse>? = null
 
     // TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments
     fun init(homePresenter: HomePresenter) {
@@ -38,21 +45,22 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         private set
     var shortcutEntities = mutableStateListOf<SimplifiedEntity>()
         private set
-    var scenes = mutableStateListOf<Entity<*>>()
+    var areas = mutableListOf<AreaRegistryResponse>()
         private set
-    var scripts = mutableStateListOf<Entity<*>>()
+
+    var entitiesByArea = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
         private set
-    var lights = mutableStateListOf<Entity<*>>()
+    var entitiesByDomain = mutableStateMapOf<String, SnapshotStateList<Entity<*>>>()
         private set
-    var locks = mutableStateListOf<Entity<*>>()
+    var entitiesByAreaOrder = mutableStateListOf<String>()
         private set
-    var inputBooleans = mutableStateListOf<Entity<*>>()
-        private set
-    var switches = mutableStateListOf<Entity<*>>()
+    var entitiesByDomainOrder = mutableStateListOf<String>()
         private set
 
     // Content of EntityListView
-    var entityLists = mutableStateMapOf<Int, List<Entity<*>>>()
+    var entityLists = mutableStateMapOf<String, List<Entity<*>>>()
+    var entityListsOrder = mutableStateListOf<String>()
+    var entityListFilter: (Entity<*>) -> Boolean = { true }
 
     // settings
     var isHapticEnabled = mutableStateOf(false)
@@ -62,6 +70,11 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     private fun favorites(): Flow<List<Favorites>>? = favoritesDao.getAllFlow()
 
+    fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
+
+    fun stringForDomain(domain: String): String? =
+        HomePresenterImpl.domainsWithNames[domain]?.let { app.applicationContext.getString(it) }
+
     private fun loadEntities() {
         viewModelScope.launch {
             if (!homePresenter.isConnected()) {
@@ -70,31 +83,96 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             shortcutEntities.addAll(homePresenter.getTileShortcuts())
             isHapticEnabled.value = homePresenter.getWearHapticFeedback()
             isToastEnabled.value = homePresenter.getWearToastConfirmation()
+
+            homePresenter.getAreaRegistry()?.let {
+                areaRegistry = it
+                areas.addAll(it)
+            }
+            deviceRegistry = homePresenter.getDeviceRegistry()
+            entityRegistry = homePresenter.getEntityRegistry()
             homePresenter.getEntities()?.forEach {
-                entities[it.entityId] = it
+                if (supportedDomains().contains(it.entityId.split(".")[0])) {
+                    entities[it.entityId] = it
+                }
             }
             updateEntityDomains()
-            homePresenter.getEntityUpdates()?.collect {
-                entities[it.entityId] = it
-                updateEntityDomains()
+
+            viewModelScope.launch {
+                homePresenter.getEntityUpdates()?.collect {
+                    if (supportedDomains().contains(it.entityId.split(".")[0])) {
+                        entities[it.entityId] = it
+                        updateEntityDomains()
+                    }
+                }
+            }
+            viewModelScope.launch {
+                homePresenter.getAreaRegistryUpdates()?.collect {
+                    areaRegistry = homePresenter.getAreaRegistry()
+                    areas.clear()
+                    areaRegistry?.let {
+                        areas.addAll(it)
+                    }
+                    updateEntityDomains()
+                }
+            }
+            viewModelScope.launch {
+                homePresenter.getDeviceRegistryUpdates()?.collect {
+                    deviceRegistry = homePresenter.getDeviceRegistry()
+                    updateEntityDomains()
+                }
+            }
+            viewModelScope.launch {
+                homePresenter.getEntityRegistryUpdates()?.collect {
+                    entityRegistry = homePresenter.getEntityRegistry()
+                    updateEntityDomains()
+                }
             }
         }
     }
 
     fun updateEntityDomains() {
         val entitiesList = entities.values.toList().sortedBy { it.entityId }
-        scenes.clear()
-        scenes.addAll(entitiesList.filter { it.entityId.split(".")[0] == "scene" })
-        scripts.clear()
-        scripts.addAll(entitiesList.filter { it.entityId.split(".")[0] == "script" })
-        lights.clear()
-        lights.addAll(entitiesList.filter { it.entityId.split(".")[0] == "light" })
-        locks.clear()
-        locks.addAll(entitiesList.filter { it.entityId.split(".")[0] == "lock" })
-        inputBooleans.clear()
-        inputBooleans.addAll(entitiesList.filter { it.entityId.split(".")[0] == "input_boolean" })
-        switches.clear()
-        switches.addAll(entitiesList.filter { it.entityId.split(".")[0] == "switch" })
+        val areasList = areaRegistry.orEmpty().sortedBy { it.name }
+        val domainsList = entitiesList.map { it.entityId.split(".")[0] }.distinct()
+
+        // Create a list with all areas + their entities
+        areasList.forEach { area ->
+            val entitiesInArea = mutableStateListOf<Entity<*>>()
+            entitiesInArea.addAll(
+                entitiesList
+                    .filter { getAreaForEntity(it.entityId)?.areaId == area.areaId }
+                    .map { it as Entity<Map<String, Any>> }
+                    .sortedBy { (it.attributes["friendly_name"] ?: it.entityId) as String }
+            )
+            entitiesByArea[area.areaId]?.let {
+                it.clear()
+                it.addAll(entitiesInArea)
+            } ?: run {
+                entitiesByArea[area.areaId] = entitiesInArea
+            }
+        }
+        entitiesByAreaOrder.clear()
+        entitiesByAreaOrder.addAll(areasList.map { it.areaId })
+        // Quick check: are there any areas in the list that no longer exist?
+        entitiesByArea.forEach {
+            if (!areasList.any { item -> item.areaId == it.key }) {
+                entitiesByArea.remove(it.key)
+            }
+        }
+
+        // Create a list with all discovered domains + their entities
+        domainsList.forEach { domain ->
+            val entitiesInDomain = mutableStateListOf<Entity<*>>()
+            entitiesInDomain.addAll(entitiesList.filter { it.entityId.split(".")[0] == domain })
+            entitiesByDomain[domain]?.let {
+                it.clear()
+                it.addAll(entitiesInDomain)
+            } ?: run {
+                entitiesByDomain[domain] = entitiesInDomain
+            }
+        }
+        entitiesByDomainOrder.clear()
+        entitiesByDomainOrder.addAll(domainsList)
     }
 
     fun toggleEntity(entityId: String, state: String) {
@@ -102,6 +180,9 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             homePresenter.onEntityClicked(entityId, state)
         }
     }
+
+    fun getAreaForEntity(entityId: String): AreaRegistryResponse? =
+        RegistriesDataHandler.getAreaForEntity(entityId, areaRegistry, deviceRegistry, entityRegistry)
 
     private fun getFavorites() {
         viewModelScope.launch {

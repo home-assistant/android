@@ -7,6 +7,13 @@ import io.homeassistant.companion.android.common.data.authentication.SessionStat
 import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,10 +22,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import io.homeassistant.companion.android.common.R as commonR
 
 class HomePresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationRepository,
-    private val integrationUseCase: IntegrationRepository
+    private val integrationUseCase: IntegrationRepository,
+    private val webSocketUseCase: WebSocketRepository
 ) : HomePresenter {
 
     companion object {
@@ -26,9 +35,15 @@ class HomePresenterImpl @Inject constructor(
             "cover", "fan", "humidifier", "input_boolean", "light", "lock",
             "media_player", "remote", "siren", "switch"
         )
-        val supportedDomains = listOf(
-            "input_boolean", "light", "lock", "switch", "script", "scene"
+        val domainsWithNames = mapOf(
+            "input_boolean" to commonR.string.input_booleans,
+            "light" to commonR.string.lights,
+            "lock" to commonR.string.locks,
+            "switch" to commonR.string.switches,
+            "script" to commonR.string.scripts,
+            "scene" to commonR.string.scenes
         )
+        val supportedDomains = domainsWithNames.keys.toList()
         const val TAG = "HomePresenter"
     }
 
@@ -110,6 +125,30 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun isConnected(): Boolean {
         return integrationUseCase.isRegistered()
+    }
+
+    override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {
+        return webSocketUseCase.getAreaRegistry()
+    }
+
+    override suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>? {
+        return webSocketUseCase.getDeviceRegistry()
+    }
+
+    override suspend fun getEntityRegistry(): List<EntityRegistryResponse>? {
+        return webSocketUseCase.getEntityRegistry()
+    }
+
+    override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? {
+        return webSocketUseCase.getAreaRegistryUpdates()
+    }
+
+    override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>? {
+        return webSocketUseCase.getDeviceRegistryUpdates()
+    }
+
+    override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>? {
+        return webSocketUseCase.getEntityRegistryUpdates()
     }
 
     override suspend fun getTileShortcuts(): List<SimplifiedEntity> {
