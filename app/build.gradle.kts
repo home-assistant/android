@@ -79,19 +79,19 @@ android {
     }
     flavorDimensions.add("version")
     productFlavors {
-        create("minimal") {
-            applicationIdSuffix = ".minimal"
-            versionNameSuffix = "-minimal"
-        }
+//        create("minimal") {
+//            applicationIdSuffix = ".minimal"
+//            versionNameSuffix = "-minimal"
+//        }
         create("full") {
             applicationIdSuffix = ""
             versionNameSuffix = "-full"
         }
-        create("quest") {
-            applicationIdSuffix = ".quest"
-            versionNameSuffix = "-quest"
-            minSdk = 23
-        }
+//        create("quest") {
+//            applicationIdSuffix = ".quest"
+//            versionNameSuffix = "-quest"
+//            minSdk = 23
+//        }
 
         // Generate a list of application ids into BuildConfig
         val values = productFlavors.joinToString {
@@ -102,12 +102,15 @@ android {
     }
 
     playConfigs {
-        register("minimal") {
+//        register("minimal") {
+//            enabled.set(false)
+//        }
+        register("full") {
             enabled.set(false)
         }
-        register("quest") {
-            enabled.set(false)
-        }
+//        register("quest") {
+//            enabled.set(false)
+//        }
     }
 
     testOptions {
