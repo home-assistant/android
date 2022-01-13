@@ -43,6 +43,8 @@ class SettingsWearViewModel @Inject constructor(
         private const val KEY_UPDATE_TIME = "UpdateTime"
         private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
         private const val KEY_FAVORITES = "favorites"
+        private const val KEY_TEMPLATE_TILE = "templateTile"
+        private const val KEY_TEMPLATE_TILE_REFRESH_INTERVAL = "templateTileRefreshInterval"
     }
 
     private val objectMapper = jacksonObjectMapper()
@@ -54,6 +56,12 @@ class SettingsWearViewModel @Inject constructor(
     var entities = mutableStateMapOf<String, Entity<*>>()
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
+        private set
+    var templateTileContent = mutableStateOf("")
+        private set
+    var templateTileContentRendered = mutableStateOf("")
+        private set
+    var templateTileRefreshInterval = mutableStateOf(0)
         private set
 
     init {
@@ -94,6 +102,24 @@ class SettingsWearViewModel @Inject constructor(
 
     override fun onCleared() {
         Wearable.getDataClient(getApplication<HomeAssistantApplication>()).removeListener(this)
+    }
+
+    fun setTemplateContent(template: String) {
+        templateTileContent.value = template
+        if (template.isNotEmpty()) {
+            viewModelScope.launch {
+                try {
+                    templateTileContentRendered.value =
+                        integrationUseCase.renderTemplate(template, mapOf())
+                } catch (e: Exception) {
+                    templateTileContentRendered.value = getApplication<Application>().getString(
+                        commonR.string.template_tile_error
+                    )
+                }
+            }
+        } else {
+            templateTileContentRendered.value = ""
+        }
     }
 
     fun onEntitySelected(checked: Boolean, entityId: String) {
@@ -151,8 +177,22 @@ class SettingsWearViewModel @Inject constructor(
         }
 
         Wearable.getDataClient(getApplication<HomeAssistantApplication>()).putDataItem(putDataRequest).apply {
-            addOnSuccessListener { Log.d(TAG, "Successfully sent favorites to wear") }
-            addOnFailureListener { e -> Log.e(TAG, "Failed to send favorites to wear", e) }
+            addOnSuccessListener { Log.d(TAG, "Successfully sent auth to wear") }
+            addOnFailureListener { e -> Log.e(TAG, "Failed to send auth to wear", e) }
+        }
+    }
+
+    fun sendTemplateTileInfo() {
+        val putDataRequest = PutDataMapRequest.create("/updateTemplateTile").run {
+            dataMap.putString(KEY_TEMPLATE_TILE, templateTileContent.value)
+            dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, templateTileRefreshInterval.value)
+            setUrgent()
+            asPutDataRequest()
+        }
+
+        Wearable.getDataClient(getApplication<HomeAssistantApplication>()).putDataItem(putDataRequest).apply {
+            addOnSuccessListener { Log.d(TAG, "Successfully sent tile template to wear") }
+            addOnFailureListener { e -> Log.e(TAG, "Failed to send tile template to wear", e) }
         }
     }
 
@@ -180,6 +220,8 @@ class SettingsWearViewModel @Inject constructor(
         favoriteEntityIdList.forEach { entityId ->
             favoriteEntityIds.add(entityId)
         }
+        setTemplateContent(data.getString(KEY_TEMPLATE_TILE, ""))
+        templateTileRefreshInterval.value = data.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
         hasData.value = true
     }
 }

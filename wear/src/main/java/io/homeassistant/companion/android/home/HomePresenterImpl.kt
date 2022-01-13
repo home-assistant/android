@@ -174,4 +174,20 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun setWearToastConfirmation(enabled: Boolean) {
         integrationUseCase.setWearToastConfirmation(enabled)
     }
+
+    override suspend fun getTemplateTileContent(): String {
+        return integrationUseCase.getTemplateTileContent()
+    }
+
+    override suspend fun setTemplateTileContent(content: String) {
+        integrationUseCase.setTemplateTileContent(content)
+    }
+
+    override suspend fun getTemplateTileRefreshInterval(): Int {
+        return integrationUseCase.getTemplateTileRefreshInterval()
+    }
+
+    override suspend fun setTemplateTileRefreshInterval(interval: Int) {
+        integrationUseCase.setTemplateTileRefreshInterval(interval)
+    }
 }

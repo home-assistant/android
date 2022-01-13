@@ -202,6 +202,19 @@
     <string name="input_url_hint">https://example.duckdns.org:8123</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="install_app">Install App on Wear Device</string>
+    <plurals name="interval_hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
+    <string name="interval_manual">Manual</string>
+    <plurals name="interval_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="interval_seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
     <string name="irreversible">This action is irreversible</string>
     <string name="keep_screen_on_def">Do not lock screen when Lovelace dashboard is active</string>
     <string name="keep_screen_on">Keep screen On</string>
@@ -350,6 +363,7 @@
     <string name="refresh_internal">Refresh Internal URL</string>
     <string name="refresh_log">Refresh logs</string>
     <string name="refresh">Refresh</string>
+    <string name="refresh_interval">Refresh interval</string>
     <string name="registerDevice">Register watch</string>
     <string name="remaining">Remaining</string>
     <string name="remember">Remember</string>
@@ -599,6 +613,13 @@
     <string name="successful">Successful</string>
     <string name="switches">Switches</string>
     <string name="tag_reader_title">Processing Tag</string>
+    <string name="template_tile">Template tile</string>
+    <string name="template_tile_change_message">Change template in phone settings</string>
+    <string name="template_tile_content">Template tile content</string>
+    <string name="template_tile_desc">Renders and displays a template</string>
+    <string name="template_tile_empty">Set template in the phone settings</string>
+    <string name="template_tile_error">Error in template</string>
+    <string name="template_tile_help">Provide a template below that will be displayed on the Wear OS template tile.</string>
     <string name="template_widget_default">Enter Template Here</string>
     <string name="template_widget_desc">Render any template with HTML formatting</string>
     <string name="template_widget">Template Widget</string>

@@ -38,4 +38,8 @@ interface HomePresenter {
     suspend fun setWearHapticFeedback(enabled: Boolean)
     suspend fun getWearToastConfirmation(): Boolean
     suspend fun setWearToastConfirmation(enabled: Boolean)
+    suspend fun getTemplateTileContent(): String
+    suspend fun setTemplateTileContent(content: String)
+    suspend fun getTemplateTileRefreshInterval(): Int
+    suspend fun setTemplateTileRefreshInterval(interval: Int)
 }
