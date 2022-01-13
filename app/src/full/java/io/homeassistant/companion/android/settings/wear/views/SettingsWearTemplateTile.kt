@@ -94,7 +94,7 @@ fun SettingsWearTemplateTile(
                     OutlinedButton(
                         onClick = { dropdownExpanded = true }
                     ) {
-                        Text(IntervalToString(refreshInterval))
+                        Text(IntervalToString(LocalContext.current, refreshInterval))
                     }
                     DropdownMenu(
                         expanded = dropdownExpanded,
@@ -106,7 +106,7 @@ fun SettingsWearTemplateTile(
                                 onRefreshIntervalChanged(option)
                                 dropdownExpanded = false
                             }) {
-                                Text(IntervalToString(option))
+                                Text(IntervalToString(LocalContext.current, option))
                             }
                         }
                     }

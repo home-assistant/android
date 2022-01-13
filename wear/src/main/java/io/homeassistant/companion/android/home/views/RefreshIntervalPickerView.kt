@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Button
@@ -41,7 +42,7 @@ fun RefreshIntervalPickerView(
             repeatItems = true // Desire to set to false, but current implementation is faulty
         ) {
             Text(
-                IntervalToString(options[it]),
+                IntervalToString(LocalContext.current, options[it]),
                 fontSize = 24.sp,
                 color = if (it != this.selectedOption) wearColorPalette.onBackground else wearColorPalette.primary
             )

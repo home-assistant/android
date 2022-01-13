@@ -202,6 +202,19 @@
     <string name="input_url_hint">https://example.duckdns.org:8123</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="install_app">Install App on Wear Device</string>
+    <plurals name="interval_hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
+    <string name="interval_manual">Manual</string>
+    <plurals name="interval_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <plurals name="interval_seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
     <string name="irreversible">This action is irreversible</string>
     <string name="keep_screen_on_def">Do not lock screen when Lovelace dashboard is active</string>
     <string name="keep_screen_on">Keep screen On</string>
