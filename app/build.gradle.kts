@@ -180,9 +180,9 @@ dependencies {
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
 
-    implementation("com.google.android.exoplayer:exoplayer-core:2.15.1")
-    implementation("com.google.android.exoplayer:exoplayer-hls:2.15.1")
-    implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
+    implementation("com.google.android.exoplayer:exoplayer-core:r2.16.1")
+    implementation("com.google.android.exoplayer:exoplayer-hls:r2.16.1")
+    implementation("com.google.android.exoplayer:exoplayer-ui:r2.16.1")
     implementation("com.google.android.exoplayer:extension-cronet:2.15.1")
 
     implementation("androidx.compose.animation:animation:1.0.5")
