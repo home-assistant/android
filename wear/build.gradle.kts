@@ -94,6 +94,7 @@ dependencies {
     implementation("androidx.wear:wear:1.2.0")
     implementation("com.google.android.support:wearable:2.8.1")
     implementation("com.google.android.gms:play-services-wearable:17.1.0")
+    implementation("androidx.wear:wear-input:1.2.0-alpha02")
     compileOnly("com.google.android.wearable:wearable:2.8.1")
 
     implementation("com.google.dagger:hilt-android:2.40.5")

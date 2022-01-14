@@ -27,7 +27,26 @@ fun LoadSettingsHomeView(
                     hasData = settingsWearViewModel.hasData.value,
                     isAuthed = settingsWearViewModel.isAuthenticated.value,
                     navigateFavorites = { navController.navigate(SettingsWearMainView.FAVORITES) },
+                    navigateTemplateTile = { navController.navigate(SettingsWearMainView.TEMPLATE) },
                     loginWearOs = loginWearOs
+                )
+            }
+            composable(SettingsWearMainView.TEMPLATE) {
+                SettingsWearTemplateTile(
+                    template = settingsWearViewModel.templateTileContent.value,
+                    renderedTemplate = settingsWearViewModel.templateTileContentRendered.value,
+                    refreshInterval = settingsWearViewModel.templateTileRefreshInterval.value,
+                    onContentChanged = {
+                        settingsWearViewModel.setTemplateContent(it)
+                        settingsWearViewModel.sendTemplateTileInfo()
+                    },
+                    onRefreshIntervalChanged = {
+                        settingsWearViewModel.templateTileRefreshInterval.value = it
+                        settingsWearViewModel.sendTemplateTileInfo()
+                    },
+                    onBackClicked = {
+                        navController.navigateUp()
+                    }
                 )
             }
         }

@@ -62,6 +62,8 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
+        private const val PREF_TILE_TEMPLATE = "tile_template"
+        private const val PREF_TILE_TEMPLATE_REFRESH_INTERVAL = "tile_template_refresh_interval"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_HA_VERSION = "ha_version"
@@ -370,6 +372,22 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun setTileShortcuts(entities: List<String>) {
         localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
+    }
+
+    override suspend fun getTemplateTileContent(): String {
+        return localStorage.getString(PREF_TILE_TEMPLATE) ?: ""
+    }
+
+    override suspend fun setTemplateTileContent(content: String) {
+        localStorage.putString(PREF_TILE_TEMPLATE, content)
+    }
+
+    override suspend fun getTemplateTileRefreshInterval(): Int {
+        return localStorage.getInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL) ?: 0
+    }
+
+    override suspend fun setTemplateTileRefreshInterval(interval: Int) {
+        localStorage.putInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL, interval)
     }
 
     override suspend fun setWearHapticFeedback(enabled: Boolean) {

@@ -32,7 +32,9 @@ import io.homeassistant.companion.android.common.R as commonR
 @ExperimentalComposeUiApi
 @Composable
 fun EntityViewList(
-    entityLists: Map<Int, List<Entity<*>>>,
+    entityLists: Map<String, List<Entity<*>>>,
+    entityListsOrder: List<String>,
+    entityListFilter: (Entity<*>) -> Boolean,
     onEntityClicked: (String, String) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
@@ -41,7 +43,7 @@ fun EntityViewList(
     val expandedStates = remember {
         mutableStateMapOf<Int, Boolean>().apply {
             entityLists.forEach {
-                put(it.key, true)
+                put(it.key.hashCode(), true)
             }
         }
     }
@@ -64,30 +66,32 @@ fun EntityViewList(
             horizontalAlignment = Alignment.CenterHorizontally,
             state = scalingLazyListState
         ) {
-            for ((headerId, entities) in entityLists) {
+            for (header in entityListsOrder) {
+                val entities = entityLists[header].orEmpty()
                 if (entities.isNotEmpty()) {
                     item {
                         if (entityLists.size > 1) {
                             ListHeader(
-                                stringId = headerId,
-                                expanded = expandedStates[headerId]!!,
-                                onExpandChanged = { expandedStates[headerId] = it }
+                                string = header,
+                                expanded = expandedStates[header.hashCode()]!!,
+                                onExpandChanged = { expandedStates[header.hashCode()] = it }
                             )
                         } else {
-                            ListHeader(headerId)
+                            ListHeader(header)
                         }
                     }
-                    if (expandedStates[headerId]!!) {
-                        items(entities.size) { index ->
+                    if (expandedStates[header.hashCode()]!!) {
+                        val filtered = entities.filter { entityListFilter(it) }
+                        items(filtered.size) { index ->
                             EntityUi(
-                                entities[index],
+                                filtered[index],
                                 onEntityClicked,
                                 isHapticEnabled,
                                 isToastEnabled
                             )
                         }
 
-                        if (entities.isNullOrEmpty()) {
+                        if (filtered.isNullOrEmpty()) {
                             item {
                                 Column {
                                     Chip(
@@ -116,7 +120,9 @@ fun EntityViewList(
 @Composable
 private fun PreviewEntityListView() {
     EntityViewList(
-        entityLists = mapOf(commonR.string.lights to listOf(previewEntity1, previewEntity2)),
+        entityLists = mapOf(stringResource(commonR.string.lights) to listOf(previewEntity1, previewEntity2)),
+        entityListsOrder = listOf(stringResource(commonR.string.lights)),
+        entityListFilter = { true },
         onEntityClicked = { _, _ -> },
         isHapticEnabled = false,
         isToastEnabled = false

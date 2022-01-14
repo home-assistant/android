@@ -67,6 +67,16 @@ open class HomeAssistantApplication : Application() {
             }
         )
 
+        // Update Quest only sensors when the device is a Quest
+        if (Build.MODEL == "Quest") {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter().apply {
+                    addAction("com.oculus.intent.action.MOUNT_STATE_CHANGED")
+                }
+            )
+        }
+
         // Update doze mode immediately on supported devices
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             registerReceiver(
