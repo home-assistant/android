@@ -40,7 +40,11 @@ class HomeAssistantSearcher constructor(
         if (!isSearching)
             return
         isSearching = false
-        nsdManager.stopServiceDiscovery(this)
+        try {
+            nsdManager.stopServiceDiscovery(this)
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue stopping discovery", e)
+        }
     }
 
     // Called as soon as service discovery begins.
