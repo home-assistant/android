@@ -126,11 +126,6 @@ fun LoadHomePage(
                         isToastEnabled = mainViewModel.isToastEnabled.value,
                         onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
                         onToastEnabled = { mainViewModel.setToastEnabled(it) },
-                        isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
-                        onShowShortcutTextEnabled = {
-                            mainViewModel.setShowShortcutTextEnabled(it)
-                            TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
-                        },
                         onClickTemplateTile = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
                     )
                 }
@@ -149,11 +144,17 @@ fun LoadHomePage(
                 }
                 composable(SCREEN_SET_TILE_SHORTCUTS) {
                     SetTileShortcutsView(
-                        mainViewModel.shortcutEntities
-                    ) {
-                        shortcutEntitySelectionIndex = it
-                        swipeDismissableNavController.navigate(SCREEN_SELECT_TILE_SHORTCUT)
-                    }
+                        shortcutEntities = mainViewModel.shortcutEntities,
+                        onShortcutEntitySelectionChange = {
+                            shortcutEntitySelectionIndex = it
+                            swipeDismissableNavController.navigate(SCREEN_SELECT_TILE_SHORTCUT)
+                        },
+                        isShowShortcutTextEnabled = mainViewModel.isShowShortcutTextEnabled.value,
+                        onShowShortcutTextEnabled = {
+                            mainViewModel.setShowShortcutTextEnabled(it)
+                            TileService.getUpdater(context).requestUpdate(ShortcutsTile::class.java)
+                        }
+                    )
                 }
                 composable(SCREEN_SELECT_TILE_SHORTCUT) {
                     ChooseEntityView(

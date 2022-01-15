@@ -69,7 +69,7 @@ fun ChooseEntityView(
             state = scalingLazyListState
         ) {
             item {
-                ListHeader(id = commonR.string.shortcuts)
+                ListHeader(id = commonR.string.shortcuts_choose)
             }
             item {
                 Chip(
