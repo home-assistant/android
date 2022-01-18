@@ -170,7 +170,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.squareup.picasso:picasso:2.8")
 
-    "fullImplementation"("com.google.android.gms:play-services-location:19.0.0")
+    "fullImplementation"("com.google.android.gms:play-services-location:19.0.1")
     "fullImplementation"("com.google.firebase:firebase-core:20.0.2")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
