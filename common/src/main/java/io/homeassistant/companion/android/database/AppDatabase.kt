@@ -11,6 +11,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.getSystemService
 import androidx.room.Database
 import androidx.room.OnConflictStrategy
 import androidx.room.Room
@@ -455,7 +456,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun createNotificationChannel() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val notificationManager = appContext.getSystemService<NotificationManager>()!!
 
                 var notificationChannel =
                     notificationManager.getNotificationChannel(channelId)

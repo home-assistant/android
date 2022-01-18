@@ -1,13 +1,13 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import android.content.Context.SENSOR_SERVICE
 import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.util.Log
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.math.RoundingMode
 import io.homeassistant.companion.android.common.R as commonR
@@ -62,7 +62,7 @@ class PressureSensorManager : SensorManager, SensorEventListener {
         if (!isEnabled(latestContext, pressureSensor.id))
             return
 
-        mySensorManager = latestContext.getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+        mySensorManager = latestContext.getSystemService()!!
 
         val pressureSensors = mySensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE)
         if (pressureSensors != null && !isListenerRegistered) {

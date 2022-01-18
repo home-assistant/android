@@ -8,6 +8,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.wear.tiles.ActionBuilders
 import androidx.wear.tiles.ColorBuilders.argb
 import androidx.wear.tiles.DimensionBuilders.dp
+import androidx.wear.tiles.DimensionBuilders.sp
 import androidx.wear.tiles.LayoutElementBuilders
 import androidx.wear.tiles.LayoutElementBuilders.Box
 import androidx.wear.tiles.LayoutElementBuilders.Column
@@ -47,8 +48,11 @@ import io.homeassistant.companion.android.common.R as commonR
 
 // Dimensions (dp)
 private const val CIRCLE_SIZE = 56f
-private const val ICON_SIZE = 48f * 0.7071f // square that fits in 48dp circle
+private const val ICON_SIZE_FULL = 48f * 0.7071f // square that fits in 48dp circle
+private const val ICON_SIZE_SMALL = 40f * 0.7071f // square that fits in 48dp circle
 private const val SPACING = 8f
+private const val TEXT_SIZE = 8f
+private const val TEXT_PADDING = 2f
 
 @AndroidEntryPoint
 class ShortcutsTile : TileService() {
@@ -71,6 +75,7 @@ class ShortcutsTile : TileService() {
             }
 
             val entities = getEntities()
+            val showLabels = integrationUseCase.getShowShortcutText()
 
             Tile.Builder()
                 .setResourcesVersion(entities.toString())
@@ -78,7 +83,7 @@ class ShortcutsTile : TileService() {
                     Timeline.Builder().addTimelineEntry(
                         TimelineEntry.Builder().setLayout(
                             Layout.Builder().setRoot(
-                                layout(entities)
+                                layout(entities, showLabels)
                             ).build()
                         ).build()
                     ).build()
@@ -87,8 +92,10 @@ class ShortcutsTile : TileService() {
 
     override fun onResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
+            val showLabels = integrationUseCase.getShowShortcutText()
+            val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
             val density = requestParams.deviceParameters!!.screenDensity
-            val iconSizePx = (ICON_SIZE * density).roundToInt()
+            val iconSizePx = (iconSize * density).roundToInt()
             val entities = getEntities()
 
             Resources.Builder()
@@ -112,7 +119,7 @@ class ShortcutsTile : TileService() {
                         // Create Bitmap from icon name
                         val iconBitmap = IconicsDrawable(this@ShortcutsTile, "cmd-$iconName").apply {
                             colorInt = Color.WHITE
-                            sizeDp = ICON_SIZE.roundToInt()
+                            sizeDp = iconSize.roundToInt()
                             backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)
                         }.toBitmap(iconSizePx, iconSizePx, Bitmap.Config.RGB_565)
 
@@ -149,7 +156,7 @@ class ShortcutsTile : TileService() {
         return integrationUseCase.getTileShortcuts().map { SimplifiedEntity(it) }
     }
 
-    fun layout(entities: List<SimplifiedEntity>): LayoutElement = Column.Builder().apply {
+    fun layout(entities: List<SimplifiedEntity>, showLabels: Boolean): LayoutElement = Column.Builder().apply {
         if (entities.isEmpty()) {
             addContent(
                 LayoutElementBuilders.Text.Builder()
@@ -157,29 +164,30 @@ class ShortcutsTile : TileService() {
                     .build()
             )
         } else {
-            addContent(rowLayout(entities.subList(0, min(2, entities.size))))
+            addContent(rowLayout(entities.subList(0, min(2, entities.size)), showLabels))
             if (entities.size > 2) {
                 addContent(Spacer.Builder().setHeight(dp(SPACING)).build())
-                addContent(rowLayout(entities.subList(2, min(5, entities.size))))
+                addContent(rowLayout(entities.subList(2, min(5, entities.size)), showLabels))
             }
             if (entities.size > 5) {
                 addContent(Spacer.Builder().setHeight(dp(SPACING)).build())
-                addContent(rowLayout(entities.subList(5, min(7, entities.size))))
+                addContent(rowLayout(entities.subList(5, min(7, entities.size)), showLabels))
             }
         }
     }
         .build()
 
-    private fun rowLayout(entities: List<SimplifiedEntity>): LayoutElement = Row.Builder().apply {
-        addContent(iconLayout(entities[0]))
+    private fun rowLayout(entities: List<SimplifiedEntity>, showLabels: Boolean): LayoutElement = Row.Builder().apply {
+        addContent(iconLayout(entities[0], showLabels))
         entities.drop(1).forEach { entity ->
             addContent(Spacer.Builder().setWidth(dp(SPACING)).build())
-            addContent(iconLayout(entity))
+            addContent(iconLayout(entity, showLabels))
         }
     }
         .build()
 
-    private fun iconLayout(entity: SimplifiedEntity): LayoutElement = Box.Builder().apply {
+    private fun iconLayout(entity: SimplifiedEntity, showLabels: Boolean): LayoutElement = Box.Builder().apply {
+        val iconSize = if (showLabels) ICON_SIZE_SMALL else ICON_SIZE_FULL
         setWidth(dp(CIRCLE_SIZE))
         setHeight(dp(CIRCLE_SIZE))
         setHorizontalAlignment(HORIZONTAL_ALIGN_CENTER)
@@ -211,10 +219,34 @@ class ShortcutsTile : TileService() {
             // Add icon
             LayoutElementBuilders.Image.Builder()
                 .setResourceId(entity.entityId)
-                .setWidth(dp(ICON_SIZE))
-                .setHeight(dp(ICON_SIZE))
+                .setWidth(dp(iconSize))
+                .setHeight(dp(iconSize))
                 .build()
         )
+        if (showLabels) {
+            addContent(
+                LayoutElementBuilders.Arc.Builder()
+                    .addContent(
+                        LayoutElementBuilders.ArcText.Builder()
+                            .setText(entity.friendlyName)
+                            .setFontStyle(
+                                LayoutElementBuilders.FontStyle.Builder()
+                                    .setSize(sp(TEXT_SIZE))
+                                    .build()
+                            )
+                            .build()
+                    )
+                    .setModifiers(
+                        ModifiersBuilders.Modifiers.Builder()
+                            .setPadding(
+                                ModifiersBuilders.Padding.Builder()
+                                    .setAll(dp(TEXT_PADDING))
+                                    .build()
+                            ).build()
+                    )
+                    .build()
+            )
+        }
     }
         .build()
 }

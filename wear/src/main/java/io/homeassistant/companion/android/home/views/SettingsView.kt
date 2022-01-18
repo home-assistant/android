@@ -195,7 +195,7 @@ fun SettingsView(
                         colors = ChipDefaults.secondaryChipColors(),
                         label = {
                             Text(
-                                text = stringResource(id = commonR.string.shortcuts)
+                                text = stringResource(id = commonR.string.shortcuts_tile)
                             )
                         },
                         onClick = onClickSetShortcuts

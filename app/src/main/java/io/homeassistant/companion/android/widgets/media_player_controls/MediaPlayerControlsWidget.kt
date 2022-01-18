@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.core.content.getSystemService
 import com.mikepenz.iconics.IconicsDrawable
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
@@ -616,8 +617,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     }
 
     private fun isConnectionActive(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        val connectivityManager = context.getSystemService<ConnectivityManager>()
+        val activeNetworkInfo = connectivityManager?.activeNetworkInfo
         return activeNetworkInfo?.isConnected ?: false
     }
 }

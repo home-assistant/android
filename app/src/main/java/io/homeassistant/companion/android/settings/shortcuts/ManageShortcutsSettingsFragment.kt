@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.Menu
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.preference.EditTextPreference
@@ -30,7 +31,6 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.runBlocking
-import java.lang.Exception
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -91,7 +91,7 @@ class ManageShortcutsSettingsFragment : PreferenceFragmentCompat(), IconDialog.C
         activity?.title = getString(commonR.string.shortcuts)
 
         val addNewShortcut = findPreference<PreferenceCategory>("pinned_shortcut_category")
-        val shortcutManager = requireContext().getSystemService(ShortcutManager::class.java)
+        val shortcutManager = requireContext().getSystemService<ShortcutManager>()!!
         var pinnedShortcuts = shortcutManager.pinnedShortcuts
         var dynamicShortcuts = shortcutManager.dynamicShortcuts
         var entityList = listOf<String>()

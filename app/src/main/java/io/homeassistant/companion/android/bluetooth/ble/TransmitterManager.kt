@@ -1,9 +1,10 @@
 package io.homeassistant.companion.android.bluetooth.ble
 
-import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
+import androidx.core.content.getSystemService
 import org.altbeacon.beacon.Beacon
 import org.altbeacon.beacon.BeaconParser
 import org.altbeacon.beacon.BeaconTransmitter
@@ -53,7 +54,8 @@ object TransmitterManager {
             val parser = BeaconParser().setBeaconLayout(haTransmitter.beaconLayout)
             physicalTransmitter = BeaconTransmitter(context, parser)
         }
-        val bluetoothOn = BluetoothAdapter.getDefaultAdapter().isEnabled
+        val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
+        val bluetoothOn = bluetoothAdapter?.isEnabled == true
         if (bluetoothOn) {
             val beacon = buildBeacon(haTransmitter)
             if (!physicalTransmitter.isStarted) {

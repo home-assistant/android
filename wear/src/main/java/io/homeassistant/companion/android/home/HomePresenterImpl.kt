@@ -175,6 +175,14 @@ class HomePresenterImpl @Inject constructor(
         integrationUseCase.setWearToastConfirmation(enabled)
     }
 
+    override suspend fun getShowShortcutText(): Boolean {
+        return integrationUseCase.getShowShortcutText()
+    }
+
+    override suspend fun setShowShortcutTextEnabled(enabled: Boolean) {
+        integrationUseCase.setShowShortcutTextEnabled(enabled)
+    }
+
     override suspend fun getTemplateTileContent(): String {
         return integrationUseCase.getTemplateTileContent()
     }

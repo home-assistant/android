@@ -1,12 +1,11 @@
 package io.homeassistant.companion.android.onboarding
 
 import android.app.Application
-import android.net.nsd.NsdManager
 import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.R
@@ -22,7 +21,7 @@ class OnboardingViewModel @Inject constructor(
 ) : AndroidViewModel(app) {
 
     private val homeAssistantSearcher = HomeAssistantSearcher(
-        ContextCompat.getSystemService(app, NsdManager::class.java)!!,
+        app.getSystemService()!!,
         { instance ->
             if (foundInstances.none { it.url == instance.url }) {
                 foundInstances.add(instance)

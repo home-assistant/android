@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -97,7 +98,7 @@ class AudioSensorManager : SensorManager {
     }
 
     override fun requestSensorUpdate(context: Context) {
-        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val audioManager = context.getSystemService<AudioManager>()!!
         updateAudioSensor(context, audioManager)
         updateAudioState(context, audioManager)
         updateHeadphoneState(context, audioManager)

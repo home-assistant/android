@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.TrafficStats
 import android.util.Log
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import java.math.RoundingMode
 import kotlin.math.absoluteValue
@@ -73,7 +74,7 @@ class TrafficStatsManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val cm = context.getSystemService<ConnectivityManager>()!!
         val networkInfo = cm.allNetworks
         var networkCapabilities: NetworkCapabilities?
         for (item in networkInfo) {

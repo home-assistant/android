@@ -5,13 +5,13 @@ If you are looking for documentation around the companion applications check out
 
 ## Setup App Development Environment
 
-- Download and install [Android Studio](https://developer.android.com/studio)
+1. Download and install [Android Studio](https://developer.android.com/studio)
 
-- Download / clone this repository to a folder on your computer
+2. Download / clone this repository to a folder on your computer
 
-- Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
+3. Create a Firebase project at [Firebase Console](https://console.firebase.google.com)
 
-- Create six Android apps, with following package names 
+4. Create six Android apps, with following package names 
  - `io.homeassistant.companion.android`
  - `io.homeassistant.companion.android.debug`
  - `io.homeassistant.companion.android.minimal`
@@ -19,14 +19,16 @@ If you are looking for documentation around the companion applications check out
  - `io.homeassistant.companion.android.quest`
  - `io.homeassistant.companion.android.quest.debug`
 
-- Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder. This file contains the configuration of the whole project (all the four applications).
+5. Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder. This file contains the configuration of the whole project (all the six applications). ([You can also use the mock services file instead of generating your own](/.github/mock-google-services.json). The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file push notification will never work**)
+6. Start Android Studio, open your source code folder and check if the Gradle build will be successful using Build/Make Module "App". You might have to install the right Android SDK via Tools/SDK Manager first.
+7. Run `gradlew assembleDebug` to build all debug versions, this might take a while.
+8. If the build is succesful, you can run the app by doing the following: click **Run** -> **Run 'app'**.
+9. Connect your phone or create a new virtual device following on screen instruction
+10. :tada:
 
-  [You can also use the mock services file instead of generating your own](/.github/mock-google-services.json)
-  The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file push notification will never work**
 
-- Start Android Studio, open your source code folder and check if the Gradle build will be successful using Build/Make Module "App". You might have to install the right Android SDK via Tools/SDK Manager first.
 
-- Create keystore containing keypair for debug application signing. In Android Studio: Menu/Build/Generate signed APK, then use a button to create new keystore. Remember the passwords and key alias
+- 
 
 - Set environmental variables used in `app/build.gradle.kts`:
  - `KEYSTORE_PASSWORD`
@@ -35,7 +37,7 @@ If you are looking for documentation around the companion applications check out
  
 - Run the build using `gradlew build` from command line.
 
-- If the build is successful, you can run the app by doing the following: click **Run** -> **Run 'app'**
+- If the build is successful, you can run the app by 
 
 - Connect your phone or create a new virtual device following on screen instruction
 
@@ -58,6 +60,18 @@ homeAssistantAndroidRateLimitUrl=https://mydomain.cloudfunctions.net/checkRateLi
 ## App Flavors
 
 The Android app has both a full flavor that uses Google Play Services to offer features like location tracking and notifications. There is also a minimal flavor that does not require Google Play Services and can be found in the releases section. The minimal flavor does not have location tracking or notifications. The quest flavor is identical to the minimal flavor with the exception of changes required for the device.
+
+## Building for publishing
+
+To build the app for publishing, you will need to sign the app. To do this, do the following:
+1. Create keystore containing keypair for debug application signing. In Android Studio: Menu/Build/Generate signed APK, then use a button to create new keystore. Remember the passwords and key alias. Default, the keystore must be named `release_keystore.keystore` and should be placed in the _home-assistant-Android/app_ and _home-assistant-Android/wear_ folder.
+2. Set environmental variables used in `app/build.gradle.kts`:
+ - `KEYSTORE_PASSWORD`
+ - `KEYSTORE_ALIAS`
+ - `KEYSTORE_ALIAS_PASSWORD`
+ - `KEYSTORE_PATH` (if your keystore is located differently than stated above)
+3. Run `gradlew build`
+4. The signed APK is located in your build folder
 
 ## Testing Dev Releases
 

@@ -43,6 +43,8 @@ interface IntegrationRepository {
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearToastConfirmation(enabled: Boolean)
     suspend fun getWearToastConfirmation(): Boolean
+    suspend fun getShowShortcutText(): Boolean
+    suspend fun setShowShortcutTextEnabled(enabled: Boolean)
 
     suspend fun getHomeAssistantVersion(): String
 

@@ -8,7 +8,7 @@ import com.google.android.gms.wearable.DataMap
 import com.google.android.gms.wearable.DataMapItem
 import dagger.hilt.android.qualifiers.ActivityContext
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowForm
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -73,10 +73,10 @@ class OnboardingPresenterImpl @Inject constructor(
 
             // Initiate login flow
             try {
-                val flowInit: LoginFlowInit = authenticationUseCase.initiateLoginFlow()
-                Log.d(TAG, "Created login flow step ${flowInit.stepId}: ${flowInit.flowId}")
+                val flowForm: LoginFlowForm = authenticationUseCase.initiateLoginFlow()
+                Log.d(TAG, "Created login flow step ${flowForm.stepId}: ${flowForm.flowId}")
 
-                view.startAuthentication(flowInit.flowId)
+                view.startAuthentication(flowForm.flowId)
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to initiate login flow", e)
                 view.showError()
