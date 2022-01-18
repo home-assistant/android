@@ -279,8 +279,13 @@ class SensorDetailFragment(
                         pref.isIconSpaceReserved = false
 
                         pref.setOnBindEditTextListener { fieldType ->
-                            if (setting.valueType == "number")
-                                fieldType.inputType = InputType.TYPE_CLASS_NUMBER
+                            if (setting.valueType == "number") {
+                                if (setting.name == BluetoothSensorManager.SETTING_BLE_MEASURED_POWER)
+                                    fieldType.inputType =
+                                        InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_SIGNED
+                                else
+                                    fieldType.inputType = InputType.TYPE_CLASS_NUMBER
+                            }
                         }
 
                         pref.setOnPreferenceChangeListener { _, newValue ->
