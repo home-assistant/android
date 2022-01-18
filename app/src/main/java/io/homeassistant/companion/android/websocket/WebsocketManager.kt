@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.websocket
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Context.NOTIFICATION_SERVICE
 import android.hardware.display.DisplayManager
 import android.os.Build
 import android.util.Log
@@ -23,7 +22,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
@@ -66,7 +64,7 @@ class WebsocketManager(
         }
     }
 
-    private val notificationManager =applicationContext.getSystemService<NotificationManager>()!!
+    private val notificationManager = applicationContext.getSystemService<NotificationManager>()!!
 
     private val entryPoint = EntryPointAccessors
         .fromApplication(applicationContext, WebsocketManagerEntryPoint::class.java)
@@ -84,7 +82,7 @@ class WebsocketManager(
     }
 
     override suspend fun doWork(): Result {
-        if(!shouldWeRun()) {
+        if (!shouldWeRun()) {
             return Result.success()
         }
 
@@ -92,7 +90,7 @@ class WebsocketManager(
         createNotification()
 
         // Start listening for notifications
-        val job = withContext(Dispatchers.IO){
+        val job = withContext(Dispatchers.IO) {
             return@withContext launch { collectNotifications() }
         }
 
@@ -106,7 +104,7 @@ class WebsocketManager(
         return Result.success()
     }
 
-    private fun shouldWeRun(): Boolean{
+    private fun shouldWeRun(): Boolean {
         val dm = applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
         val displayOff = dm.displays.all { it.state == Display.STATE_OFF }
         val setting = settingsDao.get(0)?.websocketSetting ?: WebsocketSetting.SCREEN_ON

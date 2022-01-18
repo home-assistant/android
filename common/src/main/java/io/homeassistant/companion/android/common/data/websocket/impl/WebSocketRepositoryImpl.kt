@@ -29,7 +29,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
@@ -387,7 +386,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                             Log.e(TAG, "Issue re-registering event subscriptions")
                         }
                     }
-                    if(notificationFlow != null){
+                    if (notificationFlow != null) {
                         val response = sendMessage(
                             mapOf(
                                 "type" to "mobile_app/push_notification_channel",

@@ -3,8 +3,8 @@ package io.homeassistant.companion.android.settings.websocket
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.database.settings.Setting
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
