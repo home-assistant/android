@@ -5,10 +5,9 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.ComponentName
 import android.content.Context
-import android.content.Context.NOTIFICATION_SERVICE
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -36,6 +35,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.core.text.HtmlCompat
 import androidx.core.text.isDigitsOnly
 import com.mikepenz.iconics.IconicsDrawable
@@ -67,7 +67,6 @@ import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
 import javax.inject.Inject
-import kotlin.collections.HashMap
 import io.homeassistant.companion.android.common.R as commonR
 
 class MessagingManager @Inject constructor(
@@ -392,9 +391,9 @@ class MessagingManager @Inject constructor(
     private fun speakNotification(data: Map<String, String>) {
         var textToSpeech: TextToSpeech? = null
         var tts = data[TITLE]
-        val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val currentAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
-        val maxAlarmVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+        val audioManager = context.getSystemService<AudioManager>()
+        val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
+        val maxAlarmVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
             tts = context.getString(commonR.string.tts_no_title)
         textToSpeech = TextToSpeech(
@@ -404,9 +403,9 @@ class MessagingManager @Inject constructor(
                 val listener = object : UtteranceProgressListener() {
                     override fun onStart(p0: String?) {
                         if (data["channel"] == ALARM_STREAM_MAX)
-                            audioManager.setStreamVolume(
+                            audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
-                                maxAlarmVolume,
+                                maxAlarmVolume!!,
                                 0
                             )
                     }
@@ -415,9 +414,9 @@ class MessagingManager @Inject constructor(
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
                         if (data["channel"] == ALARM_STREAM_MAX)
-                            audioManager.setStreamVolume(
+                            audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
-                                currentAlarmVolume,
+                                currentAlarmVolume!!,
                                 0
                             )
                     }
@@ -426,9 +425,9 @@ class MessagingManager @Inject constructor(
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
                         if (data["channel"] == ALARM_STREAM_MAX)
-                            audioManager.setStreamVolume(
+                            audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
-                                currentAlarmVolume,
+                                currentAlarmVolume!!,
                                 0
                             )
                     }
@@ -462,19 +461,19 @@ class MessagingManager @Inject constructor(
             COMMAND_DND -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager =
-                        context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                        context.getSystemService<NotificationManager>()
+                    if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         when (title) {
-                            DND_ALARMS_ONLY -> notificationManager.setInterruptionFilter(
+                            DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_ALARMS
                             )
-                            DND_ALL -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
-                            DND_NONE -> notificationManager.setInterruptionFilter(
+                            DND_ALL -> notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+                            DND_NONE -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_NONE
                             )
-                            DND_PRIORITY_ONLY -> notificationManager.setInterruptionFilter(
+                            DND_PRIORITY_ONLY -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_PRIORITY
                             )
                             else -> Log.d(TAG, "Skipping invalid command")
@@ -483,18 +482,17 @@ class MessagingManager @Inject constructor(
                 }
             }
             COMMAND_RINGER_MODE -> {
-                val audioManager =
-                    context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                val audioManager = context.getSystemService<AudioManager>()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager =
-                        context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                        context.getSystemService<NotificationManager>()
+                    if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
-                        processRingerMode(audioManager, title)
+                        processRingerMode(audioManager!!, title)
                     }
                 } else {
-                    processRingerMode(audioManager, title)
+                    processRingerMode(audioManager!!, title)
                 }
             }
             COMMAND_BROADCAST_INTENT -> {
@@ -524,33 +522,32 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_VOLUME_LEVEL -> {
                 val audioManager =
-                    context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    context.getSystemService<AudioManager>()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val notificationManager =
-                        context.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                    val notificationManager = context.getSystemService<NotificationManager>()
+                    if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         processStreamVolume(
-                            audioManager,
+                            audioManager!!,
                             data["channel"].toString(),
                             title!!.toInt()
                         )
                     }
                 } else {
                     processStreamVolume(
-                        audioManager,
+                        audioManager!!,
                         data["channel"].toString(),
                         title!!.toInt()
                     )
                 }
             }
             COMMAND_BLUETOOTH -> {
-                val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+                val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
                 if (title == TURN_OFF)
-                    bluetoothAdapter.disable()
+                    bluetoothAdapter?.disable()
                 if (title == TURN_ON)
-                    bluetoothAdapter.enable()
+                    bluetoothAdapter?.enable()
             }
             COMMAND_BLE_TRANSMITTER -> {
                 if (title == TURN_OFF)
@@ -597,16 +594,15 @@ class MessagingManager @Inject constructor(
                     }
                 }
 
-                val powerManager =
-                    context.getSystemService(Context.POWER_SERVICE) as PowerManager
-                val wakeLock = powerManager.newWakeLock(
+                val powerManager = context.getSystemService<PowerManager>()
+                val wakeLock = powerManager?.newWakeLock(
                     PowerManager.FULL_WAKE_LOCK or
                         PowerManager.ACQUIRE_CAUSES_WAKEUP or
                         PowerManager.ON_AFTER_RELEASE,
                     "HomeAssistant::NotificationScreenOnWakeLock"
                 )
-                wakeLock.acquire(1 * 30 * 1000L /*30 seconds */)
-                wakeLock.release()
+                wakeLock?.acquire(1 * 30 * 1000L /*30 seconds */)
+                wakeLock?.release()
             }
             COMMAND_MEDIA -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
@@ -1016,7 +1012,8 @@ class MessagingManager @Inject constructor(
     private fun prepareText(
         text: String
     ): Spanned {
-        var emojiParsedText = EmojiParser.parseToUnicode(text)
+        var brText = text.replace("\\n", "<br>")
+        var emojiParsedText = EmojiParser.parseToUnicode(brText)
         return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
 
@@ -1326,8 +1323,7 @@ class MessagingManager @Inject constructor(
 
     private fun processMediaCommand(data: Map<String, String>) {
         val title = data[TITLE]
-        val mediaSessionManager =
-            context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+        val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
         val mediaList = mediaSessionManager.getActiveSessions(
             ComponentName(
                 context,
@@ -1492,8 +1488,8 @@ class MessagingManager @Inject constructor(
 
     private fun notifyMissingPermission(type: String) {
         val appManager =
-            context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val currentProcess = appManager.runningAppProcesses
+            context.getSystemService<ActivityManager>()
+        val currentProcess = appManager?.runningAppProcesses
         if (currentProcess != null) {
             for (item in currentProcess) {
                 if (context.applicationInfo.processName == item.processName) {
