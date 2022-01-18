@@ -28,7 +28,7 @@ class BluetoothSensorManager : SensorManager {
         private const val DEFAULT_BLE_ADVERTISE_MODE = "lowPower"
         private const val DEFAULT_BLE_MAJOR = "100"
         private const val DEFAULT_BLE_MINOR = "1"
-        const val DEFAULT_MEASURED_POWER_AT_1M = "-59"
+        private const val DEFAULT_MEASURED_POWER_AT_1M = "-59"
         private var priorBluetoothStateEnabled = false
 
         // private const val TAG = "BluetoothSM"
