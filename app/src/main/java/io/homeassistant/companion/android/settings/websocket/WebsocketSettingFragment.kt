@@ -11,7 +11,6 @@ import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import io.homeassistant.companion.android.settings.websocket.views.WebsocketSettingView
 
-// @AndroidEntryPoint
 class WebsocketSettingFragment : Fragment() {
 
     val viewModel: WebsocketSettingViewModel by viewModels()

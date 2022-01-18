@@ -17,7 +17,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class FirebaseCloudMessagingService : FirebaseMessagingService() {
     companion object {
-        const val TAG = "MessagingService"
+        private const val TAG = "FCMService"
     }
 
     @Inject

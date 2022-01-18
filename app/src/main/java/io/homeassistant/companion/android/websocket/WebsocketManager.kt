@@ -45,7 +45,7 @@ class WebsocketManager(
         private const val TAG = "WebSockManager"
         private const val CHANNEL_ID = "Websocket"
         private const val NOTIFICATION_ID = 65423
-        private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.BUILD_TYPE == "minimal") WebsocketSetting.ALWAYS else WebsocketSetting.SCREEN_ON
+        private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.BUILD_TYPE == "full") WebsocketSetting.SCREEN_ON else WebsocketSetting.ALWAYS
 
         fun start(context: Context) {
             val constraints = Constraints.Builder()
