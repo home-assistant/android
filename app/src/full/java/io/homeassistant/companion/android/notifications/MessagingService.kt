@@ -1031,7 +1031,8 @@ class MessagingService : FirebaseMessagingService() {
     private fun prepareText(
         text: String
     ): Spanned {
-        var emojiParsedText = EmojiParser.parseToUnicode(text)
+        var brText = text.replace("\\n", "<br>")
+        var emojiParsedText = EmojiParser.parseToUnicode(brText)
         return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
 
