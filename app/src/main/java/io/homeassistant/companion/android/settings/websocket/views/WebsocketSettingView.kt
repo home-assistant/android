@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.notification.views
+package io.homeassistant.companion.android.settings.websocket.views
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,31 +13,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.database.settings.LocalNotificationSetting
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
 
 @Composable
-fun LocalNotificationSettingsView(
-    localNotificationSetting: LocalNotificationSetting,
-    onSettingChanged: (LocalNotificationSetting) -> Unit
+fun WebsocketSettingView(
+    websocketSetting: WebsocketSetting,
+    onSettingChanged: (WebsocketSetting) -> Unit
 ) {
     Column(modifier = Modifier.padding(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.local_notif_description))
+            Text(stringResource(R.string.websocket_setting_description))
         }
         RadioButtonRow(
-            text = stringResource(R.string.local_notif_never),
-            selected = localNotificationSetting == LocalNotificationSetting.NEVER,
-            onClick = { onSettingChanged(LocalNotificationSetting.NEVER) }
+            text = stringResource(R.string.websocket_setting_never),
+            selected = websocketSetting == WebsocketSetting.NEVER,
+            onClick = { onSettingChanged(WebsocketSetting.NEVER) }
         )
         RadioButtonRow(
-            text = stringResource(R.string.local_notif_while_screen_on),
-            selected = localNotificationSetting == LocalNotificationSetting.SCREEN_ON,
-            onClick = { onSettingChanged(LocalNotificationSetting.SCREEN_ON) }
+            text = stringResource(R.string.websocket_setting_while_screen_on),
+            selected = websocketSetting == WebsocketSetting.SCREEN_ON,
+            onClick = { onSettingChanged(WebsocketSetting.SCREEN_ON) }
         )
         RadioButtonRow(
-            text = stringResource(R.string.local_notif_always),
-            selected = localNotificationSetting == LocalNotificationSetting.ALWAYS,
-            onClick = { onSettingChanged(LocalNotificationSetting.ALWAYS) }
+            text = stringResource(R.string.websocket_setting_always),
+            selected = websocketSetting == WebsocketSetting.ALWAYS,
+            onClick = { onSettingChanged(WebsocketSetting.ALWAYS) }
         )
     }
 }

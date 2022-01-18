@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.notification
+package io.homeassistant.companion.android.settings.websocket
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,12 +9,12 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
-import io.homeassistant.companion.android.settings.notification.views.LocalNotificationSettingsView
+import io.homeassistant.companion.android.settings.websocket.views.WebsocketSettingView
 
 // @AndroidEntryPoint
-class LocalNotificationSettingsFragment : Fragment() {
+class WebsocketSettingFragment : Fragment() {
 
-    val viewModel: LocalNotificationViewModel by viewModels()
+    val viewModel: WebsocketSettingViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -26,8 +26,8 @@ class LocalNotificationSettingsFragment : Fragment() {
                 MdcTheme {
                     val settings = viewModel.getLocalNotificationSettingFlow(0)
                         .collectAsState(initial = viewModel.getLocalNotificationSetting(0))
-                    LocalNotificationSettingsView(
-                        localNotificationSetting = settings.value.localNotificationSetting,
+                    WebsocketSettingView(
+                        websocketSetting = settings.value.websocketSetting,
                         onSettingChanged = { viewModel.updateLocalNotificationSetting(0, it) }
                     )
                 }

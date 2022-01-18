@@ -31,7 +31,7 @@ import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.log.LogFragment
-import io.homeassistant.companion.android.settings.notification.LocalNotificationSettingsFragment
+import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
@@ -198,7 +198,7 @@ class SettingsFragment constructor(
             it.setOnPreferenceClickListener {
                 parentFragmentManager
                     .beginTransaction()
-                    .replace(R.id.content, LocalNotificationSettingsFragment::class.java, null)
+                    .replace(R.id.content, WebsocketSettingFragment::class.java, null)
                     .addToBackStack(getString(commonR.string.notifications))
                     .commit()
                 return@setOnPreferenceClickListener true

@@ -1,15 +1,15 @@
-package io.homeassistant.companion.android.settings.notification
+package io.homeassistant.companion.android.settings.websocket
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.settings.LocalNotificationSetting
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.database.settings.Setting
-import io.homeassistant.companion.android.notifications.WebsocketNotificationManager
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class LocalNotificationViewModel @Inject constructor(
+class WebsocketSettingViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(
     application
@@ -19,7 +19,7 @@ class LocalNotificationViewModel @Inject constructor(
     fun getLocalNotificationSetting(id: Int): Setting {
         var setting = settingsDao.get(id)
         if (setting == null) {
-            setting = Setting(id, LocalNotificationSetting.SCREEN_ON)
+            setting = Setting(id, WebsocketSetting.SCREEN_ON)
             settingsDao.insert(setting)
         }
         return setting
@@ -28,11 +28,11 @@ class LocalNotificationViewModel @Inject constructor(
     // Once we support more than one instance we can get the setting per instance
     fun getLocalNotificationSettingFlow(id: Int): Flow<Setting> = settingsDao.getFlow(id)
 
-    fun updateLocalNotificationSetting(id: Int, setting: LocalNotificationSetting) {
+    fun updateLocalNotificationSetting(id: Int, setting: WebsocketSetting) {
         settingsDao.get(id)?.let {
-            it.localNotificationSetting = setting
+            it.websocketSetting = setting
             settingsDao.update(it)
         }
-        WebsocketNotificationManager.start(getApplication())
+        WebsocketManager.start(getApplication())
     }
 }

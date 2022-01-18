@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.notifications
+package io.homeassistant.companion.android.websocket
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -9,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import android.view.Display
 import androidx.core.app.NotificationCompat
+import androidx.core.content.getSystemService
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -22,21 +23,28 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.settings.LocalNotificationSetting
+import io.homeassistant.companion.android.database.settings.WebsocketSetting
+import io.homeassistant.companion.android.notifications.MessagingManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 @ExperimentalCoroutinesApi
-class WebsocketNotificationManager(
+class WebsocketManager(
     appContext: Context,
     workerParams: WorkerParameters
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
-        private const val TAG = "WebSockNotifManager"
-        private const val CHANNEL_ID = "Websocket Notifications"
+        private const val TAG = "WebSockManager"
+        private const val CHANNEL_ID = "Websocket"
         private const val NOTIFICATION_ID = 65423
 
         fun start(context: Context) {
@@ -45,7 +53,7 @@ class WebsocketNotificationManager(
                 .build()
 
             val websocketNotifications =
-                PeriodicWorkRequestBuilder<WebsocketNotificationManager>(15, TimeUnit.MINUTES)
+                PeriodicWorkRequestBuilder<WebsocketManager>(15, TimeUnit.MINUTES)
                     .setConstraints(constraints)
                     .build()
 
@@ -58,11 +66,10 @@ class WebsocketNotificationManager(
         }
     }
 
-    private val notificationManager =
-        applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    private val notificationManager =applicationContext.getSystemService<NotificationManager>()!!
 
     private val entryPoint = EntryPointAccessors
-        .fromApplication(applicationContext, WebsocketNotificationManagerEntryPoint::class.java)
+        .fromApplication(applicationContext, WebsocketManagerEntryPoint::class.java)
 
     private val websocketRepository: WebSocketRepository = entryPoint.websocketRepository()
     private val messagingManager: MessagingManager = entryPoint.messagingManager()
@@ -71,31 +78,54 @@ class WebsocketNotificationManager(
 
     @EntryPoint
     @InstallIn(SingletonComponent::class)
-    interface WebsocketNotificationManagerEntryPoint {
+    interface WebsocketManagerEntryPoint {
         fun websocketRepository(): WebSocketRepository
         fun messagingManager(): MessagingManager
     }
 
     override suspend fun doWork(): Result {
-        // should we be running....
-        val dm = applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        val displayOff = dm.displays.all { it.state == Display.STATE_OFF }
-        val setting = settingsDao.get(0)?.localNotificationSetting ?: LocalNotificationSetting.SCREEN_ON
-        if (setting == LocalNotificationSetting.NEVER) {
-            return Result.success()
-        } else if (displayOff && settingsDao.get(0)?.localNotificationSetting == LocalNotificationSetting.SCREEN_ON) {
+        if(!shouldWeRun()) {
             return Result.success()
         }
 
-        Log.d(TAG, "Starting to listen for Websocket Notifications")
-        createNotificationChannel()
-        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_ic_notification)
-            .setContentTitle(applicationContext.getString(R.string.websocket_listening))
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
-        setForeground(ForegroundInfo(NOTIFICATION_ID, notification))
+        Log.d(TAG, "Starting to listen to Websocket")
+        createNotification()
 
+        // Start listening for notifications
+        val job = withContext(Dispatchers.IO){
+            return@withContext launch { collectNotifications() }
+        }
+
+        // play ping pong to ensure we have a connection.
+        ensureConnectionAlive()
+
+        job.cancelAndJoin()
+
+        Log.d(TAG, "Done listening to Websocket")
+
+        return Result.success()
+    }
+
+    private fun shouldWeRun(): Boolean{
+        val dm = applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        val displayOff = dm.displays.all { it.state == Display.STATE_OFF }
+        val setting = settingsDao.get(0)?.websocketSetting ?: WebsocketSetting.SCREEN_ON
+        if (setting == WebsocketSetting.NEVER) {
+            return false
+        } else if (displayOff && setting == WebsocketSetting.SCREEN_ON) {
+            return false
+        }
+
+        return true
+    }
+
+    private suspend fun ensureConnectionAlive() {
+        do {
+            delay(30000)
+        } while (websocketRepository.sendPing() && shouldWeRun())
+    }
+
+    private suspend fun collectNotifications() {
         websocketRepository.getNotifications()?.collect {
             if (it.containsKey("hass_confirm_id"))
                 websocketRepository.ackNotification(it["hass_confirm_id"].toString())
@@ -122,11 +152,9 @@ class WebsocketNotificationManager(
             }
             messagingManager.handleMessage(flattened)
         }
-
-        return Result.success()
     }
 
-    private fun createNotificationChannel() {
+    private suspend fun createNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             var notificationChannel =
                 notificationManager.getNotificationChannel(CHANNEL_ID)
@@ -139,5 +167,12 @@ class WebsocketNotificationManager(
                 notificationManager.createNotificationChannel(notificationChannel)
             }
         }
+
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_ic_notification)
+            .setContentTitle(applicationContext.getString(R.string.websocket_listening))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+        setForeground(ForegroundInfo(NOTIFICATION_ID, notification))
     }
 }

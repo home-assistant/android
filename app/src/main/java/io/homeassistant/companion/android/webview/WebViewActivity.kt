@@ -71,7 +71,7 @@ import io.homeassistant.companion.android.databinding.DialogAuthenticationBindin
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
-import io.homeassistant.companion.android.notifications.WebsocketNotificationManager
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -622,7 +622,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         SensorWorker.start(this)
-        WebsocketNotificationManager.start(this)
+        WebsocketManager.start(this)
         checkAndWarnForDisabledLocation()
     }
 

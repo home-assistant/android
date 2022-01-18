@@ -9,6 +9,6 @@ data class Setting(
     @PrimaryKey
     @ColumnInfo(name = "id")
     val id: Int,
-    @ColumnInfo(name = "localNotificationSetting")
-    var localNotificationSetting: LocalNotificationSetting
+    @ColumnInfo(name = "websocketSetting")
+    var websocketSetting: WebsocketSetting
 )

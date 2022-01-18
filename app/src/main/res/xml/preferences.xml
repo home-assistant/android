@@ -114,8 +114,8 @@
         app:isPreferenceVisible="false">
         <Preference
             android:key="local_notifications"
-            android:title="@string/local_notif_name"
-            android:summary="@string/local_notif_summary" />
+            android:title="@string/websocket_setting_name"
+            android:summary="@string/websocket_setting_summary" />
         <Preference
             android:key="notification_history"
             app:isPreferenceVisible="false"

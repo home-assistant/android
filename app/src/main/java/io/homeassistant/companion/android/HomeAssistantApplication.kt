@@ -14,7 +14,7 @@ import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.notifications.NotificationBroadcastReceiver
+import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
@@ -46,7 +46,7 @@ open class HomeAssistantApplication : Application() {
 
         // This will make sure we start/stop when we actually need too.
         registerReceiver(
-            NotificationBroadcastReceiver(),
+            WebsocketBroadcastReceiver(),
             IntentFilter().apply {
                 addAction(Intent.ACTION_SCREEN_OFF)
                 addAction(Intent.ACTION_SCREEN_ON)
