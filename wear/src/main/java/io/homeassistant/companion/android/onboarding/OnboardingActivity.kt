@@ -9,6 +9,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.wear.activity.ConfirmationActivity
+import androidx.wear.remote.interactions.RemoteActivityHelper
 import androidx.wear.widget.WearableRecyclerView
 import com.google.android.gms.tasks.Tasks
 import com.google.android.gms.wearable.CapabilityClient
@@ -28,6 +29,9 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
     private lateinit var adapter: ServerListAdapter
 
+    private lateinit var capabilityClient: CapabilityClient
+    private lateinit var remoteActivityHelper: RemoteActivityHelper
+
     companion object {
         private const val TAG = "OnboardingActivity"
 
@@ -45,11 +49,15 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
         setContentView(R.layout.activity_onboarding)
 
-        loadingView = findViewById<LoadingView>(R.id.loading_view)
+        loadingView = findViewById(R.id.loading_view)
 
         adapter = ServerListAdapter(ArrayList())
         adapter.onInstanceClicked = { instance -> presenter.onAdapterItemClick(instance) }
         adapter.onManualSetupClicked = { this.startManualSetup() }
+        adapter.onPhoneSignInClicked = { this.startPhoneSignIn() }
+
+        capabilityClient = Wearable.getCapabilityClient(this)
+        remoteActivityHelper = RemoteActivityHelper(this)
 
         findViewById<WearableRecyclerView>(R.id.server_list)?.apply {
             layoutManager = LinearLayoutManager(this@OnboardingActivity)
@@ -71,6 +79,9 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
         // Request authentication token in separate task
         Thread { requestInstances() }.start()
+
+        // Check if there is a phone connected that supports sign in
+        Thread { requestPhoneSignIn() }.start()
     }
 
     override fun onPause() {
@@ -85,6 +96,28 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
     override fun startManualSetup() {
         startActivity(ManualSetupActivity.newInstance(this))
+    }
+
+    override fun startPhoneSignIn() {
+        try {
+            remoteActivityHelper.startRemoteActivity(
+                Intent(Intent.ACTION_VIEW).apply {
+                    addCategory(Intent.CATEGORY_DEFAULT)
+                    addCategory(Intent.CATEGORY_BROWSABLE)
+                    data = Uri.parse("homeassistant://wear-phone-signin")
+                },
+                null // a Wear device only has one companion device so this is not needed
+            )
+            val confirmation = Intent(this, ConfirmationActivity::class.java).apply {
+                putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, ConfirmationActivity.OPEN_ON_PHONE_ANIMATION)
+                putExtra(ConfirmationActivity.EXTRA_ANIMATION_DURATION_MILLIS, 2500)
+                putExtra(ConfirmationActivity.EXTRA_MESSAGE, getString(commonR.string.continue_on_phone))
+            }
+            startActivity(confirmation)
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to open sign in activity on phone", e)
+            showError()
+        }
     }
 
     override fun showLoading() {
@@ -135,11 +168,10 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
 
         // Find all nodes that are capable
         val capabilityInfo: CapabilityInfo = Tasks.await(
-            Wearable.getCapabilityClient(this)
-                .getCapability(
-                    "request_home_assistant_instance",
-                    CapabilityClient.FILTER_REACHABLE
-                )
+            capabilityClient.getCapability(
+                "request_home_assistant_instance",
+                CapabilityClient.FILTER_REACHABLE
+            )
         )
 
         if (capabilityInfo.nodes.size == 0) {
@@ -155,6 +187,24 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
                 addOnSuccessListener { Log.d(TAG, "requestInstances: request home assistant instances from $node.id: ${node.displayName}") }
                 addOnFailureListener { Log.w(TAG, "requestInstances: failed to request home assistant instances from $node.id: ${node.displayName}") }
             }
+        }
+    }
+
+    private fun requestPhoneSignIn() {
+        Log.d(TAG, "requestPhoneSignIn")
+
+        // Find all nodes that are capable
+        val capabilityInfo: CapabilityInfo = Tasks.await(
+            capabilityClient.getCapability(
+                "sign_in_to_home_assistant_instance",
+                CapabilityClient.FILTER_REACHABLE
+            )
+        )
+
+        Log.d(TAG, "requestPhoneSignIn: found ${capabilityInfo.nodes.size} nodes")
+        runOnUiThread {
+            adapter.phoneSignInAvailable = capabilityInfo.nodes.size > 0
+            adapter.notifyDataSetChanged()
         }
     }
 
