@@ -3,14 +3,8 @@ package io.homeassistant.companion.android.settings.wear
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.wearable.CapabilityClient
-import com.google.android.gms.wearable.CapabilityInfo
 
-class SettingsWearActivity : AppCompatActivity(), CapabilityClient.OnCapabilityChangedListener {
-
-    override fun onCapabilityChanged(capabilityInfo: CapabilityInfo) {
-        // No op
-    }
+class SettingsWearActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "SettingsWearAct"
