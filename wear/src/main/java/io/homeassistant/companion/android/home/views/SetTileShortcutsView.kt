@@ -24,11 +24,13 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.util.simplifiedEntity
@@ -38,7 +40,9 @@ import io.homeassistant.companion.android.common.R as commonR
 @Composable
 fun SetTileShortcutsView(
     shortcutEntities: MutableList<SimplifiedEntity>,
-    onShortcutEntitySelectionChange: (Int) -> Unit
+    onShortcutEntitySelectionChange: (Int) -> Unit,
+    isShowShortcutTextEnabled: Boolean,
+    onShowShortcutTextEnabled: (Boolean) -> Unit
 ) {
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
@@ -60,7 +64,30 @@ fun SetTileShortcutsView(
             state = scalingLazyListState
         ) {
             item {
-                ListHeader(id = commonR.string.shortcuts)
+                ListHeader(id = commonR.string.shortcuts_tile)
+            }
+            item {
+                ToggleChip(
+                    modifier = Modifier.fillMaxWidth(),
+                    checked = isShowShortcutTextEnabled,
+                    onCheckedChange = { onShowShortcutTextEnabled(it) },
+                    label = {
+                        Text(stringResource(commonR.string.shortcuts_tile_text_setting))
+                    },
+                    appIcon = {
+                        Image(
+                            asset =
+                            if (isShowShortcutTextEnabled)
+                                CommunityMaterial.Icon.cmd_alphabetical
+                            else
+                                CommunityMaterial.Icon.cmd_alphabetical_off,
+                            colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+                        )
+                    }
+                )
+            }
+            item {
+                ListHeader(id = commonR.string.shortcuts_choose)
             }
             items(shortcutEntities.size) { index ->
 
@@ -118,6 +145,8 @@ fun SetTileShortcutsView(
 private fun PreviewSetTileShortcutsView() {
     SetTileShortcutsView(
         shortcutEntities = mutableListOf(simplifiedEntity),
-        onShortcutEntitySelectionChange = {}
+        onShortcutEntitySelectionChange = {},
+        isShowShortcutTextEnabled = true,
+        onShowShortcutTextEnabled = {}
     )
 }
