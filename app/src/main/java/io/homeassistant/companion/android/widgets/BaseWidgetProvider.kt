@@ -76,10 +76,8 @@ abstract class BaseWidgetProvider : AppWidgetProvider() {
                 updateAllWidgets(context)
                 if (getAllWidgetIds(context).isNotEmpty()) {
                     entityUpdates = integrationUseCase.getEntityUpdates()
-                    if (entityUpdates != null) {
-                        entityUpdates!!.collect {
-                            onEntityStateChanged(context, it)
-                        }
+                    entityUpdates?.collect {
+                        onEntityStateChanged(context, it)
                     }
                 }
             }
