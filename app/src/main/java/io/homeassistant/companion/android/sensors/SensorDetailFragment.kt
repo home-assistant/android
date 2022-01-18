@@ -293,7 +293,7 @@ class SensorDetailFragment(
                                 Setting(
                                     basicSensor.id,
                                     setting.name,
-                                    if (setting.name == BluetoothSensorManager.SETTING_BLE_MEASURED_POWER && newValue == "") BluetoothSensorManager.DEFAULT_MEASURED_POWER_AT_1M else newValue as String,
+                                    newValue as String,
                                     setting.valueType,
                                     setting.enabled
                                 )

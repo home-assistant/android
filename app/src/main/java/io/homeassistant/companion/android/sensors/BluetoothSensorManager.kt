@@ -166,7 +166,7 @@ class BluetoothSensorManager : SensorManager {
         val uuid = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
         val major = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_MAJOR)
         val minor = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_MINOR)
-        val measuredPower = getSetting(context, bleTransmitter, SETTING_BLE_MEASURED_POWER, "number", DEFAULT_MEASURED_POWER_AT_1M).toInt()
+        val measuredPower = getSetting(context, bleTransmitter, SETTING_BLE_MEASURED_POWER, "number", DEFAULT_MEASURED_POWER_AT_1M).toIntOrNull() ?: DEFAULT_MEASURED_POWER_AT_1M.toInt()
         val transmitPower = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list", listOf("ultraLow", "low", "medium", "high"), DEFAULT_BLE_TRANSMIT_POWER)
         val advertiseMode = getSetting(context, bleTransmitter, SETTING_BLE_ADVERTISE_MODE, "list", listOf("lowPower", "balanced", "lowLatency"), DEFAULT_BLE_ADVERTISE_MODE)
 
