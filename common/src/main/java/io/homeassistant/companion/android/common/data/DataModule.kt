@@ -5,6 +5,7 @@ import android.content.Context
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.provider.Settings
+import androidx.core.content.getSystemService
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -120,7 +121,7 @@ abstract class DataModule {
 
         @Provides
         @Singleton
-        fun wifiManager(@ApplicationContext appContext: Context) = appContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        fun wifiManager(@ApplicationContext appContext: Context) = appContext.getSystemService<WifiManager>()!!
     }
 
     @Binds

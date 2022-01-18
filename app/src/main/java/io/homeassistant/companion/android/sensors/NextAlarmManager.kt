@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
@@ -68,8 +69,7 @@ class NextAlarmManager : SensorManager {
         val allowPackageList = sensorSetting.firstOrNull { it.name == SETTING_ALLOW_LIST }?.value ?: ""
 
         try {
-            val alarmManager: AlarmManager =
-                context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val alarmManager = context.getSystemService<AlarmManager>()!!
 
             val alarmClockInfo = alarmManager.nextAlarmClock
 

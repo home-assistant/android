@@ -3,10 +3,10 @@ package io.homeassistant.companion.android.common.sensors
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Context.NOTIFICATION_SERVICE
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.getSystemService
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
@@ -30,7 +30,7 @@ abstract class SensorWorkerBase(
         const val NOTIFICATION_ID = 42
     }
 
-    private val notificationManager = appContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+    private val notificationManager = appContext.getSystemService<NotificationManager>()!!
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val sensorDao = AppDatabase.getInstance(applicationContext).sensorDao()

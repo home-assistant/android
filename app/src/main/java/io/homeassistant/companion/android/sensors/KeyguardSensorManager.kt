@@ -4,6 +4,7 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -64,7 +65,7 @@ class KeyguardSensorManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        val km = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        val km = context.getSystemService<KeyguardManager>()!!
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
             updateDeviceLocked(context, km)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)

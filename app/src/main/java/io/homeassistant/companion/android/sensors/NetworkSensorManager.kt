@@ -6,6 +6,7 @@ import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
@@ -152,7 +153,7 @@ class NetworkSensorManager : SensorManager {
 
         if (checkPermission(context, wifiConnection.id)) {
             val wifiManager =
-                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+                context.applicationContext.getSystemService<WifiManager>()!!
             conInfo = wifiManager.connectionInfo
 
             ssid = if (conInfo.networkId == -1) {
@@ -185,7 +186,7 @@ class NetworkSensorManager : SensorManager {
 
         if (checkPermission(context, bssidState.id)) {
             val wifiManager =
-                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+                context.applicationContext.getSystemService<WifiManager>()!!
             conInfo = wifiManager.connectionInfo
         }
 
@@ -228,7 +229,7 @@ class NetworkSensorManager : SensorManager {
 
         if (checkPermission(context, wifiIp.id)) {
             val wifiManager =
-                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+                context.applicationContext.getSystemService<WifiManager>()!!
             val conInfo = wifiManager.connectionInfo
 
             deviceIp = if (conInfo.networkId == -1) {
@@ -258,7 +259,7 @@ class NetworkSensorManager : SensorManager {
 
         if (checkPermission(context, wifiLinkSpeed.id)) {
             val wifiManager =
-                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+                context.applicationContext.getSystemService<WifiManager>()!!
             val conInfo = wifiManager.connectionInfo
 
             linkSpeed = if (conInfo.networkId == -1) {
@@ -300,7 +301,7 @@ class NetworkSensorManager : SensorManager {
 
         if (checkPermission(context, wifiState.id)) {
             val wifiManager =
-                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+                context.applicationContext.getSystemService<WifiManager>()!!
 
             wifiEnabled = wifiManager.isWifiEnabled
         }
@@ -323,7 +324,7 @@ class NetworkSensorManager : SensorManager {
 
         if (checkPermission(context, wifiFrequency.id)) {
             val wifiManager =
-                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+                context.applicationContext.getSystemService<WifiManager>()!!
             val conInfo = wifiManager.connectionInfo
 
             frequency = if (conInfo.networkId == -1) {
@@ -352,7 +353,7 @@ class NetworkSensorManager : SensorManager {
 
         if (checkPermission(context, wifiSignalStrength.id)) {
             val wifiManager =
-                (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
+                context.applicationContext.getSystemService<WifiManager>()!!
             val conInfo = wifiManager.connectionInfo
 
             lastScanStrength = wifiManager.scanResults.firstOrNull {

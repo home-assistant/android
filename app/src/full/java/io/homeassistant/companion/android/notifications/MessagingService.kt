@@ -5,9 +5,8 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -35,6 +34,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import androidx.core.text.HtmlCompat
 import androidx.core.text.isDigitsOnly
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -70,7 +70,6 @@ import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
 import javax.inject.Inject
-import kotlin.collections.HashMap
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -407,7 +406,7 @@ class MessagingService : FirebaseMessagingService() {
         var textToSpeech: TextToSpeech? = null
         var tts = data[TITLE]
         val audioManager =
-            applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            applicationContext.getSystemService<AudioManager>()!!
         val currentAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
         val maxAlarmVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
@@ -477,7 +476,7 @@ class MessagingService : FirebaseMessagingService() {
             COMMAND_DND -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager =
-                        applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                        applicationContext.getSystemService<NotificationManager>()!!
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
@@ -499,10 +498,10 @@ class MessagingService : FirebaseMessagingService() {
             }
             COMMAND_RINGER_MODE -> {
                 val audioManager =
-                    applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    applicationContext.getSystemService<AudioManager>()!!
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager =
-                        applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                        applicationContext.getSystemService<NotificationManager>()!!
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
@@ -539,10 +538,10 @@ class MessagingService : FirebaseMessagingService() {
             }
             COMMAND_VOLUME_LEVEL -> {
                 val audioManager =
-                    applicationContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    applicationContext.getSystemService<AudioManager>()!!
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager =
-                        applicationContext.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+                        applicationContext.getSystemService<NotificationManager>()!!
                     if (!notificationManager.isNotificationPolicyAccessGranted) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
@@ -561,11 +560,12 @@ class MessagingService : FirebaseMessagingService() {
                 }
             }
             COMMAND_BLUETOOTH -> {
-                val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+                val bluetoothAdapter =
+                    applicationContext.getSystemService<BluetoothManager>()?.adapter
                 if (title == TURN_OFF)
-                    bluetoothAdapter.disable()
+                    bluetoothAdapter?.disable()
                 if (title == TURN_ON)
-                    bluetoothAdapter.enable()
+                    bluetoothAdapter?.enable()
             }
             COMMAND_BLE_TRANSMITTER -> {
                 if (title == TURN_OFF)
@@ -613,7 +613,7 @@ class MessagingService : FirebaseMessagingService() {
                 }
 
                 val powerManager =
-                    applicationContext.getSystemService(Context.POWER_SERVICE) as PowerManager
+                    applicationContext.getSystemService<PowerManager>()!!
                 val wakeLock = powerManager.newWakeLock(
                     PowerManager.FULL_WAKE_LOCK or
                         PowerManager.ACQUIRE_CAUSES_WAKEUP or
@@ -1338,7 +1338,7 @@ class MessagingService : FirebaseMessagingService() {
     private fun processMediaCommand(data: Map<String, String>) {
         val title = data[TITLE]
         val mediaSessionManager =
-            applicationContext.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+            applicationContext.getSystemService<MediaSessionManager>()!!
         val mediaList = mediaSessionManager.getActiveSessions(
             ComponentName(
                 applicationContext,
@@ -1503,7 +1503,7 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun notifyMissingPermission(type: String) {
         val appManager =
-            applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            applicationContext.getSystemService<ActivityManager>()!!
         val currentProcess = appManager.runningAppProcesses
         if (currentProcess != null) {
             for (item in currentProcess) {
