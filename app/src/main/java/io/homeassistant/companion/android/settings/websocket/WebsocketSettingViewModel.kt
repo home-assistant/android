@@ -16,7 +16,7 @@ class WebsocketSettingViewModel @Inject constructor(
 ) {
     private val settingsDao = AppDatabase.getInstance(application).settingsDao()
 
-    fun getLocalNotificationSetting(id: Int): Setting {
+    fun getWebsocketSetting(id: Int): Setting {
         var setting = settingsDao.get(id)
         if (setting == null) {
             setting = Setting(id, WebsocketSetting.SCREEN_ON)
@@ -26,9 +26,9 @@ class WebsocketSettingViewModel @Inject constructor(
     }
 
     // Once we support more than one instance we can get the setting per instance
-    fun getLocalNotificationSettingFlow(id: Int): Flow<Setting> = settingsDao.getFlow(id)
+    fun getWebsocketSettingFlow(id: Int): Flow<Setting> = settingsDao.getFlow(id)
 
-    fun updateLocalNotificationSetting(id: Int, setting: WebsocketSetting) {
+    fun updateWebsocketSetting(id: Int, setting: WebsocketSetting) {
         settingsDao.get(id)?.let {
             it.websocketSetting = setting
             settingsDao.update(it)

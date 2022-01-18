@@ -298,19 +298,19 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     private suspend fun sendMessage(request: Map<*, *>): SocketResponse? {
-        val requestId = id.getAndIncrement()
-        val outbound = request.plus("id" to requestId)
         return if (connect()) {
-            Log.d(TAG, "Sending message $requestId: $outbound")
             withTimeoutOrNull(30000) {
                 suspendCancellableCoroutine { cont ->
+                    val requestId = id.getAndIncrement()
+                    val outbound = request.plus("id" to requestId)
+                    Log.d(TAG, "Sending message $requestId: $outbound")
                     responseCallbackJobs[requestId] = cont
                     connection!!.send(mapper.writeValueAsString(outbound))
                     Log.d(TAG, "Message number $requestId sent")
                 }
             }
         } else {
-            Log.e(TAG, "Unable to send message $requestId: $outbound")
+            Log.e(TAG, "Unable to send message $request")
             null
         }
     }

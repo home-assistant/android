@@ -21,6 +21,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.AppDatabase
@@ -44,6 +45,7 @@ class WebsocketManager(
         private const val TAG = "WebSockManager"
         private const val CHANNEL_ID = "Websocket"
         private const val NOTIFICATION_ID = 65423
+        private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.BUILD_TYPE == "minimal") WebsocketSetting.ALWAYS else WebsocketSetting.SCREEN_ON
 
         fun start(context: Context) {
             val constraints = Constraints.Builder()
@@ -107,7 +109,7 @@ class WebsocketManager(
     private fun shouldWeRun(): Boolean {
         val dm = applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
         val displayOff = dm.displays.all { it.state == Display.STATE_OFF }
-        val setting = settingsDao.get(0)?.websocketSetting ?: WebsocketSetting.SCREEN_ON
+        val setting = settingsDao.get(0)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
         if (setting == WebsocketSetting.NEVER) {
             return false
         } else if (displayOff && setting == WebsocketSetting.SCREEN_ON) {
