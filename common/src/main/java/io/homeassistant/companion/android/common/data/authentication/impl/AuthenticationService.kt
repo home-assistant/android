@@ -1,11 +1,12 @@
 package io.homeassistant.companion.android.common.data.authentication.impl
 
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowAuthentication
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowForm
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowMfaCode
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowRequest
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.Token
 import okhttp3.HttpUrl
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.Field
@@ -52,8 +53,11 @@ interface AuthenticationService {
     )
 
     @POST
-    suspend fun initializeLogin(@Url url: String, @Body body: LoginFlowRequest): LoginFlowInit
+    suspend fun initializeLogin(@Url url: String, @Body body: LoginFlowRequest): LoginFlowForm
 
     @POST
-    suspend fun authenticate(@Url url: String, @Body body: LoginFlowAuthentication): LoginFlowCreateEntry
+    suspend fun authenticatePassword(@Url url: HttpUrl, @Body body: LoginFlowAuthentication): Response<ResponseBody>
+
+    @POST
+    suspend fun authenticateMfa(@Url url: HttpUrl, @Body body: LoginFlowMfaCode): Response<ResponseBody>
 }

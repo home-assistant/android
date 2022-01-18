@@ -1,17 +1,25 @@
 package io.homeassistant.companion.android.common.data.authentication.impl
 
 import android.util.Log
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.LocalStorage
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.authentication.SessionState
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowAuthentication
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowCreateEntry
-import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowInit
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowForm
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowMfaCode
 import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowRequest
+import io.homeassistant.companion.android.common.data.authentication.impl.entities.LoginFlowResponse
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.ResponseBody
 import java.net.URL
 import javax.inject.Inject
 import javax.inject.Named
@@ -31,7 +39,11 @@ class AuthenticationRepositoryImpl @Inject constructor(
         private const val PREF_BIOMETRIC_ENABLED = "biometric_enabled"
     }
 
-    override suspend fun initiateLoginFlow(): LoginFlowInit {
+    private val mapper = jacksonObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+
+    override suspend fun initiateLoginFlow(): LoginFlowForm {
         val url = urlRepository.getUrl()?.toHttpUrlOrNull().toString()
         return authenticationService.initializeLogin(
             url + "auth/login_flow",
@@ -43,16 +55,41 @@ class AuthenticationRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowCreateEntry {
-        val url = urlRepository.getUrl()?.toHttpUrlOrNull().toString()
-        return authenticationService.authenticate(
-            url + AuthenticationService.AUTHENTICATE_BASE_PATH + flowId,
+    override suspend fun loginAuthentication(flowId: String, username: String, password: String): LoginFlowResponse? {
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        if (url == null) {
+            Log.e(TAG, "Unable to authenticate with username/password.")
+            throw AuthorizationException()
+        }
+
+        val response = authenticationService.authenticatePassword(
+            url.newBuilder().addPathSegments(AuthenticationService.AUTHENTICATE_BASE_PATH + flowId).build(),
             LoginFlowAuthentication(
                 AuthenticationService.CLIENT_ID,
                 username,
                 password
             )
         )
+        if (!response.isSuccessful || response.body() == null) throw AuthorizationException()
+        return mapLoginFlowResponse(response.body()!!)
+    }
+
+    override suspend fun loginCode(flowId: String, code: String): LoginFlowResponse? {
+        val url = urlRepository.getUrl()?.toHttpUrlOrNull()
+        if (url == null) {
+            Log.e(TAG, "Unable to authenticate with MFA code.")
+            throw AuthorizationException()
+        }
+
+        val response = authenticationService.authenticateMfa(
+            url.newBuilder().addPathSegments(AuthenticationService.AUTHENTICATE_BASE_PATH + flowId).build(),
+            LoginFlowMfaCode(
+                AuthenticationService.CLIENT_ID,
+                code
+            )
+        )
+        if (!response.isSuccessful || response.body() == null) throw AuthorizationException()
+        return mapLoginFlowResponse(response.body()!!)
     }
 
     override suspend fun registerAuthorizationCode(authorizationCode: String) {
@@ -127,6 +164,16 @@ class AuthenticationRepositoryImpl @Inject constructor(
 
     override suspend fun buildBearerToken(): String {
         return "Bearer " + ensureValidSession().accessToken
+    }
+
+    private fun mapLoginFlowResponse(responseBody: ResponseBody): LoginFlowResponse? {
+        val responseText = responseBody.charStream().readText()
+        val message: JsonNode? = mapper.readValue(responseText)
+        return when (message?.get("type")?.textValue()) {
+            "form" -> mapper.readValue(responseText, LoginFlowForm::class.java)
+            "create_entry" -> mapper.readValue(responseText, LoginFlowCreateEntry::class.java)
+            else -> null
+        }
     }
 
     private fun convertSession(session: Session): String {
