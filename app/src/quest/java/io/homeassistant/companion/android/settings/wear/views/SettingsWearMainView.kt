@@ -13,5 +13,4 @@ class SettingsWearMainView : AppCompatActivity() {
             return Intent(context, SettingsWearMainView::class.java)
         }
     }
-
 }
