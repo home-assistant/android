@@ -115,7 +115,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingView {
             }
             startActivity(confirmation)
         } catch (e: Exception) {
-            Log.e(TAG, "Unable to open sign in activity on phone")
+            Log.e(TAG, "Unable to open sign in activity on phone", e)
             showError()
         }
     }
