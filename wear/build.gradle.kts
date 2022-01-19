@@ -114,9 +114,9 @@ dependencies {
     implementation("androidx.compose.compiler:compiler:1.0.5")
     implementation("androidx.compose.foundation:foundation:1.0.5")
     implementation("androidx.compose.ui:ui-tooling:1.0.5")
-    implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha13")
-    implementation("androidx.wear.compose:compose-material:1.0.0-alpha13")
-    implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha13")
+    implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha14")
+    implementation("androidx.wear.compose:compose-material:1.0.0-alpha14")
+    implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha14")
 
     implementation("com.google.guava:guava:31.0.1-android")
     implementation("androidx.wear.tiles:tiles:1.0.0")
