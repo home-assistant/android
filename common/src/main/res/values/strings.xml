@@ -685,6 +685,7 @@
     <string name="wear_os_settings_title">Wear OS Settings</string>
     <string name="wear_set_favorites">Select your favorite entities to appear at the top of the wear home screen. You can also drag and drop to change the order in which they appear.</string>
     <string name="wear_settings">Wear Device Settings</string>
+    <string name="websocket_listening">Listening to Home Assistant via Websocket</string>
     <string name="webview_error_AUTH_SCHEME">Unsupported authentication scheme (not basic or digest), please check network settings.</string>
     <string name="webview_error_AUTHENTICATION">User authentication failed on server, please check server settings.</string>
     <string name="webview_error_description">Encountered error :</string>
@@ -738,5 +739,10 @@
     <string name="basic_sensor_name_last_used_app">Last Used App</string>
     <string name="sensor_description_last_used_app">Application name or package name of the last used application on the device</string>
     <string name="sensor_name_last_app">Last Used App</string>
-
+    <string name="websocket_setting_name">Websocket Settings</string>
+    <string name="websocket_setting_summary">Manage when we are in direct communication with your server via websockets.</string>
+    <string name="websocket_setting_description">Please select when you would like the application to attempt to directly communicate with your Home Assistant instance for all communication.  This will include push notifications, if you are on a minimal build this needs to be always to consistently get push notifications.</string>
+    <string name="websocket_setting_never">Never</string>
+    <string name="websocket_setting_while_screen_on">While Screen On</string>
+    <string name="websocket_setting_always">Always</string>
 </resources>

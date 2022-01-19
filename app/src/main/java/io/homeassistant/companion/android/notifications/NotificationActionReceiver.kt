@@ -10,6 +10,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.notifications.MessagingManager.Companion.KEY_TEXT_REPLY
 import io.homeassistant.companion.android.util.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,8 +63,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         if (notificationAction.key == "REPLY") {
             notificationAction.data += Pair(
                 "reply_text",
-                RemoteInput.getResultsFromIntent(intent)
-                    .getCharSequence(MessagingService.KEY_TEXT_REPLY).toString()
+                RemoteInput.getResultsFromIntent(intent).getCharSequence(KEY_TEXT_REPLY).toString()
             )
         }
 

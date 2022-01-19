@@ -27,7 +27,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import kotlinx.coroutines.runBlocking
@@ -238,7 +238,7 @@ class SensorDetailFragment(
                         pref.setOnPreferenceChangeListener { _, newState ->
                             val isEnabled = newState as Boolean
 
-                            sensorDao.add(Setting(basicSensor.id, setting.name, isEnabled.toString(), "toggle", setting.enabled))
+                            sensorDao.add(SensorSetting(basicSensor.id, setting.name, isEnabled.toString(), "toggle", setting.enabled))
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
@@ -256,7 +256,7 @@ class SensorDetailFragment(
                         pref.isIconSpaceReserved = false
                         pref.isSingleLineTitle = false
                         pref.setOnPreferenceChangeListener { _, newState ->
-                            sensorDao.add(Setting(basicSensor.id, setting.name, newState as String, "list", setting.entries, setting.enabled))
+                            sensorDao.add(SensorSetting(basicSensor.id, setting.name, newState as String, "list", setting.entries, setting.enabled))
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
@@ -290,7 +290,7 @@ class SensorDetailFragment(
 
                         pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
-                                Setting(
+                                SensorSetting(
                                     basicSensor.id,
                                     setting.name,
                                     newValue as String,
@@ -424,7 +424,7 @@ class SensorDetailFragment(
 
     private fun createListPreference(
         key: String,
-        setting: Setting,
+        sensorSetting: SensorSetting,
         sensorDao: SensorDao,
         entries: List<String>
     ): Preference {
@@ -432,8 +432,8 @@ class SensorDetailFragment(
         val pref = findPreference(key)
             ?: MultiSelectListPreference(requireContext())
         pref.key = key
-        pref.isEnabled = setting.enabled
-        pref.title = getTranslatedTitle(setting.name)
+        pref.isEnabled = sensorSetting.enabled
+        pref.title = getTranslatedTitle(sensorSetting.name)
         pref.dialogTitle = pref.title
         pref.entries = entries.toTypedArray()
         pref.entryValues = entries.toTypedArray()
@@ -441,18 +441,18 @@ class SensorDetailFragment(
         pref.isSingleLineTitle = false
 
         // If selected list values are empty, but the setting.value is filled, then set the selected list value to the setting value
-        if ((pref.values == null || pref.values.isEmpty()) && setting.value.isNotEmpty()) pref.values = setting.value.split(", ").map { it }.toSet()
+        if ((pref.values == null || pref.values.isEmpty()) && sensorSetting.value.isNotEmpty()) pref.values = sensorSetting.value.split(", ").map { it }.toSet()
 
         pref.summary = pref.values.toString()
 
         pref.setOnPreferenceChangeListener { _, newValue ->
             sensorDao.add(
-                Setting(
+                SensorSetting(
                     basicSensor.id,
-                    setting.name,
+                    sensorSetting.name,
                     newValue.toString().replace("[", "").replace("]", ""),
-                    setting.valueType,
-                    setting.enabled
+                    sensorSetting.valueType,
+                    sensorSetting.enabled
                 )
             )
             sensorManager.requestSensorUpdate(requireContext())
@@ -466,7 +466,7 @@ class SensorDetailFragment(
             }
             pref.summary = pref.values.toString()
         } else
-            pref.summary = setting.value
+            pref.summary = sensorSetting.value
 
         return pref
     }

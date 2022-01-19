@@ -37,6 +37,7 @@ import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSett
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
+import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
@@ -189,23 +190,36 @@ class SettingsFragment constructor(
             }
         }
 
-        if (BuildConfig.FLAVOR == "full") {
-            findPreference<PreferenceCategory>("notifications")?.let {
-                it.isVisible = true
-            }
-            findPreference<Preference>("notification_history")?.let {
-                it.isVisible = true
-                it.setOnPreferenceClickListener {
-                    parentFragmentManager
-                        .beginTransaction()
-                        .replace(R.id.content, NotificationHistoryFragment::class.java, null)
-                        .addToBackStack(getString(commonR.string.notifications))
-                        .commit()
-                    return@setOnPreferenceClickListener true
-                }
-            }
+        findPreference<PreferenceCategory>("notifications")?.let {
+            it.isVisible = true
+        }
 
+        findPreference<Preference>("local_notifications")?.let {
+            it.setOnPreferenceClickListener {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.content, WebsocketSettingFragment::class.java, null)
+                    .addToBackStack(getString(commonR.string.notifications))
+                    .commit()
+                return@setOnPreferenceClickListener true
+            }
+        }
+
+        findPreference<Preference>("notification_history")?.let {
+            it.isVisible = true
+            it.setOnPreferenceClickListener {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.content, NotificationHistoryFragment::class.java, null)
+                    .addToBackStack(getString(commonR.string.notifications))
+                    .commit()
+                return@setOnPreferenceClickListener true
+            }
+        }
+
+        if (BuildConfig.FLAVOR == "full") {
             findPreference<Preference>("notification_rate_limit")?.let {
+
                 lifecycleScope.launch(Dispatchers.Main) {
                     // Runs in IO Dispatcher
                     val rateLimits = presenter.getNotificationRateLimits()
@@ -227,23 +241,22 @@ class SettingsFragment constructor(
                     }
                 }
             }
-            findPreference<SwitchPreference>("crash_reporting")?.let {
-                it.isVisible = BuildConfig.FLAVOR == "full"
-                it.setOnPreferenceChangeListener { _, newValue ->
-                    val checked = newValue as Boolean
-
-                    true
-                }
+        }
+        findPreference<SwitchPreference>("crash_reporting")?.let {
+            it.isVisible = BuildConfig.FLAVOR == "full"
+            it.setOnPreferenceChangeListener { _, newValue ->
+                val checked = newValue as Boolean
+                true
             }
+        }
 
-            val pm = requireContext().packageManager
-            val hasWearApp = pm.getLaunchIntentForPackage("com.google.android.wearable.app")
-            val hasSamsungApp = pm.getLaunchIntentForPackage("com.samsung.android.app.watchmanager")
-            findPreference<PreferenceCategory>("wear_category")?.isVisible = BuildConfig.FLAVOR == "full" && (hasWearApp != null || hasSamsungApp != null)
-            findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
-                startActivity(SettingsWearActivity.newInstance(requireContext()))
-                return@setOnPreferenceClickListener true
-            }
+        val pm = requireContext().packageManager
+        val hasWearApp = pm.getLaunchIntentForPackage("com.google.android.wearable.app")
+        val hasSamsungApp = pm.getLaunchIntentForPackage("com.samsung.android.app.watchmanager")
+        findPreference<PreferenceCategory>("wear_category")?.isVisible = BuildConfig.FLAVOR == "full" && (hasWearApp != null || hasSamsungApp != null)
+        findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
+            startActivity(SettingsWearActivity.newInstance(requireContext()))
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<Preference>("changelog")?.let {

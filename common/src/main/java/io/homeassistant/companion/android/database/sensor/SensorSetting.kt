@@ -5,7 +5,7 @@ import androidx.room.Entity
 import androidx.room.TypeConverter
 
 @Entity(tableName = "sensor_settings", primaryKeys = ["sensor_id", "name"])
-data class Setting(
+data class SensorSetting(
     @ColumnInfo(name = "sensor_id")
     val sensorId: String,
     @ColumnInfo(name = "name")

@@ -19,7 +19,7 @@ interface SensorDao {
 
     @Transaction
     @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id")
-    fun getSettings(id: String): List<Setting>
+    fun getSettings(id: String): List<SensorSetting>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun add(sensor: Sensor)
@@ -28,7 +28,7 @@ interface SensorDao {
     fun add(attribute: Attribute)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(setting: Setting)
+    fun add(sensorSetting: SensorSetting)
 
     @Query("DELETE FROM sensor_settings WHERE sensor_id = :sensorId AND name = :settingName")
     fun removeSetting(sensorId: String, settingName: String)

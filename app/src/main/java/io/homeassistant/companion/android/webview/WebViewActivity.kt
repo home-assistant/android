@@ -78,8 +78,10 @@ import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -602,6 +604,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
+    @ExperimentalCoroutinesApi
     override fun onResume() {
         super.onResume()
         if ((currentLang != languagesManager.getCurrentLang()) || currentAutoplay != presenter.isAutoPlayVideoEnabled())
@@ -619,6 +622,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         SensorWorker.start(this)
+        WebsocketManager.start(this)
         checkAndWarnForDisabledLocation()
     }
 

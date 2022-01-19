@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.bluetooth.BluetoothManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -37,16 +38,12 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.getSystemService
 import androidx.core.text.HtmlCompat
 import androidx.core.text.isDigitsOnly
-import com.google.firebase.messaging.FirebaseMessagingService
-import com.google.firebase.messaging.RemoteMessage
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.iconics.utils.toAndroidIconCompat
 import com.vdurmont.emoji.EmojiParser
-import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
-import io.homeassistant.companion.android.common.data.authentication.SessionState
-import io.homeassistant.companion.android.common.data.integration.DeviceRegistration
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
@@ -72,8 +69,12 @@ import java.util.Locale
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
-@AndroidEntryPoint
-class MessagingService : FirebaseMessagingService() {
+class MessagingManager @Inject constructor(
+    @ApplicationContext val context: Context,
+    private val integrationUseCase: IntegrationRepository,
+    private val urlUseCase: UrlRepository,
+    private val authenticationUseCase: AuthenticationRepository
+) {
     companion object {
         const val TAG = "MessagingService"
 
@@ -176,215 +177,200 @@ class MessagingService : FirebaseMessagingService() {
         )
     }
 
-    @Inject
-    lateinit var integrationUseCase: IntegrationRepository
-
-    @Inject
-    lateinit var urlUseCase: UrlRepository
-
-    @Inject
-    lateinit var authenticationUseCase: AuthenticationRepository
-
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        Log.d(TAG, "From: ${remoteMessage.from}")
+    fun handleMessage(jsonData: Map<String, String>) {
 
-        // Check if message contains a data payload.
-        remoteMessage.data.let {
-            Log.d(TAG, "Message data payload: " + remoteMessage.data)
-            val jsonData: Map<String, String> = it
-            val jsonObject = JSONObject(jsonData)
-            val notificationDao = AppDatabase.getInstance(applicationContext).notificationDao()
-            val now = System.currentTimeMillis()
-            val notificationRow =
-                NotificationItem(0, now, it[MESSAGE].toString(), jsonObject.toString())
-            notificationDao.add(notificationRow)
+        val jsonObject = JSONObject(jsonData)
+        val notificationDao = AppDatabase.getInstance(context).notificationDao()
+        val now = System.currentTimeMillis()
+        val notificationRow =
+            NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString())
+        notificationDao.add(notificationRow)
 
-            when {
-                it[MESSAGE] == REQUEST_LOCATION_UPDATE -> {
-                    Log.d(TAG, "Request location update")
-                    requestAccurateLocationUpdate()
-                }
-                it[MESSAGE] == CLEAR_NOTIFICATION && !it["tag"].isNullOrBlank() -> {
-                    Log.d(TAG, "Clearing notification with tag: ${it["tag"]}")
-                    clearNotification(it["tag"]!!)
-                }
-                it[MESSAGE] == REMOVE_CHANNEL && !it["channel"].isNullOrBlank() -> {
-                    Log.d(TAG, "Removing Notification channel ${it["channel"]}")
-                    removeNotificationChannel(it["channel"]!!)
-                }
-                it[MESSAGE] == TTS -> {
-                    Log.d(TAG, "Sending notification title to TTS")
-                    speakNotification(it)
-                }
-                it[MESSAGE] in DEVICE_COMMANDS -> {
-                    Log.d(TAG, "Processing device command")
-                    when (it[MESSAGE]) {
-                        COMMAND_DND -> {
-                            if (it[TITLE] in DND_COMMANDS) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                                    handleDeviceCommands(it)
-                                else {
-                                    mainScope.launch {
-                                        Log.d(
-                                            TAG,
-                                            "Posting notification to device as it does not support DND commands"
-                                        )
-                                        sendNotification(it)
-                                    }
-                                }
-                            } else {
-                                mainScope.launch {
-                                    Log.d(
-                                        TAG,
-                                        "Invalid DND command received, posting notification to device"
-                                    )
-                                    sendNotification(it)
-                                }
-                            }
-                        }
-                        COMMAND_RINGER_MODE -> {
-                            if (it[TITLE] in RM_COMMANDS) {
-                                handleDeviceCommands(it)
-                            } else {
-                                mainScope.launch {
-                                    Log.d(
-                                        TAG,
-                                        "Invalid ringer mode command received, posting notification to device"
-                                    )
-                                    sendNotification(it)
-                                }
-                            }
-                        }
-                        COMMAND_BROADCAST_INTENT -> {
-                            if (!it[TITLE].isNullOrEmpty() && !it["channel"].isNullOrEmpty())
-                                handleDeviceCommands(it)
+        when {
+            jsonData[MESSAGE] == REQUEST_LOCATION_UPDATE -> {
+                Log.d(TAG, "Request location update")
+                requestAccurateLocationUpdate()
+            }
+            jsonData[MESSAGE] == CLEAR_NOTIFICATION && !jsonData["tag"].isNullOrBlank() -> {
+                Log.d(TAG, "Clearing notification with tag: ${jsonData["tag"]}")
+                clearNotification(jsonData["tag"]!!)
+            }
+            jsonData[MESSAGE] == REMOVE_CHANNEL && !jsonData["channel"].isNullOrBlank() -> {
+                Log.d(TAG, "Removing Notification channel ${jsonData["channel"]}")
+                removeNotificationChannel(jsonData["channel"]!!)
+            }
+            jsonData[MESSAGE] == TTS -> {
+                Log.d(TAG, "Sending notification title to TTS")
+                speakNotification(jsonData)
+            }
+            jsonData[MESSAGE] in DEVICE_COMMANDS -> {
+                Log.d(TAG, "Processing device command")
+                when (jsonData[MESSAGE]) {
+                    COMMAND_DND -> {
+                        if (jsonData[TITLE] in DND_COMMANDS) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                                handleDeviceCommands(jsonData)
                             else {
                                 mainScope.launch {
                                     Log.d(
                                         TAG,
-                                        "Invalid broadcast command received, posting notification to device"
+                                        "Posting notification to device as it does not support DND commands"
                                     )
-                                    sendNotification(it)
+                                    sendNotification(jsonData)
                                 }
                             }
-                        }
-                        COMMAND_VOLUME_LEVEL -> {
-                            if (!it["channel"].isNullOrEmpty() && it["channel"] in CHANNEL_VOLUME_STREAM &&
-                                !it[TITLE].isNullOrEmpty() && it[TITLE]?.toIntOrNull() != null
-                            )
-                                handleDeviceCommands(it)
-                            else {
-                                mainScope.launch {
-                                    Log.d(
-                                        TAG,
-                                        "Invalid volume command received, posting notification to device"
-                                    )
-                                    sendNotification(it)
-                                }
+                        } else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid DND command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
                             }
                         }
-                        COMMAND_BLUETOOTH -> {
-                            if (!it[TITLE].isNullOrEmpty() && it[TITLE] in ENABLE_COMMANDS)
-                                handleDeviceCommands(it)
-                            else {
-                                mainScope.launch {
-                                    Log.d(
-                                        TAG,
-                                        "Invalid bluetooth command received, posting notification to device"
-                                    )
-                                    sendNotification(it)
-                                }
-                            }
-                        }
-                        COMMAND_BLE_TRANSMITTER -> {
-                            if (!it[TITLE].isNullOrEmpty() && it[TITLE] in ENABLE_COMMANDS)
-                                handleDeviceCommands(it)
-                            else {
-                                mainScope.launch {
-                                    Log.d(
-                                        TAG,
-                                        "Invalid ble transmitter command received, posting notification to device"
-                                    )
-                                    sendNotification(it)
-                                }
-                            }
-                        }
-                        COMMAND_HIGH_ACCURACY_MODE -> {
-                            if (!it[TITLE].isNullOrEmpty() && it[TITLE] in ENABLE_COMMANDS)
-                                handleDeviceCommands(it)
-                            else {
-                                mainScope.launch {
-                                    Log.d(
-                                        TAG,
-                                        "Invalid high accuracy mode command received, posting notification to device"
-                                    )
-                                }
-                            }
-                        }
-                        COMMAND_ACTIVITY -> {
-                            if (!it["tag"].isNullOrEmpty())
-                                handleDeviceCommands(it)
-                            else {
-                                mainScope.launch {
-                                    Log.d(
-                                        TAG,
-                                        "Invalid activity command received, posting notification to device"
-                                    )
-                                    sendNotification(it)
-                                }
-                            }
-                        }
-                        COMMAND_WEBVIEW -> {
-                            handleDeviceCommands(it)
-                        }
-                        COMMAND_SCREEN_ON -> {
-                            handleDeviceCommands(it)
-                        }
-                        COMMAND_MEDIA -> {
-                            if (!it[TITLE].isNullOrEmpty() && it[TITLE] in MEDIA_COMMANDS && !it["channel"].isNullOrEmpty()) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                                    handleDeviceCommands(it)
-                                } else {
-                                    mainScope.launch {
-                                        Log.d(
-                                            TAG,
-                                            "Posting notification to device as it does not support media commands"
-                                        )
-                                        sendNotification(it)
-                                    }
-                                }
-                            } else {
-                                mainScope.launch {
-                                    Log.d(
-                                        TAG,
-                                        "Invalid media command received, posting notification to device"
-                                    )
-                                    sendNotification(it)
-                                }
-                            }
-                        }
-                        else -> Log.d(TAG, "No command received")
                     }
+                    COMMAND_RINGER_MODE -> {
+                        if (jsonData[TITLE] in RM_COMMANDS) {
+                            handleDeviceCommands(jsonData)
+                        } else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid ringer mode command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_BROADCAST_INTENT -> {
+                        if (!jsonData[TITLE].isNullOrEmpty() && !jsonData["channel"].isNullOrEmpty())
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid broadcast command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_VOLUME_LEVEL -> {
+                        if (!jsonData["channel"].isNullOrEmpty() && jsonData["channel"] in CHANNEL_VOLUME_STREAM &&
+                            !jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE]?.toIntOrNull() != null
+                        )
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid volume command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_BLUETOOTH -> {
+                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS)
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid bluetooth command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_BLE_TRANSMITTER -> {
+                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS)
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid ble transmitter command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_HIGH_ACCURACY_MODE -> {
+                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS)
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid high accuracy mode command received, posting notification to device"
+                                )
+                            }
+                        }
+                    }
+                    COMMAND_ACTIVITY -> {
+                        if (!jsonData["tag"].isNullOrEmpty())
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid activity command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    COMMAND_WEBVIEW -> {
+                        handleDeviceCommands(jsonData)
+                    }
+                    COMMAND_SCREEN_ON -> {
+                        handleDeviceCommands(jsonData)
+                    }
+                    COMMAND_MEDIA -> {
+                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in MEDIA_COMMANDS && !jsonData["channel"].isNullOrEmpty()) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                                handleDeviceCommands(jsonData)
+                            } else {
+                                mainScope.launch {
+                                    Log.d(
+                                        TAG,
+                                        "Posting notification to device as it does not support media commands"
+                                    )
+                                    sendNotification(jsonData)
+                                }
+                            }
+                        } else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Invalid media command received, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
+                    else -> Log.d(TAG, "No command received")
                 }
-                else -> mainScope.launch {
-                    Log.d(TAG, "Creating notification with following data: $it")
-                    sendNotification(it)
-                }
+            }
+            else -> mainScope.launch {
+                Log.d(TAG, "Creating notification with following data: $jsonData")
+                sendNotification(jsonData)
             }
         }
     }
 
     private fun requestAccurateLocationUpdate() {
-        val intent = Intent(this, LocationSensorManager::class.java)
+        val intent = Intent(context, LocationSensorManager::class.java)
         intent.action = LocationSensorManager.ACTION_REQUEST_ACCURATE_LOCATION_UPDATE
 
-        sendBroadcast(intent)
+        context.sendBroadcast(intent)
     }
 
     private fun clearNotification(tag: String) {
-        val notificationManagerCompat = NotificationManagerCompat.from(this)
+        val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val messageId = tag.hashCode()
 
@@ -393,7 +379,7 @@ class MessagingService : FirebaseMessagingService() {
     }
 
     private fun removeNotificationChannel(channelName: String) {
-        val notificationManagerCompat = NotificationManagerCompat.from(this)
+        val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val channelID: String = createChannelID(channelName)
 
@@ -405,22 +391,21 @@ class MessagingService : FirebaseMessagingService() {
     private fun speakNotification(data: Map<String, String>) {
         var textToSpeech: TextToSpeech? = null
         var tts = data[TITLE]
-        val audioManager =
-            applicationContext.getSystemService<AudioManager>()!!
-        val currentAlarmVolume = audioManager.getStreamVolume(AudioManager.STREAM_ALARM)
-        val maxAlarmVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+        val audioManager = context.getSystemService<AudioManager>()
+        val currentAlarmVolume = audioManager?.getStreamVolume(AudioManager.STREAM_ALARM)
+        val maxAlarmVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         if (tts.isNullOrEmpty())
-            tts = getString(commonR.string.tts_no_title)
+            tts = context.getString(commonR.string.tts_no_title)
         textToSpeech = TextToSpeech(
-            applicationContext
+            context
         ) {
             if (it == TextToSpeech.SUCCESS) {
                 val listener = object : UtteranceProgressListener() {
                     override fun onStart(p0: String?) {
                         if (data["channel"] == ALARM_STREAM_MAX)
-                            audioManager.setStreamVolume(
+                            audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
-                                maxAlarmVolume,
+                                maxAlarmVolume!!,
                                 0
                             )
                     }
@@ -429,9 +414,9 @@ class MessagingService : FirebaseMessagingService() {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
                         if (data["channel"] == ALARM_STREAM_MAX)
-                            audioManager.setStreamVolume(
+                            audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
-                                currentAlarmVolume,
+                                currentAlarmVolume!!,
                                 0
                             )
                     }
@@ -440,9 +425,9 @@ class MessagingService : FirebaseMessagingService() {
                         textToSpeech?.stop()
                         textToSpeech?.shutdown()
                         if (data["channel"] == ALARM_STREAM_MAX)
-                            audioManager.setStreamVolume(
+                            audioManager?.setStreamVolume(
                                 AudioManager.STREAM_ALARM,
-                                currentAlarmVolume,
+                                currentAlarmVolume!!,
                                 0
                             )
                     }
@@ -460,8 +445,8 @@ class MessagingService : FirebaseMessagingService() {
             } else {
                 Handler(Looper.getMainLooper()).post {
                     Toast.makeText(
-                        applicationContext,
-                        getString(commonR.string.tts_error, tts),
+                        context,
+                        context.getString(commonR.string.tts_error, tts),
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -476,19 +461,19 @@ class MessagingService : FirebaseMessagingService() {
             COMMAND_DND -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager =
-                        applicationContext.getSystemService<NotificationManager>()!!
-                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                        context.getSystemService<NotificationManager>()
+                    if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         when (title) {
-                            DND_ALARMS_ONLY -> notificationManager.setInterruptionFilter(
+                            DND_ALARMS_ONLY -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_ALARMS
                             )
-                            DND_ALL -> notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
-                            DND_NONE -> notificationManager.setInterruptionFilter(
+                            DND_ALL -> notificationManager?.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL)
+                            DND_NONE -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_NONE
                             )
-                            DND_PRIORITY_ONLY -> notificationManager.setInterruptionFilter(
+                            DND_PRIORITY_ONLY -> notificationManager?.setInterruptionFilter(
                                 NotificationManager.INTERRUPTION_FILTER_PRIORITY
                             )
                             else -> Log.d(TAG, "Skipping invalid command")
@@ -497,18 +482,17 @@ class MessagingService : FirebaseMessagingService() {
                 }
             }
             COMMAND_RINGER_MODE -> {
-                val audioManager =
-                    applicationContext.getSystemService<AudioManager>()!!
+                val audioManager = context.getSystemService<AudioManager>()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     val notificationManager =
-                        applicationContext.getSystemService<NotificationManager>()!!
-                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                        context.getSystemService<NotificationManager>()
+                    if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
-                        processRingerMode(audioManager, title)
+                        processRingerMode(audioManager!!, title)
                     }
                 } else {
-                    processRingerMode(audioManager, title)
+                    processRingerMode(audioManager!!, title)
                 }
             }
             COMMAND_BROADCAST_INTENT -> {
@@ -524,12 +508,12 @@ class MessagingService : FirebaseMessagingService() {
                     if (!packageName.isNullOrEmpty() && !className.isNullOrEmpty())
                         intent.setClassName(packageName, className)
                     Log.d(TAG, "Sending broadcast intent")
-                    applicationContext.sendBroadcast(intent)
+                    context.sendBroadcast(intent)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to send broadcast intent please check command format", e)
                     Handler(Looper.getMainLooper()).post {
                         Toast.makeText(
-                            applicationContext,
+                            context,
                             commonR.string.broadcast_intent_error,
                             Toast.LENGTH_LONG
                         ).show()
@@ -538,30 +522,28 @@ class MessagingService : FirebaseMessagingService() {
             }
             COMMAND_VOLUME_LEVEL -> {
                 val audioManager =
-                    applicationContext.getSystemService<AudioManager>()!!
+                    context.getSystemService<AudioManager>()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val notificationManager =
-                        applicationContext.getSystemService<NotificationManager>()!!
-                    if (!notificationManager.isNotificationPolicyAccessGranted) {
+                    val notificationManager = context.getSystemService<NotificationManager>()
+                    if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                         notifyMissingPermission(data[MESSAGE].toString())
                     } else {
                         processStreamVolume(
-                            audioManager,
+                            audioManager!!,
                             data["channel"].toString(),
                             title!!.toInt()
                         )
                     }
                 } else {
                     processStreamVolume(
-                        audioManager,
+                        audioManager!!,
                         data["channel"].toString(),
                         title!!.toInt()
                     )
                 }
             }
             COMMAND_BLUETOOTH -> {
-                val bluetoothAdapter =
-                    applicationContext.getSystemService<BluetoothManager>()?.adapter
+                val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
                 if (title == TURN_OFF)
                     bluetoothAdapter?.disable()
                 if (title == TURN_ON)
@@ -569,25 +551,25 @@ class MessagingService : FirebaseMessagingService() {
             }
             COMMAND_BLE_TRANSMITTER -> {
                 if (title == TURN_OFF)
-                    BluetoothSensorManager.enableDisableBLETransmitter(applicationContext, false)
+                    BluetoothSensorManager.enableDisableBLETransmitter(context, false)
                 if (title == TURN_ON)
-                    BluetoothSensorManager.enableDisableBLETransmitter(applicationContext, true)
+                    BluetoothSensorManager.enableDisableBLETransmitter(context, true)
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 if (title == TURN_OFF) {
-                    LocationSensorManager.setHighAccuracyModeSetting(applicationContext, false)
+                    LocationSensorManager.setHighAccuracyModeSetting(context, false)
                 }
                 if (title == TURN_ON) {
-                    LocationSensorManager.setHighAccuracyModeSetting(applicationContext, true)
+                    LocationSensorManager.setHighAccuracyModeSetting(context, true)
                 }
-                val intent = Intent(this, LocationSensorManager::class.java)
+                val intent = Intent(context, LocationSensorManager::class.java)
                 intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY
                 intent.putExtra("command", title)
-                applicationContext.sendBroadcast(intent)
+                context.sendBroadcast(intent)
             }
             COMMAND_ACTIVITY -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (!Settings.canDrawOverlays(applicationContext))
+                    if (!Settings.canDrawOverlays(context))
                         notifyMissingPermission(data[MESSAGE].toString())
                     else
                         processActivityCommand(data)
@@ -596,7 +578,7 @@ class MessagingService : FirebaseMessagingService() {
             }
             COMMAND_WEBVIEW -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    if (!Settings.canDrawOverlays(applicationContext))
+                    if (!Settings.canDrawOverlays(context))
                         notifyMissingPermission(data[MESSAGE].toString())
                     else
                         openWebview(title)
@@ -612,21 +594,20 @@ class MessagingService : FirebaseMessagingService() {
                     }
                 }
 
-                val powerManager =
-                    applicationContext.getSystemService<PowerManager>()!!
-                val wakeLock = powerManager.newWakeLock(
+                val powerManager = context.getSystemService<PowerManager>()
+                val wakeLock = powerManager?.newWakeLock(
                     PowerManager.FULL_WAKE_LOCK or
                         PowerManager.ACQUIRE_CAUSES_WAKEUP or
                         PowerManager.ON_AFTER_RELEASE,
                     "HomeAssistant::NotificationScreenOnWakeLock"
                 )
-                wakeLock.acquire(1 * 30 * 1000L /*30 seconds */)
-                wakeLock.release()
+                wakeLock?.acquire(1 * 30 * 1000L /*30 seconds */)
+                wakeLock?.release()
             }
             COMMAND_MEDIA -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-                    if (!NotificationManagerCompat.getEnabledListenerPackages(applicationContext)
-                        .contains(applicationContext.packageName)
+                    if (!NotificationManagerCompat.getEnabledListenerPackages(context)
+                        .contains(context.packageName)
                     )
                         notifyMissingPermission(data[MESSAGE].toString())
                     else {
@@ -669,7 +650,7 @@ class MessagingService : FirebaseMessagingService() {
      *
      */
     private suspend fun sendNotification(data: Map<String, String>) {
-        val notificationManagerCompat = NotificationManagerCompat.from(this)
+        val notificationManagerCompat = NotificationManagerCompat.from(context)
 
         val tag = data["tag"]
         val messageId = tag?.hashCode() ?: System.currentTimeMillis().toInt()
@@ -694,7 +675,7 @@ class MessagingService : FirebaseMessagingService() {
 
         val channelId = handleChannel(notificationManagerCompat, data)
 
-        val notificationBuilder = NotificationCompat.Builder(this, channelId)
+        val notificationBuilder = NotificationCompat.Builder(context, channelId)
 
         handleSmallIcon(notificationBuilder, data)
 
@@ -780,7 +761,7 @@ class MessagingService : FirebaseMessagingService() {
         if (data[NOTIFICATION_ICON]?.startsWith("mdi") == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val iconName = data[NOTIFICATION_ICON]!!.split(":")[1]
             val iconDrawable =
-                IconicsDrawable(applicationContext, "cmd-$iconName").toAndroidIconCompat()
+                IconicsDrawable(context, "cmd-$iconName").toAndroidIconCompat()
             builder.setSmallIcon(iconDrawable)
         } else
             builder.setSmallIcon(commonR.drawable.ic_stat_ic_notification)
@@ -806,13 +787,13 @@ class MessagingService : FirebaseMessagingService() {
 
     ) {
 
-        val deleteIntent = Intent(this, NotificationDeleteReceiver::class.java).apply {
+        val deleteIntent = Intent(context, NotificationDeleteReceiver::class.java).apply {
             putExtra(NotificationDeleteReceiver.EXTRA_DATA, HashMap(data))
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP, group)
             putExtra(NotificationDeleteReceiver.EXTRA_NOTIFICATION_GROUP_ID, groupId)
         }
         val deletePendingIntent = PendingIntent.getBroadcast(
-            this,
+            context,
             messageId,
             deleteIntent,
             PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -839,7 +820,7 @@ class MessagingService : FirebaseMessagingService() {
         data: Map<String, String>
     ): NotificationCompat.Builder {
 
-        val groupNotificationBuilder = NotificationCompat.Builder(this, channelId)
+        val groupNotificationBuilder = NotificationCompat.Builder(context, channelId)
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .setSummaryText(
@@ -864,11 +845,11 @@ class MessagingService : FirebaseMessagingService() {
             builder.setCategory(Notification.CATEGORY_ALARM)
             builder.setSound(
                 RingtoneManager.getActualDefaultRingtoneUri(
-                    applicationContext,
+                    context,
                     RingtoneManager.TYPE_ALARM
                 )
                     ?: RingtoneManager.getActualDefaultRingtoneUri(
-                        applicationContext,
+                        context,
                         RingtoneManager.TYPE_RINGTONE
                     ),
                 AudioManager.STREAM_ALARM
@@ -898,7 +879,7 @@ class MessagingService : FirebaseMessagingService() {
                 Log.e(TAG, "Unable to parse color", e)
             }
         }
-        return ContextCompat.getColor(this, default)
+        return ContextCompat.getColor(context, default)
     }
 
     private fun handleLegacyLedColor(
@@ -1102,7 +1083,7 @@ class MessagingService : FirebaseMessagingService() {
                     data["action_${i}_uri"],
                     data
                 )
-                val eventIntent = Intent(this, NotificationActionReceiver::class.java).apply {
+                val eventIntent = Intent(context, NotificationActionReceiver::class.java).apply {
                     action = NotificationActionReceiver.FIRE_EVENT
                     if (data["sticky"]?.toBoolean() != true) {
                         putExtra(NotificationActionReceiver.EXTRA_NOTIFICATION_TAG, tag)
@@ -1126,11 +1107,11 @@ class MessagingService : FirebaseMessagingService() {
                     }
                     REPLY -> {
                         val remoteInput: RemoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).run {
-                            setLabel(getString(commonR.string.action_reply))
+                            setLabel(context.getString(commonR.string.action_reply))
                             build()
                         }
                         val replyPendingIntent = PendingIntent.getBroadcast(
-                            this,
+                            context,
                             0,
                             eventIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
@@ -1146,12 +1127,16 @@ class MessagingService : FirebaseMessagingService() {
                     }
                     else -> {
                         val actionPendingIntent = PendingIntent.getBroadcast(
-                            this,
+                            context,
                             (notificationAction.title.hashCode() + System.currentTimeMillis()).toInt(),
                             eventIntent,
                             PendingIntent.FLAG_IMMUTABLE
                         )
-                        builder.addAction(commonR.drawable.ic_stat_ic_notification, notificationAction.title, actionPendingIntent)
+                        builder.addAction(
+                            commonR.drawable.ic_stat_ic_notification,
+                            notificationAction.title,
+                            actionPendingIntent
+                        )
                     }
                 }
             }
@@ -1163,10 +1148,10 @@ class MessagingService : FirebaseMessagingService() {
     ): PendingIntent {
         val intent = when {
             uri.isBlank() -> {
-                WebViewActivity.newInstance(this)
+                WebViewActivity.newInstance(context)
             }
             uri.startsWith(APP_PREFIX) -> {
-                packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
+                context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
             }
             UrlHandler.isAbsoluteUrl(uri) -> {
                 Intent(Intent.ACTION_VIEW).apply {
@@ -1174,15 +1159,15 @@ class MessagingService : FirebaseMessagingService() {
                 }
             }
             else -> {
-                WebViewActivity.newInstance(this, uri)
+                WebViewActivity.newInstance(context, uri)
             }
-        } ?: WebViewActivity.newInstance(this)
+        } ?: WebViewActivity.newInstance(context)
 
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
         return PendingIntent.getActivity(
-            this,
+            context,
             (uri.hashCode() + System.currentTimeMillis()).toInt(),
             intent,
             PendingIntent.FLAG_IMMUTABLE
@@ -1258,11 +1243,11 @@ class MessagingService : FirebaseMessagingService() {
             .build()
         channel.setSound(
             RingtoneManager.getActualDefaultRingtoneUri(
-                applicationContext,
+                context,
                 RingtoneManager.TYPE_ALARM
             )
                 ?: RingtoneManager.getActualDefaultRingtoneUri(
-                    applicationContext,
+                    context,
                     RingtoneManager.TYPE_RINGTONE
                 ),
             audioAttributes
@@ -1302,24 +1287,24 @@ class MessagingService : FirebaseMessagingService() {
         val intent =
             Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
+        context.startActivity(intent)
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun requestSystemAlertPermission() {
         val intent = Intent(
             Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-            Uri.parse("package:$packageName")
+            Uri.parse("package:${context.packageName}")
         )
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
+        context.startActivity(intent)
     }
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP_MR1)
     private fun requestNotificationPermission() {
         val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        startActivity(intent)
+        context.startActivity(intent)
     }
 
     private fun getKeyEvent(key: String): Int {
@@ -1338,11 +1323,10 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun processMediaCommand(data: Map<String, String>) {
         val title = data[TITLE]
-        val mediaSessionManager =
-            applicationContext.getSystemService<MediaSessionManager>()!!
+        val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
         val mediaList = mediaSessionManager.getActiveSessions(
             ComponentName(
-                applicationContext,
+                context,
                 NotificationSensorManager::class.java
             )
         )
@@ -1352,7 +1336,7 @@ class MessagingService : FirebaseMessagingService() {
                 if (item.packageName == data["channel"]) {
                     hasCorrectPackage = true
                     val mediaSessionController =
-                        MediaController(applicationContext, item.sessionToken)
+                        MediaController(context, item.sessionToken)
                     val success = mediaSessionController.dispatchMediaButtonEvent(
                         KeyEvent(
                             KeyEvent.ACTION_DOWN,
@@ -1466,9 +1450,9 @@ class MessagingService : FirebaseMessagingService() {
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             if (!packageName.isNullOrEmpty()) {
                 intent.setPackage(packageName)
-                startActivity(intent)
-            } else if (intent.resolveActivity(applicationContext.packageManager) != null)
-                startActivity(intent)
+                context.startActivity(intent)
+            } else if (intent.resolveActivity(context.packageManager) != null)
+                context.startActivity(intent)
             else
                 mainScope.launch {
                     Log.d(
@@ -1481,7 +1465,7 @@ class MessagingService : FirebaseMessagingService() {
             Log.e(TAG, "Unable to send activity intent please check command format", e)
             Handler(Looper.getMainLooper()).post {
                 Toast.makeText(
-                    applicationContext,
+                    context,
                     commonR.string.activity_intent_error,
                     Toast.LENGTH_LONG
                 ).show()
@@ -1492,11 +1476,11 @@ class MessagingService : FirebaseMessagingService() {
     private fun openWebview(title: String?) {
         try {
             val intent = if (title.isNullOrEmpty())
-                WebViewActivity.newInstance(applicationContext)
+                WebViewActivity.newInstance(context)
             else
-                WebViewActivity.newInstance(applicationContext, title)
+                WebViewActivity.newInstance(context, title)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
+            context.startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to open webview", e)
         }
@@ -1504,14 +1488,14 @@ class MessagingService : FirebaseMessagingService() {
 
     private fun notifyMissingPermission(type: String) {
         val appManager =
-            applicationContext.getSystemService<ActivityManager>()!!
-        val currentProcess = appManager.runningAppProcesses
+            context.getSystemService<ActivityManager>()
+        val currentProcess = appManager?.runningAppProcesses
         if (currentProcess != null) {
             for (item in currentProcess) {
-                if (applicationContext.applicationInfo.processName == item.processName) {
+                if (context.applicationInfo.processName == item.processName) {
                     if (item.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
                         val data =
-                            mutableMapOf(MESSAGE to getString(commonR.string.missing_command_permission))
+                            mutableMapOf(MESSAGE to context.getString(commonR.string.missing_command_permission))
                         runBlocking {
                             sendNotification(data)
                         }
@@ -1529,31 +1513,6 @@ class MessagingService : FirebaseMessagingService() {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    /**
-     * Called if InstanceID token is updated. This may occur if the security of
-     * the previous token had been compromised. Note that this is called when the InstanceID token
-     * is initially generated so this is where you would retrieve the token.
-     */
-    override fun onNewToken(token: String) {
-        mainScope.launch {
-            Log.d(TAG, "Refreshed token: $token")
-            if (authenticationUseCase.getSessionState() == SessionState.ANONYMOUS) {
-                Log.d(TAG, "Not trying to update registration since we aren't authenticated.")
-                return@launch
-            }
-            try {
-                integrationUseCase.updateRegistration(
-                    DeviceRegistration(
-                        pushToken = token
-                    )
-                )
-            } catch (e: Exception) {
-                // TODO: Store for update later
-                Log.e(TAG, "Issue updating token", e)
             }
         }
     }

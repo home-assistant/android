@@ -48,7 +48,7 @@
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
 
     <application
-        android:name=".HomeAssistantApplication"
+        android:name="io.homeassistant.companion.android.HomeAssistantApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/backup_rules_android12"
@@ -62,6 +62,20 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <!-- Start things like SensorWorker on device boot -->
+        <receiver android:name=".websocket.WebsocketBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.MY_PACKAGE_SUSPENDED" />
+                <action android:name="android.intent.action.MY_PACKAGE_UNSUSPENDED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+            </intent-filter>
+        </receiver>
         <receiver android:name=".sensors.SensorReceiver"
             android:exported="true">
             <intent-filter>
