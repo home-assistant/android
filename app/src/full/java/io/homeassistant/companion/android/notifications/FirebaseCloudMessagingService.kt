@@ -18,6 +18,7 @@ import javax.inject.Inject
 class FirebaseCloudMessagingService : FirebaseMessagingService() {
     companion object {
         private const val TAG = "FCMService"
+        private const val SOURCE = "FCM"
     }
 
     @Inject
@@ -34,7 +35,7 @@ class FirebaseCloudMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         Log.d(TAG, "From: ${remoteMessage.from}")
 
-        messagingManager.handleMessage(remoteMessage.data)
+        messagingManager.handleMessage(remoteMessage.data, SOURCE)
     }
 
     /**

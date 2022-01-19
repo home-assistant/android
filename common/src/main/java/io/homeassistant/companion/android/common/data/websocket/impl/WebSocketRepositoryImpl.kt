@@ -301,12 +301,16 @@ class WebSocketRepositoryImpl @Inject constructor(
         return if (connect()) {
             withTimeoutOrNull(30000) {
                 suspendCancellableCoroutine { cont ->
-                    val requestId = id.getAndIncrement()
-                    val outbound = request.plus("id" to requestId)
-                    Log.d(TAG, "Sending message $requestId: $outbound")
-                    responseCallbackJobs[requestId] = cont
-                    connection!!.send(mapper.writeValueAsString(outbound))
-                    Log.d(TAG, "Message number $requestId sent")
+                    // Lock on the connection so that we fully send before allowing another send.
+                    // This should prevent out of order errors.
+                    synchronized(connection!!) {
+                        val requestId = id.getAndIncrement()
+                        val outbound = request.plus("id" to requestId)
+                        Log.d(TAG, "Sending message $requestId: $outbound")
+                        responseCallbackJobs[requestId] = cont
+                        connection!!.send(mapper.writeValueAsString(outbound))
+                        Log.d(TAG, "Message number $requestId sent")
+                    }
                 }
             }
         } else {

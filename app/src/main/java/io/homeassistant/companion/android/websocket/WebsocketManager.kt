@@ -43,6 +43,7 @@ class WebsocketManager(
 
     companion object {
         private const val TAG = "WebSockManager"
+        private const val SOURCE = "Websocket"
         private const val CHANNEL_ID = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.SCREEN_ON else WebsocketSetting.ALWAYS
@@ -83,18 +84,16 @@ class WebsocketManager(
         fun messagingManager(): MessagingManager
     }
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         if (!shouldWeRun()) {
-            return Result.success()
+            return@withContext Result.success()
         }
 
         Log.d(TAG, "Starting to listen to Websocket")
         createNotification()
 
         // Start listening for notifications
-        val job = withContext(Dispatchers.IO) {
-            return@withContext launch { collectNotifications() }
-        }
+        val job = launch { collectNotifications() }
 
         // play ping pong to ensure we have a connection.
         ensureConnectionAlive()
@@ -103,7 +102,7 @@ class WebsocketManager(
 
         Log.d(TAG, "Done listening to Websocket")
 
-        return Result.success()
+        return@withContext Result.success()
     }
 
     private fun shouldWeRun(): Boolean {
@@ -122,7 +121,7 @@ class WebsocketManager(
     private suspend fun ensureConnectionAlive() {
         do {
             delay(30000)
-        } while (websocketRepository.sendPing() && shouldWeRun())
+        } while (!isStopped && shouldWeRun() && websocketRepository.sendPing())
     }
 
     private suspend fun collectNotifications() {
@@ -150,7 +149,7 @@ class WebsocketManager(
                 if (it.containsKey(key))
                     flattened[key] = it[key].toString()
             }
-            messagingManager.handleMessage(flattened)
+            messagingManager.handleMessage(flattened, SOURCE)
         }
     }
 
@@ -172,6 +171,8 @@ class WebsocketManager(
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setContentTitle(applicationContext.getString(R.string.websocket_listening))
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .setGroup(CHANNEL_ID)
             .build()
         setForeground(ForegroundInfo(NOTIFICATION_ID, notification))
     }

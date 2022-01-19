@@ -333,6 +333,7 @@
     <string name="notification_history">Notification History</string>
     <string name="notification_message">Message</string>
     <string name="notification_received_at">Notification Received At</string>
+    <string name="notification_source">Notification Source</string>
     <string name="notifications">Notifications</string>
     <string name="other_settings">Other Settings</string>
     <string name="other">Other</string>

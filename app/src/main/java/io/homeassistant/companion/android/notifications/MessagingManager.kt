@@ -179,13 +179,13 @@ class MessagingManager @Inject constructor(
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
-    fun handleMessage(jsonData: Map<String, String>) {
+    fun handleMessage(jsonData: Map<String, String>, source: String) {
 
         val jsonObject = JSONObject(jsonData)
         val notificationDao = AppDatabase.getInstance(context).notificationDao()
         val now = System.currentTimeMillis()
         val notificationRow =
-            NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString())
+            NotificationItem(0, now, jsonData[MESSAGE].toString(), jsonObject.toString(), source)
         notificationDao.add(notificationRow)
 
         when {
