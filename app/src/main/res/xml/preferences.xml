@@ -107,15 +107,15 @@
         <Preference
             android:key="background"
             android:title="@string/background_access_title"/>
+        <Preference
+            android:key="websocket"
+            android:title="@string/websocket_setting_name"
+            android:summary="@string/websocket_setting_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/notifications"
         android:key="notifications"
         app:isPreferenceVisible="false">
-        <Preference
-            android:key="local_notifications"
-            android:title="@string/websocket_setting_name"
-            android:summary="@string/websocket_setting_summary" />
         <Preference
             android:key="notification_history"
             app:isPreferenceVisible="false"

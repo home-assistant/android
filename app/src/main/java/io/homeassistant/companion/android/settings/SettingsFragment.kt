@@ -194,7 +194,7 @@ class SettingsFragment constructor(
             it.isVisible = true
         }
 
-        findPreference<Preference>("local_notifications")?.let {
+        findPreference<Preference>("websocket")?.let {
             it.setOnPreferenceClickListener {
                 parentFragmentManager
                     .beginTransaction()
