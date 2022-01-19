@@ -163,8 +163,6 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
     implementation("com.google.android.material:material:1.4.0")
 
-    implementation("androidx.wear:wear-remote-interactions:1.0.0")
-
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.squareup.picasso:picasso:2.8")
@@ -176,6 +174,7 @@ dependencies {
     "fullImplementation"("io.sentry:sentry-android:5.5.2")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0")
     "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
+    "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
 
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
