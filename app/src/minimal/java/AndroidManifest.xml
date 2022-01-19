@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="io.homeassistant.companion.android">
+
+    <application>
+        <activity android:name="com.google.android.gms.common.api.GoogleApiActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            tools:node="remove"
+            android:exported="false"/>
+    </application>
+
+</manifest>
