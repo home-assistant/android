@@ -234,7 +234,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                         notificationProducerScope = null
                         connection?.close(1001, "Done listening to notifications.")
                     }
-                }.shareIn(ioScope, SharingStarted.WhileSubscribed(DISCONNECT_DELAY))
+                }.shareIn(ioScope, SharingStarted.WhileSubscribed(DISCONNECT_DELAY, 0))
             }
 
             return notificationFlow
