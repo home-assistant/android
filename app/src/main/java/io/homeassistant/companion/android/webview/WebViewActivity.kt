@@ -163,7 +163,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoMute: Boolean = true
     private var failedConnection = "external"
     private var moreInfoEntity = ""
-    private var moreInfoMutex = Mutex()
+    private val moreInfoMutex = Mutex()
     private var currentAutoplay: Boolean = false
 
     @SuppressLint("SetJavaScriptEnabled")
