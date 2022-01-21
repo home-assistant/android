@@ -74,8 +74,13 @@ abstract class TileExtensions : TileService() {
                         tile.subtitle = tileData.subtitle
                     }
                     if (tileData.entityId.split('.')[0] in toggleDomains) {
-                        val state = runBlocking { integrationUseCase.getEntity(tileData.entityId) }
-                        tile.state = if (state?.state == "on" || state?.state == "open") Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                        try {
+                            val state = runBlocking { integrationUseCase.getEntity(tileData.entityId) }
+                            tile.state = if (state?.state == "on" || state?.state == "open") Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Unable to set state for tile", e)
+                            tile.state = Tile.STATE_UNAVAILABLE
+                        }
                     } else
                         tile.state = Tile.STATE_INACTIVE
                     val iconId = tileData.iconId
