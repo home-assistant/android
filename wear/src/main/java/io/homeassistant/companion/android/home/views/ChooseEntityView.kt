@@ -1,8 +1,5 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -17,10 +14,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ScalingLazyColumn
-import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -28,7 +22,6 @@ import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalComposeUiApi
@@ -41,24 +34,10 @@ fun ChooseEntityView(
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
 
-    val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     LocalView.current.requestFocus()
 
     WearAppTheme {
-        ScalingLazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .scrollHandler(scalingLazyListState),
-            contentPadding = PaddingValues(
-                top = 24.dp,
-                start = 8.dp,
-                end = 8.dp,
-                bottom = 48.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            state = scalingLazyListState
-        ) {
+        ThemeLazyColumn {
             item {
                 ListHeader(id = commonR.string.shortcuts_choose)
             }

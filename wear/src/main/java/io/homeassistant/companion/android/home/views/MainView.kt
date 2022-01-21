@@ -1,11 +1,8 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -13,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,7 +26,6 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberScalingLazyListState
@@ -42,7 +37,6 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
-import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalComposeUiApi
@@ -75,18 +69,7 @@ fun MainView(
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
-            ScalingLazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scrollHandler(scalingLazyListState),
-                contentPadding = PaddingValues(
-                    top = 24.dp,
-                    start = 8.dp,
-                    end = 8.dp,
-                    bottom = 48.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            ThemeLazyColumn(
                 state = scalingLazyListState
             ) {
                 if (favoriteEntityIds.isNotEmpty()) {

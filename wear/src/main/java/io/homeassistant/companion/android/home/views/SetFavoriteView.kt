@@ -1,24 +1,17 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
@@ -31,7 +24,6 @@ import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
-import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalComposeUiApi
@@ -57,17 +49,7 @@ fun SetFavoritesView(
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
-            ScalingLazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scrollHandler(scalingLazyListState),
-                contentPadding = PaddingValues(
-                    top = 24.dp,
-                    start = 8.dp,
-                    end = 8.dp,
-                    bottom = 48.dp
-                ),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            ThemeLazyColumn(
                 state = scalingLazyListState
             ) {
                 item {
