@@ -40,13 +40,7 @@ fun EntityViewList(
     isToastEnabled: Boolean
 ) {
     // Remember expanded state of each header
-    val expandedStates = remember {
-        mutableStateMapOf<Int, Boolean>().apply {
-            entityLists.forEach {
-                put(it.key.hashCode(), true)
-            }
-        }
-    }
+    val expandedStates = rememberExpandedStates(entityLists.keys.map { it.hashCode() })
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     LocalView.current.requestFocus()
@@ -71,10 +65,10 @@ fun EntityViewList(
                 if (entities.isNotEmpty()) {
                     item {
                         if (entityLists.size > 1) {
-                            ListHeader(
+                            ExpandableListHeader(
                                 string = header,
-                                expanded = expandedStates[header.hashCode()]!!,
-                                onExpandChanged = { expandedStates[header.hashCode()] = it }
+                                key = header.hashCode(),
+                                expandedStates = expandedStates
                             )
                         } else {
                             ListHeader(header)
@@ -91,7 +85,7 @@ fun EntityViewList(
                             )
                         }
 
-                        if (filtered.isNullOrEmpty()) {
+                        if (filtered.isEmpty()) {
                             item {
                                 Column {
                                     Chip(

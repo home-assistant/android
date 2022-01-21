@@ -91,8 +91,8 @@ fun MainView(
             ) {
                 if (favoriteEntityIds.isNotEmpty()) {
                     item {
-                        ListHeader(
-                            stringId = commonR.string.favorites,
+                        ExpandableListHeader(
+                            string = stringResource(commonR.string.favorites),
                             expanded = expandedFavorites,
                             onExpandChanged = { expandedFavorites = it }
                         )
@@ -100,7 +100,7 @@ fun MainView(
                     if (expandedFavorites) {
                         items(favoriteEntityIds.size) { index ->
                             val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
-                            if (mainViewModel.entities.isNullOrEmpty()) {
+                            if (mainViewModel.entities.isEmpty()) {
                                 // Use a normal chip when we don't have the state of the entity
                                 Chip(
                                     modifier = Modifier
@@ -144,7 +144,7 @@ fun MainView(
                         }
                     }
                 }
-                if (mainViewModel.entities.isNullOrEmpty()) {
+                if (mainViewModel.entities.isEmpty()) {
                     item {
                         Column {
                             ListHeader(id = commonR.string.loading)
@@ -167,8 +167,8 @@ fun MainView(
                         ListHeader(id = commonR.string.areas)
                     }
                     for (id in mainViewModel.entitiesByAreaOrder) {
-                        val entities = mainViewModel.entitiesByArea[id]!!
-                        if (entities.isNotEmpty()) {
+                        val entities = mainViewModel.entitiesByArea[id]
+                        if (!entities.isNullOrEmpty()) {
                             val area = mainViewModel.areas.first { it.areaId == id }
                             item {
                                 Chip(
@@ -178,7 +178,7 @@ fun MainView(
                                     },
                                     onClick = {
                                         onTestClicked(
-                                            mapOf(area.name to mainViewModel.entitiesByArea[id]!!),
+                                            mapOf(area.name to entities),
                                             listOf(area.name)
                                         ) { true }
                                     },
@@ -196,7 +196,8 @@ fun MainView(
                 }
                 // Buttons for each existing category
                 for (domain in mainViewModel.entitiesByDomainOrder) {
-                    val domainEntitiesNotInArea = mainViewModel.entitiesByDomain[domain]!!.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
+                    val domainEntities = mainViewModel.entitiesByDomain[domain]!!
+                    val domainEntitiesNotInArea = domainEntities.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
                     if (domainEntitiesNotInArea.isNotEmpty()) {
                         item {
                             Chip(
@@ -210,7 +211,7 @@ fun MainView(
                                 onClick = {
                                     onTestClicked(
                                         mapOf(
-                                            mainViewModel.stringForDomain(domain)!! to mainViewModel.entitiesByDomain[domain]!!
+                                            mainViewModel.stringForDomain(domain)!! to domainEntities
                                         ),
                                         listOf(mainViewModel.stringForDomain(domain)!!)
                                     ) { mainViewModel.getAreaForEntity(it.entityId) == null }

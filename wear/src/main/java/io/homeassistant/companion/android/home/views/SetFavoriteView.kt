@@ -44,13 +44,7 @@ fun SetFavoritesView(
     onFavoriteSelected: (entityId: String, entityPosition: Int, isSelected: Boolean) -> Unit
 ) {
     // Remember expanded state of each header
-    val expandedStates = remember {
-        mutableStateMapOf<String, Boolean>().apply {
-            mainViewModel.supportedDomains().forEach {
-                put(it, true)
-            }
-        }
-    }
+    val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     LocalView.current.requestFocus()
@@ -83,16 +77,16 @@ fun SetFavoritesView(
                     val entities = mainViewModel.entitiesByDomain[domain].orEmpty()
                     if (entities.isNotEmpty()) {
                         item {
-                            ListHeader(
+                            ExpandableListHeader(
                                 string = mainViewModel.stringForDomain(domain)!!,
-                                expanded = expandedStates[domain]!!,
-                                onExpandChanged = { expandedStates[domain] = it }
+                                key = domain,
+                                expandedStates = expandedStates
                             )
                         }
                         if (expandedStates[domain] == true) {
-                            items(mainViewModel.entitiesByDomain[domain].orEmpty().size) { index ->
+                            items(entities.size) { index ->
                                 FavoriteToggleChip(
-                                    entityList = mainViewModel.entitiesByDomain[domain]!!,
+                                    entityList = entities,
                                     index = index,
                                     favoriteEntityIds = favoriteEntityIds,
                                     onFavoriteSelected = onFavoriteSelected

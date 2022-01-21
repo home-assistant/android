@@ -6,9 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,13 +39,7 @@ fun ChooseEntityView(
     onEntitySelected: (entity: SimplifiedEntity) -> Unit
 ) {
     // Remember expanded state of each header
-    val expandedStates = remember {
-        mutableStateMapOf<String, Boolean>().apply {
-            mainViewModel.supportedDomains().forEach {
-                put(it, true)
-            }
-        }
-    }
+    val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
     LocalView.current.requestFocus()
@@ -85,19 +76,19 @@ fun ChooseEntityView(
                 )
             }
             for (domain in mainViewModel.entitiesByDomainOrder) {
-                val entities = mainViewModel.entitiesByDomain[domain].orEmpty()
-                if (entities.isNotEmpty()) {
+                val entities = mainViewModel.entitiesByDomain[domain]
+                if (!entities.isNullOrEmpty()) {
                     item {
-                        ListHeader(
+                        ExpandableListHeader(
                             string = mainViewModel.stringForDomain(domain)!!,
-                            expanded = expandedStates[domain]!!,
-                            onExpandChanged = { expandedStates[domain] = it }
+                            key = domain,
+                            expandedStates = expandedStates
                         )
                     }
                     if (expandedStates[domain] == true) {
-                        items(mainViewModel.entitiesByDomain[domain].orEmpty().size) { index ->
+                        items(entities.size) { index ->
                             ChooseEntityChip(
-                                entityList = mainViewModel.entitiesByDomain[domain]!!,
+                                entityList = entities,
                                 index = index,
                                 onEntitySelected = onEntitySelected
                             )
