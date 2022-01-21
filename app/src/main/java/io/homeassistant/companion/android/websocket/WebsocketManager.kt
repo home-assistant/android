@@ -2,7 +2,9 @@ package io.homeassistant.companion.android.websocket
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.hardware.display.DisplayManager
 import android.os.Build
 import android.util.Log
@@ -28,6 +30,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketReposit
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
+import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -174,9 +177,20 @@ class WebsocketManager(
             }
         }
 
+        val intent = WebViewActivity.newInstance(applicationContext)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        val pendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setContentTitle(applicationContext.getString(R.string.websocket_listening))
+            .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setGroup(CHANNEL_ID)
