@@ -113,11 +113,15 @@ class HaControlsProviderService : ControlsProviderService() {
                         var entityRegistry = webSocketRepository.getEntityRegistry()
                         val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
                         controlIds.forEach {
-                            val entity = integrationRepository.getEntity(it)
-                            if (entity != null) {
-                                entities[it] = entity
-                            } else {
-                                Log.e(TAG, "Unable to get $it from Home Assistant.")
+                            try {
+                                val entity = integrationRepository.getEntity(it)
+                                if (entity != null) {
+                                    entities[it] = entity
+                                } else {
+                                    Log.e(TAG, "Unable to get $it from Home Assistant, null response.")
+                                }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Unable to get $it from Home Assistant, exception.", e)
                             }
                         }
                         sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
