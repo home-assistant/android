@@ -1,12 +1,8 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,24 +12,48 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.rememberScalingLazyListState
 import com.mikepenz.iconics.compose.Image
+import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.previewFavoritesList
-import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.common.R as commonR
+
+@Composable
+fun SecondarySettingsChip(
+    icon: IIcon,
+    label: String,
+    secondaryLabel: String? = null,
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
+    Chip(
+        modifier = Modifier.fillMaxWidth(),
+        icon = {
+            Image(
+                asset = icon,
+                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
+            )
+        },
+        colors = ChipDefaults.secondaryChipColors(),
+        label = { Text(text = label) },
+        secondaryLabel = secondaryLabel?.let {
+            { Text(text = secondaryLabel) }
+        },
+        enabled = enabled,
+        onClick = onClick
+    )
+}
 
 @ExperimentalComposeUiApi
 @ExperimentalAnimationApi
@@ -62,65 +82,26 @@ fun SettingsView(
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
-            ScalingLazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scrollHandler(scalingLazyListState),
-                contentPadding = PaddingValues(
-                    top = 24.dp,
-                    start = 8.dp,
-                    end = 8.dp,
-                    bottom = 48.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            ThemeLazyColumn(
                 state = scalingLazyListState
             ) {
                 item {
                     ListHeader(id = commonR.string.favorite_settings)
                 }
                 item {
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = CommunityMaterial.Icon3.cmd_star,
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        colors = ChipDefaults.secondaryChipColors(),
-                        label = {
-                            Text(
-                                text = stringResource(id = commonR.string.favorite)
-                            )
-                        },
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon3.cmd_star,
+                        label = stringResource(commonR.string.favorite),
                         onClick = onClickSetFavorites
                     )
                 }
                 item {
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = CommunityMaterial.Icon.cmd_delete,
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        colors = ChipDefaults.secondaryChipColors(),
-                        label = {
-                            Text(
-                                text = stringResource(id = commonR.string.clear_favorites),
-                            )
-                        },
-                        onClick = onClearFavorites,
-                        secondaryLabel = {
-                            Text(
-                                text = stringResource(id = commonR.string.irreversible)
-                            )
-                        },
-                        enabled = favorites.isNotEmpty()
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon.cmd_delete,
+                        label = stringResource(commonR.string.clear_favorites),
+                        secondaryLabel = stringResource(commonR.string.irreversible),
+                        enabled = favorites.isNotEmpty(),
+                        onClick = onClearFavorites
                     )
                 }
                 item {
@@ -131,8 +112,7 @@ fun SettingsView(
                 item {
                     val haptic = LocalHapticFeedback.current
                     ToggleChip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         checked = isHapticEnabled,
                         onCheckedChange = {
                             onHapticEnabled(it)
@@ -155,12 +135,9 @@ fun SettingsView(
                 }
                 item {
                     ToggleChip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         checked = isToastEnabled,
-                        onCheckedChange = {
-                            onToastEnabled(it)
-                        },
+                        onCheckedChange = onToastEnabled,
                         label = {
                             Text(stringResource(commonR.string.setting_toast_label))
                         },
@@ -183,39 +160,16 @@ fun SettingsView(
                     )
                 }
                 item {
-                    Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = CommunityMaterial.Icon3.cmd_star_circle_outline,
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        colors = ChipDefaults.secondaryChipColors(),
-                        label = {
-                            Text(
-                                text = stringResource(id = commonR.string.shortcuts_tile)
-                            )
-                        },
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon3.cmd_star_circle_outline,
+                        label = stringResource(commonR.string.shortcuts_tile),
                         onClick = onClickSetShortcuts
                     )
                 }
                 item {
-                    Chip(
-                        modifier = Modifier.fillMaxWidth(),
-                        icon = {
-                            Image(
-                                asset = CommunityMaterial.Icon3.cmd_text_box,
-                                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-                            )
-                        },
-                        colors = ChipDefaults.secondaryChipColors(),
-                        label = {
-                            Text(
-                                text = stringResource(id = commonR.string.template_tile)
-                            )
-                        },
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon3.cmd_text_box,
+                        label = stringResource(commonR.string.template_tile),
                         onClick = onClickTemplateTile
                     )
                 }
@@ -227,8 +181,7 @@ fun SettingsView(
                 }
                 item {
                     Chip(
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         icon = {
                             Image(asset = CommunityMaterial.Icon.cmd_exit_run)
                         },
@@ -263,8 +216,8 @@ private fun PreviewSettingsView() {
         onClickLogout = {},
         isHapticEnabled = true,
         isToastEnabled = false,
-        {},
-        {},
-        {}
+        onHapticEnabled = {},
+        onToastEnabled = {},
+        onClickTemplateTile = {}
     )
 }
