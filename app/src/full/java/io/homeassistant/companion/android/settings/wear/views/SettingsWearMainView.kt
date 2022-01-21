@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.wearable.Node
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import javax.inject.Inject
@@ -24,11 +25,10 @@ class SettingsWearMainView : AppCompatActivity() {
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
 
-    private val registerActivityResult =
-        registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-            this::onOnboardingComplete
-        )
+    private val registerActivityResult = registerForActivityResult(
+        OnboardApp(),
+        this::onOnboardingComplete
+    )
 
     companion object {
         private const val TAG = "SettingsWearDevice"
@@ -56,16 +56,15 @@ class SettingsWearMainView : AppCompatActivity() {
     }
 
     private fun loginWearOs() {
-        registerActivityResult.launch(OnboardingActivity.newInstance(this, currentNodes.firstOrNull()?.displayName ?: "unknown", false))
+        registerActivityResult.launch(OnboardApp.Input(
+            defaultDeviceName = currentNodes.firstOrNull()?.displayName ?: "unknown",
+            locationTrackingPossible = false
+        ))
     }
 
-    private fun onOnboardingComplete(result: ActivityResult) {
-        if (result.data != null) {
-            val intent = result.data!!
-            val url = intent.getStringExtra("URL").toString()
-            val authCode = intent.getStringExtra("AuthCode").toString()
-            val deviceName = intent.getStringExtra("DeviceName").toString()
-            val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
+    private fun onOnboardingComplete(result: OnboardApp.Output?) {
+        if (result != null) {
+            val (url, authCode, deviceName, deviceTrackingEnabled) = result
             settingsWearViewModel.sendAuthToWear(url, authCode, deviceName, deviceTrackingEnabled)
         } else
             Log.e(TAG, "onOnboardingComplete: Activity result returned null intent data")
