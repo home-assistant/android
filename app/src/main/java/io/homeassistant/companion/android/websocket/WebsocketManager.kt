@@ -15,6 +15,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.hilt.EntryPoint
@@ -29,8 +30,8 @@ import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
@@ -58,12 +59,22 @@ class WebsocketManager(
                     .setConstraints(constraints)
                     .build()
 
-            WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(
+            val workManager = WorkManager.getInstance(context)
+            val workInfo = workManager.getWorkInfosForUniqueWork(TAG).get().firstOrNull()
+
+            if (workInfo == null || workInfo.state.isFinished || workInfo.state == WorkInfo.State.ENQUEUED) {
+                workManager.enqueueUniquePeriodicWork(
                     TAG,
                     ExistingPeriodicWorkPolicy.REPLACE,
                     websocketNotifications
                 )
+            } else {
+                workManager.enqueueUniquePeriodicWork(
+                    TAG,
+                    ExistingPeriodicWorkPolicy.KEEP,
+                    websocketNotifications
+                )
+            }
         }
     }
 
@@ -96,9 +107,11 @@ class WebsocketManager(
         val job = launch { collectNotifications() }
 
         // play ping pong to ensure we have a connection.
-        ensureConnectionAlive()
+        do {
+            delay(30000)
+        } while (job.isActive && isActive && shouldWeRun() && websocketRepository.sendPing())
 
-        job.cancelAndJoin()
+        job.cancel()
 
         Log.d(TAG, "Done listening to Websocket")
 
@@ -116,12 +129,6 @@ class WebsocketManager(
         }
 
         return true
-    }
-
-    private suspend fun ensureConnectionAlive() {
-        do {
-            delay(30000)
-        } while (!isStopped && shouldWeRun() && websocketRepository.sendPing())
     }
 
     private suspend fun collectNotifications() {
