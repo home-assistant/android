@@ -304,7 +304,7 @@ class SettingsFragment constructor(
                 unwrappedDrawable?.setTint(Color.DKGRAY)
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+                Log.e(TAG, "Unable to set the icon tint", e)
             }
         }
 
@@ -316,7 +316,7 @@ class SettingsFragment constructor(
                 unwrappedDrawable?.setTint(Color.DKGRAY)
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+                Log.e(TAG, "Unable to set the icon tint", e)
             }
         }
     }
@@ -330,7 +330,7 @@ class SettingsFragment constructor(
                 unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+                Log.e(TAG, "Unable to set the icon tint", e)
             }
         }
 
@@ -342,7 +342,7 @@ class SettingsFragment constructor(
                 unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+                Log.e(TAG, "Unable to set the icon tint", e)
             }
         }
     }
@@ -423,11 +423,13 @@ class SettingsFragment constructor(
         findPreference<Preference>("background")?.let {
             if (isIgnoringBatteryOptimizations()) {
                 it.setSummary(commonR.string.background_access_enabled)
+                it.icon = AppCompatResources.getDrawable(requireContext(), R.drawable.ic_check)
                 it.setOnPreferenceClickListener {
                     true
                 }
             } else {
                 it.setSummary(commonR.string.background_access_disabled)
+                it.icon = AppCompatResources.getDrawable(requireContext(), R.drawable.ic_close)
                 it.setOnPreferenceClickListener {
                     requestBackgroundAccess()
                     true
