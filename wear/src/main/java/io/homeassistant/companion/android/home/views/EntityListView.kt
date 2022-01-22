@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.home.views
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,8 +28,6 @@ fun EntityViewList(
 ) {
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(entityLists.keys.map { it.hashCode() })
-
-    LocalView.current.requestFocus()
 
     WearAppTheme {
         ThemeLazyColumn {

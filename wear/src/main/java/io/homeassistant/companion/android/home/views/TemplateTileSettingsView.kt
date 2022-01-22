@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
@@ -25,7 +24,6 @@ fun TemplateTileSettingsView(
     refreshInterval: Int,
     onClickRefreshInterval: () -> Unit
 ) {
-    LocalView.current.requestFocus()
 
     ThemeLazyColumn {
         item {

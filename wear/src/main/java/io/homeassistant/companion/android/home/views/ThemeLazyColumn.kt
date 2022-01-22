@@ -12,7 +12,7 @@ import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListScope
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.rememberScalingLazyListState
-import io.homeassistant.companion.android.util.scrollHandler
+import io.homeassistant.companion.android.util.rotaryEventHandler
 
 @ExperimentalComposeUiApi
 @Composable
@@ -23,7 +23,7 @@ fun ThemeLazyColumn(
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .scrollHandler(state),
+            .rotaryEventHandler(state),
         contentPadding = PaddingValues(
             top = 24.dp,
             start = 8.dp,
@@ -32,6 +32,7 @@ fun ThemeLazyColumn(
         ),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        state = state,
         content = content
     )
 }
