@@ -89,7 +89,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.6.0")
 
-    implementation("com.google.android.material:material:1.4.0")
+    implementation("com.google.android.material:material:1.5.0")
 
     implementation("androidx.wear:wear:1.2.0")
     implementation("com.google.android.support:wearable:2.8.1")
@@ -105,7 +105,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
-    implementation("androidx.appcompat:appcompat:1.4.0")
+    implementation("androidx.appcompat:appcompat:1.4.1")
     implementation("com.mikepenz:community-material-typeface:6.4.95.0-kotlin@aar")
     implementation("com.mikepenz:iconics-compose:5.3.3")
 
