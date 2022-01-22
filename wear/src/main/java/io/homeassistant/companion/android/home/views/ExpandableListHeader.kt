@@ -40,7 +40,7 @@ fun ExpandableListHeader(
             .clickable { onExpandChanged(!expanded) }
     ) {
         Row {
-            val plusMinus = if (expanded) "+" else "-"
+            val plusMinus = if (expanded) "-" else "+"
             Text(
                 text = "$string\u2001$plusMinus"
             )
