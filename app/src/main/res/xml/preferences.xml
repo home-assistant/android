@@ -109,6 +109,7 @@
             android:title="@string/background_access_title"/>
         <Preference
             android:key="websocket"
+            android:icon="@drawable/ic_websocket"
             android:title="@string/websocket_setting_name"
             android:summary="@string/websocket_setting_summary" />
     </PreferenceCategory>
