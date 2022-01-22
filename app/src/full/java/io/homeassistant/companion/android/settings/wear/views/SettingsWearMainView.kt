@@ -5,15 +5,12 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.wearable.Node
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.onboarding.OnboardApp
-import io.homeassistant.companion.android.onboarding.OnboardingActivity
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import javax.inject.Inject
 
@@ -56,10 +53,12 @@ class SettingsWearMainView : AppCompatActivity() {
     }
 
     private fun loginWearOs() {
-        registerActivityResult.launch(OnboardApp.Input(
-            defaultDeviceName = currentNodes.firstOrNull()?.displayName ?: "unknown",
-            locationTrackingPossible = false
-        ))
+        registerActivityResult.launch(
+            OnboardApp.Input(
+                defaultDeviceName = currentNodes.firstOrNull()?.displayName ?: "unknown",
+                locationTrackingPossible = false
+            )
+        )
     }
 
     private fun onOnboardingComplete(result: OnboardApp.Output?) {

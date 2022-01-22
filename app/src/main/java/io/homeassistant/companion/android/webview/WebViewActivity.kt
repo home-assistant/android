@@ -71,7 +71,6 @@ import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
@@ -528,10 +527,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         SettingsActivity.newInstance(this@WebViewActivity)
                                     )
                                 "tag/write" ->
-                                    writeNfcTag.launch(WriteNfcTag.Input(
-                                        tagId = json.getJSONObject("payload").getString("tag"),
-                                        messageId = JSONObject(message).getInt("id")
-                                    ))
+                                    writeNfcTag.launch(
+                                        WriteNfcTag.Input(
+                                            tagId = json.getJSONObject("payload").getString("tag"),
+                                            messageId = JSONObject(message).getInt("id")
+                                        )
+                                    )
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
                                 "exoplayer/resize" -> exoResizeHls(json)
