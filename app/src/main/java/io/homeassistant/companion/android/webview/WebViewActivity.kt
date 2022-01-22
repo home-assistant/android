@@ -87,6 +87,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.chromium.net.CronetEngine
 import org.json.JSONObject
@@ -162,6 +163,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoMute: Boolean = true
     private var failedConnection = "external"
     private var moreInfoEntity = ""
+    private val moreInfoMutex = Mutex()
     private var currentAutoplay: Boolean = false
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -234,13 +236,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 override fun onPageFinished(view: WebView?, url: String?) {
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
-                            delay(2000L)
-                            Log.d(TAG, "More info entity: $moreInfoEntity")
-                            webView.evaluateJavascript(
-                                "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))",
-                                null
-                            )
-                            moreInfoEntity = ""
+                            val owner = "onPageFinished:$moreInfoEntity"
+                            if (moreInfoMutex.tryLock(owner)) {
+                                delay(2000L)
+                                Log.d(TAG, "More info entity: $moreInfoEntity")
+                                webView.evaluateJavascript(
+                                    "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))"
+                                ) {
+                                    moreInfoMutex.unlock(owner)
+                                    moreInfoEntity = ""
+                                }
+                            }
                         }
                     }
                 }
