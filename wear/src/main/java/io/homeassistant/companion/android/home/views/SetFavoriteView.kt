@@ -7,7 +7,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
@@ -39,7 +38,6 @@ fun SetFavoritesView(
     val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
 
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
-    LocalView.current.requestFocus()
 
     WearAppTheme {
         Scaffold(
