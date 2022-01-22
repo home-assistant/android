@@ -18,6 +18,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.util.Calendar
 import java.util.concurrent.Flow
 import java.util.function.Consumer
 import javax.inject.Inject
@@ -40,11 +42,12 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private val domainToHaControl = mapOf(
         "automation" to DefaultSwitchControl,
-        "camera" to null,
         "button" to DefaultButtonControl,
+        "camera" to null,
         "climate" to ClimateControl,
         "cover" to CoverControl,
         "fan" to FanControl,
+        "ha_failed" to HaFailedControl,
         "input_boolean" to DefaultSwitchControl,
         "input_button" to DefaultButtonControl,
         "input_number" to DefaultSliderControl,
@@ -113,11 +116,23 @@ class HaControlsProviderService : ControlsProviderService() {
                         var entityRegistry = webSocketRepository.getEntityRegistry()
                         val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
                         controlIds.forEach {
-                            val entity = integrationRepository.getEntity(it)
-                            if (entity != null) {
-                                entities[it] = entity
-                            } else {
-                                Log.e(TAG, "Unable to get $it from Home Assistant.")
+                            try {
+                                val entity = integrationRepository.getEntity(it)
+                                if (entity != null) {
+                                    entities[it] = entity
+                                } else {
+                                    Log.e(TAG, "Unable to get $it from Home Assistant, null response.")
+                                }
+                            } catch (e: Exception) {
+                                entities["ha_failed.$it"] = Entity(
+                                    entityId = it,
+                                    state = if (e is HttpException && e.code() == 404) "notfound" else "exception",
+                                    attributes = mapOf<String, String>(),
+                                    lastChanged = Calendar.getInstance(),
+                                    lastUpdated = Calendar.getInstance(),
+                                    context = null
+                                )
+                                Log.e(TAG, "Unable to get $it from Home Assistant, caught exception.", e)
                             }
                         }
                         sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
