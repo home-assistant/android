@@ -1,11 +1,8 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -13,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,7 +26,6 @@ import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
-import androidx.wear.compose.material.ScalingLazyColumn
 import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.rememberScalingLazyListState
@@ -42,7 +37,6 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.util.onEntityClickedFeedback
-import io.homeassistant.companion.android.util.scrollHandler
 import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalComposeUiApi
@@ -75,24 +69,13 @@ fun MainView(
             },
             timeText = { TimeText(!scalingLazyListState.isScrollInProgress) }
         ) {
-            ScalingLazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scrollHandler(scalingLazyListState),
-                contentPadding = PaddingValues(
-                    top = 24.dp,
-                    start = 8.dp,
-                    end = 8.dp,
-                    bottom = 48.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            ThemeLazyColumn(
                 state = scalingLazyListState
             ) {
                 if (favoriteEntityIds.isNotEmpty()) {
                     item {
-                        ListHeader(
-                            stringId = commonR.string.favorites,
+                        ExpandableListHeader(
+                            string = stringResource(commonR.string.favorites),
                             expanded = expandedFavorites,
                             onExpandChanged = { expandedFavorites = it }
                         )
@@ -100,7 +83,7 @@ fun MainView(
                     if (expandedFavorites) {
                         items(favoriteEntityIds.size) { index ->
                             val favoriteEntityID = favoriteEntityIds[index].split(",")[0]
-                            if (mainViewModel.entities.isNullOrEmpty()) {
+                            if (mainViewModel.entities.isEmpty()) {
                                 // Use a normal chip when we don't have the state of the entity
                                 Chip(
                                     modifier = Modifier
@@ -144,7 +127,7 @@ fun MainView(
                         }
                     }
                 }
-                if (mainViewModel.entities.isNullOrEmpty()) {
+                if (mainViewModel.entities.isEmpty()) {
                     item {
                         Column {
                             ListHeader(id = commonR.string.loading)
@@ -167,8 +150,8 @@ fun MainView(
                         ListHeader(id = commonR.string.areas)
                     }
                     for (id in mainViewModel.entitiesByAreaOrder) {
-                        val entities = mainViewModel.entitiesByArea[id]!!
-                        if (entities.isNotEmpty()) {
+                        val entities = mainViewModel.entitiesByArea[id]
+                        if (!entities.isNullOrEmpty()) {
                             val area = mainViewModel.areas.first { it.areaId == id }
                             item {
                                 Chip(
@@ -178,7 +161,7 @@ fun MainView(
                                     },
                                     onClick = {
                                         onTestClicked(
-                                            mapOf(area.name to mainViewModel.entitiesByArea[id]!!),
+                                            mapOf(area.name to entities),
                                             listOf(area.name)
                                         ) { true }
                                     },
@@ -196,7 +179,8 @@ fun MainView(
                 }
                 // Buttons for each existing category
                 for (domain in mainViewModel.entitiesByDomainOrder) {
-                    val domainEntitiesNotInArea = mainViewModel.entitiesByDomain[domain]!!.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
+                    val domainEntities = mainViewModel.entitiesByDomain[domain]!!
+                    val domainEntitiesNotInArea = domainEntities.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
                     if (domainEntitiesNotInArea.isNotEmpty()) {
                         item {
                             Chip(
@@ -210,7 +194,7 @@ fun MainView(
                                 onClick = {
                                     onTestClicked(
                                         mapOf(
-                                            mainViewModel.stringForDomain(domain)!! to mainViewModel.entitiesByDomain[domain]!!
+                                            mainViewModel.stringForDomain(domain)!! to domainEntities
                                         ),
                                         listOf(mainViewModel.stringForDomain(domain)!!)
                                     ) { mainViewModel.getAreaForEntity(it.entityId) == null }
