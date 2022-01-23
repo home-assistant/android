@@ -8,16 +8,24 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material.Button
-import androidx.compose.material.Divider
+import androidx.compose.foundation.text.ClickableText
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -48,25 +56,42 @@ fun WebsocketSettingView(
             onClick = { onSettingChanged(WebsocketSetting.ALWAYS) }
         )
         if (websocketSetting != WebsocketSetting.NEVER && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Divider()
+            Icon(
+                Icons.Outlined.Info,
+                contentDescription = stringResource(id = R.string.info),
+                modifier = Modifier.padding(top = 40.dp)
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(20.dp)
+                modifier = Modifier.padding(top = 20.dp)
             ) {
-                Text(text = stringResource(id = R.string.websocket_persistent_notification))
+                Text(
+                    text = stringResource(id = R.string.websocket_persistent_notification),
+                    fontSize = 15.sp
+                )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Button(
-                    modifier = Modifier.padding(start = 20.dp),
+                val annotatedString = buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(
+                            color = MaterialTheme.colors.primary,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    ) {
+                        append(stringResource(id = R.string.websocket_notification_channel))
+                    }
+                }
+                ClickableText(
+                    modifier = Modifier.padding(top = 10.dp),
                     onClick = {
                         val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
                         intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
                         intent.putExtra(Settings.EXTRA_CHANNEL_ID, WebsocketManager.CHANNEL_ID)
                         context.startActivity(intent)
-                    }
-                ) {
-                    Text(text = stringResource(id = R.string.websocket_notification_channel))
-                }
+                    },
+                    text = annotatedString
+                )
             }
         }
     }

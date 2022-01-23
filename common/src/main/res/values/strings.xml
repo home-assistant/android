@@ -750,4 +750,5 @@
     <string name="websocket_notification_channel">Manage Websocket Notification Channel</string>
     <string name="notification_channels">Notification Channels</string>
     <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
+    <string name="info">Information</string>
 </resources>
