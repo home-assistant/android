@@ -48,7 +48,7 @@ class WebsocketManager(
     companion object {
         private const val TAG = "WebSockManager"
         private const val SOURCE = "Websocket"
-        private const val CHANNEL_ID = "Websocket"
+        const val CHANNEL_ID = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.SCREEN_ON else WebsocketSetting.ALWAYS
 
