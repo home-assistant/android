@@ -8,11 +8,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.runtime.Composable
@@ -20,10 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.homeassistant.companion.android.common.R
@@ -71,27 +66,14 @@ fun WebsocketSettingView(
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                val annotatedString = buildAnnotatedString {
-                    withStyle(
-                        style = SpanStyle(
-                            color = MaterialTheme.colors.primary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
-                        )
-                    ) {
-                        append(stringResource(id = R.string.websocket_notification_channel))
-                    }
+                TextButton(onClick = {
+                    val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    intent.putExtra(Settings.EXTRA_CHANNEL_ID, WebsocketManager.CHANNEL_ID)
+                    context.startActivity(intent)
+                }) {
+                    Text(stringResource(R.string.websocket_notification_channel))
                 }
-                ClickableText(
-                    modifier = Modifier.padding(top = 10.dp),
-                    onClick = {
-                        val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-                        intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                        intent.putExtra(Settings.EXTRA_CHANNEL_ID, WebsocketManager.CHANNEL_ID)
-                        context.startActivity(intent)
-                    },
-                    text = annotatedString
-                )
             }
         }
     }
