@@ -91,7 +91,7 @@ class ManageTilesFragment constructor(
         if (iconDrawable != null) {
             val icon = DrawableCompat.wrap(iconDrawable)
             icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
-            viewModel.icon.value = icon
+            viewModel.drawableIcon.value = icon
         }
     }
 
@@ -107,7 +107,7 @@ class ManageTilesFragment constructor(
                 val icon = DrawableCompat.wrap(iconDrawable)
                 icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
                 viewModel.selectedIcon.value = selectedIcon.id
-                viewModel.icon.value = icon
+                viewModel.drawableIcon.value = icon
             }
         }
     }
