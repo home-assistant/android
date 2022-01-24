@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.qs.views
 
-import android.graphics.PorterDuff
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -20,8 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -109,12 +110,14 @@ fun ManageTilesView(
                 iconDialog.show(childFragment, viewModel.selectedTile.value)
             }) {
                 val icon = viewModel.drawableIcon.value?.let { DrawableCompat.wrap(it) }
-                icon?.setColorFilter(
-                    context.resources.getColor(io.homeassistant.companion.android.R.color.colorAccent),
-                    PorterDuff.Mode.SRC_IN
-                )
                 icon?.toBitmap()?.asImageBitmap()
-                    ?.let { Image(it, contentDescription = stringResource(id = R.string.tile_icon)) }
+                    ?.let {
+                        Image(
+                            it,
+                            contentDescription = stringResource(id = R.string.tile_icon),
+                            colorFilter = ColorFilter.tint(colorResource(io.homeassistant.companion.android.R.color.colorAccent))
+                        )
+                    }
             }
         }
 

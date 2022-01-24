@@ -105,7 +105,6 @@ class ManageTilesFragment constructor(
             val iconDrawable = selectedIcon.drawable
             if (iconDrawable != null) {
                 val icon = DrawableCompat.wrap(iconDrawable)
-                icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
                 viewModel.selectedIcon.value = selectedIcon.id
                 viewModel.drawableIcon.value = icon
             }
