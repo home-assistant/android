@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -44,7 +45,7 @@ fun ManageTilesView(
     var expandedTile by remember { mutableStateOf(false) }
     var expandedEntity by remember { mutableStateOf(false) }
     Column(modifier = Modifier.padding(20.dp)) {
-        Row {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.tile_select),
                 fontSize = 15.sp,
@@ -98,7 +99,7 @@ fun ManageTilesView(
             modifier = Modifier.padding(10.dp)
         )
 
-        Row {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(id = R.string.tile_icon),
                 fontSize = 15.sp,
