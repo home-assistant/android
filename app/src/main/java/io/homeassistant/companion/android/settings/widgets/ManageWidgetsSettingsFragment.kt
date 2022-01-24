@@ -42,7 +42,6 @@ class ManageWidgetsSettingsFragment : Fragment() {
             setContent {
                 MdcTheme {
                     ManageWidgetsView(viewModel = viewModel)
-                    viewModel.init()
                 }
             }
         }

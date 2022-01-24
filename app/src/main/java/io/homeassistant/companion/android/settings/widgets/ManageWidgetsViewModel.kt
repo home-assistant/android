@@ -10,7 +10,6 @@ import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWid
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -37,7 +36,7 @@ class ManageWidgetsViewModel @Inject constructor(
     var templateWidgetList = mutableStateListOf<TemplateWidgetEntity>()
         private set
 
-    fun init() {
+    init {
         buttonWidgetList()
         staticWidgetList()
         mediaWidgetList()
