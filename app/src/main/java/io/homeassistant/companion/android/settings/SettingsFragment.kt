@@ -44,7 +44,7 @@ import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.time.LocalDateTime
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -232,18 +232,18 @@ class SettingsFragment constructor(
                     val rateLimits = presenter.getNotificationRateLimits()
 
                     if (rateLimits != null) {
-                        var formattedDate = rateLimits?.resetsAt
+                        var formattedDate = rateLimits.resetsAt
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             try {
-                                val localDateTime = LocalDateTime.parse(rateLimits?.resetsAt, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
-                                formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault()).format(localDateTime)
+                                val utcDateTime = Instant.parse(rateLimits.resetsAt)
+                                formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(utcDateTime.atZone(ZoneId.systemDefault()))
                             } catch (e: Exception) {
-                                Log.d(TAG, "Cannot parse notification rate limit date \"${rateLimits?.resetsAt}\"", e)
+                                Log.d(TAG, "Cannot parse notification rate limit date \"${rateLimits.resetsAt}\"", e)
                             }
                         }
                         it.isVisible = true
-                        it.summary = "\n${getString(commonR.string.successful)}: ${rateLimits?.successful}       ${getString(commonR.string.errors)}: ${rateLimits?.errors}" +
-                            "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
+                        it.summary = "\n${getString(commonR.string.successful)}: ${rateLimits.successful}       ${getString(commonR.string.errors)}: ${rateLimits.errors}" +
+                            "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits.remaining}/${rateLimits.maximum}" +
                             "\n\n${getString(commonR.string.resets_at)}: $formattedDate"
                     }
                 }
