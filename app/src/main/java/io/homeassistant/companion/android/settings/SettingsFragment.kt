@@ -205,6 +205,13 @@ class SettingsFragment constructor(
             }
         }
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            findPreference<Preference>("notification_channels")?.let {
+                it.isVisible = true
+                it.intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context?.packageName)
+            }
+        }
+
         findPreference<Preference>("notification_history")?.let {
             it.isVisible = true
             it.setOnPreferenceClickListener {

@@ -13,6 +13,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -44,9 +45,22 @@ class SettingsActivity : BaseActivity() {
 
         setSupportActionBar(findViewById(R.id.toolbar))
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        val settingsNavigation = intent.getStringExtra("fragment")
+
         supportFragmentManager
             .beginTransaction()
-            .replace(R.id.content, SettingsFragment::class.java, null)
+            .replace(
+                R.id.content,
+                if (settingsNavigation == null)
+                    SettingsFragment::class.java
+                else {
+                    when (settingsNavigation) {
+                        "websocket" -> WebsocketSettingFragment::class.java
+                        else -> SettingsFragment::class.java
+                    }
+                },
+                null
+            )
             .commit()
     }
 

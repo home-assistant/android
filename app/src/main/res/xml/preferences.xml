@@ -118,6 +118,12 @@
         android:key="notifications"
         app:isPreferenceVisible="false">
         <Preference
+            android:key="notification_channels"
+            android:title="@string/notification_channels"
+            android:summary="@string/notification_channels_summary"
+            app:isPreferenceVisible="false"
+            android:icon="@drawable/ic_notification_channel" />
+        <Preference
             android:key="notification_history"
             app:isPreferenceVisible="false"
             android:title="@string/notification_history"

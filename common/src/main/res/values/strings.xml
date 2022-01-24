@@ -742,8 +742,13 @@
     <string name="sensor_name_last_app">Last Used App</string>
     <string name="websocket_setting_name">Websocket Settings</string>
     <string name="websocket_setting_summary">Manage when we are in direct communication with your server via websockets.</string>
-    <string name="websocket_setting_description">Please select when you would like the application to attempt to directly communicate with your Home Assistant instance for all communication.  This will include push notifications, if you are on a minimal build this needs to be always to consistently get push notifications.</string>
+    <string name="websocket_setting_description">Please select when you would like the application to attempt to directly communicate with your Home Assistant instance for all communication. This will include push notifications, if you are on a minimal build this needs to be always to consistently get push notifications.</string>
     <string name="websocket_setting_never">Never</string>
     <string name="websocket_setting_while_screen_on">While Screen On</string>
     <string name="websocket_setting_always">Always</string>
+    <string name="websocket_persistent_notification">In order to maintain the websocket connection the app will need to create a persistent notification. You may use the button below to manage the appearance of this notification. It is recommended to minimize the notification to hide the icon.</string>
+    <string name="websocket_notification_channel">Manage Websocket Notification Channel</string>
+    <string name="notification_channels">Notification Channels</string>
+    <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
+    <string name="info">Information</string>
 </resources>

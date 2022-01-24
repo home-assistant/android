@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketReposit
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,7 +49,7 @@ class WebsocketManager(
     companion object {
         private const val TAG = "WebSockManager"
         private const val SOURCE = "Websocket"
-        private const val CHANNEL_ID = "Websocket"
+        const val CHANNEL_ID = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.SCREEN_ON else WebsocketSetting.ALWAYS
 
@@ -187,6 +188,16 @@ class WebsocketManager(
             PendingIntent.FLAG_IMMUTABLE
         )
 
+        val settingIntent = SettingsActivity.newInstance(applicationContext)
+        settingIntent.putExtra("fragment", "websocket")
+        settingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        settingIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+        val settingPendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            0,
+            settingIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setContentTitle(applicationContext.getString(R.string.websocket_listening))
@@ -194,6 +205,11 @@ class WebsocketManager(
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
             .setGroup(CHANNEL_ID)
+            .addAction(
+                io.homeassistant.companion.android.R.drawable.ic_websocket,
+                applicationContext.getString(R.string.websocket_setting_name),
+                settingPendingIntent
+            )
             .build()
         setForeground(ForegroundInfo(NOTIFICATION_ID, notification))
     }
