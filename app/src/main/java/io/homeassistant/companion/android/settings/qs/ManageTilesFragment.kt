@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.qs
 
 import android.content.Intent
-import android.graphics.PorterDuff
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -81,18 +80,8 @@ class ManageTilesFragment constructor(
         val loader = IconPackLoader(requireContext())
         iconPack = createMaterialDesignIconPack(loader)
         iconPack.loadDrawables(loader.drawableLoader)
-        reloadIcon()
 
         activity?.title = getString(commonR.string.tiles)
-    }
-
-    private fun reloadIcon() {
-        val iconDrawable = viewModel.selectedIcon.value?.let { iconPack.getIcon(it)?.drawable }
-        if (iconDrawable != null) {
-            val icon = DrawableCompat.wrap(iconDrawable)
-            icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
-            viewModel.drawableIcon.value = icon
-        }
     }
 
     override val iconDialogIconPack: IconPack

@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.qs.views
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -52,25 +53,29 @@ fun ManageTilesView(
                 fontSize = 15.sp,
                 modifier = Modifier.padding(end = 10.dp)
             )
-            OutlinedButton(onClick = { expandedTile = true }) {
-                Text(
-                    viewModel.selectedTileName.value
-                )
-            }
-        }
+            Box {
+                OutlinedButton(onClick = { expandedTile = true }) {
+                    Text(
+                        viewModel.selectedTileName.value
+                    )
+                }
 
-        DropdownMenu(expanded = expandedTile, onDismissRequest = { expandedTile = false }) {
-            val tileNameArray = stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_name)
-            val tileIdArray = stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_ids)
-            for ((tileName, tileId) in tileNameArray.zip(tileIdArray)) {
-                DropdownMenuItem(onClick = {
-                    viewModel.selectedTile.value = tileId
-                    viewModel.selectedTileName.value = tileName
-                    expandedTile = false
-                    if (viewModel.currentTile() != null)
-                        viewModel.updateExistingTileFields()
-                }) {
-                    Text(tileName)
+                DropdownMenu(expanded = expandedTile, onDismissRequest = { expandedTile = false }) {
+                    val tileNameArray =
+                        stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_name)
+                    val tileIdArray =
+                        stringArrayResource(id = io.homeassistant.companion.android.R.array.tile_ids)
+                    for ((tileName, tileId) in tileNameArray.zip(tileIdArray)) {
+                        DropdownMenuItem(onClick = {
+                            viewModel.selectedTile.value = tileId
+                            viewModel.selectedTileName.value = tileName
+                            expandedTile = false
+                            if (viewModel.currentTile() != null)
+                                viewModel.updateExistingTileFields()
+                        }) {
+                            Text(tileName)
+                        }
+                    }
                 }
             }
         }
@@ -81,8 +86,7 @@ fun ManageTilesView(
             onValueChange = { viewModel.tileLabel.value = it },
             label = {
                 Text(
-                    text = stringResource(id = R.string.tile_label),
-                    modifier = Modifier.padding(start = 10.dp, bottom = 10.dp)
+                    text = stringResource(id = R.string.tile_label)
                 )
             },
             modifier = Modifier.padding(10.dp)
@@ -93,8 +97,7 @@ fun ManageTilesView(
             onValueChange = { viewModel.tileSubtitle.value = it },
             label = {
                 Text(
-                    text = stringResource(id = R.string.tile_subtitle),
-                    modifier = Modifier.padding(start = 10.dp, bottom = 10.dp)
+                    text = stringResource(id = R.string.tile_subtitle)
                 )
             },
             modifier = Modifier.padding(10.dp)
