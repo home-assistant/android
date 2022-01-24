@@ -5,8 +5,8 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.Button
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -24,7 +24,7 @@ fun ManageWidgetsView(
     viewModel: ManageWidgetsViewModel
 ) {
     LazyColumn(
-        modifier = Modifier.padding(10.dp)
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp)
     ) {
         if (viewModel.buttonWidgetList.isNullOrEmpty() && viewModel.staticWidgetList.isNullOrEmpty() &&
             viewModel.mediaWidgetList.isNullOrEmpty() && viewModel.templateWidgetList.isNullOrEmpty()
@@ -33,7 +33,7 @@ fun ManageWidgetsView(
         }
         if (!viewModel.buttonWidgetList.isNullOrEmpty()) {
             item {
-                Text(stringResource(id = R.string.list_button_widgets))
+                Text(stringResource(id = R.string.button_widgets))
             }
             items(viewModel.buttonWidgetList.size) { index ->
                 val item = viewModel.buttonWidgetList[index]
@@ -43,7 +43,7 @@ fun ManageWidgetsView(
         }
         if (!viewModel.staticWidgetList.isNullOrEmpty()) {
             item {
-                Text(stringResource(id = R.string.list_entity_state_widgets))
+                Text(stringResource(id = R.string.entity_state_widgets))
             }
             items(viewModel.staticWidgetList.size) { index ->
                 val item = viewModel.staticWidgetList[index]
@@ -53,7 +53,7 @@ fun ManageWidgetsView(
         }
         if (!viewModel.mediaWidgetList.isNullOrEmpty()) {
             item {
-                Text(stringResource(id = R.string.list_media_player_widgets))
+                Text(stringResource(id = R.string.media_player_widgets))
             }
             items(viewModel.mediaWidgetList.size) { index ->
                 val item = viewModel.mediaWidgetList[index]
@@ -63,7 +63,7 @@ fun ManageWidgetsView(
         }
         if (!viewModel.templateWidgetList.isNullOrEmpty()) {
             item {
-                Text(stringResource(id = R.string.list_template_widgets))
+                Text(stringResource(id = R.string.template_widgets))
             }
             items(viewModel.templateWidgetList.size) { index ->
                 val item = viewModel.templateWidgetList[index]
@@ -81,7 +81,7 @@ fun WidgetRow(
 ) {
     val context = LocalContext.current
     Row {
-        TextButton(onClick = {
+        Button(onClick = {
             val intent = Intent(
                 context,
                 when (widgetType) {
