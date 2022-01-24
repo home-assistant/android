@@ -1,0 +1,6 @@
+package io.homeassistant.companion.android.onboarding
+
+class WearOnboardingListener {
+    // No op
+
+}

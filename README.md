@@ -26,23 +26,6 @@ If you are looking for documentation around the companion applications check out
 9. Connect your phone or create a new virtual device following on screen instruction
 10. :tada:
 
-
-
-- 
-
-- Set environmental variables used in `app/build.gradle.kts`:
- - `KEYSTORE_PASSWORD`
- - `KEYSTORE_ALIAS`
- - `KEYSTORE_ALIAS_PASSWORD`
- 
-- Run the build using `gradlew build` from command line.
-
-- If the build is successful, you can run the app by 
-
-- Connect your phone or create a new virtual device following on screen instruction
-
-- :tada:
-
 If you get stuck while setting up your own environment, you can ask questions in the **#devs_mobile_apps** channel on [Discord](https://discord.gg/c5DvZ4e).
 
 ### Push Notifications

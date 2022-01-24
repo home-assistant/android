@@ -154,18 +154,16 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.40.5")
     kapt("com.google.dagger:hilt-android-compiler:2.40.5")
 
-    implementation("androidx.appcompat:appcompat:1.4.0")
+    implementation("androidx.appcompat:appcompat:1.4.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.2")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.3")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.preference:preference-ktx:1.1.1")
     implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
     implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
-    implementation("com.google.android.material:material:1.4.0")
+    implementation("com.google.android.material:material:1.5.0")
 
-    implementation("androidx.wear:wear-remote-interactions:1.0.0")
-    implementation("com.google.android.gms:play-services-wearable:17.1.0")
-
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.squareup.picasso:picasso:2.8")
@@ -174,8 +172,10 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-core:20.0.2")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.5.2")
+    "fullImplementation"("io.sentry:sentry-android:5.5.3")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0")
+    "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
+    "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
 
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.webkit:webkit:1.4.0")
@@ -183,7 +183,15 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-core:2.15.1")
     implementation("com.google.android.exoplayer:exoplayer-hls:2.15.1")
     implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
-    implementation("com.google.android.exoplayer:extension-cronet:2.15.1")
+    "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1")
+    "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1") {
+        exclude(group = "com.google.android.gms", module = "play-services-cronet")
+    }
+    "questImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1") {
+        exclude(group = "com.google.android.gms", module = "play-services-cronet")
+    }
+    "minimalImplementation"("org.chromium.net:cronet-embedded:95.4638.50")
+    "questImplementation"("org.chromium.net:cronet-embedded:95.4638.50")
 
     implementation("androidx.compose.animation:animation:1.0.5")
     implementation("androidx.compose.compiler:compiler:1.0.5")
@@ -196,7 +204,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling:1.0.5")
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.navigation:navigation-compose:2.4.0-rc01")
-    implementation("com.google.android.material:compose-theme-adapter:1.1.1")
+    implementation("com.google.android.material:compose-theme-adapter:1.1.3")
     implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.3")
 
     implementation("com.mikepenz:iconics-core:5.3.3")

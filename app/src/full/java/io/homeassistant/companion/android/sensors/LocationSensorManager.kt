@@ -29,7 +29,7 @@ import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBa
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import kotlinx.coroutines.CoroutineScope
@@ -116,7 +116,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), "toggle"))
+            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE, enabled.toString(), "toggle"))
         }
 
         fun getHighAccuracyModeIntervalSetting(context: Context): Int {
@@ -292,7 +292,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             updateIntervalHighAccuracySecondsInt = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
 
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, updateIntervalHighAccuracySecondsInt.toString(), "number"))
+            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, updateIntervalHighAccuracySecondsInt.toString(), "number"))
         }
         return updateIntervalHighAccuracySecondsInt
     }
@@ -448,7 +448,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             val minAccuracy = sensorSettings
                 .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                 ?: DEFAULT_MINIMUM_ACCURACY
-            sensorDao.add(Setting(backgroundLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
             if (location.accuracy > minAccuracy) {
                 Log.w(TAG, "Location accuracy didn't meet requirements, disregarding: $location")
             } else {
@@ -547,7 +547,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(Setting(zoneLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+        sensorDao.add(SensorSetting(zoneLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
 
         if (geofencingEvent.triggeringLocation.accuracy > minAccuracy) {
             Log.w(
@@ -719,7 +719,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             highAccuracyTriggerRangeInt = DEFAULT_TRIGGER_RANGE_METERS
 
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-            sensorDao.add(Setting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE, highAccuracyTriggerRangeInt.toString(), "number"))
+            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_TRIGGER_RANGE_ZONE, highAccuracyTriggerRangeInt.toString(), "number"))
         }
 
         return highAccuracyTriggerRangeInt
@@ -765,11 +765,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val minAccuracy = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
-        sensorDao.add(Setting(singleAccurateLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
+        sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_ACCURACY, minAccuracy.toString(), "number"))
         val minTimeBetweenUpdates = sensorSettings
             .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
             ?: 60000
-        sensorDao.add(Setting(singleAccurateLocation.id, SETTING_ACCURATE_UPDATE_TIME, minTimeBetweenUpdates.toString(), "number"))
+        sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_ACCURATE_UPDATE_TIME, minTimeBetweenUpdates.toString(), "number"))
 
         // Only update accurate location at most once a minute
         if (now < latestAccurateLocation + minTimeBetweenUpdates) {
@@ -891,6 +891,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 )
             }
         } else
-            sensorDao.add(Setting(singleAccurateLocation.id, SETTING_INCLUDE_SENSOR_UPDATE, "false", "toggle"))
+            sensorDao.add(SensorSetting(singleAccurateLocation.id, SETTING_INCLUDE_SENSOR_UPDATE, "false", "toggle"))
     }
 }

@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.home.views
 
-import android.app.Activity
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -13,7 +11,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,7 +47,6 @@ fun LoadHomePage(
 ) {
     var shortcutEntitySelectionIndex: Int by remember { mutableStateOf(0) }
     val context = LocalContext.current
-    LocalView.current.requestFocus()
 
     WearAppTheme {
         if (mainViewModel.entities.isNullOrEmpty() && mainViewModel.favoriteEntityIds.isNullOrEmpty()) {
@@ -71,14 +67,6 @@ fun LoadHomePage(
             }
         } else {
             val swipeDismissableNavController = rememberSwipeDismissableNavController()
-            BackHandler {
-                val activity = (context as? Activity)
-                if (swipeDismissableNavController.currentDestination?.route == SCREEN_LANDING) {
-                    activity?.finish()
-                } else {
-                    swipeDismissableNavController.popBackStack()
-                }
-            }
             SwipeDismissableNavHost(
                 navController = swipeDismissableNavController,
                 startDestination = SCREEN_LANDING

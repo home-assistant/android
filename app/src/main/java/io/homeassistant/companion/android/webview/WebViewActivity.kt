@@ -78,13 +78,16 @@ import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
+import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.chromium.net.CronetEngine
 import org.json.JSONObject
@@ -160,6 +163,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var exoMute: Boolean = true
     private var failedConnection = "external"
     private var moreInfoEntity = ""
+    private val moreInfoMutex = Mutex()
     private var currentAutoplay: Boolean = false
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -232,13 +236,17 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 override fun onPageFinished(view: WebView?, url: String?) {
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
-                            delay(2000L)
-                            Log.d(TAG, "More info entity: $moreInfoEntity")
-                            webView.evaluateJavascript(
-                                "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))",
-                                null
-                            )
-                            moreInfoEntity = ""
+                            val owner = "onPageFinished:$moreInfoEntity"
+                            if (moreInfoMutex.tryLock(owner)) {
+                                delay(2000L)
+                                Log.d(TAG, "More info entity: $moreInfoEntity")
+                                webView.evaluateJavascript(
+                                    "document.querySelector(\"home-assistant\").dispatchEvent(new CustomEvent(\"hass-more-info\", { detail: { entityId: \"$moreInfoEntity\" }}))"
+                                ) {
+                                    moreInfoMutex.unlock(owner)
+                                    moreInfoEntity = ""
+                                }
+                            }
                         }
                     }
                 }
@@ -602,6 +610,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
+    @ExperimentalCoroutinesApi
     override fun onResume() {
         super.onResume()
         if ((currentLang != languagesManager.getCurrentLang()) || currentAutoplay != presenter.isAutoPlayVideoEnabled())
@@ -619,6 +628,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         SensorWorker.start(this)
+        WebsocketManager.start(this)
         checkAndWarnForDisabledLocation()
     }
 

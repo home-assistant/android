@@ -1,6 +1,6 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.foundation.clickable
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -11,34 +11,7 @@ import androidx.wear.compose.material.Text
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
-fun ListHeader(
-    stringId: Int,
-    expanded: Boolean,
-    onExpandChanged: (Boolean) -> Unit
-) {
-    ListHeader(stringResource(stringId), expanded, onExpandChanged)
-}
-
-@Composable
-fun ListHeader(
-    string: String,
-    expanded: Boolean,
-    onExpandChanged: (Boolean) -> Unit
-) {
-    ListHeader(
-        modifier = Modifier
-            .clickable { onExpandChanged(!expanded) }
-    ) {
-        Row {
-            Text(
-                text = string + if (expanded) "\u2001-" else "\u2001+"
-            )
-        }
-    }
-}
-
-@Composable
-fun ListHeader(id: Int, modifier: Modifier = Modifier) {
+fun ListHeader(@StringRes id: Int, modifier: Modifier = Modifier) {
     ListHeader(stringResource(id), modifier)
 }
 
@@ -58,8 +31,6 @@ fun ListHeader(string: String, modifier: Modifier = Modifier) {
 @Composable
 private fun PreviewListHeader() {
     ListHeader(
-        stringId = commonR.string.other,
-        expanded = true,
-        onExpandChanged = {}
+        id = commonR.string.other
     )
 }

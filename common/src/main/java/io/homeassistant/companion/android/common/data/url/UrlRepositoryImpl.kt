@@ -26,6 +26,10 @@ class UrlRepositoryImpl @Inject constructor(
         private const val TAG = "UrlRepository"
     }
 
+    override suspend fun getWebhookId(): String? {
+        return localStorage.getString(PREF_WEBHOOK_ID)
+    }
+
     override suspend fun getApiUrls(): Array<URL> {
         val retVal = ArrayList<URL>()
         val webhook = localStorage.getString(PREF_WEBHOOK_ID)

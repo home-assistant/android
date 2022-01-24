@@ -4,6 +4,8 @@ import java.net.URL
 
 interface UrlRepository {
 
+    suspend fun getWebhookId(): String?
+
     suspend fun getApiUrls(): Array<URL>
 
     suspend fun saveRegistrationUrls(cloudHookUrl: String?, remoteUiUrl: String?, webhookId: String)

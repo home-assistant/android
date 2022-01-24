@@ -37,13 +37,14 @@ import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSett
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
+import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.time.LocalDateTime
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -189,61 +190,80 @@ class SettingsFragment constructor(
             }
         }
 
-        if (BuildConfig.FLAVOR == "full") {
-            findPreference<PreferenceCategory>("notifications")?.let {
-                it.isVisible = true
-            }
-            findPreference<Preference>("notification_history")?.let {
-                it.isVisible = true
-                it.setOnPreferenceClickListener {
-                    parentFragmentManager
-                        .beginTransaction()
-                        .replace(R.id.content, NotificationHistoryFragment::class.java, null)
-                        .addToBackStack(getString(commonR.string.notifications))
-                        .commit()
-                    return@setOnPreferenceClickListener true
-                }
-            }
+        findPreference<PreferenceCategory>("notifications")?.let {
+            it.isVisible = true
+        }
 
+        findPreference<Preference>("websocket")?.let {
+            it.setOnPreferenceClickListener {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.content, WebsocketSettingFragment::class.java, null)
+                    .addToBackStack(getString(commonR.string.notifications))
+                    .commit()
+                return@setOnPreferenceClickListener true
+            }
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            findPreference<Preference>("notification_channels")?.let {
+                it.isVisible = true
+                it.intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context?.packageName)
+            }
+        }
+
+        findPreference<Preference>("notification_history")?.let {
+            it.isVisible = true
+            it.setOnPreferenceClickListener {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.content, NotificationHistoryFragment::class.java, null)
+                    .addToBackStack(getString(commonR.string.notifications))
+                    .commit()
+                return@setOnPreferenceClickListener true
+            }
+        }
+
+        if (BuildConfig.FLAVOR == "full") {
             findPreference<Preference>("notification_rate_limit")?.let {
+
                 lifecycleScope.launch(Dispatchers.Main) {
                     // Runs in IO Dispatcher
                     val rateLimits = presenter.getNotificationRateLimits()
 
                     if (rateLimits != null) {
-                        var formattedDate = rateLimits?.resetsAt
+                        var formattedDate = rateLimits.resetsAt
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                             try {
-                                val localDateTime = LocalDateTime.parse(rateLimits?.resetsAt, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"))
-                                formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault()).format(localDateTime)
+                                val utcDateTime = Instant.parse(rateLimits.resetsAt)
+                                formattedDate = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(utcDateTime.atZone(ZoneId.systemDefault()))
                             } catch (e: Exception) {
-                                Log.d(TAG, "Cannot parse notification rate limit date \"${rateLimits?.resetsAt}\"", e)
+                                Log.d(TAG, "Cannot parse notification rate limit date \"${rateLimits.resetsAt}\"", e)
                             }
                         }
                         it.isVisible = true
-                        it.summary = "\n${getString(commonR.string.successful)}: ${rateLimits?.successful}       ${getString(commonR.string.errors)}: ${rateLimits?.errors}" +
-                            "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits?.remaining}/${rateLimits?.maximum}" +
+                        it.summary = "\n${getString(commonR.string.successful)}: ${rateLimits.successful}       ${getString(commonR.string.errors)}: ${rateLimits.errors}" +
+                            "\n\n${getString(commonR.string.remaining)}/${getString(commonR.string.maximum)}: ${rateLimits.remaining}/${rateLimits.maximum}" +
                             "\n\n${getString(commonR.string.resets_at)}: $formattedDate"
                     }
                 }
             }
-            findPreference<SwitchPreference>("crash_reporting")?.let {
-                it.isVisible = BuildConfig.FLAVOR == "full"
-                it.setOnPreferenceChangeListener { _, newValue ->
-                    val checked = newValue as Boolean
-
-                    true
-                }
+        }
+        findPreference<SwitchPreference>("crash_reporting")?.let {
+            it.isVisible = BuildConfig.FLAVOR == "full"
+            it.setOnPreferenceChangeListener { _, newValue ->
+                val checked = newValue as Boolean
+                true
             }
+        }
 
-            val pm = requireContext().packageManager
-            val hasWearApp = pm.getLaunchIntentForPackage("com.google.android.wearable.app")
-            val hasSamsungApp = pm.getLaunchIntentForPackage("com.samsung.android.app.watchmanager")
-            findPreference<PreferenceCategory>("wear_category")?.isVisible = BuildConfig.FLAVOR == "full" && (hasWearApp != null || hasSamsungApp != null)
-            findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
-                startActivity(SettingsWearActivity.newInstance(requireContext()))
-                return@setOnPreferenceClickListener true
-            }
+        val pm = requireContext().packageManager
+        val hasWearApp = pm.getLaunchIntentForPackage("com.google.android.wearable.app")
+        val hasSamsungApp = pm.getLaunchIntentForPackage("com.samsung.android.app.watchmanager")
+        findPreference<PreferenceCategory>("wear_category")?.isVisible = BuildConfig.FLAVOR == "full" && (hasWearApp != null || hasSamsungApp != null)
+        findPreference<Preference>("wear_settings")?.setOnPreferenceClickListener {
+            startActivity(SettingsWearActivity.newInstance(requireContext()))
+            return@setOnPreferenceClickListener true
         }
 
         findPreference<Preference>("changelog")?.let {
@@ -291,7 +311,7 @@ class SettingsFragment constructor(
                 unwrappedDrawable?.setTint(Color.DKGRAY)
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+                Log.e(TAG, "Unable to set the icon tint", e)
             }
         }
 
@@ -303,7 +323,7 @@ class SettingsFragment constructor(
                 unwrappedDrawable?.setTint(Color.DKGRAY)
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+                Log.e(TAG, "Unable to set the icon tint", e)
             }
         }
     }
@@ -317,7 +337,7 @@ class SettingsFragment constructor(
                 unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+                Log.e(TAG, "Unable to set the icon tint", e)
             }
         }
 
@@ -329,7 +349,7 @@ class SettingsFragment constructor(
                 unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
-                Log.d("SettingsFragment", "Unable to set the icon tint", e)
+                Log.e(TAG, "Unable to set the icon tint", e)
             }
         }
     }
@@ -410,11 +430,13 @@ class SettingsFragment constructor(
         findPreference<Preference>("background")?.let {
             if (isIgnoringBatteryOptimizations()) {
                 it.setSummary(commonR.string.background_access_enabled)
+                it.icon = AppCompatResources.getDrawable(requireContext(), R.drawable.ic_check)
                 it.setOnPreferenceClickListener {
                     true
                 }
             } else {
                 it.setSummary(commonR.string.background_access_disabled)
+                it.icon = AppCompatResources.getDrawable(requireContext(), R.drawable.ic_close)
                 it.setOnPreferenceClickListener {
                     requestBackgroundAccess()
                     true

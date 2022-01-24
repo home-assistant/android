@@ -20,7 +20,7 @@
     <string name="auth_request">Authentication Requested</string>
     <string name="autoplay_video_summary">Autoplay Videos when lovelace dashboard is active. Enabling this setting may increase data usage unexpectedly, proceed with caution.</string>
     <string name="autoplay_video">Autoplay Videos</string>
-    <string name="background_access_disabled">Home Assistant does not have access to run in the background.  Click here to request permissions.</string>
+    <string name="background_access_disabled">Home Assistant does not have access to run in the background. Without this permission the app will not be able to reliably send data back to your server. Click here to request permissions.</string>
     <string name="background_access_enabled">Home Assistant has access to run in the background.</string>
     <string name="background_access_title">Background Access</string>
     <string name="basic_sensor_lullaby">Lullaby</string>
@@ -110,6 +110,7 @@
     <string name="confirm_delete_this_widget_title">Confirm deleting this widget</string>
     <string name="confirm_negative">NO</string>
     <string name="confirm_positive">YES</string>
+    <string name="continue_on_phone">Continue on your phone</string>
     <string name="connect_to_home_assistant">Connect to Home Assistant</string>
     <string name="connect_to_home_internet">Make sure your phone is connected\nto your home internet.</string>
     <string name="connect">Connect</string>
@@ -280,7 +281,7 @@
     <string name="manage_widgets_summary">Edit your widgets, adding/deleting can only be done from the home screen</string>
     <string name="manage_widgets">Manage Widgets</string>
     <string name="manual_desc">Enter the URL of your Home Assistant server. Make sure the URL includes the protocol and port. For example:\n\nhttp://homeassistant.local:8123 or \nhttps://example.duckdns.org.</string>
-    <string name="manual_setup">enter address manually</string>
+    <string name="manual_setup">Enter address manually</string>
     <string name="manual_title">What is your Home Assistant URL?</string>
     <string name="map">Map</string>
     <string name="maximum">Maximum</string>
@@ -332,6 +333,7 @@
     <string name="notification_history">Notification History</string>
     <string name="notification_message">Message</string>
     <string name="notification_received_at">Notification Received At</string>
+    <string name="notification_source">Notification Source</string>
     <string name="notifications">Notifications</string>
     <string name="other_settings">Other Settings</string>
     <string name="other">Other</string>
@@ -401,7 +403,7 @@
     <string name="sensor_description_battery_level">The current battery level of the device</string>
     <string name="sensor_description_battery_state">The current charging state of the battery</string>
     <string name="sensor_description_battery_temperature">The current battery temperature</string>
-    <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\nBy default this sensor is not turned on with the Enable all toggle, to avoid battery drain, there is a setting to enable this (\"Include when enabling all sensors\").\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)#n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
+    <string name="sensor_description_bluetooth_ble_emitter">Send BLE iBeacon with configured interval, used to track presence around house, e.g. together with roomassistant, esp32-mqtt-room or espresence projects.\n\nWarning: this can affect battery life, particularly if the \"Transmitter power\" setting is set to High or \"Advertise Mode\" is set to Low latency.\nSettings allow for specifying:\n- \"UUID\" (standard UUID format), \"Major\" and \"Minor\" (should be 0 - 65535), to tailor identifiers and groups\n- \"Transmitter Power\" and \"Advertise Mode\" to help to preserve battery life (use lowest values if possible)#n - \"Measured Power\" to specify power measured at 1m (initial default -59)\n\nNote:\nAdditionally a separate setting exists (\"Enable Transmitter\") to stop or start transmitting.</string>
     <string name="sensor_description_bluetooth_connection">Information about currently connected Bluetooth devices</string>
     <string name="sensor_description_bluetooth_state">Whether Bluetooth is enabled on the device</string>
     <string name="sensor_description_call_number">The cell number of the incoming or outgoing call</string>
@@ -584,6 +586,7 @@
     <string name="shortcuts">Shortcuts</string>
     <string name="show_share_logs_summary">Sharing logs with the Home Assistant team will help to solve issues. Please share the logs only if you have been asked to do so by a Home Assistant developer</string>
     <string name="show_share_logs">Show and Share Logs</string>
+    <string name="sign_in_on_phone">Sign in on phone</string>
     <string name="skip">Skip</string>
     <string name="state_auto">Auto</string>
     <string name="state_cleaning">Cleaning</string>
@@ -683,6 +686,7 @@
     <string name="wear_os_settings_title">Wear OS Settings</string>
     <string name="wear_set_favorites">Select your favorite entities to appear at the top of the wear home screen. You can also drag and drop to change the order in which they appear.</string>
     <string name="wear_settings">Wear Device Settings</string>
+    <string name="websocket_listening">Listening to Home Assistant via Websocket</string>
     <string name="webview_error_AUTH_SCHEME">Unsupported authentication scheme (not basic or digest), please check network settings.</string>
     <string name="webview_error_AUTHENTICATION">User authentication failed on server, please check server settings.</string>
     <string name="webview_error_description">Encountered error :</string>
@@ -736,5 +740,15 @@
     <string name="basic_sensor_name_last_used_app">Last Used App</string>
     <string name="sensor_description_last_used_app">Application name or package name of the last used application on the device</string>
     <string name="sensor_name_last_app">Last Used App</string>
-
+    <string name="websocket_setting_name">Websocket Settings</string>
+    <string name="websocket_setting_summary">Manage when we are in direct communication with your server via websockets.</string>
+    <string name="websocket_setting_description">Please select when you would like the application to attempt to directly communicate with your Home Assistant instance for all communication. This will include push notifications, if you are on a minimal build this needs to be always to consistently get push notifications.</string>
+    <string name="websocket_setting_never">Never</string>
+    <string name="websocket_setting_while_screen_on">While Screen On</string>
+    <string name="websocket_setting_always">Always</string>
+    <string name="websocket_persistent_notification">In order to maintain the websocket connection the app will need to create a persistent notification. You may use the button below to manage the appearance of this notification. It is recommended to minimize the notification to hide the icon.</string>
+    <string name="websocket_notification_channel">Manage Websocket Notification Channel</string>
+    <string name="notification_channels">Notification Channels</string>
+    <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
+    <string name="info">Information</string>
 </resources>

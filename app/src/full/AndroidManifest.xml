@@ -4,7 +4,7 @@
     package="io.homeassistant.companion.android">
 
     <application
-        android:name=".HomeAssistantApplication" >
+        android:name="io.homeassistant.companion.android.HomeAssistantApplication" >
         <meta-data android:name="io.sentry.auto-init" android:value="false" />
         <meta-data android:name="io.sentry.release" android:value="${sentryRelease}" />
 
@@ -23,7 +23,7 @@
             android:exported="true" />
 
         <service
-            android:name=".notifications.MessagingService"
+            android:name=".notifications.FirebaseCloudMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

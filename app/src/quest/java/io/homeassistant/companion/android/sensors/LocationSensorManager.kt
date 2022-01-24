@@ -19,6 +19,8 @@ class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
             "io.homeassistant.companion.android.background.PROCESS_UPDATES"
         const val ACTION_PROCESS_GEO =
             "io.homeassistant.companion.android.background.PROCESS_GEOFENCE"
+        const val ACTION_FORCE_HIGH_ACCURACY =
+            "io.homeassistant.companion.android.background.FORCE_HIGH_ACCURACY"
 
         val backgroundLocation = SensorManager.BasicSensor(
             "location_background",
@@ -39,6 +41,8 @@ class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
             commonR.string.sensor_description_location_accurate
         )
         internal const val TAG = "LocBroadcastReceiver"
+
+        fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {}
     }
 
     override fun onReceive(context: Context, intent: Intent) {

@@ -43,6 +43,18 @@ fun LoadNotification(notification: NotificationItem) {
                 .padding(start = 20.dp)
         )
         Text(
+            text = stringResource(commonR.string.notification_source),
+            fontWeight = FontWeight.ExtraBold,
+            fontSize = 20.sp,
+            modifier = Modifier
+                .padding(top = 30.dp, bottom = 20.dp, start = 10.dp)
+        )
+        Text(
+            text = notification.source.toString(),
+            modifier = Modifier
+                .padding(start = 20.dp)
+        )
+        Text(
             text = stringResource(commonR.string.notification_message),
             fontWeight = FontWeight.ExtraBold,
             fontSize = 20.sp,
