@@ -75,8 +75,8 @@ class ManageTilesViewModel @Inject constructor(
     }
 
     fun updateExistingTileFields() {
-        val currentTile = currentTile()
-        tileLabel.value = currentTile!!.label
+        val currentTile = currentTile()!!
+        tileLabel.value = currentTile.label
         tileSubtitle.value = currentTile.subtitle
         selectedEntityId.value = currentTile.entityId
         selectedIcon.value = currentTile.iconId
