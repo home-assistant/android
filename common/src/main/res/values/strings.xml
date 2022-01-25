@@ -95,7 +95,7 @@
     <string name="calendar">Calendar</string>
     <string name="camera_widget_desc">Displays the latest image from the camera</string>
     <string name="cancel">Cancel</string>
-    <string name="changelog">Change Log</string>
+    <string name="changelog">View Full Change Log</string>
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
@@ -751,4 +751,6 @@
     <string name="notification_channels">Notification Channels</string>
     <string name="notification_channels_summary">Manage all notification channels configured on the device. Channels control the behavior of its notifications including visibility and sound.</string>
     <string name="info">Information</string>
+    <string name="show_changelog">Show Changelog</string>
+    <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
 </resources>

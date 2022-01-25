@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<changelog xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingDefaultResource">
+    <release version="Beta">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Local Push notifications directly from your Home Assistant instance. The app will need to maintain a consistent websocket connection by using a persistent notification. You are free to minimize the notification channel to hide the icon.</change>
+        <change>Add change log dialog to show when the app is updated. Can also be accessed in settings.</change>
+        <change>Minor design changes to Manage Widgets page</change>
+        <change>Add notification channel settings so they are easier to find</change>
+        <change>Add icons to settings</change>
+        <change>Improve reliability of opening entity information from device controls</change>
+        <change>Open the app from persistent websocket notification</change>
+        <change>Improvements to Websocket Settings page</change>
+        <change>Minimal build fixes</change>
+        <change>Editing Wear OS Template Tile from phone settings</change>
+        <change>Add support for button and input_button domains in device controls</change>
+        <change>Add mount state sensor for Quest Devices</change>
+        <change>Minimal version fixes to remove Google dependencies</change>
+        <change>Lots of miscellaneous bug fixes</change>
+        <change>Dependency updates</change>
+    </release>
+</changelog>
