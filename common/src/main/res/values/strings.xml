@@ -653,8 +653,8 @@
     <string name="tile_8">Tile 8</string>
     <string name="tile_9">Tile 9</string>
     <string name="tile_data_missing">Tile data is missing, please set it up in App Configuration</string>
-    <string name="tile_entity">Select a entity to toggle or call</string>
-    <string name="tile_label">Tile Label</string>
+    <string name="tile_entity">Select a entity to toggle or call (required)</string>
+    <string name="tile_label">Tile Label (required)</string>
     <string name="tile_list">List of Tiles</string>
     <string name="tile_missing_entity_summary">You must have one of the following domains in order to use this feature: cover, fan, input_boolean, light, remote, scene, script, switch</string>
     <string name="tile_missing_entity_title">Missing Valid Entity Domains</string>
@@ -753,4 +753,6 @@
     <string name="info">Information</string>
     <string name="show_changelog">Show Changelog</string>
     <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
+    <string name="tile_icon">Select a icon for the tile</string>
+    <string name="tile_select">Select a tile to edit</string>
 </resources>
