@@ -68,7 +68,6 @@ class ManageTilesFragment constructor(
             setContent {
                 MdcTheme {
                     ManageTilesView(viewModel = viewModel, iconDialog = iconDialog, childFragment = childFragmentManager)
-                    viewModel.init()
                 }
             }
         }

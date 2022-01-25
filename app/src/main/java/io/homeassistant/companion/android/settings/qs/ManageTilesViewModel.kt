@@ -51,7 +51,8 @@ class ManageTilesViewModel @Inject constructor(
         private set
     var tileSubtitle = mutableStateOf(currentTile()?.subtitle)
         private set
-    fun init() {
+
+    init {
         viewModelScope.launch {
             integrationUseCase.getEntities()?.forEach {
                 val split = it.entityId.split(".")
