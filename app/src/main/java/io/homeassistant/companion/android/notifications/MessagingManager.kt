@@ -51,6 +51,7 @@ import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
+import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.util.cancel
 import io.homeassistant.companion.android.util.cancelGroupIfNeeded
@@ -113,7 +114,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_BLE_TRANSMITTER = "command_ble_transmitter"
         const val COMMAND_SCREEN_ON = "command_screen_on"
         const val COMMAND_MEDIA = "command_media"
-
+        const val COMMAND_UPDATE_SENSORS = "command_update_sensors"
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
         const val COMMAND_WEBVIEW = "command_webview"
@@ -164,7 +165,8 @@ class MessagingManager @Inject constructor(
             COMMAND_ACTIVITY,
             COMMAND_WEBVIEW,
             COMMAND_SCREEN_ON,
-            COMMAND_MEDIA
+            COMMAND_MEDIA,
+            COMMAND_UPDATE_SENSORS
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -352,6 +354,7 @@ class MessagingManager @Inject constructor(
                             }
                         }
                     }
+                    COMMAND_UPDATE_SENSORS -> SensorWorker.start(context)
                     else -> Log.d(TAG, "No command received")
                 }
             }
