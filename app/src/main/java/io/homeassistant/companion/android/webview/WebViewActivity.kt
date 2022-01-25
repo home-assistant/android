@@ -76,6 +76,7 @@ import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.util.ChangeLog
 import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -127,6 +128,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
     @Inject
     lateinit var themesManager: ThemesManager
+
+    @Inject
+    lateinit var changeLog: ChangeLog
 
     @Inject
     lateinit var languagesManager: LanguagesManager
@@ -630,6 +634,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         SensorWorker.start(this)
         WebsocketManager.start(this)
         checkAndWarnForDisabledLocation()
+        changeLog.showChangeLog(this, false)
     }
 
     override fun onPause() {
