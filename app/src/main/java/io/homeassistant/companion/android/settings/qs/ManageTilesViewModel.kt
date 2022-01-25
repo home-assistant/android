@@ -75,10 +75,11 @@ class ManageTilesViewModel @Inject constructor(
     }
 
     fun updateExistingTileFields() {
-        tileLabel.value = currentTile()!!.label
-        tileSubtitle.value = currentTile()!!.subtitle
-        selectedEntityId.value = currentTile()!!.entityId
-        selectedIcon.value = currentTile()!!.iconId
+        val currentTile = currentTile()
+        tileLabel.value = currentTile!!.label
+        tileSubtitle.value = currentTile.subtitle
+        selectedEntityId.value = currentTile.entityId
+        selectedIcon.value = currentTile.iconId
         val loader = IconPackLoader(getApplication())
         iconPack = createMaterialDesignIconPack(loader)
         iconPack.loadDrawables(loader.drawableLoader)
