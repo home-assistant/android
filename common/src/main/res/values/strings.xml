@@ -234,12 +234,12 @@
     <string name="last_num_notifications">Last %1$d Notifications</string>
     <string name="learn_more">Learn More</string>
     <string name="lights">Lights</string>
-    <string name="list_button_widgets">List of Button Widgets</string>
-    <string name="list_entity_state_widgets">List of Entity State Widgets</string>
+    <string name="button_widgets">Button Widgets</string>
+    <string name="entity_state_widgets">Entity State Widgets</string>
     <string name="list_header_instances">Instances</string>
     <string name="list_header_other">Other</string>
-    <string name="list_media_player_widgets">List of Media Player Widgets</string>
-    <string name="list_template_widgets">List of Template Widgets</string>
+    <string name="media_player_widgets">Media Player Widgets</string>
+    <string name="template_widgets">Template Widgets</string>
     <string name="loading_entities">Please wait while we load your entities</string>
     <string name="loading">Loading…</string>
     <string name="location_disabled_message">The location is disabled. The following enabled option(s) require you to enable location. If you do not enable the location, the sensor(s)/setting(s) will not work!\n\n%1$s\nDo you want to enable location?</string>
