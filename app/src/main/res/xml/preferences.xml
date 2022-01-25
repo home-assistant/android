@@ -193,6 +193,7 @@
         <Preference
             android:key="changelog_github"
             android:title="@string/changelog"
+            android:icon="@drawable/ic_github"
             android:summary="https://github.com/home-assistant/android/releases"
             app:enableCopying="true" />
         <Preference
