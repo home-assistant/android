@@ -64,7 +64,7 @@ fun ManageWidgetsView(
                 val availableWidgets = mapOf(
                     stringResource(R.string.widget_button_image_description) to Pair("button", CommunityMaterial.Icon2.cmd_gesture_tap),
                     stringResource(R.string.widget_camera_description) to Pair("camera", CommunityMaterial.Icon.cmd_camera),
-                    stringResource(R.string.widget_static_image_description) to Pair("entity", CommunityMaterial.Icon3.cmd_shape),
+                    stringResource(R.string.widget_static_image_description) to Pair("state", CommunityMaterial.Icon3.cmd_shape),
                     stringResource(R.string.widget_media_player_description) to Pair("media", CommunityMaterial.Icon3.cmd_play_box_multiple),
                     stringResource(R.string.template_widget) to Pair("template", CommunityMaterial.Icon.cmd_code_braces)
                 ).toSortedMap(compareBy { it })
@@ -171,6 +171,7 @@ fun PopupWidgetRow(
                 }
             ).apply {
                 putExtra(ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, true)
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
             context.startActivity(intent)
             onClickCallback()

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.widgets.button
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
@@ -16,6 +17,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.graphics.drawable.toBitmap
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -35,6 +37,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.Service
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetButtonConfigureBinding
+import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.common.ServiceFieldBinder
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import io.homeassistant.companion.android.widgets.common.WidgetDynamicFieldAdapter
@@ -51,6 +54,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     companion object {
         private const val TAG: String = "ButtonWidgetConfigAct"
         private const val ICON_DIALOG_TAG = "icon-dialog"
+        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
     @Inject
@@ -68,72 +72,11 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
+    private var requestLauncherSetup = false
 
     private var onDeleteWidget = View.OnClickListener {
         val context = this@ButtonWidgetConfigureActivity
         deleteConfirmation(context)
-    }
-
-    private var onAddWidget = View.OnClickListener {
-        try {
-            val context = this@ButtonWidgetConfigureActivity
-
-            // Set up a broadcast intent and pass the service call data as extras
-            val intent = Intent()
-            intent.action = ButtonWidget.RECEIVE_DATA
-            intent.component = ComponentName(context, ButtonWidget::class.java)
-
-            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-
-            // Analyze and send service and domain
-            val serviceText = binding.widgetTextConfigService.text.toString()
-            val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
-            val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
-            intent.putExtra(
-                ButtonWidget.EXTRA_DOMAIN,
-                domain
-            )
-            intent.putExtra(
-                ButtonWidget.EXTRA_SERVICE,
-                service
-            )
-
-            // Fetch and send label and icon
-            intent.putExtra(
-                ButtonWidget.EXTRA_LABEL,
-                binding.label.text.toString()
-            )
-            intent.putExtra(
-                ButtonWidget.EXTRA_ICON,
-                binding.widgetConfigIconSelector.tag as Int
-            )
-
-            // Analyze and send service data
-            val serviceDataMap = HashMap<String, Any>()
-            dynamicFields.forEach {
-                if (it.value != null) {
-                    serviceDataMap[it.field] = it.value!!
-                }
-            }
-
-            intent.putExtra(
-                ButtonWidget.EXTRA_SERVICE_DATA,
-                jacksonObjectMapper().writeValueAsString(serviceDataMap)
-            )
-
-            context.sendBroadcast(intent)
-
-            // Make sure we pass back the original appWidgetId
-            setResult(
-                RESULT_OK,
-                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-            )
-            finish()
-        } catch (e: Exception) {
-            Log.e(TAG, "Issue configuring widget", e)
-            Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG)
-                .show()
-        }
     }
 
     private val onAddFieldListener = View.OnClickListener {
@@ -239,10 +182,13 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
             )
+            requestLauncherSetup = extras.getBoolean(
+                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false
+            )
         }
 
         // If this activity was started with an intent without an app widget ID, finish with an error.
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
         }
@@ -338,7 +284,24 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         binding.widgetTextConfigService.addTextChangedListener(serviceTextWatcher)
 
         binding.addFieldButton.setOnClickListener(onAddFieldListener)
-        binding.addButton.setOnClickListener(onAddWidget)
+        binding.addButton.setOnClickListener {
+            if (requestLauncherSetup) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    getSystemService<AppWidgetManager>()?.requestPinAppWidget(
+                        ComponentName(this, ButtonWidget::class.java),
+                        null,
+                        PendingIntent.getActivity(
+                            this,
+                            System.currentTimeMillis().toInt(),
+                            Intent(this, ButtonWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                        )
+                    )
+                } else showAddWidgetError() // this shouldn't be possible
+            } else {
+                onAddWidget()
+            }
+        }
 
         dynamicFieldAdapter = WidgetDynamicFieldAdapter(services, entities, dynamicFields)
         binding.widgetConfigFieldsLayout.adapter = dynamicFieldAdapter
@@ -366,6 +329,16 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         super.onDestroy()
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
+            appWidgetId = intent.extras!!.getInt(
+                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+            )
+            onAddWidget()
+        }
+    }
+
     override val iconDialogIconPack: IconPack?
         get() = iconPack
 
@@ -383,6 +356,75 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                 binding.widgetConfigIconSelector.setImageBitmap(icon.toBitmap())
             }
         }
+    }
+
+    private fun onAddWidget() {
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            showAddWidgetError()
+            return
+        }
+        try {
+            val context = this@ButtonWidgetConfigureActivity
+
+            // Set up a broadcast intent and pass the service call data as extras
+            val intent = Intent()
+            intent.action = ButtonWidget.RECEIVE_DATA
+            intent.component = ComponentName(context, ButtonWidget::class.java)
+
+            intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+
+            // Analyze and send service and domain
+            val serviceText = binding.widgetTextConfigService.text.toString()
+            val domain = services[serviceText]?.domain ?: serviceText.split(".", limit = 2)[0]
+            val service = services[serviceText]?.service ?: serviceText.split(".", limit = 2)[1]
+            intent.putExtra(
+                ButtonWidget.EXTRA_DOMAIN,
+                domain
+            )
+            intent.putExtra(
+                ButtonWidget.EXTRA_SERVICE,
+                service
+            )
+
+            // Fetch and send label and icon
+            intent.putExtra(
+                ButtonWidget.EXTRA_LABEL,
+                binding.label.text.toString()
+            )
+            intent.putExtra(
+                ButtonWidget.EXTRA_ICON,
+                binding.widgetConfigIconSelector.tag as Int
+            )
+
+            // Analyze and send service data
+            val serviceDataMap = HashMap<String, Any>()
+            dynamicFields.forEach {
+                if (it.value != null) {
+                    serviceDataMap[it.field] = it.value!!
+                }
+            }
+
+            intent.putExtra(
+                ButtonWidget.EXTRA_SERVICE_DATA,
+                jacksonObjectMapper().writeValueAsString(serviceDataMap)
+            )
+
+            context.sendBroadcast(intent)
+
+            // Make sure we pass back the original appWidgetId
+            setResult(
+                RESULT_OK,
+                Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            )
+            finish()
+        } catch (e: Exception) {
+            Log.e(TAG, "Issue configuring widget", e)
+            showAddWidgetError()
+        }
+    }
+
+    private fun showAddWidgetError() {
+        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
     }
 
     private fun deleteConfirmation(context: Context) {
