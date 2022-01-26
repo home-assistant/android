@@ -40,6 +40,7 @@ import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -70,7 +71,7 @@ import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
 import io.homeassistant.companion.android.databinding.DialogAuthenticationBinding
 import io.homeassistant.companion.android.databinding.ExoPlayerViewBinding
 import io.homeassistant.companion.android.launch.LaunchActivity
-import io.homeassistant.companion.android.nfc.NfcSetupActivity
+import io.homeassistant.companion.android.nfc.WriteNfcTag
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
@@ -103,10 +104,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         const val EXTRA_PATH = "path"
 
         private const val TAG = "WebviewActivity"
-        private const val CAMERA_REQUEST_CODE = 8675309
-        private const val AUDIO_REQUEST_CODE = 42
-        private const val NFC_COMPLETE = 1
-        private const val FILE_CHOOSER_RESULT_CODE = 15
         private const val APP_PREFIX = "app://"
         private const val INTENT_PREFIX = "intent://"
         private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
@@ -122,6 +119,24 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
+    private val requestPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            webView.reload()
+        }
+    private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
+        webView.externalBus(
+            id = messageId,
+            type = "result",
+            success = true,
+            result = emptyMap<String, String>()
+        ) {
+            Log.d(TAG, "NFC Write Complete $it")
+        }
+    }
+    private val showWebFileChooser = registerForActivityResult(ShowWebFileChooser()) { result ->
+        mFilePathCallback?.onReceiveValue(result)
+        mFilePathCallback = null
+    }
 
     @Inject
     lateinit var presenter: WebViewPresenter
@@ -381,10 +396,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 ) {
                                     request.grant(arrayOf(it))
                                 } else {
-                                    requestPermissions(
-                                        arrayOf(android.Manifest.permission.CAMERA),
-                                        CAMERA_REQUEST_CODE
-                                    )
+                                    requestPermission.launch(android.Manifest.permission.CAMERA)
                                 }
                             } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
                                 if (ActivityCompat.checkSelfPermission(
@@ -394,9 +406,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 ) {
                                     request.grant(arrayOf(it))
                                 } else {
-                                    requestPermissions(
-                                        arrayOf(android.Manifest.permission.RECORD_AUDIO),
-                                        AUDIO_REQUEST_CODE
+                                    requestPermission.launch(
+                                        android.Manifest.permission.RECORD_AUDIO
                                     )
                                 }
                             } else if (it == PermissionRequest.RESOURCE_AUDIO_CAPTURE) {
@@ -421,9 +432,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                     fileChooserParams: FileChooserParams
                 ): Boolean {
                     mFilePathCallback = uploadMsg
-                    val i = fileChooserParams.createIntent()
-                    i.type = "*/*"
-                    startActivityForResult(i, FILE_CHOOSER_RESULT_CODE)
+                    showWebFileChooser.launch(fileChooserParams)
                     return true
                 }
 
@@ -495,24 +504,18 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 "config/get" -> {
                                     val pm: PackageManager = context.packageManager
                                     val hasNfc = pm.hasSystemFeature(PackageManager.FEATURE_NFC)
-                                    val script = "externalBus(" +
-                                        "${JSONObject(
+                                    webView.externalBus(
+                                        id = JSONObject(message).get("id"),
+                                        type = "result",
+                                        success = true,
+                                        result = JSONObject(
                                             mapOf(
-                                                "id" to JSONObject(message).get("id"),
-                                                "type" to "result",
-                                                "success" to true,
-                                                "result" to JSONObject(
-                                                    mapOf(
-                                                        "hasSettingsScreen" to true,
-                                                        "canWriteTag" to hasNfc,
-                                                        "hasExoPlayer" to true
-                                                    )
-                                                )
+                                                "hasSettingsScreen" to true,
+                                                "canWriteTag" to hasNfc,
+                                                "hasExoPlayer" to true
                                             )
-                                        )}" +
-                                        ");"
-                                    Log.d(TAG, script)
-                                    webView.evaluateJavascript(script) {
+                                        )
+                                    ) {
                                         Log.d(TAG, "Callback $it")
                                     }
 
@@ -534,13 +537,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                         SettingsActivity.newInstance(this@WebViewActivity)
                                     )
                                 "tag/write" ->
-                                    startActivityForResult(
-                                        NfcSetupActivity.newInstance(
-                                            this@WebViewActivity,
-                                            json.getJSONObject("payload").getString("tag"),
-                                            JSONObject(message).getInt("id")
-                                        ),
-                                        NFC_COMPLETE
+                                    writeNfcTag.launch(
+                                        WriteNfcTag.Input(
+                                            tagId = json.getJSONObject("payload").getString("tag"),
+                                            messageId = JSONObject(message).getInt("id")
+                                        )
                                     )
                                 "exoplayer/play_hls" -> exoPlayHls(json)
                                 "exoplayer/stop" -> exoStopHls()
@@ -672,24 +673,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == NFC_COMPLETE && resultCode != -1) {
-            val message = mapOf(
-                "id" to resultCode,
-                "type" to "result",
-                "success" to true,
-                "result" to mapOf<String, String>()
-            )
-            webView.evaluateJavascript("externalBus(${JSONObject(message)})") {
-                Log.d(TAG, "NFC Write Complete $it")
-            }
-        } else if (requestCode == FILE_CHOOSER_RESULT_CODE) {
-            mFilePathCallback?.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data))
-            mFilePathCallback = null
-        }
-    }
-
     fun exoPlayHls(json: JSONObject) {
         val payload = json.getJSONObject("payload")
         val uri = Uri.parse(payload.getString("url"))
@@ -731,18 +714,14 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
             findViewById<ImageView>(R.id.exo_mute_icon).setOnClickListener { exoToggleMute() }
         }
-        val script = "externalBus(" + "${
-        JSONObject(
-            mapOf(
-                "id" to json.get("id"),
-                "type" to "result",
-                "success" to true,
-                "result" to null
-            )
-        )
-        }" + ");"
-        Log.d(TAG, script)
-        webView.evaluateJavascript(script) { Log.d(TAG, "Callback $it") }
+        webView.externalBus(
+            id = json.get("id"),
+            type = "result",
+            success = true,
+            result = null
+        ) {
+            Log.d(TAG, "Callback $it")
+        }
     }
 
     fun exoStopHls() {
@@ -1228,18 +1207,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        if (requestCode == CAMERA_REQUEST_CODE || requestCode == AUDIO_REQUEST_CODE) {
-            webView.reload()
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        }
-    }
-
     private fun isCutout(): Boolean {
         var cutout = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && window.decorView.rootWindowInsets.displayCutout != null)
@@ -1256,6 +1223,28 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             },
             CONNECTION_DELAY
         )
+    }
+
+    private fun WebView.externalBus(
+        id: Any,
+        type: String,
+        success: Boolean,
+        result: Any?,
+        callback: ValueCallback<String>?
+    ) {
+        val json = JSONObject(
+            mapOf(
+                "id" to id,
+                "type" to type,
+                "success" to success,
+                "result" to result
+            )
+        )
+        val script = "externalBus($json);"
+
+        Log.d(TAG, script)
+
+        this.evaluateJavascript(script, callback)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
