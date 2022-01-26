@@ -73,7 +73,7 @@ fun ManageShortcutsView(
                 else {
                     // No op
                 }
-            } catch(e: Exception) {
+            } catch (e: Exception) {
                 null
             }
             if (existingShortcut != null)
@@ -176,21 +176,25 @@ fun ManageShortcutsView(
                     6 -> viewModel.shortcutLabelPinned.value
                     else -> viewModel.shortcutLabel1.value
                 },
-                onValueChange = { when (index) {
-                    1 -> viewModel.shortcutLabel1.value = it
-                    2 -> viewModel.shortcutLabel2.value = it
-                    3 -> viewModel.shortcutLabel3.value = it
-                    4 -> viewModel.shortcutLabel4.value = it
-                    5 -> viewModel.shortcutLabel5.value = it
-                    6 -> viewModel.shortcutLabelPinned.value = it
-                    else -> viewModel.shortcutLabel1.value = it
-                }},
-                label = { Text(
-                    if (index < 6)
-                        "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.label)}"
-                    else
-                        stringResource(id = R.string.shortcut_pinned_label)
-                )},
+                onValueChange = {
+                    when (index) {
+                        1 -> viewModel.shortcutLabel1.value = it
+                        2 -> viewModel.shortcutLabel2.value = it
+                        3 -> viewModel.shortcutLabel3.value = it
+                        4 -> viewModel.shortcutLabel4.value = it
+                        5 -> viewModel.shortcutLabel5.value = it
+                        6 -> viewModel.shortcutLabelPinned.value = it
+                        else -> viewModel.shortcutLabel1.value = it
+                    }
+                },
+                label = {
+                    Text(
+                        if (index < 6)
+                            "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.label)}"
+                        else
+                            stringResource(id = R.string.shortcut_pinned_label)
+                    )
+                },
                 modifier = Modifier.padding(top = 16.dp)
             )
 
@@ -204,21 +208,25 @@ fun ManageShortcutsView(
                     6 -> viewModel.shortcutDescPinned.value
                     else -> viewModel.shortcutDesc1.value
                 },
-                onValueChange = { when (index) {
-                    1 -> viewModel.shortcutDesc1.value = it
-                    2 -> viewModel.shortcutDesc2.value = it
-                    3 -> viewModel.shortcutDesc3.value = it
-                    4 -> viewModel.shortcutDesc4.value = it
-                    5 -> viewModel.shortcutDesc5.value = it
-                    6 -> viewModel.shortcutDescPinned.value = it
-                    else -> viewModel.shortcutDesc1.value = it
-                } },
-                label = { Text(
-                    if (index < 6)
-                        "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.description)}"
-                    else
-                        stringResource(id = R.string.shortcut_pinned_desc)
-                )},
+                onValueChange = {
+                    when (index) {
+                        1 -> viewModel.shortcutDesc1.value = it
+                        2 -> viewModel.shortcutDesc2.value = it
+                        3 -> viewModel.shortcutDesc3.value = it
+                        4 -> viewModel.shortcutDesc4.value = it
+                        5 -> viewModel.shortcutDesc5.value = it
+                        6 -> viewModel.shortcutDescPinned.value = it
+                        else -> viewModel.shortcutDesc1.value = it
+                    }
+                },
+                label = {
+                    Text(
+                        if (index < 6)
+                            "${stringResource(id = R.string.shortcut)} $index ${stringResource(id = R.string.description)}"
+                        else
+                            stringResource(id = R.string.shortcut_pinned_desc)
+                    )
+                },
                 modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)
             )
 
@@ -238,7 +246,8 @@ fun ManageShortcutsView(
                     5 -> viewModel.shortcutType5.value == "lovelace"
                     6 -> viewModel.shortcutTypePinned.value == "lovelace"
                     else -> viewModel.shortcutType1.value == "lovelace"
-                }) {
+                }
+            ) {
                 TextField(
                     value = when (index) {
                         1 -> viewModel.shortcutPath1.value
@@ -249,14 +258,16 @@ fun ManageShortcutsView(
                         6 -> viewModel.shortcutPathPinned.value
                         else -> viewModel.shortcutPath1.value
                     },
-                    onValueChange = { when (index) {
-                        1 -> viewModel.shortcutPath1.value = it
-                        2 -> viewModel.shortcutPath2.value = it
-                        3 -> viewModel.shortcutPath3.value = it
-                        4 -> viewModel.shortcutPath4.value = it
-                        5 -> viewModel.shortcutPath5.value = it
-                        6 -> viewModel.shortcutPathPinned.value = it
-                    } },
+                    onValueChange = {
+                        when (index) {
+                            1 -> viewModel.shortcutPath1.value = it
+                            2 -> viewModel.shortcutPath2.value = it
+                            3 -> viewModel.shortcutPath3.value = it
+                            4 -> viewModel.shortcutPath4.value = it
+                            5 -> viewModel.shortcutPath5.value = it
+                            6 -> viewModel.shortcutPathPinned.value = it
+                        }
+                    },
                     label = { Text(stringResource(id = R.string.lovelace_view_dashboard)) },
                     modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)
                 )
@@ -266,15 +277,17 @@ fun ManageShortcutsView(
                     fontSize = 15.sp
                 )
                 OutlinedButton(onClick = { expandedEntity = true }) {
-                    Text(text = when (index) {
-                        1 -> viewModel.shortcutPath1.value
-                        2 -> viewModel.shortcutPath2.value
-                        3 -> viewModel.shortcutPath3.value
-                        4 -> viewModel.shortcutPath4.value
-                        5 -> viewModel.shortcutPath5.value
-                        6 -> viewModel.shortcutPathPinned.value
-                        else -> viewModel.shortcutPath1.value
-                    })
+                    Text(
+                        text = when (index) {
+                            1 -> viewModel.shortcutPath1.value
+                            2 -> viewModel.shortcutPath2.value
+                            3 -> viewModel.shortcutPath3.value
+                            4 -> viewModel.shortcutPath4.value
+                            5 -> viewModel.shortcutPath5.value
+                            6 -> viewModel.shortcutPathPinned.value
+                            else -> viewModel.shortcutPath1.value
+                        }
+                    )
                 }
 
                 DropdownMenu(expanded = expandedEntity, onDismissRequest = { expandedEntity = false }) {
@@ -309,31 +322,31 @@ fun ManageShortcutsView(
             }
             Button(
                 onClick = {
-                          when (index) {
-                              1 -> {
-                                  if (viewModel.deleteShortcut1.value)
-                                      Toast.makeText(context, R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
-                                  viewModel.deleteShortcut1.value = true
-                                  viewModel.createShortcut(shortcutId, viewModel.shortcutLabel1.value, viewModel.shortcutDesc1.value, viewModel.shortcutPath1.value, viewModel.drawableIcon1.value?.toBitmap(), viewModel.selectedIcon1.value)
-                              }
-                              2 -> {
-                                  viewModel.deleteShortcut2.value = true
-                                  viewModel.createShortcut(shortcutId, viewModel.shortcutLabel2.value, viewModel.shortcutDesc2.value, viewModel.shortcutPath2.value, viewModel.drawableIcon2.value?.toBitmap(), viewModel.selectedIcon2.value)
-                              }
-                              3 -> {
-                                  viewModel.deleteShortcut3.value = true
-                                  viewModel.createShortcut(shortcutId, viewModel.shortcutLabel3.value, viewModel.shortcutDesc3.value, viewModel.shortcutPath3.value, viewModel.drawableIcon3.value?.toBitmap(), viewModel.selectedIcon3.value)
-                              }
-                              4 -> {
-                                  viewModel.deleteShortcut4.value = true
-                                  viewModel.createShortcut(shortcutId, viewModel.shortcutLabel4.value, viewModel.shortcutDesc4.value, viewModel.shortcutPath4.value, viewModel.drawableIcon4.value?.toBitmap(), viewModel.selectedIcon4.value)
-                              }
-                              5 -> {
-                                  viewModel.deleteShortcut5.value = true
-                                  viewModel.createShortcut(shortcutId, viewModel.shortcutLabel5.value, viewModel.shortcutDesc5.value, viewModel.shortcutPath5.value, viewModel.drawableIcon5.value?.toBitmap(), viewModel.selectedIcon5.value)
-                              }
-                              6 -> viewModel.createShortcut(viewModel.shortcutIdPinned.value, viewModel.shortcutLabelPinned.value, viewModel.shortcutDescPinned.value, viewModel.shortcutPathPinned.value, viewModel.drawableIconPinned.value?.toBitmap(), viewModel.selectedIconPinned.value)
-                          }
+                    when (index) {
+                        1 -> {
+                            if (viewModel.deleteShortcut1.value)
+                                Toast.makeText(context, R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
+                            viewModel.deleteShortcut1.value = true
+                            viewModel.createShortcut(shortcutId, viewModel.shortcutLabel1.value, viewModel.shortcutDesc1.value, viewModel.shortcutPath1.value, viewModel.drawableIcon1.value?.toBitmap(), viewModel.selectedIcon1.value)
+                        }
+                        2 -> {
+                            viewModel.deleteShortcut2.value = true
+                            viewModel.createShortcut(shortcutId, viewModel.shortcutLabel2.value, viewModel.shortcutDesc2.value, viewModel.shortcutPath2.value, viewModel.drawableIcon2.value?.toBitmap(), viewModel.selectedIcon2.value)
+                        }
+                        3 -> {
+                            viewModel.deleteShortcut3.value = true
+                            viewModel.createShortcut(shortcutId, viewModel.shortcutLabel3.value, viewModel.shortcutDesc3.value, viewModel.shortcutPath3.value, viewModel.drawableIcon3.value?.toBitmap(), viewModel.selectedIcon3.value)
+                        }
+                        4 -> {
+                            viewModel.deleteShortcut4.value = true
+                            viewModel.createShortcut(shortcutId, viewModel.shortcutLabel4.value, viewModel.shortcutDesc4.value, viewModel.shortcutPath4.value, viewModel.drawableIcon4.value?.toBitmap(), viewModel.selectedIcon4.value)
+                        }
+                        5 -> {
+                            viewModel.deleteShortcut5.value = true
+                            viewModel.createShortcut(shortcutId, viewModel.shortcutLabel5.value, viewModel.shortcutDesc5.value, viewModel.shortcutPath5.value, viewModel.drawableIcon5.value?.toBitmap(), viewModel.selectedIcon5.value)
+                        }
+                        6 -> viewModel.createShortcut(viewModel.shortcutIdPinned.value, viewModel.shortcutLabelPinned.value, viewModel.shortcutDescPinned.value, viewModel.shortcutPathPinned.value, viewModel.drawableIconPinned.value?.toBitmap(), viewModel.selectedIconPinned.value)
+                    }
                 },
                 enabled = when (index) {
                     1 -> viewModel.shortcutLabel1.value.isNotEmpty() && viewModel.shortcutDesc1.value.isNotEmpty() && viewModel.shortcutPath1.value.isNotEmpty()
@@ -345,28 +358,33 @@ fun ManageShortcutsView(
                     else -> viewModel.shortcutLabel1.value.isNotEmpty() && viewModel.shortcutDesc1.value.isNotEmpty() && viewModel.shortcutPath1.value.isNotEmpty()
                 }
             ) {
-                Text(text = stringResource(id = if (when (index) {
-                        1 -> viewModel.deleteShortcut1.value
-                        2 -> viewModel.deleteShortcut2.value
-                        3 -> viewModel.deleteShortcut3.value
-                        4 -> viewModel.deleteShortcut4.value
-                        5 -> viewModel.deleteShortcut5.value
-                        6 -> {
-                            var isCurrentPinned = false
-                            if (viewModel.pinnedShortcuts.value.isEmpty())
-                                isCurrentPinned = false
-                            else {
-                                for (item in viewModel.pinnedShortcuts.value) {
-                                    isCurrentPinned = when (item.id) {
-                                        viewModel.shortcutIdPinned.value -> true
-                                        else -> false
+                Text(
+                    text = stringResource(
+                        id = if (
+                            when (index) {
+                                1 -> viewModel.deleteShortcut1.value
+                                2 -> viewModel.deleteShortcut2.value
+                                3 -> viewModel.deleteShortcut3.value
+                                4 -> viewModel.deleteShortcut4.value
+                                5 -> viewModel.deleteShortcut5.value
+                                6 -> {
+                                    var isCurrentPinned = false
+                                    if (viewModel.pinnedShortcuts.value.isEmpty())
+                                        isCurrentPinned = false
+                                    else {
+                                        for (item in viewModel.pinnedShortcuts.value) {
+                                            isCurrentPinned = when (item.id) {
+                                                viewModel.shortcutIdPinned.value -> true
+                                                else -> false
+                                            }
+                                        }
                                     }
+                                    isCurrentPinned
                                 }
+                                else -> viewModel.deleteShortcut1.value
                             }
-                            isCurrentPinned
-                        }
-                        else -> viewModel.deleteShortcut1.value
-                    }) R.string.update_shortcut else R.string.add_shortcut)
+                        ) R.string.update_shortcut else R.string.add_shortcut
+                    )
                 )
             }
 
@@ -395,13 +413,16 @@ private fun ShortcutRadioButtonRow(viewModel: ManageShortcutsViewModel, type: St
                 5 -> viewModel.shortcutType5.value == type
                 else -> viewModel.shortcutType1.value == type
             },
-            onClick = { when (index) {
-                1 -> viewModel.shortcutType1.value = type
-                2 -> viewModel.shortcutType2.value = type
-                3 -> viewModel.shortcutType3.value = type
-                4 -> viewModel.shortcutType4.value = type
-                5 -> viewModel.shortcutType5.value = type
-            } })
+            onClick = {
+                when (index) {
+                    1 -> viewModel.shortcutType1.value = type
+                    2 -> viewModel.shortcutType2.value = type
+                    3 -> viewModel.shortcutType3.value = type
+                    4 -> viewModel.shortcutType4.value = type
+                    5 -> viewModel.shortcutType5.value = type
+                }
+            }
+        )
         Text(stringResource(id = if (type == "lovelace") R.string.lovelace else R.string.entity_id))
     }
 }
@@ -419,7 +440,7 @@ private fun AddDeleteButton(viewModel: ManageShortcutsViewModel, shortcutId: Str
                 4 -> viewModel.deleteShortcut4.value = false
                 5 -> viewModel.deleteShortcut5.value = false
             }
-            }
+        }
     ) {
         Text(stringResource(id = R.string.delete_shortcut))
     }
