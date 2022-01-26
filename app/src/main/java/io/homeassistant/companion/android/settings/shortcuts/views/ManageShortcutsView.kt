@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -49,7 +50,7 @@ fun ManageShortcutsView(
     var expandedEntity by remember { mutableStateOf(false) }
     var expandedPinnedShortcuts by remember { mutableStateOf(false) }
 
-    LazyColumn(modifier = Modifier.padding(20.dp)) {
+    LazyColumn(contentPadding = PaddingValues(20.dp)) {
         item {
             Text(
                 text = stringResource(id = R.string.shortcut_instruction_desc),
@@ -330,18 +331,26 @@ fun ManageShortcutsView(
                             viewModel.createShortcut(shortcutId, viewModel.shortcutLabel1.value, viewModel.shortcutDesc1.value, viewModel.shortcutPath1.value, viewModel.drawableIcon1.value?.toBitmap(), viewModel.selectedIcon1.value)
                         }
                         2 -> {
+                            if (viewModel.deleteShortcut2.value)
+                                Toast.makeText(context, R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                             viewModel.deleteShortcut2.value = true
                             viewModel.createShortcut(shortcutId, viewModel.shortcutLabel2.value, viewModel.shortcutDesc2.value, viewModel.shortcutPath2.value, viewModel.drawableIcon2.value?.toBitmap(), viewModel.selectedIcon2.value)
                         }
                         3 -> {
+                            if (viewModel.deleteShortcut3.value)
+                                Toast.makeText(context, R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                             viewModel.deleteShortcut3.value = true
                             viewModel.createShortcut(shortcutId, viewModel.shortcutLabel3.value, viewModel.shortcutDesc3.value, viewModel.shortcutPath3.value, viewModel.drawableIcon3.value?.toBitmap(), viewModel.selectedIcon3.value)
                         }
                         4 -> {
+                            if (viewModel.deleteShortcut4.value)
+                                Toast.makeText(context, R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                             viewModel.deleteShortcut4.value = true
                             viewModel.createShortcut(shortcutId, viewModel.shortcutLabel4.value, viewModel.shortcutDesc4.value, viewModel.shortcutPath4.value, viewModel.drawableIcon4.value?.toBitmap(), viewModel.selectedIcon4.value)
                         }
                         5 -> {
+                            if (viewModel.deleteShortcut5.value)
+                                Toast.makeText(context, R.string.shortcut_updated, Toast.LENGTH_SHORT).show()
                             viewModel.deleteShortcut5.value = true
                             viewModel.createShortcut(shortcutId, viewModel.shortcutLabel5.value, viewModel.shortcutDesc5.value, viewModel.shortcutPath5.value, viewModel.drawableIcon5.value?.toBitmap(), viewModel.selectedIcon5.value)
                         }
