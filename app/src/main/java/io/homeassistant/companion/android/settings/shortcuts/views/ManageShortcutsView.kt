@@ -420,6 +420,7 @@ private fun ShortcutRadioButtonRow(viewModel: ManageShortcutsViewModel, type: St
                 3 -> viewModel.shortcutType3.value == type
                 4 -> viewModel.shortcutType4.value == type
                 5 -> viewModel.shortcutType5.value == type
+                6 -> viewModel.shortcutTypePinned.value == type
                 else -> viewModel.shortcutType1.value == type
             },
             onClick = {
@@ -429,6 +430,7 @@ private fun ShortcutRadioButtonRow(viewModel: ManageShortcutsViewModel, type: St
                     3 -> viewModel.shortcutType3.value = type
                     4 -> viewModel.shortcutType4.value = type
                     5 -> viewModel.shortcutType5.value = type
+                    6 -> viewModel.shortcutTypePinned.value = type
                 }
             }
         )
