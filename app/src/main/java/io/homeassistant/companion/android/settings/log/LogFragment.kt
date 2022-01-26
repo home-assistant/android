@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
@@ -33,25 +34,30 @@ import io.homeassistant.companion.android.common.R as commonR
 
 class LogFragment : Fragment() {
 
-    private var currentLog = ""
-
     companion object {
         private const val TAG = "LogFragment"
-        private const val SHARE_LOGS_REQUEST_CODE = 2
     }
+
+    private var currentLog = ""
+    private val requestPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                shareLog()
+            }
+        }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.share_log -> {
                 val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
-                if (ContextCompat.checkSelfPermission(requireContext(), permission) === PackageManager.PERMISSION_DENIED) {
+                if (ContextCompat.checkSelfPermission(requireContext(), permission) == PackageManager.PERMISSION_DENIED) {
                     Log.d(TAG, "Click on share logs without WRITE_EXTERNAL_STORAGE permission")
                     AlertDialog.Builder(requireActivity())
                         .setTitle(getString(commonR.string.share_logs))
                         .setMessage(getString(commonR.string.share_logs_perm_message))
                         .setPositiveButton(commonR.string.confirm_positive) { _, _ ->
                             Log.i(TAG, "Request WRITE_EXTERNAL_STORAGE permission, to create log file")
-                            requestPermissions(arrayOf(permission), SHARE_LOGS_REQUEST_CODE)
+                            requestPermission.launch(permission)
                         }
                         .setNegativeButton(commonR.string.confirm_negative) { _, _ ->
                             Log.w(TAG, "User cancel request for WRITE_EXTERNAL_STORAGE permission")
@@ -94,13 +100,6 @@ class LogFragment : Fragment() {
             (view?.findViewById<ScrollView>(R.id.logScrollview))?.apply {
                 post { fullScroll(ScrollView.FOCUS_DOWN) }
             }
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == SHARE_LOGS_REQUEST_CODE && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-            shareLog()
         }
     }
 
