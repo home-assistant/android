@@ -306,4 +306,9 @@ class ManageShortcutsViewModel @Inject constructor(
         }
         return null
     }
+
+    @RequiresApi(Build.VERSION_CODES.N_MR1)
+    fun updatePinnedShortcuts() {
+        pinnedShortcuts.value = shortcutManager.pinnedShortcuts
+    }
 }

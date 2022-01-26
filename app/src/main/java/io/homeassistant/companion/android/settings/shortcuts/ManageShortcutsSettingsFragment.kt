@@ -84,6 +84,7 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
         iconPack = createMaterialDesignIconPack(loader)
         iconPack.loadDrawables(loader.drawableLoader)
 
+        viewModel.updatePinnedShortcuts()
         activity?.title = getString(commonR.string.shortcuts)
     }
 
