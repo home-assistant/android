@@ -75,7 +75,7 @@ class ButtonWidget : AppWidgetProvider() {
 
     private fun updateAllWidgets(
         context: Context,
-        buttonWidgetEntityList: Array<ButtonWidgetEntity>?
+        buttonWidgetEntityList: List<ButtonWidgetEntity>?
     ) {
         if (buttonWidgetEntityList != null) {
             Log.d(TAG, "Updating all widgets")

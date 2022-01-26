@@ -3,8 +3,6 @@ package io.homeassistant.companion.android.launch
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
@@ -21,7 +19,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.onboarding.OnboardingActivity
+import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.getMessagingToken
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.webview.WebViewActivity
@@ -53,11 +51,10 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
 
     private val mainScope = CoroutineScope(Dispatchers.Main + Job())
 
-    private val registerActivityResult =
-        registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult(),
-            this::onOnboardingComplete
-        )
+    private val registerActivityResult = registerForActivityResult(
+        OnboardApp(),
+        this::onOnboardingComplete
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,8 +79,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
     }
 
     override fun displayOnBoarding(sessionConnected: Boolean) {
-        val intent = OnboardingActivity.newInstance(this)
-        registerActivityResult.launch(intent)
+        registerActivityResult.launch(OnboardApp.Input())
     }
 
     override fun onDestroy() {
@@ -91,16 +87,12 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
         super.onDestroy()
     }
 
-    private fun onOnboardingComplete(result: ActivityResult) {
+    private fun onOnboardingComplete(result: OnboardApp.Output?) {
         mainScope.launch {
-            if (result.data != null) {
-                val intent = result.data!!
-                val url = intent.getStringExtra("URL").toString()
-                val authCode = intent.getStringExtra("AuthCode").toString()
-                val deviceName = intent.getStringExtra("DeviceName").toString()
-                val deviceTrackingEnabled = intent.getBooleanExtra("LocationTracking", false)
+            if (result != null) {
+                val (url, authCode, deviceName, deviceTrackingEnabled) = result
                 val messagingToken = getMessagingToken()
-                if (messagingToken.isNullOrBlank() && BuildConfig.FLAVOR == "full") {
+                if (messagingToken.isBlank() && BuildConfig.FLAVOR == "full") {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)
                         .setMessage(commonR.string.firebase_error_message)

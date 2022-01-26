@@ -23,6 +23,7 @@ import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.DisabledLocationHandler
@@ -175,13 +176,13 @@ class MobileAppIntegrationFragment : Fragment() {
     }
 
     private fun onComplete() {
-        val retData = Intent().apply {
-            putExtra("URL", viewModel.manualUrl.value)
-            putExtra("AuthCode", viewModel.authCode.value)
-            putExtra("DeviceName", viewModel.deviceName.value)
-            putExtra("LocationTracking", viewModel.locationTrackingEnabled.value)
-        }
-        activity?.setResult(Activity.RESULT_OK, retData)
+        val retData = OnboardApp.Output(
+            url = viewModel.manualUrl.value,
+            authCode = viewModel.authCode.value,
+            deviceName = viewModel.deviceName.value,
+            deviceTrackingEnabled = viewModel.locationTrackingEnabled.value
+        )
+        activity?.setResult(Activity.RESULT_OK, retData.toIntent())
         activity?.finish()
     }
 

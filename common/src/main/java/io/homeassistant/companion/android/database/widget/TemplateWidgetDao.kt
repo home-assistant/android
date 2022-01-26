@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TemplateWidgetDao {
@@ -22,7 +23,10 @@ interface TemplateWidgetDao {
     fun delete(id: Int)
 
     @Query("SELECT * FROM template_widgets")
-    fun getAll(): Array<TemplateWidgetEntity>?
+    fun getAll(): List<TemplateWidgetEntity>?
+
+    @Query("SELECT * FROM template_widgets")
+    fun getAllFlow(): Flow<List<TemplateWidgetEntity>>?
 
     @Query("UPDATE template_widgets SET last_update = :lastUpdate WHERE id = :widgetId")
     fun updateTemplateWidgetLastUpdate(widgetId: Int, lastUpdate: String)

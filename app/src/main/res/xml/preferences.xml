@@ -186,9 +186,14 @@
     <PreferenceCategory
         android:title="@string/app_version_info">
         <Preference
-            android:key="changelog"
+            android:key="changelog_prompt"
             android:icon="@drawable/ic_changelog"
+            android:title="@string/show_changelog"
+            android:summary="@string/show_changelog_summary" />
+        <Preference
+            android:key="changelog_github"
             android:title="@string/changelog"
+            android:icon="@drawable/ic_github"
             android:summary="https://github.com/home-assistant/android/releases"
             app:enableCopying="true" />
         <Preference

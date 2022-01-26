@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MediaPlayerControlsWidgetDao {
@@ -22,5 +23,8 @@ interface MediaPlayerControlsWidgetDao {
     fun delete(id: Int)
 
     @Query("SELECT * FROM mediaplayctrls_widgets")
-    fun getAll(): Array<MediaPlayerControlsWidgetEntity>?
+    fun getAll(): List<MediaPlayerControlsWidgetEntity>?
+
+    @Query("SELECT * FROM mediaplayctrls_widgets")
+    fun getAllFlow(): Flow<List<MediaPlayerControlsWidgetEntity>>?
 }
