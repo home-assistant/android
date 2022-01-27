@@ -5,7 +5,8 @@
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Local Push notifications directly from your Home Assistant instance. The app will need to maintain a consistent websocket connection by using a persistent notification. You are free to minimize the notification channel to hide the icon.</change>
         <change>Add change log dialog to show when the app is updated. Can also be accessed in settings.</change>
         <change>Add notification command to update sensors</change>
-        <change>Minor design changes to Manage Tiles/Widgets page</change>
+        <change>Add option to add a new widget and other design changes to Manage Widgets page</change>
+        <change>Minor design changes to Manage Tiles page</change>
         <change>Add notification channel settings so they are easier to find</change>
         <change>Add icons to settings</change>
         <change>Improve reliability of opening entity information from device controls</change>

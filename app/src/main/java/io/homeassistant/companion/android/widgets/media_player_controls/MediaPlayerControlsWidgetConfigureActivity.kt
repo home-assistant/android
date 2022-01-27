@@ -1,21 +1,25 @@
 package io.homeassistant.companion.android.widgets.media_player_controls
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.AutoCompleteTextView
 import android.widget.Toast
+import androidx.core.content.getSystemService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetMediaControlsConfigureBinding
+import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,9 +35,11 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
 
     companion object {
         private const val TAG: String = "MediaWidgetConfigAct"
+        private const val PIN_WIDGET_CALLBACK = "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidgetConfigureActivity.PIN_WIDGET_CALLBACK"
     }
 
     private var appWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID
+    private var requestLauncherSetup = false
 
     @Inject
     lateinit var integrationUseCase: IntegrationRepository
@@ -55,7 +61,24 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         binding = WidgetMediaControlsConfigureBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.addButton.setOnClickListener(addWidgetButtonClickListener)
+        binding.addButton.setOnClickListener {
+            if (requestLauncherSetup) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    getSystemService<AppWidgetManager>()?.requestPinAppWidget(
+                        ComponentName(this, MediaPlayerControlsWidget::class.java),
+                        null,
+                        PendingIntent.getActivity(
+                            this,
+                            System.currentTimeMillis().toInt(),
+                            Intent(this, MediaPlayerControlsWidgetConfigureActivity::class.java).putExtra(PIN_WIDGET_CALLBACK, true).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+                        )
+                    )
+                } else showAddWidgetError() // this shouldn't be possible
+            } else {
+                onAddWidget()
+            }
+        }
 
         // Find the widget id from the intent.
         val intent = intent
@@ -64,10 +87,13 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             appWidgetId = extras.getInt(
                 AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
             )
+            requestLauncherSetup = extras.getBoolean(
+                ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER, false
+            )
         }
 
         // If this activity was started with an intent without an app widget ID, finish with an error.
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
         }
@@ -138,9 +164,12 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             selectedEntity = parent.getItemAtPosition(position) as Entity<Any>?
         }
 
-    private var addWidgetButtonClickListener = View.OnClickListener {
+    private fun onAddWidget() {
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            showAddWidgetError()
+            return
+        }
         try {
-
             val context = this@MediaPlayerControlsWidgetConfigureActivity
 
             // Set up a broadcast intent and pass the service call data as extras
@@ -177,14 +206,27 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             finish()
         } catch (e: Exception) {
             Log.e(TAG, "Issue configuring widget", e)
-            Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG)
-                .show()
+            showAddWidgetError()
         }
+    }
+
+    private fun showAddWidgetError() {
+        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
     }
 
     override fun onDestroy() {
         mainScope.cancel()
         super.onDestroy()
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent != null && intent.extras != null && intent.hasExtra(PIN_WIDGET_CALLBACK)) {
+            appWidgetId = intent.extras!!.getInt(
+                AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID
+            )
+            onAddWidget()
+        }
     }
 
     private var onDeleteWidget = View.OnClickListener {

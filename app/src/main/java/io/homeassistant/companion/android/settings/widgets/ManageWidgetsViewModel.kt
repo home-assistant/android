@@ -1,9 +1,16 @@
 package io.homeassistant.companion.android.settings.widgets
 
 import android.app.Application
+import android.appwidget.AppWidgetManager
+import android.os.Build
+import android.os.RemoteException
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
@@ -18,6 +25,13 @@ class ManageWidgetsViewModel @Inject constructor(
 ) : AndroidViewModel(
     application
 ) {
+    companion object {
+        private const val TAG = "ManageWidgetsViewModel"
+
+        const val CONFIGURE_REQUEST_LAUNCHER =
+            "io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel.CONFIGURE_REQUEST_LAUNCHER"
+    }
+
     private val buttonWidgetDao = AppDatabase.getInstance(application).buttonWidgetDao()
     private fun buttonWidgetFlow(): Flow<List<ButtonWidgetEntity>>? = buttonWidgetDao.getAllFlow()
     private val staticWidgetDao = AppDatabase.getInstance(application).staticWidgetDao()
@@ -35,12 +49,15 @@ class ManageWidgetsViewModel @Inject constructor(
         private set
     var templateWidgetList = mutableStateListOf<TemplateWidgetEntity>()
         private set
+    var supportsAddingWidgets = mutableStateOf(false)
+        private set
 
     init {
         buttonWidgetList()
         staticWidgetList()
         mediaWidgetList()
         templateWidgetList()
+        checkSupportsAddingWidgets()
     }
 
     private fun buttonWidgetList() {
@@ -80,6 +97,18 @@ class ManageWidgetsViewModel @Inject constructor(
                 it.forEach { widget ->
                     templateWidgetList.add(widget)
                 }
+            }
+        }
+    }
+
+    private fun checkSupportsAddingWidgets() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val appWidgetManager = getApplication<HomeAssistantApplication>().getSystemService<AppWidgetManager>()
+            supportsAddingWidgets.value = try {
+                appWidgetManager?.isRequestPinAppWidgetSupported ?: false
+            } catch (e: RemoteException) {
+                Log.e(TAG, "Unable to read isRequestPinAppWidgetSupported", e)
+                false
             }
         }
     }
