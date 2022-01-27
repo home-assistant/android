@@ -732,7 +732,7 @@ class MessagingManager @Inject constructor(
         notificationManagerCompat.apply {
             Log.d(TAG, "Show notification with tag \"$tag\" and id \"$messageId\"")
             notify(tag, messageId, notificationBuilder.build())
-            if (group != null) {
+            if (!group.isNullOrBlank()) {
                 Log.d(TAG, "Show group notification with tag \"$group\" and id \"$groupId\"")
                 notify(group, groupId, getGroupNotificationBuilder(channelId, group, data).build())
             } else {
