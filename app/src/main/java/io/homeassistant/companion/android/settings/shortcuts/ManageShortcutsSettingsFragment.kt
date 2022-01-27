@@ -101,28 +101,28 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
                 icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
                 when (dialog.tag) {
                     "shortcut_1" -> {
-                        viewModel.selectedIcon1.value = selectedIcon.id
-                        viewModel.drawableIcon1.value = icon
+                        viewModel.shortcuts[0].selectedIcon.value = selectedIcon.id
+                        viewModel.shortcuts[0].drawable.value = icon
                     }
                     "shortcut_2" -> {
-                        viewModel.selectedIcon2.value = selectedIcon.id
-                        viewModel.drawableIcon2.value = icon
+                        viewModel.shortcuts[1].selectedIcon.value = selectedIcon.id
+                        viewModel.shortcuts[1].drawable.value = icon
                     }
                     "shortcut_3" -> {
-                        viewModel.selectedIcon3.value = selectedIcon.id
-                        viewModel.drawableIcon3.value = icon
+                        viewModel.shortcuts[2].selectedIcon.value = selectedIcon.id
+                        viewModel.shortcuts[2].drawable.value = icon
                     }
                     "shortcut_4" -> {
-                        viewModel.selectedIcon4.value = selectedIcon.id
-                        viewModel.drawableIcon4.value = icon
+                        viewModel.shortcuts[3].selectedIcon.value = selectedIcon.id
+                        viewModel.shortcuts[3].drawable.value = icon
                     }
                     "shortcut_5" -> {
-                        viewModel.selectedIcon5.value = selectedIcon.id
-                        viewModel.drawableIcon5.value = icon
+                        viewModel.shortcuts[4].selectedIcon.value = selectedIcon.id
+                        viewModel.shortcuts[4].drawable.value = icon
                     }
                     else -> {
-                        viewModel.selectedIconPinned.value = selectedIcon.id
-                        viewModel.drawableIconPinned.value = icon
+                        viewModel.shortcuts[5].selectedIcon.value = selectedIcon.id
+                        viewModel.shortcuts[5].drawable.value = icon
                     }
                 }
             }
