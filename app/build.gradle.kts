@@ -118,8 +118,8 @@ android {
     }
 
     lint {
-        isAbortOnError = false
-        disable("MissingTranslation")
+        abortOnError = false
+        disable += "MissingTranslation"
     }
 
     kapt {

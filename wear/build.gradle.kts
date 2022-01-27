@@ -67,7 +67,7 @@ android {
     }
 
     lint {
-        disable("MissingTranslation")
+        disable += "MissingTranslation"
     }
 
     kapt {
