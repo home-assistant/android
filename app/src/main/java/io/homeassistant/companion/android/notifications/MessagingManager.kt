@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.notifications
 
+import android.Manifest
 import android.app.ActivityManager
 import android.app.Notification
 import android.app.NotificationChannel
@@ -9,6 +10,7 @@ import android.bluetooth.BluetoothManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -547,6 +549,17 @@ class MessagingManager @Inject constructor(
             }
             COMMAND_BLUETOOTH -> {
                 val bluetoothAdapter = context.getSystemService<BluetoothManager>()?.adapter
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    when (PackageManager.PERMISSION_GRANTED) {
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) -> {
+                            Log.d(TAG, "We have proper bluetooth permissions proceeding with command")
+                        }
+                        else -> {
+                            Log.e(TAG, "Missing Bluetooth permissions, notifying user to grant permissions")
+                            notifyMissingPermission(data[MESSAGE].toString())
+                        }
+                    }
+                }
                 if (title == TURN_OFF)
                     bluetoothAdapter?.disable()
                 if (title == TURN_ON)
@@ -1310,6 +1323,15 @@ class MessagingManager @Inject constructor(
         context.startActivity(intent)
     }
 
+    private fun navigateAppDetails() {
+        val intent = Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.parse("package:${context.packageName}")
+        )
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
+    }
+
     private fun getKeyEvent(key: String): Int {
         return when (key) {
             MEDIA_FAST_FORWARD -> KeyEvent.KEYCODE_MEDIA_FAST_FORWARD
@@ -1513,6 +1535,7 @@ class MessagingManager @Inject constructor(
                             COMMAND_MEDIA -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                                 requestNotificationPermission()
                             }
+                            COMMAND_BLUETOOTH -> navigateAppDetails()
                         }
                     }
                 }

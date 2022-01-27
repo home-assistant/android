@@ -292,7 +292,7 @@
     <string name="message_some_installed">The Wear app is installed on some of your wear devices: (%1$s)\n\nClick the button below to install the app on the other devices.\n\nNote: Currently the Wear OS app requires you to be enrolled in the beta for the phone app. If the button does not work then please join the beta: https://play.google.com/apps/testing/io.homeassistant.companion.android</string>
     <string name="mfa_title">Two-factor\nAuthentication</string>
     <string name="mfa_hint">Code</string>
-    <string name="missing_command_permission">Please open the Home Assistant app and send the command again in order to grant the proper permissions.</string>
+    <string name="missing_command_permission">Please open the Home Assistant app and send the command again in order to grant the proper permissions. You will be taken to a page to either grant the Home Assistant app the permission, or you will need to select Permissions from the details page and then grant the missing permission. For command_bluetooth the name of the permission is Nearby devices.</string>
     <string name="areas">Areas</string>
     <string name="more_entities">More entities</string>
     <string name="need_help">Need Help?</string>
