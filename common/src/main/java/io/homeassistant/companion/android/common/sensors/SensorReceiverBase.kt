@@ -36,6 +36,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
     protected abstract val skippableActions: Map<String, String>
 
     override fun onReceive(context: Context, intent: Intent) {
+        Log.d(tag, "Received intent: ${intent.action}")
         if (skippableActions.containsKey(intent.action)) {
             val sensor = skippableActions[intent.action]
             if (!isSensorEnabled(context, sensor!!)) {
