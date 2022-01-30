@@ -42,6 +42,7 @@ class SettingsWearViewModel @Inject constructor(
 
         private const val KEY_UPDATE_TIME = "UpdateTime"
         private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
+        private const val KEY_SUPPORTED_DOMAINS = "supportedDomains"
         private const val KEY_FAVORITES = "favorites"
         private const val KEY_TEMPLATE_TILE = "templateTile"
         private const val KEY_TEMPLATE_TILE_REFRESH_INTERVAL = "templateTileRefreshInterval"
@@ -54,6 +55,8 @@ class SettingsWearViewModel @Inject constructor(
     var isAuthenticated = mutableStateOf(false)
         private set
     var entities = mutableStateMapOf<String, Entity<*>>()
+        private set
+    var supportedDomains = mutableStateListOf<String>()
         private set
     var favoriteEntityIds = mutableStateListOf<String>()
         private set
@@ -214,6 +217,10 @@ class SettingsWearViewModel @Inject constructor(
 
     private fun onLoadConfigFromWear(data: DataMap) {
         isAuthenticated.value = data.getBoolean(KEY_IS_AUTHENTICATED, false)
+        val supportedDomainsList: List<String> =
+            objectMapper.readValue(data.getString(KEY_SUPPORTED_DOMAINS, "[\"input_boolean\", \"light\", \"lock\", \"switch\", \"script\", \"scene\"]"))
+        supportedDomains.clear()
+        supportedDomains.addAll(supportedDomainsList)
         val favoriteEntityIdList: List<String> =
             objectMapper.readValue(data.getString(KEY_FAVORITES, "[]"))
         favoriteEntityIds.clear()

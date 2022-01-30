@@ -116,6 +116,7 @@
     <string name="connect">Connect</string>
     <string name="connected_to_home_assistant">Connected to Home Assistant</string>
     <string name="continue_connect">Continue</string>
+    <string name="covers">Covers</string>
     <string name="crash_reporting_summary">Help the developers fix bugs and crashes by leaving this enabled. If the application crashes this will automatically generate and send a report. If you notice a crash also create an issue on Github!</string>
     <string name="crash_reporting">Crash Reporting</string>
     <string name="create_template">Create Template</string>
@@ -179,6 +180,7 @@
     <string name="failed_registration">Could not register</string>
     <string name="failed_scan">Scanning for Home Assistant failed.</string>
     <string name="failure_send_favorites_wear">Failed to send favorites selection to Wear OS</string>
+    <string name="fans">Fans</string>
     <string name="favorite_settings">Favorite Settings</string>
     <string name="favorite">Set Favorite Entities</string>
     <string name="favorites">Favorites</string>

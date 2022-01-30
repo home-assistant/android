@@ -35,9 +35,6 @@ import org.burnoutcrew.reorderable.reorderable
 import io.homeassistant.companion.android.common.R as commonR
 
 const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/"
-val supportedDomains = listOf(
-    "input_boolean", "light", "lock", "switch", "script", "scene"
-)
 
 @Composable
 fun LoadWearFavoritesSettings(
@@ -46,7 +43,7 @@ fun LoadWearFavoritesSettings(
     val context = LocalContext.current
     val reorderState = rememberReorderState()
 
-    val validEntities = settingsWearViewModel.entities.filter { it.key.split(".")[0] in supportedDomains }.values.sortedBy { it.entityId }.toList()
+    val validEntities = settingsWearViewModel.entities.filter { it.key.split(".")[0] in settingsWearViewModel.supportedDomains }.values.sortedBy { it.entityId }.toList()
     val favoriteEntities = settingsWearViewModel.favoriteEntityIds
     Scaffold(
         topBar = {
@@ -176,6 +173,8 @@ fun LoadWearFavoritesSettings(
 @Composable
 private fun getDomainString(domain: String): String {
     return when (domain) {
+        "cover" -> stringResource(commonR.string.domain_cover)
+        "fan" -> stringResource(commonR.string.domain_fan)
         "input_boolean" -> stringResource(commonR.string.domain_input_boolean)
         "light" -> stringResource(commonR.string.domain_light)
         "lock" -> stringResource(commonR.string.domain_lock)
