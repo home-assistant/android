@@ -184,10 +184,7 @@ fun SettingsView(
                 }
                 item {
                     SecondarySettingsChip(
-                        icon = Icon(
-                            painter = painterResource(id = commonR.drawable.leak),
-                            contentDescription = stringResource(id = commonR.string.sensor_title)
-                        ),
+                        icon = CommunityMaterial.Icon2.cmd_leak,
                         label = stringResource(id = commonR.string.sensors),
                         onClick = onClickSensors
                     )

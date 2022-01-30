@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.home.views
 
-import android.content.Intent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -15,7 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
@@ -24,17 +24,24 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
+import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.id
+import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.home.MainViewModel
-import io.homeassistant.companion.android.sensors.SensorSettingsActivity
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.common.R as commonR
 
+private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
+
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_ENTITY_LIST = "entity_list"
-private const val SCREEN_MANAGE_SENSORS = "manage_sensors"
+private const val SCREEN_MANAGE_SENSORS = "manage_all_sensors"
+private const val SCREEN_SINGLE_SENSOR_MANAGER = "sensor_manager"
 private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
 private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
@@ -149,9 +156,6 @@ fun LoadHomePage(
                         }
                     )
                 }
-                composable(SCREEN_MANAGE_SENSORS) {
-                    SensorsView()
-                }
                 composable(SCREEN_SELECT_TILE_SHORTCUT) {
                     ChooseEntityView(
                         mainViewModel,
@@ -186,7 +190,87 @@ fun LoadHomePage(
                         swipeDismissableNavController.navigateUp()
                     }
                 }
+                composable(route = SCREEN_MANAGE_SENSORS) {
+                    SensorsView(onClickSensorManager = {
+                        swipeDismissableNavController.navigate("$SCREEN_SINGLE_SENSOR_MANAGER/${it.id()}")
+                    })
+                }
+                composable(
+                    route = "$SCREEN_SINGLE_SENSOR_MANAGER/{$ARG_SCREEN_SENSOR_MANAGER_ID}",
+                    arguments = listOf(
+                        navArgument(name = ARG_SCREEN_SENSOR_MANAGER_ID) {
+                            type = NavType.StringType
+                        }
+                    )) { backStackEntry ->
+                    val sensorManagerId =
+                        backStackEntry.arguments?.getString(ARG_SCREEN_SENSOR_MANAGER_ID)
+                    //TODO cache sensor managers list or find better way to pass list of sensor managers
+                    val sensorManager = getSensorManagers().first { sensorManager ->
+                        sensorManager.id() == sensorManagerId
+                    }
+                    val sensorDao = AppDatabase.getInstance(context).sensorDao()
+                    SensorManagerUi(
+                        sensorDao = sensorDao,
+                        sensorManager = sensorManager,
+                    ) { sensorId, enabled ->
+//                            if (isEnabled) {
+//                                val permissions = sensorManager.requiredPermissions(basicSensor.id)
+//                                val context = requireContext()
+//                                val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
+//                                val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
+//
+//                                if ((fineLocation || coarseLocation) &&
+//                                    !DisabledLocationHandler.isLocationEnabled(context)
+//                                ) {
+//                                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(basicSensor.name)))
+//                                    return@setOnPreferenceChangeListener false
+//                                } else {
+//                                    if (!sensorManager.checkPermission(context, basicSensor.id)) {
+//                                        if (sensorManager is NetworkSensorManager) {
+//                                            LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
+//                                                context, permissions,
+//                                                continueYesCallback = {
+//                                                    requestPermissions(permissions)
+//                                                }
+//                                            )
+//                                        } else requestPermissions(permissions)
+//
+//                                        return@setOnPreferenceChangeListener false
+//                                    }
+//                                }
+//                            }
+//                            val basicSensor = sensorManager.getAvailableSensors(context)
+//                                .first { basicSensor -> basicSensor.id == sensorId }
+//                            updateSensorEntity(sensorDao, basicSensor, enabled)
+//
+//                            if (enabled)
+//                                sensorManager.requestSensorUpdate(context)
+                        mainViewModel.toggleSensor(context, sensorId, enabled)
+                    }
+//                            isHapticEnabled = isHapticEnabled,
+//                            isToastEnabled = isToastEnabled
+
+                }
             }
         }
     }
+}
+
+//TODO move to integration use case
+private fun updateSensorEntity(
+    sensorDao: SensorDao,
+    basicSensor: SensorManager.BasicSensor,
+    isEnabled: Boolean
+) {
+
+    var sensorEntity = sensorDao.get(basicSensor.id)
+    if (sensorEntity != null) {
+        sensorEntity.enabled = isEnabled
+        sensorEntity.lastSentState = ""
+        sensorDao.update(sensorEntity)
+    } else {
+        sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
+        sensorDao.add(sensorEntity)
+    }
+//    refreshSensorData()
 }

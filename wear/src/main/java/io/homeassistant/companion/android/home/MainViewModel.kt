@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.home
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -80,6 +81,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     fun stringForDomain(domain: String): String? =
         HomePresenterImpl.domainsWithNames[domain]?.let { app.applicationContext.getString(it) }
+//    var sensorManagers = mutableStateMapOf<String, SensorManager<*>>()
+//        private set
 
     private fun loadEntities() {
         viewModelScope.launch {
@@ -187,6 +190,12 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun toggleEntity(entityId: String, state: String) {
         viewModelScope.launch {
             homePresenter.onEntityClicked(entityId, state)
+        }
+    }
+
+    fun toggleSensor(context: Context, entityId: String, enabled: Boolean) {
+        viewModelScope.launch {
+            homePresenter.onSensorClicked(context, entityId, enabled)
         }
     }
 

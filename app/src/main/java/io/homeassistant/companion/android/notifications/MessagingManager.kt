@@ -1141,7 +1141,7 @@ class MessagingManager @Inject constructor(
                     URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
                             builder.addAction(
-                                R.drawable.ic_globe,
+                                commonR.drawable.ic_globe,
                                 notificationAction.title,
                                 createOpenUriPendingIntent(notificationAction.uri)
                             )
