@@ -38,8 +38,9 @@ fun EntityUi(
     val friendlyName = attributes["friendly_name"].toString()
 
     if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
+        val isChecked = entity.state in listOf("on", "locked", "open", "opening")
         ToggleChip(
-            checked = entity.state == "on" || entity.state == "locked",
+            checked = isChecked,
             onCheckedChange = {
                 onEntityClicked(entity.entityId, entity.state)
                 onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, friendlyName, haptic)
@@ -60,7 +61,7 @@ fun EntityUi(
                 )
             },
             enabled = entity.state != "unavailable",
-            toggleIcon = { ToggleChipDefaults.SwitchIcon(entity.state == "on") }
+            toggleIcon = { ToggleChipDefaults.SwitchIcon(isChecked) }
         )
     } else {
         Chip(
