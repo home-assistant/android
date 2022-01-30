@@ -563,7 +563,7 @@
     <string name="share_logs">Share logs</string>
     <string name="share_success">Shared with Home Assistant</string>
     <string name="shopping_list">Shopping List</string>
-    <string name="shortcut_icon">Shortcut Icon</string>
+    <string name="shortcut_icon">Select an icon for this shortcut</string>
     <string name="shortcut_instruction_desc">Use the below sections to create your shortcuts. Once you have added a shortcut you will need to drag it on your home screen after long pressing on the app icon. Although Android supports up to 5 dynamic shortcuts most launchers will only show 4 shortcuts.</string>
     <string name="shortcut_instruction_title">Shortcut Instructions</string>
     <string name="shortcut_n">Shortcut %d</string>
@@ -571,7 +571,7 @@
     <string name="shortcut_pinned_desc">Pinned Shortcut Description</string>
     <string name="shortcut_pinned_id">Pinned Shortcut ID</string>
     <string name="shortcut_pinned_label">Pinned Shortcut Label</string>
-    <string name="shortcut_pinned_list">List of Pinned Shortcut IDs</string>
+    <string name="shortcut_pinned_list">Select a pinned shortcut ID to edit</string>
     <string name="shortcut_pinned_note">Make sure to change the ID below for each new shortcut you want to add otherwise the existing ID will be updated. There are no limits to the amount of pinned shortcuts you can create.</string>
     <string name="shortcut_type">Select Shortcut Type</string>
     <string name="shortcut_updated">Shortcut updated</string>
@@ -755,4 +755,5 @@
     <string name="show_changelog_summary">Show the change log dialog from when the app was updated</string>
     <string name="tile_icon">Select a icon for the tile</string>
     <string name="tile_select">Select a tile to edit</string>
+    <string name="shortcut_pinned">Pinned Shortcuts</string>
 </resources>
