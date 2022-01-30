@@ -36,6 +36,7 @@ class HomePresenterImpl @Inject constructor(
             "media_player", "remote", "siren", "switch"
         )
         val domainsWithNames = mapOf(
+            "fan" to commonR.string.fans,
             "input_boolean" to commonR.string.input_booleans,
             "light" to commonR.string.lights,
             "lock" to commonR.string.locks,
