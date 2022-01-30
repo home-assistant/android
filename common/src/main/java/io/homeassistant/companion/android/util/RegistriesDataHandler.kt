@@ -26,4 +26,11 @@ object RegistriesDataHandler {
         }
         return null
     }
+
+    fun getCategoryForEntity(
+        entityId: String,
+        entityRegistry: List<EntityRegistryResponse>?
+    ): String? {
+        return entityRegistry?.firstOrNull { it.entityId == entityId }?.entityCategory
+    }
 }

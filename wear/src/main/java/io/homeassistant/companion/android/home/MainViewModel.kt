@@ -193,6 +193,9 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun getAreaForEntity(entityId: String): AreaRegistryResponse? =
         RegistriesDataHandler.getAreaForEntity(entityId, areaRegistry, deviceRegistry, entityRegistry)
 
+    fun getCategoryForEntity(entityId: String): String? =
+        RegistriesDataHandler.getCategoryForEntity(entityId, entityRegistry)
+
     private fun getFavorites() {
         viewModelScope.launch {
             favorites()?.collect {
