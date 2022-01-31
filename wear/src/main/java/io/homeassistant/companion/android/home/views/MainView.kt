@@ -143,13 +143,17 @@ fun MainView(
                     }
                 }
 
-                if (mainViewModel.entitiesByArea.values.any { it.isNotEmpty() }) {
+                if (mainViewModel.entitiesByArea.values.any {
+                    it.isNotEmpty() && it.any { entity -> mainViewModel.getCategoryForEntity(entity.entityId) == null }
+                }
+                ) {
                     item {
                         ListHeader(id = commonR.string.areas)
                     }
                     for (id in mainViewModel.entitiesByAreaOrder) {
                         val entities = mainViewModel.entitiesByArea[id]
-                        if (!entities.isNullOrEmpty()) {
+                        val entitiesToShow = entities?.filter { mainViewModel.getCategoryForEntity(it.entityId) == null }
+                        if (!entitiesToShow.isNullOrEmpty()) {
                             val area = mainViewModel.areas.first { it.areaId == id }
                             item {
                                 Chip(
@@ -161,7 +165,7 @@ fun MainView(
                                         onTestClicked(
                                             mapOf(area.name to entities),
                                             listOf(area.name)
-                                        ) { true }
+                                        ) { mainViewModel.getCategoryForEntity(it.entityId) == null }
                                     },
                                     colors = ChipDefaults.primaryChipColors()
                                 )
@@ -170,7 +174,9 @@ fun MainView(
                     }
                 }
 
-                if (mainViewModel.entities.values.any { mainViewModel.getAreaForEntity(it.entityId) == null }) {
+                val domainEntitiesFilter: (entity: Entity<*>) -> Boolean =
+                    { mainViewModel.getAreaForEntity(it.entityId) == null && mainViewModel.getCategoryForEntity(it.entityId) == null }
+                if (mainViewModel.entities.values.any(domainEntitiesFilter)) {
                     item {
                         ListHeader(id = commonR.string.more_entities)
                     }
@@ -178,8 +184,8 @@ fun MainView(
                 // Buttons for each existing category
                 for (domain in mainViewModel.entitiesByDomainOrder) {
                     val domainEntities = mainViewModel.entitiesByDomain[domain]!!
-                    val domainEntitiesNotInArea = domainEntities.filter { mainViewModel.getAreaForEntity(it.entityId) == null }
-                    if (domainEntitiesNotInArea.isNotEmpty()) {
+                    val domainEntitiesToShow = domainEntities.filter(domainEntitiesFilter)
+                    if (domainEntitiesToShow.isNotEmpty()) {
                         item {
                             Chip(
                                 modifier = Modifier.fillMaxWidth(),
@@ -194,8 +200,9 @@ fun MainView(
                                         mapOf(
                                             mainViewModel.stringForDomain(domain)!! to domainEntities
                                         ),
-                                        listOf(mainViewModel.stringForDomain(domain)!!)
-                                    ) { mainViewModel.getAreaForEntity(it.entityId) == null }
+                                        listOf(mainViewModel.stringForDomain(domain)!!),
+                                        domainEntitiesFilter
+                                    )
                                 },
                                 colors = ChipDefaults.primaryChipColors()
                             )
