@@ -101,7 +101,10 @@ open class HomeAssistantApplication : Application() {
         // This will trigger an update any time the wifi state has changed
         registerReceiver(
             sensorReceiver,
-            IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+            IntentFilter().apply {
+                addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+                addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
+            }
         )
 
         // This will cause the phone state sensor to be updated every time the OS broadcasts that a call triggered.
