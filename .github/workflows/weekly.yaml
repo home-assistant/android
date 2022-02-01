@@ -76,3 +76,12 @@ jobs:
           VERSION: ${{ steps.rel_number.outputs.version }}
           VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
         run: ./gradlew publishReleaseBundle || echo "Issue uploading Release, may just be nothing has changed"
+
+      - name: Deploy to Playstore Listing
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_FILE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.UPLOAD_KEYSTORE_ALIAS }}
+          KEYSTORE_ALIAS_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_ALIAS_PASSWORD }}
+          VERSION: ${{ steps.rel_number.outputs.version }}
+          VERSION_CODE: ${{ steps.rel_number.outputs.version-code }}
+        run: ./gradlew publishListing
