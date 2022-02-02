@@ -203,6 +203,7 @@
     <string name="home_assistant_not_discover">Unable to find your\nHome Assistant instance</string>
     <string name="icon">Icon</string>
     <string name="input_booleans">Input Booleans</string>
+    <string name="input_buttons">Input Buttons</string>
     <string name="input_url_hint">https://example.duckdns.org:8123</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="install_app">Install App on Wear Device</string>
