@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.websocket
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
@@ -19,7 +20,7 @@ class WebsocketSettingViewModel @Inject constructor(
     fun getWebsocketSetting(id: Int): Setting {
         var setting = settingsDao.get(id)
         if (setting == null) {
-            setting = Setting(id, WebsocketSetting.SCREEN_ON)
+            setting = Setting(id, if (BuildConfig.FLAVOR == "full") WebsocketSetting.SCREEN_ON else WebsocketSetting.ALWAYS)
             settingsDao.insert(setting)
         }
         return setting
