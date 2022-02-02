@@ -90,6 +90,7 @@
     <string name="biometric_set_title">Confirm to continue</string>
     <string name="biometric_title">Home Assistant is locked</string>
     <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
+    <string name="buttons">Buttons</string>
     <string name="button_forward">Next</string>
     <string name="button_widget_desc">Call any service</string>
     <string name="calendar">Calendar</string>

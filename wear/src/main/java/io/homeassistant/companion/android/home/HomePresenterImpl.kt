@@ -36,6 +36,7 @@ class HomePresenterImpl @Inject constructor(
             "media_player", "remote", "siren", "switch"
         )
         val domainsWithNames = mapOf(
+            "button" to commonR.string.buttons,
             "cover" to commonR.string.covers,
             "fan" to commonR.string.fans,
             "input_boolean" to commonR.string.input_booleans,
@@ -81,6 +82,7 @@ class HomePresenterImpl @Inject constructor(
     override suspend fun onEntityClicked(entityId: String, state: String) {
         val domain = entityId.split(".")[0]
         val serviceName = when (domain) {
+            "button" -> "press"
             "lock" -> {
                 // Defaults to locking, to be save
                 if (state == "locked")

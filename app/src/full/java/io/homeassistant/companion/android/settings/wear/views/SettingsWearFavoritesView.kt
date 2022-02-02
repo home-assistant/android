@@ -173,6 +173,7 @@ fun LoadWearFavoritesSettings(
 @Composable
 private fun getDomainString(domain: String): String {
     return when (domain) {
+        "button" -> stringResource(commonR.string.domain_button)
         "cover" -> stringResource(commonR.string.domain_cover)
         "fan" -> stringResource(commonR.string.domain_fan)
         "input_boolean" -> stringResource(commonR.string.domain_input_boolean)
