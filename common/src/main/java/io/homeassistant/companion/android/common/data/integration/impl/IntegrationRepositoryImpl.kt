@@ -623,8 +623,8 @@ class IntegrationRepositoryImpl @Inject constructor(
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
 
-        val appData = mutableMapOf<String,Any>("push_websocket_channel" to true)
-        if(!pushToken.isNullOrBlank()){
+        val appData = mutableMapOf<String, Any>("push_websocket_channel" to true)
+        if (!pushToken.isNullOrBlank()) {
             appData["push_url"] = PUSH_URL
             appData["push_token"] = pushToken
         }
