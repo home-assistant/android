@@ -13,7 +13,7 @@ data class RegisterDeviceRequest(
     var osName: String?,
     var osVersion: String?,
     var supportsEncryption: Boolean?,
-    var appData: HashMap<String, String>?,
+    var appData: Map<String, Any>?,
     // Added in HA 0.104.0
     var deviceId: String?
 )
