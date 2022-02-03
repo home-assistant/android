@@ -38,6 +38,7 @@ class TileActionReceiver : BroadcastReceiver() {
 
                 val domain = entityId.split(".")[0]
                 val serviceName = when (domain) {
+                    "button", "input_button" -> "press"
                     "lock" -> {
                         val lockEntity = integrationUseCase.getEntity(entityId)
                         if (lockEntity?.state == "locked")

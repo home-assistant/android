@@ -57,7 +57,7 @@ class CameraWidgetConfigureActivity : BaseActivity() {
 
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && selectedEntity != null) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, CameraWidget::class.java),
                         null,
@@ -68,7 +68,7 @@ class CameraWidgetConfigureActivity : BaseActivity() {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
                     )
-                } else showAddWidgetError() // this shouldn't be possible
+                } else showAddWidgetError()
             } else {
                 onAddWidget()
             }

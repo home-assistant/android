@@ -5,10 +5,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.hardware.display.DisplayManager
 import android.os.Build
+import android.os.PowerManager
 import android.util.Log
-import android.view.Display
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
 import androidx.work.Constraints
@@ -123,8 +122,8 @@ class WebsocketManager(
     }
 
     private fun shouldWeRun(): Boolean {
-        val dm = applicationContext.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-        val displayOff = dm.displays.all { it.state == Display.STATE_OFF }
+        val powerManager = applicationContext.getSystemService<PowerManager>()!!
+        val displayOff = !powerManager.isInteractive
         val setting = settingsDao.get(0)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
         if (setting == WebsocketSetting.NEVER) {
             return false

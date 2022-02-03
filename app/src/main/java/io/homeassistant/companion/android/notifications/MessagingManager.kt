@@ -70,6 +70,8 @@ import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import io.homeassistant.companion.android.common.R as commonR
 
 class MessagingManager @Inject constructor(
@@ -637,27 +639,51 @@ class MessagingManager @Inject constructor(
 
     /**
      * Add Extra values to Intent.
+     * Extra value might include type information based on type
+     * given by the user. If a known type is given, the initial string value
+     * will be converted to this type.
      */
     private fun addExtrasToIntent(intent: Intent, extras: String) {
         val items = extras.split(',')
         for (item in items) {
             val chunks = item.split(":")
             var value = chunks[1]
-            if (chunks.size > 2) {
+            val hasTypeInfo = chunks.size > 2
+
+            // Intent item has included type info, convert to this type
+            if (hasTypeInfo) {
                 value = chunks.subList(1, chunks.lastIndex).joinToString(":")
-                if (chunks.last() == "urlencoded")
-                    value = URLDecoder.decode(value, "UTF-8")
-            }
-            intent.putExtra(
-                chunks[0],
+
+                when (chunks.last()) {
+                    "urlencoded" -> intent.putExtra(chunks[0], URLDecoder.decode(value, "UTF-8"))
+                    "int" -> intent.putExtra(chunks[0], value.toInt())
+                    "double" -> intent.putExtra(chunks[0], value.toDouble())
+                    "float" -> intent.putExtra(chunks[0], value.toFloat())
+                    "long" -> intent.putExtra(chunks[0], value.toLong())
+                    "short" -> intent.putExtra(chunks[0], value.toShort())
+                    "boolean" -> intent.putExtra(chunks[0], value.toBoolean())
+                    "char" -> intent.putExtra(chunks[0], value[0].toChar())
+                    "ArrayList<Integer>" -> intent.putIntegerArrayListExtra(
+                        chunks[0],
+                        value.split(";").map { it.toInt() }.toCollection(ArrayList())
+                    )
+                    "ArrayList<String>" -> intent.putStringArrayListExtra(
+                        chunks[0],
+                        value.split(";").toCollection(ArrayList())
+                    )
+                    else -> {
+                        intent.putExtra(chunks[0], value)
+                    }
+                }
+            } else {
+                // Try to guess the correct type
                 if (value.isDigitsOnly())
-                    value.toInt()
-                else if ((value.lowercase() == "true") ||
-                    (value.lowercase() == "false")
-                )
-                    value.toBoolean()
-                else value
-            )
+                    intent.putExtra(chunks[0], value.toInt())
+                else if ((value.lowercase() == "true") || (value.lowercase() == "false"))
+                    intent.putExtra(chunks[0], value.toBoolean())
+                else
+                    intent.putExtra(chunks[0], value)
+            }
         }
     }
 

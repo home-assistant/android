@@ -286,7 +286,10 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
         binding.addFieldButton.setOnClickListener(onAddFieldListener)
         binding.addButton.setOnClickListener {
             if (requestLauncherSetup) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val widgetConfigService = binding.widgetTextConfigService.text.toString()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                    (widgetConfigService in services || widgetConfigService.split(".", limit = 2).size == 2)
+                ) {
                     getSystemService<AppWidgetManager>()?.requestPinAppWidget(
                         ComponentName(this, ButtonWidget::class.java),
                         null,
@@ -297,7 +300,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
                             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
                         )
                     )
-                } else showAddWidgetError() // this shouldn't be possible
+                } else showAddWidgetError()
             } else {
                 onAddWidget()
             }
