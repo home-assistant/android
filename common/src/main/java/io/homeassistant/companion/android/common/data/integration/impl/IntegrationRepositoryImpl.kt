@@ -623,6 +623,12 @@ class IntegrationRepositoryImpl @Inject constructor(
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
 
+        val appData = mutableMapOf<String, Any>("push_websocket_channel" to true)
+        if (!pushToken.isNullOrBlank()) {
+            appData["push_url"] = PUSH_URL
+            appData["push_token"] = pushToken
+        }
+
         return RegisterDeviceRequest(
             null,
             null,
@@ -633,11 +639,7 @@ class IntegrationRepositoryImpl @Inject constructor(
             null,
             osVersion,
             null,
-            hashMapOf(
-                // TODO: This is a hack and should be fixed in core
-                "push_url" to if (!pushToken.isNullOrBlank()) PUSH_URL else "http://0.0.0.0/",
-                "push_token" to (pushToken ?: "")
-            ),
+            appData,
             null
         )
     }
