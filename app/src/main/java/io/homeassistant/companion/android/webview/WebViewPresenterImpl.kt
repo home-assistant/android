@@ -178,6 +178,12 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun getAuthorizationHeader(): String {
+        return runBlocking {
+            authenticationUseCase.buildBearerToken()
+        }
+    }
+
     override suspend fun parseWebViewColor(webViewColor: String): Int = withContext(Dispatchers.IO) {
         var color = 0
 
