@@ -90,6 +90,7 @@
     <string name="biometric_set_title">Confirm to continue</string>
     <string name="biometric_title">Home Assistant is locked</string>
     <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
+    <string name="buttons">Buttons</string>
     <string name="button_forward">Next</string>
     <string name="button_widget_desc">Call any service</string>
     <string name="calendar">Calendar</string>
@@ -202,6 +203,7 @@
     <string name="home_assistant_not_discover">Unable to find your\nHome Assistant instance</string>
     <string name="icon">Icon</string>
     <string name="input_booleans">Input Booleans</string>
+    <string name="input_buttons">Input Buttons</string>
     <string name="input_url_hint">https://example.duckdns.org:8123</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="install_app">Install App on Wear Device</string>

@@ -107,6 +107,7 @@ class ShortcutsTile : TileService() {
                             entity.icon.split(":")[1]
                         } else { // Default scene icon
                             when (entity.entityId.split(".")[0]) {
+                                "button", "input_button" -> "gesture_tap_button"
                                 "cover" -> "window_closed"
                                 "fan" -> "fan"
                                 "input_boolean", "switch" -> "light_switch"

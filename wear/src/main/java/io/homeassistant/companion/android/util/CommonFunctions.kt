@@ -15,6 +15,7 @@ fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
         IconicsDrawable(context, "cmd-$mdiIcon").icon
     } else {
         when (domain) {
+            "button", "input_button" -> CommunityMaterial.Icon2.cmd_gesture_tap_button
             "cover" -> CommunityMaterial.Icon3.cmd_window_closed
             "fan" -> CommunityMaterial.Icon2.cmd_fan
             "input_boolean", "switch" -> CommunityMaterial.Icon2.cmd_light_switch
