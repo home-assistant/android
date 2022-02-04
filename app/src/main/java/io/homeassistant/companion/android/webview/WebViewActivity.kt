@@ -1293,6 +1293,11 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
             }
         }
+        try {
+            request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+        } catch (e: Exception) {
+            // Cannot get cookies, probably not relevant
+        }
 
         getSystemService<DownloadManager>()?.enqueue(request) ?: Log.d(TAG, "Unable to start download, cannot get DownloadManager")
     }
