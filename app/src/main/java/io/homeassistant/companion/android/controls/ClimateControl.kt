@@ -63,13 +63,20 @@ class ClimateControl {
             if (currentValue > maxValue)
                 currentValue = maxValue
 
+            val temperatureUnit = entity.attributes["temperature_unit"] ?: ""
+            val temperatureStepSize = (entity.attributes["target_temperature_step"] as? Number)?.toFloat()
+                ?: when (temperatureUnit) {
+                    "°C" -> 0.5f
+                    else -> 1f
+                }
+            val temperatureFormatSize = if (temperatureStepSize < 1f) "1" else "0"
             val rangeTemplate = RangeTemplate(
                 entity.entityId,
                 minValue,
                 maxValue,
                 currentValue,
-                1f,
-                "%.0f"
+                temperatureStepSize,
+                "%.${temperatureFormatSize}f $temperatureUnit"
             )
             if (entityShouldBePresentedAsThermostat(entity)) {
                 var modesFlag = 0
