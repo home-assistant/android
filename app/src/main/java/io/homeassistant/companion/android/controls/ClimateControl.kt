@@ -7,6 +7,7 @@ import android.service.controls.DeviceTypes
 import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
 import android.service.controls.templates.RangeTemplate
+import android.service.controls.templates.TemperatureControlTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -17,6 +18,21 @@ import io.homeassistant.companion.android.common.R as commonR
 @RequiresApi(Build.VERSION_CODES.R)
 class ClimateControl {
     companion object : HaControl {
+        private const val SUPPORT_TARGET_TEMPERATURE = 1
+        private const val SUPPORT_TARGET_TEMPERATURE_RANGE = 2
+        private val temperatureControlModes = mapOf(
+            "cool" to TemperatureControlTemplate.MODE_COOL,
+            "heat" to TemperatureControlTemplate.MODE_HEAT,
+            "heat_cool" to TemperatureControlTemplate.MODE_HEAT_COOL,
+            "off" to TemperatureControlTemplate.MODE_OFF
+        )
+        private val temperatureControlModeFlags = mapOf(
+            "cool" to TemperatureControlTemplate.FLAG_MODE_COOL,
+            "heat" to TemperatureControlTemplate.FLAG_MODE_HEAT,
+            "heat_cool" to TemperatureControlTemplate.FLAG_MODE_HEAT_COOL,
+            "off" to TemperatureControlTemplate.FLAG_MODE_OFF
+        )
+
         override fun provideControlFeatures(
             context: Context,
             control: Control.StatefulBuilder,
@@ -46,22 +62,41 @@ class ClimateControl {
                 currentValue = minValue
             if (currentValue > maxValue)
                 currentValue = maxValue
-            control.setControlTemplate(
-                RangeTemplate(
-                    entity.entityId,
-                    minValue,
-                    maxValue,
-                    currentValue,
-                    .5f,
-                    "%.0f"
-                )
 
+            val rangeTemplate = RangeTemplate(
+                entity.entityId,
+                minValue,
+                maxValue,
+                currentValue,
+                1f,
+                "%.0f"
             )
+            if (entityShouldBePresentedAsThermostat(entity)) {
+                var modesFlag = 0
+                (entity.attributes["hvac_modes"] as? List<String>)?.forEach {
+                    modesFlag = modesFlag or temperatureControlModeFlags[it]!!
+                }
+                control.setControlTemplate(
+                    TemperatureControlTemplate(
+                        entity.entityId,
+                        rangeTemplate,
+                        temperatureControlModes[entity.state]!!,
+                        temperatureControlModes[entity.state]!!,
+                        modesFlag
+                    )
+                )
+            } else {
+                control.setControlTemplate(rangeTemplate)
+            }
+
             return control
         }
 
         override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-            DeviceTypes.TYPE_AC_HEATER
+            if (entityShouldBePresentedAsThermostat(entity))
+                DeviceTypes.TYPE_THERMOSTAT
+            else
+                DeviceTypes.TYPE_AC_HEATER
 
         override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
             context.getString(commonR.string.domain_climate)
@@ -81,6 +116,16 @@ class ClimateControl {
                 )
                 return@runBlocking true
             }
+        }
+
+        private fun entityShouldBePresentedAsThermostat(entity: Entity<Map<String, Any>>): Boolean {
+            return temperatureControlModes.containsKey(entity.state) &&
+                ((entity.attributes["hvac_modes"] as? List<String>)?.isNotEmpty() == true) &&
+                ((entity.attributes["hvac_modes"] as? List<String>)?.all { temperatureControlModes.containsKey(it) } == true) &&
+                (
+                    ((entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE == SUPPORT_TARGET_TEMPERATURE) ||
+                        ((entity.attributes["supported_features"] as Int) and SUPPORT_TARGET_TEMPERATURE_RANGE == SUPPORT_TARGET_TEMPERATURE_RANGE)
+                    )
         }
     }
 }
