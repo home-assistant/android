@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
+import android.app.DownloadManager
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
@@ -12,6 +13,7 @@ import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
@@ -31,6 +33,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
+import android.webkit.URLUtil
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -123,6 +126,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             webView.reload()
         }
+    private val requestStoragePermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                downloadFile(downloadFileUrl, downloadFileContentDisposition, downloadFileMimetype)
+            }
+        }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
         webView.externalBus(
             id = messageId,
@@ -184,6 +193,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var moreInfoEntity = ""
     private val moreInfoMutex = Mutex()
     private var currentAutoplay: Boolean = false
+    private var downloadFileUrl = ""
+    private var downloadFileContentDisposition = ""
+    private var downloadFileMimetype = ""
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -352,6 +364,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 }
                                 return true
                             } else if (!webView.url.toString().contains(it.toString())) {
+                                Log.d(TAG, "Launching browser")
                                 val browserIntent = Intent(Intent.ACTION_VIEW, it)
                                 startActivity(browserIntent)
                                 return true
@@ -362,6 +375,23 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         }
                     }
                     return false
+                }
+            }
+
+            setDownloadListener { url, _, contentDisposition, mimetype, _ ->
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                    ActivityCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    downloadFile(url, contentDisposition, mimetype)
+                } else {
+                    downloadFileUrl = url
+                    downloadFileContentDisposition = contentDisposition
+                    downloadFileMimetype = mimetype
+                    requestStoragePermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 }
             }
 
@@ -1245,6 +1275,31 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         Log.d(TAG, script)
 
         this.evaluateJavascript(script, callback)
+    }
+
+    private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {
+        Log.d(TAG, "WebView requested download of $url")
+        val request = DownloadManager.Request(Uri.parse(url))
+            .setMimeType(mimetype)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(
+                Environment.DIRECTORY_DOWNLOADS,
+                URLUtil.guessFileName(url, contentDisposition, mimetype)
+            )
+        runBlocking {
+            if (url.startsWith(urlRepository.getUrl(true).toString()) ||
+                url.startsWith(urlRepository.getUrl(false).toString())
+            ) {
+                request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
+            }
+        }
+        try {
+            request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+        } catch (e: Exception) {
+            // Cannot get cookies, probably not relevant
+        }
+
+        getSystemService<DownloadManager>()?.enqueue(request) ?: Log.d(TAG, "Unable to start download, cannot get DownloadManager")
     }
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
