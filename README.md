@@ -16,13 +16,11 @@ If you are looking for documentation around the companion applications check out
  - `io.homeassistant.companion.android.debug`
  - `io.homeassistant.companion.android.minimal`
  - `io.homeassistant.companion.android.minimal.debug`
- - `io.homeassistant.companion.android.quest`
- - `io.homeassistant.companion.android.quest.debug`
 
-5. Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder. This file contains the configuration of the whole project (all the six applications). ([You can also use the mock services file instead of generating your own](/.github/mock-google-services.json). The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file push notification will never work**)
+5. Now download the `google-services.json` file and put it in the _home-assistant-Android/app_ folder. This file contains the configuration of the whole project (all four applications). ([You can also use the mock services file instead of generating your own](/.github/mock-google-services.json). The file should contain client IDs for all packages listed above for debugging to work properly.  **If you do not generate your own file FCM push notification will never work, only websocket notifications will**)
 6. Start Android Studio, open your source code folder and check if the Gradle build will be successful using Build/Make Module "App". You might have to install the right Android SDK via Tools/SDK Manager first.
 7. Run `gradlew assembleDebug` to build all debug versions, this might take a while.
-8. If the build is succesful, you can run the app by doing the following: click **Run** -> **Run 'app'**.
+8. If the build is successful, you can run the app by doing the following: click **Run** -> **Run 'app'**.
 9. Connect your phone or create a new virtual device following on screen instruction
 10. :tada:
 
@@ -42,7 +40,7 @@ homeAssistantAndroidRateLimitUrl=https://mydomain.cloudfunctions.net/checkRateLi
 
 ## App Flavors
 
-The Android app has both a full flavor that uses Google Play Services to offer features like location tracking and notifications. There is also a minimal flavor that does not require Google Play Services and can be found in the releases section. The minimal flavor does not have location tracking or notifications. The quest flavor is identical to the minimal flavor with the exception of changes required for the device.
+The Android app has both a full flavor that uses Google Play Services to offer features like location tracking and notifications. There is also a minimal flavor that does not require Google Play Services and can be found in the releases section. The minimal flavor does not have location tracking or notifications.
 
 ## Building for publishing
 
