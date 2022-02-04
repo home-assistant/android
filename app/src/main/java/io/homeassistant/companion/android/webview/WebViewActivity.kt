@@ -364,6 +364,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 }
                                 return true
                             } else if (!webView.url.toString().contains(it.toString())) {
+                                Log.d(TAG, "Launching browser")
                                 val browserIntent = Intent(Intent.ACTION_VIEW, it)
                                 startActivity(browserIntent)
                                 return true
@@ -1277,6 +1278,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     }
 
     private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {
+        Log.d(TAG, "WebView requested download of $url")
         val request = DownloadManager.Request(Uri.parse(url))
             .setMimeType(mimetype)
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -1292,7 +1294,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             }
         }
 
-        getSystemService<DownloadManager>()?.enqueue(request)
+        getSystemService<DownloadManager>()?.enqueue(request) ?: Log.d(TAG, "Unable to start download, cannot get DownloadManager")
     }
 
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
