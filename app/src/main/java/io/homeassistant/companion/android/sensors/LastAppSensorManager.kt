@@ -3,9 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.app.usage.UsageStatsManager
 import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
@@ -58,14 +56,7 @@ class LastAppSensorManager : SensorManager {
 
         val usageStats = context.getSystemService<UsageStatsManager>()!!
         val current = System.currentTimeMillis()
-        var lastApp = usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull { it.lastTimeUsed }?.packageName ?: "none"
-        try {
-            val pm = context.packageManager
-            val appInfo = pm.getApplicationInfo(lastApp, PackageManager.GET_META_DATA)
-            lastApp = pm.getApplicationLabel(appInfo).toString()
-        } catch (e: Exception) {
-            Log.e(TAG, "Unable to get package name for: $lastApp", e)
-        }
+        val lastApp = usageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, current - 1000 * 1000, current).maxByOrNull { it.lastTimeUsed }?.packageName ?: "none"
 
         val icon = "mdi:android"
 
