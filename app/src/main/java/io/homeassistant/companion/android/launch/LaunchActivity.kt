@@ -96,7 +96,7 @@ class LaunchActivity : AppCompatActivity(), LaunchView {
                     AlertDialog.Builder(this@LaunchActivity)
                         .setTitle(commonR.string.firebase_error_title)
                         .setMessage(commonR.string.firebase_error_message)
-                        .setPositiveButton(commonR.string.skip) { _, _ ->
+                        .setPositiveButton(commonR.string.continue_connect) { _, _ ->
                             mainScope.launch {
                                 registerAndOpenWebview(
                                     url,
