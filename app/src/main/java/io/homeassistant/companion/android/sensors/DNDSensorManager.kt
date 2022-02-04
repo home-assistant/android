@@ -39,7 +39,8 @@ class DNDSensorManager : SensorManager {
     }
 
     override fun requestSensorUpdate(context: Context) {
-        updateDNDState(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            updateDNDState(context)
     }
 
     override fun hasSensor(context: Context): Boolean {
