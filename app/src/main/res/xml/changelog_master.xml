@@ -17,6 +17,7 @@
         <change>Improve reliability of opening entity information from device controls</change>
         <change>Editing Wear OS Template Tile from phone settings</change>
         <change>Add support for button and input_button domains in device controls</change>
+        <change>Add support for button and input_button domains in quick settings tiles</change>
         <change>Add In Use sensor for Quest devices</change>
         <change>Minimal version fixes to remove Google dependencies</change>
         <change>Lots of miscellaneous bug fixes</change>
