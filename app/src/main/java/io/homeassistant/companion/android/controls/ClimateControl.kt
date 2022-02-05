@@ -6,6 +6,7 @@ import android.service.controls.Control
 import android.service.controls.DeviceTypes
 import android.service.controls.actions.ControlAction
 import android.service.controls.actions.FloatAction
+import android.service.controls.actions.ModeAction
 import android.service.controls.templates.RangeTemplate
 import android.service.controls.templates.TemperatureControlTemplate
 import androidx.annotation.RequiresApi
@@ -113,15 +114,37 @@ class ClimateControl {
             action: ControlAction
         ): Boolean {
             return runBlocking {
-                integrationRepository.callService(
-                    action.templateId.split(".")[0],
-                    "set_temperature",
-                    hashMapOf(
-                        "entity_id" to action.templateId,
-                        "temperature" to (action as? FloatAction)?.newValue.toString()
-                    )
-                )
-                return@runBlocking true
+                return@runBlocking when (action) {
+                    is FloatAction -> {
+                        integrationRepository.callService(
+                            action.templateId.split(".")[0],
+                            "set_temperature",
+                            hashMapOf(
+                                "entity_id" to action.templateId,
+                                "temperature" to (action as? FloatAction)?.newValue.toString()
+                            )
+                        )
+                        true
+                    }
+                    is ModeAction -> {
+                        integrationRepository.callService(
+                            action.templateId.split(".")[0],
+                            "set_hvac_mode",
+                            hashMapOf(
+                                "entity_id" to action.templateId,
+                                "hvac_mode" to (
+                                    temperatureControlModes.entries.find {
+                                        it.value == ((action as? ModeAction)?.newMode ?: -1)
+                                    }?.key ?: ""
+                                    )
+                            )
+                        )
+                        true
+                    }
+                    else -> {
+                        false
+                    }
+                }
             }
         }
 
