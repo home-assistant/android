@@ -11,7 +11,7 @@
         <change>Add icons to settings</change>
         <change>Improve reliability of opening entity information from device controls</change>
         <change>Editing Wear OS Template Tile from phone settings</change>
-        <change>Add support for button and input_button domains in device controls</change>
+        <change>Add support for button and input_button domains, tweak climate domain in device controls</change>
         <change>Add mount state sensor for Quest Devices</change>
         <change>Minimal version fixes to remove Google dependencies</change>
         <change>Lots of miscellaneous bug fixes</change>
