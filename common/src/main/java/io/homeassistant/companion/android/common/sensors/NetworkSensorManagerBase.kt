@@ -7,8 +7,6 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import okhttp3.Call
@@ -21,7 +19,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import io.homeassistant.companion.android.common.R as commonR
 
-class NetworkSensorManager : SensorManager {
+open class NetworkSensorManagerBase : SensorManager {
     companion object {
         private const val TAG = "NetworkSM"
         val wifiConnection = SensorManager.BasicSensor(
@@ -93,9 +91,6 @@ class NetworkSensorManager : SensorManager {
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#connection-type-sensor"
-    }
-    override fun hasSensor(context: Context): Boolean {
-        return BuildConfig.FLAVOR != "quest"
     }
     override val enabledByDefault: Boolean
         get() = false
