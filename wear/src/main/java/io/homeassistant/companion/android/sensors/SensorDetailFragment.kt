@@ -3,12 +3,14 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
 import android.text.InputType
 import android.util.Log
+import android.view.Menu
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.MultiSelectListPreference
@@ -21,16 +23,16 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import kotlinx.coroutines.runBlocking
 
+//TODO remove me
 @AndroidEntryPoint
 class SensorDetailFragment(
     private val sensorManager: SensorManager,
@@ -70,19 +72,6 @@ class SensorDetailFragment(
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
     }
-
-//    override fun onPrepareOptionsMenu(menu: Menu) {
-//        super.onPrepareOptionsMenu(menu)
-//        menu.setGroupVisible(R.id.senor_detail_toolbar_group, true)
-//        menu.removeItem(R.id.action_filter)
-//        menu.removeItem(R.id.action_search)
-//
-//        menu.findItem(R.id.get_help)?.let {
-//            it.isVisible = true
-//            val docsLink = basicSensor.docsLink ?: sensorManager.docsLink()
-//            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(docsLink))
-//        }
-//    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 
@@ -235,7 +224,7 @@ class SensorDetailFragment(
                         pref.setOnPreferenceChangeListener { _, newState ->
                             val isEnabled = newState as Boolean
 
-                            sensorDao.add(Setting(basicSensor.id, setting.name, isEnabled.toString(), "toggle", setting.enabled))
+                            sensorDao.add(SensorSetting(basicSensor.id, setting.name, isEnabled.toString(), "toggle", setting.enabled))
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
@@ -253,7 +242,7 @@ class SensorDetailFragment(
                         pref.isIconSpaceReserved = false
                         pref.isSingleLineTitle = false
                         pref.setOnPreferenceChangeListener { _, newState ->
-                            sensorDao.add(Setting(basicSensor.id, setting.name, newState as String, "list", setting.entries, setting.enabled))
+                            sensorDao.add(SensorSetting(basicSensor.id, setting.name, newState as String, "list", setting.entries, setting.enabled))
                             sensorManager.requestSensorUpdate(requireContext())
                             return@setOnPreferenceChangeListener true
                         }
@@ -276,13 +265,14 @@ class SensorDetailFragment(
                         pref.isIconSpaceReserved = false
 
                         pref.setOnBindEditTextListener { fieldType ->
-                            if (setting.valueType == "number")
+                            if (setting.valueType == "number") {
                                 fieldType.inputType = InputType.TYPE_CLASS_NUMBER
+                            }
                         }
 
                         pref.setOnPreferenceChangeListener { _, newValue ->
                             sensorDao.add(
-                                Setting(
+                                SensorSetting(
                                     basicSensor.id,
                                     setting.name,
                                     newValue as String,
@@ -416,7 +406,7 @@ class SensorDetailFragment(
 
     private fun createListPreference(
         key: String,
-        setting: Setting,
+        sensorSetting: SensorSetting,
         sensorDao: SensorDao,
         entries: List<String>
     ): Preference {
@@ -424,8 +414,8 @@ class SensorDetailFragment(
         val pref = findPreference(key)
             ?: MultiSelectListPreference(requireContext())
         pref.key = key
-        pref.isEnabled = setting.enabled
-        pref.title = getTranslatedTitle(setting.name)
+        pref.isEnabled = sensorSetting.enabled
+        pref.title = getTranslatedTitle(sensorSetting.name)
         pref.dialogTitle = pref.title
         pref.entries = entries.toTypedArray()
         pref.entryValues = entries.toTypedArray()
@@ -433,18 +423,18 @@ class SensorDetailFragment(
         pref.isSingleLineTitle = false
 
         // If selected list values are empty, but the setting.value is filled, then set the selected list value to the setting value
-        if ((pref.values == null || pref.values.isEmpty()) && setting.value.isNotEmpty()) pref.values = setting.value.split(", ").map { it }.toSet()
+        if ((pref.values == null || pref.values.isEmpty()) && sensorSetting.value.isNotEmpty()) pref.values = sensorSetting.value.split(", ").map { it }.toSet()
 
         pref.summary = pref.values.toString()
 
         pref.setOnPreferenceChangeListener { _, newValue ->
             sensorDao.add(
-                Setting(
+                SensorSetting(
                     basicSensor.id,
-                    setting.name,
+                    sensorSetting.name,
                     newValue.toString().replace("[", "").replace("]", ""),
-                    setting.valueType,
-                    setting.enabled
+                    sensorSetting.valueType,
+                    sensorSetting.enabled
                 )
             )
             sensorManager.requestSensorUpdate(requireContext())
@@ -458,7 +448,7 @@ class SensorDetailFragment(
             }
             pref.summary = pref.values.toString()
         } else
-            pref.summary = setting.value
+            pref.summary = sensorSetting.value
 
         return pref
     }
@@ -482,6 +472,8 @@ class SensorDetailFragment(
         when {
             permissions.any { perm -> perm == Manifest.permission.BIND_NOTIFICATION_LISTENER_SERVICE } ->
                 startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            permissions.any { perm -> perm == Manifest.permission.PACKAGE_USAGE_STATS } ->
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
             android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R ->
                 requestPermissions(
                     permissions.toSet()
