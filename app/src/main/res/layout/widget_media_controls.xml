@@ -119,6 +119,30 @@
                 android:orientation="horizontal">
 
                 <ImageButton
+                    android:id="@+id/widgetVolumeDownButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="?android:selectableItemBackground"
+                    android:contentDescription="@string/widget_media_volume_down_button"
+                    android:padding="4dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_volume_down"
+                    android:tint="@color/colorIcon" />
+
+                <ImageButton
+                    android:id="@+id/widgetVolumeUpButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="?android:selectableItemBackground"
+                    android:contentDescription="@string/widget_media_volume_up_button"
+                    android:padding="4dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_volume_up"
+                    android:tint="@color/colorIcon" />
+
+                <ImageButton
                     android:id="@+id/widgetPrevTrackButton"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
