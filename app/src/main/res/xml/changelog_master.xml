@@ -4,7 +4,7 @@
     <release version="Beta">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Local Push notifications directly from your Home Assistant instance. The app will need to maintain a consistent websockets connection by using a persistent notification. From the notification you will be able to access websockets settings to adjust the behavior of the connection as well as the notification channel. You are free to minimize the notification channel to hide the icon. If you are on the minimal build you will need to have Home Assistant Core on 2022.2 in order for the notify service call to be created.</change>
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; The Do Not Disturb sensor is now only available on devices running Android 6 or higher. The sensor was updated to use a documented API rather than the undocumented method used.</change>
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; The Last Used App sensor will now report its state as the package name to always be unique</change>
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; The Last Used App sensor will now report its state as the package name to always be unique. The old state will now be an attribute of the sensor.</change>
         <change>Downloads are now supported in the Home Assistant Frontend</change>
         <change>WiFi State sensor now has instant updates for those devices that did not have it before</change>
         <change>Notification commands for command_activity and command_broadcast_intent now support more types of intent extras</change>
