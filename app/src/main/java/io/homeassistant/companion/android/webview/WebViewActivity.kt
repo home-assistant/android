@@ -590,6 +590,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         // This enables the ability to have the launch screen behind the WebView until the web frontend gets rendered
         binding.webview.setBackgroundColor(Color.TRANSPARENT)
 
+        // Enable pinch to zoom
+        if (presenter.isPinchToZoomEnabled()) {
+            webView.getSettings().setBuiltInZoomControls(true)
+            webView.getSettings().setDisplayZoomControls(false)
+        } else {
+            webView.getSettings().setBuiltInZoomControls(false)
+            webView.getSettings().setDisplayZoomControls(false)
+        }
+
         themesManager.setThemeForWebView(this, webView.settings)
 
         val cookieManager = CookieManager.getInstance()
@@ -655,6 +664,15 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         ) {
             unlocked = true
             binding.blurView.setBlurEnabled(false)
+        }
+
+        // Enable pinch to zoom
+        if (presenter.isPinchToZoomEnabled()) {
+            webView.getSettings().setBuiltInZoomControls(true)
+            webView.getSettings().setDisplayZoomControls(false)
+        } else {
+            webView.getSettings().setBuiltInZoomControls(false)
+            webView.getSettings().setDisplayZoomControls(false)
         }
 
         if (presenter.isKeepScreenOnEnabled())

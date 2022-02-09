@@ -223,6 +223,8 @@
     <string name="irreversible">This action is irreversible</string>
     <string name="keep_screen_on_def">Do not lock screen when Lovelace dashboard is active</string>
     <string name="keep_screen_on">Keep screen On</string>
+    <string name="pinch_to_zoom_def">Allow Pinch-to-zoom gesture to zoom app window</string>
+    <string name="pinch_to_zoom">Pinch To Zoom</string>
     <string name="label_attribute">Attribute:</string>
     <string name="label_dynamic_data">Data:</string>
     <string name="label_entity_id">Entity ID:</string>
