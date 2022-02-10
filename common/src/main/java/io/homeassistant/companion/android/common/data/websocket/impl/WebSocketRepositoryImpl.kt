@@ -9,6 +9,7 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.url.UrlRepository
@@ -288,6 +289,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             return true == withTimeoutOrNull(30000) {
                 return@withTimeoutOrNull try {
                     connected.join()
+                    if (connected.isCancelled) throw AuthorizationException()
                     true
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to authenticate", e)
@@ -372,8 +374,12 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     private fun handleClosingSocket() {
-        connected = Job()
-        connection = null
+        ioScope.launch {
+            connectedMutex.withLock {
+                connected = Job()
+                connection = null
+            }
+        }
         // If we still have flows flowing
         if ((eventSubscriptionFlow.any() || notificationFlow != null) && ioScope.isActive) {
             ioScope.launch {
@@ -445,6 +451,9 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         Log.e(TAG, "Websocket: onFailure", t)
+        if (connected.isActive) {
+            connected.completeExceptionally(t)
+        }
         handleClosingSocket()
     }
 }
