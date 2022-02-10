@@ -451,6 +451,9 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         Log.e(TAG, "Websocket: onFailure", t)
+        if (connected.isActive) {
+            connected.completeExceptionally(t)
+        }
         handleClosingSocket()
     }
 }
