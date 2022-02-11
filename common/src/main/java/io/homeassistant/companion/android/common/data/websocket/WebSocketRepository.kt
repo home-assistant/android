@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 
 @ExperimentalCoroutinesApi
 interface WebSocketRepository {
+    fun getConnectionState(): WebSocketState?
     suspend fun sendPing(): Boolean
     suspend fun getConfig(): GetConfigResponse?
     suspend fun getStates(): List<EntityResponse<Any>>?

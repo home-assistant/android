@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -79,6 +80,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val responseCallbackJobs = mutableMapOf<Long, CancellableContinuation<SocketResponse>>()
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null
+    private var connectionState: WebSocketState? = null
     private val connectedMutex = Mutex()
     private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
@@ -87,6 +89,8 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val notificationMutex = Mutex()
     private var notificationFlow: Flow<Map<String, Any>>? = null
     private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
+
+    override fun getConnectionState(): WebSocketState? = connectionState
 
     override suspend fun sendPing(): Boolean {
         val socketResponse = sendMessage(
@@ -287,6 +291,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             }
 
             // Wait up to 30 seconds for auth response
+            connectionState = WebSocketState.AUTHENTICATING
             return true == withTimeoutOrNull(30000) {
                 return@withTimeoutOrNull try {
                     connected.await()
@@ -324,10 +329,13 @@ class WebSocketRepositoryImpl @Inject constructor(
         if (response?.result != null) mapper.convertValue(response.result) else null
 
     private fun handleAuthComplete(successful: Boolean) {
-        if (successful)
+        if (successful) {
+            connectionState = WebSocketState.ACTIVE
             connected.complete(true)
-        else
+        } else {
+            connectionState = WebSocketState.CLOSED_AUTH
             connected.completeExceptionally(AuthorizationException())
+        }
     }
 
     private fun handleMessage(response: SocketResponse) {
@@ -377,6 +385,8 @@ class WebSocketRepositoryImpl @Inject constructor(
             connectedMutex.withLock {
                 connected = CompletableDeferred()
                 connection = null
+                if (connectionState != WebSocketState.CLOSED_AUTH)
+                    connectionState = WebSocketState.CLOSED_OTHER
             }
         }
         // If we still have flows flowing
