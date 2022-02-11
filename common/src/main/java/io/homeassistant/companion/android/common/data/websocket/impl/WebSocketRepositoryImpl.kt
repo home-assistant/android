@@ -261,7 +261,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {
-                return true
+                return !connected.isCancelled
             }
 
             val url = urlRepository.getUrl()
@@ -280,6 +280,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                 this
             ).also {
                 // Preemptively send auth
+                connectionState = WebSocketState.AUTHENTICATING
                 it.send(
                     mapper.writeValueAsString(
                         mapOf(
@@ -291,7 +292,6 @@ class WebSocketRepositoryImpl @Inject constructor(
             }
 
             // Wait up to 30 seconds for auth response
-            connectionState = WebSocketState.AUTHENTICATING
             return true == withTimeoutOrNull(30000) {
                 return@withTimeoutOrNull try {
                     connected.await()
