@@ -7,8 +7,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
+import android.view.View
 import android.widget.RemoteViews
-import android.widget.Toast
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class EntityWidget : BaseWidgetProvider() {
@@ -30,6 +29,8 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
+
+        private var lastResolvedTextSuccess = true
     }
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
@@ -68,6 +69,10 @@ class EntityWidget : BaseWidgetProvider() {
                     R.id.widgetLabel,
                     label ?: entityId
                 )
+                setViewVisibility(
+                    R.id.widgetStaticOffline,
+                    if (lastResolvedTextSuccess) View.GONE else View.VISIBLE
+                )
                 setOnClickPendingIntent(
                     R.id.widgetTextLayout,
                     PendingIntent.getBroadcast(
@@ -104,11 +109,10 @@ class EntityWidget : BaseWidgetProvider() {
             } else {
                 entityId?.let { integrationUseCase.getEntity(it) }
             }
+            lastResolvedTextSuccess = true
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
-            if (lastIntent == UPDATE_VIEW)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                    .show()
+            lastResolvedTextSuccess = false
         }
         if (attributeIds == null) {
             staticWidgetDao.updateWidgetLastUpdate(
@@ -128,12 +132,11 @@ class EntityWidget : BaseWidgetProvider() {
                 entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
                     .plus(attributeValues.joinToString(attributeSeparator))
             staticWidgetDao.updateWidgetLastUpdate(appWidgetId, lastUpdate)
+            lastResolvedTextSuccess = true
             return lastUpdate
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
-            if (lastIntent == UPDATE_VIEW)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                    .show()
+            lastResolvedTextSuccess = false
         }
         return staticWidgetDao.get(appWidgetId)?.lastUpdate
     }
