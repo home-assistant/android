@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.websocket.WebsocketManager
@@ -36,12 +37,12 @@ fun WebsocketSettingView(
             Text(stringResource(R.string.websocket_setting_description))
         }
         RadioButtonRow(
-            text = stringResource(R.string.websocket_setting_never),
+            text = stringResource(if (BuildConfig.FLAVOR == "full") R.string.websocket_setting_never else R.string.websocket_setting_never_minimal),
             selected = websocketSetting == WebsocketSetting.NEVER,
             onClick = { onSettingChanged(WebsocketSetting.NEVER) }
         )
         RadioButtonRow(
-            text = stringResource(R.string.websocket_setting_while_screen_on),
+            text = stringResource(if (BuildConfig.FLAVOR == "full") R.string.websocket_setting_while_screen_on else R.string.websocket_setting_while_screen_on_minimal),
             selected = websocketSetting == WebsocketSetting.SCREEN_ON,
             onClick = { onSettingChanged(WebsocketSetting.SCREEN_ON) }
         )
