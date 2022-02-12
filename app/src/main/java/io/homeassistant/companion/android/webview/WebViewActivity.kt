@@ -266,8 +266,23 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    // Use idea from https://github.com/home-assistant/iOS/pull/1472 to filter viewport
                     webView.evaluateJavascript(
-                        "document.querySelector(\"meta[name=viewport]\").setAttribute(\"content\", \"width=device-width,user-scalable=yes,viewport-fit=cover,initial-scale=1\");"
+                        """
+                        {
+                            const viewport = document.querySelector('meta[name="viewport"]');
+                            if (viewport != null) {
+                                const ignoredBits = ['user-scalable', 'minimum-scale', 'maximum-scale'];
+                                const elements = viewport['content']
+                                    .split(',')
+                                    .filter(contentItem => {
+                                        return ignoredBits.every(ignoredBit => !contentItem.includes(ignoredBit));
+                                    });
+                                elements.push('user-scalable=yes');
+                                viewport['content'] = elements.join(',');
+                            }
+                        }
+                        """
                     ) {}
 
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
