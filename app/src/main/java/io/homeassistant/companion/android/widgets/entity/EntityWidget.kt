@@ -70,7 +70,7 @@ class EntityWidget : BaseWidgetProvider() {
                     label ?: entityId
                 )
                 setViewVisibility(
-                    R.id.widgetStaticOffline,
+                    R.id.widgetStaticError,
                     if (lastResolvedTextSuccess) View.GONE else View.VISIBLE
                 )
                 setOnClickPendingIntent(

@@ -67,10 +67,10 @@ class TemplateWidget : BaseWidgetProvider() {
                 try {
                     renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
                     templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
-                    setViewVisibility(R.id.widgetTemplateOffline, View.GONE)
+                    setViewVisibility(R.id.widgetTemplateError, View.GONE)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
-                    setViewVisibility(R.id.widgetTemplateOffline, View.VISIBLE)
+                    setViewVisibility(R.id.widgetTemplateError, View.VISIBLE)
                 }
                 setTextViewText(
                     R.id.widgetTemplateText,

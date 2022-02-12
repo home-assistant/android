@@ -107,10 +107,10 @@ class CameraWidget : AppWidgetProvider() {
                 var entityPictureUrl: String?
                 try {
                     entityPictureUrl = retrieveCameraImageUrl(widget.entityId)
-                    setViewVisibility(R.id.widgetCameraOffline, View.GONE)
+                    setViewVisibility(R.id.widgetCameraError, View.GONE)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
-                    setViewVisibility(R.id.widgetCameraOffline, View.VISIBLE)
+                    setViewVisibility(R.id.widgetCameraError, View.VISIBLE)
                     entityPictureUrl = null
                 }
                 val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
