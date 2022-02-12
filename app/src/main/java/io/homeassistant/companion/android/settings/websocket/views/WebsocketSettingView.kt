@@ -89,7 +89,8 @@ fun RadioButtonRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .selectable(selected = selected, onClick = onClick),
+            .selectable(selected = selected, onClick = onClick)
+            .padding(top = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(selected = selected, onClick = onClick)
