@@ -8,7 +8,6 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -37,7 +36,7 @@ class LastAppSensorManager : SensorManager {
     }
 
     override fun hasSensor(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && BuildConfig.FLAVOR != "quest"
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
     }
     @RequiresApi(Build.VERSION_CODES.M)
     override fun requiredPermissions(sensorId: String): Array<String> {

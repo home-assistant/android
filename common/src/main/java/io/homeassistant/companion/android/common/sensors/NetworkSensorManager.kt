@@ -19,7 +19,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import io.homeassistant.companion.android.common.R as commonR
 
-open class NetworkSensorManagerBase : SensorManager {
+class NetworkSensorManager : SensorManager {
     companion object {
         private const val TAG = "NetworkSM"
         val wifiConnection = SensorManager.BasicSensor(

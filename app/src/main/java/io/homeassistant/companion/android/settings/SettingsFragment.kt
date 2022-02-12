@@ -2,8 +2,10 @@ package io.homeassistant.companion.android.settings
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.UiModeManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -128,10 +130,7 @@ class SettingsFragment constructor(
 
         updateBackgroundAccessPref()
 
-        findPreference<SsidPreference>("connection_internal_ssids")?.isVisible = BuildConfig.FLAVOR != "quest"
-
         findPreference<EditTextPreference>("connection_internal")?.let {
-            it.isVisible = BuildConfig.FLAVOR != "quest"
             it.onPreferenceChangeListener =
                 onChangeUrlValidator
         }
@@ -139,7 +138,6 @@ class SettingsFragment constructor(
         findPreference<EditTextPreference>("connection_external")?.onPreferenceChangeListener =
             onChangeUrlValidator
 
-        findPreference<SwitchPreference>("prioritize_internal")?.isVisible = BuildConfig.FLAVOR != "quest"
         findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
@@ -149,8 +147,8 @@ class SettingsFragment constructor(
             return@setOnPreferenceClickListener true
         }
 
-        findPreference<PreferenceCategory>("widgets")?.isVisible = BuildConfig.FLAVOR != "quest"
-        findPreference<PreferenceCategory>("security_category")?.isVisible = BuildConfig.FLAVOR != "quest"
+        findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest"
+        findPreference<PreferenceCategory>("security_category")?.isVisible = Build.MODEL != "Quest"
         findPreference<Preference>("manage_widgets")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
@@ -160,7 +158,7 @@ class SettingsFragment constructor(
             return@setOnPreferenceClickListener true
         }
 
-        if (BuildConfig.FLAVOR != "quest") {
+        if (Build.MODEL != "Quest") {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
                 findPreference<PreferenceCategory>("shortcuts")?.let {
                     it.isVisible = true
@@ -207,7 +205,8 @@ class SettingsFragment constructor(
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             findPreference<Preference>("notification_channels")?.let {
-                it.isVisible = true
+                val uiManager = requireContext().getSystemService<UiModeManager>()
+                it.isVisible = uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
                 it.intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context?.packageName)
             }
         }
@@ -269,7 +268,7 @@ class SettingsFragment constructor(
         findPreference<Preference>("changelog_github")?.let {
             val link = if (BuildConfig.VERSION_NAME.startsWith("LOCAL"))
                 "https://github.com/home-assistant/android/releases"
-            else "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "").replace("-quest", "")}"
+            else "https://github.com/home-assistant/android/releases/tag/${BuildConfig.VERSION_NAME.replace("-full", "").replace("-minimal", "")}"
             it.summary = link
             it.intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
         }
