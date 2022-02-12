@@ -266,6 +266,10 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    webView.evaluateJavascript(
+                        "document.querySelector(\"meta[name=viewport]\").setAttribute(\"content\", \"width=device-width,user-scalable=yes,viewport-fit=cover,initial-scale=1\");"
+                    ) {}
+
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
                             val owner = "onPageFinished:$moreInfoEntity"
