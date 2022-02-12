@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
+    <release version="2022.2.1">
+        <changes>Change the default behavior of the WebSocket connection to "Never" for installations from the Google Play Store</changes>
+        <changes>Make the WebSocket connection settings options more clear as to what they actually mean</changes>
+    </release>
     <release version="2022.2.0">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Local Push notifications directly from your Home Assistant instance. The app will need to maintain a consistent websockets connection by using a persistent notification. From the notification you will be able to access websockets settings to adjust the behavior of the connection as well as the notification channel. You are free to minimize the notification channel to hide the icon. If you are on the minimal build you will need to have Home Assistant Core on 2022.2 in order for the notify service call to be created.</change>
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; The Do Not Disturb sensor is now only available on devices running Android 6 or higher. The sensor was updated to use a documented API rather than the undocumented method used.</change>
