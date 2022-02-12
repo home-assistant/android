@@ -170,7 +170,7 @@ class WebsocketManager(
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
                     CHANNEL_ID,
-                    CHANNEL_ID,
+                    applicationContext.getString(R.string.websocket_setting_name),
                     NotificationManager.IMPORTANCE_LOW
                 )
                 notificationManager.createNotificationChannel(notificationChannel)
