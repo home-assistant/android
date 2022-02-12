@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
@@ -33,9 +34,13 @@ fun WebsocketSettingView(
 ) {
     val context = LocalContext.current
     Column(modifier = Modifier.padding(20.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 20.dp)
+        ) {
             Text(stringResource(R.string.websocket_setting_description))
         }
+        Divider()
         RadioButtonRow(
             text = stringResource(if (BuildConfig.FLAVOR == "full") R.string.websocket_setting_never else R.string.websocket_setting_never_minimal),
             selected = websocketSetting == WebsocketSetting.NEVER,
@@ -47,7 +52,7 @@ fun WebsocketSettingView(
             onClick = { onSettingChanged(WebsocketSetting.SCREEN_ON) }
         )
         RadioButtonRow(
-            text = stringResource(R.string.websocket_setting_always),
+            text = stringResource(if (BuildConfig.FLAVOR == "full") R.string.websocket_setting_always else R.string.websocket_setting_always_minimal),
             selected = websocketSetting == WebsocketSetting.ALWAYS,
             onClick = { onSettingChanged(WebsocketSetting.ALWAYS) }
         )
@@ -90,10 +95,11 @@ fun RadioButtonRow(
         modifier = Modifier
             .fillMaxWidth()
             .selectable(selected = selected, onClick = onClick)
-            .padding(top = 10.dp),
+            .padding(top = 20.dp, bottom = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(selected = selected, onClick = onClick)
         Text(text)
     }
+    Divider()
 }

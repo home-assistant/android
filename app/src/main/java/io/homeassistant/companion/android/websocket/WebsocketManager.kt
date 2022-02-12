@@ -206,7 +206,7 @@ class WebsocketManager(
             .setGroup(CHANNEL_ID)
             .addAction(
                 io.homeassistant.companion.android.R.drawable.ic_websocket,
-                applicationContext.getString(R.string.websocket_setting_name),
+                applicationContext.getString(R.string.settings),
                 settingPendingIntent
             )
             .build()
