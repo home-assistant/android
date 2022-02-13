@@ -16,6 +16,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     private lateinit var homePresenter: HomePresenter
     val app = getApplication<HomeAssistantApplication>()
     private val favoritesDao = AppDatabase.getInstance(app.applicationContext).favoritesDao()
+    private val sensorsDao = AppDatabase.getInstance(app.applicationContext).sensorDao()
     private var areaRegistry: List<AreaRegistryResponse>? = null
     private var deviceRegistry: List<DeviceRegistryResponse>? = null
     private var entityRegistry: List<EntityRegistryResponse>? = null
@@ -37,6 +39,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         this.homePresenter = homePresenter
         loadEntities()
         getFavorites()
+        getSensors()
     }
 
     // entities
@@ -77,12 +80,14 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     private fun favorites(): Flow<List<Favorites>>? = favoritesDao.getAllFlow()
 
+    private fun sensors(): Flow<List<Sensor>>? = sensorsDao.getAllFlow()
+
     fun supportedDomains(): List<String> = HomePresenterImpl.supportedDomains
 
     fun stringForDomain(domain: String): String? =
         HomePresenterImpl.domainsWithNames[domain]?.let { app.applicationContext.getString(it) }
-//    var sensorManagers = mutableStateMapOf<String, SensorManager<*>>()
-//        private set
+
+    var sensors = mutableStateListOf<Sensor>()
 
     private fun loadEntities() {
         viewModelScope.launch {
@@ -219,6 +224,17 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun clearFavorites() {
         favoriteEntityIds.clear()
         favoritesDao.deleteAll()
+    }
+
+    private fun getSensors() {
+        viewModelScope.launch{
+            sensors()?.collect {
+                sensors.clear()
+                for (sensor in it) {
+                    sensors.add(sensor)
+                }
+            }
+        }
     }
 
     fun setTileShortcut(index: Int, entity: SimplifiedEntity) {

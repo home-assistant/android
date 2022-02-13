@@ -10,35 +10,27 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleChip
 import androidx.wear.compose.material.ToggleChipDefaults
 import io.homeassistant.companion.android.common.sensors.SensorManager
-import io.homeassistant.companion.android.database.sensor.SensorDao
+import io.homeassistant.companion.android.database.sensor.Sensor
 
 @Composable
 fun SensorUi(
-    sensorDao: SensorDao,
+    sensor: Sensor?,
     manager: SensorManager,
     basicSensor: SensorManager.BasicSensor,
     onSensorClicked: (String, Boolean) -> Unit,
 //    isHapticEnabled: Boolean,
 //    isToastEnabled: Boolean
 ) {
-    val dao = sensorDao.get(basicSensor.id)
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
-    val checked = manager.isEnabled(LocalContext.current, basicSensor.id)
+    val checked = sensor?.enabled == true
     ToggleChip(
-        checked = (dao == null && manager.enabledByDefault) ||
-            (dao?.enabled == true && perm),
+        checked = (sensor == null && manager.enabledByDefault) ||
+            (sensor?.enabled == true && perm),
         onCheckedChange = { enabled ->
             onSensorClicked(basicSensor.id, enabled)
-//                onEntityClickedFeedback(isToastEnabled, isHapticEnabled, context, friendlyName, haptic)
         },
         modifier = Modifier
             .fillMaxWidth(),
-        /*appIcon = {
-            Image(
-                asset = iconBitmap ?: CommunityMaterial.Icon.cmd_cellphone,
-                colorFilter = ColorFilter.tint(wearColorPalette.onSurface)
-            )
-        },*/
         label = {
             Text(
                 text = stringResource(basicSensor.name),

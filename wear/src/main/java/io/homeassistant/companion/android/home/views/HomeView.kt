@@ -117,17 +117,28 @@ fun LoadHomePage(
                 composable(SCREEN_SETTINGS) {
                     SettingsView(
                         favorites = mainViewModel.favoriteEntityIds,
-                        onClickSetFavorites = { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
+                        onClickSetFavorites = {
+                            swipeDismissableNavController.navigate(
+                                SCREEN_SET_FAVORITES
+                            )
+                        },
                         onClearFavorites = { mainViewModel.clearFavorites() },
-                        onClickSetShortcuts = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) },
-                        onClickSensors = { swipeDismissableNavController.navigate(SCREEN_MANAGE_SENSORS) },
+                        onClickSetShortcuts = {
+                            swipeDismissableNavController.navigate(
+                                SCREEN_SET_TILE_SHORTCUTS
+                            )
+                        },
+                        onClickSensors = {
+                            swipeDismissableNavController.navigate(
+                                SCREEN_MANAGE_SENSORS
+                            )
+                        },
                         onClickLogout = { mainViewModel.logout() },
                         isHapticEnabled = mainViewModel.isHapticEnabled.value,
                         isToastEnabled = mainViewModel.isToastEnabled.value,
                         onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
-                        onToastEnabled = { mainViewModel.setToastEnabled(it) },
-                        onClickTemplateTile = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
-                    )
+                        onToastEnabled = { mainViewModel.setToastEnabled(it) }
+                    ) { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
                 }
                 composable(SCREEN_SET_FAVORITES) {
                     SetFavoritesView(
@@ -210,42 +221,16 @@ fun LoadHomePage(
                     }
                     val sensorDao = AppDatabase.getInstance(context).sensorDao()
                     SensorManagerUi(
-                        sensorDao = sensorDao,
+                        allSensors = mainViewModel.sensors,
                         sensorManager = sensorManager,
-                    ) { sensorId, enabled ->
-//                            if (isEnabled) {
-//                                val permissions = sensorManager.requiredPermissions(basicSensor.id)
-//                                val context = requireContext()
-//                                val fineLocation = DisabledLocationHandler.containsLocationPermission(permissions, true)
-//                                val coarseLocation = DisabledLocationHandler.containsLocationPermission(permissions, false)
-//
-//                                if ((fineLocation || coarseLocation) &&
-//                                    !DisabledLocationHandler.isLocationEnabled(context)
-//                                ) {
-//                                    DisabledLocationHandler.showLocationDisabledWarnDialog(requireActivity(), arrayOf(getString(basicSensor.name)))
-//                                    return@setOnPreferenceChangeListener false
-//                                } else {
-//                                    if (!sensorManager.checkPermission(context, basicSensor.id)) {
-//                                        if (sensorManager is NetworkSensorManager) {
-//                                            LocationPermissionInfoHandler.showLocationPermInfoDialogIfNeeded(
-//                                                context, permissions,
-//                                                continueYesCallback = {
-//                                                    requestPermissions(permissions)
-//                                                }
-//                                            )
-//                                        } else requestPermissions(permissions)
-//
-//                                        return@setOnPreferenceChangeListener false
-//                                    }
-//                                }
-//                            }
-//                            val basicSensor = sensorManager.getAvailableSensors(context)
-//                                .first { basicSensor -> basicSensor.id == sensorId }
-//                            updateSensorEntity(sensorDao, basicSensor, enabled)
-//
-//                            if (enabled)
-//                                sensorManager.requestSensorUpdate(context)
-                        mainViewModel.toggleSensor(context, sensorId, enabled)
+                    ) { sensorId, isEnabled ->
+                        val basicSensor = sensorManager.getAvailableSensors(context)
+                            .first { basicSensor -> basicSensor.id == sensorId }
+                        updateSensorEntity(sensorDao, basicSensor, isEnabled)
+
+                        if (isEnabled)
+                            sensorManager.requestSensorUpdate(context)
+//                        mainViewModel.toggleSensor(context, sensorId, enabled)
                     }
 //                            isHapticEnabled = isHapticEnabled,
 //                            isToastEnabled = isToastEnabled
