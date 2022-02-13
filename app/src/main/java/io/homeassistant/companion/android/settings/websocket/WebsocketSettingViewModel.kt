@@ -20,7 +20,7 @@ class WebsocketSettingViewModel @Inject constructor(
     fun getWebsocketSetting(id: Int): Setting {
         var setting = settingsDao.get(id)
         if (setting == null) {
-            setting = Setting(id, if (BuildConfig.FLAVOR == "full") WebsocketSetting.SCREEN_ON else WebsocketSetting.ALWAYS)
+            setting = Setting(id, if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS)
             settingsDao.insert(setting)
         }
         return setting
