@@ -200,7 +200,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         }
     }
 
-    fun toggleSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
+    fun enableDisableSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
         viewModelScope.launch {
             val basicSensor = sensorManager.getAvailableSensors(app)
                 .first { basicSensor -> basicSensor.id == sensorId }

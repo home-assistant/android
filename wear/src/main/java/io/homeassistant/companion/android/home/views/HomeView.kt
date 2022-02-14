@@ -220,7 +220,7 @@ fun LoadHomePage(
                         allSensors = mainViewModel.sensors,
                         sensorManager = sensorManager,
                     ) { sensorId, isEnabled ->
-                        mainViewModel.toggleSensor(sensorManager, sensorId, isEnabled)
+                        mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)
                     }
 //                            isHapticEnabled = isHapticEnabled,
 //                            isToastEnabled = isToastEnabled
