@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.home
 
 import android.app.Application
-import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -251,7 +250,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     }
 
     private fun getSensors() {
-        viewModelScope.launch{
+        viewModelScope.launch {
             sensors()?.collect {
                 sensors.clear()
                 for (sensor in it) {

@@ -9,5 +9,4 @@ class NetworkSensorManager : NetworkSensorManagerBase() {
     override fun hasSensor(context: Context): Boolean {
         return BuildConfig.FLAVOR != "quest"
     }
-
 }

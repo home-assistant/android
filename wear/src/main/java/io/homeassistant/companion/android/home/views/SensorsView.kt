@@ -61,7 +61,7 @@ fun SensorsView(
                 item {
                     ListHeader(id = commonR.string.sensors)
                 }
-                items(sensorManagers.size, { sensorManagers[it].name } ) { index ->
+                items(sensorManagers.size, { sensorManagers[it].name }) { index ->
                     sensorManagers.forEach { manager ->
                         Row {
                             Chip(

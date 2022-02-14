@@ -25,7 +25,6 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.common.sensors.id
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -209,10 +208,10 @@ fun LoadHomePage(
                         navArgument(name = ARG_SCREEN_SENSOR_MANAGER_ID) {
                             type = NavType.StringType
                         }
-                    )) { backStackEntry ->
+                    )
+                ) { backStackEntry ->
                     val sensorManagerId =
                         backStackEntry.arguments?.getString(ARG_SCREEN_SENSOR_MANAGER_ID)
-                    //TODO cache sensor managers list or find better way to pass list of sensor managers
                     val sensorManager = getSensorManagers().first { sensorManager ->
                         sensorManager.id() == sensorManagerId
                     }
@@ -222,9 +221,6 @@ fun LoadHomePage(
                     ) { sensorId, isEnabled ->
                         mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)
                     }
-//                            isHapticEnabled = isHapticEnabled,
-//                            isToastEnabled = isToastEnabled
-
                 }
             }
         }

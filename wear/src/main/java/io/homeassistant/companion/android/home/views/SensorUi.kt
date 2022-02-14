@@ -18,8 +18,6 @@ fun SensorUi(
     manager: SensorManager,
     basicSensor: SensorManager.BasicSensor,
     onSensorClicked: (String, Boolean) -> Unit,
-//    isHapticEnabled: Boolean,
-//    isToastEnabled: Boolean
 ) {
     val perm = manager.checkPermission(LocalContext.current, basicSensor.id)
     val checked = sensor?.enabled == true

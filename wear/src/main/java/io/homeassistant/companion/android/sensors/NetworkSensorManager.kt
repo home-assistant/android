@@ -8,5 +8,4 @@ class NetworkSensorManager : NetworkSensorManagerBase() {
     override fun hasSensor(context: Context): Boolean {
         return true
     }
-
 }

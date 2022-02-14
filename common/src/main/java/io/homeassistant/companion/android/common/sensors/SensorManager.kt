@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
-import java.util.*
+import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
 interface SensorManager {

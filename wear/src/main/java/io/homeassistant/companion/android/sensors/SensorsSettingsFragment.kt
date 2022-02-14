@@ -1,36 +1,22 @@
 package io.homeassistant.companion.android.sensors
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.Settings
-import android.view.Menu
-import android.view.MenuItem
-import android.widget.SearchView
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.view.MenuItemCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceGroup
-import androidx.preference.SwitchPreference
 import androidx.preference.forEach
 import androidx.preference.iterator
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.common.util.DisabledLocationHandler
-import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
-//TODO remove me
+// TODO remove me
 @AndroidEntryPoint
 class SensorsSettingsFragment : PreferenceFragmentCompat() {
 

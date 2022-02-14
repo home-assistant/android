@@ -3,10 +3,7 @@ package io.homeassistant.companion.android.sensors
 import android.os.Bundle
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.commitNow
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.R
 
 @AndroidEntryPoint

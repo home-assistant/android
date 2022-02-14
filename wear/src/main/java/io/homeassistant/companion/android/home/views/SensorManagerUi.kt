@@ -19,7 +19,6 @@ import androidx.wear.compose.material.rememberScalingLazyListState
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.theme.WearAppTheme
-//import io.homeassistant.companion.android.util.previewSensorManager
 
 @ExperimentalAnimationApi
 @ExperimentalWearMaterialApi
@@ -29,8 +28,6 @@ fun SensorManagerUi(
     allSensors: List<Sensor>?,
     sensorManager: SensorManager,
     onSensorClicked: (String, Boolean) -> Unit,
-//    isHapticEnabled: Boolean,
-//    isToastEnabled: Boolean
 ) {
     val scalingLazyListState: ScalingLazyListState = rememberScalingLazyListState()
 
@@ -75,28 +72,8 @@ fun SensorManagerUi(
                         manager = sensorManager,
                         basicSensor = basicSensor,
                     ) { sensorId, enabled -> onSensorClicked(sensorId, enabled) }
-//                            isHapticEnabled,
-//                            isToastEnabled
-
                 }
             }
         }
     }
 }
-
-//@ExperimentalComposeUiApi
-//@ExperimentalWearMaterialApi
-//@ExperimentalAnimationApi
-//@Preview
-//@Composable
-//private fun PreviewSensorUI() {
-//    Column {
-//        SensorManagerUi(
-//            sensorDao,
-//            sensorManager = previewSensorManager,
-//        ) { _, _ -> }
-////            isHapticEnabled = true,
-////            isToastEnabled = false
-//
-//    }
-//}
