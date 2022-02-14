@@ -30,6 +30,7 @@ import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.common.R as commonR
 
 private const val SCREEN_LANDING = "landing"
+private const val SCREEN_ENTITY_DETAIL = "entity_detail"
 private const val SCREEN_ENTITY_LIST = "entity_list"
 private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
@@ -73,11 +74,14 @@ fun LoadHomePage(
             ) {
                 composable(SCREEN_LANDING) {
                     MainView(
-                        mainViewModel,
-                        mainViewModel.favoriteEntityIds,
-                        { id, state -> mainViewModel.toggleEntity(id, state) },
-                        { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
-                        { lists, order, filter ->
+                        mainViewModel = mainViewModel,
+                        favoriteEntityIds = mainViewModel.favoriteEntityIds,
+                        onEntityClicked = { id, state -> mainViewModel.toggleEntity(id, state) },
+                        onEntityLongClicked = { entityId ->
+                            swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
+                        },
+                        onSettingsClicked = { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
+                        onTestClicked = { lists, order, filter ->
                             mainViewModel.entityLists.clear()
                             mainViewModel.entityLists.putAll(lists)
                             mainViewModel.entityListsOrder.clear()
@@ -85,19 +89,41 @@ fun LoadHomePage(
                             mainViewModel.entityListFilter = filter
                             swipeDismissableNavController.navigate(SCREEN_ENTITY_LIST)
                         },
-                        mainViewModel.isHapticEnabled.value,
-                        mainViewModel.isToastEnabled.value,
-                        { id -> mainViewModel.removeFavorites(id) }
+                        isHapticEnabled = mainViewModel.isHapticEnabled.value,
+                        isToastEnabled = mainViewModel.isToastEnabled.value,
+                        deleteFavorite = { id -> mainViewModel.removeFavorites(id) }
                     )
+                }
+                composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
+                    val entity = mainViewModel.entities[it.arguments?.getString("entityId")]
+                    if (entity != null) {
+                        DetailsPanelView(
+                            entity = entity,
+                            onBrightnessChanged = { brightness ->
+                                mainViewModel.setBrightness(
+                                    entity.entityId,
+                                    brightness
+                                )
+                            },
+                            onColorTempChanged = { colorTemp ->
+                                mainViewModel.setColorTemp(
+                                    entity.entityId,
+                                    colorTemp
+                                )
+                            }
+                        )
+                    }
                 }
                 composable(SCREEN_ENTITY_LIST) {
                     EntityViewList(
                         entityLists = mainViewModel.entityLists,
                         entityListsOrder = mainViewModel.entityListsOrder,
                         entityListFilter = mainViewModel.entityListFilter,
-                        onEntityClicked =
-                        { entityId, state ->
+                        onEntityClicked = { entityId, state ->
                             mainViewModel.toggleEntity(entityId, state)
+                        },
+                        onEntityLongClicked = { entityId ->
+                            swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
                         },
                         isHapticEnabled = mainViewModel.isHapticEnabled.value,
                         isToastEnabled = mainViewModel.isToastEnabled.value

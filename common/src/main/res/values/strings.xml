@@ -89,6 +89,7 @@
     <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
     <string name="biometric_set_title">Confirm to continue</string>
     <string name="biometric_title">Home Assistant is locked</string>
+    <string name="brightness">Brightness</string>
     <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
     <string name="buttons">Buttons</string>
     <string name="button_forward">Next</string>
@@ -100,6 +101,7 @@
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
+    <string name="color_temp">Color temperature</string>
     <string name="config">Configuration</string>
     <string name="configure_service_call">Configure Service Call</string>
     <string name="configure_widget_label">Widget Label</string>
@@ -128,6 +130,7 @@
     <string name="delete_this_notification">Delete this notification from history</string>
     <string name="delete_widget">Delete Widget</string>
     <string name="description">Description</string>
+    <string name="details">Details</string>
     <string name="developer_tools">Developer Tools</string>
     <string name="device_class">Device Class</string>
     <string name="device_name">Device Name</string>
@@ -235,7 +238,9 @@
     <string name="lang_summary_settings">Changing default language may have influence on device entities naming</string>
     <string name="lang_title_settings">Language</string>
     <string name="last_25_notifications">Last 25 Notifications</string>
+    <string name="last_changed">Last changed</string>
     <string name="last_num_notifications">Last %1$d Notifications</string>
+    <string name="last_updated">Last updated</string>
     <string name="learn_more">Learn More</string>
     <string name="lights">Lights</string>
     <string name="button_widgets">Button Widgets</string>

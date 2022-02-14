@@ -46,6 +46,7 @@ fun MainView(
     mainViewModel: MainViewModel,
     favoriteEntityIds: List<String>,
     onEntityClicked: (String, String) -> Unit,
+    onEntityLongClicked: (String) -> Unit,
     onSettingsClicked: () -> Unit,
     onTestClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> (Boolean)) -> Unit,
     isHapticEnabled: Boolean,
@@ -115,7 +116,7 @@ fun MainView(
                                             onEntityClicked,
                                             isHapticEnabled,
                                             isToastEnabled
-                                        )
+                                        ) { entityId -> onEntityLongClicked(entityId) }
                                     }
                                 }
                                 if (!isValidEntity) {

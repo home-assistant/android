@@ -101,6 +101,28 @@ class HomePresenterImpl @Inject constructor(
         )
     }
 
+    override suspend fun onBrightnessChanged(entityId: String, brightness: Float) {
+        integrationUseCase.callService(
+            entityId.split(".")[0],
+            "turn_on",
+            hashMapOf(
+                "entity_id" to entityId,
+                "brightness" to brightness.toInt()
+            )
+        )
+    }
+
+    override suspend fun onColorTempChanged(entityId: String, colorTemp: Float) {
+        integrationUseCase.callService(
+            entityId.split(".")[0],
+            "turn_on",
+            hashMapOf(
+                "entity_id" to entityId,
+                "color_temp" to colorTemp.toInt()
+            )
+        )
+    }
+
     override fun onLogoutClicked() {
         mainScope.launch {
             authenticationUseCase.revokeSession()
