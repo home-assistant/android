@@ -24,11 +24,8 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -219,18 +216,11 @@ fun LoadHomePage(
                     val sensorManager = getSensorManagers().first { sensorManager ->
                         sensorManager.id() == sensorManagerId
                     }
-                    val sensorDao = AppDatabase.getInstance(context).sensorDao()
                     SensorManagerUi(
                         allSensors = mainViewModel.sensors,
                         sensorManager = sensorManager,
                     ) { sensorId, isEnabled ->
-                        val basicSensor = sensorManager.getAvailableSensors(context)
-                            .first { basicSensor -> basicSensor.id == sensorId }
-                        updateSensorEntity(sensorDao, basicSensor, isEnabled)
-
-                        if (isEnabled)
-                            sensorManager.requestSensorUpdate(context)
-//                        mainViewModel.toggleSensor(context, sensorId, enabled)
+                        mainViewModel.toggleSensor(sensorManager, sensorId, isEnabled)
                     }
 //                            isHapticEnabled = isHapticEnabled,
 //                            isToastEnabled = isToastEnabled
@@ -239,23 +229,4 @@ fun LoadHomePage(
             }
         }
     }
-}
-
-//TODO move to integration use case
-private fun updateSensorEntity(
-    sensorDao: SensorDao,
-    basicSensor: SensorManager.BasicSensor,
-    isEnabled: Boolean
-) {
-
-    var sensorEntity = sensorDao.get(basicSensor.id)
-    if (sensorEntity != null) {
-        sensorEntity.enabled = isEnabled
-        sensorEntity.lastSentState = ""
-        sensorDao.update(sensorEntity)
-    } else {
-        sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
-        sensorDao.add(sensorEntity)
-    }
-//    refreshSensorData()
 }

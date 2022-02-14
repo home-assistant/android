@@ -14,9 +14,11 @@ import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.data.SimplifiedEntity
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.flow.Flow
@@ -198,9 +200,31 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         }
     }
 
-    fun toggleSensor(context: Context, entityId: String, enabled: Boolean) {
+    fun toggleSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
         viewModelScope.launch {
-            homePresenter.onSensorClicked(context, entityId, enabled)
+            val basicSensor = sensorManager.getAvailableSensors(app)
+                .first { basicSensor -> basicSensor.id == sensorId }
+            updateSensorEntity(sensorsDao, basicSensor, isEnabled)
+
+            if (isEnabled)
+                sensorManager.requestSensorUpdate(app)
+        }
+    }
+
+    private fun updateSensorEntity(
+        sensorDao: SensorDao,
+        basicSensor: SensorManager.BasicSensor,
+        isEnabled: Boolean
+    ) {
+
+        var sensorEntity = sensorDao.get(basicSensor.id)
+        if (sensorEntity != null) {
+            sensorEntity.enabled = isEnabled
+            sensorEntity.lastSentState = ""
+            sensorDao.update(sensorEntity)
+        } else {
+            sensorEntity = Sensor(basicSensor.id, isEnabled, false, "")
+            sensorDao.add(sensorEntity)
         }
     }
 
