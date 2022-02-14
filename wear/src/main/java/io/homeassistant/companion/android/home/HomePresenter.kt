@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.home
 
-import android.content.Context
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
@@ -17,7 +16,6 @@ interface HomePresenter {
 
     fun onViewReady()
     suspend fun onEntityClicked(entityId: String, state: String)
-    suspend fun onSensorClicked(context: Context, entityId: String, enabled: Boolean)
     fun onLogoutClicked()
     fun onFinish()
 

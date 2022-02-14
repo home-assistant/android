@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.home
 
-import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
@@ -16,8 +15,6 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.De
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.data.SimplifiedEntity
-import io.homeassistant.companion.android.sensors.SensorReceiver
-import io.homeassistant.companion.android.sensors.SensorWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -102,13 +99,6 @@ class HomePresenterImpl @Inject constructor(
             serviceName,
             hashMapOf("entity_id" to entityId)
         )
-    }
-
-    override suspend fun onSensorClicked(context: Context, entityId: String, enabled: Boolean) {
-        mainScope.launch {
-            integrationUseCase.enableDisableSensor(context, entityId, enabled, SensorReceiver.MANAGERS)
-            SensorWorker.start(context)
-        }
     }
 
     override fun onLogoutClicked() {

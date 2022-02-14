@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.common.data.integration.impl
 
-import android.content.Context
 import android.util.Log
 import io.homeassistant.companion.android.common.BuildConfig
 import io.homeassistant.companion.android.common.data.LocalStorage
@@ -26,8 +25,6 @@ import io.homeassistant.companion.android.common.data.integration.impl.entities.
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
-import io.homeassistant.companion.android.common.sensors.SensorManager
-import io.homeassistant.companion.android.database.sensor.Sensor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
@@ -36,8 +33,6 @@ import org.json.JSONArray
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -609,22 +604,6 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         if (causeException != null) throw IntegrationException(causeException)
         else throw IntegrationException("Error calling integration update_sensor_states")
-    }
-
-    override suspend fun enableDisableSensor(
-        context: Context,
-        sensorId: String,
-        enabled: Boolean,
-        managers: List<SensorManager>
-    ) {
-        managers.forEach { manager ->
-            val basicSensor = manager.getAvailableSensors(context).firstOrNull { basicSensor ->
-                basicSensor.id == sensorId
-            }
-            basicSensor?.let {
-                manager.enableDisableSetting(context, basicSensor, context.getString(basicSensor.name), enabled)
-            }
-        }
     }
 
     override suspend fun shouldNotifySecurityWarning(): Boolean {

@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration
 
-import android.content.Context
 import io.homeassistant.companion.android.common.data.integration.impl.entities.RateLimitResponse
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import kotlinx.coroutines.flow.Flow
 
 interface IntegrationRepository {
@@ -65,12 +63,6 @@ interface IntegrationRepository {
 
     suspend fun registerSensor(sensorRegistration: SensorRegistration<Any>)
     suspend fun updateSensors(sensors: Array<SensorRegistration<Any>>): Boolean
-    suspend fun enableDisableSensor(
-        context: Context,
-        sensorId: String,
-        enabled: Boolean,
-        managers: List<SensorManager>
-    )
 
     suspend fun shouldNotifySecurityWarning(): Boolean
 }
