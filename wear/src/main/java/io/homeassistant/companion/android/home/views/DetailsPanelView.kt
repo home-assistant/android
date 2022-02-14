@@ -61,14 +61,7 @@ fun DetailsPanelView(
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
                         ) {
-                            Image(
-                                asset = CommunityMaterial.Icon.cmd_brightness_5,
-                                colorFilter = ColorFilter.tint(Color.White)
-                            )
-                            Text(
-                                text = stringResource(R.string.brightness),
-                                modifier = Modifier.padding(start = 4.dp)
-                            )
+                            Text(stringResource(R.string.brightness))
                         }
                     }
                     item {
@@ -79,6 +72,18 @@ fun DetailsPanelView(
                             },
                             steps = 20,
                             valueRange = minValue..maxValue,
+                            decreaseIcon = {
+                                Image(
+                                    asset = CommunityMaterial.Icon.cmd_brightness_4,
+                                    colorFilter = ColorFilter.tint(Color.White)
+                                )
+                            },
+                            increaseIcon = {
+                                Image(
+                                    asset = CommunityMaterial.Icon.cmd_brightness_7,
+                                    colorFilter = ColorFilter.tint(Color.White)
+                                )
+                            },
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }
@@ -101,14 +106,7 @@ fun DetailsPanelView(
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
                         ) {
-                            Image(
-                                asset = CommunityMaterial.Icon3.cmd_thermometer,
-                                colorFilter = ColorFilter.tint(Color.White)
-                            )
-                            Text(
-                                text = stringResource(R.string.color_temp),
-                                modifier = Modifier.padding(start = 4.dp)
-                            )
+                            Text(stringResource(R.string.color_temp))
                         }
                     }
                     item {
@@ -117,6 +115,18 @@ fun DetailsPanelView(
                             onValueChange = onColorTempChanged,
                             steps = 20,
                             valueRange = minValue..maxValue,
+                            decreaseIcon = {
+                                Image(
+                                    asset = CommunityMaterial.Icon3.cmd_thermometer_minus,
+                                    colorFilter = ColorFilter.tint(Color.White)
+                                )
+                            },
+                            increaseIcon = {
+                                Image(
+                                    asset = CommunityMaterial.Icon3.cmd_thermometer_plus,
+                                    colorFilter = ColorFilter.tint(Color.White)
+                                )
+                            },
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }
