@@ -56,8 +56,6 @@
 
         <!-- To show confirmations and failures -->
         <activity android:name="androidx.wear.activity.ConfirmationActivity" />
-        <activity android:name=".sensors.SensorSettingsActivity"
-            android:theme="@style/Theme.AppCompat.DayNight" />
 
         <!-- Tiles -->
         <service
