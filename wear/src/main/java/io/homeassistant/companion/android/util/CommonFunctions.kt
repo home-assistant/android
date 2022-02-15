@@ -13,7 +13,7 @@ fun getIcon(icon: String?, domain: String, context: Context): IIcon? {
     return if (icon?.startsWith("mdi") == true) {
         val mdiIcon = icon.split(":")[1]
         IconicsDrawable(context, "cmd-$mdiIcon").icon
-    } else {
+    } else { // Default domain icon
         when (domain) {
             "button", "input_button" -> CommunityMaterial.Icon2.cmd_gesture_tap_button
             "cover" -> CommunityMaterial.Icon3.cmd_window_closed
