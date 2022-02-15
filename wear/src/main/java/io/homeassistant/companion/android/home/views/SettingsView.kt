@@ -180,7 +180,7 @@ fun SettingsView(
                 item {
                     SecondarySettingsChip(
                         icon = CommunityMaterial.Icon2.cmd_leak,
-                        label = stringResource(id = commonR.string.sensors),
+                        label = stringResource(id = commonR.string.sensor_title),
                         onClick = onClickSensors
                     )
                 }
