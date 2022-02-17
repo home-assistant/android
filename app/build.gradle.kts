@@ -193,7 +193,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.navigation:navigation-compose:2.4.0-rc01")
     implementation("com.google.android.material:compose-theme-adapter:1.1.3")
-    implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.3")
+    implementation("com.google.accompanist:accompanist-appcompat-theme:0.23.0")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
     implementation("com.mikepenz:iconics-compose:5.3.3")
