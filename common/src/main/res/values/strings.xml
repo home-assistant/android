@@ -94,6 +94,7 @@
     <string name="button_forward">Next</string>
     <string name="button_widget_desc">Call any service</string>
     <string name="calendar">Calendar</string>
+    <string name="camera_widgets">Camera Widgets</string>
     <string name="camera_widget_desc">Displays the latest image from the camera</string>
     <string name="cancel">Cancel</string>
     <string name="changelog">View Full Change Log</string>
@@ -328,7 +329,7 @@
     <string name="nfc_write_tag_too_early">Please fill out the form first</string>
     <string name="no_notifications_summary">You have not received any notifications yet</string>
     <string name="no_notifications">No Notifications</string>
-    <string name="no_widgets_summary">When you add a configurable widget to your home screen, you will see it here</string>
+    <string name="no_widgets_summary">When you add a widget to your home screen, you will see it here</string>
     <string name="no_widgets">No Widgets Found</string>
     <string name="none">None</string>
     <string name="not_private">Your connection to this site is not private.</string>

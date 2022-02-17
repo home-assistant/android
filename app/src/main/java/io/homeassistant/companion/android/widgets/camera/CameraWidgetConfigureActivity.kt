@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.widgets.camera
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -16,6 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.widgets.common.SingleItemArrayAdapter
@@ -24,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -90,6 +93,28 @@ class CameraWidgetConfigureActivity : BaseActivity() {
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
+        }
+
+        val cameraWidgetDao = AppDatabase.getInstance(this).cameraWidgetDao()
+        val cameraWidget = cameraWidgetDao.get(appWidgetId)
+        if (cameraWidget != null) {
+            binding.widgetTextConfigEntityId.setText(cameraWidget.entityId)
+            binding.addButton.setText(commonR.string.update_widget)
+            binding.deleteButton.visibility = View.VISIBLE
+            binding.deleteButton.setOnClickListener(onDeleteWidget)
+            val entity = runBlocking {
+                try {
+                    integrationUseCase.getEntity(cameraWidget.entityId)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Unable to get entity information", e)
+                    Toast.makeText(applicationContext, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
+                        .show()
+                    null
+                }
+            }
+            if (entity != null) {
+                selectedEntity = entity as Entity<Any>?
+            }
         }
 
         val entityAdapter = SingleItemArrayAdapter<Entity<Any>>(this) { it?.entityId ?: "" }
@@ -186,5 +211,36 @@ class CameraWidgetConfigureActivity : BaseActivity() {
             )
             onAddWidget()
         }
+    }
+
+    private var onDeleteWidget = View.OnClickListener {
+        val context = this@CameraWidgetConfigureActivity
+        deleteConfirmation(context)
+    }
+
+    private fun deleteConfirmation(context: Context) {
+        val cameraWidgetDao = AppDatabase.getInstance(context).cameraWidgetDao()
+
+        val builder: android.app.AlertDialog.Builder = android.app.AlertDialog.Builder(context)
+
+        builder.setTitle(commonR.string.confirm_delete_this_widget_title)
+        builder.setMessage(commonR.string.confirm_delete_this_widget_message)
+
+        builder.setPositiveButton(
+            commonR.string.confirm_positive
+        ) { dialog, _ ->
+            cameraWidgetDao.delete(appWidgetId)
+            dialog.dismiss()
+            finish()
+        }
+
+        builder.setNegativeButton(
+            commonR.string.confirm_negative
+        ) { dialog, _ -> // Do nothing
+            dialog.dismiss()
+        }
+
+        val alert: android.app.AlertDialog? = builder.create()
+        alert?.show()
     }
 }

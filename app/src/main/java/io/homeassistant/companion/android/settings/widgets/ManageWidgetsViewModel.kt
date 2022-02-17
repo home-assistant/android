@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.ButtonWidgetEntity
+import io.homeassistant.companion.android.database.widget.CameraWidgetEntity
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetEntity
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
@@ -34,6 +35,8 @@ class ManageWidgetsViewModel @Inject constructor(
 
     private val buttonWidgetDao = AppDatabase.getInstance(application).buttonWidgetDao()
     private fun buttonWidgetFlow(): Flow<List<ButtonWidgetEntity>>? = buttonWidgetDao.getAllFlow()
+    private val cameraWidgetDao = AppDatabase.getInstance(application).cameraWidgetDao()
+    private fun cameraWidgetFlow(): Flow<List<CameraWidgetEntity>>? = cameraWidgetDao.getAllFlow()
     private val staticWidgetDao = AppDatabase.getInstance(application).staticWidgetDao()
     private fun staticWidgetFlow(): Flow<List<StaticWidgetEntity>>? = staticWidgetDao.getAllFlow()
     private val mediaPlayerControlsWidgetDao = AppDatabase.getInstance(application).mediaPlayCtrlWidgetDao()
@@ -42,6 +45,8 @@ class ManageWidgetsViewModel @Inject constructor(
     private fun templateWidgetFlow(): Flow<List<TemplateWidgetEntity>>? = templateWidgetDao.getAllFlow()
 
     var buttonWidgetList = mutableStateListOf<ButtonWidgetEntity>()
+        private set
+    var cameraWidgetList = mutableStateListOf<CameraWidgetEntity>()
         private set
     var staticWidgetList = mutableStateListOf<StaticWidgetEntity>()
         private set
@@ -54,6 +59,7 @@ class ManageWidgetsViewModel @Inject constructor(
 
     init {
         buttonWidgetList()
+        cameraWidgetList()
         staticWidgetList()
         mediaWidgetList()
         templateWidgetList()
@@ -66,6 +72,16 @@ class ManageWidgetsViewModel @Inject constructor(
                 buttonWidgetList.clear()
                 it.forEach { widget ->
                     buttonWidgetList.add(widget)
+                }
+            }
+        }
+    }
+    private fun cameraWidgetList() {
+        viewModelScope.launch {
+            cameraWidgetFlow()?.collect {
+                cameraWidgetList.clear()
+                it.forEach { widget ->
+                    cameraWidgetList.add(widget)
                 }
             }
         }
