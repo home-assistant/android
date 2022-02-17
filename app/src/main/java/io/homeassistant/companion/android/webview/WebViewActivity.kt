@@ -249,6 +249,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.displayZoomControls = false
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
             settings.userAgentString = USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
             webViewClient = object : WebViewClient() {
@@ -265,6 +266,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    enablePinchToZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
                             val owner = "onPageFinished:$moreInfoEntity"
@@ -656,6 +658,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             unlocked = true
             binding.blurView.setBlurEnabled(false)
         }
+
+        enablePinchToZoom()
 
         if (presenter.isKeepScreenOnEnabled())
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -1310,5 +1314,34 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun enablePinchToZoom() {
+        // Enable pinch to zoom
+        webView.getSettings().setBuiltInZoomControls(presenter.isPinchToZoomEnabled())
+        // Use idea from https://github.com/home-assistant/iOS/pull/1472 to filter viewport
+        val pinchToZoom = if (presenter.isPinchToZoomEnabled()) "true" else "false"
+        webView.evaluateJavascript(
+            """
+            if (typeof viewport === 'undefined') {
+                var viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport != null && typeof original_elements === 'undefined') {
+                    var original_elements = viewport['content'];
+                }
+            }
+            if (viewport != null) {
+                if ($pinchToZoom) {
+                    const ignoredBits = ['user-scalable', 'minimum-scale', 'maximum-scale'];
+                    let elements = viewport['content'].split(',').filter(contentItem => {
+                        return ignoredBits.every(ignoredBit => !contentItem.includes(ignoredBit));
+                    });
+                    elements.push('user-scalable=yes');
+                    viewport['content'] = elements.join(',');
+                } else {
+                    viewport['content'] = original_elements;
+                }           
+            }
+            """
+        ) {}
     }
 }

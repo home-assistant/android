@@ -25,6 +25,9 @@ interface IntegrationRepository {
     suspend fun setKeepScreenOnEnabled(enabled: Boolean)
     suspend fun isKeepScreenOnEnabled(): Boolean
 
+    suspend fun setPinchToZoomEnabled(enabled: Boolean)
+    suspend fun isPinchToZoomEnabled(): Boolean
+
     suspend fun setAutoPlayVideo(enabled: Boolean)
     suspend fun isAutoPlayVideoEnabled(): Boolean
 

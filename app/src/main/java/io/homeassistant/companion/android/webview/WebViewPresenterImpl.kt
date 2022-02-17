@@ -138,6 +138,12 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isPinchToZoomEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isPinchToZoomEnabled()
+        }
+    }
+
     override fun isLockEnabled(): Boolean {
         return runBlocking {
             authenticationUseCase.isLockEnabled()
