@@ -48,6 +48,9 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.util.cancel
+import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
@@ -55,9 +58,6 @@ import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.util.UrlHandler
-import io.homeassistant.companion.android.util.cancel
-import io.homeassistant.companion.android.util.cancelGroupIfNeeded
-import io.homeassistant.companion.android.util.getActiveNotification
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -1141,7 +1141,7 @@ class MessagingManager @Inject constructor(
                     URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
                             builder.addAction(
-                                R.drawable.ic_globe,
+                                commonR.drawable.ic_globe,
                                 notificationAction.title,
                                 createOpenUriPendingIntent(notificationAction.uri)
                             )

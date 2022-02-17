@@ -27,6 +27,8 @@ import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
+import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
@@ -39,8 +41,6 @@ import io.homeassistant.companion.android.settings.ssid.SsidPreference
 import io.homeassistant.companion.android.settings.wear.SettingsWearActivity
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
-import io.homeassistant.companion.android.util.DisabledLocationHandler
-import io.homeassistant.companion.android.util.LocationPermissionInfoHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -324,7 +324,7 @@ class SettingsFragment constructor(
             it.isEnabled = false
             try {
                 val unwrappedDrawable =
-                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_priority)
+                    AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_priority)
                 unwrappedDrawable?.setTint(Color.DKGRAY)
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
@@ -350,7 +350,7 @@ class SettingsFragment constructor(
             it.isEnabled = true
             try {
                 val unwrappedDrawable =
-                    AppCompatResources.getDrawable(requireContext(), R.drawable.ic_priority)
+                    AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_priority)
                 unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {

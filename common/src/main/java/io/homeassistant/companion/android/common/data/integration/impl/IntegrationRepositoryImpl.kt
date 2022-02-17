@@ -33,8 +33,6 @@ import org.json.JSONArray
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,

@@ -68,6 +68,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
@@ -81,7 +82,6 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
-import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.CoroutineScope

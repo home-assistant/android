@@ -10,8 +10,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.RemoteInput
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.notifications.MessagingManager.Companion.KEY_TEXT_REPLY
-import io.homeassistant.companion.android.util.cancel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

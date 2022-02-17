@@ -14,6 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
@@ -22,6 +24,7 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
+import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -29,8 +32,12 @@ import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import io.homeassistant.companion.android.common.R as commonR
 
+private const val ARG_SCREEN_SENSOR_MANAGER_ID = "sensorManagerId"
+
 private const val SCREEN_LANDING = "landing"
 private const val SCREEN_ENTITY_LIST = "entity_list"
+private const val SCREEN_MANAGE_SENSORS = "manage_all_sensors"
+private const val SCREEN_SINGLE_SENSOR_MANAGER = "sensor_manager"
 private const val SCREEN_SETTINGS = "settings"
 private const val SCREEN_SET_FAVORITES = "set_favorites"
 private const val SCREEN_SET_TILE_SHORTCUTS = "set_tile_shortcuts"
@@ -106,16 +113,28 @@ fun LoadHomePage(
                 composable(SCREEN_SETTINGS) {
                     SettingsView(
                         favorites = mainViewModel.favoriteEntityIds,
-                        onClickSetFavorites = { swipeDismissableNavController.navigate(SCREEN_SET_FAVORITES) },
+                        onClickSetFavorites = {
+                            swipeDismissableNavController.navigate(
+                                SCREEN_SET_FAVORITES
+                            )
+                        },
                         onClearFavorites = { mainViewModel.clearFavorites() },
-                        onClickSetShortcuts = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_SHORTCUTS) },
+                        onClickSetShortcuts = {
+                            swipeDismissableNavController.navigate(
+                                SCREEN_SET_TILE_SHORTCUTS
+                            )
+                        },
+                        onClickSensors = {
+                            swipeDismissableNavController.navigate(
+                                SCREEN_MANAGE_SENSORS
+                            )
+                        },
                         onClickLogout = { mainViewModel.logout() },
                         isHapticEnabled = mainViewModel.isHapticEnabled.value,
                         isToastEnabled = mainViewModel.isToastEnabled.value,
                         onHapticEnabled = { mainViewModel.setHapticEnabled(it) },
-                        onToastEnabled = { mainViewModel.setToastEnabled(it) },
-                        onClickTemplateTile = { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
-                    )
+                        onToastEnabled = { mainViewModel.setToastEnabled(it) }
+                    ) { swipeDismissableNavController.navigate(SCREEN_SET_TILE_TEMPLATE) }
                 }
                 composable(SCREEN_SET_FAVORITES) {
                     SetFavoritesView(
@@ -176,6 +195,31 @@ fun LoadHomePage(
                         mainViewModel.setTemplateTileRefreshInterval(it)
                         TileService.getUpdater(context).requestUpdate(TemplateTile::class.java)
                         swipeDismissableNavController.navigateUp()
+                    }
+                }
+                composable(route = SCREEN_MANAGE_SENSORS) {
+                    SensorsView(onClickSensorManager = {
+                        swipeDismissableNavController.navigate("$SCREEN_SINGLE_SENSOR_MANAGER/${it.id()}")
+                    })
+                }
+                composable(
+                    route = "$SCREEN_SINGLE_SENSOR_MANAGER/{$ARG_SCREEN_SENSOR_MANAGER_ID}",
+                    arguments = listOf(
+                        navArgument(name = ARG_SCREEN_SENSOR_MANAGER_ID) {
+                            type = NavType.StringType
+                        }
+                    )
+                ) { backStackEntry ->
+                    val sensorManagerId =
+                        backStackEntry.arguments?.getString(ARG_SCREEN_SENSOR_MANAGER_ID)
+                    val sensorManager = getSensorManagers().first { sensorManager ->
+                        sensorManager.id() == sensorManagerId
+                    }
+                    SensorManagerUi(
+                        allSensors = mainViewModel.sensors,
+                        sensorManager = sensorManager,
+                    ) { sensorId, isEnabled ->
+                        mainViewModel.enableDisableSensor(sensorManager, sensorId, isEnabled)
                     }
                 }
             }
