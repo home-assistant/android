@@ -800,7 +800,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        if (data[NOTIFICATION_ICON]?.startsWith("mdi") == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (data[NOTIFICATION_ICON]?.startsWith("mdi:") == true && !data[NOTIFICATION_ICON]?.substringAfter("mdi:").isNullOrBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val iconName = data[NOTIFICATION_ICON]!!.split(":")[1]
             val iconDrawable =
                 IconicsDrawable(context, "cmd-$iconName").toAndroidIconCompat()
