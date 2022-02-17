@@ -7,8 +7,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
+import android.view.View
 import android.widget.RemoteViews
-import android.widget.Toast
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.StaticWidgetEntity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class EntityWidget : BaseWidgetProvider() {
@@ -30,6 +29,8 @@ class EntityWidget : BaseWidgetProvider() {
         internal const val EXTRA_TEXT_SIZE = "EXTRA_TEXT_SIZE"
         internal const val EXTRA_STATE_SEPARATOR = "EXTRA_STATE_SEPARATOR"
         internal const val EXTRA_ATTRIBUTE_SEPARATOR = "EXTRA_ATTRIBUTE_SEPARATOR"
+
+        private data class ResolvedText(val text: CharSequence?, val exception: Boolean = false)
     }
 
     override suspend fun getWidgetRemoteViews(context: Context, appWidgetId: Int, suggestedEntity: Entity<Map<String, Any>>?): RemoteViews {
@@ -47,6 +48,15 @@ class EntityWidget : BaseWidgetProvider() {
                 val textSize: Float = widget.textSize
                 val stateSeparator: String = widget.stateSeparator
                 val attributeSeparator: String = widget.attributeSeparator
+                val resolvedText = resolveTextToShow(
+                    context,
+                    entityId,
+                    suggestedEntity,
+                    attributeIds,
+                    stateSeparator,
+                    attributeSeparator,
+                    appWidgetId
+                )
                 setTextViewTextSize(
                     R.id.widgetText,
                     TypedValue.COMPLEX_UNIT_SP,
@@ -54,19 +64,15 @@ class EntityWidget : BaseWidgetProvider() {
                 )
                 setTextViewText(
                     R.id.widgetText,
-                    resolveTextToShow(
-                        context,
-                        entityId,
-                        suggestedEntity,
-                        attributeIds,
-                        stateSeparator,
-                        attributeSeparator,
-                        appWidgetId
-                    )
+                    resolvedText.text
                 )
                 setTextViewText(
                     R.id.widgetLabel,
                     label ?: entityId
+                )
+                setViewVisibility(
+                    R.id.widgetStaticError,
+                    if (resolvedText.exception) View.VISIBLE else View.GONE
                 )
                 setOnClickPendingIntent(
                     R.id.widgetTextLayout,
@@ -95,9 +101,10 @@ class EntityWidget : BaseWidgetProvider() {
         stateSeparator: String,
         attributeSeparator: String,
         appWidgetId: Int
-    ): CharSequence? {
+    ): ResolvedText {
         val staticWidgetDao = AppDatabase.getInstance(context).staticWidgetDao()
         var entity: Entity<Map<String, Any>>? = null
+        var entityCaughtException = false
         try {
             entity = if (suggestedEntity != null && suggestedEntity.entityId == entityId) {
                 suggestedEntity
@@ -106,16 +113,14 @@ class EntityWidget : BaseWidgetProvider() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity", e)
-            if (lastIntent == UPDATE_VIEW)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                    .show()
+            entityCaughtException = true
         }
         if (attributeIds == null) {
             staticWidgetDao.updateWidgetLastUpdate(
                 appWidgetId,
                 entity?.state ?: staticWidgetDao.get(appWidgetId)?.lastUpdate ?: ""
             )
-            return staticWidgetDao.get(appWidgetId)?.lastUpdate
+            return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, entityCaughtException)
         }
 
         var fetchedAttributes: Map<*, *>
@@ -128,14 +133,11 @@ class EntityWidget : BaseWidgetProvider() {
                 entity?.state.plus(if (attributeValues.isNotEmpty()) stateSeparator else "")
                     .plus(attributeValues.joinToString(attributeSeparator))
             staticWidgetDao.updateWidgetLastUpdate(appWidgetId, lastUpdate)
-            return lastUpdate
+            return ResolvedText(lastUpdate)
         } catch (e: Exception) {
             Log.e(TAG, "Unable to fetch entity state and attributes", e)
-            if (lastIntent == UPDATE_VIEW)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG)
-                    .show()
         }
-        return staticWidgetDao.get(appWidgetId)?.lastUpdate
+        return ResolvedText(staticWidgetDao.get(appWidgetId)?.lastUpdate, true)
     }
 
     override fun saveEntityConfiguration(context: Context, extras: Bundle?, appWidgetId: Int) {
