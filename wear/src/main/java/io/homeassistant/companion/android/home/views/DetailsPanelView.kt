@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.home.views
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,22 +43,26 @@ fun DetailsPanelView(
         ThemeLazyColumn {
             val attributes = entity.attributes as Map<*, *>
 
-            if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
-                item {
-                    val isChecked = entity.state in listOf("on", "locked", "open", "opening")
-                    ToggleButton(
-                        checked = isChecked,
-                        onCheckedChange = { onEntityToggled(entity.entityId, entity.state) },
-                        modifier = Modifier.size(ToggleButtonDefaults.SmallToggleButtonSize)
-                    ) {
-                        ToggleChipDefaults.SwitchIcon(checked = isChecked)
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val friendlyName = attributes["friendly_name"].toString()
+                    Text(friendlyName)
+
+                    if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
+                        val isChecked = entity.state in listOf("on", "locked", "open", "opening")
+                        ToggleButton(
+                            checked = isChecked,
+                            onCheckedChange = { onEntityToggled(entity.entityId, entity.state) },
+                            modifier = Modifier
+                                .padding(start = 16.dp)
+                                .size(ToggleButtonDefaults.SmallToggleButtonSize)
+                        ) {
+                            ToggleChipDefaults.SwitchIcon(checked = isChecked)
+                        }
                     }
                 }
-            }
-
-            item {
-                val friendlyName = attributes["friendly_name"].toString()
-                ListHeader(friendlyName)
             }
 
             if (entity.entityId.split('.')[0] == "light") {
@@ -88,7 +94,7 @@ fun DetailsPanelView(
             }
             item {
                 Text(
-                    stringResource(R.string.state) + ": ${entity.state}",
+                    stringResource(R.string.state_name, entity.state),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
@@ -97,7 +103,7 @@ fun DetailsPanelView(
             item {
                 val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
                 Text(
-                    stringResource(R.string.last_changed) + ": $lastChanged",
+                    stringResource(R.string.last_changed, lastChanged),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
@@ -106,7 +112,7 @@ fun DetailsPanelView(
             item {
                 val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
                 Text(
-                    stringResource(R.string.last_updated) + ": $lastUpdated",
+                    stringResource(R.string.last_updated, lastUpdated),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
@@ -114,7 +120,7 @@ fun DetailsPanelView(
             }
             item {
                 Text(
-                    stringResource(R.string.entity_id) + ": ${entity.entityId}",
+                    stringResource(R.string.entity_id_name, entity.entityId),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
@@ -138,7 +144,7 @@ fun BrightnessSlider(attributes: Map<*, *>, onBrightnessChanged: (Float) -> Unit
 
     Column {
         Text(
-            stringResource(R.string.brightness) + ": %.1f%%".format(currentValue),
+            stringResource(R.string.brightness) + ": %.0f%%".format(currentValue),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
