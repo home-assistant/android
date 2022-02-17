@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.settings.websocket.views
 
+import android.app.UiModeManager
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.Column
@@ -24,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
@@ -63,7 +66,8 @@ fun WebsocketSettingView(
             selected = websocketSetting == WebsocketSetting.ALWAYS,
             onClick = { onSettingChanged(WebsocketSetting.ALWAYS) }
         )
-        if (websocketSetting != WebsocketSetting.NEVER && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val uiManager = context.getSystemService<UiModeManager>()
+        if (websocketSetting != WebsocketSetting.NEVER && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
             Icon(
                 Icons.Outlined.Info,
                 contentDescription = stringResource(id = R.string.info),
