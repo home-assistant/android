@@ -1,8 +1,9 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -12,10 +13,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.InlineSlider
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.ToggleButton
+import androidx.wear.compose.material.ToggleButtonDefaults
+import androidx.wear.compose.material.ToggleChipDefaults
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.WearAppTheme
 import java.text.DateFormat
 
@@ -28,12 +33,27 @@ const val SUPPORT_COLOR_TEMP = "color_temp"
 @Composable
 fun DetailsPanelView(
     entity: Entity<*>,
+    onEntityToggled: (String, String) -> Unit,
     onBrightnessChanged: (Float) -> Unit,
     onColorTempChanged: (Float) -> Unit
 ) {
     WearAppTheme {
         ThemeLazyColumn {
             val attributes = entity.attributes as Map<*, *>
+
+            if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
+                item {
+                    val isChecked = entity.state in listOf("on", "locked", "open", "opening")
+                    ToggleButton(
+                        checked = isChecked,
+                        onCheckedChange = { onEntityToggled(entity.entityId, entity.state) },
+                        modifier = Modifier.size(ToggleButtonDefaults.SmallToggleButtonSize)
+                    ) {
+                        ToggleChipDefaults.SwitchIcon(checked = isChecked)
+                    }
+                }
+            }
+
             item {
                 val friendlyName = attributes["friendly_name"].toString()
                 ListHeader(friendlyName)
@@ -47,45 +67,8 @@ fun DetailsPanelView(
                 val supportsBrightness =
                     if (supportedColorModes == null) false else (supportedColorModes - NO_BRIGHTNESS_SUPPORT).isNotEmpty()
                 if (supportsBrightness || ((attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS_DEPR == SUPPORT_BRIGHTNESS_DEPR)) {
-                    val minValue = 0f
-                    val maxValue = 100f
-                    var currentValue =
-                        (attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100)
-                            ?: 0f
-                    if (currentValue < minValue)
-                        currentValue = minValue
-                    if (currentValue > maxValue)
-                        currentValue = maxValue
-
                     item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
-                        ) {
-                            Text(stringResource(R.string.brightness))
-                        }
-                    }
-                    item {
-                        InlineSlider(
-                            value = currentValue,
-                            onValueChange = { brightness ->
-                                onBrightnessChanged(brightness.div(100).times(255))
-                            },
-                            steps = 20,
-                            valueRange = minValue..maxValue,
-                            decreaseIcon = {
-                                Image(
-                                    asset = CommunityMaterial.Icon.cmd_brightness_4,
-                                    colorFilter = ColorFilter.tint(Color.White)
-                                )
-                            },
-                            increaseIcon = {
-                                Image(
-                                    asset = CommunityMaterial.Icon.cmd_brightness_7,
-                                    colorFilter = ColorFilter.tint(Color.White)
-                                )
-                            },
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        BrightnessSlider(attributes, onBrightnessChanged)
                     }
                 }
 
@@ -94,41 +77,8 @@ fun DetailsPanelView(
                 val supportsColorTempComplete =
                     supportsColorTemp || ((attributes["supported_features"] as Int) and SUPPORT_COLOR_TEMP_DEPR == SUPPORT_COLOR_TEMP_DEPR)
                 if (supportsColorTempComplete && attributes["color_mode"] == SUPPORT_COLOR_TEMP) {
-                    val minValue = (attributes["min_mireds"] as? Number)?.toFloat() ?: 0f
-                    val maxValue = (attributes["max_mireds"] as? Number)?.toFloat() ?: 0f
-                    var currentValue = (attributes["color_temp"] as? Number)?.toFloat() ?: 0f
-                    if (currentValue < minValue)
-                        currentValue = minValue
-                    if (currentValue > maxValue)
-                        currentValue = maxValue
-
                     item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
-                        ) {
-                            Text(stringResource(R.string.color_temp))
-                        }
-                    }
-                    item {
-                        InlineSlider(
-                            value = currentValue,
-                            onValueChange = onColorTempChanged,
-                            steps = 20,
-                            valueRange = minValue..maxValue,
-                            decreaseIcon = {
-                                Image(
-                                    asset = CommunityMaterial.Icon3.cmd_thermometer_minus,
-                                    colorFilter = ColorFilter.tint(Color.White)
-                                )
-                            },
-                            increaseIcon = {
-                                Image(
-                                    asset = CommunityMaterial.Icon3.cmd_thermometer_plus,
-                                    colorFilter = ColorFilter.tint(Color.White)
-                                )
-                            },
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        ColorTempSlider(attributes, onColorTempChanged)
                     }
                 }
             }
@@ -137,27 +87,121 @@ fun DetailsPanelView(
                 ListHeader(R.string.details)
             }
             item {
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                    Text(stringResource(R.string.entity_id) + ": ${entity.entityId}")
-                }
+                Text(
+                    stringResource(R.string.state) + ": ${entity.state}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
             }
             item {
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                    Text(stringResource(R.string.state) + ": ${entity.state}")
-                }
+                val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
+                Text(
+                    stringResource(R.string.last_changed) + ": $lastChanged",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
             }
             item {
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                    val lastChanged = DateFormat.getDateTimeInstance().format(entity.lastChanged.time)
-                    Text(stringResource(R.string.last_changed) + ": $lastChanged")
-                }
+                val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
+                Text(
+                    stringResource(R.string.last_updated) + ": $lastUpdated",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
             }
             item {
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                    val lastUpdated = DateFormat.getDateTimeInstance().format(entity.lastUpdated.time)
-                    Text(stringResource(R.string.last_updated) + ": $lastUpdated")
-                }
+                Text(
+                    stringResource(R.string.entity_id) + ": ${entity.entityId}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
+                )
             }
         }
+    }
+}
+
+@Composable
+fun BrightnessSlider(attributes: Map<*, *>, onBrightnessChanged: (Float) -> Unit) {
+    val minValue = 0f
+    val maxValue = 100f
+    var currentValue =
+        (attributes["brightness"] as? Number)?.toFloat()?.div(255f)?.times(100)
+            ?: 0f
+    if (currentValue < minValue)
+        currentValue = minValue
+    if (currentValue > maxValue)
+        currentValue = maxValue
+
+    Column {
+        Text(
+            stringResource(R.string.brightness) + ": %.1f%%".format(currentValue),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        )
+        InlineSlider(
+            value = currentValue,
+            onValueChange = { brightness ->
+                onBrightnessChanged(brightness.div(100).times(255))
+            },
+            steps = 20,
+            valueRange = minValue..maxValue,
+            decreaseIcon = {
+                Image(
+                    asset = CommunityMaterial.Icon.cmd_brightness_4,
+                    colorFilter = ColorFilter.tint(Color.White)
+                )
+            },
+            increaseIcon = {
+                Image(
+                    asset = CommunityMaterial.Icon.cmd_brightness_7,
+                    colorFilter = ColorFilter.tint(Color.White)
+                )
+            },
+            modifier = Modifier.padding(bottom = 8.dp, top = 2.dp)
+        )
+    }
+}
+
+@Composable
+fun ColorTempSlider(attributes: Map<*, *>, onColorTempChanged: (Float) -> Unit) {
+    val minValue = (attributes["min_mireds"] as? Number)?.toFloat() ?: 0f
+    val maxValue = (attributes["max_mireds"] as? Number)?.toFloat() ?: 0f
+    var currentValue = (attributes["color_temp"] as? Number)?.toFloat() ?: 0f
+    if (currentValue < minValue)
+        currentValue = minValue
+    if (currentValue > maxValue)
+        currentValue = maxValue
+
+    Column {
+        Text(
+            stringResource(R.string.color_temp) + ": %.0f".format(currentValue),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        )
+        InlineSlider(
+            value = currentValue,
+            onValueChange = onColorTempChanged,
+            steps = 20,
+            valueRange = minValue..maxValue,
+            decreaseIcon = {
+                Image(
+                    asset = CommunityMaterial.Icon3.cmd_thermometer_minus,
+                    colorFilter = ColorFilter.tint(Color.White)
+                )
+            },
+            increaseIcon = {
+                Image(
+                    asset = CommunityMaterial.Icon3.cmd_thermometer_plus,
+                    colorFilter = ColorFilter.tint(Color.White)
+                )
+            },
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
     }
 }

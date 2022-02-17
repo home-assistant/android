@@ -61,7 +61,7 @@ fun EntityUi(
                     text = friendlyName,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.pointerInput(Unit) {
+                    modifier = Modifier.fillMaxWidth().pointerInput(Unit) {
                         detectTapGestures(
                             onTap = {
                                 onEntityClicked(entity.entityId, entity.state)
@@ -98,7 +98,7 @@ fun EntityUi(
                     text = friendlyName,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.pointerInput(Unit) {
+                    modifier = Modifier.fillMaxWidth().pointerInput(Unit) {
                         detectTapGestures(
                             onTap = {
                                 onEntityClicked(entity.entityId, entity.state)

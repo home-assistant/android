@@ -99,6 +99,9 @@ fun LoadHomePage(
                     if (entity != null) {
                         DetailsPanelView(
                             entity = entity,
+                            onEntityToggled = { entityId, state ->
+                                mainViewModel.toggleEntity(entityId, state)
+                            },
                             onBrightnessChanged = { brightness ->
                                 mainViewModel.setBrightness(
                                     entity.entityId,
