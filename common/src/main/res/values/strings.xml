@@ -722,7 +722,10 @@
     <string name="widget_media_player_description">Media Player Widget</string>
     <string name="widget_media_playpause_button">Play/Pause</string>
     <string name="widget_media_prev_track_button">Previous Track</string>
+    <string name="widget_media_volume_down_button">Volume Down</string>
+    <string name="widget_media_volume_up_button">Volume Up</string>
     <string name="widget_media_rewind_button">Rewind</string>
+    <string name="widget_media_show_volume">Show Volume Buttons</string>
     <string name="widget_media_show_seek">Show Seek Buttons</string>
     <string name="widget_media_show_skip">Show Skip Buttons</string>
     <string name="widget_separator_input_hint">No separator</string>

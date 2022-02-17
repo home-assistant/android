@@ -65,7 +65,7 @@ import io.homeassistant.companion.android.common.R as commonR
         Favorites::class,
         Setting::class
     ],
-    version = 22,
+    version = 23,
     exportSchema = false
 )
 @TypeConverters(
@@ -129,7 +129,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_18_19,
                     MIGRATION_19_20,
                     MIGRATION_20_21,
-                    MIGRATION_21_22
+                    MIGRATION_21_22,
+                    MIGRATION_22_23
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -473,6 +474,12 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_21_22 = object : Migration(21, 22) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `notification_history` ADD `source` TEXT NOT NULL DEFAULT 'FCM'")
+            }
+        }
+
+        private val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `mediaplayctrls_widgets` ADD `showVolume` INTEGER NOT NULL DEFAULT '0'")
             }
         }
 
