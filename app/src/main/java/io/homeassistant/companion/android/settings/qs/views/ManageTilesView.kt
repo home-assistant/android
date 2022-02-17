@@ -118,7 +118,7 @@ fun ManageTilesView(
                         Image(
                             it,
                             contentDescription = stringResource(id = R.string.tile_icon),
-                            colorFilter = ColorFilter.tint(colorResource(io.homeassistant.companion.android.R.color.colorAccent))
+                            colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
                         )
                     }
             }

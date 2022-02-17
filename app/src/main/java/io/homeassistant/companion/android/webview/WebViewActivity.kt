@@ -207,7 +207,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
 
         // Initially set status and navigation bar color to colorLaunchScreenBackground to match the launch screen until the web frontend is loaded
-        val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, R.color.colorLaunchScreenBackground, theme)
+        val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, commonR.color.colorLaunchScreenBackground, theme)
         setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
         if (BuildConfig.DEBUG) {

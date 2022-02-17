@@ -909,7 +909,7 @@ class MessagingManager @Inject constructor(
     ) {
 
         val colorString = data["color"]
-        val color = parseColor(colorString, R.color.colorPrimary)
+        val color = parseColor(colorString, commonR.color.colorPrimary)
         builder.color = color
     }
 
@@ -930,7 +930,7 @@ class MessagingManager @Inject constructor(
     ) {
         val ledColor = data[LED_COLOR]
         if (!ledColor.isNullOrBlank()) {
-            builder.setLights(parseColor(ledColor, R.color.colorPrimary), 3000, 3000)
+            builder.setLights(parseColor(ledColor, commonR.color.colorPrimary), 3000, 3000)
         }
     }
 
@@ -1255,7 +1255,7 @@ class MessagingManager @Inject constructor(
             val ledColor = data[LED_COLOR]
             if (!ledColor.isNullOrBlank()) {
                 channel.enableLights(true)
-                channel.lightColor = parseColor(ledColor, R.color.colorPrimary)
+                channel.lightColor = parseColor(ledColor, commonR.color.colorPrimary)
             }
         }
     }

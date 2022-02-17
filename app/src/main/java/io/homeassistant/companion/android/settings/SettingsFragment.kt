@@ -339,7 +339,7 @@ class SettingsFragment constructor(
             try {
                 val unwrappedDrawable =
                     AppCompatResources.getDrawable(requireContext(), R.drawable.ic_computer)
-                unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
+                unwrappedDrawable?.setTint(resources.getColor(commonR.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to set the icon tint", e)
@@ -351,7 +351,7 @@ class SettingsFragment constructor(
             try {
                 val unwrappedDrawable =
                     AppCompatResources.getDrawable(requireContext(), commonR.drawable.ic_priority)
-                unwrappedDrawable?.setTint(resources.getColor(R.color.colorAccent))
+                unwrappedDrawable?.setTint(resources.getColor(commonR.color.colorAccent))
                 it.icon = unwrappedDrawable
             } catch (e: Exception) {
                 Log.e(TAG, "Unable to set the icon tint", e)
