@@ -50,7 +50,7 @@ class WebsocketManager(
         private const val SOURCE = "Websocket"
         const val CHANNEL_ID = "Websocket"
         private const val NOTIFICATION_ID = 65423
-        private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.SCREEN_ON else WebsocketSetting.ALWAYS
+        private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS
 
         fun start(context: Context) {
             val constraints = Constraints.Builder()
@@ -170,7 +170,7 @@ class WebsocketManager(
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
                     CHANNEL_ID,
-                    CHANNEL_ID,
+                    applicationContext.getString(R.string.websocket_setting_name),
                     NotificationManager.IMPORTANCE_LOW
                 )
                 notificationManager.createNotificationChannel(notificationChannel)
@@ -206,7 +206,7 @@ class WebsocketManager(
             .setGroup(CHANNEL_ID)
             .addAction(
                 io.homeassistant.companion.android.R.drawable.ic_websocket,
-                applicationContext.getString(R.string.websocket_setting_name),
+                applicationContext.getString(R.string.settings),
                 settingPendingIntent
             )
             .build()

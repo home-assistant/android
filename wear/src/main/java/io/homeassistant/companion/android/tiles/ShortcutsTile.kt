@@ -29,6 +29,7 @@ import androidx.wear.tiles.TimelineBuilders.TimelineEntry
 import com.google.common.util.concurrent.ListenableFuture
 import com.mikepenz.iconics.IconicsColor
 import com.mikepenz.iconics.IconicsDrawable
+import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import com.mikepenz.iconics.utils.backgroundColor
 import com.mikepenz.iconics.utils.colorInt
 import com.mikepenz.iconics.utils.sizeDp
@@ -36,6 +37,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.data.SimplifiedEntity
+import io.homeassistant.companion.android.util.getIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -102,25 +104,13 @@ class ShortcutsTile : TileService() {
                 .setVersion(entities.toString())
                 .apply {
                     entities.map { entity ->
-                        // Find icon name
-                        val iconName: String = if (entity.icon.startsWith("mdi")) {
-                            entity.icon.split(":")[1]
-                        } else { // Default scene icon
-                            when (entity.entityId.split(".")[0]) {
-                                "button", "input_button" -> "gesture_tap_button"
-                                "cover" -> "window_closed"
-                                "fan" -> "fan"
-                                "input_boolean", "switch" -> "light_switch"
-                                "light" -> "lightbulb"
-                                "lock" -> "lock"
-                                "script" -> "script_text_outline"
-                                "scene" -> "palette_outline"
-                                else -> "cellphone"
-                            }
-                        }
-
-                        // Create Bitmap from icon name
-                        val iconBitmap = IconicsDrawable(this@ShortcutsTile, "cmd-$iconName").apply {
+                        // Find icon and create Bitmap
+                        val iconIIcon = getIcon(
+                            entity.icon,
+                            entity.entityId.split("")[0],
+                            this@ShortcutsTile
+                        ) ?: CommunityMaterial.Icon.cmd_cellphone
+                        val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {
                             colorInt = Color.WHITE
                             sizeDp = iconSize.roundToInt()
                             backgroundColor = IconicsColor.colorRes(R.color.colorOverlay)

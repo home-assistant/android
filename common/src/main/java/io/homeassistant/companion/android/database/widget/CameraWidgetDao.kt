@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CameraWidgetDao {
@@ -23,4 +24,7 @@ interface CameraWidgetDao {
 
     @Query("SELECT * FROM camera_widgets")
     fun getAll(): Array<CameraWidgetEntity>?
+
+    @Query("SELECT * FROM camera_widgets")
+    fun getAllFlow(): Flow<List<CameraWidgetEntity>>?
 }

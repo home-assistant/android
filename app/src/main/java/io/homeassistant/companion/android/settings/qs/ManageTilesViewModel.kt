@@ -86,7 +86,7 @@ class ManageTilesViewModel @Inject constructor(
         val iconDrawable = selectedIcon.value?.let { iconPack.getIcon(it)?.drawable }
         if (iconDrawable != null) {
             val icon = DrawableCompat.wrap(iconDrawable)
-            icon.setColorFilter(getApplication<HomeAssistantApplication>().resources.getColor(io.homeassistant.companion.android.R.color.colorAccent), PorterDuff.Mode.SRC_IN)
+            icon.setColorFilter(getApplication<HomeAssistantApplication>().resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
             drawableIcon.value = icon
         }
     }

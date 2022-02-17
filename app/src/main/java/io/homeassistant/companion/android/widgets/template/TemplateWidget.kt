@@ -7,8 +7,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Html.fromHtml
 import android.util.Log
+import android.view.View
 import android.widget.RemoteViews
-import android.widget.Toast
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -16,7 +16,6 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.widget.TemplateWidgetEntity
 import io.homeassistant.companion.android.widgets.BaseWidgetProvider
 import kotlinx.coroutines.launch
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class TemplateWidget : BaseWidgetProvider() {
@@ -68,11 +67,10 @@ class TemplateWidget : BaseWidgetProvider() {
                 try {
                     renderedTemplate = integrationUseCase.renderTemplate(widget.template, mapOf())
                     templateWidgetDao.updateTemplateWidgetLastUpdate(appWidgetId, renderedTemplate)
+                    setViewVisibility(R.id.widgetTemplateError, View.GONE)
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to render template: ${widget.template}", e)
-                    if (lastIntent == UPDATE_VIEW)
-                        Toast.makeText(context, commonR.string.widget_template_error, Toast.LENGTH_LONG)
-                            .show()
+                    setViewVisibility(R.id.widgetTemplateError, View.VISIBLE)
                 }
                 setTextViewText(
                     R.id.widgetTemplateText,

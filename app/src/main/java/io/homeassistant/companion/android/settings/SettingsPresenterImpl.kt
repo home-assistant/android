@@ -47,6 +47,7 @@ class SettingsPresenterImpl @Inject constructor(
             return@runBlocking when (key) {
                 "fullscreen" -> integrationUseCase.isFullScreenEnabled()
                 "keep_screen_on" -> integrationUseCase.isKeepScreenOnEnabled()
+                "pinch_to_zoom" -> integrationUseCase.isPinchToZoomEnabled()
                 "app_lock" -> authenticationUseCase.isLockEnabled()
                 "crash_reporting" -> prefsRepository.isCrashReporting()
                 "prioritize_internal" -> urlUseCase.isPrioritizeInternal()
@@ -61,6 +62,7 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
                 "keep_screen_on" -> integrationUseCase.setKeepScreenOnEnabled(value)
+                "pinch_to_zoom" -> integrationUseCase.setPinchToZoomEnabled(value)
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "prioritize_internal" -> urlUseCase.setPrioritizeInternal(value)

@@ -68,6 +68,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
@@ -81,7 +82,6 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
-import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.CoroutineScope
@@ -207,7 +207,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
 
         // Initially set status and navigation bar color to colorLaunchScreenBackground to match the launch screen until the web frontend is loaded
-        val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, R.color.colorLaunchScreenBackground, theme)
+        val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, commonR.color.colorLaunchScreenBackground, theme)
         setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
         if (BuildConfig.DEBUG) {
@@ -249,6 +249,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.displayZoomControls = false
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
             settings.userAgentString = USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
             webViewClient = object : WebViewClient() {
@@ -265,6 +266,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    enablePinchToZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
                             val owner = "onPageFinished:$moreInfoEntity"
@@ -656,6 +658,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             unlocked = true
             binding.blurView.setBlurEnabled(false)
         }
+
+        enablePinchToZoom()
 
         if (presenter.isKeepScreenOnEnabled())
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -1310,5 +1314,34 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun enablePinchToZoom() {
+        // Enable pinch to zoom
+        webView.getSettings().setBuiltInZoomControls(presenter.isPinchToZoomEnabled())
+        // Use idea from https://github.com/home-assistant/iOS/pull/1472 to filter viewport
+        val pinchToZoom = if (presenter.isPinchToZoomEnabled()) "true" else "false"
+        webView.evaluateJavascript(
+            """
+            if (typeof viewport === 'undefined') {
+                var viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport != null && typeof original_elements === 'undefined') {
+                    var original_elements = viewport['content'];
+                }
+            }
+            if (viewport != null) {
+                if ($pinchToZoom) {
+                    const ignoredBits = ['user-scalable', 'minimum-scale', 'maximum-scale'];
+                    let elements = viewport['content'].split(',').filter(contentItem => {
+                        return ignoredBits.every(ignoredBit => !contentItem.includes(ignoredBit));
+                    });
+                    elements.push('user-scalable=yes');
+                    viewport['content'] = elements.join(',');
+                } else {
+                    viewport['content'] = original_elements;
+                }           
+            }
+            """
+        ) {}
     }
 }
