@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Divider
 import androidx.compose.material.DropdownMenu
@@ -43,10 +45,15 @@ fun ManageTilesView(
     iconDialog: IconDialog,
     childFragment: FragmentManager
 ) {
+    val scrollState = rememberScrollState()
     val context = LocalContext.current
     var expandedTile by remember { mutableStateOf(false) }
     var expandedEntity by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.padding(20.dp)) {
+    Column(
+        modifier = Modifier
+            .padding(20.dp)
+            .verticalScroll(scrollState)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = stringResource(R.string.tile_select),
