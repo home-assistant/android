@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.InlineSlider
+import androidx.wear.compose.material.InlineSliderDefaults
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.ToggleButton
 import androidx.wear.compose.material.ToggleButtonDefaults
@@ -24,6 +25,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.WearAppTheme
+import io.homeassistant.companion.android.util.getColorTemperature
 import java.text.DateFormat
 
 const val SUPPORT_BRIGHTNESS_DEPR = 1
@@ -144,7 +146,7 @@ fun BrightnessSlider(attributes: Map<*, *>, onBrightnessChanged: (Float) -> Unit
 
     Column {
         Text(
-            stringResource(R.string.brightness) + ": %.0f%%".format(currentValue),
+            stringResource(R.string.brightness, currentValue.toInt()),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
@@ -185,7 +187,7 @@ fun ColorTempSlider(attributes: Map<*, *>, onColorTempChanged: (Float) -> Unit) 
 
     Column {
         Text(
-            stringResource(R.string.color_temp) + ": %.0f".format(currentValue),
+            stringResource(R.string.color_temp, currentValue.toInt()),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp)
@@ -207,6 +209,11 @@ fun ColorTempSlider(attributes: Map<*, *>, onColorTempChanged: (Float) -> Unit) 
                     colorFilter = ColorFilter.tint(Color.White)
                 )
             },
+            colors = InlineSliderDefaults.colors(
+                selectedBarColor = getColorTemperature(
+                    (currentValue - minValue).toDouble() / (maxValue - minValue).toDouble()
+                )
+            ),
             modifier = Modifier.padding(bottom = 8.dp)
         )
     }
