@@ -13,6 +13,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.R
+import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.websocket.WebsocketSettingFragment
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -56,6 +57,7 @@ class SettingsActivity : BaseActivity() {
                 else {
                     when (settingsNavigation) {
                         "websocket" -> WebsocketSettingFragment::class.java
+                        "notification_history" -> NotificationHistoryFragment::class.java
                         else -> SettingsFragment::class.java
                     }
                 },

@@ -57,6 +57,7 @@ import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
@@ -84,6 +85,8 @@ class MessagingManager @Inject constructor(
         const val TAG = "MessagingService"
 
         const val APP_PREFIX = "app://"
+        const val SETTINGS_PREFIX = "settings://"
+        const val NOTIFICATION_HISTORY = "notification_history"
 
         const val TITLE = "title"
         const val MESSAGE = "message"
@@ -1195,6 +1198,12 @@ class MessagingManager @Inject constructor(
             uri.startsWith(APP_PREFIX) -> {
                 context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
             }
+            uri.startsWith(SETTINGS_PREFIX) -> {
+                if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
+                    SettingsActivity.newInstance(context)
+                else
+                    WebViewActivity.newInstance(context)
+            }
             UrlHandler.isAbsoluteUrl(uri) -> {
                 Intent(Intent.ACTION_VIEW).apply {
                     this.data = Uri.parse(uri)
@@ -1205,6 +1214,8 @@ class MessagingManager @Inject constructor(
             }
         } ?: WebViewActivity.newInstance(context)
 
+        if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
+            intent.putExtra("fragment", NOTIFICATION_HISTORY)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
