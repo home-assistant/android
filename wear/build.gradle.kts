@@ -99,7 +99,7 @@ dependencies {
     compileOnly("com.google.android.wearable:wearable:2.8.1")
 
     implementation("com.google.dagger:hilt-android:2.41")
-    kapt("com.google.dagger:hilt-android-compiler:2.40.5")
+    kapt("com.google.dagger:hilt-android-compiler:2.41")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
