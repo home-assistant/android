@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.home
 
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -17,9 +18,11 @@ interface HomePresenter {
     fun onViewReady()
     suspend fun onEntityClicked(entityId: String, state: String)
     fun onLogoutClicked()
+    fun onInvalidAuthorization()
     fun onFinish()
 
     suspend fun isConnected(): Boolean
+    fun getWebSocketState(): WebSocketState?
 
     suspend fun getEntities(): List<Entity<*>>?
     suspend fun getEntityUpdates(): Flow<Entity<*>>?

@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -26,6 +27,7 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ge
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -78,14 +80,17 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val responseCallbackJobs = mutableMapOf<Long, CancellableContinuation<SocketResponse>>()
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null
+    private var connectionState: WebSocketState? = null
     private val connectedMutex = Mutex()
-    private var connected = Job()
+    private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
     private val eventSubscriptionFlow = mutableMapOf<String, SharedFlow<*>>()
     private var eventSubscriptionProducerScope = mutableMapOf<String, ProducerScope<Any>>()
     private val notificationMutex = Mutex()
     private var notificationFlow: Flow<Map<String, Any>>? = null
     private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
+
+    override fun getConnectionState(): WebSocketState? = connectionState
 
     override suspend fun sendPing(): Boolean {
         val socketResponse = sendMessage(
@@ -256,7 +261,7 @@ class WebSocketRepositoryImpl @Inject constructor(
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {
-                return true
+                return !connected.isCancelled
             }
 
             val url = urlRepository.getUrl()
@@ -275,6 +280,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                 this
             ).also {
                 // Preemptively send auth
+                connectionState = WebSocketState.AUTHENTICATING
                 it.send(
                     mapper.writeValueAsString(
                         mapOf(
@@ -288,9 +294,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             // Wait up to 30 seconds for auth response
             return true == withTimeoutOrNull(30000) {
                 return@withTimeoutOrNull try {
-                    connected.join()
-                    if (connected.isCancelled) throw AuthorizationException()
-                    true
+                    connected.await()
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to authenticate", e)
                     false
@@ -327,10 +331,13 @@ class WebSocketRepositoryImpl @Inject constructor(
         if (response?.result != null) mapper.convertValue(response.result) else null
 
     private fun handleAuthComplete(successful: Boolean) {
-        if (successful)
-            connected.complete()
-        else
-            connected.completeExceptionally(Exception("Authentication Error"))
+        if (successful) {
+            connectionState = WebSocketState.ACTIVE
+            connected.complete(true)
+        } else {
+            connectionState = WebSocketState.CLOSED_AUTH
+            connected.completeExceptionally(AuthorizationException())
+        }
     }
 
     private fun handleMessage(response: SocketResponse) {
@@ -378,8 +385,10 @@ class WebSocketRepositoryImpl @Inject constructor(
     private fun handleClosingSocket() {
         ioScope.launch {
             connectedMutex.withLock {
-                connected = Job()
+                connected = CompletableDeferred()
                 connection = null
+                if (connectionState != WebSocketState.CLOSED_AUTH)
+                    connectionState = WebSocketState.CLOSED_OTHER
             }
         }
         // If we still have flows flowing

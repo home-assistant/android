@@ -56,7 +56,9 @@ fun LoadHomePage(
     val context = LocalContext.current
 
     WearAppTheme {
-        if (mainViewModel.entities.isNullOrEmpty() && mainViewModel.favoriteEntityIds.isNullOrEmpty()) {
+        if (mainViewModel.loadingState.value == MainViewModel.LoadingState.LOADING &&
+            mainViewModel.favoriteEntityIds.isNullOrEmpty()
+        ) {
             Column {
                 ListHeader(id = commonR.string.loading)
                 Chip(
@@ -83,6 +85,7 @@ fun LoadHomePage(
                         mainViewModel,
                         mainViewModel.favoriteEntityIds,
                         { id, state -> mainViewModel.toggleEntity(id, state) },
+                        mainViewModel::loadEntities,
                         { swipeDismissableNavController.navigate(SCREEN_SETTINGS) },
                         { lists, order, filter ->
                             mainViewModel.entityLists.clear()

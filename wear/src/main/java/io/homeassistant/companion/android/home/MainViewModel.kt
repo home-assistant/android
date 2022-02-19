@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.home
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
@@ -27,6 +29,14 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
 
+    companion object {
+        const val TAG = "MainViewModel"
+    }
+
+    enum class LoadingState {
+        LOADING, READY, ERROR
+    }
+
     private lateinit var homePresenter: HomePresenter
     val app = getApplication<HomeAssistantApplication>()
     private val favoritesDao = AppDatabase.getInstance(app.applicationContext).favoritesDao()
@@ -38,6 +48,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     // TODO: This is bad, do this instead: https://stackoverflow.com/questions/46283981/android-viewmodel-additional-arguments
     fun init(homePresenter: HomePresenter) {
         this.homePresenter = homePresenter
+        loadSettings()
         loadEntities()
         getFavorites()
         getSensors()
@@ -68,6 +79,8 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     var entityListFilter: (Entity<*>) -> Boolean = { true }
 
     // settings
+    var loadingState = mutableStateOf(LoadingState.LOADING)
+        private set
     var isHapticEnabled = mutableStateOf(false)
         private set
     var isToastEnabled = mutableStateOf(false)
@@ -90,7 +103,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
 
     var sensors = mutableStateListOf<Sensor>()
 
-    private fun loadEntities() {
+    private fun loadSettings() {
         viewModelScope.launch {
             if (!homePresenter.isConnected()) {
                 return@launch
@@ -101,49 +114,76 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             isShowShortcutTextEnabled.value = homePresenter.getShowShortcutText()
             templateTileContent.value = homePresenter.getTemplateTileContent()
             templateTileRefreshInterval.value = homePresenter.getTemplateTileRefreshInterval()
+        }
+    }
 
-            homePresenter.getAreaRegistry()?.let {
-                areaRegistry = it
-                areas.addAll(it)
+    fun loadEntities() {
+        viewModelScope.launch {
+            if (!homePresenter.isConnected()) {
+                return@launch
             }
-            deviceRegistry = homePresenter.getDeviceRegistry()
-            entityRegistry = homePresenter.getEntityRegistry()
-            homePresenter.getEntities()?.forEach {
-                if (supportedDomains().contains(it.entityId.split(".")[0])) {
-                    entities[it.entityId] = it
+            try {
+                // Load initial state
+                loadingState.value = LoadingState.LOADING
+                homePresenter.getAreaRegistry()?.let {
+                    areaRegistry = it
+                    areas.addAll(it)
                 }
-            }
-            updateEntityDomains()
-
-            viewModelScope.launch {
-                homePresenter.getEntityUpdates()?.collect {
+                deviceRegistry = homePresenter.getDeviceRegistry()
+                entityRegistry = homePresenter.getEntityRegistry()
+                homePresenter.getEntities()?.forEach {
                     if (supportedDomains().contains(it.entityId.split(".")[0])) {
                         entities[it.entityId] = it
+                    }
+                }
+                updateEntityDomains()
+
+                // Finished initial load, update state
+                val webSocketState = homePresenter.getWebSocketState()
+                if (webSocketState == WebSocketState.CLOSED_AUTH) {
+                    homePresenter.onInvalidAuthorization()
+                    return@launch
+                }
+                loadingState.value = if (webSocketState == WebSocketState.ACTIVE) {
+                    LoadingState.READY
+                } else {
+                    LoadingState.ERROR
+                }
+
+                // Listen for updates
+                viewModelScope.launch {
+                    homePresenter.getEntityUpdates()?.collect {
+                        if (supportedDomains().contains(it.entityId.split(".")[0])) {
+                            entities[it.entityId] = it
+                            updateEntityDomains()
+                        }
+                    }
+                }
+                viewModelScope.launch {
+                    homePresenter.getAreaRegistryUpdates()?.collect {
+                        areaRegistry = homePresenter.getAreaRegistry()
+                        areas.clear()
+                        areaRegistry?.let {
+                            areas.addAll(it)
+                        }
                         updateEntityDomains()
                     }
                 }
-            }
-            viewModelScope.launch {
-                homePresenter.getAreaRegistryUpdates()?.collect {
-                    areaRegistry = homePresenter.getAreaRegistry()
-                    areas.clear()
-                    areaRegistry?.let {
-                        areas.addAll(it)
+                viewModelScope.launch {
+                    homePresenter.getDeviceRegistryUpdates()?.collect {
+                        deviceRegistry = homePresenter.getDeviceRegistry()
+                        updateEntityDomains()
                     }
-                    updateEntityDomains()
                 }
-            }
-            viewModelScope.launch {
-                homePresenter.getDeviceRegistryUpdates()?.collect {
-                    deviceRegistry = homePresenter.getDeviceRegistry()
-                    updateEntityDomains()
+                viewModelScope.launch {
+                    homePresenter.getEntityRegistryUpdates()?.collect {
+                        entityRegistry = homePresenter.getEntityRegistry()
+                        updateEntityDomains()
+                    }
                 }
-            }
-            viewModelScope.launch {
-                homePresenter.getEntityRegistryUpdates()?.collect {
-                    entityRegistry = homePresenter.getEntityRegistry()
-                    updateEntityDomains()
-                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception while loading entities", e)
+                loadingState.value = LoadingState.ERROR
             }
         }
     }
