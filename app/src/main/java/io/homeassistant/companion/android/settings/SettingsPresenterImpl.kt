@@ -52,6 +52,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "crash_reporting" -> prefsRepository.isCrashReporting()
                 "prioritize_internal" -> urlUseCase.isPrioritizeInternal()
                 "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
+                "webview_debug" -> integrationUseCase.isWebViewDebugEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -67,6 +68,7 @@ class SettingsPresenterImpl @Inject constructor(
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "prioritize_internal" -> urlUseCase.setPrioritizeInternal(value)
                 "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
+                "webview_debug" -> integrationUseCase.setWebViewDebugEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
