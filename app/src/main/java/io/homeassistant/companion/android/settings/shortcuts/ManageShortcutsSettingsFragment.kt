@@ -98,7 +98,7 @@ class ManageShortcutsSettingsFragment : Fragment(), IconDialog.Callback {
             val iconDrawable = selectedIcon.drawable
             if (iconDrawable != null) {
                 val icon = DrawableCompat.wrap(iconDrawable)
-                icon.setColorFilter(resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
+                icon.setColorFilter(resources.getColor(commonR.color.colorAccent), PorterDuff.Mode.SRC_IN)
                 when (dialog.tag) {
                     "shortcut_1" -> {
                         viewModel.shortcuts[0].selectedIcon.value = selectedIcon.id

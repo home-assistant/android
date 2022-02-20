@@ -121,7 +121,11 @@ abstract class TileExtensions : TileService() {
                     try {
                         integrationUseCase.callService(
                             tileData?.entityId?.split(".")!![0],
-                            if (tileData.entityId.split(".")[0] in toggleDomains) "toggle" else "turn_on",
+                            when (tileData.entityId.split(".")[0]) {
+                                "button", "input_button" -> "press"
+                                in toggleDomains -> "toggle"
+                                else -> "turn_on"
+                            },
                             hashMapOf("entity_id" to tileData.entityId)
                         )
                         Log.d(TAG, "Service call sent for tile ID: $tileId")

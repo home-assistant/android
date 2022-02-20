@@ -1,20 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
-    <release version="Beta">
-        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; Local Push notifications directly from your Home Assistant instance. The app will need to maintain a consistent websockets connection by using a persistent notification. From the notification you will be able to access websockets settings to adjust the behavior of the connection as well as the notification channel. You are free to minimize the notification channel to hide the icon.</change>
-        <change>Add change log dialog to show when the app is updated. Can also be accessed in settings.</change>
-        <change>Add notification command to update sensors</change>
-        <change>Add option to add a new widget and other design changes to Manage Widgets page</change>
-        <change>Minor design changes to Manage Tiles page</change>
-        <change>Add notification channel settings so they are easier to find</change>
-        <change>Add icons to settings</change>
-        <change>Improve reliability of opening entity information from device controls</change>
-        <change>Editing Wear OS Template Tile from phone settings</change>
-        <change>Add support for button and input_button domains in device controls</change>
-        <change>Add mount state sensor for Quest Devices</change>
-        <change>Minimal version fixes to remove Google dependencies</change>
-        <change>Lots of miscellaneous bug fixes</change>
-        <change>Dependency updates</change>
+    <release version="2022.3">
+        <change>Add pinch to zoom setting under Companion App so users can zoom in the frontend, default value is off.</change>
+        <change>Add volume up &amp; down functionality to media player widget</change>
+        <change>Allow camera widget to be reconfigurable</change>
+        <change>Replace widget error message with a icon in the widget to indicate the failure</change>
+        <change>Bug fixes</change>
     </release>
 </changelog>

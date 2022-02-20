@@ -84,11 +84,6 @@ android {
             applicationIdSuffix = ""
             versionNameSuffix = "-full"
         }
-        create("quest") {
-            applicationIdSuffix = ".quest"
-            versionNameSuffix = "-quest"
-            minSdk = 23
-        }
 
         // Generate a list of application ids into BuildConfig
         val values = productFlavors.joinToString {
@@ -100,9 +95,6 @@ android {
 
     playConfigs {
         register("minimal") {
-            enabled.set(false)
-        }
-        register("quest") {
             enabled.set(false)
         }
     }
@@ -151,8 +143,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0")
 
-    implementation("com.google.dagger:hilt-android:2.40.5")
-    kapt("com.google.dagger:hilt-android-compiler:2.40.5")
+    implementation("com.google.dagger:hilt-android:2.41")
+    kapt("com.google.dagger:hilt-android-compiler:2.41")
 
     implementation("androidx.appcompat:appcompat:1.4.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
@@ -172,7 +164,7 @@ dependencies {
     "fullImplementation"("com.google.firebase:firebase-core:20.0.2")
     "fullImplementation"("com.google.firebase:firebase-iid:21.1.0")
     "fullImplementation"("com.google.firebase:firebase-messaging:23.0.0")
-    "fullImplementation"("io.sentry:sentry-android:5.6.0")
+    "fullImplementation"("io.sentry:sentry-android:5.6.1")
     "fullImplementation"("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0")
     "fullImplementation"("com.google.android.gms:play-services-wearable:17.1.0")
     "fullImplementation"("androidx.wear:wear-remote-interactions:1.0.0")
@@ -187,11 +179,7 @@ dependencies {
     "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1") {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
-    "questImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1") {
-        exclude(group = "com.google.android.gms", module = "play-services-cronet")
-    }
     "minimalImplementation"("org.chromium.net:cronet-embedded:95.4638.50")
-    "questImplementation"("org.chromium.net:cronet-embedded:95.4638.50")
 
     implementation("androidx.compose.animation:animation:1.0.5")
     implementation("androidx.compose.compiler:compiler:1.0.5")
@@ -205,7 +193,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.navigation:navigation-compose:2.4.0-rc01")
     implementation("com.google.android.material:compose-theme-adapter:1.1.3")
-    implementation("com.google.accompanist:accompanist-appcompat-theme:0.20.3")
+    implementation("com.google.accompanist:accompanist-appcompat-theme:0.23.0")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
     implementation("com.mikepenz:iconics-compose:5.3.3")

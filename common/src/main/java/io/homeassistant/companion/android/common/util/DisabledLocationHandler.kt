@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.util
+package io.homeassistant.companion.android.common.util
 
 import android.Manifest
 import android.app.Activity
@@ -33,7 +33,9 @@ object DisabledLocationHandler {
         return if (VERSION.SDK_INT >= VERSION_CODES.P) {
             lm.isLocationEnabled
         } else {
-            lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER) || lm.isProviderEnabled(
+                LocationManager.GPS_PROVIDER
+            )
         }
     }
 
@@ -50,7 +52,8 @@ object DisabledLocationHandler {
     }
 
     fun removeLocationDisabledWarning(activity: Activity) {
-        NotificationManagerCompat.from(activity).cancel(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode())
+        NotificationManagerCompat.from(activity)
+            .cancel(DISABLED_LOCATION_WARN_ID, DISABLED_LOCATION_WARN_ID.hashCode())
     }
 
     fun showLocationDisabledWarnDialog(context: Context, settings: Array<String>, showAsNotification: Boolean = false, withDisableOption: Boolean = false, callback: (() -> Unit)? = null) {

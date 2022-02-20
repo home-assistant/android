@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
+import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
@@ -46,6 +48,7 @@ fun MainView(
     mainViewModel: MainViewModel,
     favoriteEntityIds: List<String>,
     onEntityClicked: (String, String) -> Unit,
+    onRetryLoadEntitiesClicked: () -> Unit,
     onSettingsClicked: () -> Unit,
     onTestClicked: (entityLists: Map<String, List<Entity<*>>>, listOrder: List<String>, filter: (Entity<*>) -> (Boolean)) -> Unit,
     isHapticEnabled: Boolean,
@@ -125,20 +128,52 @@ fun MainView(
                         }
                     }
                 }
-                if (mainViewModel.entities.isEmpty()) {
-                    item {
-                        Column {
-                            ListHeader(id = commonR.string.loading)
-                            Chip(
-                                label = {
+                item {
+                    Column {
+                        when (mainViewModel.loadingState.value) {
+                            MainViewModel.LoadingState.LOADING -> {
+                                ListHeader(id = commonR.string.loading)
+                                Chip(
+                                    label = {
+                                        Text(
+                                            text = stringResource(commonR.string.loading_entities),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    },
+                                    onClick = { /* No op */ },
+                                    colors = ChipDefaults.primaryChipColors()
+                                )
+                            }
+                            MainViewModel.LoadingState.READY -> {
+                                if (mainViewModel.entities.isEmpty()) {
                                     Text(
-                                        text = stringResource(commonR.string.loading_entities),
-                                        textAlign = TextAlign.Center
+                                        text = stringResource(commonR.string.no_supported_entities),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.title3,
+                                        modifier = Modifier.fillMaxWidth().padding(top = 32.dp)
                                     )
-                                },
-                                onClick = { /* No op */ },
-                                colors = ChipDefaults.primaryChipColors()
-                            )
+                                    Text(
+                                        text = stringResource(commonR.string.no_supported_entities_summary),
+                                        textAlign = TextAlign.Center,
+                                        style = MaterialTheme.typography.body2,
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                                    )
+                                }
+                            }
+                            MainViewModel.LoadingState.ERROR -> {
+                                ListHeader(id = commonR.string.error_loading_entities)
+                                Chip(
+                                    label = {
+                                        Text(
+                                            text = stringResource(commonR.string.retry),
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    },
+                                    onClick = onRetryLoadEntitiesClicked,
+                                    colors = ChipDefaults.primaryChipColors()
+                                )
+                            }
                         }
                     }
                 }

@@ -15,5 +15,7 @@ data class MediaPlayerControlsWidgetEntity(
     @ColumnInfo(name = "showSkip")
     val showSkip: Boolean,
     @ColumnInfo(name = "showSeek")
-    val showSeek: Boolean
+    val showSeek: Boolean,
+    @ColumnInfo(name = "showVolume")
+    val showVolume: Boolean
 )

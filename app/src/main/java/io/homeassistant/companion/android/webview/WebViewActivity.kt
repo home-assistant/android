@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.webview
 
 import android.annotation.SuppressLint
+import android.app.DownloadManager
 import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.Intent
@@ -12,6 +13,7 @@ import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
@@ -31,6 +33,7 @@ import android.webkit.JavascriptInterface
 import android.webkit.JsResult
 import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
+import android.webkit.URLUtil
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -65,6 +68,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.databinding.ActivityWebviewBinding
@@ -78,7 +82,6 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
 import io.homeassistant.companion.android.util.ChangeLog
-import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.util.isStarted
 import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.CoroutineScope
@@ -122,6 +125,12 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private val requestPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             webView.reload()
+        }
+    private val requestStoragePermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                downloadFile(downloadFileUrl, downloadFileContentDisposition, downloadFileMimetype)
+            }
         }
     private val writeNfcTag = registerForActivityResult(WriteNfcTag()) { messageId ->
         webView.externalBus(
@@ -184,6 +193,9 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
     private var moreInfoEntity = ""
     private val moreInfoMutex = Mutex()
     private var currentAutoplay: Boolean = false
+    private var downloadFileUrl = ""
+    private var downloadFileContentDisposition = ""
+    private var downloadFileMimetype = ""
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -195,7 +207,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
 
         // Initially set status and navigation bar color to colorLaunchScreenBackground to match the launch screen until the web frontend is loaded
-        val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, R.color.colorLaunchScreenBackground, theme)
+        val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, commonR.color.colorLaunchScreenBackground, theme)
         setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
         if (BuildConfig.DEBUG) {
@@ -237,6 +249,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
 
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
+            settings.displayZoomControls = false
             settings.mediaPlaybackRequiresUserGesture = !presenter.isAutoPlayVideoEnabled()
             settings.userAgentString = USER_AGENT_STRING + " ${Build.MODEL} ${BuildConfig.VERSION_NAME}"
             webViewClient = object : WebViewClient() {
@@ -253,6 +266,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 }
 
                 override fun onPageFinished(view: WebView?, url: String?) {
+                    enablePinchToZoom()
                     if (moreInfoEntity != "" && view?.progress == 100 && isConnected) {
                         ioScope.launch {
                             val owner = "onPageFinished:$moreInfoEntity"
@@ -352,6 +366,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                                 }
                                 return true
                             } else if (!webView.url.toString().contains(it.toString())) {
+                                Log.d(TAG, "Launching browser")
                                 val browserIntent = Intent(Intent.ACTION_VIEW, it)
                                 startActivity(browserIntent)
                                 return true
@@ -362,6 +377,23 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                         }
                     }
                     return false
+                }
+            }
+
+            setDownloadListener { url, _, contentDisposition, mimetype, _ ->
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M ||
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+                    ActivityCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    downloadFile(url, contentDisposition, mimetype)
+                } else {
+                    downloadFileUrl = url
+                    downloadFileContentDisposition = contentDisposition
+                    downloadFileMimetype = mimetype
+                    requestStoragePermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 }
             }
 
@@ -626,6 +658,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
             unlocked = true
             binding.blurView.setBlurEnabled(false)
         }
+
+        enablePinchToZoom()
 
         if (presenter.isKeepScreenOnEnabled())
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -1247,6 +1281,31 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         this.evaluateJavascript(script, callback)
     }
 
+    private fun downloadFile(url: String, contentDisposition: String, mimetype: String) {
+        Log.d(TAG, "WebView requested download of $url")
+        val request = DownloadManager.Request(Uri.parse(url))
+            .setMimeType(mimetype)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(
+                Environment.DIRECTORY_DOWNLOADS,
+                URLUtil.guessFileName(url, contentDisposition, mimetype)
+            )
+        runBlocking {
+            if (url.startsWith(urlRepository.getUrl(true).toString()) ||
+                url.startsWith(urlRepository.getUrl(false).toString())
+            ) {
+                request.addRequestHeader("Authorization", presenter.getAuthorizationHeader())
+            }
+        }
+        try {
+            request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url))
+        } catch (e: Exception) {
+            // Cannot get cookies, probably not relevant
+        }
+
+        getSystemService<DownloadManager>()?.enqueue(request) ?: Log.d(TAG, "Unable to start download, cannot get DownloadManager")
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
         // Temporary workaround to sideload on Android TV and use a remote for basic navigation in WebView
         if (event?.keyCode == KeyEvent.KEYCODE_DPAD_DOWN && event.action == KeyEvent.ACTION_DOWN) {
@@ -1255,5 +1314,34 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         return super.dispatchKeyEvent(event)
+    }
+
+    private fun enablePinchToZoom() {
+        // Enable pinch to zoom
+        webView.getSettings().setBuiltInZoomControls(presenter.isPinchToZoomEnabled())
+        // Use idea from https://github.com/home-assistant/iOS/pull/1472 to filter viewport
+        val pinchToZoom = if (presenter.isPinchToZoomEnabled()) "true" else "false"
+        webView.evaluateJavascript(
+            """
+            if (typeof viewport === 'undefined') {
+                var viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport != null && typeof original_elements === 'undefined') {
+                    var original_elements = viewport['content'];
+                }
+            }
+            if (viewport != null) {
+                if ($pinchToZoom) {
+                    const ignoredBits = ['user-scalable', 'minimum-scale', 'maximum-scale'];
+                    let elements = viewport['content'].split(',').filter(contentItem => {
+                        return ignoredBits.every(ignoredBit => !contentItem.includes(ignoredBit));
+                    });
+                    elements.push('user-scalable=yes');
+                    viewport['content'] = elements.join(',');
+                } else {
+                    viewport['content'] = original_elements;
+                }           
+            }
+            """
+        ) {}
     }
 }

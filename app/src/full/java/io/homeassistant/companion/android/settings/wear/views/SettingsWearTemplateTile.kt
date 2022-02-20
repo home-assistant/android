@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
-import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.util.IntervalToString
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -58,7 +57,7 @@ fun SettingsWearTemplateTile(
                     ) {
                         Image(
                             asset = CommunityMaterial.Icon.cmd_arrow_left,
-                            colorFilter = ColorFilter.tint(colorResource(R.color.colorIcon))
+                            colorFilter = ColorFilter.tint(colorResource(commonR.color.colorIcon))
                         )
                     }
                 },
@@ -80,7 +79,7 @@ fun SettingsWearTemplateTile(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
                     asset = CommunityMaterial.Icon3.cmd_timer_cog,
-                    colorFilter = ColorFilter.tint(colorResource(R.color.colorPrimary)),
+                    colorFilter = ColorFilter.tint(colorResource(commonR.color.colorPrimary)),
                     modifier = Modifier
                         .height(24.dp)
                         .width(24.dp)

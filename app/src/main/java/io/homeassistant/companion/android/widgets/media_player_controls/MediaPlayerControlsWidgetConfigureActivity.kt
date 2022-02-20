@@ -103,6 +103,7 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
         if (mediaPlayerWidget != null) {
             binding.label.setText(mediaPlayerWidget.label)
             binding.widgetTextConfigEntityId.setText(mediaPlayerWidget.entityId)
+            binding.widgetShowVolumeButtonCheckbox.isChecked = mediaPlayerWidget.showVolume
             binding.widgetShowSeekButtonsCheckbox.isChecked = mediaPlayerWidget.showSeek
             binding.widgetShowSkipButtonsCheckbox.isChecked = mediaPlayerWidget.showSkip
             val entity = runBlocking {
@@ -186,6 +187,10 @@ class MediaPlayerControlsWidgetConfigureActivity : BaseActivity() {
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_LABEL,
                 binding.label.text.toString()
+            )
+            intent.putExtra(
+                MediaPlayerControlsWidget.EXTRA_SHOW_VOLUME,
+                binding.widgetShowVolumeButtonCheckbox.isChecked
             )
             intent.putExtra(
                 MediaPlayerControlsWidget.EXTRA_SHOW_SKIP,

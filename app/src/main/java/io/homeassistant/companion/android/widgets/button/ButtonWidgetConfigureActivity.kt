@@ -354,7 +354,7 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             if (iconDrawable != null) {
                 val icon = DrawableCompat.wrap(iconDrawable)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    DrawableCompat.setTint(icon, resources.getColor(R.color.colorIcon, theme))
+                    DrawableCompat.setTint(icon, resources.getColor(commonR.color.colorIcon, theme))
                 }
                 binding.widgetConfigIconSelector.setImageBitmap(icon.toBitmap())
             }

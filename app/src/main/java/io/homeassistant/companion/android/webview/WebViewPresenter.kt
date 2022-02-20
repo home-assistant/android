@@ -16,6 +16,8 @@ interface WebViewPresenter {
 
     fun isKeepScreenOnEnabled(): Boolean
 
+    fun isPinchToZoomEnabled(): Boolean
+
     fun isLockEnabled(): Boolean
     fun isAutoPlayVideoEnabled(): Boolean
 
@@ -27,6 +29,8 @@ interface WebViewPresenter {
     fun onFinish()
 
     fun isSsidUsed(): Boolean
+
+    fun getAuthorizationHeader(): String
 
     suspend fun parseWebViewColor(webViewColor: String): Int
 }

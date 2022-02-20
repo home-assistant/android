@@ -11,6 +11,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorSetting
+import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
 interface SensorManager {
@@ -41,6 +42,7 @@ interface SensorManager {
     fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors"
     }
+
     fun requiredPermissions(sensorId: String): Array<String>
 
     fun checkPermission(context: Context, sensorId: String): Boolean {
@@ -206,4 +208,9 @@ interface SensorManager {
             )
         }
     }
+}
+
+fun SensorManager.id(): String {
+    val simpleName = this::class.simpleName ?: this::class.java.name
+    return simpleName.lowercase(Locale.US).replace(" ", "_")
 }

@@ -106,7 +106,8 @@ fun ManageWidgetsView(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp)
         ) {
             if (viewModel.buttonWidgetList.isNullOrEmpty() && viewModel.staticWidgetList.isNullOrEmpty() &&
-                viewModel.mediaWidgetList.isNullOrEmpty() && viewModel.templateWidgetList.isNullOrEmpty()
+                viewModel.mediaWidgetList.isNullOrEmpty() && viewModel.templateWidgetList.isNullOrEmpty() &&
+                viewModel.cameraWidgetList.isNullOrEmpty()
             ) {
                 item {
                     Column(
@@ -141,6 +142,15 @@ fun ManageWidgetsView(
                     val item = viewModel.buttonWidgetList[index]
                     val label = if (!item.label.isNullOrEmpty()) item.label else "${item.domain}.${item.service}"
                     WidgetRow(widgetLabel = label.toString(), widgetId = item.id, widgetType = "button")
+                }
+            }
+            if (!viewModel.cameraWidgetList.isNullOrEmpty()) {
+                item {
+                    Text(stringResource(id = R.string.camera_widgets))
+                }
+                items(viewModel.cameraWidgetList.size) { index ->
+                    val item = viewModel.cameraWidgetList[index]
+                    WidgetRow(widgetLabel = item.entityId, widgetId = item.id, widgetType = "camera")
                 }
             }
             if (!viewModel.staticWidgetList.isNullOrEmpty()) {
@@ -231,6 +241,7 @@ fun WidgetRow(
                 context,
                 when (widgetType) {
                     "button" -> ButtonWidgetConfigureActivity::class.java
+                    "camera" -> CameraWidgetConfigureActivity::class.java
                     "media" -> MediaPlayerControlsWidgetConfigureActivity::class.java
                     "state" -> EntityWidgetConfigureActivity::class.java
                     "template" -> TemplateWidgetConfigureActivity::class.java
