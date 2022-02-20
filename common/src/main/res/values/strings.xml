@@ -95,6 +95,7 @@
     <string name="button_forward">Next</string>
     <string name="button_widget_desc">Call any service</string>
     <string name="calendar">Calendar</string>
+    <string name="camera_widgets">Camera Widgets</string>
     <string name="camera_widget_desc">Displays the latest image from the camera</string>
     <string name="cancel">Cancel</string>
     <string name="changelog">View Full Change Log</string>
@@ -174,6 +175,7 @@
     <string name="entity_widget_desc">Current state and attribute of any entity</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
+    <string name="error_loading_entities">Error loading entities</string>
     <string name="error_onboarding_connection_failed">Unable to connect to Home Assistant.</string>
     <string name="error_ssl">Unable to communicate with Home Assistant because of a SSL error.  Please ensure your certificate is valid.</string>
     <string name="error_with_registration">Please check to ensure you have the mobile_app\nintegration enabled on your home assistant instance.</string>
@@ -227,6 +229,8 @@
     <string name="irreversible">This action is irreversible</string>
     <string name="keep_screen_on_def">Do not lock screen when Lovelace dashboard is active</string>
     <string name="keep_screen_on">Keep screen On</string>
+    <string name="pinch_to_zoom_def">Allow Pinch-to-zoom gesture to zoom app window</string>
+    <string name="pinch_to_zoom">Pinch To Zoom</string>
     <string name="label_attribute">Attribute:</string>
     <string name="label_dynamic_data">Data:</string>
     <string name="label_entity_id">Entity ID:</string>
@@ -332,7 +336,9 @@
     <string name="nfc_write_tag_too_early">Please fill out the form first</string>
     <string name="no_notifications_summary">You have not received any notifications yet</string>
     <string name="no_notifications">No Notifications</string>
-    <string name="no_widgets_summary">When you add a configurable widget to your home screen, you will see it here</string>
+    <string name="no_supported_entities">No Supported Entities</string>
+    <string name="no_supported_entities_summary">Check the documentation for more information</string>
+    <string name="no_widgets_summary">When you add a widget to your home screen, you will see it here</string>
     <string name="no_widgets">No Widgets Found</string>
     <string name="none">None</string>
     <string name="not_private">Your connection to this site is not private.</string>
@@ -729,7 +735,10 @@
     <string name="widget_media_player_description">Media Player Widget</string>
     <string name="widget_media_playpause_button">Play/Pause</string>
     <string name="widget_media_prev_track_button">Previous Track</string>
+    <string name="widget_media_volume_down_button">Volume Down</string>
+    <string name="widget_media_volume_up_button">Volume Up</string>
     <string name="widget_media_rewind_button">Rewind</string>
+    <string name="widget_media_show_volume">Show Volume Buttons</string>
     <string name="widget_media_show_seek">Show Seek Buttons</string>
     <string name="widget_media_show_skip">Show Skip Buttons</string>
     <string name="widget_separator_input_hint">No separator</string>

@@ -8,6 +8,7 @@ import io.homeassistant.companion.android.common.data.integration.DeviceRegistra
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -123,7 +124,11 @@ class HomePresenterImpl @Inject constructor(
         )
     }
 
-    override fun onLogoutClicked() {
+    override fun onInvalidAuthorization() = finishSession()
+
+    override fun onLogoutClicked() = finishSession()
+
+    private fun finishSession() {
         mainScope.launch {
             authenticationUseCase.revokeSession()
             view.displayOnBoarding()
@@ -152,6 +157,10 @@ class HomePresenterImpl @Inject constructor(
 
     override suspend fun isConnected(): Boolean {
         return integrationUseCase.isRegistered()
+    }
+
+    override fun getWebSocketState(): WebSocketState? {
+        return webSocketUseCase.getConnectionState()
     }
 
     override suspend fun getAreaRegistry(): List<AreaRegistryResponse>? {

@@ -81,6 +81,11 @@
             android:title="@string/keep_screen_on"
             android:summary="@string/keep_screen_on_def"/>
         <SwitchPreference
+            android:key="pinch_to_zoom"
+            android:icon="@drawable/ic_gesture_pinch"
+            android:title="@string/pinch_to_zoom"
+            android:summary="@string/pinch_to_zoom_def"/>
+        <SwitchPreference
             android:key="autoplay_video"
             android:icon="@drawable/ic_baseline_video_settings_24"
             android:title="@string/autoplay_video"

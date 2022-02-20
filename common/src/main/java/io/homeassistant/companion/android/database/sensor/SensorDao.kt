@@ -6,12 +6,16 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SensorDao {
 
     @Query("SELECT * FROM Sensors WHERE id = :id")
     fun get(id: String): Sensor?
+
+    @Query("SELECT * FROM sensors")
+    fun getAllFlow(): Flow<List<Sensor>>?
 
     @Transaction
     @Query("SELECT * FROM Sensors WHERE id = :id")

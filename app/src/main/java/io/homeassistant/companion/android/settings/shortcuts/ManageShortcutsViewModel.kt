@@ -202,7 +202,7 @@ class ManageShortcutsViewModel @Inject constructor(
         val iconDrawable = iconPack.icons[tileIconId]?.drawable
         if (iconDrawable != null) {
             val icon = DrawableCompat.wrap(iconDrawable)
-            icon.setColorFilter(app.resources.getColor(io.homeassistant.companion.android.R.color.colorAccent), PorterDuff.Mode.SRC_IN)
+            icon.setColorFilter(app.resources.getColor(R.color.colorAccent), PorterDuff.Mode.SRC_IN)
             return icon
         }
         return null

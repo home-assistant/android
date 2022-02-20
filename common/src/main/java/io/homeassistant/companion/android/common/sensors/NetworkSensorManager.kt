@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.sensors
+package io.homeassistant.companion.android.common.sensors
 
 import android.Manifest
 import android.content.Context
@@ -7,8 +7,6 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
 import androidx.core.content.getSystemService
-import io.homeassistant.companion.android.BuildConfig
-import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import okhttp3.Call
@@ -93,9 +91,6 @@ class NetworkSensorManager : SensorManager {
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#connection-type-sensor"
-    }
-    override fun hasSensor(context: Context): Boolean {
-        return BuildConfig.FLAVOR != "quest"
     }
     override val enabledByDefault: Boolean
         get() = false

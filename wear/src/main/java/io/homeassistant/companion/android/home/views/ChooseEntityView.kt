@@ -84,7 +84,7 @@ private fun ChooseEntityChip(
 ) {
     val attributes = entityList[index].attributes as Map<*, *>
     val iconBitmap = getIcon(
-        attributes["icon"] as String?,
+        entityList[index] as Entity<Map<String, Any>>,
         entityList[index].entityId.split(".")[0],
         LocalContext.current
     )

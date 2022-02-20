@@ -63,6 +63,7 @@ fun SettingsView(
     onClickSetFavorites: () -> Unit,
     onClearFavorites: () -> Unit,
     onClickSetShortcuts: () -> Unit,
+    onClickSensors: () -> Unit,
     onClickLogout: () -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean,
@@ -171,7 +172,18 @@ fun SettingsView(
                         onClick = onClickTemplateTile
                     )
                 }
-
+                item {
+                    ListHeader(
+                        id = commonR.string.sensors
+                    )
+                }
+                item {
+                    SecondarySettingsChip(
+                        icon = CommunityMaterial.Icon2.cmd_leak,
+                        label = stringResource(id = commonR.string.sensor_title),
+                        onClick = onClickSensors
+                    )
+                }
                 item {
                     ListHeader(
                         id = commonR.string.account
@@ -211,11 +223,11 @@ private fun PreviewSettingsView() {
         onClickSetFavorites = { /*TODO*/ },
         onClearFavorites = {},
         onClickSetShortcuts = {},
+        onClickSensors = {},
         onClickLogout = {},
         isHapticEnabled = true,
         isToastEnabled = false,
         onHapticEnabled = {},
-        onToastEnabled = {},
-        onClickTemplateTile = {}
-    )
+        onToastEnabled = {}
+    ) {}
 }

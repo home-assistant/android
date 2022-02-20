@@ -39,6 +39,16 @@
         </LinearLayout>
 
         <CheckBox
+            android:id="@+id/widget_show_volume_button_checkbox"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_margin="5dp"
+            android:checked="true"
+            android:layoutDirection="rtl"
+            android:text="@string/widget_media_show_volume" />
+
+        <CheckBox
             android:id="@+id/widget_show_skip_buttons_checkbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

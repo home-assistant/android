@@ -3,9 +3,9 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Context
 import android.os.Build
-import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
+import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting

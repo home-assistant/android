@@ -48,16 +48,17 @@ import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
+import io.homeassistant.companion.android.common.util.cancel
+import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.NotificationSensorManager
 import io.homeassistant.companion.android.sensors.SensorWorker
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
-import io.homeassistant.companion.android.util.cancel
-import io.homeassistant.companion.android.util.cancelGroupIfNeeded
-import io.homeassistant.companion.android.util.getActiveNotification
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -84,6 +85,8 @@ class MessagingManager @Inject constructor(
         const val TAG = "MessagingService"
 
         const val APP_PREFIX = "app://"
+        const val SETTINGS_PREFIX = "settings://"
+        const val NOTIFICATION_HISTORY = "notification_history"
 
         const val TITLE = "title"
         const val MESSAGE = "message"
@@ -800,7 +803,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        if (data[NOTIFICATION_ICON]?.startsWith("mdi") == true && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (data[NOTIFICATION_ICON]?.startsWith("mdi:") == true && !data[NOTIFICATION_ICON]?.substringAfter("mdi:").isNullOrBlank() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val iconName = data[NOTIFICATION_ICON]!!.split(":")[1]
             val iconDrawable =
                 IconicsDrawable(context, "cmd-$iconName").toAndroidIconCompat()
@@ -909,7 +912,7 @@ class MessagingManager @Inject constructor(
     ) {
 
         val colorString = data["color"]
-        val color = parseColor(colorString, R.color.colorPrimary)
+        val color = parseColor(colorString, commonR.color.colorPrimary)
         builder.color = color
     }
 
@@ -930,7 +933,7 @@ class MessagingManager @Inject constructor(
     ) {
         val ledColor = data[LED_COLOR]
         if (!ledColor.isNullOrBlank()) {
-            builder.setLights(parseColor(ledColor, R.color.colorPrimary), 3000, 3000)
+            builder.setLights(parseColor(ledColor, commonR.color.colorPrimary), 3000, 3000)
         }
     }
 
@@ -1141,7 +1144,7 @@ class MessagingManager @Inject constructor(
                     URI -> {
                         if (!notificationAction.uri.isNullOrBlank()) {
                             builder.addAction(
-                                R.drawable.ic_globe,
+                                commonR.drawable.ic_globe,
                                 notificationAction.title,
                                 createOpenUriPendingIntent(notificationAction.uri)
                             )
@@ -1195,6 +1198,12 @@ class MessagingManager @Inject constructor(
             uri.startsWith(APP_PREFIX) -> {
                 context.packageManager.getLaunchIntentForPackage(uri.substringAfter(APP_PREFIX))
             }
+            uri.startsWith(SETTINGS_PREFIX) -> {
+                if (uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
+                    SettingsActivity.newInstance(context)
+                else
+                    WebViewActivity.newInstance(context)
+            }
             UrlHandler.isAbsoluteUrl(uri) -> {
                 Intent(Intent.ACTION_VIEW).apply {
                     this.data = Uri.parse(uri)
@@ -1205,6 +1214,8 @@ class MessagingManager @Inject constructor(
             }
         } ?: WebViewActivity.newInstance(context)
 
+        if (uri.startsWith(SETTINGS_PREFIX) && uri.substringAfter(SETTINGS_PREFIX) == NOTIFICATION_HISTORY)
+            intent.putExtra("fragment", NOTIFICATION_HISTORY)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         intent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
 
@@ -1255,7 +1266,7 @@ class MessagingManager @Inject constructor(
             val ledColor = data[LED_COLOR]
             if (!ledColor.isNullOrBlank()) {
                 channel.enableLights(true)
-                channel.lightColor = parseColor(ledColor, R.color.colorPrimary)
+                channel.lightColor = parseColor(ledColor, commonR.color.colorPrimary)
             }
         }
     }

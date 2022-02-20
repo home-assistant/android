@@ -88,7 +88,7 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
             id = R.string.shortcut_pinned
         ),
         fontSize = 20.sp,
-        color = colorResource(id = io.homeassistant.companion.android.R.color.colorAccent),
+        color = colorResource(id = R.color.colorAccent),
         modifier = Modifier.padding(top = 20.dp)
     )
 
@@ -157,7 +157,7 @@ private fun CreateShortcutView(i: Int, viewModel: ManageShortcutsViewModel, icon
                     Image(
                         it,
                         contentDescription = stringResource(id = R.string.shortcut_icon),
-                        colorFilter = ColorFilter.tint(colorResource(io.homeassistant.companion.android.R.color.colorAccent))
+                        colorFilter = ColorFilter.tint(colorResource(R.color.colorAccent))
                     )
                 }
         }

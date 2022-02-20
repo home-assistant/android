@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.bluetooth
+package io.homeassistant.companion.android.common.bluetooth
 
 data class BluetoothDevice(
     val address: String,

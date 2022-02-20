@@ -1,13 +1,17 @@
 package io.homeassistant.companion.android.settings.websocket.views
 
+import android.app.UiModeManager
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Build
 import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.RadioButton
@@ -22,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
@@ -32,8 +37,13 @@ fun WebsocketSettingView(
     websocketSetting: WebsocketSetting,
     onSettingChanged: (WebsocketSetting) -> Unit
 ) {
+    val scrollState = rememberScrollState()
     val context = LocalContext.current
-    Column(modifier = Modifier.padding(20.dp)) {
+    Column(
+        modifier = Modifier
+            .padding(20.dp)
+            .verticalScroll(scrollState)
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(bottom = 20.dp)
@@ -56,7 +66,8 @@ fun WebsocketSettingView(
             selected = websocketSetting == WebsocketSetting.ALWAYS,
             onClick = { onSettingChanged(WebsocketSetting.ALWAYS) }
         )
-        if (websocketSetting != WebsocketSetting.NEVER && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val uiManager = context.getSystemService<UiModeManager>()
+        if (websocketSetting != WebsocketSetting.NEVER && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
             Icon(
                 Icons.Outlined.Info,
                 contentDescription = stringResource(id = R.string.info),
