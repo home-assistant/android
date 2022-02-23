@@ -70,6 +70,7 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
         private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
+        private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
@@ -345,6 +346,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isPinchToZoomEnabled(): Boolean {
         return localStorage.getBoolean(PREF_PINCH_TO_ZOOM_ENABLED)
+    }
+
+    override suspend fun setWebViewDebugEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, enabled)
+    }
+
+    override suspend fun isWebViewDebugEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_WEBVIEW_DEBUG_ENABLED)
     }
 
     override suspend fun isAutoPlayVideoEnabled(): Boolean {

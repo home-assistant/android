@@ -210,10 +210,6 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         val colorLaunchScreenBackground = ResourcesCompat.getColor(resources, commonR.color.colorLaunchScreenBackground, theme)
         setStatusBarAndNavigationBarColor(colorLaunchScreenBackground, colorLaunchScreenBackground)
 
-        if (BuildConfig.DEBUG) {
-            WebView.setWebContentsDebuggingEnabled(true)
-        }
-
         binding.blurView.setupWith(binding.root)
             .setBlurAlgorithm(RenderScriptBlur(this))
             .setBlurRadius(5f)
@@ -660,6 +656,8 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
         }
 
         enablePinchToZoom()
+
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG || presenter.isWebViewDebugEnabled())
 
         if (presenter.isKeepScreenOnEnabled())
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
