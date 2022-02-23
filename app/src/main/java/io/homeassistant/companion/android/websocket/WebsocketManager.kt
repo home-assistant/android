@@ -25,6 +25,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
@@ -88,6 +89,7 @@ class WebsocketManager(
 
     private val websocketRepository: WebSocketRepository = entryPoint.websocketRepository()
     private val messagingManager: MessagingManager = entryPoint.messagingManager()
+    private val urlRepository: UrlRepository = entryPoint.urlRepository()
 
     private val settingsDao = AppDatabase.getInstance(appContext).settingsDao()
 
@@ -96,6 +98,7 @@ class WebsocketManager(
     interface WebsocketManagerEntryPoint {
         fun websocketRepository(): WebSocketRepository
         fun messagingManager(): MessagingManager
+        fun urlRepository(): UrlRepository
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -121,17 +124,17 @@ class WebsocketManager(
         return@withContext Result.success()
     }
 
-    private fun shouldWeRun(): Boolean {
+    private suspend fun shouldWeRun(): Boolean {
         val powerManager = applicationContext.getSystemService<PowerManager>()!!
         val displayOff = !powerManager.isInteractive
         val setting = settingsDao.get(0)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
-        if (setting == WebsocketSetting.NEVER) {
-            return false
-        } else if (displayOff && setting == WebsocketSetting.SCREEN_ON) {
-            return false
+        val isHome = urlRepository.isInternal()
+        return when {
+            (setting == WebsocketSetting.NEVER) -> false
+            (displayOff && setting == WebsocketSetting.SCREEN_ON) -> false
+            (!isHome && setting == WebsocketSetting.HOME_WIFI) -> false
+            else -> true
         }
-
-        return true
     }
 
     private suspend fun collectNotifications() {

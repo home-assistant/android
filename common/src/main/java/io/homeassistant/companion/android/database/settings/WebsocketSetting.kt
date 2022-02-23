@@ -5,7 +5,8 @@ import androidx.room.TypeConverter
 enum class WebsocketSetting {
     NEVER,
     SCREEN_ON,
-    ALWAYS
+    ALWAYS,
+    HOME_WIFI
 }
 
 class LocalNotificationSettingConverter {

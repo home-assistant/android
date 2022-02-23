@@ -781,4 +781,5 @@
     <string name="shortcut_pinned">Pinned Shortcuts</string>
     <string name="remote_debugging">WebView Remote Debugging</string>
     <string name="remote_debugging_summary">Allow remote debugging of WebView to troubleshoot Home Assistant frontend issues</string>
+    <string name="websocket_setting_home_wifi">On Home WiFi Only\n\nNotifications will be delivered by Google only when not on Home WiFi.</string>
 </resources>
