@@ -19,8 +19,8 @@ class BluetoothSensorManager : SensorManager {
         private const val SETTING_BLE_ID1 = "ble_uuid"
         private const val SETTING_BLE_ID2 = "ble_major"
         private const val SETTING_BLE_ID3 = "ble_minor"
-        private const val SETTING_BLE_TRANSMIT_POWER = "ble_transmit_power"
-        private const val SETTING_BLE_ADVERTISE_MODE = "ble_advertise_mode"
+        const val SETTING_BLE_TRANSMIT_POWER = "ble_transmit_power"
+        const val SETTING_BLE_ADVERTISE_MODE = "ble_advertise_mode"
         private const val SETTING_BLE_TRANSMIT_ENABLED = "ble_transmit_enabled"
         const val SETTING_BLE_MEASURED_POWER = "ble_measured_power_at_1m"
 
