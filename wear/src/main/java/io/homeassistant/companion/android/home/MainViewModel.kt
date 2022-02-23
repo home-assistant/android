@@ -238,6 +238,16 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             homePresenter.onEntityClicked(entityId, state)
         }
     }
+    fun setBrightness(entityId: String, brightness: Float) {
+        viewModelScope.launch {
+            homePresenter.onBrightnessChanged(entityId, brightness)
+        }
+    }
+    fun setColorTemp(entityId: String, colorTemp: Float) {
+        viewModelScope.launch {
+            homePresenter.onColorTempChanged(entityId, colorTemp)
+        }
+    }
 
     fun enableDisableSensor(sensorManager: SensorManager, sensorId: String, isEnabled: Boolean) {
         viewModelScope.launch {

@@ -89,6 +89,7 @@
     <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
     <string name="biometric_set_title">Confirm to continue</string>
     <string name="biometric_title">Home Assistant is locked</string>
+    <string name="brightness">Brightness: %1$d</string>
     <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
     <string name="buttons">Buttons</string>
     <string name="button_forward">Next</string>
@@ -101,6 +102,7 @@
     <string name="checking_with_home_assistant">Checking with Home Assistant</string>
     <string name="choose_server">Choose server</string>
     <string name="clear_favorites">Clear Favorites</string>
+    <string name="color_temp">Color temperature: %1$d</string>
     <string name="config">Configuration</string>
     <string name="configure_service_call">Configure Service Call</string>
     <string name="configure_widget_label">Widget Label</string>
@@ -129,6 +131,7 @@
     <string name="delete_this_notification">Delete this notification from history</string>
     <string name="delete_widget">Delete Widget</string>
     <string name="description">Description</string>
+    <string name="details">Details</string>
     <string name="developer_tools">Developer Tools</string>
     <string name="device_class">Device Class</string>
     <string name="device_name">Device Name</string>
@@ -168,6 +171,7 @@
     </plurals>
     <string name="entity_attribute_checkbox">Append Attribute Value</string>
     <string name="entity_id">Entity ID</string>
+    <string name="entity_id_name">Entity ID: %1$s</string>
     <string name="entity_widget_desc">Current state and attribute of any entity</string>
     <string name="error_auth_revoked">It appears that your authorization was revoked, please reconnect to Home Assistant.</string>
     <string name="error_connection_failed">Unable to connect to Home Assistant.</string>
@@ -239,7 +243,9 @@
     <string name="lang_summary_settings">Changing default language may have influence on device entities naming</string>
     <string name="lang_title_settings">Language</string>
     <string name="last_25_notifications">Last 25 Notifications</string>
+    <string name="last_changed">Last changed: %1$s</string>
     <string name="last_num_notifications">Last %1$d Notifications</string>
+    <string name="last_updated">Last updated: %1$s</string>
     <string name="learn_more">Learn More</string>
     <string name="lights">Lights</string>
     <string name="button_widgets">Button Widgets</string>
@@ -624,6 +630,7 @@
     <string name="state_unlocked">Unlocked</string>
     <string name="state_unlocking">Unlocking</string>
     <string name="state">State</string>
+    <string name="state_name">State: %1$s</string>
     <string name="states">Overview</string>
     <string name="status_of_mobile_app_integration">Status of mobile app integration:</string>
     <string name="store_request_successful">Request to install app on wear device sent successfully</string>
