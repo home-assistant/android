@@ -46,6 +46,9 @@ interface SensorDao {
     @Query("UPDATE sensor_settings SET enabled = :enabled WHERE sensor_id = :sensorId AND name = :settingName")
     fun updateSettingEnabled(sensorId: String, settingName: String, enabled: Boolean)
 
+    @Query("UPDATE sensor_settings SET value = :value WHERE sensor_id = :sensorId AND name = :settingName")
+    fun updateSettingValue(sensorId: String, settingName: String, value: String)
+
     @Query("UPDATE sensors SET last_sent_state = :state WHERE id = :sensorId")
     fun updateLastSendState(sensorId: String, state: String)
 

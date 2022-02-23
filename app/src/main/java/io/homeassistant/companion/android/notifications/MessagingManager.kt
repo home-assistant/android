@@ -107,6 +107,8 @@ class MessagingManager @Inject constructor(
         const val NOTIFICATION_ICON = "notification_icon"
         const val URI = "URI"
         const val REPLY = "REPLY"
+        const val BLE_ADVERTISE = "ble_advertise"
+        const val BLE_TRANSMIT = "ble_transmit"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -125,6 +127,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
         const val COMMAND_ACTIVITY = "command_activity"
         const val COMMAND_WEBVIEW = "command_webview"
+        const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -158,7 +161,16 @@ class MessagingManager @Inject constructor(
         const val MEDIA_REWIND = "rewind"
         const val MEDIA_STOP = "stop"
 
-        const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
+        // Ble Transmitter Commands
+        const val BLE_SET_TRANSMIT_POWER = "ble_set_transmit_power"
+        const val BLE_SET_ADVERTISE_MODE = "ble_set_advertise_mode"
+        const val BLE_ADVERTISE_LOW_LATENCY = "ble_advertise_low_latency"
+        const val BLE_ADVERTISE_BALANCED = "ble_advertise_balanced"
+        const val BLE_ADVERTISE_LOW_POWER = "ble_advertise_low_power"
+        const val BLE_TRANSMIT_ULTRA_LOW = "ble_transmit_ultra_low"
+        const val BLE_TRANSMIT_LOW = "ble_transmit_low"
+        const val BLE_TRANSMIT_MEDIUM = "ble_transmit_medium"
+        const val BLE_TRANSMIT_HIGH = "ble_transmit_high"
 
         // Command groups
         val DEVICE_COMMANDS = listOf(
@@ -184,6 +196,11 @@ class MessagingManager @Inject constructor(
             MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
             MEDIA_PLAY_PAUSE, MEDIA_PREVIOUS, MEDIA_REWIND, MEDIA_STOP
         )
+        val BLE_COMMANDS = listOf(TURN_OFF, TURN_ON, BLE_SET_ADVERTISE_MODE, BLE_SET_TRANSMIT_POWER)
+        val BLE_TRANSMIT_COMMANDS =
+            listOf(BLE_TRANSMIT_HIGH, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_ULTRA_LOW)
+        val BLE_ADVERTISE_COMMANDS =
+            listOf(BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY, BLE_ADVERTISE_LOW_POWER)
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -295,7 +312,13 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_BLE_TRANSMITTER -> {
-                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS)
+                        if (
+                            (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in BLE_COMMANDS) &&
+                            (
+                                !jsonData[BLE_ADVERTISE].isNullOrEmpty() && jsonData[BLE_ADVERTISE] in BLE_ADVERTISE_COMMANDS ||
+                                    !jsonData[BLE_TRANSMIT].isNullOrEmpty() && jsonData[BLE_TRANSMIT] in BLE_TRANSMIT_COMMANDS
+                                )
+                        )
                             handleDeviceCommands(jsonData)
                         else {
                             mainScope.launch {
@@ -571,10 +594,38 @@ class MessagingManager @Inject constructor(
                     bluetoothAdapter?.enable()
             }
             COMMAND_BLE_TRANSMITTER -> {
+                val sensorDao = AppDatabase.getInstance(context).sensorDao()
                 if (title == TURN_OFF)
                     BluetoothSensorManager.enableDisableBLETransmitter(context, false)
                 if (title == TURN_ON)
                     BluetoothSensorManager.enableDisableBLETransmitter(context, true)
+                if (title == BLE_SET_ADVERTISE_MODE || title == BLE_SET_TRANSMIT_POWER)
+                    sensorDao.updateSettingValue(
+                        BluetoothSensorManager.bleTransmitter.id,
+                        if (title == BLE_SET_ADVERTISE_MODE)
+                            BluetoothSensorManager.SETTING_BLE_ADVERTISE_MODE
+                        else
+                            BluetoothSensorManager.SETTING_BLE_TRANSMIT_POWER,
+                        when (title) {
+                            BLE_SET_ADVERTISE_MODE -> {
+                                when (data[BLE_ADVERTISE]) {
+                                    BLE_ADVERTISE_BALANCED -> BluetoothSensorManager.BLE_ADVERTISE_BALANCED
+                                    BLE_ADVERTISE_LOW_LATENCY -> BluetoothSensorManager.BLE_ADVERTISE_LOW_LATENCY
+                                    BLE_ADVERTISE_LOW_POWER -> BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER
+                                    else -> BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER
+                                }
+                            }
+                            else -> {
+                                when (data[BLE_TRANSMIT]) {
+                                    BLE_TRANSMIT_HIGH -> BluetoothSensorManager.BLE_TRANSMIT_HIGH
+                                    BLE_TRANSMIT_LOW -> BluetoothSensorManager.BLE_TRANSMIT_LOW
+                                    BLE_TRANSMIT_MEDIUM -> BluetoothSensorManager.BLE_TRANSMIT_MEDIUM
+                                    BLE_TRANSMIT_ULTRA_LOW -> BluetoothSensorManager.BLE_TRANSMIT_ULTRA_LOW
+                                    else -> BluetoothSensorManager.BLE_TRANSMIT_ULTRA_LOW
+                                }
+                            }
+                        }
+                    )
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
                 if (title == TURN_OFF) {
