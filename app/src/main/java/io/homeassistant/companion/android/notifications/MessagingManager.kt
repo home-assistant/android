@@ -609,19 +609,19 @@ class MessagingManager @Inject constructor(
                         when (title) {
                             BLE_SET_ADVERTISE_MODE -> {
                                 when (data[BLE_ADVERTISE]) {
-                                    BLE_ADVERTISE_BALANCED -> "balanced"
-                                    BLE_ADVERTISE_LOW_LATENCY -> "lowLatency"
-                                    BLE_ADVERTISE_LOW_POWER -> "lowPower"
-                                    else -> "lowPower"
+                                    BLE_ADVERTISE_BALANCED -> BluetoothSensorManager.BLE_ADVERTISE_BALANCED
+                                    BLE_ADVERTISE_LOW_LATENCY -> BluetoothSensorManager.BLE_ADVERTISE_LOW_LATENCY
+                                    BLE_ADVERTISE_LOW_POWER -> BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER
+                                    else -> BluetoothSensorManager.BLE_ADVERTISE_LOW_POWER
                                 }
                             }
                             else -> {
                                 when (data[BLE_TRANSMIT]) {
-                                    BLE_TRANSMIT_HIGH -> "high"
-                                    BLE_TRANSMIT_LOW -> "low"
-                                    BLE_TRANSMIT_MEDIUM -> "medium"
-                                    BLE_TRANSMIT_ULTRA_LOW -> "ultraLow"
-                                    else -> "ultraLow"
+                                    BLE_TRANSMIT_HIGH -> BluetoothSensorManager.BLE_TRANSMIT_HIGH
+                                    BLE_TRANSMIT_LOW -> BluetoothSensorManager.BLE_TRANSMIT_LOW
+                                    BLE_TRANSMIT_MEDIUM -> BluetoothSensorManager.BLE_TRANSMIT_MEDIUM
+                                    BLE_TRANSMIT_ULTRA_LOW -> BluetoothSensorManager.BLE_TRANSMIT_ULTRA_LOW
+                                    else -> BluetoothSensorManager.BLE_TRANSMIT_ULTRA_LOW
                                 }
                             }
                         }
