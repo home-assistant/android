@@ -402,8 +402,14 @@ class ButtonWidgetConfigureActivity : BaseActivity(), IconDialog.Callback {
             // Analyze and send service data
             val serviceDataMap = HashMap<String, Any>()
             dynamicFields.forEach {
-                if (it.value != null) {
-                    serviceDataMap[it.field] = it.value!!
+                var value = it.value
+                if (value != null) {
+                    if (it.field == "entity_id" && value is String) {
+                        // Remove trailing commas and spaces
+                        val trailingRegex = "[, ]+$".toRegex()
+                        value = value.replace(trailingRegex, "")
+                    }
+                    serviceDataMap[it.field] = value
                 }
             }
 
