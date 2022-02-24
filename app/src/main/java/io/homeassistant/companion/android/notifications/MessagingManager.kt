@@ -196,7 +196,7 @@ class MessagingManager @Inject constructor(
             MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
             MEDIA_PLAY_PAUSE, MEDIA_PREVIOUS, MEDIA_REWIND, MEDIA_STOP
         )
-        val BLE_COMMANDS = listOf(TURN_OFF, TURN_ON, BLE_SET_ADVERTISE_MODE, BLE_SET_TRANSMIT_POWER)
+        val BLE_COMMANDS = listOf(BLE_SET_ADVERTISE_MODE, BLE_SET_TRANSMIT_POWER)
         val BLE_TRANSMIT_COMMANDS =
             listOf(BLE_TRANSMIT_HIGH, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_ULTRA_LOW)
         val BLE_ADVERTISE_COMMANDS =
@@ -313,10 +313,13 @@ class MessagingManager @Inject constructor(
                     }
                     COMMAND_BLE_TRANSMITTER -> {
                         if (
-                            (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in BLE_COMMANDS) &&
+                            (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS) ||
                             (
-                                !jsonData[BLE_ADVERTISE].isNullOrEmpty() && jsonData[BLE_ADVERTISE] in BLE_ADVERTISE_COMMANDS ||
-                                    !jsonData[BLE_TRANSMIT].isNullOrEmpty() && jsonData[BLE_TRANSMIT] in BLE_TRANSMIT_COMMANDS
+                                (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in BLE_COMMANDS) &&
+                                    (
+                                        !jsonData[BLE_ADVERTISE].isNullOrEmpty() && jsonData[BLE_ADVERTISE] in BLE_ADVERTISE_COMMANDS ||
+                                            !jsonData[BLE_TRANSMIT].isNullOrEmpty() && jsonData[BLE_TRANSMIT] in BLE_TRANSMIT_COMMANDS
+                                        )
                                 )
                         )
                             handleDeviceCommands(jsonData)
