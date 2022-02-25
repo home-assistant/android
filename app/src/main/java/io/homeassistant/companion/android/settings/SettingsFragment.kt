@@ -29,8 +29,10 @@ import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
+import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
+import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
@@ -145,6 +147,16 @@ class SettingsFragment constructor(
                 .addToBackStack(getString(commonR.string.sensors))
                 .commit()
             return@setOnPreferenceClickListener true
+        }
+        val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
+        val isChargingSensor = sensorDao.get(BatterySensorManager.isChargingState.id)
+        findPreference<SwitchPreference>("faster_sensor_update_charging")?.isVisible =
+            findPreference<SwitchPreference>("faster_sensor_update")?.isChecked == true && isChargingSensor != null && isChargingSensor.enabled
+
+        findPreference<SwitchPreference>("faster_sensor_update")?.setOnPreferenceChangeListener { _, newValue ->
+            if (isChargingSensor != null && isChargingSensor.enabled)
+                findPreference<SwitchPreference>("faster_sensor_update_charging")?.isVisible = newValue.toString().toBoolean()
+            return@setOnPreferenceChangeListener true
         }
 
         findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest"

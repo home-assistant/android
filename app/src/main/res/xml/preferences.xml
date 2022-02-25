@@ -42,6 +42,17 @@
             android:icon="@drawable/leak"
             android:title="@string/sensor_title"
             android:summary="@string/sensor_summary"/>
+        <SwitchPreference
+            android:key="faster_sensor_update"
+            android:icon="@drawable/ic_clock_fast"
+            android:title="@string/faster_sensor_updates_title"
+            android:summary="@string/faster_sensor_updates_summary" />
+        <SwitchPreference
+            android:key="faster_sensor_update_charging"
+            android:icon="@drawable/ic_phone_charging"
+            app:isPreferenceVisible="false"
+            android:title="@string/faster_sensor_updates_charging_title"
+            android:summary="@string/faster_sensor_updates_charging_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="security_category"

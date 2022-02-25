@@ -782,4 +782,8 @@
     <string name="remote_debugging">WebView Remote Debugging</string>
     <string name="remote_debugging_summary">Allow remote debugging of WebView to troubleshoot Home Assistant frontend issues</string>
     <string name="websocket_setting_home_wifi">On Home WiFi Only\n\nNotifications will be delivered by Google only when not on Home WiFi.</string>
+    <string name="faster_sensor_updates_title">Faster Sensor Updates</string>
+    <string name="faster_sensor_updates_summary">Get sensor updates every minute, instead of every 15 minutes. This option may have an adverse affect on battery life. Please restart the app after changing this setting.</string>
+    <string name="faster_sensor_updates_charging_title">Faster Sensor Updates While Charging</string>
+    <string name="faster_sensor_updates_charging_summary">Only get faster sensor updates while the device is charging, otherwise the normal 15 minute update schedule will be used.</string>
 </resources>

@@ -82,6 +82,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         ioScope.launch {
+            val sensorDao = AppDatabase.getInstance(context).sensorDao()
+            val isChargingSensor = sensorDao.get(BatterySensorManager.isChargingState.id)
+            if (isChargingSensor != null && isChargingSensor.state == "false" && integrationUseCase.isFasterSensorUpdatesChargingEnabled() && intent.action == Intent.ACTION_TIME_TICK) {
+                Log.i(tag, "Skipping faster update as device is not charging")
+                return@launch
+            }
             updateSensors(context, integrationUseCase, intent)
             if (chargingActions.contains(intent.action)) {
                 // Add a 5 second delay to perform another update so charging state updates completely.

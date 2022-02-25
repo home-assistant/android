@@ -34,6 +34,11 @@ interface IntegrationRepository {
     suspend fun setWebViewDebugEnabled(enabled: Boolean)
     suspend fun isWebViewDebugEnabled(): Boolean
 
+    suspend fun setFasterSensorUpdatesEnabled(enabled: Boolean)
+    suspend fun isFasterSensorUpdatesEnabled(): Boolean
+    suspend fun setFasterSensorUpdatesChargingEnabled(enabled: Boolean)
+    suspend fun isFasterSensorUpdatesChargingEnabled(): Boolean
+
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
 

@@ -27,7 +27,7 @@ class BatterySensorManager : SensorManager {
             commonR.string.sensor_description_battery_state,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
-        private val isChargingState = SensorManager.BasicSensor(
+        val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
             commonR.string.basic_sensor_name_charging,

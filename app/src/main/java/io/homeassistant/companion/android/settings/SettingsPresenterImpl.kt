@@ -53,6 +53,8 @@ class SettingsPresenterImpl @Inject constructor(
                 "prioritize_internal" -> urlUseCase.isPrioritizeInternal()
                 "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
                 "webview_debug" -> integrationUseCase.isWebViewDebugEnabled()
+                "faster_sensor_update" -> integrationUseCase.isFasterSensorUpdatesEnabled()
+                "faster_sensor_update_charging" -> integrationUseCase.isFasterSensorUpdatesChargingEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -69,6 +71,8 @@ class SettingsPresenterImpl @Inject constructor(
                 "prioritize_internal" -> urlUseCase.setPrioritizeInternal(value)
                 "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
                 "webview_debug" -> integrationUseCase.setWebViewDebugEnabled(value)
+                "faster_sensor_update" -> integrationUseCase.setFasterSensorUpdatesEnabled(value)
+                "faster_sensor_update_charging" -> integrationUseCase.setFasterSensorUpdatesChargingEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
