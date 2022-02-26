@@ -14,6 +14,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.text.InputType
 import android.util.Log
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.biometric.BiometricManager
@@ -66,6 +67,10 @@ class SettingsFragment constructor(
 
     private lateinit var authenticator: Authenticator
     private var setLock = false
+
+    private val requestBackgroundAccessResult = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        updateBackgroundAccessPref()
+    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         presenter.init(this)
@@ -451,13 +456,13 @@ class SettingsFragment constructor(
 
     @SuppressLint("BatteryLife")
     private fun requestBackgroundAccess() {
-        val intent: Intent
         if (!isIgnoringBatteryOptimizations()) {
-            intent = Intent(
-                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                Uri.parse("package:${activity?.packageName}")
+            requestBackgroundAccessResult.launch(
+                Intent(
+                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.parse("package:${activity?.packageName}")
+                )
             )
-            startActivityForResult(intent, 0)
         }
     }
 
@@ -512,7 +517,6 @@ class SettingsFragment constructor(
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        updateBackgroundAccessPref()
 
         val isGreaterR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
