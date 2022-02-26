@@ -23,15 +23,14 @@ import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.EntityExt
+import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
+import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getColorTemperature
 import java.text.DateFormat
-
-const val SUPPORT_BRIGHTNESS_DEPR = 1
-val NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
-const val SUPPORT_COLOR_TEMP_DEPR = 2
-const val SUPPORT_COLOR_TEMP = "color_temp"
 
 @ExperimentalComposeUiApi
 @Composable
@@ -52,7 +51,7 @@ fun DetailsPanelView(
                     val friendlyName = attributes["friendly_name"].toString()
                     Text(friendlyName)
 
-                    if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
+                    if (entity.domain in HomePresenterImpl.toggleDomains) {
                         val isChecked = entity.state in listOf("on", "locked", "open", "opening")
                         ToggleButton(
                             checked = isChecked,
@@ -67,24 +66,14 @@ fun DetailsPanelView(
                 }
             }
 
-            if (entity.entityId.split('.')[0] == "light") {
-                // Brightness
-                // On HA Core 2021.5 and later brightness detection has changed
-                // to simplify things in the app lets use both methods for now
-                val supportedColorModes = attributes["supported_color_modes"] as? List<String>
-                val supportsBrightness =
-                    if (supportedColorModes == null) false else (supportedColorModes - NO_BRIGHTNESS_SUPPORT).isNotEmpty()
-                if (supportsBrightness || ((attributes["supported_features"] as Int) and SUPPORT_BRIGHTNESS_DEPR == SUPPORT_BRIGHTNESS_DEPR)) {
+            if (entity.domain == "light") {
+                if (entity.supportsLightBrightness()) {
                     item {
                         BrightnessSlider(attributes, onBrightnessChanged)
                     }
                 }
 
-                // Color temp
-                val supportsColorTemp = supportedColorModes?.contains(SUPPORT_COLOR_TEMP) ?: false
-                val supportsColorTempComplete =
-                    supportsColorTemp || ((attributes["supported_features"] as Int) and SUPPORT_COLOR_TEMP_DEPR == SUPPORT_COLOR_TEMP_DEPR)
-                if (supportsColorTempComplete && attributes["color_mode"] == SUPPORT_COLOR_TEMP) {
+                if (entity.supportsLightColorTemperature() && attributes["color_mode"] == EntityExt.LIGHT_MODE_COLOR_TEMP) {
                     item {
                         ColorTempSlider(attributes, onColorTempChanged)
                     }
