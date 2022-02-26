@@ -19,6 +19,7 @@ import androidx.wear.compose.material.ToggleChipDefaults
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
@@ -37,10 +38,10 @@ fun EntityUi(
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = getIcon(entity as Entity<Map<String, Any>>, entity.entityId.split(".")[0], LocalContext.current)
+    val iconBitmap = getIcon(entity as Entity<Map<String, Any>>, entity.domain, LocalContext.current)
     val friendlyName = attributes["friendly_name"].toString()
 
-    if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
+    if (entity.domain in HomePresenterImpl.toggleDomains) {
         val isChecked = entity.state in listOf("on", "locked", "open", "opening")
         ToggleChip(
             checked = isChecked,

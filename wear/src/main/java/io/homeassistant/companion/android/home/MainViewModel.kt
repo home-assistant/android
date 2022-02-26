@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.HomeAssistantApplication
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -132,7 +133,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
                 deviceRegistry = homePresenter.getDeviceRegistry()
                 entityRegistry = homePresenter.getEntityRegistry()
                 homePresenter.getEntities()?.forEach {
-                    if (supportedDomains().contains(it.entityId.split(".")[0])) {
+                    if (supportedDomains().contains(it.domain)) {
                         entities[it.entityId] = it
                     }
                 }
@@ -153,7 +154,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
                 // Listen for updates
                 viewModelScope.launch {
                     homePresenter.getEntityUpdates()?.collect {
-                        if (supportedDomains().contains(it.entityId.split(".")[0])) {
+                        if (supportedDomains().contains(it.domain)) {
                             entities[it.entityId] = it
                             updateEntityDomains()
                         }
@@ -191,7 +192,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
     fun updateEntityDomains() {
         val entitiesList = entities.values.toList().sortedBy { it.entityId }
         val areasList = areaRegistry.orEmpty().sortedBy { it.name }
-        val domainsList = entitiesList.map { it.entityId.split(".")[0] }.distinct()
+        val domainsList = entitiesList.map { it.domain }.distinct()
 
         // Create a list with all areas + their entities
         areasList.forEach { area ->
@@ -221,7 +222,7 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
         // Create a list with all discovered domains + their entities
         domainsList.forEach { domain ->
             val entitiesInDomain = mutableStateListOf<Entity<*>>()
-            entitiesInDomain.addAll(entitiesList.filter { it.entityId.split(".")[0] == domain })
+            entitiesInDomain.addAll(entitiesList.filter { it.domain == domain })
             entitiesByDomain[domain]?.let {
                 it.clear()
                 it.addAll(entitiesInDomain)
