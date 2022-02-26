@@ -159,7 +159,7 @@ fun ManageWidgetsView(
                 }
                 items(viewModel.staticWidgetList.size) { index ->
                     val item = viewModel.staticWidgetList[index]
-                    val label = if (!item.label.isNullOrEmpty()) item.label else "${item.entityId} ${item.stateSeparator} ${item.attributeIds}"
+                    val label = if (!item.label.isNullOrEmpty()) item.label else "${item.entityId} ${item.stateSeparator} ${item?.attributeIds ?: ""}"
                     WidgetRow(widgetLabel = label.toString(), widgetId = item.id, widgetType = "state")
                 }
             }
