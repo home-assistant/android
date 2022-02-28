@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.PowerManager
 import android.telephony.TelephonyManager
 import dagger.hilt.android.HiltAndroidApp
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
@@ -35,9 +34,6 @@ open class HomeAssistantApplication : Application() {
 
     @Inject
     lateinit var prefsRepository: PrefsRepository
-
-    @Inject
-    lateinit var integrationRepository: IntegrationRepository
 
     override fun onCreate() {
         super.onCreate()
