@@ -135,7 +135,7 @@ class SensorsSettingsFragment : PreferenceFragmentCompat() {
 
         menu.findItem(R.id.get_help)?.let {
             it.isVisible = true
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/core/sensors"))
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/core/sensors#android-sensors"))
         }
     }
 

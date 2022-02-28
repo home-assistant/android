@@ -29,16 +29,15 @@ import androidx.preference.SwitchPreference
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
-import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
 import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
+import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
@@ -148,15 +147,15 @@ class SettingsFragment constructor(
                 .commit()
             return@setOnPreferenceClickListener true
         }
-        val sensorDao = AppDatabase.getInstance(requireContext()).sensorDao()
-        val isChargingSensor = sensorDao.get(BatterySensorManager.isChargingState.id)
-        findPreference<SwitchPreference>("faster_sensor_update_charging")?.isVisible =
-            findPreference<SwitchPreference>("faster_sensor_update")?.isChecked == true && isChargingSensor != null && isChargingSensor.enabled
-
-        findPreference<SwitchPreference>("faster_sensor_update")?.setOnPreferenceChangeListener { _, newValue ->
-            if (isChargingSensor != null && isChargingSensor.enabled)
-                findPreference<SwitchPreference>("faster_sensor_update_charging")?.isVisible = newValue.toString().toBoolean()
-            return@setOnPreferenceChangeListener true
+        findPreference<Preference>("sensor_update_frequency")?.let {
+            it.setOnPreferenceClickListener {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.content, SensorUpdateFrequencyFragment::class.java, null)
+                    .addToBackStack(getString(commonR.string.sensor_update_frequency))
+                    .commit()
+                return@setOnPreferenceClickListener true
+            }
         }
 
         findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest"

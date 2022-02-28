@@ -8,6 +8,7 @@ import android.util.Log
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.data.integration.SensorRegistration
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -84,7 +85,12 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         ioScope.launch {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             val isChargingSensor = sensorDao.get(BatterySensorManager.isChargingState.id)
-            if (isChargingSensor != null && isChargingSensor.state == "false" && integrationUseCase.isFasterSensorUpdatesChargingEnabled() && intent.action == Intent.ACTION_TIME_TICK) {
+            val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
+            if (isChargingSensor != null && isChargingSensor.state == "false" &&
+                isChargingSensor.enabled && settingDao != null &&
+                settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING &&
+                intent.action == Intent.ACTION_TIME_TICK
+            ) {
                 Log.i(tag, "Skipping faster update as device is not charging")
                 return@launch
             }

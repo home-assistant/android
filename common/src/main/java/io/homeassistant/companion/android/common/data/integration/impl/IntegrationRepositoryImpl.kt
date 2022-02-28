@@ -71,8 +71,6 @@ class IntegrationRepositoryImpl @Inject constructor(
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
         private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
         private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
-        private const val PREF_FASTER_SENSOR_UPDATES = "faster_sensor_updates"
-        private const val PREF_FASTER_SENSOR_UPDATES_CHARGING = "faster_sensor_updates_charging"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
@@ -356,22 +354,6 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun isWebViewDebugEnabled(): Boolean {
         return localStorage.getBoolean(PREF_WEBVIEW_DEBUG_ENABLED)
-    }
-
-    override suspend fun setFasterSensorUpdatesEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_FASTER_SENSOR_UPDATES, enabled)
-    }
-
-    override suspend fun isFasterSensorUpdatesEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_FASTER_SENSOR_UPDATES)
-    }
-
-    override suspend fun setFasterSensorUpdatesChargingEnabled(enabled: Boolean) {
-        localStorage.putBoolean(PREF_FASTER_SENSOR_UPDATES_CHARGING, enabled)
-    }
-
-    override suspend fun isFasterSensorUpdatesChargingEnabled(): Boolean {
-        return localStorage.getBoolean(PREF_FASTER_SENSOR_UPDATES_CHARGING)
     }
 
     override suspend fun isAutoPlayVideoEnabled(): Boolean {

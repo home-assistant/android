@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.settings.websocket
+package io.homeassistant.companion.android.settings.sensor
 
 import android.content.Intent
 import android.net.Uri
@@ -14,10 +14,10 @@ import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.settings.SettingViewModel
-import io.homeassistant.companion.android.settings.websocket.views.WebsocketSettingView
+import io.homeassistant.companion.android.settings.sensor.views.SensorUpdateFrequencyView
 import io.homeassistant.companion.android.common.R as commonR
 
-class WebsocketSettingFragment : Fragment() {
+class SensorUpdateFrequencyFragment : Fragment() {
 
     val viewModel: SettingViewModel by viewModels()
 
@@ -31,7 +31,7 @@ class WebsocketSettingFragment : Fragment() {
 
         menu.findItem(R.id.get_help)?.let {
             it.isVisible = true
-            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/notifications/notification-local"))
+            it.intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://companion.home-assistant.io/docs/core/sensors#android-sensors"))
         }
     }
 
@@ -45,9 +45,9 @@ class WebsocketSettingFragment : Fragment() {
                 MdcTheme {
                     val settings = viewModel.getSettingFlow(0)
                         .collectAsState(initial = viewModel.getSetting(0))
-                    WebsocketSettingView(
-                        websocketSetting = settings.value.websocketSetting,
-                        onSettingChanged = { viewModel.updateWebsocketSetting(0, it) }
+                    SensorUpdateFrequencyView(
+                        sensorUpdateFrequency = settings.value.sensorUpdateFrequency,
+                        onSettingChanged = { viewModel.updateSensorSetting(0, it) }
                     )
                 }
             }
@@ -56,6 +56,6 @@ class WebsocketSettingFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        activity?.title = getString(commonR.string.websocket_setting_name)
+        activity?.title = getString(commonR.string.sensor_update_frequency)
     }
 }
