@@ -488,7 +488,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_23_24 = object : Migration(23, 24) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL")
+                database.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL DEFAULT ''")
             }
         }
 
