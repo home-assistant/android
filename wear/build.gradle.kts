@@ -118,6 +118,6 @@ dependencies {
     implementation("androidx.wear.compose:compose-material:1.0.0-alpha14")
     implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha14")
 
-    implementation("com.google.guava:guava:31.0.1-android")
+    implementation("com.google.guava:guava:31.1-android")
     implementation("androidx.wear.tiles:tiles:1.0.0")
 }
