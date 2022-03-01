@@ -144,6 +144,12 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isWebViewDebugEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isWebViewDebugEnabled()
+        }
+    }
+
     override fun isLockEnabled(): Boolean {
         return runBlocking {
             authenticationUseCase.isLockEnabled()

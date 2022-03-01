@@ -5,6 +5,10 @@
         <change>Add pinch to zoom setting under Companion App so users can zoom in the frontend, default value is off.</change>
         <change>Add volume up &amp; down functionality to media player widget</change>
         <change>Allow camera widget to be reconfigurable</change>
+        <change>Add new notification feature to open Notification History from action and clickAction</change>
+        <change>Add new setting to enable WebView remote debugging</change>
+        <change>Add new setting for persistent connection only when on home WiFi</change>
+        <change>Enhance command_ble_transmitter to allow for changing advertise mode and transmit power</change>
         <change>Replace widget error message with a icon in the widget to indicate the failure</change>
         <change>Bug fixes</change>
     </release>

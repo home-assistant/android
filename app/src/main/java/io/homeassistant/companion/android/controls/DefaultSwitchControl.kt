@@ -11,6 +11,7 @@ import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -37,17 +38,17 @@ class DefaultSwitchControl {
         }
 
         override fun getDeviceType(entity: Entity<Map<String, Any>>): Int =
-            when (entity.entityId.split(".")[0]) {
+            when (entity.domain) {
                 "switch" -> DeviceTypes.TYPE_SWITCH
                 else -> DeviceTypes.TYPE_GENERIC_ON_OFF
             }
 
         override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
-            when (entity.entityId.split(".")[0]) {
+            when (entity.domain) {
                 "automation" -> context.getString(commonR.string.domain_automation)
                 "input_boolean" -> context.getString(commonR.string.domain_input_boolean)
                 "switch" -> context.getString(commonR.string.domain_switch)
-                else -> entity.entityId.split(".")[0].capitalize()
+                else -> entity.domain.capitalize()
             }
 
         override fun performAction(

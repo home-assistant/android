@@ -17,6 +17,7 @@ interface WebViewPresenter {
     fun isKeepScreenOnEnabled(): Boolean
 
     fun isPinchToZoomEnabled(): Boolean
+    fun isWebViewDebugEnabled(): Boolean
 
     fun isLockEnabled(): Boolean
     fun isAutoPlayVideoEnabled(): Boolean

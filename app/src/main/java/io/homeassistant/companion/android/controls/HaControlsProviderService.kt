@@ -9,6 +9,7 @@ import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -78,8 +79,7 @@ class HaControlsProviderService : ControlsProviderService() {
                     entities
                         ?.sortedWith(compareBy(nullsLast()) { areaForEntity[it.entityId]?.name })
                         ?.mapNotNull {
-                            val domain = it.entityId.split(".")[0]
-                            domainToHaControl[domain]?.createControl(
+                            domainToHaControl[it.domain]?.createControl(
                                 applicationContext,
                                 it as Entity<Map<String, Any>>,
                                 areaForEntity[it.entityId]
@@ -141,8 +141,7 @@ class HaControlsProviderService : ControlsProviderService() {
                         webSocketScope.launch {
                             entityFlow?.collect {
                                 if (controlIds.contains(it.entityId)) {
-                                    val domain = it.entityId.split(".")[0]
-                                    val control = domainToHaControl[domain]?.createControl(
+                                    val control = domainToHaControl[it.domain]?.createControl(
                                         applicationContext,
                                         it as Entity<Map<String, Any>>,
                                         RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
@@ -214,8 +213,7 @@ class HaControlsProviderService : ControlsProviderService() {
         entityRegistry: List<EntityRegistryResponse>?
     ) {
         entities.forEach {
-            val domain = it.key.split(".")[0]
-            val control = domainToHaControl[domain]?.createControl(
+            val control = domainToHaControl[it.value.domain]?.createControl(
                 applicationContext,
                 it.value,
                 RegistriesDataHandler.getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)

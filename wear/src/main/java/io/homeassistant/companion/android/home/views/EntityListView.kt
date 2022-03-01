@@ -23,6 +23,7 @@ fun EntityViewList(
     entityListsOrder: List<String>,
     entityListFilter: (Entity<*>) -> Boolean,
     onEntityClicked: (String, String) -> Unit,
+    onEntityLongClicked: (String) -> Unit,
     isHapticEnabled: Boolean,
     isToastEnabled: Boolean
 ) {
@@ -53,7 +54,7 @@ fun EntityViewList(
                                 onEntityClicked,
                                 isHapticEnabled,
                                 isToastEnabled
-                            )
+                            ) { entityId -> onEntityLongClicked(entityId) }
                         }
 
                         if (filtered.isEmpty()) {
@@ -89,6 +90,7 @@ private fun PreviewEntityListView() {
         entityListsOrder = listOf(stringResource(commonR.string.lights)),
         entityListFilter = { true },
         onEntityClicked = { _, _ -> },
+        onEntityLongClicked = { _ -> },
         isHapticEnabled = false,
         isToastEnabled = false
     )

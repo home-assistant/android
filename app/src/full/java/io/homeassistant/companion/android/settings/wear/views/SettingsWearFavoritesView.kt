@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mikepenz.iconics.IconicsDrawable
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.settings.wear.SettingsWearViewModel
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.draggedItem
@@ -158,7 +159,7 @@ fun LoadWearFavoritesSettings(
                                     modifier = Modifier.padding(top = 10.dp)
                                 )
                                 Text(
-                                    text = getDomainString(item.entityId.split('.')[0]),
+                                    text = getDomainString(item.domain),
                                     fontSize = 11.sp
                                 )
                             }

@@ -9,6 +9,7 @@ import android.service.controls.templates.StatelessTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 
 @RequiresApi(Build.VERSION_CODES.R)
@@ -34,7 +35,7 @@ class HaFailedControl {
             DeviceTypes.TYPE_UNKNOWN
 
         override fun getDomainString(context: Context, entity: Entity<Map<String, Any>>): String =
-            entity.entityId.split(".")[0].capitalize()
+            entity.domain.capitalize()
 
         override fun performAction(
             integrationRepository: IntegrationRepository,

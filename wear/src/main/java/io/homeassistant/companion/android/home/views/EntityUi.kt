@@ -1,10 +1,12 @@
 package io.homeassistant.companion.android.home.views
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextOverflow
@@ -17,6 +19,7 @@ import androidx.wear.compose.material.ToggleChipDefaults
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.data.integration.Entity
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.home.HomePresenterImpl
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.getIcon
@@ -29,15 +32,16 @@ fun EntityUi(
     entity: Entity<*>,
     onEntityClicked: (String, String) -> Unit,
     isHapticEnabled: Boolean,
-    isToastEnabled: Boolean
+    isToastEnabled: Boolean,
+    onEntityLongPressed: (String) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val attributes = entity.attributes as Map<*, *>
-    val iconBitmap = getIcon(entity as Entity<Map<String, Any>>, entity.entityId.split(".")[0], LocalContext.current)
+    val iconBitmap = getIcon(entity as Entity<Map<String, Any>>, entity.domain, LocalContext.current)
     val friendlyName = attributes["friendly_name"].toString()
 
-    if (entity.entityId.split(".")[0] in HomePresenterImpl.toggleDomains) {
+    if (entity.domain in HomePresenterImpl.toggleDomains) {
         val isChecked = entity.state in listOf("on", "locked", "open", "opening")
         ToggleChip(
             checked = isChecked,
@@ -57,7 +61,24 @@ fun EntityUi(
                 Text(
                     text = friendlyName,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth().pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onEntityClicked(entity.entityId, entity.state)
+                                onEntityClickedFeedback(
+                                    isToastEnabled,
+                                    isHapticEnabled,
+                                    context,
+                                    friendlyName,
+                                    haptic
+                                )
+                            },
+                            onLongPress = {
+                                onEntityLongPressed(entity.entityId)
+                            }
+                        )
+                    }
                 )
             },
             enabled = entity.state != "unavailable",
@@ -77,7 +98,24 @@ fun EntityUi(
                 Text(
                     text = friendlyName,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth().pointerInput(Unit) {
+                        detectTapGestures(
+                            onTap = {
+                                onEntityClicked(entity.entityId, entity.state)
+                                onEntityClickedFeedback(
+                                    isToastEnabled,
+                                    isHapticEnabled,
+                                    context,
+                                    friendlyName,
+                                    haptic
+                                )
+                            },
+                            onLongPress = {
+                                onEntityLongPressed(entity.entityId)
+                            }
+                        )
+                    }
                 )
             },
             enabled = entity.state != "unavailable",
@@ -98,13 +136,15 @@ private fun PreviewEntityUI() {
             entity = previewEntity1,
             onEntityClicked = { _, _ -> },
             isHapticEnabled = true,
-            isToastEnabled = false
+            isToastEnabled = false,
+            onEntityLongPressed = { _ -> }
         )
         EntityUi(
             entity = previewEntity3,
             onEntityClicked = { _, _ -> },
             isHapticEnabled = false,
-            isToastEnabled = true
+            isToastEnabled = true,
+            onEntityLongPressed = { _ -> }
         )
     }
 }

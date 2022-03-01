@@ -17,6 +17,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.databinding.WidgetCameraConfigureBinding
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
@@ -128,11 +129,8 @@ class CameraWidgetConfigureActivity : BaseActivity() {
                 // Fetch entities
                 val fetchedEntities = integrationUseCase.getEntities()
                 fetchedEntities?.forEach {
-                    val entityId = it.entityId
-                    val domain = entityId.split(".")[0]
-
-                    if (domain == "camera") {
-                        entities[entityId] = it
+                    if (it.domain == "camera") {
+                        entities[it.entityId] = it
                     }
                 }
                 entityAdapter.addAll(entities.values)

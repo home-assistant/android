@@ -31,6 +31,9 @@ interface IntegrationRepository {
     suspend fun setAutoPlayVideo(enabled: Boolean)
     suspend fun isAutoPlayVideoEnabled(): Boolean
 
+    suspend fun setWebViewDebugEnabled(enabled: Boolean)
+    suspend fun isWebViewDebugEnabled(): Boolean
+
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
 
