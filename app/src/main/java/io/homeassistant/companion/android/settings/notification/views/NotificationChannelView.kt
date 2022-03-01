@@ -47,12 +47,13 @@ fun NotificationChannelView(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-
                 Text(
-                    text = notificationViewModel.channelList[0][index].name.toString()
+                    text = notificationViewModel.channelList[0][index].name.toString().take(30)
                 )
                 val editIcon =
                     IconicsDrawable(context, "cmd-pencil").toBitmap().asImageBitmap()
+                val deleteIcon =
+                    IconicsDrawable(context, "cmd-delete").toBitmap().asImageBitmap()
                 Row {
                     Icon(
                         editIcon,
@@ -61,8 +62,6 @@ fun NotificationChannelView(
                             .clickable { notificationViewModel.editChannelDetails(channelId) }
                             .padding(end = 10.dp)
                     )
-                    val deleteIcon =
-                        IconicsDrawable(context, "cmd-delete").toBitmap().asImageBitmap()
                     Icon(
                         deleteIcon,
                         "",
