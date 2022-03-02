@@ -25,7 +25,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
-import io.homeassistant.companion.android.common.data.integration.supportsFanSpeed
+import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
 import io.homeassistant.companion.android.home.HomePresenterImpl
@@ -69,7 +69,7 @@ fun DetailsPanelView(
             }
 
             if (entity.domain == "fan") {
-                if (entity.supportsFanSpeed()) {
+                if (entity.supportsFanSetSpeed()) {
                     item {
                         FanSpeedSlider(attributes, onFanSpeedChanged)
                     }

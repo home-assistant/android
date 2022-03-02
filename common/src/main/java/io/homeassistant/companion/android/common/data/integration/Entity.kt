@@ -25,12 +25,12 @@ object EntityExt {
 val <T> Entity<T>.domain: String
     get() = this.entityId.split(".")[0]
 
-fun <T> Entity<T>.supportsFanSpeed(): Boolean {
+fun <T> Entity<T>.supportsFanSetSpeed(): Boolean {
     return try {
         if (domain != "fan") return false
         ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.FAN_SUPPORT_SET_SPEED == EntityExt.FAN_SUPPORT_SET_SPEED
     } catch (e: Exception) {
-        Log.e(EntityExt.TAG, "Unable to get supportsFanSpeed", e)
+        Log.e(EntityExt.TAG, "Unable to get supportsFanSetSpeed", e)
         false
     }
 }

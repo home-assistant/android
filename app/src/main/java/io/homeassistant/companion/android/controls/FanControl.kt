@@ -14,7 +14,7 @@ import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.common.data.integration.supportsFanSpeed
+import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -28,7 +28,7 @@ class FanControl {
             entity: Entity<Map<String, Any>>,
             area: AreaRegistryResponse?
         ): Control.StatefulBuilder {
-            if (entity.supportsFanSpeed()) {
+            if (entity.supportsFanSetSpeed()) {
                 val minValue = 0f
                 val maxValue = 100f
                 var currentValue =
