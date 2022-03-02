@@ -239,6 +239,11 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
             homePresenter.onEntityClicked(entityId, state)
         }
     }
+    fun setFanSpeed(entityId: String, speed: Float) {
+        viewModelScope.launch {
+            homePresenter.onFanSpeedChanged(entityId, speed)
+        }
+    }
     fun setBrightness(entityId: String, brightness: Float) {
         viewModelScope.launch {
             homePresenter.onBrightnessChanged(entityId, brightness)

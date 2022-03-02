@@ -112,6 +112,12 @@ fun LoadHomePage(
                             onEntityToggled = { entityId, state ->
                                 mainViewModel.toggleEntity(entityId, state)
                             },
+                            onFanSpeedChanged = { speed ->
+                                mainViewModel.setFanSpeed(
+                                    entity.entityId,
+                                    speed
+                                )
+                            },
                             onBrightnessChanged = { brightness ->
                                 mainViewModel.setBrightness(
                                     entity.entityId,

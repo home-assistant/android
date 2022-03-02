@@ -17,6 +17,7 @@ interface HomePresenter {
 
     fun onViewReady()
     suspend fun onEntityClicked(entityId: String, state: String)
+    suspend fun onFanSpeedChanged(entityId: String, speed: Float)
     suspend fun onBrightnessChanged(entityId: String, brightness: Float)
     suspend fun onColorTempChanged(entityId: String, colorTemp: Float)
     fun onLogoutClicked()

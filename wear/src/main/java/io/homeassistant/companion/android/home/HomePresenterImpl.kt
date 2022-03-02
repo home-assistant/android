@@ -102,6 +102,17 @@ class HomePresenterImpl @Inject constructor(
         )
     }
 
+    override suspend fun onFanSpeedChanged(entityId: String, speed: Float) {
+        integrationUseCase.callService(
+            entityId.split(".")[0],
+            "set_percentage",
+            hashMapOf(
+                "entity_id" to entityId,
+                "percentage" to speed.toInt()
+            )
+        )
+    }
+
     override suspend fun onBrightnessChanged(entityId: String, brightness: Float) {
         integrationUseCase.callService(
             entityId.split(".")[0],
