@@ -87,7 +87,7 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
             val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
             val batteryStatusIntent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
             val isCharging = batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) }
-            if (isCharging == false && settingDao != null &&
+            if (isCharging != true && settingDao != null &&
                 settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING &&
                 intent.action == Intent.ACTION_TIME_TICK
             ) {
