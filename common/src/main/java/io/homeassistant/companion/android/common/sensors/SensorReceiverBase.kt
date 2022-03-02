@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.common.sensors
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.Configuration
 import android.util.Log
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -83,11 +84,10 @@ abstract class SensorReceiverBase : BroadcastReceiver() {
         }
 
         ioScope.launch {
-            val sensorDao = AppDatabase.getInstance(context).sensorDao()
-            val isChargingSensor = sensorDao.get(BatterySensorManager.isChargingState.id)
             val settingDao = AppDatabase.getInstance(context).settingsDao().get(0)
-            if (isChargingSensor != null && isChargingSensor.state == "false" &&
-                isChargingSensor.enabled && settingDao != null &&
+            val batteryStatusIntent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            val isCharging = batteryStatusIntent?.let { BatterySensorManager.getIsCharging(it) }
+            if (isCharging == false && settingDao != null &&
                 settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING &&
                 intent.action == Intent.ACTION_TIME_TICK
             ) {

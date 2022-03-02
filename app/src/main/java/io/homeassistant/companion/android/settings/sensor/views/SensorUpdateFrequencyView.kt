@@ -11,13 +11,10 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.sensors.BatterySensorManager
 import io.homeassistant.companion.android.common.sensors.SensorWorkerBase
-import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.util.compose.InfoNotification
 import io.homeassistant.companion.android.util.compose.RadioButtonRow
@@ -28,7 +25,6 @@ fun SensorUpdateFrequencyView(
     onSettingChanged: (SensorUpdateFrequencySetting) -> Unit
 ) {
     val scrollState = rememberScrollState()
-    val context = LocalContext.current
     Column(
         modifier = Modifier
             .padding(20.dp)
@@ -46,25 +42,10 @@ fun SensorUpdateFrequencyView(
             selected = sensorUpdateFrequency == SensorUpdateFrequencySetting.NORMAL,
             onClick = { onSettingChanged(SensorUpdateFrequencySetting.NORMAL) }
         )
-        val isCharging = AppDatabase.getInstance(context).sensorDao().get(BatterySensorManager.isChargingState.id)
-        val sensorStatus = isCharging != null && isCharging.enabled
         RadioButtonRow(
-            text = stringResource(
-                when {
-                    (sensorStatus) -> R.string.sensor_update_frequency_fast_charging
-                    (sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING && !sensorStatus) ->
-                        R.string.sensor_update_frequency_fast_charging_sensor_disabled_selected
-                    (sensorUpdateFrequency != SensorUpdateFrequencySetting.FAST_WHILE_CHARGING && !sensorStatus) ->
-                        R.string.sensor_update_frequency_fast_charging_sensor_disabled_unselected
-                    else -> R.string.sensor_update_frequency_fast_charging
-                }
-            ),
+            text = stringResource(R.string.sensor_update_frequency_fast_charging),
             selected = sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING,
-            onClick = {
-                if (sensorStatus)
-                    onSettingChanged(SensorUpdateFrequencySetting.FAST_WHILE_CHARGING)
-            },
-            enabled = sensorStatus
+            onClick = { onSettingChanged(SensorUpdateFrequencySetting.FAST_WHILE_CHARGING) }
         )
         RadioButtonRow(
             text = stringResource(R.string.sensor_update_frequency_fast_always),
