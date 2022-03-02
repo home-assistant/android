@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 fun RadioButtonRow(
     text: String,
     selected: Boolean,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Row(
@@ -25,7 +26,7 @@ fun RadioButtonRow(
             .padding(top = 20.dp, bottom = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        RadioButton(selected = selected, onClick = onClick)
+        RadioButton(selected = selected, onClick = onClick, enabled = enabled)
         Text(text)
     }
     Divider()

@@ -47,21 +47,28 @@ fun SensorUpdateFrequencyView(
             onClick = { onSettingChanged(SensorUpdateFrequencySetting.NORMAL) }
         )
         val isCharging = AppDatabase.getInstance(context).sensorDao().get(BatterySensorManager.isChargingState.id)
-        if (isCharging != null && isCharging.enabled)
-            RadioButtonRow(
-                text = stringResource(R.string.sensor_update_frequency_fast_charging),
-                selected = sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING,
-                onClick = { onSettingChanged(SensorUpdateFrequencySetting.FAST_WHILE_CHARGING) }
-            )
+        val sensorStatus = isCharging != null && isCharging.enabled
+        RadioButtonRow(
+            text = stringResource(
+                when {
+                    (sensorStatus) -> R.string.sensor_update_frequency_fast_charging
+                    (sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING && !sensorStatus) ->
+                        R.string.sensor_update_frequency_fast_charging_sensor_disabled_selected
+                    (sensorUpdateFrequency != SensorUpdateFrequencySetting.FAST_WHILE_CHARGING && !sensorStatus) ->
+                        R.string.sensor_update_frequency_fast_charging_sensor_disabled_unselected
+                    else -> R.string.sensor_update_frequency_fast_charging
+                }
+            ),
+            selected = sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING,
+            onClick = {
+                if (sensorStatus)
+                    onSettingChanged(SensorUpdateFrequencySetting.FAST_WHILE_CHARGING)
+            },
+            enabled = sensorStatus
+        )
         RadioButtonRow(
             text = stringResource(R.string.sensor_update_frequency_fast_always),
-            selected = if (
-                sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING &&
-                isCharging != null && !isCharging.enabled
-            )
-                true
-            else
-                sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS,
+            selected = sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS,
             onClick = { onSettingChanged(SensorUpdateFrequencySetting.FAST_ALWAYS) }
         )
 
