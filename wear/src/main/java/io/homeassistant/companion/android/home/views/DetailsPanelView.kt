@@ -25,6 +25,7 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityExt
 import io.homeassistant.companion.android.common.data.integration.domain
+import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.integration.supportsLightBrightness
 import io.homeassistant.companion.android.common.data.integration.supportsLightColorTemperature
 import io.homeassistant.companion.android.home.HomePresenterImpl
@@ -37,6 +38,7 @@ import java.text.DateFormat
 fun DetailsPanelView(
     entity: Entity<*>,
     onEntityToggled: (String, String) -> Unit,
+    onFanSpeedChanged: (Float) -> Unit,
     onBrightnessChanged: (Float) -> Unit,
     onColorTempChanged: (Float) -> Unit
 ) {
@@ -66,6 +68,13 @@ fun DetailsPanelView(
                 }
             }
 
+            if (entity.domain == "fan") {
+                if (entity.supportsFanSetSpeed()) {
+                    item {
+                        FanSpeedSlider(attributes, onFanSpeedChanged)
+                    }
+                }
+            }
             if (entity.domain == "light") {
                 if (entity.supportsLightBrightness()) {
                     item {
@@ -118,6 +127,45 @@ fun DetailsPanelView(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun FanSpeedSlider(attributes: Map<*, *>, onFanSpeedChanged: (Float) -> Unit) {
+    val minValue = 0f
+    val maxValue = 100f
+    var currentValue = (attributes["percentage"] as? Number)?.toFloat() ?: 0f
+    if (currentValue < minValue)
+        currentValue = minValue
+    if (currentValue > maxValue)
+        currentValue = maxValue
+
+    Column {
+        Text(
+            stringResource(R.string.speed, currentValue.toInt()),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        )
+        InlineSlider(
+            value = currentValue,
+            onValueChange = onFanSpeedChanged,
+            steps = 9,
+            valueRange = minValue..maxValue,
+            decreaseIcon = {
+                Image(
+                    asset = CommunityMaterial.Icon2.cmd_fan_minus,
+                    colorFilter = ColorFilter.tint(Color.White)
+                )
+            },
+            increaseIcon = {
+                Image(
+                    asset = CommunityMaterial.Icon2.cmd_fan_plus,
+                    colorFilter = ColorFilter.tint(Color.White)
+                )
+            },
+            modifier = Modifier.padding(bottom = 8.dp, top = 2.dp)
+        )
     }
 }
 

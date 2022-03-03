@@ -89,7 +89,7 @@
     <string name="biometric_message">Unlock using your biometric or screenlock credential</string>
     <string name="biometric_set_title">Confirm to continue</string>
     <string name="biometric_title">Home Assistant is locked</string>
-    <string name="brightness">Brightness: %1$d</string>
+    <string name="brightness">Brightness: %1$d%%</string>
     <string name="broadcast_intent_error">Unable to send broadcast intent, please check the command format</string>
     <string name="buttons">Buttons</string>
     <string name="button_forward">Next</string>
@@ -604,6 +604,7 @@
     <string name="show_share_logs">Show and Share Logs</string>
     <string name="sign_in_on_phone">Sign in on phone</string>
     <string name="skip">Skip</string>
+    <string name="speed">Speed: %1$d%%</string>
     <string name="state_auto">Auto</string>
     <string name="state_cleaning">Cleaning</string>
     <string name="state_closed">Closed</string>
