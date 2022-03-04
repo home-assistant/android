@@ -10,5 +10,7 @@ data class Setting(
     @ColumnInfo(name = "id")
     val id: Int,
     @ColumnInfo(name = "websocketSetting")
-    var websocketSetting: WebsocketSetting
+    var websocketSetting: WebsocketSetting,
+    @ColumnInfo(name = "sensorUpdateFrequency")
+    var sensorUpdateFrequency: SensorUpdateFrequencySetting
 )

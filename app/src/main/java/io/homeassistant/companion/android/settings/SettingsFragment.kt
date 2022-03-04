@@ -38,6 +38,7 @@ import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
+import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
 import io.homeassistant.companion.android.settings.ssid.SsidPreference
@@ -150,6 +151,16 @@ class SettingsFragment constructor(
                 .addToBackStack(getString(commonR.string.sensors))
                 .commit()
             return@setOnPreferenceClickListener true
+        }
+        findPreference<Preference>("sensor_update_frequency")?.let {
+            it.setOnPreferenceClickListener {
+                parentFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.content, SensorUpdateFrequencyFragment::class.java, null)
+                    .addToBackStack(getString(commonR.string.sensor_update_frequency))
+                    .commit()
+                return@setOnPreferenceClickListener true
+            }
         }
 
         findPreference<PreferenceCategory>("widgets")?.isVisible = Build.MODEL != "Quest"

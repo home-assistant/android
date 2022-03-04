@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
+import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
 import io.homeassistant.companion.android.database.settings.Setting
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.Favorites
@@ -65,11 +66,12 @@ import io.homeassistant.companion.android.common.R as commonR
         Favorites::class,
         Setting::class
     ],
-    version = 23,
+    version = 24,
     exportSchema = false
 )
 @TypeConverters(
     LocalNotificationSettingConverter::class,
+    LocalSensorSettingConverter::class,
     EntriesTypeConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -130,7 +132,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_19_20,
                     MIGRATION_20_21,
                     MIGRATION_21_22,
-                    MIGRATION_22_23
+                    MIGRATION_22_23,
+                    MIGRATION_23_24
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -480,6 +483,12 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_22_23 = object : Migration(22, 23) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `mediaplayctrls_widgets` ADD `showVolume` INTEGER NOT NULL DEFAULT '0'")
+            }
+        }
+
+        private val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL DEFAULT 'NORMAL'")
             }
         }
 

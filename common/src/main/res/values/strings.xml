@@ -783,4 +783,12 @@
     <string name="remote_debugging">WebView Remote Debugging</string>
     <string name="remote_debugging_summary">Allow remote debugging of WebView to troubleshoot Home Assistant frontend issues</string>
     <string name="websocket_setting_home_wifi">On Home WiFi Only\n\nNotifications will be delivered by Google only when not on Home WiFi.</string>
+    <string name="sensor_update_frequency">Sensor Update Frequency</string>
+    <string name="sensor_update_frequency_description">Sensors will update either instantly or on a defined interval. If the sensor supports instant updates then it will always receive instant updates. Click on the help icon at the top right hand corner to learn which sensors update instantly.\n\nIf the sensor does not support instant updates then it will update based on one of the below selected options.\n\nYou must restart the application when you make any changes to this setting.</string>
+    <string name="sensor_update_frequency_normal">Normal\n\nSensors will update on a 15 minute interval.</string>
+    <string name="sensor_update_frequency_fast_charging">Fast While Charging\n\nSensors will update every minute while the device is charging. When not charging sensors will update every 15 minutes.</string>
+    <string name="sensor_update_frequency_fast_always">Fast Always\n\nSensors will update every minute, always.</string>
+    <string name="sensor_update_notification">In order for the app to send sensor updates in the background a notification will be created during the update. You may use the button below to manage the appearance of this notification. It is recommended to minimize the notification to hide the icon.</string>
+    <string name="sensor_worker_notification_channel">Manage Sensor Worker Notification</string>
+    <string name="sensor_update_frequency_summary">Change the frequency of updates for sensors that do not update instantly.</string>
 </resources>
