@@ -16,6 +16,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.MediaMetadataRetriever
 import android.media.RingtoneManager
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
@@ -95,6 +96,7 @@ class MessagingManager @Inject constructor(
         const val TIMEOUT = "timeout"
         const val IMAGE_URL = "image"
         const val ICON_URL = "icon_url"
+        const val VIDEO_URL = "video_url"
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
@@ -798,6 +800,8 @@ class MessagingManager @Inject constructor(
 
         handleImage(notificationBuilder, data)
 
+        handleVideo(notificationBuilder, data)
+
         handleActions(notificationBuilder, tag, messageId, data)
 
         handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
@@ -1167,6 +1171,74 @@ class MessagingManager @Inject constructor(
             }
             return@withContext image
         }
+
+    private suspend fun handleVideo(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        data[VIDEO_URL]?.let {
+            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
+            getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
+
+            }
+        }
+    }
+
+    private suspend fun getVideoFrames(url: URL?, requiresAuth: Boolean = false): List<Bitmap>? =
+        withContext(
+            Dispatchers.IO
+        ) {
+            url ?: return@withContext null
+            val frames = mutableListOf<Bitmap>()
+
+            try {
+                MediaMetadataRetriever().let { mediaRetriever ->
+
+                    if (requiresAuth) {
+                        mediaRetriever.setDataSource(url.toString(), mapOf("Authorization" to authenticationUseCase.buildBearerToken()))
+                    } else {
+                        mediaRetriever.setDataSource(url.toString())
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        var frameIndex = 0
+                        var lastWasNull = false
+
+                        while (frameIndex < 3 && !lastWasNull) {
+                            mediaRetriever.getFrameAtIndex(frameIndex)?.resizeFrameForClip()?.let { smallFrame ->
+                                frames.add(smallFrame)
+                            } ?: run { lastWasNull = true }
+                            frameIndex += 1
+                        }
+                    } else {
+                        val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 7000 * 1000))
+
+                        // Start at 100 milliseconds and get frames every 500 milliseconds until reaching the end
+                        for (timeInMicroSeconds in 100000 until durationInMicroSeconds step 500000) {
+                            mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
+                                ?.resizeFrameForClip()
+                                ?.let { smallFrame -> frames.add(smallFrame) }
+                        }
+                    }
+
+                    mediaRetriever.release()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Couldn't download video for notification", e)
+            }
+
+            return@withContext frames
+        }
+
+    private fun Bitmap.resizeFrameForClip(): Bitmap {
+        var imageWidth = width
+        var imageHeight = height
+        val dimenRatio = imageWidth.toFloat() / imageHeight.toFloat()
+        imageWidth = 300
+        imageHeight = (imageWidth / dimenRatio).toInt()
+
+        return Bitmap.createScaledBitmap(this, imageWidth, imageHeight, true)
+    }
 
     private fun handleActions(
         builder: NotificationCompat.Builder,
