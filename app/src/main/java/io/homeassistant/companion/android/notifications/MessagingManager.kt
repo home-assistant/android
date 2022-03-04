@@ -32,6 +32,7 @@ import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
 import android.util.Log
 import android.view.KeyEvent
+import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -1179,7 +1180,24 @@ class MessagingManager @Inject constructor(
         data[VIDEO_URL]?.let {
             val url = UrlHandler.handle(urlUseCase.getUrl(), it)
             getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
+                RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
+                    if (frames.isNotEmpty()) {
+                        frames.forEach { frame ->
+                            remoteViewFlipper.addView(
+                                R.id.frame_flipper,
+                                RemoteViews(context.packageName, R.layout.view_single_frame).apply {
+                                    setImageViewBitmap(
+                                        R.id.frame,
+                                        frame
+                                    )
+                                }
+                            )
+                        }
 
+                        builder.setCustomBigContentView(remoteViewFlipper)
+                        builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                    }
+                }
             }
         }
     }
