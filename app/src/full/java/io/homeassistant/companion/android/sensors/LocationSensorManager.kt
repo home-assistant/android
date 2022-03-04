@@ -141,10 +141,13 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
                 val intentData = intent.extras?.get("command")?.toString()
-                if (intentData == "turn_on")
+                if (intentData == "turn_on") {
+                    removeBackgroundUpdateRequests()
                     startHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
-                else if (intentData == "turn_off")
+                } else if (intentData == "turn_off") {
                     stopHighAccuracyService()
+                    requestLocationUpdates()
+                }
             }
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
         }

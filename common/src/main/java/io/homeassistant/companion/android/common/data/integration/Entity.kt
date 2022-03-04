@@ -15,6 +15,7 @@ data class Entity<T>(
 object EntityExt {
     const val TAG = "EntityExt"
 
+    const val FAN_SUPPORT_SET_SPEED = 1
     const val LIGHT_MODE_COLOR_TEMP = "color_temp"
     val LIGHT_MODE_NO_BRIGHTNESS_SUPPORT = listOf("unknown", "onoff")
     const val LIGHT_SUPPORT_BRIGHTNESS_DEPR = 1
@@ -23,6 +24,16 @@ object EntityExt {
 
 val <T> Entity<T>.domain: String
     get() = this.entityId.split(".")[0]
+
+fun <T> Entity<T>.supportsFanSetSpeed(): Boolean {
+    return try {
+        if (domain != "fan") return false
+        ((attributes as Map<*, *>)["supported_features"] as Int) and EntityExt.FAN_SUPPORT_SET_SPEED == EntityExt.FAN_SUPPORT_SET_SPEED
+    } catch (e: Exception) {
+        Log.e(EntityExt.TAG, "Unable to get supportsFanSetSpeed", e)
+        false
+    }
+}
 
 fun <T> Entity<T>.supportsLightBrightness(): Boolean {
     return try {
