@@ -1201,6 +1201,14 @@ class MessagingManager @Inject constructor(
                             )
                         }
 
+                        data[TITLE]?.let { rawTitle ->
+                            remoteViewFlipper.setTextViewText(R.id.title, rawTitle)
+                        }
+
+                        data[MESSAGE]?.let { rawMessage ->
+                            remoteViewFlipper.setTextViewText(R.id.info, rawMessage)
+                        }
+
                         builder.setCustomBigContentView(remoteViewFlipper)
                         builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
                     }
