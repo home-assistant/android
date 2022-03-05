@@ -7,7 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.provider.Settings
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.toMutableStateList
 import androidx.core.content.getSystemService
 import androidx.lifecycle.AndroidViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +23,7 @@ class NotificationViewModel @Inject constructor(
 
     private var notificationManager = application.applicationContext.getSystemService<NotificationManager>()!!
 
-    var channelList = mutableStateListOf(notificationManager.notificationChannels)
+    var channelList = notificationManager.notificationChannels.sortedBy { it.name.toString() }.toMutableStateList()
         private set
 
     fun deleteChannel(channelId: String) {
@@ -40,7 +40,7 @@ class NotificationViewModel @Inject constructor(
 
     fun updateChannelList() {
         channelList.clear()
-        channelList.add(notificationManager.notificationChannels)
+        channelList.addAll(notificationManager.notificationChannels.sortedBy { it.name.toString() })
     }
 
     fun createChannel(channel: NotificationChannel) {

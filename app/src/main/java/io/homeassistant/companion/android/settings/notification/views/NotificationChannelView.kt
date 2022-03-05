@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.settings.notification.views
 
-import android.app.NotificationChannel
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
@@ -43,7 +42,6 @@ fun NotificationChannelView(
     Scaffold(
         scaffoldState = scaffoldState
     ) {
-        val sortedChannelList = notificationViewModel.channelList[0].toList().sortedBy { it.name.toString() }
         LazyColumn(contentPadding = PaddingValues(20.dp)) {
             item {
                 Text(
@@ -53,8 +51,8 @@ fun NotificationChannelView(
                 Divider()
             }
 
-            items(sortedChannelList.size) { index ->
-                val channel = sortedChannelList[index]
+            items(notificationViewModel.channelList.size) { index ->
+                val channel = notificationViewModel.channelList[index]
                 Row(
                     modifier = Modifier
                         .padding(10.dp)
@@ -91,13 +89,7 @@ fun NotificationChannelView(
                                                 )
                                                 .let {
                                                     if (it == SnackbarResult.ActionPerformed) {
-                                                        notificationViewModel.createChannel(
-                                                            NotificationChannel(
-                                                                channel.id,
-                                                                channel.name,
-                                                                channel.importance
-                                                            )
-                                                        )
+                                                        notificationViewModel.createChannel(channel)
                                                         notificationViewModel.updateChannelList()
                                                     }
                                                 }
