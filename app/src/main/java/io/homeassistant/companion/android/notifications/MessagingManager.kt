@@ -646,7 +646,16 @@ class MessagingManager @Inject constructor(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!Settings.canDrawOverlays(context))
                         notifyMissingPermission(data[MESSAGE].toString())
-                    else
+                    else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED && data["tag"] == Intent.ACTION_CALL) {
+                        Handler(Looper.getMainLooper()).post {
+                            Toast.makeText(
+                                context,
+                                context.getString(commonR.string.missing_phone_permission),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        navigateAppDetails()
+                    } else
                         processActivityCommand(data)
                 } else
                     processActivityCommand(data)
@@ -1626,7 +1635,16 @@ class MessagingManager @Inject constructor(
                             COMMAND_MEDIA -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                                 requestNotificationPermission()
                             }
-                            COMMAND_BLUETOOTH -> navigateAppDetails()
+                            COMMAND_BLUETOOTH -> {
+                                Handler(Looper.getMainLooper()).post {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(commonR.string.missing_bluetooth_permission),
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                                navigateAppDetails()
+                            }
                         }
                     }
                 }
