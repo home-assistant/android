@@ -97,7 +97,7 @@ class MessagingManager @Inject constructor(
         const val TIMEOUT = "timeout"
         const val IMAGE_URL = "image"
         const val ICON_URL = "icon_url"
-        const val VIDEO_URL = "video_url"
+        const val VIDEO_URL = "video"
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
@@ -204,6 +204,10 @@ class MessagingManager @Inject constructor(
             listOf(BLE_TRANSMIT_HIGH, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_ULTRA_LOW)
         val BLE_ADVERTISE_COMMANDS =
             listOf(BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY, BLE_ADVERTISE_LOW_POWER)
+
+        // Video Values
+
+        const val VIDEO_MAX_FRAMES = 5
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1177,7 +1181,9 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
+        Log.e("ERROR?", "Starting to look for video in $data")
         data[VIDEO_URL]?.let {
+            Log.e("ERROR?", "Url is $it")
             val url = UrlHandler.handle(urlUseCase.getUrl(), it)
             getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
@@ -1215,18 +1221,29 @@ class MessagingManager @Inject constructor(
                     if (requiresAuth) {
                         mediaRetriever.setDataSource(url.toString(), mapOf("Authorization" to authenticationUseCase.buildBearerToken()))
                     } else {
-                        mediaRetriever.setDataSource(url.toString())
+                        mediaRetriever.setDataSource(url.toString(), hashMapOf())
                     }
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         var frameIndex = 0
+                        val frameCount = mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toIntOrNull() ?: 10
+                        val frameIncrement = frameCount / 20
                         var lastWasNull = false
 
-                        while (frameIndex < 3 && !lastWasNull) {
-                            mediaRetriever.getFrameAtIndex(frameIndex)?.resizeFrameForClip()?.let { smallFrame ->
-                                frames.add(smallFrame)
-                            } ?: run { lastWasNull = true }
-                            frameIndex += 1
+                        while (frames.size < 5 && !lastWasNull) {
+                            Log.e("ERROR?", "Get frame at $frameIndex out of $frameCount")
+
+                            try {
+                                mediaRetriever.getFrameAtIndex(frameIndex)
+                                    ?.let { smallFrame ->
+                                        frames.add(smallFrame)
+                                    } ?: run { lastWasNull = true }
+                            } catch (e: Exception) {
+                                if (frameIndex + frameIncrement > frameCount) {
+                                    lastWasNull = true
+                                }
+                            }
+                            frameIndex += frameIncrement
                         }
                     } else {
                         val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 7000 * 1000))
@@ -1234,29 +1251,21 @@ class MessagingManager @Inject constructor(
                         // Start at 100 milliseconds and get frames every 500 milliseconds until reaching the end
                         for (timeInMicroSeconds in 100000 until durationInMicroSeconds step 500000) {
                             mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
-                                ?.resizeFrameForClip()
                                 ?.let { smallFrame -> frames.add(smallFrame) }
                         }
                     }
 
+                    Log.e("ERROR?", "Found ${frames.size} frames")
+
                     mediaRetriever.release()
                 }
             } catch (e: Exception) {
+                e.printStackTrace()
                 Log.e(TAG, "Couldn't download video for notification", e)
             }
 
             return@withContext frames
         }
-
-    private fun Bitmap.resizeFrameForClip(): Bitmap {
-        var imageWidth = width
-        var imageHeight = height
-        val dimenRatio = imageWidth.toFloat() / imageHeight.toFloat()
-        imageWidth = 300
-        imageHeight = (imageWidth / dimenRatio).toInt()
-
-        return Bitmap.createScaledBitmap(this, imageWidth, imageHeight, true)
-    }
 
     private fun handleActions(
         builder: NotificationCompat.Builder,
