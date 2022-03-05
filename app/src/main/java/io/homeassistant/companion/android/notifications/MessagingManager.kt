@@ -206,8 +206,11 @@ class MessagingManager @Inject constructor(
             listOf(BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY, BLE_ADVERTISE_LOW_POWER)
 
         // Video Values
-
         const val VIDEO_MAX_FRAMES = 5
+        const val VIDEO_FRAME_CHUNKS = 20
+        const val VIDEO_START_MICROSECONDS = 100000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 500000L
+        const val VIDEO_GUESS_MICROSECONDS = 7000000L
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1181,9 +1184,7 @@ class MessagingManager @Inject constructor(
         builder: NotificationCompat.Builder,
         data: Map<String, String>
     ) {
-        Log.e("ERROR?", "Starting to look for video in $data")
         data[VIDEO_URL]?.let {
-            Log.e("ERROR?", "Url is $it")
             val url = UrlHandler.handle(urlUseCase.getUrl(), it)
             getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
@@ -1226,13 +1227,11 @@ class MessagingManager @Inject constructor(
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                         var frameIndex = 0
-                        val frameCount = mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toIntOrNull() ?: 10
-                        val frameIncrement = frameCount / 20
+                        val frameCount = mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toIntOrNull() ?: VIDEO_FRAME_CHUNKS
+                        val frameIncrement = frameCount / VIDEO_FRAME_CHUNKS
                         var lastWasNull = false
 
-                        while (frames.size < 5 && !lastWasNull) {
-                            Log.e("ERROR?", "Get frame at $frameIndex out of $frameCount")
-
+                        while (frames.size < VIDEO_MAX_FRAMES && !lastWasNull) {
                             try {
                                 mediaRetriever.getFrameAtIndex(frameIndex)
                                     ?.let { smallFrame ->
@@ -1246,16 +1245,14 @@ class MessagingManager @Inject constructor(
                             frameIndex += frameIncrement
                         }
                     } else {
-                        val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 7000 * 1000))
+                        val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MICROSECONDS))
 
                         // Start at 100 milliseconds and get frames every 500 milliseconds until reaching the end
-                        for (timeInMicroSeconds in 100000 until durationInMicroSeconds step 500000) {
+                        for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
                             mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
                                 ?.let { smallFrame -> frames.add(smallFrame) }
                         }
                     }
-
-                    Log.e("ERROR?", "Found ${frames.size} frames")
 
                     mediaRetriever.release()
                 }
