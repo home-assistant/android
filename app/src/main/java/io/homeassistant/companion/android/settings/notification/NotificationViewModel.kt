@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.settings.notification
 
 import android.app.Application
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
 import android.os.Build
@@ -40,5 +41,9 @@ class NotificationViewModel @Inject constructor(
     fun updateChannelList() {
         channelList.clear()
         channelList.add(notificationManager.notificationChannels)
+    }
+
+    fun createChannel(channel: NotificationChannel) {
+        notificationManager.createNotificationChannel(channel)
     }
 }
