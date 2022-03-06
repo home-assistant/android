@@ -2,6 +2,9 @@
 <changelog xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingDefaultResource">
     <release version="2022.3">
+        <change>&lt;b&gt;Breaking Change:&lt;/b&gt; All attributes for geocoded location sensor are now lower case and spaces have been replaced with an underscore</change>
+        <change>Add permissions needed to initiate a phone call using command_activity</change>
+        <change>Add new setting screen to change sensor update frequency</change>
         <change>Add pinch to zoom setting under Companion App so users can zoom in the frontend, default value is off.</change>
         <change>Add volume up &amp; down functionality to media player widget</change>
         <change>Allow camera widget to be reconfigurable</change>
