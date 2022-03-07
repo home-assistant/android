@@ -83,17 +83,17 @@ class GeocodeSensorManager : SensorManager {
             }
             val attributes = address?.let {
                 mapOf(
-                    "Administrative Area" to it.adminArea,
-                    "Country" to it.countryName,
-                    "ISO Country Code" to it.countryCode,
-                    "Locality" to it.locality,
-                    "Latitude" to it.latitude,
-                    "Longitude" to it.longitude,
-                    "Postal Code" to it.postalCode,
-                    "Sub Administrative Area" to it.subAdminArea,
-                    "Sub Locality" to it.subLocality,
-                    "Sub Thoroughfare" to it.subThoroughfare,
-                    "Thoroughfare" to it.thoroughfare
+                    "administrative_area" to it.adminArea,
+                    "country" to it.countryName,
+                    "iso_country_code" to it.countryCode,
+                    "locality" to it.locality,
+                    "latitude" to it.latitude,
+                    "longitude" to it.longitude,
+                    "postal_code" to it.postalCode,
+                    "sub_administrative_area" to it.subAdminArea,
+                    "sub_locality" to it.subLocality,
+                    "sub_thoroughfare" to it.subThoroughfare,
+                    "thoroughfare" to it.thoroughfare
                 )
             }.orEmpty()
 
