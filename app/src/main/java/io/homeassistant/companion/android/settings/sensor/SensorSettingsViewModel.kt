@@ -11,7 +11,7 @@ import io.homeassistant.companion.android.sensors.SensorReceiver
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class SensorSettingViewModel @Inject constructor(application: Application) :
+class SensorSettingsViewModel @Inject constructor(application: Application) :
     AndroidViewModel(application) {
 
     val app = application

@@ -26,12 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.settings.sensor.SensorSettingViewModel
+import io.homeassistant.companion.android.settings.sensor.SensorSettingsViewModel
 import io.homeassistant.companion.android.common.R as commonR
 
 @Composable
 fun SensorListView(
-    viewModel: SensorSettingViewModel,
+    viewModel: SensorSettingsViewModel,
     managers: List<SensorManager>,
     onSensorClicked: (SensorManager, String) -> Unit
 ) {

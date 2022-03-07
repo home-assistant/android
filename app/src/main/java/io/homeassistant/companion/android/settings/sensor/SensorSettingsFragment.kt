@@ -28,7 +28,7 @@ class SensorSettingsFragment : Fragment() {
     @Inject // TODO remove when detail fragment is migrated
     lateinit var integrationUseCase: IntegrationRepository
 
-    val viewModel: SensorSettingViewModel by viewModels()
+    val viewModel: SensorSettingsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
