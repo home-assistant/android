@@ -575,7 +575,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 "\nAccuracy: ${location.accuracy}" +
                 "\nBearing: ${location.bearing}"
         )
-        val highAccuracy = getHighAccuracyModeSetting()
+        val highAccuracy = getHighAccuracyMode()
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
             accuracy = location.accuracy.toInt()
