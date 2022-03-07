@@ -13,20 +13,12 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import com.google.android.material.composethemeadapter.MdcTheme
-import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
-import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
-import io.homeassistant.companion.android.sensors.SensorDetailFragment
 import io.homeassistant.companion.android.sensors.SensorReceiver
 import io.homeassistant.companion.android.settings.sensor.views.SensorListView
-import javax.inject.Inject
 import io.homeassistant.companion.android.common.R as commonR
 
-@AndroidEntryPoint // TODO remove when detail fragment is migrated
 class SensorSettingsFragment : Fragment() {
-
-    @Inject // TODO remove when detail fragment is migrated
-    lateinit var integrationUseCase: IntegrationRepository
 
     val viewModel: SensorSettingsViewModel by viewModels()
 
@@ -87,22 +79,17 @@ class SensorSettingsFragment : Fragment() {
                     SensorListView(
                         viewModel = viewModel,
                         managers = SensorReceiver.MANAGERS.sortedBy { getString(it.name) },
-                        onSensorClicked = { manager, sensor ->
-                            // TODO compose with fragment that uses same view model
-                            manager.getAvailableSensors(requireContext()).firstOrNull { it.id == sensor }?.let { basicSensor ->
-                                parentFragmentManager
-                                    .beginTransaction()
-                                    .replace(
-                                        R.id.content,
-                                        SensorDetailFragment.newInstance(
-                                            manager,
-                                            basicSensor,
-                                            integrationUseCase
-                                        )
+                        onSensorClicked = { sensor ->
+                            parentFragmentManager
+                                .beginTransaction()
+                                .replace(
+                                    R.id.content,
+                                    SensorDetailFragment.newInstance(
+                                        sensor
                                     )
-                                    .addToBackStack("Sensor Detail")
-                                    .commit()
-                            }
+                                )
+                                .addToBackStack("Sensor Detail")
+                                .commit()
                         }
                     )
                 }

@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Divider
 import androidx.compose.material.LocalContentAlpha
@@ -33,13 +33,11 @@ import io.homeassistant.companion.android.common.R as commonR
 fun SensorListView(
     viewModel: SensorSettingsViewModel,
     managers: List<SensorManager>,
-    onSensorClicked: (SensorManager, String) -> Unit
+    onSensorClicked: (String) -> Unit
 ) {
     val context = LocalContext.current
-    val listState = rememberLazyListState()
 
     LazyColumn(
-        state = listState,
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         managers.forEachIndexed { index, manager ->
@@ -68,7 +66,6 @@ fun SensorListView(
                 }
                 items(currentSensors) { basicSensor ->
                     SensorRow(
-                        manager = manager,
                         basicSensor = basicSensor,
                         dbSensor = viewModel.sensors.firstOrNull { it.id == basicSensor.id },
                         onSensorClicked = onSensorClicked
@@ -81,16 +78,15 @@ fun SensorListView(
 
 @Composable
 fun SensorRow(
-    manager: SensorManager,
     basicSensor: SensorManager.BasicSensor,
     dbSensor: Sensor?,
-    onSensorClicked: (SensorManager, String) -> Unit
+    onSensorClicked: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
-            .clickable { onSensorClicked(manager, basicSensor.id) }
-            .height(72.dp)
-            .padding(start = 72.dp, end = 16.dp)
+            .clickable { onSensorClicked(basicSensor.id) }
+            .heightIn(min = 72.dp)
+            .padding(start = 72.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
             .fillMaxWidth(),
         verticalArrangement = Arrangement.Center,
 
