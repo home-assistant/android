@@ -1193,7 +1193,6 @@ class MessagingManager @Inject constructor(
             val url = UrlHandler.handle(urlUseCase.getUrl(), it)
             getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
-                    Log.e("ERROR?", "Found ${frames.size} frames")
                     if (frames.isNotEmpty()) {
                         frames.forEach { frame ->
                             remoteViewFlipper.addView(
@@ -1280,8 +1279,7 @@ class MessagingManager @Inject constructor(
 
     private fun Bitmap.getCompressedFrame(): Bitmap? =
         ByteArrayOutputStream().let { outputStream ->
-            Log.e("ERROR?", "Compressing frame")
-            this.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+            this.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
             outputStream.toByteArray().let { bytes -> BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }
         }
 
