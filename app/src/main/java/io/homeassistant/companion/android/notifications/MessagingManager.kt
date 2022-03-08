@@ -62,13 +62,9 @@ import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.webview.WebViewActivity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
@@ -1197,6 +1193,7 @@ class MessagingManager @Inject constructor(
             val url = UrlHandler.handle(urlUseCase.getUrl(), it)
             getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
+                    Log.e("ERROR?", "Found ${frames.size} frames")
                     if (frames.isNotEmpty()) {
                         frames.forEach { frame ->
                             remoteViewFlipper.addView(
@@ -1231,7 +1228,7 @@ class MessagingManager @Inject constructor(
             Dispatchers.IO
         ) {
             url ?: return@withContext null
-            val frames = mutableListOf<Bitmap>()
+            val processingFrames = mutableListOf<Deferred<Bitmap?>>()
 
             try {
                 MediaMetadataRetriever().let { mediaRetriever ->
@@ -1248,11 +1245,11 @@ class MessagingManager @Inject constructor(
                         val frameIncrement = frameCount / VIDEO_FRAME_CHUNKS
                         var lastWasNull = false
 
-                        while (frames.size < VIDEO_MAX_FRAMES && !lastWasNull) {
+                        while (processingFrames.size < VIDEO_MAX_FRAMES && !lastWasNull) {
                             try {
                                 mediaRetriever.getFrameAtIndex(frameIndex)
                                     ?.let { smallFrame ->
-                                        frames.add(smallFrame)
+                                        processingFrames.add(async { smallFrame.getCompressedFrame() })
                                     } ?: run { lastWasNull = true }
                             } catch (e: Exception) {
                                 if (frameIndex + frameIncrement > frameCount) {
@@ -1267,7 +1264,7 @@ class MessagingManager @Inject constructor(
                         // Start at 100 milliseconds and get frames every 500 milliseconds until reaching the end
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
                             mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
-                                ?.let { smallFrame -> frames.add(smallFrame) }
+                                ?.let { smallFrame -> processingFrames.add(async { smallFrame.getCompressedFrame() }) }
                         }
                     }
 
@@ -1278,7 +1275,14 @@ class MessagingManager @Inject constructor(
                 Log.e(TAG, "Couldn't download video for notification", e)
             }
 
-            return@withContext frames
+            return@withContext processingFrames.awaitAll().filterNotNull()
+        }
+
+    private fun Bitmap.getCompressedFrame(): Bitmap? =
+        ByteArrayOutputStream().let { outputStream ->
+            Log.e("ERROR?", "Compressing frame")
+            this.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+            outputStream.toByteArray().let { bytes -> BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }
         }
 
     private fun handleActions(
