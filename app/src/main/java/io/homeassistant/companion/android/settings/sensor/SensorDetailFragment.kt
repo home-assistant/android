@@ -68,7 +68,10 @@ class SensorDetailFragment(val sensorId: String) : Fragment() {
                 MdcTheme {
                     SensorDetailView(
                         viewModel = viewModel,
-                        onSetEnabled = { enable -> viewModel.setEnabled(enable) }
+                        onSetEnabled = { enable -> viewModel.setEnabled(enable) },
+                        onToggleSettingSubmitted = { setting -> viewModel.setSetting(setting) },
+                        onDialogSettingClicked = { setting -> viewModel.onSettingWithDialogPressed(setting) },
+                        onDialogSettingSubmitted = { state -> viewModel.submitSettingWithDialog(state) }
                     )
                 }
             }

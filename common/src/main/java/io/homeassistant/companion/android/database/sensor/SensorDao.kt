@@ -30,7 +30,7 @@ interface SensorDao {
     fun getSettings(id: String): List<SensorSetting>
 
     @Transaction
-    @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id")
+    @Query("SELECT * FROM sensor_settings WHERE sensor_id = :id ORDER BY sensor_id")
     fun getSettingsFlow(id: String): Flow<List<SensorSetting>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)

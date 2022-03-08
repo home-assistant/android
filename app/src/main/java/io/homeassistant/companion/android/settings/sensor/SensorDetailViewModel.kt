@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.settings.sensor
 
 import android.Manifest
 import android.app.Application
+import android.content.pm.PackageManager
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -10,6 +11,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
 import io.homeassistant.companion.android.common.sensors.NetworkSensorManager
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
@@ -34,10 +36,18 @@ class SensorDetailViewModel @Inject constructor(
     companion object {
         const val TAG = "SensorDetailViewModel"
 
+        private const val SENSOR_SETTING_TRANS_KEY_PREFIX = "sensor_setting_"
+
         data class LocationPermissionsDialog(
             val block: Boolean,
             val sensors: Array<String>,
             val permissions: Array<String>? = null
+        )
+        data class SettingDialogState(
+            val setting: SensorSetting,
+            val entries: List<String>? = null,
+            val entriesIds: List<String>? = null,
+            val entriesSelected: List<String>? = null
         )
     }
 
@@ -60,8 +70,10 @@ class SensorDetailViewModel @Inject constructor(
     private val sensorSettingsFlow = sensorDao.getSettingsFlow(sensorId)
     var sensorSettings = mutableStateListOf<SensorSetting>()
         private set
+    var sensorSettingsDialog = mutableStateOf<SettingDialogState?>(null)
+        private set
 
-    val zones by lazy {
+    private val zones by lazy {
         Log.d(TAG, "Get zones from Home Assistant for listing zones in preferences...")
         runBlocking {
             try {
@@ -132,6 +144,34 @@ class SensorDetailViewModel @Inject constructor(
         if (isEnabled) sensorManager?.requestSensorUpdate(app)
     }
 
+    fun onSettingWithDialogPressed(setting: SensorSetting) {
+        val state = SettingDialogState(setting)
+        if (setting.valueType != "string" && setting.valueType != "number") {
+            // TODO
+        }
+        sensorSettingsDialog.value = state
+    }
+
+    fun cancelSettingWithDialog() {
+        sensorSettingsDialog.value = null
+    }
+
+    fun submitSettingWithDialog(data: SettingDialogState?) {
+        if (data != null) {
+            if (data.setting.valueType == "string" || data.setting.valueType == "number") {
+                setSetting(
+                    SensorSetting(sensorId, data.setting.name, data.setting.value, data.setting.valueType, data.setting.enabled)
+                )
+            }
+        }
+        sensorSettingsDialog.value = null
+    }
+
+    fun setSetting(setting: SensorSetting) {
+        sensorDao.add(setting)
+        sensorManager?.requestSensorUpdate(app)
+    }
+
     private fun updateSensorEntity(isEnabled: Boolean) {
         sensor.value?.let {
             sensorDao.update(
@@ -149,6 +189,88 @@ class SensorDetailViewModel @Inject constructor(
 
     private fun refreshSensorData() {
         SensorWorker.start(app.applicationContext)
+    }
+
+    fun getSettingTranslatedTitle(key: String): String {
+        val name = SENSOR_SETTING_TRANS_KEY_PREFIX + getCleanedKey(key) + "_title"
+        return getStringFromIdentifierString(key, name) ?: key
+    }
+
+    private fun getSettingTranslatedEntries(key: String, entries: List<String>): List<String> {
+        val translatedEntries = ArrayList<String>(entries.size)
+        for (entry in entries) {
+            val name = SENSOR_SETTING_TRANS_KEY_PREFIX + getCleanedKey(key) + "_" + entry + "_label"
+            translatedEntries.add(getStringFromIdentifierString(entry, name) ?: entry)
+        }
+        return translatedEntries
+    }
+
+    private fun getStringFromIdentifierString(key: String, identifierString: String): String? {
+        val rawVars = getRawVars(key)
+        val stringId = app.resources.getIdentifier(identifierString, "string", app.packageName)
+        if (stringId != 0) {
+            try {
+                return app.getString(stringId, *convertRawVarsToStringVars(rawVars))
+            } catch (e: Exception) {
+                Log.w(TAG, "getStringFromIdentifierString: Cannot get translated string for name \"$identifierString\"", e)
+            }
+        } else {
+            Log.e(TAG, "getStringFromIdentifierString: Cannot find string identifier for name \"$identifierString\"")
+        }
+        return null
+    }
+
+    private fun getCleanedKey(key: String): String {
+        val varWithUnderscoreRegex = "_var\\d:.*:".toRegex()
+        val cleanedKey = key.replace(varWithUnderscoreRegex, "")
+        if (key != cleanedKey) Log.d(TAG, "Cleaned translation key \"$cleanedKey\"")
+        return cleanedKey
+    }
+
+    private fun getRawVars(key: String): List<String> {
+        val varRegex = "var\\d:.*:".toRegex()
+        val rawVars = key.split("_").filter { it.matches(varRegex) }
+        if (rawVars.isNotEmpty()) Log.d(TAG, "Vars from translation key \"$key\": $rawVars")
+        return rawVars
+    }
+
+    private fun convertRawVarsToStringVars(rawVars: List<String>): Array<String> {
+        var stringVars: MutableList<String> = ArrayList()
+        if (rawVars.isNotEmpty()) {
+            Log.d(TAG, "Convert raw vars \"$rawVars\" to string vars...")
+            var varPrefixRegex = "var\\d:".toRegex()
+            var varSuffixRegex = ":$".toRegex()
+            for (rawVar in rawVars) {
+                var stringVar = rawVar.replace(varPrefixRegex, "").replace(varSuffixRegex, "")
+                Log.d(TAG, "Convert raw var \"$rawVar\" to string var \"$stringVar\"")
+                stringVars.add(stringVar)
+            }
+            Log.d(TAG, "Converted raw vars to string vars \"$stringVars\"")
+        }
+        return stringVars.toTypedArray()
+    }
+
+    private fun getSettingEntries(setting: SensorSetting): List<String> {
+        return when (setting.valueType) {
+            "list" ->
+                getSettingTranslatedEntries(setting.name, setting.entries)
+            "list-apps" -> {
+                val packageNames = mutableListOf<String>()
+                app.packageManager?.getInstalledApplications(PackageManager.GET_META_DATA)?.let {
+                    for (packageItem in it) {
+                        packageNames.add(packageItem.packageName)
+                    }
+                    packageNames.sort()
+                }
+                return packageNames
+            }
+            "list-bluetooth" ->
+                BluetoothUtils.getBluetoothDevices(app.applicationContext).map { it.name }
+            "list-zones" ->
+                zones
+            else ->
+                emptyList()
+        }
     }
 
     fun onActivityResult() {
