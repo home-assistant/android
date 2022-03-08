@@ -41,14 +41,11 @@ fun SensorDetailView(
             viewModel.basicSensor != null
         ) {
             item {
-                val hasPermission = viewModel.sensorManager.checkPermission(context, viewModel.basicSensor.id)
-                val enabled = viewModel.sensor.value?.let {
-                    it.sensor.enabled && hasPermission
-                } ?: (viewModel.sensorManager.enabledByDefault && hasPermission)
                 SensorDetailRow(
                     title = stringResource(commonR.string.enabled),
                     summary = stringResource(commonR.string.enabled_summary),
-                    switch = enabled,
+                    switch = viewModel.sensor.value?.sensor?.enabled
+                        ?: (viewModel.sensorManager.enabledByDefault && viewModel.sensorManager.checkPermission(context, viewModel.basicSensor.id)),
                     onClick = { onSetEnabled(it!!) }
                 )
             }
@@ -57,6 +54,54 @@ fun SensorDetailView(
                     title = stringResource(commonR.string.sensor_description),
                     summary = stringResource(viewModel.basicSensor.descriptionId)
                 )
+            }
+            viewModel.sensor.value?.let { sensor ->
+                item {
+                    SensorDetailRow(
+                        title = stringResource(commonR.string.unique_id),
+                        summary = viewModel.basicSensor.id
+                    )
+                }
+                item {
+                    SensorDetailRow(
+                        title = stringResource(commonR.string.state),
+                        summary = if (!sensor.sensor.enabled) {
+                            stringResource(commonR.string.disabled)
+                        } else {
+                            if (sensor.sensor.unitOfMeasurement.isNullOrBlank()) sensor.sensor.state
+                            else "${sensor.sensor.state} ${sensor.sensor.unitOfMeasurement}"
+                        }
+                    )
+                }
+                if (sensor.sensor.deviceClass != null) {
+                    item {
+                        SensorDetailRow(
+                            title = stringResource(commonR.string.device_class),
+                            summary = sensor.sensor.deviceClass!!
+                        )
+                    }
+                }
+                if (sensor.sensor.icon.isNotBlank()) {
+                    item {
+                        SensorDetailRow(
+                            title = stringResource(commonR.string.icon),
+                            summary = sensor.sensor.icon
+                        )
+                    }
+                }
+                if (sensor.sensor.enabled && sensor.attributes.isNotEmpty()) {
+                    item {
+                        SensorDetailHeader(stringResource(commonR.string.attributes))
+                    }
+                    sensor.attributes.forEach { attribute ->
+                        item {
+                            SensorDetailRow(
+                                title = attribute.name,
+                                summary = attribute.value
+                            )
+                        }
+                    }
+                }
             }
         }
     }

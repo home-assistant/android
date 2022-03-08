@@ -56,6 +56,7 @@ class SensorDetailViewModel @Inject constructor(
     private val sensorFlow = sensorDao.getFullFlow(sensorId)
     var sensor = mutableStateOf<SensorWithAttributes?>(null)
         private set
+    private var sensorCheckedEnabled = false
     private val sensorSettingsFlow = sensorDao.getSettingsFlow(sensorId)
     var sensorSettings = mutableStateListOf<SensorSetting>()
         private set
@@ -78,10 +79,24 @@ class SensorDetailViewModel @Inject constructor(
         viewModelScope.launch {
             sensorFlow?.collect {
                 sensor.value = it
+                if (!sensorCheckedEnabled) checkSensorEnabled()
             }
+        }
+        viewModelScope.launch {
             sensorSettingsFlow.collect {
                 sensorSettings.clear()
                 sensorSettings.addAll(it)
+            }
+        }
+    }
+
+    private fun checkSensorEnabled() {
+        if (sensorManager != null && basicSensor != null) {
+            sensor.value?.let {
+                sensorCheckedEnabled = true
+                val hasPermission = sensorManager.checkPermission(app.applicationContext, basicSensor.id)
+                val enabled = it.sensor.enabled && hasPermission
+                updateSensorEntity(enabled)
             }
         }
     }
