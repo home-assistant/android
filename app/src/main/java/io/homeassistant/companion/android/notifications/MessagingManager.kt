@@ -16,6 +16,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.MediaMetadataRetriever
 import android.media.RingtoneManager
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
@@ -31,6 +32,7 @@ import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
 import android.util.Log
 import android.view.KeyEvent
+import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -95,6 +97,7 @@ class MessagingManager @Inject constructor(
         const val TIMEOUT = "timeout"
         const val IMAGE_URL = "image"
         const val ICON_URL = "icon_url"
+        const val VIDEO_URL = "video"
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
@@ -201,6 +204,13 @@ class MessagingManager @Inject constructor(
             listOf(BLE_TRANSMIT_HIGH, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_ULTRA_LOW)
         val BLE_ADVERTISE_COMMANDS =
             listOf(BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY, BLE_ADVERTISE_LOW_POWER)
+
+        // Video Values
+        const val VIDEO_MAX_FRAMES = 5
+        const val VIDEO_FRAME_CHUNKS = 20
+        const val VIDEO_START_MICROSECONDS = 100000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 500000L
+        const val VIDEO_GUESS_MICROSECONDS = 7000000L
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -807,6 +817,8 @@ class MessagingManager @Inject constructor(
 
         handleImage(notificationBuilder, data)
 
+        handleVideo(notificationBuilder, data)
+
         handleActions(notificationBuilder, tag, messageId, data)
 
         handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
@@ -1175,6 +1187,98 @@ class MessagingManager @Inject constructor(
                 Log.e(TAG, "Couldn't download image for notification", e)
             }
             return@withContext image
+        }
+
+    private suspend fun handleVideo(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        data[VIDEO_URL]?.let {
+            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
+            getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
+                RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
+                    if (frames.isNotEmpty()) {
+                        frames.forEach { frame ->
+                            remoteViewFlipper.addView(
+                                R.id.frame_flipper,
+                                RemoteViews(context.packageName, R.layout.view_single_frame).apply {
+                                    setImageViewBitmap(
+                                        R.id.frame,
+                                        frame
+                                    )
+                                }
+                            )
+                        }
+
+                        data[TITLE]?.let { rawTitle ->
+                            remoteViewFlipper.setTextViewText(R.id.title, rawTitle)
+                        }
+
+                        data[MESSAGE]?.let { rawMessage ->
+                            remoteViewFlipper.setTextViewText(R.id.info, rawMessage)
+                        }
+
+                        builder.setCustomBigContentView(remoteViewFlipper)
+                        builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun getVideoFrames(url: URL?, requiresAuth: Boolean = false): List<Bitmap>? =
+        withContext(
+            Dispatchers.IO
+        ) {
+            url ?: return@withContext null
+            val frames = mutableListOf<Bitmap>()
+
+            try {
+                MediaMetadataRetriever().let { mediaRetriever ->
+
+                    if (requiresAuth) {
+                        mediaRetriever.setDataSource(url.toString(), mapOf("Authorization" to authenticationUseCase.buildBearerToken()))
+                    } else {
+                        mediaRetriever.setDataSource(url.toString(), hashMapOf())
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        var frameIndex = 0
+                        val frameCount = mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toIntOrNull() ?: VIDEO_FRAME_CHUNKS
+                        val frameIncrement = frameCount / VIDEO_FRAME_CHUNKS
+                        var lastWasNull = false
+
+                        while (frames.size < VIDEO_MAX_FRAMES && !lastWasNull) {
+                            try {
+                                mediaRetriever.getFrameAtIndex(frameIndex)
+                                    ?.let { smallFrame ->
+                                        frames.add(smallFrame)
+                                    } ?: run { lastWasNull = true }
+                            } catch (e: Exception) {
+                                if (frameIndex + frameIncrement > frameCount) {
+                                    lastWasNull = true
+                                }
+                            }
+                            frameIndex += frameIncrement
+                        }
+                    } else {
+                        val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MICROSECONDS))
+
+                        // Start at 100 milliseconds and get frames every 500 milliseconds until reaching the end
+                        for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
+                            mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
+                                ?.let { smallFrame -> frames.add(smallFrame) }
+                        }
+                    }
+
+                    mediaRetriever.release()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e(TAG, "Couldn't download video for notification", e)
+            }
+
+            return@withContext frames
         }
 
     private fun handleActions(
