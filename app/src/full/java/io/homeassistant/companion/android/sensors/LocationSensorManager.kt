@@ -575,6 +575,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 "\nAccuracy: ${location.accuracy}" +
                 "\nBearing: ${location.bearing}"
         )
+        val highAccuracy = getHighAccuracyMode()
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
             accuracy = location.accuracy.toInt()
@@ -591,7 +592,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val now = System.currentTimeMillis()
 
         Log.d(TAG, "Begin evaluating if location update should be skipped")
-        if (now + 5000 < location.time) {
+        if (now + 5000 < location.time && !highAccuracy) {
             Log.d(TAG, "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}")
             return
         }
@@ -615,7 +616,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     return
                 }
             } else {
-                if (now < lastLocationSend + 5000 && !geofenceUpdate) {
+                if (now < lastLocationSend + 5000 && !geofenceUpdate && !highAccuracy) {
                     Log.d(
                         TAG,
                         "New location update not possible within 5 seconds, not sending to HA"
