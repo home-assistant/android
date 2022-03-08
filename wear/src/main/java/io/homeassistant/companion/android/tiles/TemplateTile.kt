@@ -1,5 +1,10 @@
 package io.homeassistant.companion.android.tiles
 
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import androidx.core.content.getSystemService
 import androidx.wear.tiles.ActionBuilders
 import androidx.wear.tiles.DimensionBuilders
 import androidx.wear.tiles.DimensionBuilders.dp
@@ -37,6 +42,20 @@ class TemplateTile : TileService() {
 
     override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
+            val state = requestParams.state
+            if (state != null && state.lastClickableId == "refresh") {
+                if (integrationUseCase.getWearHapticFeedback()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        val vibratorManager = applicationContext.getSystemService<VibratorManager>()
+                        val vibrator = vibratorManager?.defaultVibrator
+                        vibrator?.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK))
+                    } else {
+                        val vibrator = applicationContext.getSystemService<Vibrator>()
+                        vibrator?.vibrate(200)
+                    }
+                }
+            }
+
             val template = integrationUseCase.getTemplateTileContent()
             val renderedText = try {
                 integrationUseCase.renderTemplate(template, mapOf())
@@ -116,6 +135,7 @@ class TemplateTile : TileService() {
                                                 .setOnClick(
                                                     ActionBuilders.LoadAction.Builder().build()
                                                 )
+                                                .setId("refresh")
                                                 .build()
                                         )
                                         .build()
