@@ -62,7 +62,15 @@ import io.homeassistant.companion.android.sensors.SensorWorker
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.webview.WebViewActivity
-import kotlinx.coroutines.*
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.net.URL
@@ -202,8 +210,6 @@ class MessagingManager @Inject constructor(
             listOf(BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY, BLE_ADVERTISE_LOW_POWER)
 
         // Video Values
-        const val VIDEO_MAX_FRAMES = 5
-        const val VIDEO_FRAME_CHUNKS = 20
         const val VIDEO_START_MICROSECONDS = 100000L
         const val VIDEO_INCREMENT_MICROSECONDS = 2000000L
         const val VIDEO_GUESS_MILLISECONDS = 7000L
