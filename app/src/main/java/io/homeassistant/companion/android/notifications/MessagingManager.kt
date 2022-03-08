@@ -205,8 +205,8 @@ class MessagingManager @Inject constructor(
         const val VIDEO_MAX_FRAMES = 5
         const val VIDEO_FRAME_CHUNKS = 20
         const val VIDEO_START_MICROSECONDS = 100000L
-        const val VIDEO_INCREMENT_MICROSECONDS = 500000L
-        const val VIDEO_GUESS_MICROSECONDS = 7000000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 2000000L
+        const val VIDEO_GUESS_MILLISECONDS = 7000L
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1239,30 +1239,15 @@ class MessagingManager @Inject constructor(
                         mediaRetriever.setDataSource(url.toString(), hashMapOf())
                     }
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        var frameIndex = 0
-                        val frameCount = mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toIntOrNull() ?: VIDEO_FRAME_CHUNKS
-                        val frameIncrement = frameCount / VIDEO_FRAME_CHUNKS
-                        var lastWasNull = false
+                    val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MILLISECONDS)) * 1000
 
-                        while (processingFrames.size < VIDEO_MAX_FRAMES && !lastWasNull) {
-                            try {
-                                mediaRetriever.getFrameAtIndex(frameIndex)
-                                    ?.let { smallFrame ->
-                                        processingFrames.add(async { smallFrame.getCompressedFrame() })
-                                    } ?: run { lastWasNull = true }
-                            } catch (e: Exception) {
-                                if (frameIndex + frameIncrement > frameCount) {
-                                    lastWasNull = true
-                                }
-                            }
-                            frameIndex += frameIncrement
-                        }
-                    } else {
-                        val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MICROSECONDS))
-
-                        // Start at 100 milliseconds and get frames every 500 milliseconds until reaching the end
+                    // Start at 100 milliseconds and get frames every 2 seconds until reaching the end
+                    run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
+                            if (processingFrames.size >= 5) {
+                                return@frameLoop
+                            }
+
                             mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
                                 ?.let { smallFrame -> processingFrames.add(async { smallFrame.getCompressedFrame() }) }
                         }
