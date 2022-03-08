@@ -27,6 +27,7 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.util.websocketChannel
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
@@ -49,7 +50,6 @@ class WebsocketManager(
     companion object {
         private const val TAG = "WebSockManager"
         private const val SOURCE = "Websocket"
-        const val CHANNEL_ID = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS
 
@@ -169,10 +169,10 @@ class WebsocketManager(
     private suspend fun createNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             var notificationChannel =
-                notificationManager.getNotificationChannel(CHANNEL_ID)
+                notificationManager.getNotificationChannel(websocketChannel)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    CHANNEL_ID,
+                    websocketChannel,
                     applicationContext.getString(R.string.websocket_setting_name),
                     NotificationManager.IMPORTANCE_LOW
                 )
@@ -200,13 +200,13 @@ class WebsocketManager(
             settingIntent,
             PendingIntent.FLAG_IMMUTABLE
         )
-        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(applicationContext, websocketChannel)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setContentTitle(applicationContext.getString(R.string.websocket_listening))
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
-            .setGroup(CHANNEL_ID)
+            .setGroup(websocketChannel)
             .addAction(
                 io.homeassistant.companion.android.R.drawable.ic_websocket,
                 applicationContext.getString(R.string.settings),
