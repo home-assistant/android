@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -9,14 +10,19 @@
         style="@style/TextAppearance.Compat.Notification.Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical" />
+        android:gravity="center_vertical"
+        android:maxLines="2"
+        tools:text="@tools:sample/lorem" />
 
     <TextView
         android:id="@+id/info"
         style="@style/TextAppearance.Compat.Notification.Info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical" />
+        android:gravity="center_vertical"
+        android:maxLines="2"
+        android:textSize="14sp"
+        tools:text="@tools:sample/lorem/random" />
 
     <ViewFlipper
         android:id="@+id/frame_flipper"
