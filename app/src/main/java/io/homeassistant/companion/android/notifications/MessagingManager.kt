@@ -112,6 +112,7 @@ class MessagingManager @Inject constructor(
         const val REPLY = "REPLY"
         const val BLE_ADVERTISE = "ble_advertise"
         const val BLE_TRANSMIT = "ble_transmit"
+        const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -174,6 +175,9 @@ class MessagingManager @Inject constructor(
         const val BLE_TRANSMIT_LOW = "ble_transmit_low"
         const val BLE_TRANSMIT_MEDIUM = "ble_transmit_medium"
         const val BLE_TRANSMIT_HIGH = "ble_transmit_high"
+
+        // High accuracy commands
+        const val HIGH_ACCURACY_SET_UPDATE_INTERVAL = "high_accuracy_set_update_interval"
 
         // Command groups
         val DEVICE_COMMANDS = listOf(
@@ -344,7 +348,12 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_HIGH_ACCURACY_MODE -> {
-                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS)
+                        if ((!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS) ||
+                            (
+                                !jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
+                                    jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! > 5
+                                )
+                        )
                             handleDeviceCommands(jsonData)
                         else {
                             mainScope.launch {
@@ -352,6 +361,7 @@ class MessagingManager @Inject constructor(
                                     TAG,
                                     "Invalid high accuracy mode command received, posting notification to device"
                                 )
+                                sendNotification(jsonData)
                             }
                         }
                     }
@@ -641,11 +651,10 @@ class MessagingManager @Inject constructor(
                     )
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
-                if (title == TURN_OFF) {
-                    LocationSensorManager.setHighAccuracyModeSetting(context, false)
-                }
-                if (title == TURN_ON) {
-                    LocationSensorManager.setHighAccuracyModeSetting(context, true)
+                when (title) {
+                    TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
+                    TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
+                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(context, data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt())
                 }
                 val intent = Intent(context, LocationSensorManager::class.java)
                 intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY

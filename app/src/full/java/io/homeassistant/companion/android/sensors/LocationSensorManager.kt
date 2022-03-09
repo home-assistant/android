@@ -32,6 +32,7 @@ import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.location.HighAccuracyLocationService
+import io.homeassistant.companion.android.notifications.MessagingManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -124,6 +125,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
             val sensorSettings = sensorDao.getSettings(backgroundLocation.id)
             return sensorSettings.firstOrNull { it.name == SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL }?.value?.toIntOrNull() ?: DEFAULT_UPDATE_INTERVAL_HA_SECONDS
         }
+
+        fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {
+            val sensorDao = AppDatabase.getInstance(context).sensorDao()
+            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, updateInterval.toString(), "number"))
+        }
     }
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -140,13 +146,19 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
-                val intentData = intent.extras?.get("command")?.toString()
-                if (intentData == "turn_on") {
-                    removeBackgroundUpdateRequests()
-                    startHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
-                } else if (intentData == "turn_off") {
-                    stopHighAccuracyService()
-                    requestLocationUpdates()
+                when (intent.extras?.get("command")?.toString()) {
+                    MessagingManager.TURN_ON -> {
+                        removeBackgroundUpdateRequests()
+                        startHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
+                    }
+                    MessagingManager.TURN_OFF -> {
+                        stopHighAccuracyService()
+                        requestLocationUpdates()
+                    }
+                    MessagingManager.HIGH_ACCURACY_SET_UPDATE_INTERVAL -> {
+                        if (lastHighAccuracyMode)
+                            restartHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
+                    }
                 }
             }
             else -> Log.w(TAG, "Unknown intent action: ${intent.action}!")
@@ -294,8 +306,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         if (updateIntervalHighAccuracySecondsInt < 5) {
             updateIntervalHighAccuracySecondsInt = DEFAULT_UPDATE_INTERVAL_HA_SECONDS
 
-            val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
-            sensorDao.add(SensorSetting(backgroundLocation.id, SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL, updateIntervalHighAccuracySecondsInt.toString(), "number"))
+            setHighAccuracyModeIntervalSetting(latestContext, updateIntervalHighAccuracySecondsInt)
         }
         return updateIntervalHighAccuracySecondsInt
     }
