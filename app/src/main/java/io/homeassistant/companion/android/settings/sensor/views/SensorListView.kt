@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.sensors.id
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.settings.sensor.SensorSettingsViewModel
 import io.homeassistant.companion.android.common.R as commonR
@@ -45,7 +46,7 @@ fun SensorListView(
                 val basicSensors = manager.getAvailableSensors(context)
                 val currentSensors = basicSensors.filter { basicSensor ->
                     viewModel.sensors.any { basicSensor.id == it.id }
-                }
+                }.sortedBy { context.getString(it.name) }
                 if (currentSensors.any()) {
                     item {
                         if (index != 0) Divider()
@@ -64,7 +65,10 @@ fun SensorListView(
                         }
                     }
                 }
-                items(currentSensors) { basicSensor ->
+                items(
+                    items = currentSensors,
+                    key = {  "${manager.id()}_${it.id}" }
+                ) { basicSensor ->
                     SensorRow(
                         basicSensor = basicSensor,
                         dbSensor = viewModel.sensors.firstOrNull { it.id == basicSensor.id },

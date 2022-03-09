@@ -45,6 +45,9 @@ class SensorSettingsFragment : Fragment() {
                 return false
             }
         })
+        if (!viewModel.searchQuery.isNullOrBlank() && !searchViewItem.isActionViewExpanded) {
+            viewModel.setSensorsSearchQuery(null)
+        }
 
         if (viewModel.showOnlyEnabledSensors.value) {
             val checkable = menu.findItem(R.id.action_show_only_enabled_sensors)

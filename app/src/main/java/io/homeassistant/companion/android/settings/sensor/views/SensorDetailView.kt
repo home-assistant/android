@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Checkbox
 import androidx.compose.material.ContentAlpha
@@ -31,11 +32,14 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -43,6 +47,7 @@ import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.common.R as commonR
 
+@ExperimentalComposeUiApi
 @Composable
 fun SensorDetailView(
     viewModel: SensorDetailViewModel,
@@ -213,7 +218,7 @@ fun SensorDetailRow(
     onClick: (Boolean?) -> Unit = { }
 ) {
     var rowModifier = Modifier
-        .heightIn(min = if(summary.isNullOrBlank()) 56.dp else 72.dp)
+        .heightIn(min = if (summary.isNullOrBlank()) 56.dp else 72.dp)
         .padding(horizontal = 16.dp, vertical = 8.dp)
         .fillMaxWidth()
     if (clickable) {
@@ -255,6 +260,7 @@ fun SensorDetailRow(
     }
 }
 
+@ExperimentalComposeUiApi
 @Composable
 fun SensorDetailSettingDialog(
     viewModel: SensorDetailViewModel,
@@ -263,6 +269,7 @@ fun SensorDetailSettingDialog(
     onSubmit: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit
 ) {
     val configuration = LocalConfiguration.current
+    val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType != "string" && state.setting.valueType != "number"
     val inputValue = remember { mutableStateOf(state.setting.value) }
     val checkedValue = remember { mutableStateListOf(*state.entriesSelected?.toTypedArray() ?: emptyArray()) }
@@ -308,13 +315,17 @@ fun SensorDetailSettingDialog(
                         OutlinedTextField(
                             value = inputValue.value,
                             keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Done,
                                 keyboardType = if (state.setting.valueType == "number") {
                                     KeyboardType.Number
                                 } else {
                                     KeyboardType.Text
                                 }
                             ),
-                            onValueChange = { input -> inputValue.value = input.trim() }
+                            keyboardActions = KeyboardActions(
+                                onDone = { keyboardController?.hide() }
+                            ),
+                            onValueChange = { input -> inputValue.value = input }
                         )
                     }
                 }

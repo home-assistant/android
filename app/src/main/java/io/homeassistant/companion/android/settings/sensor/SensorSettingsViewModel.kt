@@ -21,7 +21,7 @@ class SensorSettingsViewModel @Inject constructor(application: Application) :
     private var sensorsList = mutableListOf<Sensor>()
     var sensors = mutableStateListOf<Sensor>()
 
-    private var sensorsSearchQuery: String? = null
+    var searchQuery: String? = null
     var showOnlyEnabledSensors = mutableStateOf(false)
         private set
 
@@ -35,8 +35,8 @@ class SensorSettingsViewModel @Inject constructor(application: Application) :
         }
     }
 
-    fun setSensorsSearchQuery(searchQuery: String? = "") {
-        sensorsSearchQuery = searchQuery
+    fun setSensorsSearchQuery(query: String? = "") {
+        searchQuery = query
         filterSensorsList()
     }
 
@@ -52,10 +52,9 @@ class SensorSettingsViewModel @Inject constructor(application: Application) :
             sensors.addAll(
                 manager.getAvailableSensors(app.applicationContext)
                     .filter { sensor ->
-                        (sensorsSearchQuery.isNullOrEmpty() || app.getString(sensor.name).contains(sensorsSearchQuery!!, true)) &&
+                        (searchQuery.isNullOrEmpty() || app.getString(sensor.name).contains(searchQuery!!, true)) &&
                             (!showOnlyEnabledSensors.value || manager.isEnabled(app.applicationContext, sensor.id))
                     }
-                    .sortedBy { app.getString(it.name) }
                     .mapNotNull { sensor -> sensorsList.firstOrNull { it.id == sensor.id } }
             )
         }
