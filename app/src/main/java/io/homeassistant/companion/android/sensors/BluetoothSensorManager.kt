@@ -53,7 +53,7 @@ class BluetoothSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_bluetooth_state,
             commonR.string.sensor_description_bluetooth_state,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val bleTransmitter = SensorManager.BasicSensor(
             "ble_emitter",

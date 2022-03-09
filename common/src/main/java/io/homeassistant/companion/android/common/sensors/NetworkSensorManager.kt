@@ -57,7 +57,7 @@ class NetworkSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_wifi_state,
             commonR.string.sensor_description_wifi_state,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val wifiFrequency = SensorManager.BasicSensor(
             "wifi_frequency",
