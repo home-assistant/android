@@ -145,10 +145,26 @@ class SensorDetailViewModel @Inject constructor(
     }
 
     fun onSettingWithDialogPressed(setting: SensorSetting) {
-        val state = SettingDialogState(setting)
-        if (setting.valueType != "string" && setting.valueType != "number") {
-            // TODO
-        }
+        val listSetting = setting.valueType != "string" && setting.valueType != "number"
+        val listEntries = getSettingEntries(setting)
+        val state = SettingDialogState(
+            setting = setting,
+            entries = if (listSetting) listEntries else null,
+            entriesIds = if (listSetting) {
+                if (setting.valueType == "list") setting.entries
+                else listEntries
+            } else {
+                null
+            },
+            entriesSelected = if (listSetting) {
+                setting.value.split(", ").filter {
+                    if (setting.valueType == "list") setting.entries.contains(it)
+                    else listEntries.contains(it)
+                }
+            } else {
+                null
+            }
+        )
         sensorSettingsDialog.value = state
     }
 
@@ -158,11 +174,7 @@ class SensorDetailViewModel @Inject constructor(
 
     fun submitSettingWithDialog(data: SettingDialogState?) {
         if (data != null) {
-            if (data.setting.valueType == "string" || data.setting.valueType == "number") {
-                setSetting(
-                    SensorSetting(sensorId, data.setting.name, data.setting.value, data.setting.valueType, data.setting.enabled)
-                )
-            }
+            setSetting(data.setting)
         }
         sensorSettingsDialog.value = null
     }
@@ -170,6 +182,7 @@ class SensorDetailViewModel @Inject constructor(
     fun setSetting(setting: SensorSetting) {
         sensorDao.add(setting)
         sensorManager?.requestSensorUpdate(app)
+        refreshSensorData()
     }
 
     private fun updateSensorEntity(isEnabled: Boolean) {
@@ -194,6 +207,11 @@ class SensorDetailViewModel @Inject constructor(
     fun getSettingTranslatedTitle(key: String): String {
         val name = SENSOR_SETTING_TRANS_KEY_PREFIX + getCleanedKey(key) + "_title"
         return getStringFromIdentifierString(key, name) ?: key
+    }
+
+    fun getSettingTranslatedEntry(key: String, entry: String): String {
+        val name = SENSOR_SETTING_TRANS_KEY_PREFIX + getCleanedKey(key) + "_" + entry + "_label"
+        return getStringFromIdentifierString(entry, name) ?: entry
     }
 
     private fun getSettingTranslatedEntries(key: String, entries: List<String>): List<String> {
