@@ -213,7 +213,7 @@ fun SensorDetailRow(
     onClick: (Boolean?) -> Unit = { }
 ) {
     var rowModifier = Modifier
-        .heightIn(min = 72.dp)
+        .heightIn(min = if(summary.isNullOrBlank()) 56.dp else 72.dp)
         .padding(horizontal = 16.dp, vertical = 8.dp)
         .fillMaxWidth()
     if (clickable) {
@@ -247,8 +247,9 @@ fun SensorDetailRow(
         if (switch != null) {
             Switch(
                 checked = switch,
-                onCheckedChange = { onClick(!switch) },
-                enabled = clickable
+                onCheckedChange = null,
+                enabled = clickable,
+                modifier = Modifier.padding(start = 16.dp)
             )
         }
     }
