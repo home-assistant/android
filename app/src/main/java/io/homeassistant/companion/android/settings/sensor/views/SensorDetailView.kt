@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Checkbox
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentAlpha
@@ -93,7 +94,8 @@ fun SensorDetailView(
                     SensorDetailRow(
                         title = stringResource(commonR.string.unique_id),
                         summary = viewModel.basicSensor.id,
-                        clickable = false
+                        clickable = false,
+                        selectingEnabled = true
                     )
                 }
                 item {
@@ -105,7 +107,8 @@ fun SensorDetailView(
                             if (sensor.sensor.unitOfMeasurement.isNullOrBlank()) sensor.sensor.state
                             else "${sensor.sensor.state} ${sensor.sensor.unitOfMeasurement}"
                         },
-                        clickable = false
+                        clickable = false,
+                        selectingEnabled = true
                     )
                 }
                 if (sensor.sensor.deviceClass != null) {
@@ -135,7 +138,8 @@ fun SensorDetailView(
                             SensorDetailRow(
                                 title = attribute.name,
                                 summary = attribute.value,
-                                clickable = false
+                                clickable = false,
+                                selectingEnabled = true
                             )
                         }
                     }
@@ -214,6 +218,7 @@ fun SensorDetailRow(
     title: String,
     summary: String? = null,
     switch: Boolean? = null,
+    selectingEnabled: Boolean = false,
     clickable: Boolean = true,
     onClick: (Boolean?) -> Unit = { }
 ) {
@@ -236,16 +241,11 @@ fun SensorDetailRow(
                 .weight(1f),
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.body1
-            )
+            Text(text = title, style = MaterialTheme.typography.body1)
             if (summary != null) {
                 CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                    Text(
-                        text = summary,
-                        style = MaterialTheme.typography.body2
-                    )
+                    if (selectingEnabled) SelectionContainer { Text(text = summary, style = MaterialTheme.typography.body2) }
+                    else Text(text = summary, style = MaterialTheme.typography.body2)
                 }
             }
         }

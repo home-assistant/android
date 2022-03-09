@@ -67,7 +67,7 @@ fun SensorListView(
                 }
                 items(
                     items = currentSensors,
-                    key = {  "${manager.id()}_${it.id}" }
+                    key = { "${manager.id()}_${it.id}" }
                 ) { basicSensor ->
                     SensorRow(
                         basicSensor = basicSensor,
