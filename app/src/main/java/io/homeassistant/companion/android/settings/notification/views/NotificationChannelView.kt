@@ -26,9 +26,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.common.R
-import io.homeassistant.companion.android.common.sensors.SensorWorkerBase
+import io.homeassistant.companion.android.common.util.appCreatedChannels
 import io.homeassistant.companion.android.settings.notification.NotificationViewModel
-import io.homeassistant.companion.android.websocket.WebsocketManager
 import kotlinx.coroutines.launch
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -73,7 +72,7 @@ fun NotificationChannelView(
                                 .clickable { notificationViewModel.editChannelDetails(channel.id) }
                                 .padding(12.dp)
                         )
-                        if (channel.id != SensorWorkerBase.channelId && channel.id != WebsocketManager.CHANNEL_ID) {
+                        if (channel.id !in appCreatedChannels) {
                             Icon(
                                 Icons.Filled.Delete,
                                 stringResource(id = R.string.delete_channel),

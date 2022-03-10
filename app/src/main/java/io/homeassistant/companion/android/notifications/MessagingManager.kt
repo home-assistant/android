@@ -52,6 +52,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.generalChannel
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
@@ -1393,7 +1394,7 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ): String {
         // Define some values for a default channel
-        var channelID = "general"
+        var channelID = generalChannel
         var channelName = "General"
 
         if (data.containsKey("channel")) {
