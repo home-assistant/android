@@ -63,12 +63,16 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.net.URL
 import java.net.URLDecoder
 import java.util.Locale
@@ -206,11 +210,9 @@ class MessagingManager @Inject constructor(
             listOf(BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY, BLE_ADVERTISE_LOW_POWER)
 
         // Video Values
-        const val VIDEO_MAX_FRAMES = 5
-        const val VIDEO_FRAME_CHUNKS = 20
         const val VIDEO_START_MICROSECONDS = 100000L
-        const val VIDEO_INCREMENT_MICROSECONDS = 500000L
-        const val VIDEO_GUESS_MICROSECONDS = 7000000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 2000000L
+        const val VIDEO_GUESS_MILLISECONDS = 7000L
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1196,6 +1198,7 @@ class MessagingManager @Inject constructor(
         data[VIDEO_URL]?.let {
             val url = UrlHandler.handle(urlUseCase.getUrl(), it)
             getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
+                Log.d(TAG, "Found ${frames.size} frames for video notification")
                 RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
                     if (frames.isNotEmpty()) {
                         frames.forEach { frame ->
@@ -1231,7 +1234,7 @@ class MessagingManager @Inject constructor(
             Dispatchers.IO
         ) {
             url ?: return@withContext null
-            val frames = mutableListOf<Bitmap>()
+            val processingFrames = mutableListOf<Deferred<Bitmap?>>()
 
             try {
                 MediaMetadataRetriever().let { mediaRetriever ->
@@ -1242,32 +1245,17 @@ class MessagingManager @Inject constructor(
                         mediaRetriever.setDataSource(url.toString(), hashMapOf())
                     }
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        var frameIndex = 0
-                        val frameCount = mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toIntOrNull() ?: VIDEO_FRAME_CHUNKS
-                        val frameIncrement = frameCount / VIDEO_FRAME_CHUNKS
-                        var lastWasNull = false
+                    val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MILLISECONDS)) * 1000
 
-                        while (frames.size < VIDEO_MAX_FRAMES && !lastWasNull) {
-                            try {
-                                mediaRetriever.getFrameAtIndex(frameIndex)
-                                    ?.let { smallFrame ->
-                                        frames.add(smallFrame)
-                                    } ?: run { lastWasNull = true }
-                            } catch (e: Exception) {
-                                if (frameIndex + frameIncrement > frameCount) {
-                                    lastWasNull = true
-                                }
-                            }
-                            frameIndex += frameIncrement
-                        }
-                    } else {
-                        val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MICROSECONDS))
-
-                        // Start at 100 milliseconds and get frames every 500 milliseconds until reaching the end
+                    // Start at 100 milliseconds and get frames every 2 seconds until reaching the end
+                    run frameLoop@{
                         for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
+                            if (processingFrames.size >= 5) {
+                                return@frameLoop
+                            }
+
                             mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
-                                ?.let { smallFrame -> frames.add(smallFrame) }
+                                ?.let { smallFrame -> processingFrames.add(async { smallFrame.getCompressedFrame() }) }
                         }
                     }
 
@@ -1278,7 +1266,13 @@ class MessagingManager @Inject constructor(
                 Log.e(TAG, "Couldn't download video for notification", e)
             }
 
-            return@withContext frames
+            return@withContext processingFrames.awaitAll().filterNotNull()
+        }
+
+    private fun Bitmap.getCompressedFrame(): Bitmap? =
+        ByteArrayOutputStream().let { outputStream ->
+            this.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
+            outputStream.toByteArray().let { bytes -> BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }
         }
 
     private fun handleActions(
