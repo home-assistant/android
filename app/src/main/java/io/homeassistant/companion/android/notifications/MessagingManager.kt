@@ -1270,11 +1270,11 @@ class MessagingManager @Inject constructor(
             return@withContext processingFrames.awaitAll().filterNotNull()
         }
 
-    private fun Bitmap.getCompressedFrame(): Bitmap? =
-        ByteArrayOutputStream().let { outputStream ->
-            this.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
-            outputStream.toByteArray().let { bytes -> BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }
-        }
+    private fun Bitmap.getCompressedFrame(): Bitmap? {
+        val newHeight = height / 4
+        val newWidth = width / 4
+        return Bitmap.createScaledBitmap(this, newWidth, newHeight, false)
+    }
 
     private fun handleActions(
         builder: NotificationCompat.Builder,
