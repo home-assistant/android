@@ -246,7 +246,7 @@ fun SensorDetailRow(
             ) {
                 Text(text = title, style = MaterialTheme.typography.body1)
                 if (summary != null) {
-                    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                    CompositionLocalProvider(LocalContentAlpha provides (if (enabled) ContentAlpha.medium else ContentAlpha.disabled)) {
                         if (selectingEnabled) SelectionContainer { Text(text = summary, style = MaterialTheme.typography.body2) }
                         else Text(text = summary, style = MaterialTheme.typography.body2)
                     }
