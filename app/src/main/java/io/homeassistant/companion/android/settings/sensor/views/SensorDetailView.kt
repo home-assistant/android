@@ -150,6 +150,7 @@ fun SensorDetailView(
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         switch = setting.value == "true",
+                                        enabled = setting.enabled,
                                         clickable = setting.enabled,
                                         onClick = { isEnabled ->
                                             onToggleSettingSubmitted(
@@ -162,6 +163,7 @@ fun SensorDetailView(
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         summary = viewModel.getSettingTranslatedEntry(setting.name, setting.value),
+                                        enabled = setting.enabled,
                                         clickable = setting.enabled,
                                         onClick = { onDialogSettingClicked(setting) }
                                     )
@@ -170,6 +172,7 @@ fun SensorDetailView(
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         summary = setting.value.split(", ").map { it }.toString(),
+                                        enabled = setting.enabled,
                                         clickable = setting.enabled,
                                         onClick = { onDialogSettingClicked(setting) }
                                     )
@@ -178,6 +181,7 @@ fun SensorDetailView(
                                     SensorDetailRow(
                                         title = viewModel.getSettingTranslatedTitle(setting.name),
                                         summary = setting.value,
+                                        enabled = setting.enabled,
                                         clickable = setting.enabled,
                                         onClick = { onDialogSettingClicked(setting) }
                                     )
@@ -214,6 +218,7 @@ fun SensorDetailRow(
     summary: String? = null,
     switch: Boolean? = null,
     selectingEnabled: Boolean = false,
+    enabled: Boolean = true,
     clickable: Boolean = true,
     onClick: (Boolean?) -> Unit = { }
 ) {
@@ -230,27 +235,29 @@ fun SensorDetailRow(
         modifier = rowModifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(1f),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(text = title, style = MaterialTheme.typography.body1)
-            if (summary != null) {
-                CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
-                    if (selectingEnabled) SelectionContainer { Text(text = summary, style = MaterialTheme.typography.body2) }
-                    else Text(text = summary, style = MaterialTheme.typography.body2)
+        CompositionLocalProvider(LocalContentAlpha provides (if (enabled) ContentAlpha.high else ContentAlpha.disabled)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(text = title, style = MaterialTheme.typography.body1)
+                if (summary != null) {
+                    CompositionLocalProvider(LocalContentAlpha provides ContentAlpha.medium) {
+                        if (selectingEnabled) SelectionContainer { Text(text = summary, style = MaterialTheme.typography.body2) }
+                        else Text(text = summary, style = MaterialTheme.typography.body2)
+                    }
                 }
             }
-        }
-        if (switch != null) {
-            Switch(
-                checked = switch,
-                onCheckedChange = null,
-                enabled = clickable,
-                modifier = Modifier.padding(start = 16.dp)
-            )
+            if (switch != null) {
+                Switch(
+                    checked = switch,
+                    onCheckedChange = null,
+                    enabled = clickable,
+                    modifier = Modifier.padding(start = 16.dp)
+                )
+            }
         }
     }
 }
