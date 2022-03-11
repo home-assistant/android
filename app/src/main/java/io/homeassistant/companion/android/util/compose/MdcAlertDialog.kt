@@ -34,7 +34,7 @@ import io.homeassistant.companion.android.common.R as commonR
  * - Buttons are already defined and can only be set to show/hide to improve consistency
  *
  * @param onDismissRequest Action when the user dismisses the dialog by tapping outside it or pressing back
- * @param title Title for the dialog, provided text style will be [androidx.compose.material.Typography.subtitle1].
+ * @param title Title for the dialog, provided text style will be [androidx.compose.material.Typography.h6].
  * @param content Content for the dialog, provided text style will be [androidx.compose.material.Typography.body1].
  * @param onCancel Action when the 'Cancel' button is pressed. Set to null to hide button.
  * @param onSave Action when the 'Save' button is pressed. Set to null to hide button.
