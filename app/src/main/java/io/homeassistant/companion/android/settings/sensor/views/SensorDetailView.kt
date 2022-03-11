@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.settings.sensor.views
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,7 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -26,7 +23,6 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateListOf
@@ -35,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -43,9 +38,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import io.homeassistant.companion.android.database.sensor.SensorSetting
 import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
+import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.common.R as commonR
 
 @ExperimentalComposeUiApi
@@ -268,90 +263,66 @@ fun SensorDetailSettingDialog(
     onDismiss: () -> Unit,
     onSubmit: (SensorDetailViewModel.Companion.SettingDialogState) -> Unit
 ) {
-    val configuration = LocalConfiguration.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val listSettingDialog = state.setting.valueType != "string" && state.setting.valueType != "number"
     val inputValue = remember { mutableStateOf(state.setting.value) }
     val checkedValue = remember { mutableStateListOf(*state.entriesSelected?.toTypedArray() ?: emptyArray()) }
 
-    Dialog(onDismissRequest = onDismiss) {
-        Box(modifier = Modifier.background(MaterialTheme.colors.surface, RoundedCornerShape(4.dp))) {
-            Column {
-                Text(
-                    text = viewModel.getSettingTranslatedTitle(state.setting.name),
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-                    style = MaterialTheme.typography.h6
-                )
-                if (listSettingDialog) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .heightIn(max = configuration.screenHeightDp.dp - 112.dp - 32.dp)
-                    ) { // height is screen height - header/footer (112dp) - padding around dialog (16dp top/bottom)
-                        state.entries?.forEachIndexed { index, entry ->
-                            val id = state.entriesIds?.get(index)!!
-                            item {
-                                SensorDetailSettingRow(
-                                    label = entry,
-                                    checked = if (state.setting.valueType == "list") inputValue.value == id else checkedValue.contains(id),
-                                    multiple = state.setting.valueType != "list",
-                                    onClick = { isChecked ->
-                                        if (state.setting.valueType == "list") {
-                                            inputValue.value = id
-                                        } else {
-                                            if (checkedValue.contains(id) && !isChecked) checkedValue.remove(id)
-                                            else if (!checkedValue.contains(id) && isChecked) checkedValue.add(id)
-                                        }
+    MdcAlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(viewModel.getSettingTranslatedTitle(state.setting.name)) },
+        content = {
+            if (listSettingDialog) {
+                LazyColumn {
+                    state.entries?.forEachIndexed { index, entry ->
+                        val id = state.entriesIds?.get(index)!!
+                        item {
+                            SensorDetailSettingRow(
+                                label = entry,
+                                checked = if (state.setting.valueType == "list") inputValue.value == id else checkedValue.contains(id),
+                                multiple = state.setting.valueType != "list",
+                                onClick = { isChecked ->
+                                    if (state.setting.valueType == "list") {
+                                        inputValue.value = id
+                                        onSubmit(state.copy().apply { setting.value = inputValue.value })
+                                    } else {
+                                        if (checkedValue.contains(id) && !isChecked) checkedValue.remove(id)
+                                        else if (!checkedValue.contains(id) && isChecked) checkedValue.add(id)
                                     }
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 16.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = inputValue.value,
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done,
-                                keyboardType = if (state.setting.valueType == "number") {
-                                    KeyboardType.Number
-                                } else {
-                                    KeyboardType.Text
                                 }
-                            ),
-                            keyboardActions = KeyboardActions(
-                                onDone = { keyboardController?.hide() }
-                            ),
-                            onValueChange = { input -> inputValue.value = input }
-                        )
-                    }
-                }
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(end = 8.dp, bottom = 8.dp)
-                ) {
-                    TextButton(modifier = Modifier.padding(end = 8.dp), onClick = onDismiss) {
-                        Text(stringResource(commonR.string.cancel))
-                    }
-                    TextButton(
-                        onClick = {
-                            if (listSettingDialog && state.setting.valueType != "list") {
-                                inputValue.value = checkedValue.joinToString().replace("[", "").replace("]", "")
-                            }
-                            onSubmit(state.copy().apply { setting.value = inputValue.value })
+                            )
                         }
-                    ) {
-                        Text(stringResource(commonR.string.save))
                     }
                 }
+            } else {
+                OutlinedTextField(
+                    value = inputValue.value,
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done,
+                        keyboardType = if (state.setting.valueType == "number") {
+                            KeyboardType.Number
+                        } else {
+                            KeyboardType.Text
+                        }
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { keyboardController?.hide() }
+                    ),
+                    onValueChange = { input -> inputValue.value = input }
+                )
             }
-        }
-    }
+        },
+        onCancel = onDismiss,
+        onSave = if (state.setting.valueType != "list") {
+            {
+                if (listSettingDialog) {
+                    inputValue.value = checkedValue.joinToString().replace("[", "").replace("]", "")
+                }
+                onSubmit(state.copy().apply { setting.value = inputValue.value })
+            }
+        } else null, // list is saved when selecting a value
+        contentPadding = if (listSettingDialog) PaddingValues(all = 0.dp) else PaddingValues(horizontal = 24.dp)
+    )
 }
 
 @Composable
@@ -381,9 +352,6 @@ fun SensorDetailSettingRow(
                 modifier = Modifier.size(width = 48.dp, height = 48.dp)
             )
         }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.body1
-        )
+        Text(label)
     }
 }
