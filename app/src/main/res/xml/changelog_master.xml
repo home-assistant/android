@@ -3,6 +3,8 @@
     tools:ignore="MissingDefaultResource">
     <release version="2022.3">
         <change>&lt;b&gt;Breaking Change:&lt;/b&gt; All attributes for geocoded location sensor are now lower case and spaces have been replaced with an underscore</change>
+        <change>Add new video parameter for notifications to display the video as a GIF, check the docs for more details</change>
+        <change>Add a settings screen to easily edit or delete notification channels</change>
         <change>Add permissions needed to initiate a phone call using command_activity</change>
         <change>Add new setting screen to change sensor update frequency</change>
         <change>Add pinch to zoom setting under Companion App so users can zoom in the frontend, default value is off.</change>
