@@ -126,8 +126,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         }
 
         val attr = sbn.notification.extras.keySet()
-            .map { it to sbn.notification.extras.get(it) }
-            .toMap()
+            .associateWith { sbn.notification.extras.get(it) }
             .plus("package" to sbn.packageName)
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
@@ -180,8 +179,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         }
 
         val attr = sbn.notification.extras.keySet()
-            .map { it to sbn.notification.extras.get(it) }
-            .toMap()
+            .associateWith { sbn.notification.extras.get(it) }
             .plus("package" to sbn.packageName)
             .plus("post_time" to sbn.postTime)
             .plus("is_clearable" to sbn.isClearable)
@@ -210,8 +208,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
             val attr: MutableMap<String, Any?> = mutableMapOf()
             for (item in activeNotifications) {
                 attr += item.notification.extras.keySet()
-                    .map { it + "_" + item.packageName to item.notification.extras.get(it) }
-                    .toMap()
+                    .associate { it + "_" + item.packageName to item.notification.extras.get(it) }
                     .plus(item.packageName + "_" + item.id + "_post_time" to item.postTime)
                     .plus(item.packageName + "_" + item.id + "_is_ongoing" to item.isOngoing)
                     .plus(item.packageName + "_" + item.id + "_is_clearable" to item.isClearable)

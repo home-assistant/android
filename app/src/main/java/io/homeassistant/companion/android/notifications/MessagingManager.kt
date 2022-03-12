@@ -825,7 +825,7 @@ class MessagingManager @Inject constructor(
 
         handleDeleteIntent(notificationBuilder, data, messageId, group, groupId)
 
-        handleContentIntent(notificationBuilder, messageId, group, groupId, data)
+        handleContentIntent(notificationBuilder, data)
 
         handleChronometer(notificationBuilder, data)
 
@@ -891,9 +891,6 @@ class MessagingManager @Inject constructor(
 
     private fun handleContentIntent(
         builder: NotificationCompat.Builder,
-        messageId: Int,
-        group: String?,
-        groupId: Int,
         data: Map<String, String>
     ) {
         val actionUri = data["clickAction"] ?: "/"
@@ -1134,8 +1131,8 @@ class MessagingManager @Inject constructor(
     private fun prepareText(
         text: String
     ): Spanned {
-        var brText = text.replace("\\n", "<br>")
-        var emojiParsedText = EmojiParser.parseToUnicode(brText)
+        val brText = text.replace("\\n", "<br>")
+        val emojiParsedText = EmojiParser.parseToUnicode(brText)
         return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
 

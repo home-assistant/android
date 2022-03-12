@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.onboarding
 
 import android.content.Context
 import android.content.Intent
-import android.icu.util.Output
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContract
 import io.homeassistant.companion.android.BuildConfig
