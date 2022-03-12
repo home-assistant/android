@@ -50,7 +50,7 @@ fun LoadNotification(notification: NotificationItem) {
                 .padding(top = 30.dp, bottom = 20.dp, start = 10.dp)
         )
         Text(
-            text = notification.source.toString(),
+            text = notification.source,
             modifier = Modifier
                 .padding(start = 20.dp)
         )

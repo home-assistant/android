@@ -408,13 +408,13 @@ class SensorDetailFragment(
     }
 
     private fun convertRawVarsToStringVars(rawVars: List<String>): Array<String> {
-        var stringVars: MutableList<String> = ArrayList()
+        val stringVars: MutableList<String> = ArrayList()
         if (rawVars.isNotEmpty()) {
             Log.d(TAG, "Convert raw vars \"$rawVars\" to string vars...")
-            var varPrefixRegex = "var\\d:".toRegex()
-            var varSuffixRegex = ":$".toRegex()
+            val varPrefixRegex = "var\\d:".toRegex()
+            val varSuffixRegex = ":$".toRegex()
             for (rawVar in rawVars) {
-                var stringVar = rawVar.replace(varPrefixRegex, "").replace(varSuffixRegex, "")
+                val stringVar = rawVar.replace(varPrefixRegex, "").replace(varSuffixRegex, "")
                 Log.d(TAG, "Convert raw var \"$rawVar\" to string var \"$stringVar\"")
                 stringVars.add(stringVar)
             }
