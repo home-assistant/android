@@ -3,7 +3,6 @@ package io.homeassistant.companion.android.home.views
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -24,7 +23,6 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getIcon
 import io.homeassistant.companion.android.common.R as commonR
 
-@ExperimentalComposeUiApi
 @Composable
 fun ChooseEntityView(
     mainViewModel: MainViewModel,

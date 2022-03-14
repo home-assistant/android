@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material.ScalingLazyColumn
@@ -14,7 +13,6 @@ import androidx.wear.compose.material.ScalingLazyListState
 import androidx.wear.compose.material.rememberScalingLazyListState
 import io.homeassistant.companion.android.util.rotaryEventHandler
 
-@ExperimentalComposeUiApi
 @Composable
 fun ThemeLazyColumn(
     state: ScalingLazyListState = rememberScalingLazyListState(),

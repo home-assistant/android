@@ -2,13 +2,11 @@ package io.homeassistant.companion.android.home.views
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.Text
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.theme.WearAppTheme
@@ -16,7 +14,6 @@ import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.common.R as commonR
 
-@ExperimentalComposeUiApi
 @Composable
 fun EntityViewList(
     entityLists: Map<String, List<Entity<*>>>,
@@ -80,8 +77,6 @@ fun EntityViewList(
     }
 }
 
-@ExperimentalComposeUiApi
-@ExperimentalWearMaterialApi
 @Preview
 @Composable
 private fun PreviewEntityListView() {

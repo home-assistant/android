@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "RotaryEvent"
 
-@ExperimentalComposeUiApi
+@OptIn(ExperimentalComposeUiApi::class)
 fun Modifier.rotaryEventHandler(scrollState: ScrollableState): Modifier = composed {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()

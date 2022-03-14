@@ -1,6 +1,5 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -8,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -46,9 +44,7 @@ private const val SCREEN_SELECT_TILE_SHORTCUT = "select_tile_shortcut"
 private const val SCREEN_SET_TILE_TEMPLATE = "set_tile_template"
 private const val SCREEN_SET_TILE_TEMPLATE_REFRESH_INTERVAL = "set_tile_template_refresh_interval"
 
-@ExperimentalComposeUiApi
-@ExperimentalAnimationApi
-@ExperimentalWearMaterialApi
+@OptIn(ExperimentalWearMaterialApi::class)
 @Composable
 fun LoadHomePage(
     mainViewModel: MainViewModel
