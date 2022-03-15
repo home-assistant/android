@@ -798,4 +798,6 @@
     <string name="delete_channel">Delete notification channel</string>
     <string name="notification_channel_deleted">Channel \"%1$s\" deleted</string>
     <string name="undo">Undo</string>
+    <string name="basic_sensor_name_network_type">Network Type</string>
+    <string name="sensor_description_network_type">The type of transport the current active network is using</string>
 </resources>

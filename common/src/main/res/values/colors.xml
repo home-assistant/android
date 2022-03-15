@@ -13,6 +13,7 @@
     <color name="colorHeadline2">@android:color/black</color>
     <color name="colorActionBar">#03A9F4</color>
     <color name="colorIcon">@android:color/black</color>
+    <color name="colorSwitchUncheckedThumb">#ececec</color>
     <color name="colorWidgetButtonBackground">@android:color/white</color>
     <color name="colorWidgetButtonLabel">#3A3A3A</color>
     <color name="colorActionBarPopupBackground">@android:color/white</color>

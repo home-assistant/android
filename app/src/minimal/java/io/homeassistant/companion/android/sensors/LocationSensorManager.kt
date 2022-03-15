@@ -43,6 +43,7 @@ class LocationSensorManager : LocationSensorManagerBase(), SensorManager {
         internal const val TAG = "LocBroadcastReceiver"
 
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {}
+        fun setHighAccuracyModeIntervalSetting(context: Context, updateInterval: Int) {}
     }
 
     override fun onReceive(context: Context, intent: Intent) {
