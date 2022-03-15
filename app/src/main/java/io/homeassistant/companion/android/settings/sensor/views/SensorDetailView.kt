@@ -45,7 +45,6 @@ import io.homeassistant.companion.android.settings.sensor.SensorDetailViewModel
 import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.common.R as commonR
 
-@ExperimentalComposeUiApi
 @Composable
 fun SensorDetailView(
     viewModel: SensorDetailViewModel,
@@ -265,7 +264,7 @@ fun SensorDetailRow(
     }
 }
 
-@ExperimentalComposeUiApi
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SensorDetailSettingDialog(
     viewModel: SensorDetailViewModel,
