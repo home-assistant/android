@@ -1,11 +1,15 @@
 package io.homeassistant.companion.android.common.sensors
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.SensorSetting
@@ -86,6 +90,14 @@ class NetworkSensorManager : SensorManager {
             docsLink = "https://companion.home-assistant.io/docs/core/sensors#public-ip-sensor",
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
+        val networkType = SensorManager.BasicSensor(
+            "network_type",
+            "sensor",
+            commonR.string.basic_sensor_name_network_type,
+            commonR.string.sensor_description_network_type,
+            docsLink = "https://companion.home-assistant.io/docs/core/sensors#network-type-sensor",
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
         private const val SETTING_GET_CURRENT_BSSID = "network_get_current_bssid"
     }
 
@@ -97,7 +109,7 @@ class NetworkSensorManager : SensorManager {
     override val name: Int
         get() = commonR.string.sensor_name_network
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(
+        val list = listOf(
             wifiConnection,
             bssidState,
             wifiIp,
@@ -107,11 +119,15 @@ class NetworkSensorManager : SensorManager {
             wifiSignalStrength,
             publicIp
         )
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            list.plus(networkType)
+        else
+            list
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
         return when {
-            sensorId == publicIp.id -> {
+            sensorId == publicIp.id || sensorId == networkType.id -> {
                 arrayOf()
             }
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
@@ -137,6 +153,9 @@ class NetworkSensorManager : SensorManager {
         updateWifiFrequencySensor(context)
         updateWifiSignalStrengthSensor(context)
         updatePublicIpSensor(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            updateNetworkType(context)
+        }
     }
 
     private fun updateWifiConnectionSensor(context: Context) {
@@ -414,5 +433,49 @@ class NetworkSensorManager : SensorManager {
                 )
             }
         })
+    }
+
+    @SuppressLint("MissingPermission")
+    @RequiresApi(Build.VERSION_CODES.M)
+    private fun updateNetworkType(context: Context) {
+        if (!isEnabled(context, networkType.id))
+            return
+
+        val connectivityManager = context.getSystemService<ConnectivityManager>()
+        val activeNetwork = connectivityManager?.activeNetwork
+        val capabilities = connectivityManager?.getNetworkCapabilities(activeNetwork)
+
+        var networkCapability = "unavailable"
+        if (capabilities != null) {
+            networkCapability =
+                when {
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH)) -> "bluetooth"
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) -> "cellular"
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) -> "ethernet"
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_LOWPAN)) -> "lowpan"
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_USB)) -> "usb"
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) -> "vpn"
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) -> "wifi"
+                    (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI_AWARE)) -> "wifi_aware"
+                    else -> "unknown"
+                }
+        }
+
+        val icon = when (networkCapability) {
+            "bluetooth" -> "mdi:bluetooth"
+            "cellular" -> "mdi:signal-cellular-3"
+            "ethernet" -> "mdi:ethernet"
+            "usb" -> "mdi:usb"
+            "wifi", "wifi_aware" -> "mdi:wifi"
+            else -> "mdi:network"
+        }
+
+        onSensorUpdated(
+            context,
+            networkType,
+            networkCapability,
+            icon,
+            mapOf()
+        )
     }
 }
