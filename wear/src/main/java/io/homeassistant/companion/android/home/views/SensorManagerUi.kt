@@ -1,10 +1,7 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.LocalContext
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
@@ -13,10 +10,7 @@ import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.theme.WearAppTheme
 
-@ExperimentalAnimationApi
-@ExperimentalWearMaterialApi
 @Composable
-@ExperimentalComposeUiApi
 fun SensorManagerUi(
     allSensors: List<Sensor>?,
     sensorManager: SensorManager,

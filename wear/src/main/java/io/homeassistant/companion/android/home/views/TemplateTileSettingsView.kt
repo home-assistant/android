@@ -2,7 +2,6 @@ package io.homeassistant.companion.android.home.views
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -17,7 +16,6 @@ import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.theme.wearColorPalette
 import io.homeassistant.companion.android.util.IntervalToString
 
-@ExperimentalComposeUiApi
 @Composable
 fun TemplateTileSettingsView(
     templateContent: String,

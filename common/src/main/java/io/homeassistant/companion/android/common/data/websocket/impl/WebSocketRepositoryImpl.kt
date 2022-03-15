@@ -30,7 +30,6 @@ import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
@@ -55,7 +54,6 @@ import okio.ByteString
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 
-@ExperimentalCoroutinesApi
 class WebSocketRepositoryImpl @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val urlRepository: UrlRepository,

@@ -35,7 +35,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.0.4"
+        kotlinCompilerExtensionVersion = "1.1.1"
     }
 
     kotlinOptions {
@@ -181,15 +181,15 @@ dependencies {
     }
     "minimalImplementation"("org.chromium.net:cronet-embedded:95.4638.50")
 
-    implementation("androidx.compose.animation:animation:1.0.5")
-    implementation("androidx.compose.compiler:compiler:1.0.5")
-    implementation("androidx.compose.foundation:foundation:1.0.5")
-    implementation("androidx.compose.material:material:1.0.5")
-    implementation("androidx.compose.material:material-icons-core:1.0.5")
-    implementation("androidx.compose.material:material-icons-extended:1.0.5")
-    implementation("androidx.compose.runtime:runtime:1.0.5")
-    implementation("androidx.compose.ui:ui:1.0.5")
-    implementation("androidx.compose.ui:ui-tooling:1.0.5")
+    implementation("androidx.compose.animation:animation:1.1.1")
+    implementation("androidx.compose.compiler:compiler:1.1.1")
+    implementation("androidx.compose.foundation:foundation:1.1.1")
+    implementation("androidx.compose.material:material:1.1.1")
+    implementation("androidx.compose.material:material-icons-core:1.1.1")
+    implementation("androidx.compose.material:material-icons-extended:1.1.1")
+    implementation("androidx.compose.runtime:runtime:1.1.1")
+    implementation("androidx.compose.ui:ui:1.1.1")
+    implementation("androidx.compose.ui:ui-tooling:1.1.1")
     implementation("androidx.activity:activity-compose:1.4.0")
     implementation("androidx.navigation:navigation-compose:2.4.0-rc01")
     implementation("com.google.android.material:compose-theme-adapter:1.1.3")

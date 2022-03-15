@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -33,7 +32,6 @@ import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.util.getColorTemperature
 import java.text.DateFormat
 
-@ExperimentalComposeUiApi
 @Composable
 fun DetailsPanelView(
     entity: Entity<*>,

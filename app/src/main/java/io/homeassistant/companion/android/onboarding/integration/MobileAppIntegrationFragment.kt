@@ -14,7 +14,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
@@ -41,7 +40,6 @@ class MobileAppIntegrationFragment : Fragment() {
     private var dialog: AlertDialog? = null
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
-    @ExperimentalComposeUiApi
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
