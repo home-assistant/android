@@ -9,15 +9,18 @@ import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.domain
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryResponse
+import io.homeassistant.companion.android.util.RegistriesDataHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.util.Calendar
 import java.util.concurrent.Flow
 import java.util.function.Consumer
 import javax.inject.Inject
@@ -40,18 +43,21 @@ class HaControlsProviderService : ControlsProviderService() {
 
     private val domainToHaControl = mapOf(
         "automation" to DefaultSwitchControl,
+        "button" to DefaultButtonControl,
         "camera" to null,
         "climate" to ClimateControl,
         "cover" to CoverControl,
         "fan" to FanControl,
+        "ha_failed" to HaFailedControl,
         "input_boolean" to DefaultSwitchControl,
+        "input_button" to DefaultButtonControl,
         "input_number" to DefaultSliderControl,
         "light" to LightControl,
         "lock" to LockControl,
         "media_player" to null,
         "remote" to null,
-        "scene" to SceneControl,
-        "script" to SceneControl,
+        "scene" to DefaultButtonControl,
+        "script" to DefaultButtonControl,
         "switch" to DefaultSwitchControl,
         "vacuum" to VacuumControl
     )
@@ -67,14 +73,13 @@ class HaControlsProviderService : ControlsProviderService() {
                     val entities = integrationRepository.getEntities()
                     val areaForEntity = mutableMapOf<String, AreaRegistryResponse?>()
                     entities?.forEach {
-                        areaForEntity[it.entityId] = getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                        areaForEntity[it.entityId] = RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
                     }
 
                     entities
                         ?.sortedWith(compareBy(nullsLast()) { areaForEntity[it.entityId]?.name })
                         ?.mapNotNull {
-                            val domain = it.entityId.split(".")[0]
-                            domainToHaControl[domain]?.createControl(
+                            domainToHaControl[it.domain]?.createControl(
                                 applicationContext,
                                 it as Entity<Map<String, Any>>,
                                 areaForEntity[it.entityId]
@@ -111,11 +116,23 @@ class HaControlsProviderService : ControlsProviderService() {
                         var entityRegistry = webSocketRepository.getEntityRegistry()
                         val entities = mutableMapOf<String, Entity<Map<String, Any>>>()
                         controlIds.forEach {
-                            val entity = integrationRepository.getEntity(it)
-                            if (entity != null) {
-                                entities[it] = entity
-                            } else {
-                                Log.e(TAG, "Unable to get $it from Home Assistant.")
+                            try {
+                                val entity = integrationRepository.getEntity(it)
+                                if (entity != null) {
+                                    entities[it] = entity
+                                } else {
+                                    Log.e(TAG, "Unable to get $it from Home Assistant, null response.")
+                                }
+                            } catch (e: Exception) {
+                                entities["ha_failed.$it"] = Entity(
+                                    entityId = it,
+                                    state = if (e is HttpException && e.code() == 404) "notfound" else "exception",
+                                    attributes = mapOf<String, String>(),
+                                    lastChanged = Calendar.getInstance(),
+                                    lastUpdated = Calendar.getInstance(),
+                                    context = null
+                                )
+                                Log.e(TAG, "Unable to get $it from Home Assistant, caught exception.", e)
                             }
                         }
                         sendEntitiesToSubscriber(subscriber, entities, areaRegistry, deviceRegistry, entityRegistry)
@@ -124,11 +141,10 @@ class HaControlsProviderService : ControlsProviderService() {
                         webSocketScope.launch {
                             entityFlow?.collect {
                                 if (controlIds.contains(it.entityId)) {
-                                    val domain = it.entityId.split(".")[0]
-                                    val control = domainToHaControl[domain]?.createControl(
+                                    val control = domainToHaControl[it.domain]?.createControl(
                                         applicationContext,
                                         it as Entity<Map<String, Any>>,
-                                        getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
+                                        RegistriesDataHandler.getAreaForEntity(it.entityId, areaRegistry, deviceRegistry, entityRegistry)
                                     )
                                     subscriber.onNext(control)
                                 }
@@ -197,35 +213,12 @@ class HaControlsProviderService : ControlsProviderService() {
         entityRegistry: List<EntityRegistryResponse>?
     ) {
         entities.forEach {
-            val domain = it.key.split(".")[0]
-            val control = domainToHaControl[domain]?.createControl(
+            val control = domainToHaControl[it.value.domain]?.createControl(
                 applicationContext,
                 it.value,
-                getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
+                RegistriesDataHandler.getAreaForEntity(it.key, areaRegistry, deviceRegistry, entityRegistry)
             )
             subscriber.onNext(control)
         }
-    }
-
-    private fun getAreaForEntity(
-        entityId: String,
-        areaRegistry: List<AreaRegistryResponse>?,
-        deviceRegistry: List<DeviceRegistryResponse>?,
-        entityRegistry: List<EntityRegistryResponse>?
-    ): AreaRegistryResponse? {
-        val rEntity = entityRegistry?.firstOrNull { it.entityId == entityId }
-        if (rEntity != null) {
-            // By default, an entity should be considered to be in the same area as the associated device (if any)
-            // This can be overridden for an individual entity, so check the entity registry first
-            if (rEntity.areaId != null) {
-                return areaRegistry?.firstOrNull { it.areaId == rEntity.areaId }
-            } else if (rEntity.deviceId != null) {
-                val rDevice = deviceRegistry?.firstOrNull { it.id == rEntity.deviceId }
-                if (rDevice != null) {
-                    return areaRegistry?.firstOrNull { it.areaId == rDevice.areaId }
-                }
-            }
-        }
-        return null
     }
 }

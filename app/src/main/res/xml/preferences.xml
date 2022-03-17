@@ -42,6 +42,11 @@
             android:icon="@drawable/leak"
             android:title="@string/sensor_title"
             android:summary="@string/sensor_summary"/>
+        <Preference
+            android:key="sensor_update_frequency"
+            android:icon="@drawable/ic_clock_fast"
+            android:title="@string/sensor_update_frequency"
+            android:summary="@string/sensor_update_frequency_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="security_category"
@@ -81,10 +86,20 @@
             android:title="@string/keep_screen_on"
             android:summary="@string/keep_screen_on_def"/>
         <SwitchPreference
+            android:key="pinch_to_zoom"
+            android:icon="@drawable/ic_gesture_pinch"
+            android:title="@string/pinch_to_zoom"
+            android:summary="@string/pinch_to_zoom_def"/>
+        <SwitchPreference
             android:key="autoplay_video"
             android:icon="@drawable/ic_baseline_video_settings_24"
             android:title="@string/autoplay_video"
             android:summary="@string/autoplay_video_summary" />
+        <SwitchPreference
+            android:key="webview_debug"
+            android:icon="@drawable/ic_android_debug_bridge"
+            android:title="@string/remote_debugging"
+            android:summary="@string/remote_debugging_summary" />
         <Preference
             android:key="nfc_tags"
             android:icon="@drawable/ic_nfc"
@@ -107,11 +122,22 @@
         <Preference
             android:key="background"
             android:title="@string/background_access_title"/>
+        <Preference
+            android:key="websocket"
+            android:icon="@drawable/ic_websocket"
+            android:title="@string/websocket_setting_name"
+            android:summary="@string/websocket_setting_summary" />
     </PreferenceCategory>
     <PreferenceCategory
         android:title="@string/notifications"
         android:key="notifications"
         app:isPreferenceVisible="false">
+        <Preference
+            android:key="notification_channels"
+            android:title="@string/notification_channels"
+            android:summary="@string/notification_channels_summary"
+            app:isPreferenceVisible="false"
+            android:icon="@drawable/ic_notification_channel" />
         <Preference
             android:key="notification_history"
             app:isPreferenceVisible="false"
@@ -175,9 +201,14 @@
     <PreferenceCategory
         android:title="@string/app_version_info">
         <Preference
-            android:key="changelog"
+            android:key="changelog_prompt"
             android:icon="@drawable/ic_changelog"
+            android:title="@string/show_changelog"
+            android:summary="@string/show_changelog_summary" />
+        <Preference
+            android:key="changelog_github"
             android:title="@string/changelog"
+            android:icon="@drawable/ic_github"
             android:summary="https://github.com/home-assistant/android/releases"
             app:enableCopying="true" />
         <Preference

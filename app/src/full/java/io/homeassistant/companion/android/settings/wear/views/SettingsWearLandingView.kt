@@ -31,6 +31,7 @@ fun SettingWearLandingView(
     hasData: Boolean,
     isAuthed: Boolean,
     navigateFavorites: () -> Unit,
+    navigateTemplateTile: () -> Unit,
     loginWearOs: () -> Unit
 ) {
     val context = LocalContext.current
@@ -77,6 +78,14 @@ fun SettingWearLandingView(
                     ) {
                         Text(stringResource(commonR.string.set_favorites_on_device))
                     }
+                    Button(
+                        onClick = navigateTemplateTile,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp, end = 10.dp)
+                    ) {
+                        Text(stringResource(commonR.string.template_tile))
+                    }
                 }
                 else -> {
                     Button(
@@ -101,6 +110,7 @@ private fun PreviewSettingWearLandingView() {
         hasData = true,
         isAuthed = true,
         navigateFavorites = {},
+        navigateTemplateTile = {},
         loginWearOs = {}
     )
 }

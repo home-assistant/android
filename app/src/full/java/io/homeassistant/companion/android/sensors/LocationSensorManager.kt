@@ -15,10 +15,12 @@ import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
 import io.homeassistant.companion.android.common.sensors.SensorManager
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
-import io.homeassistant.companion.android.database.sensor.Setting
-import io.homeassistant.companion.android.util.DisabledLocationHandler
+import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.location.HighAccuracyLocationService
+import io.homeassistant.companion.android.notifications.MessagingManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -77,7 +79,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             "binary_sensor",
             commonR.string.basic_sensor_name_high_accuracy_mode,
             commonR.string.sensor_description_high_accuracy_mode,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         internal const val TAG = "LocBroadcastReceiver"
 
@@ -93,7 +95,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         fun setHighAccuracyModeSetting(context: Context, enabled: Boolean) {
             val sensorDao = AppDatabase.getInstance(context).sensorDao()
             sensorDao.add(
-                Setting(
+                SensorSetting(
                     backgroundLocation.id,
                     SETTING_HIGH_ACCURACY_MODE,
                     enabled.toString(),
@@ -247,7 +249,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
             val sensorDao = AppDatabase.getInstance(latestContext).sensorDao()
             sensorDao.add(
-                Setting(
+                SensorSetting(
                     backgroundLocation.id,
                     SETTING_HIGH_ACCURACY_MODE_UPDATE_INTERVAL,
                     updateIntervalHighAccuracySecondsInt.toString(),

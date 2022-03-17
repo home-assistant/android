@@ -11,6 +11,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.getSystemService
 import androidx.room.Database
 import androidx.room.OnConflictStrategy
 import androidx.room.Room
@@ -19,6 +20,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.util.databaseChannel
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.notification.NotificationDao
@@ -29,7 +31,11 @@ import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.EntriesTypeConverter
 import io.homeassistant.companion.android.database.sensor.Sensor
 import io.homeassistant.companion.android.database.sensor.SensorDao
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
+import io.homeassistant.companion.android.database.settings.LocalNotificationSettingConverter
+import io.homeassistant.companion.android.database.settings.LocalSensorSettingConverter
+import io.homeassistant.companion.android.database.settings.Setting
+import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
@@ -50,7 +56,7 @@ import io.homeassistant.companion.android.common.R as commonR
         Attribute::class,
         Authentication::class,
         Sensor::class,
-        Setting::class,
+        SensorSetting::class,
         ButtonWidgetEntity::class,
         CameraWidgetEntity::class,
         MediaPlayerControlsWidgetEntity::class,
@@ -58,12 +64,17 @@ import io.homeassistant.companion.android.common.R as commonR
         TemplateWidgetEntity::class,
         NotificationItem::class,
         TileEntity::class,
-        Favorites::class
+        Favorites::class,
+        Setting::class
     ],
-    version = 20,
+    version = 24,
     exportSchema = false
 )
-@TypeConverters(EntriesTypeConverter::class)
+@TypeConverters(
+    LocalNotificationSettingConverter::class,
+    LocalSensorSettingConverter::class,
+    EntriesTypeConverter::class
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun authenticationDao(): AuthenticationDao
     abstract fun sensorDao(): SensorDao
@@ -75,11 +86,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun tileDao(): TileDao
     abstract fun favoritesDao(): FavoritesDao
+    abstract fun settingsDao(): SettingsDao
 
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
         internal const val TAG = "AppDatabase"
-        private const val channelId = "App Database"
         private const val NOTIFICATION_ID = 45
         private lateinit var appContext: Context
         lateinit var integrationRepository: IntegrationRepository
@@ -118,7 +129,11 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_16_17,
                     MIGRATION_17_18,
                     MIGRATION_18_19,
-                    MIGRATION_19_20
+                    MIGRATION_19_20,
+                    MIGRATION_20_21,
+                    MIGRATION_21_22,
+                    MIGRATION_22_23,
+                    MIGRATION_23_24
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -453,15 +468,39 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `settings` (`id` INTEGER NOT NULL, `websocketSetting` TEXT NOT NULL, PRIMARY KEY(`id`))")
+            }
+        }
+
+        private val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `notification_history` ADD `source` TEXT NOT NULL DEFAULT 'FCM'")
+            }
+        }
+
+        private val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `mediaplayctrls_widgets` ADD `showVolume` INTEGER NOT NULL DEFAULT '0'")
+            }
+        }
+
+        private val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL DEFAULT 'NORMAL'")
+            }
+        }
+
         private fun createNotificationChannel() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val notificationManager = appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val notificationManager = appContext.getSystemService<NotificationManager>()!!
 
                 var notificationChannel =
-                    notificationManager.getNotificationChannel(channelId)
+                    notificationManager.getNotificationChannel(databaseChannel)
                 if (notificationChannel == null) {
                     notificationChannel = NotificationChannel(
-                        channelId, TAG, NotificationManager.IMPORTANCE_HIGH
+                        databaseChannel, TAG, NotificationManager.IMPORTANCE_HIGH
                     )
                     notificationManager.createNotificationChannel(notificationChannel)
                 }
@@ -470,7 +509,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun notifyMigrationFailed() {
             createNotificationChannel()
-            val notification = NotificationCompat.Builder(appContext, channelId)
+            val notification = NotificationCompat.Builder(appContext, databaseChannel)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                 .setContentTitle(appContext.getString(commonR.string.database_migration_failed))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

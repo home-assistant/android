@@ -4,6 +4,7 @@ import android.app.KeyguardManager
 import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -23,7 +24,7 @@ class KeyguardSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_device_secure,
             commonR.string.sensor_description_device_secure,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val keyguardLocked = SensorManager.BasicSensor(
             "keyguard_locked",
@@ -37,7 +38,7 @@ class KeyguardSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_keyguard_secure,
             commonR.string.sensor_description_keyguard_secure,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 
@@ -64,7 +65,7 @@ class KeyguardSensorManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        val km = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        val km = context.getSystemService<KeyguardManager>()!!
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1)
             updateDeviceLocked(context, km)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)

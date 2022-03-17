@@ -1,4 +1,4 @@
-package io.homeassistant.companion.android.onboarding.views
+package io.homeassistant.companion.android.onboarding.welcome
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement

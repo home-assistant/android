@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<changelog xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingDefaultResource">
+    <release version="2022.4">
+        <change>Allow persistent connection to work when the device has no internet</change>
+        <change>Migrate Manage Sensors screen to Compose, small design tweaks and speed improvements</change>
+        <change>Add a network transport sensor</change>
+        <change>Allow changing high accuracy update interval via notification command</change>
+    </release>
+</changelog>

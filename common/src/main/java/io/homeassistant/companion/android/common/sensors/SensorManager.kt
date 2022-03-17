@@ -6,10 +6,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Process.myPid
 import android.os.Process.myUid
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Attribute
 import io.homeassistant.companion.android.database.sensor.Sensor
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
+import java.util.Locale
 import io.homeassistant.companion.android.common.R as commonR
 
 interface SensorManager {
@@ -40,6 +42,7 @@ interface SensorManager {
     fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors"
     }
+
     fun requiredPermissions(sensorId: String): Array<String>
 
     fun checkPermission(context: Context, sensorId: String): Boolean {
@@ -55,7 +58,7 @@ interface SensorManager {
     fun checkUsageStatsPermission(context: Context): Boolean {
         val pm = context.packageManager
         val appInfo = pm.getApplicationInfo(context.packageName, 0)
-        val appOpsManager = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val appOpsManager = context.getSystemService<AppOpsManager>()!!
         val mode = appOpsManager.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, appInfo.uid, appInfo.packageName)
         return mode == AppOpsManager.MODE_ALLOWED
     }
@@ -152,7 +155,7 @@ interface SensorManager {
             .firstOrNull { it.name == settingName }
             ?.value
         if (setting == null)
-            sensorDao.add(Setting(sensor.id, settingName, default, settingType, entries, enabled))
+            sensorDao.add(SensorSetting(sensor.id, settingName, default, settingType, entries, enabled))
 
         return setting ?: default
     }
@@ -205,4 +208,9 @@ interface SensorManager {
             )
         }
     }
+}
+
+fun SensorManager.id(): String {
+    val simpleName = this::class.simpleName ?: this::class.java.name
+    return simpleName.lowercase(Locale.US).replace(" ", "_")
 }

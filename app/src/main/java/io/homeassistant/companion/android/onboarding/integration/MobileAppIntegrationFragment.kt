@@ -14,17 +14,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.content.getSystemService
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import com.google.android.material.composethemeadapter.MdcTheme
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.sensor.Sensor
+import io.homeassistant.companion.android.onboarding.OnboardApp
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.sensors.LocationSensorManager
-import io.homeassistant.companion.android.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
@@ -39,7 +40,6 @@ class MobileAppIntegrationFragment : Fragment() {
     private var dialog: AlertDialog? = null
     private val viewModel by activityViewModels<OnboardingViewModel>()
 
-    @ExperimentalComposeUiApi
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -168,19 +168,19 @@ class MobileAppIntegrationFragment : Fragment() {
 
     private fun isIgnoringBatteryOptimizations(): Boolean {
         return Build.VERSION.SDK_INT <= Build.VERSION_CODES.M ||
-            context?.getSystemService(PowerManager::class.java)
+            context?.getSystemService<PowerManager>()
                 ?.isIgnoringBatteryOptimizations(activity?.packageName ?: "")
                 ?: false
     }
 
     private fun onComplete() {
-        val retData = Intent().apply {
-            putExtra("URL", viewModel.manualUrl.value)
-            putExtra("AuthCode", viewModel.authCode.value)
-            putExtra("DeviceName", viewModel.deviceName.value)
-            putExtra("LocationTracking", viewModel.locationTrackingEnabled.value)
-        }
-        activity?.setResult(Activity.RESULT_OK, retData)
+        val retData = OnboardApp.Output(
+            url = viewModel.manualUrl.value,
+            authCode = viewModel.authCode.value,
+            deviceName = viewModel.deviceName.value,
+            deviceTrackingEnabled = viewModel.locationTrackingEnabled.value
+        )
+        activity?.setResult(Activity.RESULT_OK, retData.toIntent())
         activity?.finish()
     }
 

@@ -8,6 +8,8 @@ import io.homeassistant.companion.android.settings.log.LogFragment
 import io.homeassistant.companion.android.settings.notification.NotificationDetailFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
+import io.homeassistant.companion.android.settings.sensor.SensorDetailFragment
+import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsSettingsFragment
 import javax.inject.Inject
@@ -23,6 +25,8 @@ class SettingsFragmentFactory @Inject constructor(
             LogFragment::class.java.name -> LogFragment()
             NotificationDetailFragment::class.java.name -> NotificationDetailFragment()
             NotificationHistoryFragment::class.java.name -> NotificationHistoryFragment()
+            SensorSettingsFragment::class.java.name -> SensorSettingsFragment()
+            SensorDetailFragment::class.java.name -> SensorDetailFragment("")
             ManageTilesFragment::class.java.name -> ManageTilesFragment(integrationRepository)
             ManageShortcutsSettingsFragment::class.java.name -> ManageShortcutsSettingsFragment()
             ManageWidgetsSettingsFragment::class.java.name -> ManageWidgetsSettingsFragment()

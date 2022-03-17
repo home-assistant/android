@@ -14,6 +14,7 @@ import android.service.controls.templates.ToggleTemplate
 import androidx.annotation.RequiresApi
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.data.integration.supportsFanSetSpeed
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
@@ -21,14 +22,13 @@ import io.homeassistant.companion.android.common.R as commonR
 @RequiresApi(Build.VERSION_CODES.R)
 class FanControl {
     companion object : HaControl {
-        private const val SUPPORT_SET_SPEED = 1
         override fun provideControlFeatures(
             context: Context,
             control: Control.StatefulBuilder,
             entity: Entity<Map<String, Any>>,
             area: AreaRegistryResponse?
         ): Control.StatefulBuilder {
-            if ((entity.attributes["supported_features"] as Int) and SUPPORT_SET_SPEED == SUPPORT_SET_SPEED) {
+            if (entity.supportsFanSetSpeed()) {
                 val minValue = 0f
                 val maxValue = 100f
                 var currentValue =

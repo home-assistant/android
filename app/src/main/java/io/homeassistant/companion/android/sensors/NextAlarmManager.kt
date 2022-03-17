@@ -3,10 +3,10 @@ package io.homeassistant.companion.android.sensors
 import android.app.AlarmManager
 import android.content.Context
 import android.util.Log
-import io.homeassistant.companion.android.BuildConfig
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -30,9 +30,6 @@ class NextAlarmManager : SensorManager {
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#next-alarm-sensor"
-    }
-    override fun hasSensor(context: Context): Boolean {
-        return BuildConfig.FLAVOR != "quest"
     }
     override val enabledByDefault: Boolean
         get() = false
@@ -68,8 +65,7 @@ class NextAlarmManager : SensorManager {
         val allowPackageList = sensorSetting.firstOrNull { it.name == SETTING_ALLOW_LIST }?.value ?: ""
 
         try {
-            val alarmManager: AlarmManager =
-                context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val alarmManager = context.getSystemService<AlarmManager>()!!
 
             val alarmClockInfo = alarmManager.nextAlarmClock
 
@@ -85,7 +81,7 @@ class NextAlarmManager : SensorManager {
                         return
                     }
                 } else {
-                    sensorDao.add(Setting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, "list-apps"))
+                    sensorDao.add(SensorSetting(nextAlarm.id, SETTING_ALLOW_LIST, allowPackageList, "list-apps"))
                 }
 
                 val cal: Calendar = GregorianCalendar()

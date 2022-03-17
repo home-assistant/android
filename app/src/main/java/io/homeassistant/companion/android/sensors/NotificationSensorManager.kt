@@ -1,8 +1,10 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
+import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
+import android.content.res.Configuration
 import android.media.MediaMetadata
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
@@ -10,7 +12,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
-import io.homeassistant.companion.android.BuildConfig
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -57,7 +59,8 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         return "https://companion.home-assistant.io/docs/core/sensors#notification-sensors"
     }
     override fun hasSensor(context: Context): Boolean {
-        return BuildConfig.FLAVOR != "quest"
+        val uiManager = context.getSystemService<UiModeManager>()
+        return uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
     }
     override val name: Int
         get() = commonR.string.sensor_name_last_notification
@@ -235,7 +238,7 @@ class NotificationSensorManager : NotificationListenerService(), SensorManager {
         if (!isEnabled(context, mediaSession.id))
             return
 
-        val mediaSessionManager = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
+        val mediaSessionManager = context.getSystemService<MediaSessionManager>()!!
         val mediaList = mediaSessionManager.getActiveSessions(ComponentName(context, NotificationSensorManager::class.java))
         val sessionCount = mediaList.size
         val primaryPlaybackState = if (sessionCount > 0) getPlaybackState(mediaList[0].playbackState?.state) else "Unavailable"

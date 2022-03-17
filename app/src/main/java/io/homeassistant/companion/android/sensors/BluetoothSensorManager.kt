@@ -3,12 +3,12 @@ package io.homeassistant.companion.android.sensors
 import android.Manifest
 import android.content.Context
 import android.os.Build
-import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.bluetooth.ble.IBeaconTransmitter
 import io.homeassistant.companion.android.bluetooth.ble.TransmitterManager
+import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.database.AppDatabase
-import io.homeassistant.companion.android.database.sensor.Setting
+import io.homeassistant.companion.android.database.sensor.SensorSetting
 import java.util.UUID
 import kotlin.collections.ArrayList
 import io.homeassistant.companion.android.common.R as commonR
@@ -19,10 +19,17 @@ class BluetoothSensorManager : SensorManager {
         private const val SETTING_BLE_ID1 = "ble_uuid"
         private const val SETTING_BLE_ID2 = "ble_major"
         private const val SETTING_BLE_ID3 = "ble_minor"
-        private const val SETTING_BLE_TRANSMIT_POWER = "ble_transmit_power"
-        private const val SETTING_BLE_ADVERTISE_MODE = "ble_advertise_mode"
+        const val SETTING_BLE_TRANSMIT_POWER = "ble_transmit_power"
+        const val SETTING_BLE_ADVERTISE_MODE = "ble_advertise_mode"
         private const val SETTING_BLE_TRANSMIT_ENABLED = "ble_transmit_enabled"
-        private const val SETTING_BLE_MEASURED_POWER = "ble_measured_power_at_1m"
+        const val SETTING_BLE_MEASURED_POWER = "ble_measured_power_at_1m"
+        const val BLE_ADVERTISE_LOW_LATENCY = "lowLatency"
+        const val BLE_ADVERTISE_BALANCED = "balanced"
+        const val BLE_ADVERTISE_LOW_POWER = "lowPower"
+        const val BLE_TRANSMIT_HIGH = "high"
+        const val BLE_TRANSMIT_MEDIUM = "medium"
+        const val BLE_TRANSMIT_LOW = "low"
+        const val BLE_TRANSMIT_ULTRA_LOW = "ultraLow"
 
         private const val DEFAULT_BLE_TRANSMIT_POWER = "ultraLow"
         private const val DEFAULT_BLE_ADVERTISE_MODE = "lowPower"
@@ -46,7 +53,7 @@ class BluetoothSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_bluetooth_state,
             commonR.string.sensor_description_bluetooth_state,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val bleTransmitter = SensorManager.BasicSensor(
             "ble_emitter",
@@ -67,7 +74,7 @@ class BluetoothSensorManager : SensorManager {
             if (transmitEnabled) {
                 TransmitterManager.startTransmitting(context, bleTransmitterDevice)
             }
-            sensorDao.add(Setting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), "toggle"))
+            sensorDao.add(SensorSetting(bleTransmitter.id, SETTING_BLE_TRANSMIT_ENABLED, transmitEnabled.toString(), "toggle"))
         }
     }
 
@@ -166,9 +173,21 @@ class BluetoothSensorManager : SensorManager {
         val uuid = getSetting(context, bleTransmitter, SETTING_BLE_ID1, "string", UUID.randomUUID().toString())
         val major = getSetting(context, bleTransmitter, SETTING_BLE_ID2, "string", DEFAULT_BLE_MAJOR)
         val minor = getSetting(context, bleTransmitter, SETTING_BLE_ID3, "string", DEFAULT_BLE_MINOR)
-        val measuredPower = getSetting(context, bleTransmitter, SETTING_BLE_MEASURED_POWER, "number", DEFAULT_MEASURED_POWER_AT_1M).toInt()
-        val transmitPower = getSetting(context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list", listOf("ultraLow", "low", "medium", "high"), DEFAULT_BLE_TRANSMIT_POWER)
-        val advertiseMode = getSetting(context, bleTransmitter, SETTING_BLE_ADVERTISE_MODE, "list", listOf("lowPower", "balanced", "lowLatency"), DEFAULT_BLE_ADVERTISE_MODE)
+        val measuredPower = getSetting(context, bleTransmitter, SETTING_BLE_MEASURED_POWER, "number", DEFAULT_MEASURED_POWER_AT_1M).toIntOrNull() ?: DEFAULT_MEASURED_POWER_AT_1M.toInt()
+        val transmitPower = getSetting(
+            context, bleTransmitter, SETTING_BLE_TRANSMIT_POWER, "list",
+            listOf(
+                BLE_TRANSMIT_ULTRA_LOW, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_HIGH
+            ),
+            DEFAULT_BLE_TRANSMIT_POWER
+        )
+        val advertiseMode = getSetting(
+            context, bleTransmitter, SETTING_BLE_ADVERTISE_MODE, "list",
+            listOf(
+                BLE_ADVERTISE_LOW_POWER, BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY
+            ),
+            DEFAULT_BLE_ADVERTISE_MODE
+        )
 
         bleTransmitterDevice.restartRequired = false
         if (bleTransmitterDevice.uuid != uuid || bleTransmitterDevice.major != major ||

@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.home.HomeActivity
+import io.homeassistant.companion.android.home.HomePresenterImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -49,7 +50,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
 
         private const val KEY_UPDATE_TIME = "UpdateTime"
         private const val KEY_IS_AUTHENTICATED = "isAuthenticated"
+        private const val KEY_SUPPORTED_DOMAINS = "supportedDomains"
         private const val KEY_FAVORITES = "favorites"
+        private const val KEY_TEMPLATE_TILE = "templateTile"
+        private const val KEY_TEMPLATE_TILE_REFRESH_INTERVAL = "templateTileRefreshInterval"
     }
 
     override fun onMessageReceived(event: MessageEvent) {
@@ -65,7 +69,10 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         val putDataRequest = PutDataMapRequest.create("/config").run {
             dataMap.putLong(KEY_UPDATE_TIME, System.nanoTime())
             dataMap.putBoolean(KEY_IS_AUTHENTICATED, integrationUseCase.isRegistered())
+            dataMap.putString(KEY_SUPPORTED_DOMAINS, objectMapper.writeValueAsString(HomePresenterImpl.supportedDomains))
             dataMap.putString(KEY_FAVORITES, objectMapper.writeValueAsString(currentFavorites.map { it.id }))
+            dataMap.putString(KEY_TEMPLATE_TILE, integrationUseCase.getTemplateTileContent())
+            dataMap.putInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, integrationUseCase.getTemplateTileRefreshInterval())
             setUrgent()
             asPutDataRequest()
         }
@@ -87,6 +94,9 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
                         }
                         "/updateFavorites" -> {
                             saveFavorites(DataMapItem.fromDataItem(item).dataMap)
+                        }
+                        "/updateTemplateTile" -> {
+                            saveTileTemplate(DataMapItem.fromDataItem(item).dataMap)
                         }
                     }
                 }
@@ -125,5 +135,12 @@ class PhoneSettingsListener : WearableListenerService(), DataClient.OnDataChange
         favoritesIds.forEachIndexed { index, entityId ->
             favoritesDao.add(Favorites(entityId, index))
         }
+    }
+
+    private fun saveTileTemplate(dataMap: DataMap) = mainScope.launch {
+        val content = dataMap.getString(KEY_TEMPLATE_TILE, "")
+        val interval = dataMap.getInt(KEY_TEMPLATE_TILE_REFRESH_INTERVAL, 0)
+        integrationUseCase.setTemplateTileContent(content)
+        integrationUseCase.setTemplateTileRefreshInterval(interval)
     }
 }

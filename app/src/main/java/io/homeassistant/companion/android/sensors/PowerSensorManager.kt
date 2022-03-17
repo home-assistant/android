@@ -1,10 +1,10 @@
 package io.homeassistant.companion.android.sensors
 
 import android.content.Context
-import android.content.Context.POWER_SERVICE
 import android.os.Build
 import android.os.PowerManager
 import androidx.annotation.RequiresApi
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -59,7 +59,7 @@ class PowerSensorManager : SensorManager {
     override fun requestSensorUpdate(
         context: Context
     ) {
-        val powerManager = context.getSystemService(POWER_SERVICE) as PowerManager
+        val powerManager = context.getSystemService<PowerManager>()!!
         updateInteractive(context, powerManager)
         updatePowerSave(context, powerManager)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

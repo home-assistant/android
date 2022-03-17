@@ -138,6 +138,18 @@ class WebViewPresenterImpl @Inject constructor(
         }
     }
 
+    override fun isPinchToZoomEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isPinchToZoomEnabled()
+        }
+    }
+
+    override fun isWebViewDebugEnabled(): Boolean {
+        return runBlocking {
+            integrationUseCase.isWebViewDebugEnabled()
+        }
+    }
+
     override fun isLockEnabled(): Boolean {
         return runBlocking {
             authenticationUseCase.isLockEnabled()
@@ -175,6 +187,12 @@ class WebViewPresenterImpl @Inject constructor(
     override fun isSsidUsed(): Boolean {
         return runBlocking {
             urlUseCase.getHomeWifiSsids().isNotEmpty()
+        }
+    }
+
+    override fun getAuthorizationHeader(): String {
+        return runBlocking {
+            authenticationUseCase.buildBearerToken()
         }
     }
 

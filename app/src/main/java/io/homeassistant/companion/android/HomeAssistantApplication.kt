@@ -14,7 +14,9 @@ import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.sensors.LastUpdateManager
 import io.homeassistant.companion.android.database.AppDatabase
+import io.homeassistant.companion.android.database.settings.SensorUpdateFrequencySetting
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.websocket.WebsocketBroadcastReceiver
 import io.homeassistant.companion.android.widgets.button.ButtonWidget
 import io.homeassistant.companion.android.widgets.entity.EntityWidget
 import io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget
@@ -43,6 +45,18 @@ open class HomeAssistantApplication : Application() {
             )
         }
 
+        // This will make sure we start/stop when we actually need too.
+        registerReceiver(
+            WebsocketBroadcastReceiver(),
+            IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
+                addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+                addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
+            }
+        )
+
         val sensorReceiver = SensorReceiver()
         // This will cause the sensor to be updated every time the OS broadcasts that a cable was plugged/unplugged.
         // This should be nearly instantaneous allowing automations to fire immediately when a phone is plugged
@@ -67,6 +81,16 @@ open class HomeAssistantApplication : Application() {
             }
         )
 
+        // Update Quest only sensors when the device is a Quest
+        if (Build.MODEL == "Quest") {
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter().apply {
+                    addAction("com.oculus.intent.action.MOUNT_STATE_CHANGED")
+                }
+            )
+        }
+
         // Update doze mode immediately on supported devices
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             registerReceiver(
@@ -80,7 +104,10 @@ open class HomeAssistantApplication : Application() {
         // This will trigger an update any time the wifi state has changed
         registerReceiver(
             sensorReceiver,
-            IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+            IntentFilter().apply {
+                addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+                addAction(WifiManager.WIFI_STATE_CHANGED_ACTION)
+            }
         )
 
         // This will cause the phone state sensor to be updated every time the OS broadcasts that a call triggered.
@@ -148,6 +175,14 @@ open class HomeAssistantApplication : Application() {
                 }
             )
         }
+
+        // Register for faster sensor updates if enabled
+        val settingDao = AppDatabase.getInstance(applicationContext).settingsDao().get(0)
+        if (settingDao != null && (settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_WHILE_CHARGING || settingDao.sensorUpdateFrequency == SensorUpdateFrequencySetting.FAST_ALWAYS))
+            registerReceiver(
+                sensorReceiver,
+                IntentFilter(Intent.ACTION_TIME_TICK)
+            )
 
         // Update widgets when the screen turns on, updates are skipped if widgets were not added
         val buttonWidget = ButtonWidget()

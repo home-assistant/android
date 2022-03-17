@@ -18,6 +18,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import io.homeassistant.companion.android.common.util.highAccuracyChannel
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.util.ForegroundServiceLauncher
 import kotlin.math.abs
@@ -110,10 +111,8 @@ class HighAccuracyLocationService : Service() {
         }
 
         private fun createNotificationBuilder(context: Context) {
-            var channelID = "High accuracy location"
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(channelID, context.getString(commonR.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+                val channel = NotificationChannel(highAccuracyChannel, context.getString(commonR.string.high_accuracy_mode_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
                 notificationManagerCompat.createNotificationChannel(channel)
             }
 
@@ -124,7 +123,7 @@ class HighAccuracyLocationService : Service() {
 
             val disablePendingIntent = PendingIntent.getBroadcast(context, 0, disableIntent, PendingIntent.FLAG_MUTABLE)
 
-            notificationBuilder = NotificationCompat.Builder(context, channelID)
+            notificationBuilder = NotificationCompat.Builder(context, highAccuracyChannel)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                 .setColor(Color.GRAY)
                 .setOngoing(true)

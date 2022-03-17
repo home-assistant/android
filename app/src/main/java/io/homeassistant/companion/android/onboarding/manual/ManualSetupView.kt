@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import io.homeassistant.companion.android.onboarding.OnboardingViewModel
 import io.homeassistant.companion.android.common.R as commonR
 
-@ExperimentalComposeUiApi
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ManualSetupView(
     onboardingViewModel: OnboardingViewModel,

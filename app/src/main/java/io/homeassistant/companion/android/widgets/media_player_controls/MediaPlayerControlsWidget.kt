@@ -13,6 +13,7 @@ import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.core.content.getSystemService
 import com.mikepenz.iconics.IconicsDrawable
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
@@ -47,9 +48,14 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_FASTFORWARD"
         internal const val CALL_NEXT_TRACK =
             "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_NEXT_TRACK"
+        internal const val CALL_VOLUME_DOWN =
+            "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_VOLUME_DOWN"
+        internal const val CALL_VOLUME_UP =
+            "io.homeassistant.companion.android.widgets.media_player_controls.MediaPlayerControlsWidget.CALL_VOLUME_UP"
 
         internal const val EXTRA_ENTITY_ID = "EXTRA_ENTITY_ID"
         internal const val EXTRA_LABEL = "EXTRA_LABEL"
+        internal const val EXTRA_SHOW_VOLUME = "EXTRA_SHOW_VOLUME"
         internal const val EXTRA_SHOW_SKIP = "EXTRA_INCLUDE_SKIP"
         internal const val EXTRA_SHOW_SEEK = "EXTRA_INCLUDE_SEEK"
     }
@@ -121,11 +127,22 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         }
 
+        val volumeDownIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
+            action = CALL_VOLUME_DOWN
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+
+        val volumeUpIntent = Intent(context, MediaPlayerControlsWidget::class.java).apply {
+            action = CALL_VOLUME_UP
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+        }
+
         return RemoteViews(context.packageName, R.layout.widget_media_controls).apply {
             val widget = mediaPlayCtrlWidgetDao.get(appWidgetId)
             if (widget != null) {
                 val entityId: String = widget.entityId
                 var label: String? = widget.label
+                val showVolume: Boolean = widget.showVolume
                 val showSkip: Boolean = widget.showSkip
                 val showSeek: Boolean = widget.showSeek
                 val entity = getEntity(context, widget.entityId, suggestedEntity)
@@ -283,6 +300,32 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     )
                 )
 
+                if (showVolume) {
+                    setOnClickPendingIntent(
+                        R.id.widgetVolumeDownButton,
+                        PendingIntent.getBroadcast(
+                            context,
+                            appWidgetId,
+                            volumeDownIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                    )
+                    setOnClickPendingIntent(
+                        R.id.widgetVolumeUpButton,
+                        PendingIntent.getBroadcast(
+                            context,
+                            appWidgetId,
+                            volumeUpIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                        )
+                    )
+                    setViewVisibility(R.id.widgetVolumeDownButton, View.VISIBLE)
+                    setViewVisibility(R.id.widgetVolumeUpButton, View.VISIBLE)
+                } else {
+                    setViewVisibility(R.id.widgetVolumeDownButton, View.GONE)
+                    setViewVisibility(R.id.widgetVolumeUpButton, View.GONE)
+                }
+
                 if (showSkip) {
                     setOnClickPendingIntent(
                         R.id.widgetPrevTrackButton,
@@ -389,6 +432,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
             CALL_PLAYPAUSE -> callPlayPauseService(appWidgetId)
             CALL_FASTFORWARD -> callFastForwardService(context, appWidgetId)
             CALL_NEXT_TRACK -> callNextTrackService(appWidgetId)
+            CALL_VOLUME_DOWN -> callVolumeDownService(appWidgetId)
+            CALL_VOLUME_UP -> callVolumeUpService(appWidgetId)
         }
     }
 
@@ -399,8 +444,9 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         val labelSelection: String? = extras.getString(EXTRA_LABEL)
         val showSkip: Boolean? = extras.getBoolean(EXTRA_SHOW_SKIP)
         val showSeek: Boolean? = extras.getBoolean(EXTRA_SHOW_SEEK)
+        val showVolume: Boolean? = extras.getBoolean(EXTRA_SHOW_VOLUME)
 
-        if (entitySelection == null || showSkip == null || showSeek == null) {
+        if (entitySelection == null || showSkip == null || showSeek == null || showVolume == null) {
             Log.e(TAG, "Did not receive complete configuration data")
             return
         }
@@ -417,7 +463,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
                     entitySelection,
                     labelSelection,
                     showSkip,
-                    showSeek
+                    showSeek,
+                    showVolume
                 )
             )
 
@@ -599,6 +646,56 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
         }
     }
 
+    private fun callVolumeDownService(appWidgetId: Int) {
+        mainScope.launch {
+            Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
+            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+
+            if (entity == null) {
+                Log.d(TAG, "Failed to retrieve media player entity")
+                return@launch
+            }
+
+            Log.d(
+                TAG,
+                "Calling volume down service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
+            )
+
+            val domain = "media_player"
+            val service = "volume_down"
+
+            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
+
+            integrationUseCase.callService(domain, service, serviceDataMap)
+        }
+    }
+
+    private fun callVolumeUpService(appWidgetId: Int) {
+        mainScope.launch {
+            Log.d(TAG, "Retrieving media player entity for app widget $appWidgetId")
+            val entity: MediaPlayerControlsWidgetEntity? = mediaPlayCtrlWidgetDao.get(appWidgetId)
+
+            if (entity == null) {
+                Log.d(TAG, "Failed to retrieve media player entity")
+                return@launch
+            }
+
+            Log.d(
+                TAG,
+                "Calling volume up service:" + System.lineSeparator() +
+                    "entity id: " + entity.entityId + System.lineSeparator()
+            )
+
+            val domain = "media_player"
+            val service = "volume_up"
+
+            val serviceDataMap: HashMap<String, Any> = hashMapOf("entity_id" to entity.entityId)
+
+            integrationUseCase.callService(domain, service, serviceDataMap)
+        }
+    }
+
     override fun onDeleted(context: Context, appWidgetIds: IntArray) {
         mediaPlayCtrlWidgetDao = AppDatabase.getInstance(context).mediaPlayCtrlWidgetDao()
         // When the user deletes the widget, delete the preference associated with it.
@@ -616,8 +713,8 @@ class MediaPlayerControlsWidget : BaseWidgetProvider() {
     }
 
     private fun isConnectionActive(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        val connectivityManager = context.getSystemService<ConnectivityManager>()
+        val activeNetworkInfo = connectivityManager?.activeNetworkInfo
         return activeNetworkInfo?.isConnected ?: false
     }
 }

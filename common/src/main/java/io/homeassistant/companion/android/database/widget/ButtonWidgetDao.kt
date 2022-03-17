@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ButtonWidgetDao {
@@ -22,5 +23,8 @@ interface ButtonWidgetDao {
     fun delete(id: Int)
 
     @Query("SELECT * FROM button_widgets")
-    fun getAll(): Array<ButtonWidgetEntity>?
+    fun getAll(): List<ButtonWidgetEntity>?
+
+    @Query("SELECT * FROM button_widgets")
+    fun getAllFlow(): Flow<List<ButtonWidgetEntity>>?
 }

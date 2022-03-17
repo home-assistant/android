@@ -154,7 +154,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
                 val cal: Calendar = GregorianCalendar()
                 cal.timeInMillis = item.received
                 pref.key = item.id.toString()
-                pref.title = cal.time.toString()
+                pref.title = "${cal.time} - ${item.source}"
                 pref.summary = fromHtml(item.message)
                 pref.isIconSpaceReserved = false
 

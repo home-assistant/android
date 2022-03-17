@@ -12,6 +12,7 @@ interface IntegrationRepository {
     suspend fun isRegistered(): Boolean
 
     suspend fun getNotificationRateLimits(): RateLimitResponse
+
     suspend fun renderTemplate(template: String, variables: Map<String, String>): String
 
     suspend fun updateLocation(updateLocation: UpdateLocation)
@@ -24,8 +25,14 @@ interface IntegrationRepository {
     suspend fun setKeepScreenOnEnabled(enabled: Boolean)
     suspend fun isKeepScreenOnEnabled(): Boolean
 
+    suspend fun setPinchToZoomEnabled(enabled: Boolean)
+    suspend fun isPinchToZoomEnabled(): Boolean
+
     suspend fun setAutoPlayVideo(enabled: Boolean)
     suspend fun isAutoPlayVideoEnabled(): Boolean
+
+    suspend fun setWebViewDebugEnabled(enabled: Boolean)
+    suspend fun isWebViewDebugEnabled(): Boolean
 
     suspend fun sessionTimeOut(value: Int)
     suspend fun getSessionTimeOut(): Int
@@ -35,10 +42,16 @@ interface IntegrationRepository {
 
     suspend fun getTileShortcuts(): List<String>
     suspend fun setTileShortcuts(entities: List<String>)
+    suspend fun getTemplateTileContent(): String
+    suspend fun setTemplateTileContent(content: String)
+    suspend fun getTemplateTileRefreshInterval(): Int
+    suspend fun setTemplateTileRefreshInterval(interval: Int)
     suspend fun setWearHapticFeedback(enabled: Boolean)
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearToastConfirmation(enabled: Boolean)
     suspend fun getWearToastConfirmation(): Boolean
+    suspend fun getShowShortcutText(): Boolean
+    suspend fun setShowShortcutTextEnabled(enabled: Boolean)
 
     suspend fun getHomeAssistantVersion(): String
 

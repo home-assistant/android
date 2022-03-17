@@ -9,6 +9,7 @@ import android.content.Intent
 import android.util.Log
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
 import java.util.Calendar
 
 class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
@@ -61,7 +62,7 @@ class ForegroundServiceLauncher(private val serviceClass: Class<out Service>) {
                 val restartIntent = Intent(context, serviceClass).apply { block() }
                 val restartServicePI = PendingIntent.getService(context, 1, restartIntent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
 
-                val alarmManager: AlarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val alarmManager: AlarmManager = context.getSystemService()!!
                 val calendar: Calendar = Calendar.getInstance()
                 calendar.timeInMillis = System.currentTimeMillis()
                 calendar.add(Calendar.SECOND, 2)

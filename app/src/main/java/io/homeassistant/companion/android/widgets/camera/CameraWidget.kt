@@ -12,7 +12,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
-import android.widget.Toast
+import androidx.core.content.getSystemService
 import com.squareup.picasso.Picasso
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.BuildConfig
@@ -27,7 +27,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import io.homeassistant.companion.android.common.R as commonR
 
 @AndroidEntryPoint
 class CameraWidget : AppWidgetProvider() {
@@ -105,9 +104,15 @@ class CameraWidget : AppWidgetProvider() {
         return RemoteViews(context.packageName, R.layout.widget_camera).apply {
             val widget = cameraWidgetDao.get(appWidgetId)
             if (widget != null) {
-                val entityId: String = widget.entityId
-
-                val entityPictureUrl = retrieveCameraImageUrl(context, entityId)
+                var entityPictureUrl: String?
+                try {
+                    entityPictureUrl = retrieveCameraImageUrl(widget.entityId)
+                    setViewVisibility(R.id.widgetCameraError, View.GONE)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to fetch entity or entity does not exist", e)
+                    setViewVisibility(R.id.widgetCameraError, View.VISIBLE)
+                    entityPictureUrl = null
+                }
                 val baseUrl = urlUseCase.getUrl().toString().removeSuffix("/")
                 val url = "$baseUrl$entityPictureUrl"
                 if (entityPictureUrl == null) {
@@ -171,16 +176,9 @@ class CameraWidget : AppWidgetProvider() {
         }
     }
 
-    private suspend fun retrieveCameraImageUrl(context: Context, entityId: String): String? {
+    private suspend fun retrieveCameraImageUrl(entityId: String): String? {
         val entity = integrationUseCase.getEntity(entityId)
-        if (entity == null) {
-            Log.e(TAG, "Failed to fetch entity or entity does not exist")
-            if (lastIntent == UPDATE_IMAGE)
-                Toast.makeText(context, commonR.string.widget_entity_fetch_error, Toast.LENGTH_LONG).show()
-            return null
-        }
-
-        return entity.attributes["entity_picture"]?.toString()
+        return entity?.attributes?.get("entity_picture")?.toString()
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -249,8 +247,8 @@ class CameraWidget : AppWidgetProvider() {
     }
 
     private fun isConnectionActive(context: Context): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNetworkInfo = connectivityManager.activeNetworkInfo
+        val connectivityManager = context.getSystemService<ConnectivityManager>()
+        val activeNetworkInfo = connectivityManager?.activeNetworkInfo
         return activeNetworkInfo?.isConnected ?: false
     }
 }

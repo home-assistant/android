@@ -10,11 +10,10 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.En
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 
-@ExperimentalCoroutinesApi
 interface WebSocketRepository {
+    fun getConnectionState(): WebSocketState?
     suspend fun sendPing(): Boolean
     suspend fun getConfig(): GetConfigResponse?
     suspend fun getStates(): List<EntityResponse<Any>>?
@@ -26,4 +25,6 @@ interface WebSocketRepository {
     suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>?
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?
+    suspend fun getNotifications(): Flow<Map<String, Any>>?
+    suspend fun ackNotification(confirmId: String): Boolean
 }

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.settings
 
+import android.content.Context
 import android.util.Log
 import androidx.preference.PreferenceDataStore
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
@@ -10,6 +11,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.settings.language.LanguagesManager
 import io.homeassistant.companion.android.themes.ThemesManager
+import io.homeassistant.companion.android.util.ChangeLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -25,7 +27,8 @@ class SettingsPresenterImpl @Inject constructor(
     private val authenticationUseCase: AuthenticationRepository,
     private val prefsRepository: PrefsRepository,
     private val themesManager: ThemesManager,
-    private val langsManager: LanguagesManager
+    private val langsManager: LanguagesManager,
+    private val changeLog: ChangeLog
 ) : SettingsPresenter, PreferenceDataStore() {
 
     companion object {
@@ -44,10 +47,12 @@ class SettingsPresenterImpl @Inject constructor(
             return@runBlocking when (key) {
                 "fullscreen" -> integrationUseCase.isFullScreenEnabled()
                 "keep_screen_on" -> integrationUseCase.isKeepScreenOnEnabled()
+                "pinch_to_zoom" -> integrationUseCase.isPinchToZoomEnabled()
                 "app_lock" -> authenticationUseCase.isLockEnabled()
                 "crash_reporting" -> prefsRepository.isCrashReporting()
                 "prioritize_internal" -> urlUseCase.isPrioritizeInternal()
                 "autoplay_video" -> integrationUseCase.isAutoPlayVideoEnabled()
+                "webview_debug" -> integrationUseCase.isWebViewDebugEnabled()
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -58,10 +63,12 @@ class SettingsPresenterImpl @Inject constructor(
             when (key) {
                 "fullscreen" -> integrationUseCase.setFullScreenEnabled(value)
                 "keep_screen_on" -> integrationUseCase.setKeepScreenOnEnabled(value)
+                "pinch_to_zoom" -> integrationUseCase.setPinchToZoomEnabled(value)
                 "app_lock" -> authenticationUseCase.setLockEnabled(value)
                 "crash_reporting" -> prefsRepository.setCrashReporting(value)
                 "prioritize_internal" -> urlUseCase.setPrioritizeInternal(value)
                 "autoplay_video" -> integrationUseCase.setAutoPlayVideo(value)
+                "webview_debug" -> integrationUseCase.setWebViewDebugEnabled(value)
                 else -> throw IllegalArgumentException("No boolean found by this key: $key")
             }
         }
@@ -215,5 +222,9 @@ class SettingsPresenterImpl @Inject constructor(
         return runBlocking {
             urlUseCase.getHomeWifiSsids().isNotEmpty()
         }
+    }
+
+    override fun showChangeLog(context: Context) {
+        changeLog.showChangeLog(context, true)
     }
 }

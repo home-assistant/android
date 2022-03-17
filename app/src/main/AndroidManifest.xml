@@ -18,6 +18,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -61,7 +62,7 @@
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
 
     <application
-        android:name=".HomeAssistantApplication"
+        android:name="io.homeassistant.companion.android.HomeAssistantApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/backup_rules_android12"
@@ -76,6 +77,20 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <!-- Start things like SensorWorker on device boot -->
+        <receiver android:name=".websocket.WebsocketBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.MY_PACKAGE_SUSPENDED" />
+                <action android:name="android.intent.action.MY_PACKAGE_UNSUSPENDED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+                <action android:name="android.bluetooth.device.action.ACL_CONNECTED" />
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+            </intent-filter>
+        </receiver>
         <receiver android:name=".sensors.SensorReceiver"
             android:exported="true">
             <intent-filter>
@@ -275,7 +290,18 @@
         <activity
             android:name=".settings.wear.SettingsWearActivity"
             android:parentActivityName=".settings.SettingsActivity"
-            android:configChanges="orientation|screenSize" />
+            android:configChanges="orientation|screenSize"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="homeassistant"
+                    android:host="wear-phone-signin" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".settings.wear.views.SettingsWearMainView"
@@ -498,6 +524,16 @@
                     android:name="android.service.quicksettings.action.QS_TILE"/>
             </intent-filter>
         </service>
+
+        <receiver
+            android:name=".notifications.NotificationActionReceiver"
+            android:enabled="true"
+            android:exported="true" />
+
+        <receiver
+            android:name=".notifications.NotificationDeleteReceiver"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>

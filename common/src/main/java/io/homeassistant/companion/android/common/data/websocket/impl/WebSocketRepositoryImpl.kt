@@ -4,14 +4,17 @@ import android.util.Log
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.module.kotlin.contains
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.homeassistant.companion.android.common.data.authentication.AuthenticationRepository
+import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
 import io.homeassistant.companion.android.common.data.integration.ServiceData
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.data.websocket.WebSocketState
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -24,12 +27,13 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ge
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.SocketResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.StateChangedEvent
 import kotlinx.coroutines.CancellableContinuation
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -50,7 +54,6 @@ import okio.ByteString
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 
-@ExperimentalCoroutinesApi
 class WebSocketRepositoryImpl @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val urlRepository: UrlRepository,
@@ -58,11 +61,14 @@ class WebSocketRepositoryImpl @Inject constructor(
 ) : WebSocketRepository, WebSocketListener() {
 
     companion object {
+        private const val TAG = "WebSocketRepository"
+
         private const val EVENT_STATE_CHANGED = "state_changed"
         private const val EVENT_AREA_REGISTRY_UPDATED = "area_registry_updated"
         private const val EVENT_DEVICE_REGISTRY_UPDATED = "device_registry_updated"
         private const val EVENT_ENTITY_REGISTRY_UPDATED = "entity_registry_updated"
-        private const val TAG = "WebSocketRepository"
+
+        private const val DISCONNECT_DELAY = 10000L
     }
 
     private val ioScope = CoroutineScope(Dispatchers.IO + Job())
@@ -72,12 +78,17 @@ class WebSocketRepositoryImpl @Inject constructor(
     private val responseCallbackJobs = mutableMapOf<Long, CancellableContinuation<SocketResponse>>()
     private val id = AtomicLong(1)
     private var connection: WebSocket? = null
+    private var connectionState: WebSocketState? = null
     private val connectedMutex = Mutex()
-    private var connected = Job()
+    private var connected = CompletableDeferred<Boolean>()
     private val eventSubscriptionMutex = Mutex()
     private val eventSubscriptionFlow = mutableMapOf<String, SharedFlow<*>>()
-
     private var eventSubscriptionProducerScope = mutableMapOf<String, ProducerScope<Any>>()
+    private val notificationMutex = Mutex()
+    private var notificationFlow: Flow<Map<String, Any>>? = null
+    private var notificationProducerScope: ProducerScope<Map<String, Any>>? = null
+
+    override fun getConnectionState(): WebSocketState? = connectionState
 
     override suspend fun sendPing(): Boolean {
         val socketResponse = sendMessage(
@@ -203,10 +214,52 @@ class WebSocketRepositoryImpl @Inject constructor(
         return eventSubscriptionFlow[eventType]!! as Flow<T>
     }
 
+    override suspend fun getNotifications(): Flow<Map<String, Any>>? {
+        notificationMutex.withLock {
+            if (notificationFlow == null) {
+                val response = sendMessage(
+                    mapOf(
+                        "type" to "mobile_app/push_notification_channel",
+                        "webhook_id" to urlRepository.getWebhookId(),
+                        "support_confirm" to true
+                    )
+                )
+
+                if (response == null) {
+                    Log.e(TAG, "Unable to register for notifications")
+                    return null
+                }
+
+                notificationFlow = callbackFlow {
+                    notificationProducerScope = this
+                    awaitClose {
+                        // TODO: Is there a way to unsubscribe?
+                        notificationFlow = null
+                        notificationProducerScope = null
+                        connection?.close(1001, "Done listening to notifications.")
+                    }
+                }.shareIn(ioScope, SharingStarted.WhileSubscribed(DISCONNECT_DELAY, 0))
+            }
+
+            return notificationFlow
+        }
+    }
+
+    override suspend fun ackNotification(confirmId: String): Boolean {
+        val response = sendMessage(
+            mapOf(
+                "type" to "mobile_app/push_notification_confirm",
+                "webhook_id" to urlRepository.getWebhookId(),
+                "confirm_id" to confirmId
+            )
+        )
+        return response?.success == true
+    }
+
     private suspend fun connect(): Boolean {
         connectedMutex.withLock {
             if (connection != null && connected.isCompleted) {
-                return true
+                return !connected.isCancelled
             }
 
             val url = urlRepository.getUrl()
@@ -225,6 +278,7 @@ class WebSocketRepositoryImpl @Inject constructor(
                 this
             ).also {
                 // Preemptively send auth
+                connectionState = WebSocketState.AUTHENTICATING
                 it.send(
                     mapper.writeValueAsString(
                         mapOf(
@@ -238,8 +292,7 @@ class WebSocketRepositoryImpl @Inject constructor(
             // Wait up to 30 seconds for auth response
             return true == withTimeoutOrNull(30000) {
                 return@withTimeoutOrNull try {
-                    connected.join()
-                    true
+                    connected.await()
                 } catch (e: Exception) {
                     Log.e(TAG, "Unable to authenticate", e)
                     false
@@ -249,19 +302,25 @@ class WebSocketRepositoryImpl @Inject constructor(
     }
 
     private suspend fun sendMessage(request: Map<*, *>): SocketResponse? {
-        val requestId = id.getAndIncrement()
-        val outbound = request.plus("id" to requestId)
         return if (connect()) {
-            Log.d(TAG, "Sending message $requestId: $outbound")
             withTimeoutOrNull(30000) {
                 suspendCancellableCoroutine { cont ->
-                    responseCallbackJobs[requestId] = cont
-                    connection!!.send(mapper.writeValueAsString(outbound))
-                    Log.d(TAG, "Message number $requestId sent")
+                    // Lock on the connection so that we fully send before allowing another send.
+                    // This should prevent out of order errors.
+                    connection?.let {
+                        synchronized(it) {
+                            val requestId = id.getAndIncrement()
+                            val outbound = request.plus("id" to requestId)
+                            Log.d(TAG, "Sending message $requestId: $outbound")
+                            responseCallbackJobs[requestId] = cont
+                            connection?.send(mapper.writeValueAsString(outbound))
+                            Log.d(TAG, "Message number $requestId sent")
+                        }
+                    }
                 }
             }
         } else {
-            Log.e(TAG, "Unable to send message $requestId: $outbound")
+            Log.e(TAG, "Unable to send message $request")
             null
         }
     }
@@ -270,10 +329,13 @@ class WebSocketRepositoryImpl @Inject constructor(
         if (response?.result != null) mapper.convertValue(response.result) else null
 
     private fun handleAuthComplete(successful: Boolean) {
-        if (successful)
-            connected.complete()
-        else
-            connected.completeExceptionally(Exception("Authentication Error"))
+        if (successful) {
+            connectionState = WebSocketState.ACTIVE
+            connected.complete(true)
+        } else {
+            connectionState = WebSocketState.CLOSED_AUTH
+            connected.completeExceptionally(AuthorizationException())
+        }
     }
 
     private fun handleMessage(response: SocketResponse) {
@@ -306,15 +368,31 @@ class WebSocketRepositoryImpl @Inject constructor(
                 eventResponseClass
             )
             eventSubscriptionProducerScope[eventResponse.eventType]?.send(eventResponse.data)
+        } else if (response.event?.contains("hass_confirm_id") == true) {
+            if (notificationProducerScope?.isActive == true) {
+                notificationProducerScope?.send(
+                    mapper.convertValue(
+                        response.event,
+                        object : TypeReference<Map<String, Any>>() {}
+                    )
+                )
+            }
         }
     }
 
     private fun handleClosingSocket() {
-        connected = Job()
-        connection = null
+        ioScope.launch {
+            connectedMutex.withLock {
+                connected = CompletableDeferred()
+                connection = null
+                if (connectionState != WebSocketState.CLOSED_AUTH)
+                    connectionState = WebSocketState.CLOSED_OTHER
+            }
+        }
         // If we still have flows flowing
-        if (eventSubscriptionFlow.any() && ioScope.isActive) {
+        if ((eventSubscriptionFlow.any() || notificationFlow != null) && ioScope.isActive) {
             ioScope.launch {
+                delay(10000)
                 if (connect()) {
                     eventSubscriptionFlow.forEach { (eventType, _) ->
                         val resp = sendMessage(
@@ -325,6 +403,19 @@ class WebSocketRepositoryImpl @Inject constructor(
                         )
                         if (resp == null) {
                             Log.e(TAG, "Issue re-registering event subscriptions")
+                        }
+                    }
+                    if (notificationFlow != null) {
+                        val response = sendMessage(
+                            mapOf(
+                                "type" to "mobile_app/push_notification_channel",
+                                "webhook_id" to urlRepository.getWebhookId(),
+                                "support_confirm" to true
+                            )
+                        )
+
+                        if (response == null) {
+                            Log.e(TAG, "Unable to re-register for notifications")
                         }
                     }
                 }
@@ -369,6 +460,9 @@ class WebSocketRepositoryImpl @Inject constructor(
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         Log.e(TAG, "Websocket: onFailure", t)
+        if (connected.isActive) {
+            connected.completeExceptionally(t)
+        }
         handleClosingSocket()
     }
 }

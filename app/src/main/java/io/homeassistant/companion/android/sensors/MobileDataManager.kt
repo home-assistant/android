@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.provider.Settings
 import android.provider.Settings.Global.getInt
 import android.telephony.TelephonyManager
+import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
 
@@ -16,14 +17,14 @@ class MobileDataManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_mobile_data,
             commonR.string.sensor_description_mobile_data,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val mobileDataRoaming = SensorManager.BasicSensor(
             "mobile_data_roaming",
             "binary_sensor",
             commonR.string.basic_sensor_name_mobile_data_roaming,
             commonR.string.sensor_description_mobile_data_roaming,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 
@@ -64,9 +65,8 @@ class MobileDataManager : SensorManager {
             return
 
         var enabled = false
-        val telephonyManager =
-            (context.applicationContext.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager)
-        if (telephonyManager.simState == TelephonyManager.SIM_STATE_READY) {
+        val telephonyManager = context.applicationContext.getSystemService<TelephonyManager>()
+        if (telephonyManager?.simState == TelephonyManager.SIM_STATE_READY) {
             enabled = getInt(context.contentResolver, settingKey, 0) == 1
         }
         onSensorUpdated(

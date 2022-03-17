@@ -33,8 +33,6 @@ import org.json.JSONArray
 import java.util.regex.Pattern
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 class IntegrationRepositoryImpl @Inject constructor(
     private val integrationService: IntegrationService,
@@ -62,12 +60,17 @@ class IntegrationRepositoryImpl @Inject constructor(
 
         private const val PREF_CHECK_SENSOR_REGISTRATION_NEXT = "sensor_reg_last"
         private const val PREF_TILE_SHORTCUTS = "tile_shortcuts_list"
+        private const val PREF_SHOW_TILE_SHORTCUTS_TEXT = "show_tile_shortcuts_text"
+        private const val PREF_TILE_TEMPLATE = "tile_template"
+        private const val PREF_TILE_TEMPLATE_REFRESH_INTERVAL = "tile_template_refresh_interval"
         private const val PREF_WEAR_HAPTIC_FEEDBACK = "wear_haptic_feedback"
         private const val PREF_WEAR_TOAST_CONFIRMATION = "wear_toast_confirmation"
         private const val PREF_HA_VERSION = "ha_version"
         private const val PREF_AUTOPLAY_VIDEO = "autoplay_video"
         private const val PREF_FULLSCREEN_ENABLED = "fullscreen_enabled"
         private const val PREF_KEEP_SCREEN_ON_ENABLED = "keep_screen_on_enabled"
+        private const val PREF_PINCH_TO_ZOOM_ENABLED = "pinch_to_zoom_enabled"
+        private const val PREF_WEBVIEW_DEBUG_ENABLED = "webview_debug_enabled"
         private const val PREF_SESSION_TIMEOUT = "session_timeout"
         private const val PREF_SESSION_EXPIRE = "session_expire"
         private const val PREF_SEC_WARNING_NEXT = "sec_warning_last"
@@ -337,6 +340,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         return localStorage.getBoolean(PREF_KEEP_SCREEN_ON_ENABLED)
     }
 
+    override suspend fun setPinchToZoomEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_PINCH_TO_ZOOM_ENABLED, enabled)
+    }
+
+    override suspend fun isPinchToZoomEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_PINCH_TO_ZOOM_ENABLED)
+    }
+
+    override suspend fun setWebViewDebugEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_WEBVIEW_DEBUG_ENABLED, enabled)
+    }
+
+    override suspend fun isWebViewDebugEnabled(): Boolean {
+        return localStorage.getBoolean(PREF_WEBVIEW_DEBUG_ENABLED)
+    }
+
     override suspend fun isAutoPlayVideoEnabled(): Boolean {
         return localStorage.getBoolean(PREF_AUTOPLAY_VIDEO)
     }
@@ -372,6 +391,22 @@ class IntegrationRepositoryImpl @Inject constructor(
         localStorage.putString(PREF_TILE_SHORTCUTS, JSONArray(entities).toString())
     }
 
+    override suspend fun getTemplateTileContent(): String {
+        return localStorage.getString(PREF_TILE_TEMPLATE) ?: ""
+    }
+
+    override suspend fun setTemplateTileContent(content: String) {
+        localStorage.putString(PREF_TILE_TEMPLATE, content)
+    }
+
+    override suspend fun getTemplateTileRefreshInterval(): Int {
+        return localStorage.getInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL) ?: 0
+    }
+
+    override suspend fun setTemplateTileRefreshInterval(interval: Int) {
+        localStorage.putInt(PREF_TILE_TEMPLATE_REFRESH_INTERVAL, interval)
+    }
+
     override suspend fun setWearHapticFeedback(enabled: Boolean) {
         localStorage.putBoolean(PREF_WEAR_HAPTIC_FEEDBACK, enabled)
     }
@@ -386,6 +421,14 @@ class IntegrationRepositoryImpl @Inject constructor(
 
     override suspend fun getWearToastConfirmation(): Boolean {
         return localStorage.getBoolean(PREF_WEAR_TOAST_CONFIRMATION)
+    }
+
+    override suspend fun setShowShortcutTextEnabled(enabled: Boolean) {
+        localStorage.putBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT, enabled)
+    }
+
+    override suspend fun getShowShortcutText(): Boolean {
+        return localStorage.getBoolean(PREF_SHOW_TILE_SHORTCUTS_TEXT)
     }
 
     override suspend fun getNotificationRateLimits(): RateLimitResponse {
@@ -595,14 +638,13 @@ class IntegrationRepositoryImpl @Inject constructor(
     private suspend fun createUpdateRegistrationRequest(deviceRegistration: DeviceRegistration): RegisterDeviceRequest {
         val oldDeviceRegistration = getRegistration()
         val pushToken = deviceRegistration.pushToken ?: oldDeviceRegistration.pushToken
-        val appData = if (pushToken == null) {
-            null
-        } else {
-            hashMapOf(
-                "push_url" to PUSH_URL,
-                "push_token" to pushToken
-            )
+
+        val appData = mutableMapOf<String, Any>("push_websocket_channel" to true)
+        if (!pushToken.isNullOrBlank()) {
+            appData["push_url"] = PUSH_URL
+            appData["push_token"] = pushToken
         }
+
         return RegisterDeviceRequest(
             null,
             null,

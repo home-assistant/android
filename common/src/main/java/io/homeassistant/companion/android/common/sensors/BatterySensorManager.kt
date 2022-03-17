@@ -27,7 +27,7 @@ class BatterySensorManager : SensorManager {
             commonR.string.sensor_description_battery_state,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
-        private val isChargingState = SensorManager.BasicSensor(
+        val isChargingState = SensorManager.BasicSensor(
             "is_charging",
             "binary_sensor",
             commonR.string.basic_sensor_name_charging,
@@ -60,6 +60,13 @@ class BatterySensorManager : SensorManager {
             stateClass = SensorManager.STATE_CLASS_MEASUREMENT,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
+
+        fun getIsCharging(intent: Intent): Boolean {
+            val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+
+            return status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL
+        }
     }
 
     override fun docsLink(): String {
@@ -221,13 +228,6 @@ class BatterySensorManager : SensorManager {
             "mdi:battery",
             mapOf()
         )
-    }
-
-    private fun getIsCharging(intent: Intent): Boolean {
-        val status: Int = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-
-        return status == BatteryManager.BATTERY_STATUS_CHARGING ||
-            status == BatteryManager.BATTERY_STATUS_FULL
     }
 
     private fun getChargerType(intent: Intent): String {
