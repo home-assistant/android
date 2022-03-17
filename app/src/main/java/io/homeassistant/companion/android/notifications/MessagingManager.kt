@@ -656,7 +656,7 @@ class MessagingManager @Inject constructor(
                 when (title) {
                     TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
                     TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
-                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(context, data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt())
+                    //HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(context, data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt())
                 }
                 val intent = Intent(context, LocationSensorManager::class.java)
                 intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY

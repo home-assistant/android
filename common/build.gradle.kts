@@ -9,8 +9,8 @@ plugins {
 val homeAssistantAndroidPushUrl: String by project
 val homeAssistantAndroidRateLimitUrl: String by project
 
-val versionName = System.getenv("VERSION") ?: "LOCAL"
-val versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+val versionName = "LOCAL"
+val versionCode = 1
 
 android {
     compileSdk = 31

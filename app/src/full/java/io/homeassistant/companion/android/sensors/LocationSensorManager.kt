@@ -11,7 +11,6 @@ import android.util.Log
 import androidx.core.content.ContextCompat.getSystemService
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.GCJ2WGS
-import io.homeassistant.companion.android.bluetooth.BluetoothUtils
 import io.homeassistant.companion.android.common.data.integration.UpdateLocation
 import io.homeassistant.companion.android.common.sensors.LocationSensorManagerBase
 import io.homeassistant.companion.android.common.sensors.SensorManager
@@ -27,6 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import io.homeassistant.companion.android.common.R as commonR
 import com.amap.api.location.*
+import io.homeassistant.companion.android.common.bluetooth.BluetoothUtils
 
 @AndroidEntryPoint
 class LocationSensorManager : LocationSensorManagerBase() {
@@ -136,7 +136,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                 ?: DEFAULT_MINIMUM_ACCURACY
             sensorDao.add(
-                Setting(
+                SensorSetting(
                     backgroundLocation.id,
                     SETTING_ACCURACY,
                     minAccuracy.toString(),
@@ -455,7 +455,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
             ?: DEFAULT_MINIMUM_ACCURACY
         sensorDao.add(
-            Setting(
+            SensorSetting(
                 singleAccurateLocation.id,
                 SETTING_ACCURACY,
                 minAccuracy.toString(),
@@ -466,7 +466,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             .firstOrNull { it.name == SETTING_ACCURATE_UPDATE_TIME }?.value?.toIntOrNull()
             ?: 1000 * 60 * 5
         sensorDao.add(
-            Setting(
+            SensorSetting(
                 singleAccurateLocation.id,
                 SETTING_ACCURATE_UPDATE_TIME,
                 minTimeBetweenUpdates.toString(),
@@ -565,7 +565,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
             }
         } else
             sensorDao.add(
-                Setting(
+                SensorSetting(
                     singleAccurateLocation.id,
                     SETTING_INCLUDE_SENSOR_UPDATE,
                     "false",

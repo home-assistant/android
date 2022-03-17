@@ -81,7 +81,7 @@ class GeocodeSensorManager : SensorManager {
                 .firstOrNull { it.name == SETTING_ACCURACY }?.value?.toIntOrNull()
                 ?: DEFAULT_MINIMUM_ACCURACY
             sensorDao.add(
-                Setting(
+                SensorSetting(
                     geocodedLocation.id,
                     SETTING_ACCURACY,
                     minAccuracy.toString(),

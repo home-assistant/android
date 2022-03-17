@@ -23,8 +23,8 @@ android {
         minSdk = 21
         targetSdk = 31
 
-        versionName = System.getenv("VERSION") ?: "LOCAL"
-        versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
+        versionName = "LOCAL"
+        versionCode = 1
 
         manifestPlaceholders["sentryRelease"] = "$applicationId@$versionName"
     }
@@ -53,12 +53,15 @@ android {
         groups = "continuous-deployment"
     }
 
+    val NESTOR_KEYSTORE_PASSWORD: String by project
+    val NESTOR_KEYSTORE_ALIAS: String by project
+    val AMAP_KEY: String by project
     signingConfigs {
         create("release") {
             storeFile = file("../nestor.keystore")
-            storePassword = System.getenv("NESTOR_KEYSTORE_PASSWORD")
-            keyAlias = System.getenv("NESTOR_KEYSTORE_ALIAS")
-            keyPassword = System.getenv("NESTOR_KEYSTORE_PASSWORD")
+            storePassword = NESTOR_KEYSTORE_PASSWORD
+            keyAlias = NESTOR_KEYSTORE_ALIAS
+            keyPassword = NESTOR_KEYSTORE_PASSWORD
             enableV1Signing = true
             enableV2Signing = true
         }
@@ -68,13 +71,13 @@ android {
         named("debug").configure {
             //applicationIdSuffix = ".debug"
             signingConfig = signingConfigs.getByName("release")
-            manifestPlaceholders["amapkey"] = System.getenv("AMAP_KEY")
+            manifestPlaceholders["amapkey"] = AMAP_KEY
         }
         named("release").configure {
             isDebuggable = false
             isJniDebuggable = false
             signingConfig = signingConfigs.getByName("release")
-            manifestPlaceholders["amapkey"] = System.getenv("AMAP_KEY")
+            manifestPlaceholders["amapkey"] = AMAP_KEY
         }
     }
     flavorDimensions.add("version")
@@ -191,10 +194,10 @@ dependencies {
     implementation("com.google.android.exoplayer:exoplayer-hls:2.15.1")
     implementation("com.google.android.exoplayer:exoplayer-ui:2.15.1")
     "fullImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1")
-    "minimalImplementation"("com.google.android.exoplayer:extension-cronet:2.15.1") {
+    implementation("com.google.android.exoplayer:extension-cronet:2.15.1") {
         exclude(group = "com.google.android.gms", module = "play-services-cronet")
     }
-    "minimalImplementation"("org.chromium.net:cronet-embedded:95.4638.50")
+    implementation("org.chromium.net:cronet-embedded:95.4638.50")
 
     implementation("androidx.compose.animation:animation:1.1.1")
     implementation("androidx.compose.compiler:compiler:1.1.1")
