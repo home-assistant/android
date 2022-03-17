@@ -34,7 +34,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:completionThreshold="0"
-                android:imeOptions="actionNext"
+                android:imeOptions="actionNext|flagNoFullscreen"
                 android:inputType="text" />
         </LinearLayout>
 
