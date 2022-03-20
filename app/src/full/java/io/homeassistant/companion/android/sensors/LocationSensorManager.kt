@@ -108,8 +108,6 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         private var lastHighAccuracyMode = false
         private var lastHighAccuracyUpdateInterval = DEFAULT_MINIMUM_ACCURACY
-        private var forceHighAccuracyModeOn = false
-        private var highAccuracyModeEnabled = false
 
         private var lastEnteredGeoZones: MutableList<String> = ArrayList()
         private var lastExitedGeoZones: MutableList<String> = ArrayList()
@@ -148,19 +146,15 @@ class LocationSensorManager : LocationSensorManagerBase() {
             ACTION_PROCESS_GEO -> handleGeoUpdate(intent)
             ACTION_REQUEST_ACCURATE_LOCATION_UPDATE -> requestSingleAccurateLocation()
             ACTION_FORCE_HIGH_ACCURACY -> {
-                var command = intent.extras?.get("command")?.toString()
-                when (command) {
-                    MessagingManager.TURN_ON, MessagingManager.TURN_OFF -> {
-                        var turnOn = command == MessagingManager.TURN_ON
-                        if (turnOn) Log.d(TAG, "Forcing of high accuracy mode enabled")
-                        else Log.d(TAG, "Forcing of high accuracy mode disabled")
-                        forceHighAccuracyModeOn = turnOn
-                        setHighAccuracyModeSetting(latestContext, turnOn)
-                        ioScope.launch {
-                            setupBackgroundLocation()
-                        }
+                when (intent.extras?.get("command")?.toString()) {
+                    MessagingManager.TURN_ON -> {
+                        removeBackgroundUpdateRequests()
+                        startHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
                     }
-
+                    MessagingManager.TURN_OFF -> {
+                        stopHighAccuracyService()
+                        requestLocationUpdates()
+                    }
                     MessagingManager.HIGH_ACCURACY_SET_UPDATE_INTERVAL -> {
                         if (lastHighAccuracyMode)
                             restartHighAccuracyService(getHighAccuracyModeIntervalSetting(latestContext))
@@ -216,23 +210,23 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
         if (isBackgroundEnabled) {
             val updateIntervalHighAccuracySeconds = getHighAccuracyModeUpdateInterval()
-            highAccuracyModeEnabled = getHighAccuracyModeState()
+            val highAccuracyMode = getHighAccuracyMode()
             val highAccuracyTriggerRange = getHighAccuracyModeTriggerRange()
             val highAccuracyZones = getHighAccuracyModeZones(false)
 
             if (!isBackgroundLocationSetup) {
                 isBackgroundLocationSetup = true
-                if (highAccuracyModeEnabled) {
+                if (highAccuracyMode) {
                     startHighAccuracyService(updateIntervalHighAccuracySeconds)
                 } else {
                     requestLocationUpdates()
                 }
             } else {
-                if (highAccuracyModeEnabled != lastHighAccuracyMode ||
+                if (highAccuracyMode != lastHighAccuracyMode ||
                     updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval
                 ) {
 
-                    if (highAccuracyModeEnabled) {
+                    if (highAccuracyMode) {
                         Log.d(TAG, "High accuracy mode parameters changed. Enable high accuracy mode.")
                         if (updateIntervalHighAccuracySeconds != lastHighAccuracyUpdateInterval) {
                             restartHighAccuracyService(updateIntervalHighAccuracySeconds)
@@ -264,7 +258,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
 
             lastHighAccuracyZones = highAccuracyZones
             lastHighAccuracyTriggerRange = highAccuracyTriggerRange
-            lastHighAccuracyMode = highAccuracyModeEnabled
+            lastHighAccuracyMode = highAccuracyMode
             lastHighAccuracyUpdateInterval = updateIntervalHighAccuracySeconds
         }
     }
@@ -274,6 +268,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun startHighAccuracyService(intervalInSeconds: Int) {
+        lastHighAccuracyMode = true
         onSensorUpdated(
             latestContext,
             highAccuracyMode,
@@ -286,6 +281,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
     }
 
     private fun stopHighAccuracyService() {
+        lastHighAccuracyMode = false
         onSensorUpdated(
             latestContext,
             highAccuracyMode,
@@ -315,29 +311,11 @@ class LocationSensorManager : LocationSensorManagerBase() {
         return updateIntervalHighAccuracySecondsInt
     }
 
-    private fun getHighAccuracyModeState(): Boolean {
+    private fun getHighAccuracyMode(): Boolean {
 
         var highAccuracyMode = getHighAccuracyModeSetting()
 
         if (!highAccuracyMode) return false
-
-        val shouldEnableHighAccuracyMode = shouldEnableHighAccuracyMode()
-
-        // As soon as the high accuracy mode should be enabled, disable the force of high accuracy mode!
-        if (shouldEnableHighAccuracyMode) {
-            Log.d(TAG, "Forcing of high accuracy mode disabled, because high accuracy mode had to be enabled anyway.")
-            forceHighAccuracyModeOn = false
-        }
-
-        return if (!forceHighAccuracyModeOn) {
-            shouldEnableHighAccuracyMode
-        } else {
-            Log.d(TAG, "High accuracy mode enabled, because command_high_accuracy_mode was used to turn it on")
-            true
-        }
-    }
-
-    private fun shouldEnableHighAccuracyMode(): Boolean {
 
         val highAccuracyModeBTDevices = getSetting(
             latestContext,
@@ -355,51 +333,48 @@ class LocationSensorManager : LocationSensorManagerBase() {
             highAccuracyExpZones = getHighAccuracyModeZones(true)
         }
 
-        var btDevConnected = false
-        var inZone = false
-        var constraintsUsed = false
+        if (highAccuracyMode) {
+            var btDevConnected = false
+            var inZone = false
+            var constraintsUsed = false
+            if (!highAccuracyModeBTDevices.isNullOrEmpty()) {
+                constraintsUsed = true
 
-        if (!highAccuracyModeBTDevices.isNullOrEmpty()) {
-            constraintsUsed = true
+                val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
+                btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.name) }
 
-            val bluetoothDevices = BluetoothUtils.getBluetoothDevices(latestContext)
-            btDevConnected = bluetoothDevices.any { it.connected && highAccuracyModeBTDevices.contains(it.name) }
-
-            if (!forceHighAccuracyModeOn) {
-                if (!btDevConnected) Log.d(TAG, "High accuracy mode disabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) not connected (Connected devices: $bluetoothDevices)")
-                else Log.d(TAG, "High accuracy mode enabled, because defined ($highAccuracyModeBTDevices) bluetooth device(s) connected (Connected devices: $bluetoothDevices)")
+                if (!btDevConnected) Log.d(TAG, "High accuracy mode disabled, because bluetooth device(s) ($btDevConnected) not connected")
+                else Log.d(TAG, "High accuracy mode enabled, because bluetooth device(s) ($btDevConnected) connected")
             }
-        }
 
-        if (highAccuracyZones.isNotEmpty()) {
-            constraintsUsed = true
+            if (highAccuracyZones.isNotEmpty()) {
+                constraintsUsed = true
 
-            // (Expanded) Zone entered
-            val zoneExpEntered = lastEnteredGeoZones.isNotEmpty() && highAccuracyExpZones.containsAll(lastEnteredGeoZones)
+                // (Expanded) Zone entered
+                val zoneExpEntered = lastEnteredGeoZones.isNotEmpty() && highAccuracyExpZones.containsAll(lastEnteredGeoZones)
 
-            // Exits events are only used if expended zones are used. The exit events are used to determine the enter of the expanded zone from the original zone
-            // Zone exited
-            val zoneExited = useTriggerRange && lastExitedGeoZones.isNotEmpty() && highAccuracyZones.containsAll(lastExitedGeoZones)
+                // Exits events are only used if expended zones are used. The exit events are used to determine the enter of the expanded zone from the original zone
+                // Zone exited
+                val zoneExited = useTriggerRange && lastExitedGeoZones.isNotEmpty() && highAccuracyZones.containsAll(lastExitedGeoZones)
 
-            inZone = zoneExpEntered || zoneExited
+                inZone = zoneExpEntered || zoneExited
 
-            if (!forceHighAccuracyModeOn) {
                 if (!inZone) Log.d(TAG, "High accuracy mode disabled, because not in zone $highAccuracyExpZones")
                 else Log.d(TAG, "High accuracy mode enabled, because in zone $highAccuracyExpZones")
             }
-        }
 
-        // true = High accuracy mode enabled
-        // false = High accuracy mode disabled
-        //
-        // if either BT Device is connected or in Zone -> High accuracy mode enabled (true)
-        // Else (NO BT dev connected and NOT in Zone), if min. one constraint is used ->  High accuracy mode disabled (false)
-        //                                             if no constraint is used ->  High accuracy mode enabled (true)
-        return if (btDevConnected || inZone) {
-            true
-        } else {
-            !constraintsUsed
+            // true = High accuracy mode enabled
+            // false = High accuracy mode disabled
+            //
+            // if either BT Device is connected or in Zone -> High accuracy mode enabled (true)
+            // Else (NO BT dev connected and NOT in Zone), if min. one constraint is used ->  High accuracy mode disabled (false)
+            //                                             if no constraint is used ->  High accuracy mode enabled (true)
+            return if (btDevConnected || inZone) true
+            else {
+                !constraintsUsed
+            }
         }
+        return highAccuracyMode
     }
 
     private fun getHighAccuracyModeSetting(): Boolean {
@@ -611,6 +586,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                 "\nAccuracy: ${location.accuracy}" +
                 "\nBearing: ${location.bearing}"
         )
+        val highAccuracy = getHighAccuracyMode()
         var accuracy = 0
         if (location.accuracy.toInt() >= 0) {
             accuracy = location.accuracy.toInt()
@@ -627,7 +603,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
         val now = System.currentTimeMillis()
 
         Log.d(TAG, "Begin evaluating if location update should be skipped")
-        if (now + 5000 < location.time && !highAccuracyModeEnabled) {
+        if (now + 5000 < location.time && !highAccuracy) {
             Log.d(TAG, "Skipping location update that came from the future. ${now + 5000} should always be greater than ${location.time}")
             return
         }
@@ -651,7 +627,7 @@ class LocationSensorManager : LocationSensorManagerBase() {
                     return
                 }
             } else {
-                if (now < lastLocationSend + 5000 && !geofenceUpdate && !highAccuracyModeEnabled) {
+                if (now < lastLocationSend + 5000 && !geofenceUpdate && !highAccuracy) {
                     Log.d(
                         TAG,
                         "New location update not possible within 5 seconds, not sending to HA"
