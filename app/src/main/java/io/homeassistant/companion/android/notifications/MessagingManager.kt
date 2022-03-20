@@ -1143,7 +1143,8 @@ class MessagingManager @Inject constructor(
     private fun prepareText(
         text: String
     ): Spanned {
-        var brText = text.replace("\\n", "<br>")
+        // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
+        var brText = text.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>")
         var emojiParsedText = EmojiParser.parseToUnicode(brText)
         return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
