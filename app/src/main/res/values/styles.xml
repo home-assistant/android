@@ -19,6 +19,8 @@
         <item name="actionBarPopupTheme">@style/ThemeOverlay.MaterialComponents.Dark</item>
     </style>
 
+    <style name="Theme.HomeAssistant.Config" parent="Theme.HomeAssistant" />
+
     <style name="TextAppearance.HomeAssistant.Headline" parent="TextAppearance.MaterialComponents.Headline1">
         <item name="android:textSize">20sp</item>
         <item name="android:textColor">@color/colorHeadline1</item>
@@ -49,6 +51,13 @@
         <item name="android:background">@color/colorActionBar</item>
         <item name="android:textColorPrimary">@color/colorOnPrimary</item>
         <item name="colorControlNormal">@color/colorOnPrimary</item>
+        <item name="popupTheme">@style/Theme.HomeAssistant.PopupTheme</item>
+    </style>
+
+    <style name="ThemeOverlay.HomeAssistant.ConfigActionBar" parent="ThemeOverlay.MaterialComponents.ActionBar">
+        <item name="android:background">@color/colorBackground</item>
+        <item name="android:textColorPrimary">@color/colorOnBackground</item>
+        <item name="colorControlNormal">@color/colorOnBackground</item>
         <item name="popupTheme">@style/Theme.HomeAssistant.PopupTheme</item>
     </style>
 
