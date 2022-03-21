@@ -132,9 +132,7 @@ class PhoneStateSensorManager : SensorManager {
                             attrs["mcc"] = info.mccString.toString()
                             attrs["mnc"] = info.mncString.toString()
                             attrs["is opportunistic"] = info.isOpportunistic
-                            if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) attrs["data roaming"] =
-                                "enable"
-                            else attrs["data roaming"] = "disable"
+                             attrs["data roaming"] = if (info.dataRoaming == SubscriptionManager.DATA_ROAMING_ENABLE) "enable" else "disable"
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Unable to get SIM data", e)
