@@ -7,8 +7,7 @@ import android.os.Bundle
 import android.text.Html.fromHtml
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.SearchView
-import androidx.core.view.MenuItemCompat
+import androidx.appcompat.widget.SearchView
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -53,7 +52,7 @@ class NotificationHistoryFragment : PreferenceFragmentCompat() {
             menu.removeItem(R.id.action_delete)
         } else {
             val searchViewItem = menu.findItem(R.id.search_notifications)
-            val searchView: SearchView = MenuItemCompat.getActionView(searchViewItem) as SearchView
+            val searchView: SearchView = searchViewItem.actionView as SearchView
             searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String?): Boolean {
                     searchView.clearFocus()
