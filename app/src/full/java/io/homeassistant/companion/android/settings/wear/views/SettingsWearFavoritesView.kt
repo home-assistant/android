@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -50,18 +51,15 @@ fun LoadWearFavoritesSettings(
         LazyColumn(
             state = reorderState.listState,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .padding(top = 10.dp, start = 5.dp, end = 10.dp)
-                .then(
-                    Modifier.reorderable(
-                        reorderState,
-                        { from, to -> settingsWearViewModel.onMove(from, to) },
-                        canDragOver = { settingsWearViewModel.canDragOver(it) },
-                        onDragEnd = { _, _ ->
-                            settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
-                        }
-                    )
-                )
+            contentPadding = PaddingValues(all = 16.dp),
+            modifier = Modifier.reorderable(
+                reorderState,
+                { from, to -> settingsWearViewModel.onMove(from, to) },
+                canDragOver = { settingsWearViewModel.canDragOver(it) },
+                onDragEnd = { _, _ ->
+                    settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
+                }
+            )
         ) {
             item {
                 Text(

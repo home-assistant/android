@@ -39,7 +39,7 @@ fun SettingWearLandingView(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 20.dp, top = 10.dp, end = 20.dp)
+                .padding(all = 16.dp)
         ) {
             Text(
                 text = stringResource(id = commonR.string.manage_wear_device, deviceName),
@@ -54,7 +54,7 @@ fun SettingWearLandingView(
                         onClick = navigateFavorites,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp, end = 10.dp)
+                            .padding(top = 10.dp)
                     ) {
                         Text(stringResource(commonR.string.set_favorites_on_device))
                     }
@@ -62,7 +62,7 @@ fun SettingWearLandingView(
                         onClick = navigateTemplateTile,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp, end = 10.dp)
+                            .padding(top = 10.dp)
                     ) {
                         Text(stringResource(commonR.string.template_tile))
                     }
@@ -72,7 +72,7 @@ fun SettingWearLandingView(
                         onClick = loginWearOs,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 10.dp, end = 10.dp)
+                            .padding(top = 10.dp)
                     ) {
                         Text(stringResource(commonR.string.login_wear_os_device))
                     }
