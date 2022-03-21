@@ -144,7 +144,7 @@ class SensorDetailViewModel @Inject constructor(
         if (isEnabled) try {
             sensorManager?.requestSensorUpdate(app)
         } catch (e: Exception) {
-            Log.e(TAG, "Exception while updating sensor $sensorId", e)
+            Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
         }
     }
 
@@ -188,7 +188,7 @@ class SensorDetailViewModel @Inject constructor(
         try {
             sensorManager?.requestSensorUpdate(app)
         } catch (e: Exception) {
-            Log.e(TAG, "Exception while updating sensor $sensorId", e)
+            Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
         }
         refreshSensorData()
     }
