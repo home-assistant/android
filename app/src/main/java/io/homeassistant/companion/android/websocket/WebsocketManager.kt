@@ -5,16 +5,15 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
-import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ForegroundInfo
-import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -27,20 +26,19 @@ import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
+import io.homeassistant.companion.android.common.util.websocketChannel
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.notifications.MessagingManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
-@ExperimentalCoroutinesApi
 class WebsocketManager(
     appContext: Context,
     workerParams: WorkerParameters
@@ -49,18 +47,12 @@ class WebsocketManager(
     companion object {
         private const val TAG = "WebSockManager"
         private const val SOURCE = "Websocket"
-        const val CHANNEL_ID = "Websocket"
         private const val NOTIFICATION_ID = 65423
         private val DEFAULT_WEBSOCKET_SETTING = if (BuildConfig.FLAVOR == "full") WebsocketSetting.NEVER else WebsocketSetting.ALWAYS
 
         fun start(context: Context) {
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build()
-
             val websocketNotifications =
                 PeriodicWorkRequestBuilder<WebsocketManager>(15, TimeUnit.MINUTES)
-                    .setConstraints(constraints)
                     .build()
 
             val workManager = WorkManager.getInstance(context)
@@ -124,13 +116,18 @@ class WebsocketManager(
         return@withContext Result.success()
     }
 
+    @Suppress("DEPRECATION")
     private suspend fun shouldWeRun(): Boolean {
+        // Check for connectivity but not internet access, based on WorkManager's NetworkConnectedController API <26
+        val connectivityManager = applicationContext.getSystemService<ConnectivityManager>()
+        val networkInfo = connectivityManager?.activeNetworkInfo
         val powerManager = applicationContext.getSystemService<PowerManager>()!!
         val displayOff = !powerManager.isInteractive
         val setting = settingsDao.get(0)?.websocketSetting ?: DEFAULT_WEBSOCKET_SETTING
         val isHome = urlRepository.isInternal()
         return when {
             (setting == WebsocketSetting.NEVER) -> false
+            (networkInfo != null && !networkInfo.isConnected) -> false
             (displayOff && setting == WebsocketSetting.SCREEN_ON) -> false
             (!isHome && setting == WebsocketSetting.HOME_WIFI) -> false
             else -> true
@@ -169,10 +166,10 @@ class WebsocketManager(
     private suspend fun createNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             var notificationChannel =
-                notificationManager.getNotificationChannel(CHANNEL_ID)
+                notificationManager.getNotificationChannel(websocketChannel)
             if (notificationChannel == null) {
                 notificationChannel = NotificationChannel(
-                    CHANNEL_ID,
+                    websocketChannel,
                     applicationContext.getString(R.string.websocket_setting_name),
                     NotificationManager.IMPORTANCE_LOW
                 )
@@ -200,13 +197,13 @@ class WebsocketManager(
             settingIntent,
             PendingIntent.FLAG_IMMUTABLE
         )
-        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(applicationContext, websocketChannel)
             .setSmallIcon(R.drawable.ic_stat_ic_notification)
             .setContentTitle(applicationContext.getString(R.string.websocket_listening))
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
-            .setGroup(CHANNEL_ID)
+            .setGroup(websocketChannel)
             .addAction(
                 io.homeassistant.companion.android.R.drawable.ic_websocket,
                 applicationContext.getString(R.string.settings),

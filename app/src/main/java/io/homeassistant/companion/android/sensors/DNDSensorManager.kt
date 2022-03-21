@@ -18,7 +18,7 @@ class DNDSensorManager : SensorManager {
             "sensor",
             commonR.string.sensor_name_dnd,
             commonR.string.sensor_description_dnd_sensor,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 

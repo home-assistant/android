@@ -24,7 +24,7 @@ class KeyguardSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_device_secure,
             commonR.string.sensor_description_device_secure,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         val keyguardLocked = SensorManager.BasicSensor(
             "keyguard_locked",
@@ -38,7 +38,7 @@ class KeyguardSensorManager : SensorManager {
             "binary_sensor",
             commonR.string.basic_sensor_name_keyguard_secure,
             commonR.string.sensor_description_keyguard_secure,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 

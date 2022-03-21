@@ -33,11 +33,12 @@ import io.homeassistant.companion.android.authenticator.Authenticator
 import io.homeassistant.companion.android.common.util.DisabledLocationHandler
 import io.homeassistant.companion.android.common.util.LocationPermissionInfoHandler
 import io.homeassistant.companion.android.nfc.NfcSetupActivity
-import io.homeassistant.companion.android.sensors.SensorsSettingsFragment
 import io.homeassistant.companion.android.settings.language.LanguagesProvider
 import io.homeassistant.companion.android.settings.log.LogFragment
+import io.homeassistant.companion.android.settings.notification.NotificationChannelFragment
 import io.homeassistant.companion.android.settings.notification.NotificationHistoryFragment
 import io.homeassistant.companion.android.settings.qs.ManageTilesFragment
+import io.homeassistant.companion.android.settings.sensor.SensorSettingsFragment
 import io.homeassistant.companion.android.settings.sensor.SensorUpdateFrequencyFragment
 import io.homeassistant.companion.android.settings.shortcuts.ManageShortcutsSettingsFragment
 import io.homeassistant.companion.android.settings.ssid.SsidDialogFragment
@@ -147,7 +148,7 @@ class SettingsFragment constructor(
         findPreference<Preference>("sensors")?.setOnPreferenceClickListener {
             parentFragmentManager
                 .beginTransaction()
-                .replace(R.id.content, SensorsSettingsFragment.newInstance())
+                .replace(R.id.content, SensorSettingsFragment::class.java, null)
                 .addToBackStack(getString(commonR.string.sensors))
                 .commit()
             return@setOnPreferenceClickListener true
@@ -220,10 +221,17 @@ class SettingsFragment constructor(
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            findPreference<Preference>("notification_channels")?.let {
+            findPreference<Preference>("notification_channels")?.let { pref ->
                 val uiManager = requireContext().getSystemService<UiModeManager>()
-                it.isVisible = uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
-                it.intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context?.packageName)
+                pref.isVisible = uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION
+                pref.setOnPreferenceClickListener {
+                    parentFragmentManager
+                        .beginTransaction()
+                        .replace(R.id.content, NotificationChannelFragment::class.java, null)
+                        .addToBackStack(getString(commonR.string.notification_channels))
+                        .commit()
+                    return@setOnPreferenceClickListener true
+                }
             }
         }
 

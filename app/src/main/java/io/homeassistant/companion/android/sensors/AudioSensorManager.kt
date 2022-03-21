@@ -16,8 +16,7 @@ class AudioSensorManager : SensorManager {
             "audio_sensor",
             "sensor",
             commonR.string.sensor_name_ringer_mode,
-            commonR.string.sensor_description_audio_sensor,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            commonR.string.sensor_description_audio_sensor
         )
         private val audioState = SensorManager.BasicSensor(
             "audio_mode",
@@ -54,28 +53,28 @@ class AudioSensorManager : SensorManager {
             "sensor",
             commonR.string.sensor_name_volume_alarm,
             commonR.string.sensor_description_volume_alarm,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val volCall = SensorManager.BasicSensor(
             "volume_call",
             "sensor",
             commonR.string.sensor_name_volume_call,
             commonR.string.sensor_description_volume_call,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val volMusic = SensorManager.BasicSensor(
             "volume_music",
             "sensor",
             commonR.string.sensor_name_volume_music,
             commonR.string.sensor_description_volume_music,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
         private val volRing = SensorManager.BasicSensor(
             "volume_ring",
             "sensor",
             commonR.string.sensor_name_volume_ring,
             commonR.string.sensor_description_volume_ring,
-            entityCategory = SensorManager.ENTITY_CATEGORY_CONFIG
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
     }
 

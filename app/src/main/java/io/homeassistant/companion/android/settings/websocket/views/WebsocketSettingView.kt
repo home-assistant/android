@@ -19,10 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.util.websocketChannel
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.util.compose.InfoNotification
 import io.homeassistant.companion.android.util.compose.RadioButtonRow
-import io.homeassistant.companion.android.websocket.WebsocketManager
 
 @Composable
 fun WebsocketSettingView(
@@ -67,7 +67,7 @@ fun WebsocketSettingView(
         if (websocketSetting != WebsocketSetting.NEVER && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && uiManager?.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
             InfoNotification(
                 infoString = R.string.websocket_persistent_notification,
-                channelId = WebsocketManager.CHANNEL_ID,
+                channelId = websocketChannel,
                 buttonString = R.string.websocket_notification_channel
             )
         }

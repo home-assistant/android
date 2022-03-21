@@ -20,6 +20,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
+import io.homeassistant.companion.android.common.util.databaseChannel
 import io.homeassistant.companion.android.database.authentication.Authentication
 import io.homeassistant.companion.android.database.authentication.AuthenticationDao
 import io.homeassistant.companion.android.database.notification.NotificationDao
@@ -90,7 +91,6 @@ abstract class AppDatabase : RoomDatabase() {
     companion object {
         private const val DATABASE_NAME = "HomeAssistantDB"
         internal const val TAG = "AppDatabase"
-        private const val channelId = "App Database"
         private const val NOTIFICATION_ID = 45
         private lateinit var appContext: Context
         lateinit var integrationRepository: IntegrationRepository
@@ -497,10 +497,10 @@ abstract class AppDatabase : RoomDatabase() {
                 val notificationManager = appContext.getSystemService<NotificationManager>()!!
 
                 var notificationChannel =
-                    notificationManager.getNotificationChannel(channelId)
+                    notificationManager.getNotificationChannel(databaseChannel)
                 if (notificationChannel == null) {
                     notificationChannel = NotificationChannel(
-                        channelId, TAG, NotificationManager.IMPORTANCE_HIGH
+                        databaseChannel, TAG, NotificationManager.IMPORTANCE_HIGH
                     )
                     notificationManager.createNotificationChannel(notificationChannel)
                 }
@@ -509,7 +509,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private fun notifyMigrationFailed() {
             createNotificationChannel()
-            val notification = NotificationCompat.Builder(appContext, channelId)
+            val notification = NotificationCompat.Builder(appContext, databaseChannel)
                 .setSmallIcon(commonR.drawable.ic_stat_ic_notification)
                 .setContentTitle(appContext.getString(commonR.string.database_migration_failed))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)

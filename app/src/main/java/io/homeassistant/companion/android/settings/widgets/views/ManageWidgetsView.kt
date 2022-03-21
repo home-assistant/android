@@ -2,24 +2,22 @@ package io.homeassistant.companion.android.settings.widgets.views
 
 import android.appwidget.AppWidgetManager
 import android.content.Intent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ExtendedFloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Widgets
@@ -35,12 +33,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.mikepenz.iconics.compose.Image
 import com.mikepenz.iconics.typeface.IIcon
 import com.mikepenz.iconics.typeface.library.community.material.CommunityMaterial
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
+import io.homeassistant.companion.android.util.compose.MdcAlertDialog
 import io.homeassistant.companion.android.widgets.button.ButtonWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.camera.CameraWidgetConfigureActivity
 import io.homeassistant.companion.android.widgets.entity.EntityWidgetConfigureActivity
@@ -64,23 +62,18 @@ fun ManageWidgetsView(
         }
     }) {
         if (expandedAddWidget) {
-            Dialog(onDismissRequest = { expandedAddWidget = false }) {
-                val availableWidgets = mapOf(
-                    stringResource(R.string.widget_button_image_description) to Pair("button", CommunityMaterial.Icon2.cmd_gesture_tap),
-                    stringResource(R.string.widget_camera_description) to Pair("camera", CommunityMaterial.Icon.cmd_camera),
-                    stringResource(R.string.widget_static_image_description) to Pair("state", CommunityMaterial.Icon3.cmd_shape),
-                    stringResource(R.string.widget_media_player_description) to Pair("media", CommunityMaterial.Icon3.cmd_play_box_multiple),
-                    stringResource(R.string.template_widget) to Pair("template", CommunityMaterial.Icon.cmd_code_braces)
-                ).toSortedMap(compareBy { it })
-                Box(modifier = Modifier.background(MaterialTheme.colors.surface, RoundedCornerShape(4.dp))) {
+            val availableWidgets = mapOf(
+                stringResource(R.string.widget_button_image_description) to Pair("button", CommunityMaterial.Icon2.cmd_gesture_tap),
+                stringResource(R.string.widget_camera_description) to Pair("camera", CommunityMaterial.Icon.cmd_camera),
+                stringResource(R.string.widget_static_image_description) to Pair("state", CommunityMaterial.Icon3.cmd_shape),
+                stringResource(R.string.widget_media_player_description) to Pair("media", CommunityMaterial.Icon3.cmd_play_box_multiple),
+                stringResource(R.string.template_widget) to Pair("template", CommunityMaterial.Icon.cmd_code_braces)
+            ).toSortedMap(compareBy { it })
+            MdcAlertDialog(
+                onDismissRequest = { expandedAddWidget = false },
+                title = { Text(stringResource(R.string.add_widget)) },
+                content = {
                     LazyColumn {
-                        item {
-                            Text(
-                                text = stringResource(R.string.add_widget),
-                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-                                style = MaterialTheme.typography.h6
-                            )
-                        }
                         availableWidgets.forEach {
                             item {
                                 PopupWidgetRow(widgetLabel = it.key, widgetIcon = it.value.second, widgetType = it.value.first) {
@@ -88,19 +81,11 @@ fun ManageWidgetsView(
                                 }
                             }
                         }
-                        item {
-                            Row(
-                                horizontalArrangement = Arrangement.End,
-                                modifier = Modifier.fillMaxWidth().padding(end = 8.dp, bottom = 8.dp)
-                            ) {
-                                TextButton(onClick = { expandedAddWidget = false }) {
-                                    Text(stringResource(R.string.cancel))
-                                }
-                            }
-                        }
                     }
-                }
-            }
+                },
+                onCancel = { expandedAddWidget = false },
+                contentPadding = PaddingValues(all = 0.dp)
+            )
         }
         LazyColumn(
             modifier = Modifier.padding(start = 16.dp, end = 16.dp)

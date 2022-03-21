@@ -16,6 +16,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.MediaMetadataRetriever
 import android.media.RingtoneManager
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
@@ -31,6 +32,7 @@ import android.speech.tts.UtteranceProgressListener
 import android.text.Spanned
 import android.util.Log
 import android.view.KeyEvent
+import android.widget.RemoteViews
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -50,6 +52,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.url.UrlRepository
 import io.homeassistant.companion.android.common.util.cancel
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
+import io.homeassistant.companion.android.common.util.generalChannel
 import io.homeassistant.companion.android.common.util.getActiveNotification
 import io.homeassistant.companion.android.database.AppDatabase
 import io.homeassistant.companion.android.database.notification.NotificationItem
@@ -61,8 +64,11 @@ import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.util.UrlHandler
 import io.homeassistant.companion.android.webview.WebViewActivity
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -95,6 +101,7 @@ class MessagingManager @Inject constructor(
         const val TIMEOUT = "timeout"
         const val IMAGE_URL = "image"
         const val ICON_URL = "icon_url"
+        const val VIDEO_URL = "video"
         const val LED_COLOR = "ledColor"
         const val VIBRATION_PATTERN = "vibrationPattern"
         const val PERSISTENT = "persistent"
@@ -109,6 +116,7 @@ class MessagingManager @Inject constructor(
         const val REPLY = "REPLY"
         const val BLE_ADVERTISE = "ble_advertise"
         const val BLE_TRANSMIT = "ble_transmit"
+        const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -172,6 +180,9 @@ class MessagingManager @Inject constructor(
         const val BLE_TRANSMIT_MEDIUM = "ble_transmit_medium"
         const val BLE_TRANSMIT_HIGH = "ble_transmit_high"
 
+        // High accuracy commands
+        const val HIGH_ACCURACY_SET_UPDATE_INTERVAL = "high_accuracy_set_update_interval"
+
         // Command groups
         val DEVICE_COMMANDS = listOf(
             COMMAND_DND,
@@ -201,6 +212,11 @@ class MessagingManager @Inject constructor(
             listOf(BLE_TRANSMIT_HIGH, BLE_TRANSMIT_LOW, BLE_TRANSMIT_MEDIUM, BLE_TRANSMIT_ULTRA_LOW)
         val BLE_ADVERTISE_COMMANDS =
             listOf(BLE_ADVERTISE_BALANCED, BLE_ADVERTISE_LOW_LATENCY, BLE_ADVERTISE_LOW_POWER)
+
+        // Video Values
+        const val VIDEO_START_MICROSECONDS = 100000L
+        const val VIDEO_INCREMENT_MICROSECONDS = 2000000L
+        const val VIDEO_GUESS_MILLISECONDS = 7000L
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -334,7 +350,12 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_HIGH_ACCURACY_MODE -> {
-                        if (!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS)
+                        if ((!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS) ||
+                            (
+                                !jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
+                                    jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! > 5
+                                )
+                        )
                             handleDeviceCommands(jsonData)
                         else {
                             mainScope.launch {
@@ -342,6 +363,7 @@ class MessagingManager @Inject constructor(
                                     TAG,
                                     "Invalid high accuracy mode command received, posting notification to device"
                                 )
+                                sendNotification(jsonData)
                             }
                         }
                     }
@@ -631,11 +653,10 @@ class MessagingManager @Inject constructor(
                     )
             }
             COMMAND_HIGH_ACCURACY_MODE -> {
-                if (title == TURN_OFF) {
-                    LocationSensorManager.setHighAccuracyModeSetting(context, false)
-                }
-                if (title == TURN_ON) {
-                    LocationSensorManager.setHighAccuracyModeSetting(context, true)
+                when (title) {
+                    TURN_OFF -> LocationSensorManager.setHighAccuracyModeSetting(context, false)
+                    TURN_ON -> LocationSensorManager.setHighAccuracyModeSetting(context, true)
+                    HIGH_ACCURACY_SET_UPDATE_INTERVAL -> LocationSensorManager.setHighAccuracyModeIntervalSetting(context, data[HIGH_ACCURACY_UPDATE_INTERVAL]!!.toInt())
                 }
                 val intent = Intent(context, LocationSensorManager::class.java)
                 intent.action = LocationSensorManager.ACTION_FORCE_HIGH_ACCURACY
@@ -806,6 +827,8 @@ class MessagingManager @Inject constructor(
         handleSubject(notificationBuilder, data)
 
         handleImage(notificationBuilder, data)
+
+        handleVideo(notificationBuilder, data)
 
         handleActions(notificationBuilder, tag, messageId, data)
 
@@ -1120,7 +1143,8 @@ class MessagingManager @Inject constructor(
     private fun prepareText(
         text: String
     ): Spanned {
-        var brText = text.replace("\\n", "<br>")
+        // Replace control char \r\n, \r, \n and also \r\n, \r, \n as text literals in strings to <br>
+        var brText = text.replace("(\r\n|\r|\n)|(\\\\r\\\\n|\\\\r|\\\\n)".toRegex(), "<br>")
         var emojiParsedText = EmojiParser.parseToUnicode(brText)
         return HtmlCompat.fromHtml(emojiParsedText, HtmlCompat.FROM_HTML_MODE_LEGACY)
     }
@@ -1176,6 +1200,90 @@ class MessagingManager @Inject constructor(
             }
             return@withContext image
         }
+
+    private suspend fun handleVideo(
+        builder: NotificationCompat.Builder,
+        data: Map<String, String>
+    ) {
+        data[VIDEO_URL]?.let {
+            val url = UrlHandler.handle(urlUseCase.getUrl(), it)
+            getVideoFrames(url, !UrlHandler.isAbsoluteUrl(it))?.let { frames ->
+                Log.d(TAG, "Found ${frames.size} frames for video notification")
+                RemoteViews(context.packageName, R.layout.view_image_flipper).let { remoteViewFlipper ->
+                    if (frames.isNotEmpty()) {
+                        frames.forEach { frame ->
+                            remoteViewFlipper.addView(
+                                R.id.frame_flipper,
+                                RemoteViews(context.packageName, R.layout.view_single_frame).apply {
+                                    setImageViewBitmap(
+                                        R.id.frame,
+                                        frame
+                                    )
+                                }
+                            )
+                        }
+
+                        data[TITLE]?.let { rawTitle ->
+                            remoteViewFlipper.setTextViewText(R.id.title, rawTitle)
+                        }
+
+                        data[MESSAGE]?.let { rawMessage ->
+                            remoteViewFlipper.setTextViewText(R.id.info, rawMessage)
+                        }
+
+                        builder.setCustomBigContentView(remoteViewFlipper)
+                        builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun getVideoFrames(url: URL?, requiresAuth: Boolean = false): List<Bitmap>? =
+        withContext(
+            Dispatchers.IO
+        ) {
+            url ?: return@withContext null
+            val processingFrames = mutableListOf<Deferred<Bitmap?>>()
+
+            try {
+                MediaMetadataRetriever().let { mediaRetriever ->
+
+                    if (requiresAuth) {
+                        mediaRetriever.setDataSource(url.toString(), mapOf("Authorization" to authenticationUseCase.buildBearerToken()))
+                    } else {
+                        mediaRetriever.setDataSource(url.toString(), hashMapOf())
+                    }
+
+                    val durationInMicroSeconds = ((mediaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: VIDEO_GUESS_MILLISECONDS)) * 1000
+
+                    // Start at 100 milliseconds and get frames every 2 seconds until reaching the end
+                    run frameLoop@{
+                        for (timeInMicroSeconds in VIDEO_START_MICROSECONDS until durationInMicroSeconds step VIDEO_INCREMENT_MICROSECONDS) {
+                            if (processingFrames.size >= 5) {
+                                return@frameLoop
+                            }
+
+                            mediaRetriever.getFrameAtTime(timeInMicroSeconds, MediaMetadataRetriever.OPTION_CLOSEST)
+                                ?.let { smallFrame -> processingFrames.add(async { smallFrame.getCompressedFrame() }) }
+                        }
+                    }
+
+                    mediaRetriever.release()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e(TAG, "Couldn't download video for notification", e)
+            }
+
+            return@withContext processingFrames.awaitAll().filterNotNull()
+        }
+
+    private fun Bitmap.getCompressedFrame(): Bitmap? {
+        val newHeight = height / 4
+        val newWidth = width / 4
+        return Bitmap.createScaledBitmap(this, newWidth, newHeight, false)
+    }
 
     private fun handleActions(
         builder: NotificationCompat.Builder,
@@ -1295,7 +1403,7 @@ class MessagingManager @Inject constructor(
         data: Map<String, String>
     ): String {
         // Define some values for a default channel
-        var channelID = "general"
+        var channelID = generalChannel
         var channelName = "General"
 
         if (data.containsKey("channel")) {

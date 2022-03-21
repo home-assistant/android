@@ -1,9 +1,7 @@
 package io.homeassistant.companion.android.home.views
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -13,7 +11,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.Chip
 import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.PositionIndicator
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.ScalingLazyListState
@@ -54,9 +51,6 @@ fun SecondarySettingsChip(
     )
 }
 
-@ExperimentalComposeUiApi
-@ExperimentalAnimationApi
-@ExperimentalWearMaterialApi
 @Composable
 fun SettingsView(
     favorites: List<String>,
@@ -212,9 +206,6 @@ fun SettingsView(
     }
 }
 
-@ExperimentalComposeUiApi
-@ExperimentalAnimationApi
-@ExperimentalWearMaterialApi
 @Preview
 @Composable
 private fun PreviewSettingsView() {

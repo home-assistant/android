@@ -32,7 +32,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.0.4"
+        kotlinCompilerExtensionVersion = "1.1.1"
     }
 
     compileOptions {
@@ -101,7 +101,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.41")
     kapt("com.google.dagger:hilt-android-compiler:2.41")
 
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.2")
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
 
     implementation("com.mikepenz:iconics-core:5.3.3")
@@ -111,9 +111,9 @@ dependencies {
 
     implementation("androidx.activity:activity-ktx:1.4.0")
     implementation("androidx.activity:activity-compose:1.4.0")
-    implementation("androidx.compose.compiler:compiler:1.0.5")
-    implementation("androidx.compose.foundation:foundation:1.0.5")
-    implementation("androidx.compose.ui:ui-tooling:1.0.5")
+    implementation("androidx.compose.compiler:compiler:1.1.1")
+    implementation("androidx.compose.foundation:foundation:1.1.1")
+    implementation("androidx.compose.ui:ui-tooling:1.1.1")
     implementation("androidx.wear.compose:compose-foundation:1.0.0-alpha14")
     implementation("androidx.wear.compose:compose-material:1.0.0-alpha14")
     implementation("androidx.wear.compose:compose-navigation:1.0.0-alpha14")
