@@ -261,8 +261,11 @@ class MainViewModel @Inject constructor(application: Application) : AndroidViewM
                 .first { basicSensor -> basicSensor.id == sensorId }
             updateSensorEntity(sensorsDao, basicSensor, isEnabled)
 
-            if (isEnabled)
+            if (isEnabled) try {
                 sensorManager.requestSensorUpdate(app)
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception while requesting update for sensor $sensorId", e)
+            }
         }
     }
 
