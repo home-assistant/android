@@ -19,8 +19,8 @@ abstract class OnSwipeListener : View.OnTouchListener {
     var downEvent: MotionEvent? = null
     var numberOfPointers = 0
 
-    var minimumFlingVelocity: Int? = null
-    var maximumFlingVelocity: Int? = null
+    var minimumFlingVelocity = ViewConfiguration.getMinimumFlingVelocity()
+    var maximumFlingVelocity = ViewConfiguration.getMaximumFlingVelocity()
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         event?.let { motionEvent ->
@@ -53,35 +53,32 @@ abstract class OnSwipeListener : View.OnTouchListener {
                     // From the GestureDetector: check the dot product of current velocities.
                     // If the pointer that left was opposing another velocity vector, clear.
                     calculateVelocityForView(v)
-                    if (minimumFlingVelocity != null && maximumFlingVelocity != null) {
-                        velocityTracker?.computeCurrentVelocity(1000, maximumFlingVelocity!!.toFloat())
-                        val upIndex = motionEvent.actionIndex
-                        val id1 = motionEvent.getPointerId(upIndex)
-                        val x1 = velocityTracker?.getXVelocity(id1) ?: 0f
-                        val y1 = velocityTracker?.getYVelocity(id1) ?: 0f
-                        for (i in 0 until motionEvent.pointerCount) {
-                            if (i == upIndex) continue
-                            val id2 = motionEvent.getPointerId(i)
-                            val x = x1 * (velocityTracker?.getXVelocity(id2) ?: 0f)
-                            val y = y1 * (velocityTracker?.getYVelocity(id2) ?: 0f)
-                            val dot = x + y
-                            if (dot < 0) {
-                                velocityTracker?.clear()
-                                break
-                            }
+                    velocityTracker?.computeCurrentVelocity(1000, maximumFlingVelocity.toFloat())
+                    val upIndex = motionEvent.actionIndex
+                    val id1 = motionEvent.getPointerId(upIndex)
+                    val x1 = velocityTracker?.getXVelocity(id1) ?: 0f
+                    val y1 = velocityTracker?.getYVelocity(id1) ?: 0f
+                    for (i in 0 until motionEvent.pointerCount) {
+                        if (i == upIndex) continue
+                        val id2 = motionEvent.getPointerId(i)
+                        val x = x1 * (velocityTracker?.getXVelocity(id2) ?: 0f)
+                        val y = y1 * (velocityTracker?.getYVelocity(id2) ?: 0f)
+                        val dot = x + y
+                        if (dot < 0) {
+                            velocityTracker?.clear()
+                            break
                         }
                     }
                 }
                 MotionEvent.ACTION_UP -> {
                     var handled: Boolean? = null
                     calculateVelocityForView(v)
-                    velocityTracker?.computeCurrentVelocity(1000, maximumFlingVelocity!!.toFloat())
+                    velocityTracker?.computeCurrentVelocity(1000, maximumFlingVelocity.toFloat())
                     val velocityX = velocityTracker?.getXVelocity(motionEvent.getPointerId(0))
                     val velocityY = velocityTracker?.getYVelocity(motionEvent.getPointerId(0))
                     if (
                         velocityX != null && velocityY != null &&
-                        minimumFlingVelocity != null && maximumFlingVelocity != null &&
-                        ((abs(velocityY) > minimumFlingVelocity!!) || (abs(velocityX) > minimumFlingVelocity!!))
+                        ((abs(velocityY) > minimumFlingVelocity) || (abs(velocityX) > minimumFlingVelocity))
                     ) {
                         handled = onFling(
                             downEvent!!,
@@ -101,12 +98,9 @@ abstract class OnSwipeListener : View.OnTouchListener {
     }
 
     private fun calculateVelocityForView(view: View?) {
-        if (view != null) {
+        if (view?.context != null) {
             minimumFlingVelocity = ViewConfiguration.get(view.context).scaledMinimumFlingVelocity
             maximumFlingVelocity = ViewConfiguration.get(view.context).scaledMaximumFlingVelocity
-        } else {
-            minimumFlingVelocity = ViewConfiguration.getMinimumFlingVelocity()
-            maximumFlingVelocity = ViewConfiguration.getMaximumFlingVelocity()
         }
     }
 
