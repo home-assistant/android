@@ -80,11 +80,14 @@ abstract class OnSwipeListener : View.OnTouchListener {
                         velocityX != null && velocityY != null &&
                         ((abs(velocityY) > minimumFlingVelocity) || (abs(velocityX) > minimumFlingVelocity))
                     ) {
-                        handled = onFling(
+                        // = onFling in GestureDetector.OnGestureListener
+                        // Calculate the position of motionEvent relative to downEvent to find the fling direction
+                        val direction = getDirection(downEvent!!.x, downEvent!!.y, motionEvent.x, motionEvent.y)
+                        handled = onSwipe(
                             downEvent!!,
                             motionEvent,
-                            velocityX,
-                            velocityY,
+                            abs(if (direction == SwipeDirection.UP || direction == SwipeDirection.DOWN) velocityY else velocityX),
+                            direction,
                             numberOfPointers
                         )
                     }
@@ -112,34 +115,6 @@ abstract class OnSwipeListener : View.OnTouchListener {
         downEvent?.recycle()
         downEvent = null
         numberOfPointers = 0
-    }
-
-    private fun onFling(
-        e1: MotionEvent,
-        e2: MotionEvent,
-        velocityX: Float,
-        velocityY: Float,
-        pointerCount: Int
-    ): Boolean {
-        // Grab two events located on the plane at e1=(x1, y1) and e2=(x2, y2)
-        // Let e1 be the initial event
-        // e2 can be located at 4 different positions, consider the following diagram
-        // (Assume that lines are separated by 90 degrees.)
-        //
-        //         \ up /
-        //          \  /
-        //    left   e1   right
-        //          /  \
-        //         /down\
-        //
-        val direction = getDirection(e1.x, e1.y, e2.x, e2.y)
-        return onSwipe(
-            e1,
-            e2,
-            abs(if (direction == SwipeDirection.UP || direction == SwipeDirection.DOWN) velocityY else velocityX),
-            direction,
-            pointerCount
-        )
     }
 
     abstract fun onSwipe(
