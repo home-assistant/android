@@ -1,23 +1,18 @@
 package io.homeassistant.companion.android.settings.wear.views
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -35,50 +30,36 @@ import org.burnoutcrew.reorderable.rememberReorderState
 import org.burnoutcrew.reorderable.reorderable
 import io.homeassistant.companion.android.common.R as commonR
 
-const val WEAR_DOCS_LINK = "https://companion.home-assistant.io/docs/wear-os/"
-
 @Composable
 fun LoadWearFavoritesSettings(
-    settingsWearViewModel: SettingsWearViewModel
+    settingsWearViewModel: SettingsWearViewModel,
+    onBackClicked: () -> Unit
 ) {
-    val context = LocalContext.current
     val reorderState = rememberReorderState()
 
     val validEntities = settingsWearViewModel.entities.filter { it.key.split(".")[0] in settingsWearViewModel.supportedDomains }.values.sortedBy { it.entityId }.toList()
     val favoriteEntities = settingsWearViewModel.favoriteEntityIds
     Scaffold(
         topBar = {
-            TopAppBar(
+            SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.wear_favorite_entities)) },
-                actions = {
-                    IconButton(onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(WEAR_DOCS_LINK))
-                        context.startActivity(intent)
-                    }) {
-                        Icon(
-                            Icons.Filled.HelpOutline,
-                            contentDescription = stringResource(id = commonR.string.help)
-                        )
-                    }
-                }
+                onBackClicked = onBackClicked,
+                docsLink = WEAR_DOCS_LINK
             )
         }
     ) {
         LazyColumn(
             state = reorderState.listState,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .padding(top = 10.dp, start = 5.dp, end = 10.dp)
-                .then(
-                    Modifier.reorderable(
-                        reorderState,
-                        { from, to -> settingsWearViewModel.onMove(from, to) },
-                        canDragOver = { settingsWearViewModel.canDragOver(it) },
-                        onDragEnd = { _, _ ->
-                            settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
-                        }
-                    )
-                )
+            contentPadding = PaddingValues(all = 16.dp),
+            modifier = Modifier.reorderable(
+                reorderState,
+                { from, to -> settingsWearViewModel.onMove(from, to) },
+                canDragOver = { settingsWearViewModel.canDragOver(it) },
+                onDragEnd = { _, _ ->
+                    settingsWearViewModel.sendHomeFavorites(settingsWearViewModel.favoriteEntityIds.toList())
+                }
+            )
         ) {
             item {
                 Text(

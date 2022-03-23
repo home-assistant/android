@@ -1,7 +1,5 @@
 package io.homeassistant.companion.android.settings.wear.views
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,15 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,32 +39,12 @@ fun SettingsWearTemplateTile(
     onRefreshIntervalChanged: (Int) -> Unit,
     onBackClicked: () -> Unit
 ) {
-    val context = LocalContext.current
     Scaffold(
         topBar = {
-            TopAppBar(
+            SettingsWearTopAppBar(
                 title = { Text(stringResource(commonR.string.template_tile)) },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onBackClicked
-                    ) {
-                        Image(
-                            asset = CommunityMaterial.Icon.cmd_arrow_left,
-                            colorFilter = ColorFilter.tint(colorResource(commonR.color.colorIcon))
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(WEAR_DOCS_LINK))
-                        context.startActivity(intent)
-                    }) {
-                        Icon(
-                            Icons.Filled.HelpOutline,
-                            contentDescription = stringResource(id = commonR.string.help)
-                        )
-                    }
-                }
+                onBackClicked = onBackClicked,
+                docsLink = WEAR_DOCS_LINK
             )
         }
     ) {
