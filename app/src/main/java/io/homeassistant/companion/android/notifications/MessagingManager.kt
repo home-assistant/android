@@ -91,6 +91,7 @@ class MessagingManager @Inject constructor(
         const val TAG = "MessagingService"
 
         const val APP_PREFIX = "app://"
+        const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
         const val SETTINGS_PREFIX = "settings://"
         const val NOTIFICATION_HISTORY = "notification_history"
 
@@ -117,6 +118,7 @@ class MessagingManager @Inject constructor(
         const val BLE_ADVERTISE = "ble_advertise"
         const val BLE_TRANSMIT = "ble_transmit"
         const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
+        const val PACKAGE_NAME = "package_name"
 
         // special action constants
         const val REQUEST_LOCATION_UPDATE = "request_location_update"
@@ -136,6 +138,7 @@ class MessagingManager @Inject constructor(
         const val COMMAND_ACTIVITY = "command_activity"
         const val COMMAND_WEBVIEW = "command_webview"
         const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
+        const val COMMAND_LAUNCH_APP = "command_launch_app"
 
         // DND commands
         const val DND_PRIORITY_ONLY = "priority_only"
@@ -196,7 +199,8 @@ class MessagingManager @Inject constructor(
             COMMAND_WEBVIEW,
             COMMAND_SCREEN_ON,
             COMMAND_MEDIA,
-            COMMAND_UPDATE_SENSORS
+            COMMAND_UPDATE_SENSORS,
+            COMMAND_LAUNCH_APP
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
@@ -410,6 +414,19 @@ class MessagingManager @Inject constructor(
                         }
                     }
                     COMMAND_UPDATE_SENSORS -> SensorWorker.start(context)
+                    COMMAND_LAUNCH_APP -> {
+                        if (!jsonData[PACKAGE_NAME].isNullOrEmpty())
+                            handleDeviceCommands(jsonData)
+                        else {
+                            mainScope.launch {
+                                Log.d(
+                                    TAG,
+                                    "Missing package name for app to launch, posting notification to device"
+                                )
+                                sendNotification(jsonData)
+                            }
+                        }
+                    }
                     else -> Log.d(TAG, "No command received")
                 }
             }
@@ -719,6 +736,15 @@ class MessagingManager @Inject constructor(
                         processMediaCommand(data)
                     }
                 }
+            }
+            COMMAND_LAUNCH_APP -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (!Settings.canDrawOverlays(context))
+                        notifyMissingPermission(data[MESSAGE].toString())
+                    else
+                        launchApp(data)
+                } else
+                    launchApp(data)
             }
             else -> Log.d(TAG, "No command received")
         }
@@ -1719,6 +1745,26 @@ class MessagingManager @Inject constructor(
         }
     }
 
+    private fun launchApp(data: Map<String, String>) {
+        try {
+            val launchIntent = context.packageManager.getLaunchIntentForPackage(data[PACKAGE_NAME]!!)
+            if (launchIntent != null)
+                context.startActivity(launchIntent)
+            else {
+                Log.w(TAG, "No intent to launch app found, opening app store")
+                val marketIntent = Intent(Intent.ACTION_VIEW)
+                marketIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                marketIntent.data = Uri.parse(
+                    MARKET_PREFIX + data[PACKAGE_NAME]
+                )
+                context.startActivity(marketIntent)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to launch app", e)
+            mainScope.launch { sendNotification(data) }
+        }
+    }
+
     private fun notifyMissingPermission(type: String) {
         val appManager =
             context.getSystemService<ActivityManager>()
@@ -1734,7 +1780,7 @@ class MessagingManager @Inject constructor(
                         }
                     } else {
                         when (type) {
-                            COMMAND_WEBVIEW, COMMAND_ACTIVITY -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            COMMAND_WEBVIEW, COMMAND_ACTIVITY, COMMAND_LAUNCH_APP -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                 requestSystemAlertPermission()
                             }
                             COMMAND_RINGER_MODE, COMMAND_DND, COMMAND_VOLUME_LEVEL -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
