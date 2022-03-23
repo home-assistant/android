@@ -76,6 +76,20 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_ring,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
+        private val volNotification = SensorManager.BasicSensor(
+            "volume_notification",
+            "sensor",
+            commonR.string.sensor_name_volume_notification,
+            commonR.string.sensor_description_volume_notification,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+        private val volSystem = SensorManager.BasicSensor(
+            "volume_system",
+            "sensor",
+            commonR.string.sensor_name_volume_system,
+            commonR.string.sensor_description_volume_system,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
     }
 
     override fun docsLink(): String {
@@ -89,7 +103,10 @@ class AudioSensorManager : SensorManager {
         get() = commonR.string.sensor_name_audio
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(audioSensor, audioState, headphoneState, micMuted, speakerphoneState, musicActive, volAlarm, volCall, volMusic, volRing)
+        return listOf(
+            audioSensor, audioState, headphoneState, micMuted, speakerphoneState,
+            musicActive, volAlarm, volCall, volMusic, volRing, volNotification, volSystem
+        )
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -108,6 +125,8 @@ class AudioSensorManager : SensorManager {
         updateVolumeCall(context, audioManager)
         updateVolumeMusic(context, audioManager)
         updateVolumeRing(context, audioManager)
+        updateVolumeNotification(context, audioManager)
+        updateVolumeSystem(context, audioManager)
     }
 
     private fun updateAudioSensor(context: Context, audioManager: AudioManager) {
@@ -305,6 +324,40 @@ class AudioSensorManager : SensorManager {
             context,
             volRing,
             volumeLevelRing,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateVolumeNotification(context: Context, audioManager: AudioManager) {
+        if (!isEnabled(context, volNotification.id))
+            return
+
+        val volumeLevelNotification = audioManager.getStreamVolume(AudioManager.STREAM_NOTIFICATION)
+
+        val icon = "mdi:bell-ring"
+
+        onSensorUpdated(
+            context,
+            volNotification,
+            volumeLevelNotification,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateVolumeSystem(context: Context, audioManager: AudioManager) {
+        if (!isEnabled(context, volSystem.id))
+            return
+
+        val volumeLevelSystem = audioManager.getStreamVolume(AudioManager.STREAM_SYSTEM)
+
+        val icon = "mdi:cellphone-sound"
+
+        onSensorUpdated(
+            context,
+            volSystem,
+            volumeLevelSystem,
             icon,
             mapOf()
         )
