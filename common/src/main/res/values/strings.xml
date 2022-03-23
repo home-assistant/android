@@ -804,4 +804,8 @@
     <string name="sensor_description_volume_notification">Volume level for notifications on the device</string>
     <string name="sensor_name_volume_system">Volume Level System</string>
     <string name="sensor_description_volume_system">Volume level for the system on the device</string>
+    <string name="sensor_name_volume_accessibility">Volume Level Accessibility</string>
+    <string name="sensor_description_volume_accessibility">Volume level for accessibility prompts on the device</string>
+    <string name="sensor_name_volume_dtmf">Volume Level DTMF</string>
+    <string name="sensor_description_volume_dtmf">Volume level for DTMF tones on the device</string>
 </resources>

@@ -159,6 +159,7 @@ class MessagingManager @Inject constructor(
         const val RING_STREAM = "ring_stream"
         const val SYSTEM_STREAM = "system_stream"
         const val CALL_STREAM = "call_stream"
+        const val DTMF_STREAM = "dtmf_stream"
 
         // Enable/Disable Commands
         const val TURN_ON = "turn_on"
@@ -206,8 +207,10 @@ class MessagingManager @Inject constructor(
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
-        val CHANNEL_VOLUME_STREAM =
-            listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM, CALL_STREAM, SYSTEM_STREAM)
+        val CHANNEL_VOLUME_STREAM = listOf(
+            ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM, CALL_STREAM,
+            SYSTEM_STREAM, DTMF_STREAM
+        )
         val ENABLE_COMMANDS = listOf(TURN_OFF, TURN_ON)
         val MEDIA_COMMANDS = listOf(
             MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
@@ -1649,6 +1652,7 @@ class MessagingManager @Inject constructor(
             RING_STREAM -> adjustVolumeStream(AudioManager.STREAM_RING, volume, audioManager)
             CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
             SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
+            DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
             else -> Log.d(TAG, "Skipping command due to invalid channel stream")
         }
     }
