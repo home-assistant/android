@@ -27,7 +27,7 @@ import io.homeassistant.companion.android.common.R as commonR
 fun SetFavoritesView(
     mainViewModel: MainViewModel,
     favoriteEntityIds: List<String>,
-    onFavoriteSelected: (entityId: String, entityPosition: Int, isSelected: Boolean) -> Unit
+    onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
 ) {
     // Remember expanded state of each header
     val expandedStates = rememberExpandedStates(mainViewModel.supportedDomains())
@@ -80,7 +80,7 @@ private fun FavoriteToggleChip(
     entityList: List<Entity<*>>,
     index: Int,
     favoriteEntityIds: List<String>,
-    onFavoriteSelected: (entityId: String, entityPosition: Int, isSelected: Boolean) -> Unit
+    onFavoriteSelected: (entityId: String, isSelected: Boolean) -> Unit
 ) {
     val attributes = entityList[index].attributes as Map<*, *>
     val iconBitmap = getIcon(
@@ -94,7 +94,7 @@ private fun FavoriteToggleChip(
     ToggleChip(
         checked = checked,
         onCheckedChange = {
-            onFavoriteSelected(entityId, favoriteEntityIds.size + 1, it)
+            onFavoriteSelected(entityId, it)
         },
         modifier = Modifier
             .fillMaxWidth(),
