@@ -60,7 +60,7 @@ android {
         create("release") {
             storeFile = file("../nestor.keystore")
             storePassword = NESTOR_KEYSTORE_PASSWORD
-            keyAlias = NESTOR_KEYSTORE_ALIAS
+            keyAlias = "nestor"
             keyPassword = NESTOR_KEYSTORE_PASSWORD
             enableV1Signing = true
             enableV2Signing = true
