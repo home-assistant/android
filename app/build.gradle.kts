@@ -53,9 +53,13 @@ android {
         groups = "continuous-deployment"
     }
 
-    val NESTOR_KEYSTORE_PASSWORD: String by project
-    val NESTOR_KEYSTORE_ALIAS: String by project
-    val AMAP_KEY: String by project
+//    val NESTOR_KEYSTORE_PASSWORD: String by project
+//    val NESTOR_KEYSTORE_ALIAS: String by project
+//    val AMAP_KEY: String by project
+    val NESTOR_KEYSTORE_PASSWORD = System.getenv("NESTOR_KEYSTORE_PASSWORD")
+    val NESTOR_KEYSTORE_ALIAS = System.getenv("NESTOR_KEYSTORE_ALIAS")
+    val AMAP_KEY = System.getenv("NESTOR_KEYSTORE_PASSWORD")
+
     signingConfigs {
         create("release") {
             storeFile = file("../nestor.keystore")

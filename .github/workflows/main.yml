@@ -16,20 +16,12 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: '11'
-      - name: Restore gradle.properties
-        env:
-          AMAP_KEY: ${{ secrets.AMAP_KEY }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        shell: bash
-        run: |
-          mkdir -p ~/.gradle/
-          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
-          echo "AMAP_KEY=${AMAP_KEY}" > ~/.gradle/gradle.properties
-          echo "NESTOR_KEYSTORE_ALIAS=${KEY_ALIAS}" > ~/.gradle/gradle.properties
-          echo "NESTOR_KEYSTORE_PASSWORD=${KEY_PASSWORD}" > ~/.gradle/gradle.properties
       - name: Build with Gradle
         run: chmod +x gradlew &&./gradlew aR
+        env:
+          AMAP_KEY: ${{ secrets.AMAP_KEY }}
+          NESTOR_KEYSTORE_ALIAS: ${{ secrets.KEY_ALIAS }}
+          NESTOR_KEYSTORE_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       - name: Release apk
         uses: ncipollo/release-action@v1
         with:
