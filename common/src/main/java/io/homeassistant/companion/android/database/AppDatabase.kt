@@ -67,7 +67,7 @@ import io.homeassistant.companion.android.common.R as commonR
         Favorites::class,
         Setting::class
     ],
-    version = 24,
+    version = 25,
     exportSchema = false
 )
 @TypeConverters(
