@@ -7,7 +7,6 @@ import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import kotlin.math.abs
-import kotlin.math.atan2
 
 // Adapted from the system GestureDetector/GestureListener and https://stackoverflow.com/a/26387629
 // We need to keep track of (pointer) down, move, (pointer) up and cancel events to be able to detect flings
@@ -47,7 +46,7 @@ abstract class OnSwipeListener : View.OnTouchListener {
                         handler.removeCallbacksAndMessages(null)
                         handler.postDelayed({
                             numberOfPointers = motionEvent.pointerCount - 1
-                        }, 600)
+                        }, 500)
                     }
 
                     // From the GestureDetector: check the dot product of current velocities.
@@ -66,6 +65,10 @@ abstract class OnSwipeListener : View.OnTouchListener {
                         val dot = x + y
                         if (dot < 0) {
                             velocityTracker?.clear()
+                            if ((motionEvent.pointerCount - 1) < numberOfPointers) {
+                                handler.removeCallbacksAndMessages(null)
+                                numberOfPointers = motionEvent.pointerCount - 1
+                            }
                             break
                         }
                     }
@@ -74,15 +77,24 @@ abstract class OnSwipeListener : View.OnTouchListener {
                     var handled: Boolean? = null
                     calculateVelocityForView(v)
                     velocityTracker?.computeCurrentVelocity(1000, maximumFlingVelocity.toFloat())
-                    val velocityX = velocityTracker?.getXVelocity(motionEvent.getPointerId(0))
-                    val velocityY = velocityTracker?.getYVelocity(motionEvent.getPointerId(0))
+                    var velocityX = 0f
+                    var velocityY = 0f
+                    velocityTracker?.let {
+                        // Take average of velocities of all pointers to prevent individual outliers
+                        for (i in 0 until numberOfPointers) {
+                            velocityX += it.getXVelocity(i)
+                            velocityY += it.getYVelocity(i)
+                        }
+                        velocityX /= numberOfPointers
+                        velocityY /= numberOfPointers
+                    }
                     if (
-                        velocityX != null && velocityY != null &&
-                        ((abs(velocityY) > minimumFlingVelocity) || (abs(velocityX) > minimumFlingVelocity))
+                        abs(velocityX) > minimumFlingVelocity ||
+                        abs(velocityY) > minimumFlingVelocity
                     ) {
-                        // = onFling in GestureDetector.OnGestureListener
-                        // Calculate the position of motionEvent relative to downEvent to find the fling direction
-                        val direction = getDirection(downEvent!!.x, downEvent!!.y, motionEvent.x, motionEvent.y)
+                        // ≈ onFling in GestureDetector.OnGestureListener
+                        // Calculate the direction based on which velocity is highest
+                        val direction = SwipeDirection.fromVelocity(velocityX, velocityY)
                         handled = onSwipe(
                             downEvent!!,
                             motionEvent,
@@ -130,61 +142,17 @@ abstract class OnSwipeListener : View.OnTouchListener {
         event: MotionEvent?
     ): Boolean
 
-    /**
-     * Given two points in the plane p1=(x1, x2) and p2=(y1, y1), this method
-     * returns the direction that an arrow pointing from p1 to p2 would have.
-     * @param x1 the x position of the first point
-     * @param y1 the y position of the first point
-     * @param x2 the x position of the second point
-     * @param y2 the y position of the second point
-     * @return the direction
-     */
-    private fun getDirection(x1: Float, y1: Float, x2: Float, y2: Float): SwipeDirection {
-        val angle = getAngle(x1, y1, x2, y2)
-        return SwipeDirection.fromAngle(angle)
-    }
-
-    /**
-     * Finds the angle between two points in the plane (x1,y1) and (x2, y2)
-     * The angle is measured with 0/360 being the X-axis to the right, angles
-     * increase counter clockwise.
-     *
-     * @param x1 the x position of the first point
-     * @param y1 the y position of the first point
-     * @param x2 the x position of the second point
-     * @param y2 the y position of the second point
-     * @return the angle between two points
-     */
-    private fun getAngle(x1: Float, y1: Float, x2: Float, y2: Float): Double {
-        val rad = atan2((y1 - y2).toDouble(), (x2 - x1).toDouble()) + Math.PI
-        return (rad * 180 / Math.PI + 180) % 360
-    }
-
     enum class SwipeDirection {
         UP, DOWN, LEFT, RIGHT;
 
         companion object {
-            /**
-             * Returns a direction given an angle.
-             * Directions are defined as follows:
-             *
-             * Up: [45, 135]
-             * Right: [0,45] and [315, 360]
-             * Down: [225, 315]
-             * Left: [135, 225]
-             *
-             * @param angle an angle from 0 to 360 - e
-             * @return the direction of an angle
-             */
-            fun fromAngle(angle: Double): SwipeDirection {
-                return if (angle in (45f..135f)) {
-                    UP
-                } else if (angle in (0f..45f) || angle in (315f..360f)) {
-                    RIGHT
-                } else if (angle in (225f..315f)) {
-                    DOWN
+            fun fromVelocity(velocityX: Float, velocityY: Float): SwipeDirection {
+                return if (abs(velocityX) > abs(velocityY)) {
+                    if (velocityX > 0) RIGHT
+                    else LEFT
                 } else {
-                    LEFT
+                    if (velocityY > 0) DOWN
+                    else UP
                 }
             }
         }
