@@ -157,6 +157,9 @@ class MessagingManager @Inject constructor(
         const val MUSIC_STREAM = "music_stream"
         const val NOTIFICATION_STREAM = "notification_stream"
         const val RING_STREAM = "ring_stream"
+        const val SYSTEM_STREAM = "system_stream"
+        const val CALL_STREAM = "call_stream"
+        const val DTMF_STREAM = "dtmf_stream"
 
         // Enable/Disable Commands
         const val TURN_ON = "turn_on"
@@ -204,8 +207,10 @@ class MessagingManager @Inject constructor(
         )
         val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
-        val CHANNEL_VOLUME_STREAM =
-            listOf(ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM)
+        val CHANNEL_VOLUME_STREAM = listOf(
+            ALARM_STREAM, MUSIC_STREAM, NOTIFICATION_STREAM, RING_STREAM, CALL_STREAM,
+            SYSTEM_STREAM, DTMF_STREAM
+        )
         val ENABLE_COMMANDS = listOf(TURN_OFF, TURN_ON)
         val MEDIA_COMMANDS = listOf(
             MEDIA_FAST_FORWARD, MEDIA_NEXT, MEDIA_PAUSE, MEDIA_PLAY,
@@ -1640,54 +1645,29 @@ class MessagingManager @Inject constructor(
     }
 
     private fun processStreamVolume(audioManager: AudioManager, stream: String, volume: Int) {
-        var volumeLevel = volume
         when (stream) {
-            ALARM_STREAM -> {
-                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM))
-                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-                else if (volumeLevel < 0)
-                    volumeLevel = 0
-                audioManager.setStreamVolume(
-                    AudioManager.STREAM_ALARM,
-                    volumeLevel,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
-            MUSIC_STREAM -> {
-                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC))
-                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                else if (volumeLevel < 0)
-                    volumeLevel = 0
-                audioManager.setStreamVolume(
-                    AudioManager.STREAM_MUSIC,
-                    volumeLevel,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
-            NOTIFICATION_STREAM -> {
-                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION))
-                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_NOTIFICATION)
-                else if (volumeLevel < 0)
-                    volumeLevel = 0
-                audioManager.setStreamVolume(
-                    AudioManager.STREAM_NOTIFICATION,
-                    volumeLevel,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
-            RING_STREAM -> {
-                if (volumeLevel > audioManager.getStreamMaxVolume(AudioManager.STREAM_RING))
-                    volumeLevel = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING)
-                else if (volumeLevel < 0)
-                    volumeLevel = 0
-                audioManager.setStreamVolume(
-                    AudioManager.STREAM_RING,
-                    volumeLevel,
-                    AudioManager.FLAG_SHOW_UI
-                )
-            }
+            ALARM_STREAM -> adjustVolumeStream(AudioManager.STREAM_ALARM, volume, audioManager)
+            MUSIC_STREAM -> adjustVolumeStream(AudioManager.STREAM_MUSIC, volume, audioManager)
+            NOTIFICATION_STREAM -> adjustVolumeStream(AudioManager.STREAM_NOTIFICATION, volume, audioManager)
+            RING_STREAM -> adjustVolumeStream(AudioManager.STREAM_RING, volume, audioManager)
+            CALL_STREAM -> adjustVolumeStream(AudioManager.STREAM_VOICE_CALL, volume, audioManager)
+            SYSTEM_STREAM -> adjustVolumeStream(AudioManager.STREAM_SYSTEM, volume, audioManager)
+            DTMF_STREAM -> adjustVolumeStream(AudioManager.STREAM_DTMF, volume, audioManager)
             else -> Log.d(TAG, "Skipping command due to invalid channel stream")
         }
+    }
+
+    private fun adjustVolumeStream(stream: Int, volume: Int, audioManager: AudioManager) {
+        var volumeLevel = volume
+        if (volumeLevel > audioManager.getStreamMaxVolume(stream))
+            volumeLevel = audioManager.getStreamMaxVolume(stream)
+        else if (volumeLevel < 0)
+            volumeLevel = 0
+        audioManager.setStreamVolume(
+            stream,
+            volumeLevel,
+            AudioManager.FLAG_SHOW_UI
+        )
     }
 
     private fun processActivityCommand(data: Map<String, String>) {

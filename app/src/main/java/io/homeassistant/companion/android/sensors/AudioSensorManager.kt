@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.R as commonR
@@ -76,6 +77,34 @@ class AudioSensorManager : SensorManager {
             commonR.string.sensor_description_volume_ring,
             entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
         )
+        private val volNotification = SensorManager.BasicSensor(
+            "volume_notification",
+            "sensor",
+            commonR.string.sensor_name_volume_notification,
+            commonR.string.sensor_description_volume_notification,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+        private val volSystem = SensorManager.BasicSensor(
+            "volume_system",
+            "sensor",
+            commonR.string.sensor_name_volume_system,
+            commonR.string.sensor_description_volume_system,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+        private val volAccessibility = SensorManager.BasicSensor(
+            "volume_accessibility",
+            "sensor",
+            commonR.string.sensor_name_volume_accessibility,
+            commonR.string.sensor_description_volume_accessibility,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
+        private val volDTMF = SensorManager.BasicSensor(
+            "volume_dtmf",
+            "sensor",
+            commonR.string.sensor_name_volume_dtmf,
+            commonR.string.sensor_description_volume_dtmf,
+            entityCategory = SensorManager.ENTITY_CATEGORY_DIAGNOSTIC
+        )
     }
 
     override fun docsLink(): String {
@@ -89,7 +118,15 @@ class AudioSensorManager : SensorManager {
         get() = commonR.string.sensor_name_audio
 
     override fun getAvailableSensors(context: Context): List<SensorManager.BasicSensor> {
-        return listOf(audioSensor, audioState, headphoneState, micMuted, speakerphoneState, musicActive, volAlarm, volCall, volMusic, volRing)
+        val allSupportedSensors = listOf(
+            audioSensor, audioState, headphoneState, micMuted, speakerphoneState,
+            musicActive, volAlarm, volCall, volMusic, volRing, volNotification, volSystem,
+            volDTMF
+        )
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            allSupportedSensors.plus(volAccessibility)
+        else
+            allSupportedSensors
     }
 
     override fun requiredPermissions(sensorId: String): Array<String> {
@@ -108,6 +145,11 @@ class AudioSensorManager : SensorManager {
         updateVolumeCall(context, audioManager)
         updateVolumeMusic(context, audioManager)
         updateVolumeRing(context, audioManager)
+        updateVolumeNotification(context, audioManager)
+        updateVolumeSystem(context, audioManager)
+        updateVolumeDTMF(context, audioManager)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            updateVolumeAccessibility(context, audioManager)
     }
 
     private fun updateAudioSensor(context: Context, audioManager: AudioManager) {
@@ -145,6 +187,7 @@ class AudioSensorManager : SensorManager {
             AudioManager.MODE_RINGTONE -> "ringing"
             AudioManager.MODE_IN_CALL -> "in_call"
             AudioManager.MODE_IN_COMMUNICATION -> "in_communication"
+            AudioManager.MODE_CALL_SCREENING -> "call_screening"
             else -> "unknown"
         }
 
@@ -153,6 +196,7 @@ class AudioSensorManager : SensorManager {
             AudioManager.MODE_RINGTONE -> "mdi:phone-ring"
             AudioManager.MODE_IN_CALL -> "mdi:phone"
             AudioManager.MODE_IN_COMMUNICATION -> "mdi:message-video"
+            AudioManager.MODE_CALL_SCREENING -> "mdi:text-to-speech"
             else -> "mdi:volume-low"
         }
 
@@ -305,6 +349,75 @@ class AudioSensorManager : SensorManager {
             context,
             volRing,
             volumeLevelRing,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateVolumeNotification(context: Context, audioManager: AudioManager) {
+        if (!isEnabled(context, volNotification.id))
+            return
+
+        val volumeLevelNotification = audioManager.getStreamVolume(AudioManager.STREAM_NOTIFICATION)
+
+        val icon = "mdi:bell-ring"
+
+        onSensorUpdated(
+            context,
+            volNotification,
+            volumeLevelNotification,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateVolumeSystem(context: Context, audioManager: AudioManager) {
+        if (!isEnabled(context, volSystem.id))
+            return
+
+        val volumeLevelSystem = audioManager.getStreamVolume(AudioManager.STREAM_SYSTEM)
+
+        val icon = "mdi:cellphone-sound"
+
+        onSensorUpdated(
+            context,
+            volSystem,
+            volumeLevelSystem,
+            icon,
+            mapOf()
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun updateVolumeAccessibility(context: Context, audioManager: AudioManager) {
+        if (!isEnabled(context, volAccessibility.id))
+            return
+
+        val volumeLevelAccessibility = audioManager.getStreamVolume(AudioManager.STREAM_ACCESSIBILITY)
+
+        val icon = "mdi:human"
+
+        onSensorUpdated(
+            context,
+            volAccessibility,
+            volumeLevelAccessibility,
+            icon,
+            mapOf()
+        )
+    }
+
+    private fun updateVolumeDTMF(context: Context, audioManager: AudioManager) {
+        if (!isEnabled(context, volDTMF.id))
+            return
+
+        val volumeLevelDTMF = audioManager.getStreamVolume(AudioManager.STREAM_DTMF)
+
+        val icon = "mdi:volume-high"
+
+        onSensorUpdated(
+            context,
+            volDTMF,
+            volumeLevelDTMF,
             icon,
             mapOf()
         )
