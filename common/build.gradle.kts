@@ -23,7 +23,12 @@ android {
 
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments(mapOf("room.incremental" to "true"))
+                arguments(
+                    mapOf(
+                        "room.incremental" to "true",
+                        "room.schemaLocation" to "$projectDir/schemas"
+                    )
+                )
             }
         }
     }
