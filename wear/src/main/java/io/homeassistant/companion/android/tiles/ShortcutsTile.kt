@@ -107,7 +107,7 @@ class ShortcutsTile : TileService() {
                         // Find icon and create Bitmap
                         val iconIIcon = getIcon(
                             entity.icon,
-                            entity.entityId.split("")[0],
+                            entity.domain,
                             this@ShortcutsTile
                         ) ?: CommunityMaterial.Icon.cmd_cellphone
                         val iconBitmap = IconicsDrawable(this@ShortcutsTile, iconIIcon).apply {

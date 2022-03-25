@@ -66,7 +66,7 @@ fun SetTileShortcutsView(
 
                 val iconBitmap = getIcon(
                     shortcutEntities[index].icon,
-                    shortcutEntities[index].entityId.split(".")[0],
+                    shortcutEntities[index].domain,
                     LocalContext.current
                 )
 
