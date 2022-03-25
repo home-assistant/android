@@ -23,7 +23,6 @@ import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import androidx.wear.tiles.TileService
 import io.homeassistant.companion.android.common.sensors.id
-import io.homeassistant.companion.android.database.wear.Favorites
 import io.homeassistant.companion.android.home.MainViewModel
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.tiles.ShortcutsTile
@@ -54,7 +53,7 @@ fun LoadHomePage(
 
     WearAppTheme {
         if (mainViewModel.loadingState.value == MainViewModel.LoadingState.LOADING &&
-            mainViewModel.favoriteEntityIds.isNullOrEmpty()
+            mainViewModel.favoriteEntityIds.value.isEmpty()
         ) {
             Column {
                 ListHeader(id = commonR.string.loading)
@@ -80,7 +79,7 @@ fun LoadHomePage(
                 composable(SCREEN_LANDING) {
                     MainView(
                         mainViewModel = mainViewModel,
-                        favoriteEntityIds = mainViewModel.favoriteEntityIds,
+                        favoriteEntityIds = mainViewModel.favoriteEntityIds.value,
                         onEntityClicked = { id, state -> mainViewModel.toggleEntity(id, state) },
                         onEntityLongClicked = { entityId ->
                             swipeDismissableNavController.navigate("$SCREEN_ENTITY_DETAIL/$entityId")
@@ -97,7 +96,7 @@ fun LoadHomePage(
                         },
                         isHapticEnabled = mainViewModel.isHapticEnabled.value,
                         isToastEnabled = mainViewModel.isToastEnabled.value,
-                        deleteFavorite = { id -> mainViewModel.removeFavorites(id) }
+                        deleteFavorite = { id -> mainViewModel.removeFavoriteEntity(id) }
                     )
                 }
                 composable("$SCREEN_ENTITY_DETAIL/{entityId}") {
@@ -146,7 +145,7 @@ fun LoadHomePage(
                 }
                 composable(SCREEN_SETTINGS) {
                     SettingsView(
-                        favorites = mainViewModel.favoriteEntityIds,
+                        favorites = mainViewModel.favoriteEntityIds.value,
                         onClickSetFavorites = {
                             swipeDismissableNavController.navigate(
                                 SCREEN_SET_FAVORITES
@@ -173,13 +172,12 @@ fun LoadHomePage(
                 composable(SCREEN_SET_FAVORITES) {
                     SetFavoritesView(
                         mainViewModel,
-                        mainViewModel.favoriteEntityIds
-                    ) { entityId, position, isSelected ->
-                        val favorites = Favorites(entityId, position)
+                        mainViewModel.favoriteEntityIds.value
+                    ) { entityId, isSelected ->
                         if (isSelected) {
-                            mainViewModel.addFavorites(favorites)
+                            mainViewModel.addFavoriteEntity(entityId)
                         } else {
-                            mainViewModel.removeFavorites(entityId)
+                            mainViewModel.removeFavoriteEntity(entityId)
                         }
                     }
                 }
