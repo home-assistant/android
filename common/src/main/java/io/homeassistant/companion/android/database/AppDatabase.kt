@@ -133,7 +133,8 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_20_21,
                     MIGRATION_21_22,
                     MIGRATION_22_23,
-                    MIGRATION_23_24
+                    MIGRATION_23_24,
+                    MIGRATION_24_25
                 )
                 .fallbackToDestructiveMigration()
                 .build()
@@ -489,6 +490,16 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_23_24 = object : Migration(23, 24) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `settings` ADD `sensorUpdateFrequency` TEXT NOT NULL DEFAULT 'NORMAL'")
+            }
+        }
+
+        private val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // SQLite doesn't allow altering columns, so create new + copy old data
+                database.execSQL("CREATE TABLE IF NOT EXISTS `favoritesnew` (`id` TEXT NOT NULL, `position` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+                database.execSQL("INSERT INTO `favoritesnew` SELECT * FROM `favorites`")
+                database.execSQL("DROP TABLE `favorites`")
+                database.execSQL("ALTER TABLE `favoritesnew` RENAME TO `favorites`")
             }
         }
 
