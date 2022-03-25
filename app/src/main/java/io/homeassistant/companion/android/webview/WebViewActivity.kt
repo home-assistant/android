@@ -246,7 +246,7 @@ class WebViewActivity : BaseActivity(), io.homeassistant.companion.android.webvi
                 ): Boolean {
                     if (pointerCount == 3 &&
                         direction == SwipeDirection.DOWN &&
-                        velocity >= 250
+                        velocity >= 150
                     ) {
                         dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_E))
                     }
