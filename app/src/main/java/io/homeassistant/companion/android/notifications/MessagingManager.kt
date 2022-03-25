@@ -362,7 +362,7 @@ class MessagingManager @Inject constructor(
                         if ((!jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] in ENABLE_COMMANDS) ||
                             (
                                 !jsonData[TITLE].isNullOrEmpty() && jsonData[TITLE] == HIGH_ACCURACY_SET_UPDATE_INTERVAL &&
-                                    jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! > 5
+                                    jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toIntOrNull() != null && jsonData[HIGH_ACCURACY_UPDATE_INTERVAL]?.toInt()!! >= 5
                                 )
                         )
                             handleDeviceCommands(jsonData)
